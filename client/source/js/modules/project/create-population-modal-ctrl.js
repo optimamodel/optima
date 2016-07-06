@@ -7,6 +7,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.isNew = !population.name;
     // in order to not perform changes directly on the final value here is created a copy
     $scope.population = angular.copy(population);
+    console.log('population', population);
     $scope.population.active = true;
 
     populations = _.filter(populations, function(p) { return p.short !== $scope.population.short; });

@@ -80,6 +80,55 @@ class UserDb(db.Model):
         return True
 
 
+def convert_to_populations(datapop):
+    """
+    <odist>
+     - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
+     - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
+     - male: [0, 1, 1, 1, 1, 0]
+     - female: [1, 0, 0, 0, 0, 1]
+     - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
+     - injects: [0, 0, 0, 1, 0, 0]
+     - sexworker: [1, 0, 0, 0, 0, 0]
+    """
+    project_pops = normalize_obj(datapop)
+    result = []
+    for i in range(len(project_pops['short'])):
+        new_pop = {
+            'short': project_pops['short'][i],
+            'name': project_pops['long'][i],
+            'male': bool(project_pops['male'][i]),
+            'female': bool(project_pops['female'][i]),
+            'age_from': int(project_pops['age'][i][0]),
+            'age_to': int(project_pops['age'][i][1]),
+            'injects': bool(project_pops['injects'][i]),
+            'sexworker': bool(project_pops['sexworker'][i]),
+        }
+        result.append(new_pop)
+    return result
+
+
+def convert_to_datapop(populations):
+    result = op.odict()
+    for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
+        result[key] = []
+    for pop in populations:
+        result['short'].append(pop['short'])
+        result['long'].append(pop['name'])
+        result['male'].append(int(pop['male']))
+        result['female'].append(int(pop['female']))
+        result['age'].append([int(pop['age_from']), int(pop['age_to'])])
+        result['injects'].append(int(pop['injects']))
+        result['sexworker'].append(int(pop['sexworker']))
+    return result
+
+
+def print_odict(an_odict):
+    print "<odict>"
+    for key, val in an_odict.items():
+        print " - %s: %s" % (key, val)
+
+
 @swagger.model
 class ProjectDb(db.Model):
 
@@ -169,6 +218,8 @@ class ProjectDb(db.Model):
         project.modified = self.updated
         if self.data:
             project.data = op.loads(self.data)
+            if self.populations:
+                self.data['pops'] = convert_to_datapop(self.populations)
             # add populations here
         if self.settings:
             project.settings = op.loads(self.settings)
@@ -266,24 +317,17 @@ class ProjectDb(db.Model):
             self.dataend = int(project.data['years'][-1])
 
             print(">>> Gather populations")
-            self.populations = []
-            project_pops = normalize_obj(project.data['pops'])
-            # pprint(project_pops)
-            for i in range(len(project_pops['short'])):
-                new_pop = {
-                    'name': project_pops['long'][i],
-                    'short': project_pops['short'][i],
-                    'female': project_pops['female'][i],
-                    'male': project_pops['male'][i],
-                    'age_from': int(project_pops['age'][i][0]),
-                    'age_to': int(project_pops['age'][i][1])
-                }
-                self.populations.append(new_pop)
+            project_pops = project.data['pops']
+            self.populations = convert_to_populations(project_pops)
+            test_project_pops = convert_to_datapop(self.populations)
+            print_odict(project_pops)
+            print_odict(test_project_pops)
+
         else:
             self.has_econ = False
             self.datastart = self.datastart or op.default_datastart
             self.dataend = self.dataend or op.default_dataend
-            self.populations = self.populations or {}
+            self.populations = self.populations or []
 
         parset_id_by_name = {}
         if project.parsets:

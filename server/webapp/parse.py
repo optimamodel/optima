@@ -328,13 +328,16 @@ keys = "short name male female age_from age_to injects sexworker".split()
 
 
 def get_default_populations():
-    maybe_bool = lambda (p): bool(int(p)) if p in ['0', '1'] else p
     result = []
     lines = [l.strip() for l in ALL_POPULATIONS_SOURCE.split('\n')][2:-1]
     for line in lines:
         tokens = line.split(";")
-        entry = dict((key, maybe_bool(token)) for key, token in zip(keys, tokens))
-        result.append(entry)
+        result.append(dict(zip(keys, tokens)))
+    for piece in result:
+        for key in ['age_from', 'age_to']:
+            piece[key] = int(piece[key])
+        for key in "male female injects sexworker".split():
+            piece[key] = bool(piece[key])
     return result
 
 

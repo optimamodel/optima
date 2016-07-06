@@ -741,51 +741,37 @@ class ProjectFromData(Resource):
     def post(self):
         user_id = current_user.id
 
+        print "> Upload project"
+
         args = project_upload_form_parser.parse_args()
         uploaded_file = args['file']
         project_name = args['name']
-
         source_filename = uploaded_file.source_filename
-
-        project = op.loadobj(uploaded_file)
-        project.name = project_name
-
-        project.uid = op.uuid()
-        for parset in project.parsets.values():
-            parset.uid = op.uuid()
-        for result in project.results.values():
-            result.uid = op.uuid()
 
         from optima.makespreadsheet import default_datastart, default_dataend
         datastart = default_datastart
         dataend = default_dataend
         pops = {}
-
-        print(">>>> Process projecct upload")
-
         project_record = ProjectDb(
             project_name, user_id, datastart, dataend, pops, version=op.__version__)
-
-        # New project ID needs to be generated before calling restore
         db.session.add(project_record)
+        # flush() creates new project_record.id
         db.session.flush()
 
-        result = None
-        if project.data:
-            assert (project.parsets)
-            result = project.runsim()
-
-            print('>>>> Runsim for project: "%s"' % (project_record.name))
-
+        project = op.loadobj(uploaded_file)
+        project.name = project_name
+        project.uid = op.uuid()
+        for parset in project.parsets.values():
+            parset.uid = op.uuid()
+        for result in project.results.values():
+            result.uid = op.uuid()
         project_record.restore(project)
-        db.session.add(project_record)
-        db.session.flush()
-
-        if result is not None:
-            result_record = save_result(str(project_record.id), result)
-            db.session.add(result_record)
+        # restore will set project.uid to project_record.id
+        assert project_record.id == project.uid
 
         db.session.commit()
+
+        print "> Upload project end"
 
         response = {
             'file': source_filename,
