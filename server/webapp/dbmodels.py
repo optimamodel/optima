@@ -159,7 +159,7 @@ class ProjectDb(db.Model):
         # TODO: make it possible to uncomment the two lines of code below :)
         # if self.blob and len(self.blob):
         #     project_entry = op.loads(self.blob)
-        print ">>> Hydrate project '%s'" % self.name
+        print ">> Hydrate project '%s'" % self.name
         project = op.Project()
         project.uid = self.id
         project.name = self.name
@@ -169,6 +169,7 @@ class ProjectDb(db.Model):
         project.modified = self.updated
         if self.data:
             project.data = op.loads(self.data)
+            # add populations here
         if self.settings:
             project.settings = op.loads(self.settings)
         if self.parsets:
@@ -187,27 +188,27 @@ class ProjectDb(db.Model):
                 if scenario_record.active:
                     scenario = scenario_record.hydrate()
                     project.addscen(scenario.name, scenario)
-        # if self.optimizations:
-        #     for optimization_record in self.optimizations:
-        #         print ">>>> Hydrate optimization '%s'" % optimization_record.name
-        #         parset_name = None
-        #         progset_name = None
-        #         if optimization_record.parset_id:
-        #             parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
-        #             if parset_name:
-        #                 parset_name = parset_name[0]
-        #         if optimization_record.progset_id:
-        #             progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
-        #             if progset_name:
-        #                 progset_name = progset_name[0]
-        #         optim = op.Optim(
-        #             project,
-        #             name=optimization_record.name,
-        #             objectives=optimization_record.objectives,
-        #             constraints=optimization_record.constraints,
-        #             parsetname=parset_name,
-        #             progsetname=progset_name)
-        #         project.addoptim(optim)
+        if self.optimizations:
+            for optimization_record in self.optimizations:
+                print ">>> Hydrate optimization '%s'" % optimization_record.name
+                parset_name = None
+                progset_name = None
+                if optimization_record.parset_id:
+                    parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
+                    if parset_name:
+                        parset_name = parset_name[0]
+                if optimization_record.progset_id:
+                    progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
+                    if progset_name:
+                        progset_name = progset_name[0]
+                optim = op.Optim(
+                    project,
+                    name=optimization_record.name,
+                    objectives=optimization_record.objectives,
+                    constraints=optimization_record.constraints,
+                    parsetname=parset_name,
+                    progsetname=progset_name)
+                project.addoptim(optim)
         # if self.results:
         #     for result_entry in self.results:
         #         result = result_entry.hydrate()
@@ -216,7 +217,7 @@ class ProjectDb(db.Model):
         #             for parset in project.parsets.values():
         #                 if parset.uid == result_entry.parset_id:
         #                     parset.resultsref = result.uid
-        print ">>> Hydrate end"
+        print ">> End hydrate project"
         return project
 
     def as_file(self, loaddir, filename=None):
@@ -228,6 +229,8 @@ class ProjectDb(db.Model):
         from datetime import datetime
         import dateutil
         import pytz
+
+        print ">> Restore project"
 
         is_same_project = str(project.uid) == str(self.id)
         str_project_id = str(self.id)
@@ -262,7 +265,7 @@ class ProjectDb(db.Model):
             self.datastart = int(project.data['years'][0])
             self.dataend = int(project.data['years'][-1])
 
-            print(">>>> Gather populations")
+            print(">>> Gather populations")
             self.populations = []
             project_pops = normalize_obj(project.data['pops'])
             # pprint(project_pops)
@@ -288,7 +291,7 @@ class ProjectDb(db.Model):
             for name, parset in project.parsets.iteritems():
                 if not is_same_project:
                     parset.uid = op.uuid()  # so that we don't get same parset in two different projects
-                print ">>>>> Restore parset '%s'" % name
+                print ">>> Restore parset '%s'" % name
                 record = update_or_create_parset_record(self.id, name, parset)
                 parset_id_by_name[name] = str(record.id)
             db.session.flush()
@@ -349,6 +352,7 @@ class ProjectDb(db.Model):
             from server.webapp.dataio import save_optimization_summaries
             optimization_summaries = []
             for name, optim in project.optims.items():
+                print ">>> Restore optimization '%s'" % name
                 optimization_summary = {
                     'parset_id': parset_id_by_name[optim.parsetname],
                     'progset_id': progset_id_by_name[optim.progsetname],
@@ -360,7 +364,6 @@ class ProjectDb(db.Model):
                 }
                 optimization_summary_by_result_name[optim.resultsref] = optimization_summary
                 optimization_summaries.append(optimization_summary)
-                print ">>>> Restore optimization '%s'" % name
             save_optimization_summaries(self.id, optimization_summaries)
 
         parset_name_by_id = {v: k for k, v in parset_id_by_name.items()}
