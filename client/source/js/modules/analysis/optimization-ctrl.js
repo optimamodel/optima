@@ -218,6 +218,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     var initPollOptimizations = function() {
+      if (_.isUndefined($scope.state.activeOptimization.id)) {
+        return;
+      }
       $http.get(
         '/api/project/' + $scope.state.activeProject.id
         + '/optimizations/' + $scope.state.activeOptimization.id
