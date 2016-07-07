@@ -265,9 +265,6 @@ class ParsetCalibration(Resource):
             parset = load_parset(project_id, parset_id)
             assert str(parset.uid) == str(parset_id)
             parameters = get_parameters_from_parset(parset)
-            if which and 'improvement' not in which:
-                which.insert(0, 'improvement')
-
         else:
             print '> Uploaded updated parameters for parset', parset_id
             project = load_project(project_id, raise_exception=True)
