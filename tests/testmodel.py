@@ -89,7 +89,7 @@ if 'treatment' in tests:
     
     P.copyparset('default', 'treatment')
     treatpar = P.parsets['treatment'].pars[0]['numtx']
-    treatpar.y['tot'][treatpar.t['tot']>=2010] *= 3
+    treatpar.y['total'][treatpar.t['total']>=2010] *= 3
     results2 = P.runsim('treatment')
     
     if doplot:

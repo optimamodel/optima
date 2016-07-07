@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2016feb04 by cliffk
+Version: 2016jul06 by cliffk
 """
 
 from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
@@ -14,13 +14,13 @@ from numbers import Number
 
 class Result(object):
     ''' Class to hold overall and by-population results '''
-    def __init__(self, name=None, isnumber=True, pops=None, tot=None, datapops=None, datatot=None):
+    def __init__(self, name=None, isnumber=True, pops=None, total=None, datapops=None, datatotal=None):
         self.name = name # Name of this parameter
         self.isnumber = isnumber # Whether or not the result is a number (instead of a percentage)
         self.pops = pops # The model result by population, if available
-        self.tot = tot # The model result total, if available
+        self.total = total # The model result total, if available
         self.datapops = datapops # The input data by population, if available
-        self.datatot = datatot # The input data total, if available
+        self.datatotal = datatotal # The input data total, if available
     
     def __repr__(self):
         ''' Print out useful information when called '''
@@ -67,8 +67,8 @@ class Resultset(object):
         self.parset = dcp(parset) # Store parameters
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
-        if self.parset: self.parset.project  = project # Replace copy of project with reference to project
-        if self.progset: self.progset.project = project # Replace copy of project with reference to project
+        if self.parset is not None:  self.parset.project  = project # Replace copy of project with reference to project
+        if self.progset is not None: self.progset.project = project # Replace copy of project with reference to project
         self.budget = budget if budget is not None else odict() # Store budget
         self.coverage = coverage if coverage is not None else odict()  # Store coverage
         self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
@@ -76,15 +76,15 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
-        self.main['force']      = Result('Force-of-infection (%/year)', isnumber=False)
-        self.main['numinci']    = Result('Number of new infections')
-        self.main['nummtct']    = Result('Number of HIV+ births')
-        self.main['numnewdiag'] = Result('Number of new diagnoses')
-        self.main['numdeath']   = Result('Number of HIV-related deaths')
         self.main['numplhiv']   = Result('Number of PLHIV')
+        self.main['numinci']    = Result('Number of new infections')
+        self.main['numdeath']   = Result('Number of HIV-related deaths')
         self.main['numdiag']    = Result('Number of diagnosed PLHIV')
         self.main['numtreat']   = Result('Number of PLHIV on treatment')
+        self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
+        self.main['force']      = Result('Incidence (per 100 p.y.)', isnumber=False)
+        self.main['numnewdiag'] = Result('Number of new diagnoses')
+        self.main['nummtct']    = Result('Number of HIV+ births')
         self.main['popsize']    = Result('Population size')
         if self.settings.usecascade:
             self.main['numincare']   = Result('Number of PLHIV in care')
@@ -127,16 +127,16 @@ class Resultset(object):
             
             # It's a number, can just sum the arrays
             if res1.isnumber:
-                for attr in ['pops', 'tot']:
+                for attr in ['pops', 'total']:
                     this = getattr(res1, attr) + getattr(res2, attr)
                     setattr(R1.main[key], attr, this)
             
             # It's a percentage, average by population size
             else: 
-                R1.main[key].tot  = 0*res1.tot  # Reset
+                R1.main[key].total  = 0*res1.total  # Reset
                 R1.main[key].pops = 0*res1.pops # Reset
-                for t in range(shape(res1.tot)[-1]):
-                    R1.main[key].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] + res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
+                for t in range(shape(res1.total)[-1]):
+                    R1.main[key].total[:,t] = (res1.total[:,t]*popsize1.total[0,t] + res2.total[:,t]*popsize2.total[0,t]) / (popsize1.total[0,t] + popsize2.total[0,t])
                     for p in range(len(R1.popkeys)):
                         R1.main[key].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] + res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])
         return R1
@@ -190,71 +190,71 @@ class Resultset(object):
         data = self.data
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['prev'].total = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
-            self.main['prev'].datatot = processdata(data['optprev'])
+            self.main['prev'].datatotal = processdata(data['optprev'])
         
         self.main['force'].pops = quantile(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['force'].tot = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['force'].total = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
-        self.main['numinci'].tot = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numinci'].datatot = processdata(data['optnuminfect'])
+        self.main['numinci'].total = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numinci'].datatotal = processdata(data['optnuminfect'])
         
         self.main['nummtct'].pops = quantile(allmtct[:,:,indices], quantiles=quantiles)
-        self.main['nummtct'].tot = quantile(allmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
+        self.main['nummtct'].total = quantile(allmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
 
         self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
-        self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
+        self.main['numnewdiag'].total = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numnewdiag'].datatotal = processdata(data['optnumdiag'])
         
         self.main['numdeath'].pops = quantile(alldeaths[:,:,indices], quantiles=quantiles)
-        self.main['numdeath'].tot = quantile(alldeaths[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numdeath'].datatot = processdata(data['optdeath'])
+        self.main['numdeath'].total = quantile(alldeaths[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numdeath'].datatotal = processdata(data['optdeath'])
         
         self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+        self.main['numplhiv'].total = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        if data is not None: self.main['numplhiv'].datatotal = processdata(data['optplhiv'])
         
         self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numdiag'].total = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         
         self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
+        self.main['numtreat'].total = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numtreat'].datatotal = processdata(data['numtx'])
 
         self.main['popsize'].pops = quantile(allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) 
-        self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
+        self.main['popsize'].total = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
         
         if self.settings.usecascade:
             self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+            self.main['numincare'].total = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
             self.main['numsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.main['numsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+            self.main['numsuppressed'].total = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
 
         
 
 # WARNING, need to implement
 #        disutils = [D[self.pars['const']['disutil'][key] for key in D['G['healthstates']]
 #        tmpdalypops = allpeople[:,concatenate([D['G['tx1'], D['G['tx2']]),:,:].sum(axis=1) * D['P['const['disutil['tx']
-#        tmpdalytot = allpeople[:,concatenate([D['G['tx1'], D['G['tx2']]),:,:].sum(axis=(1,2)) * D['P['const['disutil['tx']
+#        tmpdalytotal = allpeople[:,concatenate([D['G['tx1'], D['G['tx2']]),:,:].sum(axis=(1,2)) * D['P['const['disutil['tx']
 #        for h in xrange(len(disutils)): # Loop over health states
 #            healthstates = array([D['G['undx'][h], D['G['dx'][h], D['G['fail'][h]])
 #            tmpdalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-#            tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+#            tmpdalytotal += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
 #        self.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
-#        self.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
+#        self.daly.total = quantile(tmpdalytotal, quantiles=quantiles)
         
         return None # make()
         
         
-    def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, verbose=2):
+    def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, writetofile=True, verbose=2):
         ''' Method for exporting results to a CSV file '''
         if filestem is None:  # Doesn't include extension, hence filestem
-            if self.name is not None: filestem = self.name
+            if self.name is not None: filestem = self.project.name+'-'+self.name
             else: filestem = str(self.uid)
         filename = filestem + '.csv'
         npts = len(self.tvec)
@@ -262,12 +262,12 @@ class Resultset(object):
         output = sep.join(['Indicator','Year:'] + ['%i'%t for t in self.tvec]) # Create header and years
         for key in keys:
             if bypop: output += '\n' # Add a line break between different indicators
-            if bypop: popkeys = ['tot']+self.popkeys # include total even for bypop -- WARNING, don't try to change this!
-            else:     popkeys = ['tot']
+            if bypop: popkeys = ['total']+self.popkeys # include total even for bypop -- WARNING, don't try to change this!
+            else:     popkeys = ['total']
             for pk,popkey in enumerate(popkeys):
                 output += '\n'
-                if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
-                else:                       data = self.main[key].tot[ind][:]
+                if bypop and popkey!='total': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'total' is always the first entry
+                else:                       data = self.main[key].total[ind][:]
                 output += key+sep+popkey+sep
                 for t in range(npts):
                     if self.main[key].isnumber: output += ('%i'+sep) % data[t]
@@ -285,9 +285,13 @@ class Resultset(object):
             output += sep.join(self.coverage[ind].keys()) + '\n'
             output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
             
-        with open(filename, 'w') as f: f.write(output)
-        printv('Results exported to "%s"' % filename, 2, verbose)
-        return None
+        if writetofile: 
+            with open(filename, 'w') as f: f.write(output)
+            printv('Results exported to "%s"' % filename, 2, verbose)
+            return None
+        else:
+            return output
+        
                     
             
         
@@ -324,7 +328,7 @@ class Multiresultset(Resultset):
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
         for key in self.main.keys():
-            for at in ['pops', 'tot']:
+            for at in ['pops', 'total']:
                 setattr(self.main[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
 
         for i,rset in enumerate(resultsetlist):
@@ -343,7 +347,7 @@ class Multiresultset(Resultset):
             
             # Now, the real deal: fix self.main
             for key2 in self.main.keys():
-                for at in ['pops', 'tot']:
+                for at in ['pops', 'total']:
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
@@ -369,15 +373,25 @@ class Multiresultset(Resultset):
         return output
     
     
-    def export(self, filestem=None, ind=None, **kwargs):
+    def export(self, filestem=None, ind=None, writetofile=True, verbose=2, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         if filestem is None: # Filestem rather than filename since doesn't include extension
-            if self.name is not None: filestem = self.name
+            if self.name is not None: filestem = self.project.name+'-'+self.name
             else: filestem = str(self.uid)
+        output = ''
         for k,key in enumerate(self.keys):
             thisfilestem = filestem+'-'+key
-            Resultset.export(self, filestem=thisfilestem, ind=k, **kwargs)
-        return None
+            output += '%s\n\n' % key
+            output += Resultset.export(self, filestem=thisfilestem, ind=k, writetofile=False, **kwargs)
+            output += '\n'*5
+        
+        if writetofile: 
+            filename = filestem+'.csv'
+            with open(filename, 'w') as f: f.write(output)
+            printv('Results exported to "%s"' % filename, 2, verbose)
+            return None
+        else:
+            return output
 
 
 

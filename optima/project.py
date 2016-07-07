@@ -104,7 +104,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True, **kwargs):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
@@ -116,6 +116,7 @@ class Project(object):
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True, **kwargs)
+        if self.name is 'default': self.name = os.path.basename(filename).rstrip('.xlsx') # If no project filename is given, reset it to match the uploaded spreadsheet
         return None
 
 
