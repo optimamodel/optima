@@ -67,8 +67,8 @@ class Resultset(object):
         self.parset = dcp(parset) # Store parameters
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
-        self.parset.project  = project # Replace copy of project with reference to project
-        self.progset.project = project # Replace copy of project with reference to project
+        if self.parset: self.parset.project  = project # Replace copy of project with reference to project
+        if self.progset: self.progset.project = project # Replace copy of project with reference to project
         self.budget = budget if budget is not None else odict() # Store budget
         self.coverage = coverage if coverage is not None else odict()  # Store coverage
         self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
