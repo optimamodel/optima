@@ -353,12 +353,6 @@ def update_or_create_result_record(
     return result_record
 
 
-def save_result(project_id, result):
-    record = update_or_create_result_record(project_id, result)
-    db.session.add(record)
-    db.session.commit()
-
-
 def load_project_program_summaries(project_id):
     return parse_default_program_summaries(load_project(project_id, raise_exception=True))
 
@@ -517,8 +511,25 @@ def make_scenarios_graphs(project_id):
     project = load_project(project_id)
     project.runscenarios()
     result = project.results[-1]
-    save_result(project_id, result)
+    db.session\
+        .query(ResultsDb)\
+        .filter_by(project_id=project_id, calculation_type="scenarios")\
+        .delete()
+    record = update_or_create_result_record(
+        project_id, result, 'default', 'scenarios')
+    db.session.add(record)
+    db.session.commit()
     return make_mpld3_graph_dict(result)
+
+
+def load_scenarios_graphs(project_id, which):
+    result_record = db.session.query(ResultsDb).filter_by(
+        project_id=project_id, calculation_type='scenarios').first()
+    if result_record is None:
+        return {}
+    else:
+        result = result_record.hydrate()
+        return make_mpld3_graph_dict(result, which)
 
 
 ############################################
