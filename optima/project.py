@@ -45,7 +45,7 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', newway=0, spreadsheet=None, dorun=True, verbose=2):
+    def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2):
         ''' Initialize the project '''
 
         ## Define the structure sets
@@ -69,7 +69,6 @@ class Project(object):
         self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
-        self.newway = newway # File path, only present if self.save() is used
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -105,7 +104,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, newway=0, **kwargs):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
@@ -116,7 +115,7 @@ class Project(object):
         self.makeparset(name=name, overwrite=overwrite)
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
-        if dorun: self.runsim(name, addresult=True, newway=0, **kwargs)
+        if dorun: self.runsim(name, addresult=True, **kwargs)
         if self.name is 'default': self.name = os.path.basename(filename).rstrip('.xlsx') # If no project filename is given, reset it to match the uploaded spreadsheet
         return None
 
@@ -340,7 +339,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, newway=0, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
         ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
         
         WARNING, do we need this? What's it for? Why not use runmodel()?
@@ -362,17 +361,17 @@ class Project(object):
         rawlist = []
         for ind in range(len(simparslist)):
             if debug: # Should this be die?
-                raw = model(simparslist[ind], self.settings, die=die, newway=newway, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             else:
                 try:
-                    raw = model(simparslist[ind], self.settings, die=die, newway=newway, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
                     if not (raw['people']>=0).all(): # Check for negative people
                         printv('Negative people found with runsim(); rerunning with a smaller timestep...')
                         self.settings.dt /= 4
-                        raw = model(simparslist[ind], self.settings, die=die, newway=newway, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
                 except:
                     printv('Running model failed; running again with debugging...', 1, verbose)
-                    raw = model(simparslist[ind], self.settings, die=die, newway=newway, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
