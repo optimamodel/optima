@@ -7,21 +7,21 @@
           domain: staging-new.optimamodel.com,
           port: 9000,
           repo: "github.com/optimamodel/optima.git",
-          branch: develop-without-graph-fixes
+          branch: graph_2x_and_fit_better_css
         },
         {
           name: sandbox,
           domain: sandbox.optimamodel.com,
           port: 9001,
           repo: "github.com/optimamodel/optima.git",
-          branch: develop
+          branch: stable_calc
         },
         {
           name: cdc,
           domain: cdc.optimamodel.com,
           port: 9002,
           repo: "github.com/optimamodel/optima.git",
-          branch: develop
+          branch: cdc_demo
         }
       ]
     - user: optima
