@@ -12,9 +12,9 @@ from flask_restful_swagger import swagger
 import optima as op
 from server.webapp.dataio import (
     load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_result,
-    load_project, load_result_record, load_parset_record, load_parset_list, get_parset_from_project)
+    load_project, load_parset, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
+from server.webapp.dbmodels import ResultsDb
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
 from server.webapp.resources.common import report_exception
@@ -44,10 +44,12 @@ class Parsets(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Download all parsets for project')
-    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
-        return load_parset_list(project_id)
+        project_entry = load_project_record(project_id)
+        project = project_entry.load()
+
+        return {"parsets": load_parset_list(project)}
 
     @swagger.operation(description='Create parset or copy existing parset')
     def post(self, project_id):
@@ -57,8 +59,8 @@ class Parsets(Resource):
         name = args['name']
         parset_id = args.get('parset_id')
 
-        project_record = load_project_record(project_id)
-        project = project_record.hydrate()
+        project_entry = load_project_record(project_id)
+        project = project_entry.load()
 
         if name in project.parsets:
             raise ParsetAlreadyExists(project_id, name)
@@ -66,31 +68,22 @@ class Parsets(Resource):
         if not parset_id:
             # CREATE parset with default settings
             project.makeparset(name, overwrite=False)
-            result = project.runsim(name)
-            project_record.restore(project)
-            db.session.add(project_record)
-            result_record = save_result(project_id, result, name)
+            new_result = project.runsim(name)
+            project_entry.save_obj(project)
+            db.session.add(project_entry)
+
+            result_record = save_result(project, new_result, name)
             db.session.add(result_record)
         else:
-            # COPY parset of parset_id to name
-            original_parsets = [item for item in project_record.parsets if item.id == parset_id]
-            if not original_parsets:
-                raise ParsetDoesNotExist(parset_id, project_id=project_id)
-            original_parset = original_parsets[0]
+            original_parset = get_parset_from_project(project, parset_id)
             parset_name = original_parset.name
             project.copyparset(orig=parset_name, new=name)
-            project_record.restore(project)
-            db.session.add(project_record)
+            project_entry.save_obj(project)
+            db.session.add(project_entry)
 
         db.session.commit()
 
-        rv = []
-        for item in project_record.parsets:
-            rv_item = item.hydrate().__dict__
-            rv_item['id'] = item.id
-            rv.append(rv_item)
-
-        return rv
+        return load_parset_list(project)
 
 
 rename_parser = RequestParser()
@@ -114,45 +107,35 @@ class ParsetsDetail(Resource):
 
         current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
         project_entry = load_project_record(project_id, raise_exception=True)
+        project = project_entry.load()
 
-        parset = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id, id=parset_id).first()
-        if parset is None:
-            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-
-        # TODO: also delete the corresponding calibration results
-        db.session.query(ResultsDb).filter_by(
-            project_id=project_id, id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
-        db.session.query(ScenariosDb).filter_by(project_id=project_id,
-            parset_id=parset_id).delete()
-        db.session.query(OptimizationsDb).filter_by(project_id=project_id,
-            parset_id=parset_id).delete()
-        db.session.query(ParsetsDb).filter_by(project_id=project_id, id=parset_id).delete()
-        db.session.commit()
+        parset = load_parset(project, parset_id)
+        project.parsets.pop(parset.name)
+        project_entry.save_obj(project)
 
         return '', 204
 
     @swagger.operation(description='Rename parset with parset_id')
     @report_exception
-    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def put(self, project_id, parset_id):
         """
         For consistency, let's always return the updated parsets for operations on parsets
         (so that FE doesn't need to perform another GET call)
         """
-
         current_app.logger.debug("PUT /api/project/{}/parsets/{}".format(project_id, parset_id))
         args = rename_parser.parse_args()
         name = args['name']
 
         project_record = load_project_record(project_id, raise_exception=True)
-        parset_records = [record for record in project_record.parsets if record.id == parset_id]
-        if not parset_records:
-            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-        parset_record = parset_records[0]
-        parset_record.name = name
-        db.session.add(parset_record)
-        db.session.commit()
-        return [record.hydrate() for record in project_record.parsets]
+        project = project_record.load()
+
+        parset = load_parset(project, parset_id)
+        project.parsets.rename(parset.name, name)
+        parset.name = name
+
+        project_record.save_obj(project)
+
+        return load_parset_list(project)
 
 
 
@@ -203,20 +186,20 @@ class ParsetsCalibration(Resource):
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
         print "> Calculation type: %s, autofit: %s, which: %s" % (calculation_type, autofit, which)
 
-        parset_record = load_parset_record(project_id, parset_id)
-        parset = parset_record.hydrate()
-        result_record = load_result_record(project_id, parset_id, calculation_type)
-        if result_record is None:
+        project = load_project(project_id)
+        parset = load_parset(project, parset_id)
+        result = load_result(project.uid, parset.uid, calculation_type)
+
+        if result is None:
             print "> Runsim for new calibration results and store"
             project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
-            result_record = save_result(project_id, result, parset.name, calculation_type)
+            result_record = save_result(project, result, parset.name, calculation_type)
             db.session.add(result_record)
             db.session.flush()
             db.session.commit()
         else:
-            result = result_record.hydrate()
             print "> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
 
         print "> Generating graphs"
@@ -227,7 +210,7 @@ class ParsetsCalibration(Resource):
                 "parset_id": parset_id,
                 "parameters": get_parset_parameters(parset),
                 "graphs": graphs,
-                "resultId": result_record.id,
+                "resultId": result.uid,
             }
         }
 
@@ -244,37 +227,38 @@ class ParsetsCalibration(Resource):
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
         print "> Calculation type: %s, autofit: %s, which: %s" % (calculation_type, autofit, which)
 
-        parset_record = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset_record is None or parset_record.project_id!=project_id:
-            raise ParsetDoesNotExist(id=parset_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
         # update parset with uploaded parameters
-        parset = parset_record.hydrate()
+        parset = get_parset_from_project(project, parset_id)
         put_parameters_in_parset(parameters, parset)
 
         # recalculate result for parset
-        project_record = load_project_record(parset_record.project_id, raise_exception=True)
-        project = project_record.hydrate()
         simparslist = parset.interp()
         result = project.runsim(simpars=simparslist)
 
         if doSave:  # save the updated results
             print "> Saving results", result.uid
-            parset_record.pars = op.saves(parset.pars)
-            parset_record.updated = datetime.now(dateutil.tz.tzutc())
-            db.session.add(parset_record)
-            result_record = save_result(project_id, result, parset.name, calculation_type)
+            result_record = save_result(project, result, parset.name, calculation_type)
+            db.session.add(result_record)
+            db.session.commit()
         elif autofit:
-            result_record = load_result_record(project_id, parset_id, calculation_type)
-            result = result_record.hydrate()
+            result = load_result(project_id, parset_id, calculation_type)
             print "> Loading autofit results", result.uid
             if 'improvement' not in which:
                 which.insert(0, 'improvement')
         else:
             print "> Saving temporary calibration graphs", result.uid
-            result_record = save_result(project_id, result, parset.name, "temp-" + calculation_type)
-        db.session.add(result_record)
-        db.session.commit()
+            result_record = save_result(project, result, parset.name, "temp-" + calculation_type)
+
+            db.session.add(result_record)
+            db.session.commit()
+
+        project.parsets[parset.name] = parset
+
+        project_record.save_obj(project)
 
         print "> Generating graphs"
         graphs = make_mpld3_graph_dict(result, which)['graphs']
@@ -349,13 +333,16 @@ class ParsetsAutomaticCalibration(Resource):
     def post(self, project_id, parset_id):
         from server.webapp.tasks import run_autofit, start_or_report_calculation
         args = manual_calibration_parser.parse_args()
-        parset_name = load_parset_record(project_id, parset_id).name
+
+        project = load_project(project_id)
+        parset = load_parset(project, parset_id)
+
         calc_status = start_or_report_calculation(project_id, parset_id, 'autofit')
         if not calc_status['can_start']:
             calc_status['status'] = 'running'
             return calc_status, 208
         else:
-            run_autofit.delay(project_id, parset_name, args['maxtime'])
+            run_autofit.delay(project_id, parset.name, args['maxtime'])
             calc_status['status'] = 'started'
             calc_status['maxtime'] = args['maxtime']
             return calc_status, 201
@@ -388,17 +375,22 @@ class ParsetsData(Resource):
     )
     @report_exception
     def get(self, project_id, parset_id):
+
         current_app.logger.debug("GET /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
-        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
-        if parset_entry is None:
-            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        parset = load_parset(project, parset_id)
+        parset.project = None
 
         # return result as a file
         loaddir = upload_dir_user(TEMPLATEDIR)
         if not loaddir:
             loaddir = TEMPLATEDIR
 
-        filename = parset_entry.as_file(loaddir)
+        filename = project.uid.hex + "-" + parset.uid.hex + ".prst"
+        op.saveobj(os.path.join(loaddir, filename), parset)
 
         response = helpers.send_from_directory(loaddir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
@@ -412,7 +404,6 @@ class ParsetsData(Resource):
         if parset does not exist, returns an error"""
     )
     @report_exception
-    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def post(self, project_id, parset_id):
         # TODO replace this with app.config
         current_app.logger.debug("POST /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
@@ -422,28 +413,25 @@ class ParsetsData(Resource):
         uploaded_file = args['file']
 
         project_entry = load_project_record(project_id, raise_exception=True)
+        project = project_entry.load()
 
-        parset_entry = project_entry.find_parset(parset_id)
-        parset_instance = op.loadobj(uploaded_file)
+        parset = op.loadobj(uploaded_file)
+        parset.project = project
+        project.parsets[parset.name] = parset
 
-        parset_entry.restore(parset_instance)
-        db.session.add(parset_entry)
-        db.session.flush()
 
-        # recalculate data (TODO: verify with Robyn if it's needed )
-        project_instance = project_entry.hydrate()
-        result = project_instance.runsim(parset_entry.name)
+        # recalculate data (TODO: verify with Robyn if it's needed )]
+        result = project.runsim(parset.name)
         current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
 
-        db.session.add(project_entry)  # todo: do we need to log that project was updated?
-        db.session.flush()
+        project_entry.save_obj(project)
 
-        result_record = save_result(project_entry.id, result, parset_entry.name)
+        result_record = save_result(project, result, parset.name)
         db.session.add(result_record)
 
         db.session.commit()
 
-        return [item.hydrate() for item in project_entry.parsets]
+        return load_parset_list(project)
 
 
 
@@ -475,4 +463,3 @@ class ExportResultsDataAsCsv(Resource):
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
 
         return response
-

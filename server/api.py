@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import logging
+import redis
 
 from flask import Flask, redirect, Blueprint, g, session, make_response, abort
 
@@ -21,6 +22,7 @@ if os.environ.get('OPTIMA_TEST_CFG'):
 
 import server.webapp.dbconn
 server.webapp.dbconn.db = SQLAlchemy(app)
+server.webapp.dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
 
 from server.webapp.dbmodels import UserDb
 
@@ -71,13 +73,6 @@ from server.webapp.resources.progsets import ProgramCostcovGraph
 from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs
 from server.webapp.resources.optimizations import (
     Optimizations, OptimizationCalculation, OptimizationGraph)
-
-# clear dangling tasks from the last session
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
-db.session.query(WorkLogDb).delete()
-db.session.query(WorkingProjectDb).delete()
-db.session.commit()
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 
@@ -164,8 +159,17 @@ def root():
 
 
 def init_db():
+    print("Loading DB...")
+
+    server.webapp.dbconn.db.engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
     server.webapp.dbconn.db.create_all()
 
+    # clear dangling tasks from the last session
+    from server.webapp.dbconn import db
+    from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
+    db.session.query(WorkLogDb).delete()
+    db.session.query(WorkingProjectDb).delete()
+    db.session.commit()
 
 def init_logger():
     stream_handler = logging.StreamHandler(sys.stdout)
@@ -176,7 +180,6 @@ def init_logger():
     ))
     app.logger.addHandler(stream_handler)
     app.logger.setLevel(logging.DEBUG)
-
 
 if __name__ == '__main__':
     init_logger()

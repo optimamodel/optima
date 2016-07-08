@@ -11,12 +11,14 @@ from flask_restful import Resource, marshal_with, marshal, fields
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
-    get_progset_summaries, save_progset_summaries,
-    load_project_record, load_progset_record, load_program, load_parset,
-    update_or_create_program_record, get_target_popsizes, load_parameters_from_progset_parset,
+    get_progset_summaries, save_progset_summaries, load_project,
+    load_project_record, load_program, load_parset, get_progset_summary,
+    get_target_popsizes, load_parameters_from_progset_parset,
+    get_progset_from_project, get_progset_summary, get_parset_from_project,
+    parse_outcomes_from_progset, get_program_from_progset, save_program_summary,
+    put_outcomes_into_progset,
     check_project_exists)
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 from server.webapp.exceptions import (ProgsetDoesNotExist)
 from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
 from server.webapp.utils import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
@@ -40,20 +42,28 @@ class Progsets(Resource):
 
     @swagger.operation(description='Download progsets')
     def get(self, project_id):
-        
+
         check_project_exists(project_id)
-        return get_progset_summaries(project_id)
-        
+        project = load_project(project_id)
+
+        return get_progset_summaries(project)
+
 
     @swagger.operation(description='Save progset')
     def post(self, project_id):
 
         check_project_exists(project_id)
-         
+
         data = normalize_obj(request.get_json(force=True))
         current_app.logger.debug("DATA progsets for project_id %s is :/n %s" % (project_id, pprint(data)))
-        save_progset_summaries(project_id,data)
-        return get_progset_summaries(project_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        save_progset_summaries(project, data)
+        project_record.save_obj(project)
+
+        return get_progset_summaries(project)
 
 
 class Progset(Resource):
@@ -69,7 +79,6 @@ class Progset(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Download progset with the given id.')
-    @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = load_progset_record(project_id, progset_id)
@@ -77,34 +86,29 @@ class Progset(Resource):
         return progset_entry
 
     @swagger.operation(description='Update progset with the given id.')
-    @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        args = progset_parser.parse_args()
+        data = normalize_obj(request.get_json(force=True))
 
-        progset_record = load_progset_record(project_id, progset_id)
-        progset_record.name = args['name']
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
-        program_summaries = normalize_obj(args.get('programs', []))
-        progset_record.update_from_program_summaries(program_summaries, progset_id)
-        progset_record.get_extra_data()
+        save_progset_summaries(project, data, progset_id=progset_id)
+        project_record.save_obj(project)
 
-        db.session.commit()
-        return progset_record
+        return get_progset_summary(project.progsets[data["name"]])
 
     @swagger.operation(description='Delete progset with the given id.')
     def delete(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
 
-        if progset_entry.project_id != project_id:
-            raise ProgsetDoesNotExist(id=progset_id)
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
-        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
-        db.session.delete(progset_entry)
-        db.session.commit()
+        progset = get_progset_from_project(project, progset_id)
+        project.progsets.pop(progset.name)
+
+        project_record.save_obj(project)
         return '', 204
 
 
@@ -184,7 +188,12 @@ class ProgsetParameters(Resource):
     """
     @swagger.operation(description='Get parameters sets for the selected progset')
     def get(self, project_id, progset_id, parset_id):
-        return load_parameters_from_progset_parset(project_id, progset_id, parset_id)
+
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+        parset = get_parset_from_project(project, parset_id)
+
+        return load_parameters_from_progset_parset(project, progset, parset)
 
 
 
@@ -204,24 +213,39 @@ class ProgsetEffects(Resource):
 
     @swagger.operation(summary='Get List of existing Progset effects for the selected progset')
     def get(self, project_id, progset_id):
-        from server.webapp.dataio import load_progset_record
-        progset_record = load_progset_record(project_id, progset_id)
-        return { 'effects': progset_record.effects }
+
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+
+        outcomes = parse_outcomes_from_progset(progset)
+
+        # Bosco needs to fix this...
+
+        return { 'effects': [{
+            "parset": parset.uid,
+            "parameters": outcomes,
+
+        } for parset in project.parsets.values()]}
 
     @swagger.operation(summary='Saves a list of outcomes')
     def put(self, project_id, progset_id):
-        effects = request.get_json(force=True)
-        from server.webapp.dataio import load_progset_record
-        progset_record = load_progset_record(project_id, progset_id)
-        db.session.add(progset_record)
-        db.session.flush()
-        effects = normalize_obj(effects)
-        pprint(effects)
-        progset_record.effects = effects
-        db.session.commit()
-        progset_record = load_progset_record(project_id, progset_id)
-        return { 'effects': progset_record.effects }
+        effects = normalize_obj(request.get_json(force=True))
 
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+        progset = get_progset_from_project(project, progset_id)
+
+        put_outcomes_into_progset(effects[0]["parameters"], progset)
+
+        project_record.save_obj(project)
+
+        outcomes = parse_outcomes_from_progset(progset)
+
+        return { 'effects': [{
+            "parset": parset.uid,
+            "parameters": outcomes,
+
+        } for parset in project.parsets.values()]}
 
 
 query_program_parser = RequestParser()
@@ -278,12 +302,18 @@ class Program(Resource):
     def post(self, project_id, progset_id):
         args = query_program_parser.parse_args()
         program_summary = normalize_obj(args['program'])
-        program_record = update_or_create_program_record(
-            project_id, progset_id, program_summary['short'],
-            program_summary)
-        db.session.add(program_record)
-        db.session.flush()
-        db.session.commit()
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        progset = get_progset_from_project(project, progset_id)
+
+        save_program_summary(progset, program_summary)
+
+        progset.updateprogset()
+
+        project_record.save_obj(project)
+
         return 204
 
 
@@ -297,7 +327,13 @@ class ProgramPopSizes(Resource):
     method_decorators = [report_exception, login_required]
 
     def get(self, project_id, progset_id, program_id, parset_id):
-        payload = get_target_popsizes(project_id, parset_id, progset_id, program_id)
+
+        project = load_project(project_id)
+        parset = get_parset_from_project(project, parset_id)
+        progset = get_progset_from_project(project, progset_id)
+        program = get_program_from_progset(progset, program_id)
+
+        payload = get_target_popsizes(project, parset, progset, program)
         return payload, 201
 
 
@@ -342,10 +378,12 @@ class ProgramCostcovGraph(Resource):
             if args.get(x):
                 plotoptions[x] = args[x]
 
-        program = load_program(project_id, progset_id, program_id)
-        parset = load_parset(project_id, parset_id)
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+
+        program = get_program_from_progset(progset, program_id)
+        parset = get_parset_from_project(project, parset_id)
+
         plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
         from server.webapp.plot import convert_to_mpld3
         return convert_to_mpld3(plot)
-
-

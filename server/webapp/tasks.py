@@ -1,18 +1,17 @@
-
 import datetime
 import dateutil.tz
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from server.api import app
+from server.api import app, redis
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import save_result, load_project_record, update_or_create_parset_record
+from server.webapp.dataio import save_result, load_project_record
 
 import optima as op
 from celery import Celery
-
+import optima as op
 
 db = SQLAlchemy(app)
 
@@ -112,8 +111,7 @@ def start_or_report_calculation(project_id, parset_id, work_type):
         db_session.add(work_log_record)
         db_session.flush()
 
-        project = project_record.hydrate()
-        project_pickled = op.saves(project)
+        project = project_record.load()
 
         result['can_start'] = True
 
@@ -121,14 +119,14 @@ def start_or_report_calculation(project_id, parset_id, work_type):
 
         if working_project_record is None:
             print("> Creating new working project")
-            db_session.add(
-                WorkingProjectDb(
-                    project_record.id,
-                    parset_id=parset_id,
-                    project=project_pickled,
-                    is_working=True,
-                    work_type=work_type,
-                    work_log_id=work_log_id))
+            wd = WorkingProjectDb(
+                project_record.id,
+                parset_id=parset_id,
+                is_working=True,
+                work_type=work_type,
+                work_log_id=work_log_id)
+            wd.save_obj(project)
+            db_session.add(wd)
             result['can_start'] = True
         else:
             print("Found working project for %s: %s %s %s" % (working_project_record.id, working_project_record.work_type, working_project_record.parset_id, working_project_record.is_working))
@@ -136,9 +134,9 @@ def start_or_report_calculation(project_id, parset_id, work_type):
             working_project_record.work_type = work_type
             working_project_record.parset_id = parset_id
             working_project_record.is_working = True
-            working_project_record.project = project_pickled
             working_project_record.work_log_id = work_log_id
             db_session.add(working_project_record)
+            working_project_record.save_obj(project)
 
     db_session.commit()
     close_db_session(db_session)
@@ -171,14 +169,6 @@ def check_calculation_status(project_id):
     return result
 
 
-def get_parset_from_project(project, parset_name):
-    parsets = project.parsets;
-    if parset_name in parsets:
-        return parsets[parset_name]
-    else:
-        return None
-
-
 @celery_instance.task()
 def run_autofit(project_id, parset_name, maxtime=60):
     import traceback
@@ -188,17 +178,17 @@ def run_autofit(project_id, parset_name, maxtime=60):
 
     db_session = init_db_session()
     working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-    project = op.loads(working_project_record.project)
+    working_project = working_project_record.load()
     close_db_session(db_session)
 
     result = None
     try:
-        project.autofit(
+        working_project.autofit(
             name=str(parset_name),
             orig=str(parset_name),
             maxtime=maxtime
         )
-        result = project.parsets[str(parset_name)].getresults()
+        result = working_project.parsets[str(parset_name)].getresults()
         print "result", result
     except Exception:
         var = traceback.format_exc()
@@ -208,7 +198,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
 
     db_session = init_db_session()
     working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-    working_project_record.project = op.saves(project)
+    working_project_record.save_obj(working_project)
     working_project_record.is_working = False
     working_project_record.work_type = None
     db_session.add(working_project_record)
@@ -220,12 +210,17 @@ def run_autofit(project_id, parset_name, maxtime=60):
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
+
         print(">> Save autofitted parset '%s'" % parset_name)
-        parset = get_parset_from_project(project, parset_name)
-        update_or_create_parset_record(
-            project_id, parset_name, parset, db_session)
+        parset = working_project.parsets[parset_name]
+
+        project_record = load_project_record(project_id, authenticate=False, db_session=db_session)
+        project = project_record.load()
+        project.parsets[parset_name] = parset
+        project_record.save_obj(project)
+
         result_record = save_result(
-            project_id, result, parset_name, 'autofit', db_session=db_session)
+            project, result, parset_name, 'autofit', db_session=db_session)
         db_session.flush()
         db_session.add(result_record)
         work_log.result_id = result_record.id
@@ -252,7 +247,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
 
     db_session = init_db_session()
     wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-    project_instance = op.loads(wp.project)
+    project_instance = wp.load()
     close_db_session(db_session)
 
     result = None
@@ -279,14 +274,15 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
 
     db_session = init_db_session()
     wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-    wp.project = op.saves(project_instance)
+    wp.save_obj(project_instance)
     work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
     work_log.status = status
     work_log.error = error_text
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
-        result_entry = save_result(project_id, result, parset_name, 'optimization', db_session=db_session)
+
+        result_entry = save_result(project_instance, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_entry)
         db_session.flush()
         work_log.result_id = result_entry.id

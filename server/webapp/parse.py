@@ -12,6 +12,8 @@ There should be no references to the database here!
 
 """
 
+import optima as op
+
 from collections import defaultdict
 from pprint import pprint
 from numpy import nan
@@ -62,8 +64,6 @@ def parse_costcovdata(costcovdata):
     if costcovdata is None:
         return None
     result = []
-    print ">> parsing costcovdata"
-    pprint(costcovdata, indent=2)
     costcovdata = normalize_obj(costcovdata)
     n_year = len(costcovdata['t'])
     for i_year in range(n_year):
@@ -97,16 +97,18 @@ def revert_costcovdata(costcov):
 def revert_ccopars(ccopars):
     result = None
     if ccopars:
-        result = {
+        result = op.odict({
             't': ccopars['t'],
             'saturation': map(tuple, ccopars['saturation']),
             'unitcost': map(tuple, ccopars['unitcost'])
-        }
+        })
     return result
 
 
-def parse_program_summary(program, active):
+def parse_program_summary(program, progset, active):
     result = {
+        'id': program.uid,
+        'progset_id': progset.uid if progset else None,
         'active': active,
         'name': program.name,
         'short': program.short,
@@ -122,7 +124,7 @@ def parse_program_summary(program, active):
 
 
 def parse_default_program_summaries(project):
-    return [parse_program_summary(p, False) for p in defaultprograms(project)]
+    return [parse_program_summary(p, None, False) for p in defaultprograms(project)]
 
 
 def get_parset_parameters(parset, ind=0):
@@ -455,6 +457,19 @@ def convert_pars_list(pars):
         })
     return result
 
+def revert_pars_list(pars):
+    result = []
+    for par in pars:
+        result.append({
+            'name': par['name'],
+            'startyear': par['startyear'],
+            'endval': par['endval'],
+            'endyear': par['endyear'],
+            'startval': par['startval'],
+            'for': par['for'][0] if len(par['for']) == 1 else par['for']
+        })
+    return result
+
 
 def convert_program_list(program_list):
     result = {}
@@ -466,5 +481,3 @@ def convert_program_list(program_list):
         vals = [v if v is not None else 0 for v in vals]
         result[key] = array(vals)
     return result
-
-

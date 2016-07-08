@@ -1,2 +1,0 @@
-ALTER TABLE programs DROP COLUMN IF EXISTS blob;
-ALTER TABLE programs ADD COLUMN ccopars JSON;

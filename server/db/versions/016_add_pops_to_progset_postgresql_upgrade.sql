@@ -1,1 +1,0 @@
-ALTER TABLE programs ADD COLUMN targetpops text[];
