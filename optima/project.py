@@ -45,7 +45,7 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2):
+    def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2, newway=1):
         ''' Initialize the project '''
 
         ## Define the structure sets
@@ -69,6 +69,7 @@ class Project(object):
         self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
+        self.newway = newway
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -361,17 +362,16 @@ class Project(object):
         rawlist = []
         for ind in range(len(simparslist)):
             if debug: # Should this be die?
-                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                raw = model(simparslist[ind], self.settings, newway=self.newway, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             else:
                 try:
-                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
                     if not (raw['people']>=0).all(): # Check for negative people
                         printv('Negative people found with runsim(); rerunning with a smaller timestep...')
                         self.settings.dt /= 4
-                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                        raw = model(simparslist[ind], self.settings, newway=self.newway, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
                 except:
                     printv('Running model failed; running again with debugging...', 1, verbose)
-                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    raw = model(simparslist[ind], self.settings,newway=self.newway,  die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?

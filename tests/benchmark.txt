@@ -53,3 +53,5 @@
 0.419 2016-Feb-10_01:23:00 d9bd2e3 reconcile-costfuncs-with-pars
 0.719 2016-Feb-26_14:53:18 c53b8b1 treatment-distribution
 0.406 2016-Feb-26_15:11:11 dda5b3f treatment-distribution
+0.586 2016-Jul-08_21:04:24 2b51e77 develop
+1.46 2016-Jul-08_21:45:33 4cdcea0 feature/primary-infection
