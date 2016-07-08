@@ -1,5 +1,7 @@
 from flask.ext.restful import marshal
 
+from server.webapp.plot import make_mpld3_graph_dict
+
 __doc__ = """
 
 dataio.py contains all the functions that fetch and saves optima objects to/from database
@@ -306,7 +308,7 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TY
     return result_record.hydrate()
 
 
-def save_result(
+def update_or_create_result_record(
         project_id, result, parset_name='default',
         calculation_type=ResultsDb.CALIBRATION_TYPE,
         db_session=None):
@@ -351,6 +353,12 @@ def save_result(
     return result_record
 
 
+def save_result(project_id, result):
+    record = update_or_create_result_record(project_id, result)
+    db.session.add(record)
+    db.session.commit()
+
+
 def load_project_program_summaries(project_id):
     return parse_default_program_summaries(load_project(project_id, raise_exception=True))
 
@@ -384,7 +392,13 @@ def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     return parse_parameters_from_progset_parset(settings, progset, parset)
 
 
-def get_parset_keys_with_y_values(project_id):
+
+############################################
+# Scenario functions
+############################################
+
+
+def get_parameters_for_scenarios(project_id):
     parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
     parsets = {str(record.id): record.hydrate() for record in parset_records}
     y_keys = {
@@ -404,7 +418,7 @@ def get_parset_keys_with_y_values(project_id):
     return y_keys
 
 
-def get_scenario_summary_from_record(scenario_record):
+def parse_scenario_summary_from_record(scenario_record):
     """
 
     Args:
@@ -446,7 +460,6 @@ def get_scenario_summary_from_record(scenario_record):
 def update_or_create_scenario_record(project_id, scenario_summary):
     scenario_id = scenario_summary.pop("id", None)
 
-    # put scenario type specific keys in blob
     blob = {}
     for blob_key in ['pars', 'budget', 'coverage', 'years']:
         value = scenario_summary.pop(blob_key, None)
@@ -464,17 +477,16 @@ def update_or_create_scenario_record(project_id, scenario_summary):
         for key, value in scenario_summary.items():
             setattr(record, key, value)
 
+    print ">>> Saving record for scenario '%s'" % record.name
     db.session.add(record)
     db.session.flush()
-    # print("Saving scenario to database")
-    # pprint(scenario_summary)
-    # pprint(get_scenario_summary_from_record(record))
+
     return record
 
 
-def get_scenario_summaries(project_id):
+def load_scenario_summaries(project_id):
     scenario_records = db.session.query(ScenariosDb).filter_by(project_id=project_id).all()
-    scenario_summaries = map(get_scenario_summary_from_record, scenario_records)
+    scenario_summaries = map(parse_scenario_summary_from_record, scenario_records)
     return normalize_obj(scenario_summaries)
 
 
@@ -499,6 +511,17 @@ def save_scenario_summaries(project_id, scenario_summaries):
         pprint(scenario_summary, indent=2)
         update_or_create_scenario_record(project_id, scenario_summary)
     db.session.commit()
+
+
+def make_scenarios_graphs(project_id):
+    project = load_project(project_id)
+    project.runscenarios()
+    result = project.results[-1]
+    save_result(project_id, result)
+    return make_mpld3_graph_dict(result)
+
+
+############################################
 
 
 def get_program_summary_from_program_record(program_record):
@@ -684,3 +707,5 @@ def get_default_optimization_summaries(project_id):
         defaults_by_progset_id[progset_id] = default
 
     return normalize_obj(defaults_by_progset_id)
+
+
