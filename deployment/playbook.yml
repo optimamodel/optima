@@ -7,14 +7,21 @@
           domain: staging-new.optimamodel.com,
           port: 9000,
           repo: "github.com/optimamodel/optima.git",
-          branch: run-with-tox
+          branch: graph_2x_and_fit_better_css
         },
         {
           name: sandbox,
           domain: sandbox.optimamodel.com,
           port: 9001,
           repo: "github.com/optimamodel/optima.git",
-          branch: run-with-tox
+          branch: stable_calc
+        },
+        {
+          name: cdc,
+          domain: cdc.optimamodel.com,
+          port: 9002,
+          repo: "github.com/optimamodel/optima.git",
+          branch: cdc_demo
         }
       ]
     - user: optima
@@ -34,6 +41,10 @@
     - {
         role: optima,
         app: "{{ apps.1 }}"
+      }
+    - {
+        role: optima,
+        app: "{{ apps.2 }}"
       }
     - {
         role: rproxy
