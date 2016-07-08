@@ -332,10 +332,15 @@ class ProgramCostcovGraph(Resource):
         args = costcov_graph_parser.parse_args()
         parset_id = args['parset_id']
 
+        print '>>>> Generating plot...'
+
         try:
             t = map(int, args['t'].split(','))
         except ValueError:
-            raise ValueError("t must be a year or a comma-separated list of years.")
+            t = None
+
+        if t is None:
+            return {}
 
         plotoptions = {}
         for x in ['caption', 'xupperlim', 'perperson']:
@@ -343,8 +348,11 @@ class ProgramCostcovGraph(Resource):
                 plotoptions[x] = args[x]
 
         program = load_program(project_id, progset_id, program_id)
+        print '>>>> Program', program
         parset = load_parset(project_id, parset_id)
+        print '>>>> Program', parset
         plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
+        print '>>>> plot', plot
         from server.webapp.plot import convert_to_mpld3
         return convert_to_mpld3(plot)
 
