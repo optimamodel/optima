@@ -348,11 +348,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     
     ## Births precalculation
     birthslist = []
-    for p1 in range(npops): # WARNING, should only loop over child populations
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    for p1 in range(npops): 
         alleligbirthrate = zeros(npts)
         for t in range(npts): # WARNING, could be made more efficient, it's just that the matrix multiplications get complicated -- npops x npts...
             alleligbirthrate[t] = sum(birthtransit[p1, :] * birth[p1, t]) # Births to diagnosed mothers eligible for PMTCT
-        for p2 in range(npops): # WARNING, should only loop over female populations
+        for p2 in range(npops):
             birthrates = birthtransit[p1, p2] * birth[p1, :] # WARNING, vector multiplication!!!! Need to create array
             if birthrates.any():
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
