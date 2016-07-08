@@ -137,7 +137,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         pops = range(npops) if scenpar['for'] > npops else [scenpar['for']]
                     elif type(scenpar['for']) in [list, type(array([]))]: #... if its a population.
                         pops = scenpar['for']
-                    elif scenpar['for']=='tot': #... if its a population.
+                    elif scenpar['for']=='total': #... if its a population.
                         pops = [scenpar['for']]
                     else:
                         errormsg = 'Unrecognized population or partnership type: %s' % scenpar['for']

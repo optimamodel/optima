@@ -236,7 +236,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
             except: 
                 errormsg = 'autofit(): Key to fit "%s" not found; valid keys are:\n%s' % (key, results.main.keys())
                 raise OptimaException(errormsg)
-            for attr in ['tot', 'pops']: # Loop over either total or by population denominators
+            for attr in ['total', 'pops']: # Loop over either total or by population denominators
                 tmpdata = getattr(this, 'data'+attr) # Get this data, e.g. results.main['prev'].datatot
                 if tmpdata is not None: # If it actually exists, proceed
                     tmpmodel = getattr(this, attr) # Get this result, e.g. results.main['prev'].tot

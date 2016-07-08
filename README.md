@@ -233,7 +233,7 @@ _Using the scripts directly (e.g. prod/Anaconda)_:
 
 Make sure you have the requirements:
 
-    pip install server/requirements.txt
+    pip install -r server/requirements.txt
 
 Then run the server in one terminal:
 

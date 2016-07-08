@@ -122,8 +122,8 @@ if 'makeprograms' in tests:
     R.covout['hivtest']['M 50+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
     R.covout['hivtest']['F 50+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
 
-    R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-    R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    R.covout['numtx']['total'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    R.covout['numpmtct']['total'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
     budget = R.getdefaultbudget()
     coverage = R.getprogcoverage(budget=budget, t=2016, parset=P.parsets['default'])

@@ -32,7 +32,13 @@ def run():
         def render(self, request):
             request.prepath = []
             request.postpath = ['api'] + request.postpath[:]
-            return self._wsgi.render(request)
+
+            r = self._wsgi.render(request)
+
+            request.responseHeaders.setRawHeaders(
+                b'Cache-Control', [b'no-cache', b'no-store', b'must-revalidate'])
+            request.responseHeaders.setRawHeaders(b'expires', [b'0'])
+            return r
 
 
     base_resource = File('client/source/')
