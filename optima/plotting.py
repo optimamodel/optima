@@ -272,9 +272,9 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             ################################################################################################################
             
             # Decide which attribute in results to pull -- doesn't map cleanly onto plot types
-            if istotal or (isstacked and ismultisim): attrtype = 'total' # Only plot total if it's a scenario and 'stacked' was requested
+            if istotal or (isstacked and ismultisim): attrtype = 'tot' # Only plot total if it's a scenario and 'stacked' was requested
             else: attrtype = 'pops'
-            if istotal or isstacked: datattrtype = 'total' # For pulling out total data
+            if istotal or isstacked: datattrtype = 'tot' # For pulling out total data
             else: datattrtype = 'pops'
             
             if ismultisim:  # e.g. scenario, no uncertainty
@@ -683,8 +683,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
         ## Do the plotting
         subplot(nsims,1,plt+1)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
-            if ismultisim: thisdata = results.main[key].total[plt] # If it's a multisim, need an extra index for the plot number
-            else:          thisdata = results.main[key].total[0] # Get the best estimate
+            if ismultisim: thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata = results.main[key].tot[0] # Get the best estimate
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
             plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10) # Colors are in reverse order
