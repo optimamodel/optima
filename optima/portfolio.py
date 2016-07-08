@@ -542,8 +542,8 @@ class GAOptim(object):
             
             
             for key in self.objectives['keys']:
-                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot[0][indices].sum()
-                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot[-1][indices].sum()
+                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].total[0][indices].sum()
+                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].total[-1][indices].sum()
                 overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
                 overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
                 

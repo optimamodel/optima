@@ -67,7 +67,7 @@ if 'standardscen' in tests:
              pars=[{'endval': 100000.,
                 'endyear': 2020,
                 'name': 'numtx',
-                'for': 'tot',
+                'for': 'total',
                 'startval': 3350.,
                 'startyear': 2015}]),
 
@@ -85,7 +85,7 @@ if 'standardscen' in tests:
              pars=[{'endval': 0.9,
                 'endyear': 2020,
                 'name': 'numpmtct',
-                'for': ['tot'],
+                'for': ['total'],
                 'startval': .44,
                 'startyear': 2015}]),
 
@@ -242,7 +242,7 @@ if '90-90-90' in tests:
               parsetname='default',
               pars=[
               {'name': 'propdx',
-              'for': ['tot'],
+              'for': ['total'],
               'startyear': 2016,
               'endyear': 2020,
               'startval': .5,
@@ -250,7 +250,7 @@ if '90-90-90' in tests:
               },
               
               {'name': 'propcare',
-              'for': ['tot'],
+              'for': ['total'],
               'startyear': 2016,
               'endyear': 2020,
               'startval': .5,
@@ -258,7 +258,7 @@ if '90-90-90' in tests:
               },
               
               {'name': 'proptx',
-              'for': ['tot'],
+              'for': ['total'],
               'startyear': 2016,
               'endyear': 2020,
               'startval': .5,
@@ -266,7 +266,7 @@ if '90-90-90' in tests:
               },
               
               {'name': 'treatvs',
-              'for': ['tot'],
+              'for': ['total'],
               'startyear': 2016,
               'endyear': 2020,
               'startval': .5,

@@ -87,7 +87,7 @@ if 'makeprograms' in tests:
     MGT = Program(short='MGT')
 
     ART = Program(short='ART',
-                  targetpars=[{'param': 'numtx', 'pop': 'tot'}],
+                  targetpars=[{'param': 'numtx', 'pop': 'total'}],
                   targetpops=pops,
                   criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
 
@@ -97,8 +97,8 @@ if 'makeprograms' in tests:
                   criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
 
     PMTCT = Program(short='PMTCT',
-                  targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
-                  targetpops=['tot'],
+                  targetpars=[{'param': 'numtx', 'pop': 'total'}, {'param': 'numpmtct', 'pop': 'total'}],
+                  targetpops=['total'],
                   category='Care and treatment',
                   name='Prevention of mother-to-child transmission',
                   criteria = {'hivstatus': 'allstates', 'pregnant': True})
@@ -336,8 +336,8 @@ if 'makeprograms' in tests:
                                                     't': 2015.0,
                                                     'SBCC':(0.45,0.55)})
                                                     
-    R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-    R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    R.covout['numtx']['total'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    R.covout['numpmtct']['total'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
     R.covout['numcirc']['MSM'].addccopar({'intercept': (0,0), 't': 2016.0})
     R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
@@ -397,7 +397,7 @@ if 'reconcilepars' in tests:
     P = op.defaults.defaultproject('best')
     ps = P.parsets[0]
     before = op.dcp(P.progsets[0])
-    P.progsets[0].reconcile(parset=ps, year=2016, uselimits=False)
+    P.progsets[0].reconcile(parset=ps, year=2016, uselimits=True)
     after = P.progsets[0]
     print('\n\nBEFORE:')
     before.compareoutcomes(parset=ps, year=2016, doprint=True)

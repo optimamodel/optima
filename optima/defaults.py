@@ -107,7 +107,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     OST = Program(short='OST',
-                  targetpars=[{'param': 'numost', 'pop': 'tot'}],
+                  targetpars=[{'param': 'numost', 'pop': 'total'}],
                   targetpops=pops,
                   category='Prevention',
                   name='Opiate substitution therapy',
@@ -147,14 +147,14 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     ART = Program(short='ART',
-                  targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
+                  targetpars=[{'param': 'numtx', 'pop': 'total'}],# for pop in pops],
                   targetpops=pops,
                   category='Care and treatment',
                   name='Antiretroviral therapy',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
-                  targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
+                  targetpars=[{'param': 'numtx', 'pop': 'total'}, {'param': 'numpmtct', 'pop': 'total'}],
                   targetpops=pops,
                   category='Care and treatment',
                   name='Prevention of mother-to-child transmission',
@@ -451,8 +451,8 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
                                                   'HTC mobile': (0.85,0.9),
                                                   'HTC medical': (0.65,0.75)})
 
-        R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-        R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        R.covout['numtx']['total'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        R.covout['numpmtct']['total'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
         R.covout['numcirc']['MSM'].addccopar({'intercept': (0,0), 't': 2016.0})
         R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
@@ -506,7 +506,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
         R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
     
-        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
+        R.covout['numtx']['total'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
         
         # Store this program set in the project
         P.addprogset(R)
@@ -544,9 +544,9 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
         project.runsim(parset) # Temporary, to get baseline
         res = project.parsets[parset].getresults()
         curryearind = findinds(res.tvec, startyear)
-        currnumplhiv = res.main['numplhiv'].tot[0][curryearind]
-        currnumdx =    res.main['numdiag'].tot[0][curryearind]
-        currnumtx =    res.main['numtreat'].tot[0][curryearind]
+        currnumplhiv = res.main['numplhiv'].total[0][curryearind]
+        currnumdx =    res.main['numdiag'].total[0][curryearind]
+        currnumtx =    res.main['numtreat'].total[0][curryearind]
         currpropdx = currnumdx/currnumplhiv
         currproptx = currnumtx/currnumdx
         currvs = project.parsets['default'].pars[0]['treatvs'].interp(startyear)
@@ -557,7 +557,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
                   parsetname='default',
                   pars=[
                   {'name': 'propdx',
-                  'for': ['tot'],
+                  'for': ['total'],
                   'startyear': startyear,
                   'endyear': endyear,
                   'startval': currpropdx,
@@ -565,7 +565,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
                   },
                   
                   {'name': 'proptx',
-                  'for': ['tot'],
+                  'for': ['total'],
                   'startyear': startyear,
                   'endyear': endyear,
                   'startval': currproptx,
@@ -573,7 +573,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
                   },
                   
                   {'name': 'treatvs',
-                  'for': ['tot'],
+                  'for': ['total'],
                   'startyear': startyear,
                   'endyear': endyear,
                   'startval': currvs,
