@@ -45,6 +45,12 @@ class ScenarioSimulationGraphs(Resource):
         project_entry = load_project_record(project_id)
         project = project_entry.hydrate()
         project.runscenarios()
-        return make_mpld3_graph_dict(project.results[-1])
+        result = project.results[-1]
+        from server.webapp.dataio import save_result
+        from server.webapp.dbconn import db
+        record = save_result(project_id, result)
+        db.session.add(record)
+        db.session.commit()
+        return make_mpld3_graph_dict(result)
 
 
