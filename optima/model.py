@@ -3,7 +3,7 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, power as npow
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None, newway=1):
+def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
     """
     Runs Optima's epidemiological model.
     
@@ -62,9 +62,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
     # Defined for total (not by populations) and time dependent [npts]
-    treatvs     = simpars['treatvs']     # viral suppression - ART initiators (P)
+    treatvs     = simpars['treatvs']             # viral suppression - ART initiators (P)
     if usecascade:
-        biofailure    = simpars['biofailure']  # biological treatment failure rate (P/T)
+        biofailure    = simpars['biofailure']    # biological treatment failure rate (P/T)
         freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
         restarttreat  = simpars['restarttreat']  # Rate of ART re-inititation (P/T)
         progusvl      = simpars['progusvl']      # Proportion of people who progress when on unsuppressive ART
@@ -124,6 +124,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     
     # Proportion aware and treated (for 90/90/90)
     propdx = simpars['propdx']
+
     if usecascade: 
         propcare = simpars['propcare']
         propsupp = simpars['propsupp']
@@ -144,6 +145,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     aidstest  = simpars['aidstest'] # HIV testing in AIDS stage (P) [npts]
     numcirc   = simpars['numcirc']  # Number of programmatic circumcisions performed (N)
     numpmtct  = simpars['numpmtct'] # Number of people receiving PMTCT (N)
+
     
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)
@@ -159,7 +161,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 printv(errormsg, 1, verbose)
                 ostprev = zeros(npts) # Reset to zero
     else: # No one injects
-        if sum(numost): 
+        if numost.sum(): 
             errormsg = 'You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject'
             if die: raise OptimaException(errormsg)
             else: 
@@ -290,7 +292,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 initpeople[dx, p]   = diagnosed
                 initpeople[tx, p]   = treatment
         
-    if debug and not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
+    if debug and not(initpeople.all()>=0): # If not every element is a real number >0, throw an error
         errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
         if die: raise OptimaException(errormsg)
         else:
@@ -374,12 +376,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
                 
                 
-                
-                
-                
-                
-                
-                
     ##################################################################################################################
     ### Run the model -- numerically integrate over time
     ##################################################################################################################
@@ -398,22 +394,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
             effallprev[:,pop] = (alltrans * people[:,pop,t]) / allpeople[pop,t]
             effhivprev[pop] = sum(alltrans * people[:,pop,t]) / allpeople[pop,t]
-            
-#            if not newway:
-#                effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
-#                effdx   = sum(dxfactor * cd4trans * people[dx,pop,t]) # ...and diagnosed/failed -- WARNING, reinstating cd4trans because array multiplication gets ugly...but this should be fixed
-#                if usecascade:
-#                    effcare = sum(dxfactor * cd4trans * people[care,pop,t]) # the diagnosis efficacy also applies to those in care??
-#                    efftxus = sum(dxfactor * cd4trans * efftxunsupp * people[usvl,pop,t]) # ...and treated
-#                    efftxs  = sum(dxfactor * cd4trans * efftxsupp  * people[svl,pop,t]) # ...and suppressed viral load
-#                    efflost = sum(dxfactor * cd4trans * people[lost,pop,t]) # the diagnosis efficacy also applies to those lost to follow-up??
-#                    effoff  = sum(dxfactor * cd4trans * people[off,pop,t])  # the diagnosis efficacy also applies to those off-ART but in care??
-#                    # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
-#                    effhivprev[pop] = (effundx+effdx+effcare+efftxus+efftxs+efflost+effoff) / allpeople[pop,t]
-#                else:
-#                    efftx   = sum(dxfactor * cd4trans * txfactor[t] * people[tx,pop,t]) # ...and treated
-#                    effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t] # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
-                
+                            
             
             if debug and not(all(effallprev[:,pop]>=0)): # WARNING, this shouldn't be required, negative people handles this!
                 errormsg = 'HIV prevalence invalid in population %s!' % (pop)
@@ -436,118 +417,64 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ## Calculate force-of-infection (forceinf)
         ###############################################################################
         
-        if newway: 
-            # Reset force-of-infection vector and matrix for each population group, handling circs and uncircs separately
-            forceinffull = zeros((len(sus), npops, nstates, npops)) # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
-            thisforceinfsex = zeros((len(sus), nstates))
-            
-            # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
-            for pop1,pop2,acts,cond,thistrans in sexactslist:
-                dtcondacts = dt*cond[t]*acts[t] # Make it so this only has to be calculated once
-                
-                if male[pop1]: # Separate FOI calcs for circs vs uncircs
-                    thisforceinfsex[susreg,:]     = 1 - npow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effallprev[:,pop2]))
-                    thisforceinfsex[progcirc,:]   = 1 - npow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effallprev[:,pop2]))
-                    forceinffull[:,pop1,:,pop2] = 1 - (1-forceinffull[:,pop1,:,pop2])   * (1-thisforceinfsex)
-                else: # Only have uncircs for females
-                    thisforceinfsex[0,:] = 1 - npow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effallprev[:,pop2]))
-                    forceinffull[:,pop1,:,pop2] = 1 - (1-forceinffull[susreg,pop1,:,pop2]) * (1-thisforceinfsex)
-                    
-                if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
-                    errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                    for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effallprev[:,pop2]']:
-                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                    raise OptimaException(errormsg)
-                
-            # Injection-related infections -- force-of-infection in pop1 due to pop2
-            for pop1,pop2,effinj in injactslist:
-                
-                thisforceinfinj = 1 - npow((1-transinj), (dt*sharing[pop1,t]*effinj[t]*osteff[t]*effallprev[:,pop2]))
-                for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                    forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * (1-thisforceinfinj)
-                
-                if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
-                    errormsg = 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                    for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'osteff[t]', 'effhivprev[:,pop2]']:
-                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                    raise OptimaException(errormsg)
-            
-    
-    
-    
-            ##############################################################################################################
-            ### The ODEs
-            ##############################################################################################################
+        # Reset force-of-infection vector and matrix for each population group, handling circs and uncircs separately
+        forceinffull = zeros((len(sus), npops, nstates, npops)) # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
+        thisforceinfsex = zeros((len(sus), nstates))
         
-            ## Set up
-            # New infections -- through pre-calculated force of infection
-            infmatrix = zeros((len(sus), npops, nstates, npops))
-            for index in sus:
-                for s in range(nstates):
-                    for cp in range(npops):
-                        infmatrix[index,:,s,cp] = forceinffull[index,:,s,cp] * force * inhomo * people[index, :, t] 
-    
-            newinfections = infmatrix.sum(axis=(2,3)) # Infections acquired through sex and injecting
-            newinfectionstransmitted = infmatrix.sum(axis=(1,2)) # Infections acquired through sex and injecting
-    
-            if abs(newinfectionstransmitted.sum() - newinfections.sum()) > 1:
-                errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (newinfectionstransmitted.sum(), newinfections.sum(), t)
-                if die: raise OptimaException(errormsg)
-                else: printv(errormsg, 1, verbose)
-                
-        else:
-            # Reset force-of-infection vector for each population group, handling circs and uncircs separately
-            forceinfvec = zeros((len(sus), npops))
-            thisforceinfsex = zeros(2)
+        # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
+        for pop1,pop2,acts,cond,thistrans in sexactslist:
+            dtcondacts = dt*cond[t]*acts[t] # Make it so this only has to be calculated once
             
-            # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
-            for pop1,pop2,acts,cond,thistrans in sexactslist:
-                dtcondacts = dt*cond[t]*acts[t] # Make it so this only has to be calculated once
+            if male[pop1]: # Separate FOI calcs for circs vs uncircs
+                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effallprev[:,pop2]))
+                thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effallprev[:,pop2]))
+                forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * (1-thisforceinfsex)
+            else: # Only have uncircs for females
+                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effallprev[:,pop2]))
+                forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[susreg,pop1,:,pop2]) * (1-thisforceinfsex)
                 
-                if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
-                    thisforceinfsex[0]     = 1 - mpow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effhivprev[pop2]))
-                    thisforceinfsex[1]     = 1 - mpow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effhivprev[pop2]))
-                    forceinfvec[:,pop1] = 1 - (1-forceinfvec[:,pop1])   * (1-thisforceinfsex)
-                else: # Only have uncircs for females
-                    thisforceinfsex[0] = 1 - mpow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effhivprev[pop2]))
-                    forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinfsex[0])
-                    
-                if debug and not all(forceinfvec[:,pop1]>=0):
-                    errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
-                    for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
-                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                    raise OptimaException(errormsg)
-                
-            # Injection-related infections -- force-of-infection in pop1 due to pop2
-            for pop1,pop2,effinj in injactslist:
-                
-                thisforceinfinj = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj[t]*osteff[t]*effhivprev[pop2]))
-                for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                    forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinfinj)
-                
-                if debug and not all(forceinfvec[:,pop1]>=0):
-                    errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
-                    for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'osteff[t]', 'effhivprev[pop2]']:
-                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                    raise OptimaException(errormsg)
+            if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
+                errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effallprev[:,pop2]']:
+                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                raise OptimaException(errormsg)
             
+        # Injection-related infections -- force-of-infection in pop1 due to pop2
+        for pop1,pop2,effinj in injactslist:
             
-    
-    
-    
-            ##############################################################################################################
-            ### The ODEs
-            ##############################################################################################################
+            thisforceinfinj = 1 - npow((1-transinj), (dt*sharing[pop1,t]*effinj[t]*osteff[t]*effallprev[:,pop2]))
+            for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
+                forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * (1-thisforceinfinj)
+            
+            if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
+                errormsg = 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'osteff[t]', 'effhivprev[:,pop2]']:
+                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                raise OptimaException(errormsg)
         
-            ## Set up
-        
-            # New infections -- through pre-calculated force of infection
-            newinfections = zeros((len(sus), npops)) 
-            for index in sus:
-                newinfections[index,:] = forceinfvec[index,:] * force * inhomo * people[index,:,t] 
 
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            
+
+
+        ##############################################################################################################
+        ### The ODEs
+        ##############################################################################################################
+    
+        ## Set up
+        # New infections -- through pre-calculated force of infection
+        infmatrix = zeros((len(sus), npops, nstates, npops))
+        for index in sus:
+            for s in range(nstates):
+                for cp in range(npops):
+                    infmatrix[index,:,s,cp] = forceinffull[index,:,s,cp] * force * inhomo * people[index, :, t] 
+
+        newinfections = infmatrix.sum(axis=(2,3)) # Infections acquired through sex and injecting
+        newinfectionstransmitted = infmatrix.sum(axis=(1,2)) # Infections transmitted through sex and injecting
+
+        if abs(newinfectionstransmitted.sum() - newinfections.sum()) > 1:
+            errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (newinfectionstransmitted.sum(), newinfections.sum(), t)
+            if die: raise OptimaException(errormsg)
+            else: printv(errormsg, 1, verbose)
+          
         
             
         # Initalise / reset arrays
@@ -581,7 +508,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raw_otherdeath[:,t] += otherdeaths[index]/dt    # Save annual other deaths 
         dS = -newinfections - otherdeaths # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
         raw_inci[:,t] = (newinfections.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
-        if newway: raw_infmatrix[:,:,:,t] = infmatrix.sum(axis=0) /float(dt)
+        raw_infmatrix[:,:,:,t] = infmatrix.sum(axis=0) /float(dt)
 
         ## Undiagnosed
         if not(isnan(propdx[t])):
