@@ -364,6 +364,7 @@ class Project(object):
                 raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             else:
                 try:
+                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose)
                     if not (raw['people']>=0).all(): # Check for negative people
                         printv('Negative people found with runsim(); rerunning with a smaller timestep...')
                         self.settings.dt /= 4
