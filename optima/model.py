@@ -411,7 +411,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
 
         
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()       
         
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
@@ -469,6 +468,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         newinfections = infmatrix.sum(axis=(2,3)) # Infections acquired through sex and injecting
         newinfectionstransmitted = infmatrix.sum(axis=(1,2)) # Infections transmitted through sex and injecting
+
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()       
 
         if abs(newinfectionstransmitted.sum() - newinfections.sum()) > 1:
             errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (newinfectionstransmitted.sum(), newinfections.sum(), t)
