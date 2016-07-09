@@ -463,6 +463,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # New infections -- through pre-calculated force of infection
         infmatrix = zeros((len(sus), npops, nstates, npops))
         for index in sus:
+            # WARNING, these next loops make the model take twice as long! Must figure out how to avoid them
             for s in range(nstates):
                 for cp in range(npops):
                     infmatrix[index,:,s,cp] = forceinffull[index,:,s,cp] * force * inhomo * people[index, :, t] 
