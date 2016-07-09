@@ -1,6 +1,5 @@
 ## Imports
-from math import pow as mpow
-from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, power as npow
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, power as npow
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
@@ -32,7 +31,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     allpeople    = zeros((npops, npts))    # Population sizes
     effhivprev   = zeros((npops, 1))       # HIV effective prevalence (prevalence times infectiousness), overall
     effallprev   = zeros((nstates, npops)) # HIV effective prevalence (prevalence times infectiousness), by health state
-    inhomo       = zeros(npops)            # Inhomogeneity calculations
     usecascade   = settings.usecascade     # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin   # Maximum fraction of people to move on a single timestep
     eps          = settings.eps            # Define another small number to avoid divide-by-zero errors
@@ -461,13 +459,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     
         ## Set up
         # New infections -- through pre-calculated force of infection
-        infmatrix = zeros((len(sus), npops, nstates, npops))
-        for index in sus:
-            # WARNING, these next loops make the model take twice as long! Must figure out how to avoid them
-            for s in range(nstates):
-                for cp in range(npops):
-                    infmatrix[index,:,s,cp] = forceinffull[index,:,s,cp] * force * inhomo * people[index, :, t] 
-
+        infmatrix = einsum('ijkl,j,j,ij->ijkl', forceinffull, force, inhomo, people[sus, :, t])
         newinfections = infmatrix.sum(axis=(2,3)) # Infections acquired through sex and injecting
         newinfectionstransmitted = infmatrix.sum(axis=(1,2)) # Infections transmitted through sex and injecting
 
