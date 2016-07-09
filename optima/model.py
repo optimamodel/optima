@@ -420,15 +420,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for pop1,pop2,acts,cond,thistrans in sexactslist:
-            dtcondacts = dt*cond[t]*acts[t] # Make it so this only has to be calculated once
+            exponent = dt*cond[t]*acts[t]*effallprev[:,pop2] # Make it so this only has to be calculated once
             
             if male[pop1]: # Separate FOI calcs for circs vs uncircs
-                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effallprev[:,pop2]))
-                thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effallprev[:,pop2]))
+                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsticirceff[pop1,t]),   exponent)
+                thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*prepsticircconst[pop1,t]), exponent)    
                 forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * (1-thisforceinfsex)
                 
             else: # Only have uncircs for females
-                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effallprev[:,pop2]))
+                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsti[pop1,t]), exponent)
                 forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2]) * (1-thisforceinfsex)
                 
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
@@ -467,7 +467,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (newinfectionstransmitted.sum(), newinfections.sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
-
             
         # Initalise / reset arrays
         dU = []; dD = []
