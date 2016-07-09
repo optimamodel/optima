@@ -411,7 +411,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
 
         
-        
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()       
         
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
