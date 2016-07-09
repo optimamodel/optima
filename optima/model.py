@@ -428,9 +428,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effallprev[:,pop2]))
                 thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effallprev[:,pop2]))
                 forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * (1-thisforceinfsex)
+                
             else: # Only have uncircs for females
                 thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effallprev[:,pop2]))
-                forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[susreg,pop1,:,pop2]) * (1-thisforceinfsex)
+                forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2]) * (1-thisforceinfsex)
                 
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
@@ -469,14 +470,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         newinfections = infmatrix.sum(axis=(2,3)) # Infections acquired through sex and injecting
         newinfectionstransmitted = infmatrix.sum(axis=(1,2)) # Infections transmitted through sex and injecting
 
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()       
-
         if abs(newinfectionstransmitted.sum() - newinfections.sum()) > 1:
             errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (newinfectionstransmitted.sum(), newinfections.sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
-          
-        
+
             
         # Initalise / reset arrays
         dU = []; dD = []
@@ -929,7 +927,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['popkeys']    = popkeys
     raw['people']     = people
     raw['inci']       = raw_inci
-    raw['infmatrix']       = raw_infmatrix
+    raw['infmatrix']  = raw_infmatrix
     raw['mtct']       = raw_mtct
     raw['diag']       = raw_diag
     raw['newtreat']   = raw_newtreat
