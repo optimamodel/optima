@@ -454,6 +454,7 @@ class ExportResultsDataAsCsv(Resource):
     /api/results/<results_id>
 
     - GET: returns a .csv file as blob
+    - POST: returns graphs of a result_id, using which selectors
     """
 
     method_decorators = [report_exception, login_required]
@@ -475,4 +476,11 @@ class ExportResultsDataAsCsv(Resource):
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
 
         return response
+
+    def post(self, result_id):
+        args = normalize_obj(request.get_json())
+        which = args.get('which')
+        result_record = db.session.query(ResultsDb).get(result_id)
+        result = result_record.hydrate()
+        return make_mpld3_graph_dict(result, which)
 

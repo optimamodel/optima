@@ -19,9 +19,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function loadScenarios(scenarios) {
       $scope.scenarios = scenarios;
-      $scope.scenarios = _.sortBy($scope.scenarios, function(scenario) {
-        return scenario.name;
-      });
+      function returnName(s) { return s.name }
+      $scope.scenarios = _.sortBy($scope.scenarios, returnName);
       console.log("loading scenarios", $scope.scenarios);
     }
 
