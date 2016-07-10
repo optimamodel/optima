@@ -4,19 +4,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, meta, info, scenarioParametersResponse,
-      progsetsResponse, parsetResponse, scenariosResponse, toastr) {
-
-    var project = info.data;
-    var parsets = parsetResponse.data.parsets;
-    var progsets = progsetsResponse.data.progsets;
+      $scope, $http, $modal, info, progsetsResponse, parsetResponse,
+      scenariosResponse, toastr) {
 
     function initialize() {
+      $scope.project = info.data;
+      $scope.parsets = parsetResponse.data.parsets;
+      $scope.progsets = progsetsResponse.data.progsets;
+      $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+      $scope.isMissingModelData = !$scope.project.has_data;
+      $scope.isMissingProgramSet = $scope.progsets.length == 0;
       loadScenarios(scenariosResponse.data.scenarios);
-      $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
-      console.log("parameterKeys", $scope.ykeys);
-      $scope.isMissingModelData = !project.has_data;
-      $scope.isMissingProgramSet = progsets.length == 0;
     }
 
     function loadScenarios(scenarios) {
@@ -27,22 +25,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       console.log("loading scenarios", $scope.scenarios);
     }
 
-    $scope.saveScenarios = function(scenarios, success_msg) {
+    $scope.saveScenarios = function(scenarios, successMsg) {
       console.log("saving scenarios", scenarios);
       $http.put(
-        '/api/project/' + project.id + '/scenarios',
+        '/api/project/' + $scope.project.id + '/scenarios',
         {'scenarios': scenarios })
       .success(function (response) {
         loadScenarios(response.scenarios);
-        if (success_msg) {
-          toastr.success(success_msg)
+        if (successMsg) {
+          toastr.success(successMsg)
         }
       });
     };
 
     $scope.runScenarios = function () {
       $http.get(
-        '/api/project/' + project.id + '/scenarios/results')
+        '/api/project/' + $scope.project.id + '/scenarios/results')
       .success(function (data) {
         $scope.graphs = data.graphs;
       });
@@ -69,7 +67,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.updateGraphs = function() {
       $http.post(
-        '/api/project/' + project.id + '/scenarios/results',
+        '/api/project/' + $scope.project.id + '/scenarios/results',
         {which: getSelectors()})
       .success(function (data) {
         $scope.graphs = data.graphs;
@@ -80,13 +78,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return _.some($scope.scenarios, function(s) { return s.active });
     };
 
-    $scope.parsetName = function (scenario) {
-      var parset = _.findWhere(parsets, {id: scenario.parset_id});
+    $scope.getParsetName = function (scenario) {
+      var parset = _.findWhere($scope.parsets, {id: scenario.parset_id});
       return parset ? parset.name : 'N/A';
     };
 
-    $scope.programSetName = function (scenario) {
-      var progset = _.findWhere(progsets, {id: scenario.progset_id});
+    $scope.getProgramSetName = function (scenario) {
+      var progset = _.findWhere($scope.progsets, {id: scenario.progset_id});
       return progset ? progset.name : 'N/A';
     };
 
@@ -107,9 +105,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         resolve: {
           scenarios: function () { return $scope.scenarios; },
           scenario: function () { return angular.copy(scenario); },
-          parsets: function () { return parsets; },
-          progsets: function () { return progsets; },
-          ykeys: function () { return $scope.ykeys; }
+          parsets: function () { return $scope.parsets; },
+          progsets: function () { return $scope.progsets; },
+          ykeys: function () { return $scope.parametersByParsetId; }
         }
       });
     }
@@ -118,7 +116,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Function opens a model in different modes
      * @param {string} action: 'add', 'edit' 'delete'
      */
-    $scope.modal = function (scenario, action, $event) {
+    $scope.openModal = function (scenario, action, $event) {
       if ($event) {
         $event.preventDefault();
       }
@@ -137,14 +135,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       } else if (action === 'edit') {
 
+        scenario = _.findWhere(newScenarios, {name: scenario.name});
+        var iScenario = _.indexOf(newScenarios, scenario);
+
         return openScenarioModal(scenario)
           .result
           .then(
             function (scenario) {
-              console.log('new scenario')
-              var i = newScenarios.indexOf(_.findWhere(newScenarios, { id: scenario.id }));
-              newScenarios[i] = scenario;
-              newScenarios[i].active = true;
+              newScenarios[iScenario] = scenario;
+              newScenarios[iScenario].active = true;
               $scope.saveScenarios(newScenarios, "Saved changes");
             });
 

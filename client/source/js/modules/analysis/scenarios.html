@@ -39,14 +39,14 @@
                   ng-change="saveScenarios(scenarios, 'Saved changes')">
             </td>
             <td>{{ scenario.name }}</td>
-            <td>{{ parsetName(scenario) }}</td>
-            <td>{{ programSetName(scenario) }}</td>
+            <td>{{ getParsetName(scenario) }}</td>
+            <td>{{ getProgramSetName(scenario) }}</td>
             <td>{{ scenario.scenario_type }}</td>
             <td style="white-space: nowrap; width:200px; max-width:200px">
-              <button class="btn" ng-click="modal(scenario, 'edit', $event)">Edit</button>
-              <button class="btn" ng-click="modal(scenario, 'copy', $event)">Copy</button>
+              <button class="btn" ng-click="openModal(scenario, 'edit', $event)">Edit</button>
+              <button class="btn" ng-click="openModal(scenario, 'copy', $event)">Copy</button>
               &nbsp; &nbsp; &nbsp;
-              <span class="delete" ng-click="modal(scenario, 'delete', $event)">X</span>
+              <span class="delete" ng-click="openModal(scenario, 'delete', $event)">X</span>
             </td>
           </tr>
 
@@ -58,19 +58,19 @@
               </p>
               <button
                   class="btn"
-                  ng-click="modal({'scenario_type': 'budget'}, 'add', $event)"
+                  ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
                   ng-disabled="isMissingProgramSet">
                 Add a budget scenario
               </button>
               <button
                   class="btn"
-                  ng-click="modal({'scenario_type': 'coverage'}, 'add', $event)"
+                  ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
                   ng-disabled="isMissingProgramSet">
                 Add a coverage scenario
               </button>
               <button
                   class="btn"
-                  ng-click="modal({'scenario_type': 'parameter'}, 'add', $event)">
+                  ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
                 Add a parameter scenario
               </button>
             </td>

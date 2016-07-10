@@ -10,8 +10,14 @@ define(['angular'], function (module) {
       $scope.parsets = parsets;
       $scope.progsets = progsets;
       $scope.editPar = {};
-      var ykeys = ykeys;
       var editKeys = ['startval', 'endval', 'startyear', 'endyear'];
+
+      function initialize() {
+        if (_.isUndefined($scope.scenario.name)) {
+          initNewScenario();
+        }
+        resetEditPar();
+      }
 
       $scope.scenarioExists = function () {
         var t = $scope.scenario;
@@ -95,11 +101,7 @@ define(['angular'], function (module) {
       $scope.save = function () {
         $modalInstance.close($scope.scenario); };
 
-      // initialization
-      if (_.isUndefined($scope.scenario.name)) {
-        initNewScenario();
-      }
-      resetEditPar();
+      initialize();
 
     });
 });
