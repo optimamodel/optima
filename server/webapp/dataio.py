@@ -121,7 +121,6 @@ def delete_spreadsheet(name, user_id=None):
         if os.path.exists(spreadsheet_file):
             os.remove(spreadsheet_file)
 
-
 def load_project(project_id, autofit=False, raise_exception=True):
     if not autofit:
         project_record = load_project_record(project_id, raise_exception=raise_exception)
@@ -132,15 +131,8 @@ def load_project(project_id, autofit=False, raise_exception=True):
         working_project_record = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
         if working_project_record is None:
             raise ProjectDoesNotExist(id=project_id)
-        project = op.loads(working_project_record.project)
+        project = working_project_record.load()
     return project
-
-
-def load_program(project_id, progset_id, program_id):
-    program_entry = load_program_record(project_id, progset_id, program_id)
-    if program_entry is None:
-        raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-    return program_entry.load()
 
 
 def load_parset(project, parset_id):
@@ -237,7 +229,7 @@ def get_program_from_progset(progset, program_id, include_inactive=False):
 
 
 
-def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
+def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
     result_record = db.session.query(ResultsDb).filter_by(
         project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
     if result_record is None:
@@ -245,13 +237,11 @@ def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRA
     return result_record
 
 
-def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
+def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
     result_record = load_result_record(project_id, parset_id, calculation_type)
     if result_record is None:
         return None
     return result_record.hydrate()
-
-
 
 def save_result(
         project, result, parset_name='default',
@@ -268,34 +258,111 @@ def save_result(
     if parset:
         parset = parset[0]
     else:
-        raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
 
-    # update results (after runsim is invoked)
-    result_records_from_db = db_session.query(ResultsDb).filter_by(project_id=project.uid)
-    result_records = [item for item in result_records_from_db
-                     if item.parset_id == parset.uid
-                        and item.calculation_type == calculation_type]
+def load_result_by_id(result_id):
+    result_record = db.session.query(ResultsDb).get(result_id)
+    if result_record is None:
+        return None
+    return result_record.hydrate()
+
+
+def update_or_create_result_record(
+        project,
+        result,
+        parset_name='default',
+        calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
+        db_session=None):
+
+    if db_session is None:
+        db_session = db.session
+
+    result_record = db_session.query(ResultsDb).get(result.uid)
 
     blob = op.saves(result)
-    if result_records:
-        if len(result_records) > 1:
-            abort(500, "Found multiple records for result (%s) of parset '%s'" % calculation_type, parset.name)
-        result_record = result_records[0]
+    if result_record is not None:
         result_record.blob = blob
-        print "> Updating results", result.uid
-
-    if not result_records:
+        print ">>> Updating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+    else:
+        parset = project.parsets[parset_name]
         result_record = ResultsDb(
-            parset_id=str(parset.uid),
+            parset_id=parset.uid,
             project_id=project.uid,
             calculation_type=calculation_type,
             blob=blob)
-        print "> Creating results", result.uid
+        print ">>> Creating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
 
-    result_id = str(result.uid)
-    result_record.id = result_id
+    result_record.id = result.uid
 
     return result_record
+
+
+def delete_result(
+        project_id, parset_id, calculation_type, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    records = db_session.query(ResultsDb).filter_by(
+        project_id=project_id,
+        parset_id=parset_id,
+        calculation_type=calculation_type
+    )
+    records.delete()
+    db_session.commit()
+
+
+def delete_optimization_result(
+        project_id, result_name, db_session=None):
+    if db_session is None:
+        db_session = db.session
+
+    print ">>> Deleting outdated result '%s' of an optimization" % result_name
+
+    records = db_session.query(ResultsDb).filter_by(
+        project_id=project_id,
+        calculation_type="optimization"
+    )
+    for record in records:
+        result = record.hydrate()
+        if result.name == result_name:
+            db_session.delete(record)
+    db_session.commit()
+
+
+def save_result(
+        project_id, result, parset_name='default',
+        calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
+        db_session=None):
+    if db_session is None:
+        db_session = db.session
+    result_record = update_or_create_result_record(
+        project_id, result, parset_name=parset_name,
+        calculation_type=calculation_type, db_session=db_session)
+    db_session.add(result_record)
+    db_session.flush()
+    db_session.commit()
+
+
+def load_optimization_record(optimization_id):
+    return db.session.query(OptimizationsDb).get(optimization_id)
+
+
+def load_result_by_optimization_id(optimization_id):
+    optimization_record = db.session.query(OptimizationsDb).get(optimization_id)
+    if optimization_record is None:
+        return None
+
+    result_name = "optim-" + optimization_record.name
+
+    result_records = db.session.query(ResultsDb).filter_by(
+        project_id=optimization_record.project_id,
+        parset_id=optimization_record.parset_id,
+        calculation_type="optimization")
+    for result_record in result_records:
+        result = result_record.hydrate()
+        print ">>> Matching optim result '%s' == '%s'" % (result.name, result_name)
+        if result.name == result_name:
+            return result
+
+    return None
 
 
 def load_project_program_summaries(project_id):

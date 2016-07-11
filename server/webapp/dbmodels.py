@@ -97,7 +97,6 @@ class ProjectDb(db.Model):
         filename = os.path.join(loaddir, self.id.hex + ".prj")
         op.saveobj(filename, self.load())
         return self.id.hex + ".prj"
-
     def recursive_delete(self, synchronize_session=False):
 
         str_project_id = str(self.id)
@@ -127,7 +126,7 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
 
 class ResultsDb(db.Model):
 
-    CALIBRATION_TYPE = 'calibration'  # 'calibration' or 'optimization'
+    DEFAULT_CALCULATION_TYPE = 'calibration'  # 'calibration' or 'optimization'
     # todo make enum when all types are known
 
     __tablename__ = 'results'
@@ -182,7 +181,7 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     __tablename__ = "work_log"
 
-    work_status = db.Enum('started', 'completed', 'cancelled', 'error', name='work_status')
+    work_status = db.Enum('started', 'completed', 'cancelled', 'error', 'blocked', name='work_status')
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     work_type = db.Column(db.String(32), default=None)

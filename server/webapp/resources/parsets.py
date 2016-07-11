@@ -1,7 +1,8 @@
 import uuid
 import os
 from datetime import datetime
-from pprint import pprint
+import pprint
+import json
 
 import dateutil
 from flask import current_app, helpers, request
@@ -16,7 +17,7 @@ from server.webapp.dataio import (
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ResultsDb
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
-from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
+from server.webapp.parse import get_parameters_from_parset, put_parameters_in_parset
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser, normalize_obj
 from server.webapp.plot import make_mpld3_graph_dict
@@ -68,11 +69,10 @@ class Parsets(Resource):
         if not parset_id:
             # CREATE parset with default settings
             project.makeparset(name, overwrite=False)
-            new_result = project.runsim(name)
-            project_entry.save_obj(project)
-            db.session.add(project_entry)
-
-            result_record = save_result(project, new_result, name)
+            result = project.runsim(name)
+            project_record.save_obj(project)
+            db.session.add(project_record)
+            result_record = update_or_create_result_record(project_id, result, name)
             db.session.add(result_record)
         else:
             original_parset = get_parset_from_project(project, parset_id)
@@ -89,7 +89,7 @@ class Parsets(Resource):
 rename_parser = RequestParser()
 rename_parser.add_argument('name', required=True)
 
-class ParsetsDetail(Resource):
+class ParsetRenameDelete(Resource):
     """
     DELETE /api/project/<uuid:project_id>/parsets/<uuid:parset_id>
 
@@ -112,6 +112,11 @@ class ParsetsDetail(Resource):
         parset = load_parset(project, parset_id)
         project.parsets.pop(parset.name)
         project_entry.save_obj(project)
+
+        # TODO: also delete the corresponding calibration results
+        db.session.query(ResultsDb).filter_by(
+            project_id=project_id, id=parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE).delete()
+        db.session.commit()
 
         return '', 204
 
@@ -139,52 +144,47 @@ class ParsetsDetail(Resource):
 
 
 
-calibration_parser = RequestParser()
-calibration_parser.add_argument('which', default=None, action='append')
-calibration_parser.add_argument('autofit', location='args', default=False, type=bool)
-
-calibration_update_parser = RequestParser()
-calibration_update_parser.add_arguments({
-    'which': {'default': None, 'action': 'append'},
-    'parameters': {'required': True, 'type': dict, 'action': 'append'},
-    'doSave': {'default': False, 'type': bool, 'location': 'args'},
-    'autofit': {'default': False, 'type': bool, 'location': 'args'}
-})
-
-parset_save_with_autofit_parser = RequestParser()
-parset_save_with_autofit_parser.add_arguments({
-    'parameters': {'type': fields.Raw, 'required': True, 'action': 'append'},
-    'result_id': {'type': uuid.UUID, 'required': True},
-})
-
-class ParsetsCalibration(Resource):
+class ParsetCalibration(Resource):
     """
-    GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
+    /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
 
-    Returns parameter summaries and graphs for a project/parset, called on page init
+    - GET: Returns parameter summaries and graphs for a project/parset, called on page init
     so doesn't really require a which
-
-    PUT /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
-
-    Saves the parameters and gets graphs
-
-    POST /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
-
-    Save parameters without fetching graphs
+    - POST: Sends parameters to get graphs, with optional save, and optional autofit
     """
 
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Returns parameter summaries and graphs for a project/parset')
     def get(self, project_id, parset_id):
+        """
+        Returns the graphs for the parameter sets. If the results of the parameter
+        sets exists, will use those results to generate the results, otherwise
+        will the model, save the results, and then generate the graphs.
+
+        Args:
+            project_id: uid for project
+            parset_id: uid for parset
+
+        Url-query:
+            autofit: boolean - true loads the results from the autofit parameters
+
+        Returns:
+             {
+                 "calibration": {
+                     "parset_id": uid_string,
+                     "parameters": parameter_dictionary,
+                     "graphs": mpl3_dict dictionary,
+                     "resultId": uid_string
+                 }
+             }
+
+        """
         current_app.logger.debug("/api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
-        args = calibration_parser.parse_args()
-        which = args.get('which')
-        if which is not None:
-            which = map(str, which)
-        autofit = args.get('autofit', False)
-        calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        print "> Calculation type: %s, autofit: %s, which: %s" % (calculation_type, autofit, which)
+        autofit = request.args.get('autofit', False)
+        calculation_type = 'autofit' if autofit else "calibration"
+
+        print "> Calculation type: %s, autofit: %s" % (calculation_type, autofit)
 
         project = load_project(project_id)
         parset = load_parset(project, parset_id)
@@ -201,11 +201,14 @@ class ParsetsCalibration(Resource):
             db.session.commit()
         else:
             print "> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
+        else:
+            print "> Runsim for new calibration results and store"
+            project = load_project(project_id, autofit=autofit)
+            result = project.runsim(simpars=parset.interp())
+            save_result(project_id, result, parset.name, calculation_type)
 
         print "> Generating graphs"
-        graphs = make_mpld3_graph_dict(result, which)['graphs']
-
-        return {
+        payload = {
             "calibration": {
                 "parset_id": parset_id,
                 "parameters": get_parset_parameters(parset),
@@ -213,153 +216,148 @@ class ParsetsCalibration(Resource):
                 "resultId": result.uid,
             }
         }
+        graph_dict = make_mpld3_graph_dict(result)
+        payload["calibration"].update(graph_dict)
+        return payload
 
-    @report_exception
-    def put(self, project_id, parset_id):
-        current_app.logger.debug("PUT /api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
-        args = calibration_update_parser.parse_args()
-        parameters = args.get('parameters', [])
+    @swagger.operation(description='Updates parameters and returns graphs')
+    def post(self, project_id, parset_id):
+        """
+        Generates selected graphs for an updated parameter set with optional save.
+        Or returns graphs generated from an autofit pre-calculated result.
+
+        Args:
+            project_id: uid for project
+            parset_id: uid for parset
+        Post-body:
+            parameters: list of model parameters and their values
+            which: list of graphs to generate
+            autofit: boolean indicates to fetch the autofit version of the results
+        Returns:
+             {
+                 "calibration": {
+                     "parset_id": uid_string,
+                     "parameters": parameter_dictionary,
+                     "graphs": mpl3_dict dictionary,
+                     "resultId": uid_string
+                 }
+             }
+        """
+        args = normalize_obj(json.loads(request.data))
+        autofit = args.get('autofit', False)
         which = args.get('which')
         if which is not None:
             which = map(str, which)
-        doSave = args.get('doSave')
-        autofit = args.get('autofit', False)
-        calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        print "> Calculation type: %s, autofit: %s, which: %s" % (calculation_type, autofit, which)
-
 
         project_record = load_project_record(project_id)
         project = project_record.load()
 
         # update parset with uploaded parameters
         parset = get_parset_from_project(project, parset_id)
-        put_parameters_in_parset(parameters, parset)
 
-        # recalculate result for parset
-        simparslist = parset.interp()
-        result = project.runsim(simpars=simparslist)
-
-        if doSave:  # save the updated results
-            print "> Saving results", result.uid
-            result_record = save_result(project, result, parset.name, calculation_type)
-            db.session.add(result_record)
-            db.session.commit()
-        elif autofit:
-            result = load_result(project_id, parset_id, calculation_type)
-            print "> Loading autofit results", result.uid
-            if 'improvement' not in which:
-                which.insert(0, 'improvement')
+        if autofit:
+            print "> Generating graphs from pre-autofitted results"
+            # this is called after an autofit has run, which
+            # will have deleted "calibration" results associated with the
+            # optimized parset, written the optimized values to
+            # the parset and saved the results to "autofit"
+            result = load_result(project_id, parset_id, "autofit")
+            if result is None:
+                raise ValueError("Autofit results not found")
+            parameters = get_parameters_from_parset(parset)
         else:
-            print "> Saving temporary calibration graphs", result.uid
-            result_record = save_result(project, result, parset.name, "temp-" + calculation_type)
+            print '> Uploaded updated parameters for parset', parset_id
+            parameters = args.get('parameters')
+            assert str(parset.uid) == str(parset_id)
+            put_parameters_in_parset(parameters, parset)
+            project_record.save_obj(project)
+            delete_result(project_id, parset.uid, "calibration")
+            delete_result(project_id, parset.uid, "autofit")
 
-            db.session.add(result_record)
-            db.session.commit()
+            print "> Simulating model from uploaded parameters"
+            result = project.runsim(simpars=parset.interp())
+            save_result(project_id, result, parset.name, 'calibration')
 
-        project.parsets[parset.name] = parset
+        print "> Generate graphs"
+        graphs = make_mpld3_graph_dict(result, which)
 
-        project_record.save_obj(project)
-
-        print "> Generating graphs"
-        graphs = make_mpld3_graph_dict(result, which)['graphs']
-
-        return {
+        payload = {
             'calibration': {
                 "parset_id": parset_id,
-                "parameters": get_parset_parameters(parset),
-                "graphs": graphs,
+                "parameters": parameters,
                 "resultId": str(result.uid),
+                "graphs": graphs["graphs"]
             }
         }
-
-    @report_exception
-    def post(self, project_id, parset_id):
-        current_app.logger.debug("POST /api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
-        data = normalize_obj(request.get_json(force=True))
-
-        parset_record = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset_record is None or parset_record.project_id != project_id:
-            raise ParsetDoesNotExist(id=parset_id)
-        parset = parset_record.hydrate()
-        put_parameters_in_parset(data['parameters'], parset)
-
-        parset_record.pars = op.saves(parset.pars)
-        parset_record.updated = datetime.now(dateutil.tz.tzutc())
-        db.session.add(parset_record)
-
-        ResultsDb.query \
-            .filter_by(
-                parset_id=parset_id, project_id=project_id, calculation_type="calibration") \
-            .delete()
-
-        db.session.commit()
-
-        return 200
+        return payload
 
 
-manual_calibration_parser = RequestParser()
-manual_calibration_parser.add_argument('maxtime', required=False, type=int, default=60)
-
-
-class ParsetsAutomaticCalibration(Resource):
+class ParsetAutofit(Resource):
     """
-    POST /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
+    /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
 
-    Starts celery task to autofit parameters to historical data, returns:
-    {
-        'can_start': can_start,
-        'can_join': can_join,
-        'parset_id': wp_parset_id,
-        'work_type': work_type
-    }
+    - POST: Starts celery task to autofit parameters to historical data
+    - GET: Returns the status for the current job:
 
-    GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
-
-    Returns the status for the current job:
-     {
-        'status': work_log.status,
-        'error_text': work_log.error,
-        'start_time': work_log.start_time,
-        'stop_time': work_log.stop_time,
-        'result_id': work_log.result_id
-    }
+    Returns:
+        {
+            'status': work_log.status,
+            'error_text': work_log.error,
+            'start_time': work_log.start_time,
+            'stop_time': work_log.stop_time,
+            'result_id': work_log.result_id
+        }
     """
 
-    @swagger.operation(
-        summary='Launch auto calibration for the selected parset',
-        parameters=manual_calibration_parser.swagger_parameters()
-    )
-    @report_exception
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary='Launch auto calibration')
     def post(self, project_id, parset_id):
+        """
+        Launch auto calibration and returns the status code for the async job
+
+        Args:
+            project_id:
+            parset_id:
+        Post-query:
+            maxtime: int - number of seconds to run
+
+        """
         from server.webapp.tasks import run_autofit, start_or_report_calculation
-        args = manual_calibration_parser.parse_args()
-
         project = load_project(project_id)
         parset = load_parset(project, parset_id)
 
+        maxtime = json.loads(request.data).get('maxtime')
         calc_status = start_or_report_calculation(project_id, parset_id, 'autofit')
-        if not calc_status['can_start']:
-            calc_status['status'] = 'running'
-            return calc_status, 208
-        else:
-            run_autofit.delay(project_id, parset.name, args['maxtime'])
+        if calc_status['status'] != "blocked":
+            print "> Starting autofit for %s s" % maxtime
+            run_autofit.delay(project_id, parset.name, maxtime)
             calc_status['status'] = 'started'
-            calc_status['maxtime'] = args['maxtime']
-            return calc_status, 201
+            calc_status['maxtime'] = maxtime
+        return calc_status
 
-    @report_exception
+    @swagger.operation(summary='Poll autofit status')
     def get(self, project_id, parset_id):
+        """
+        Returns status of auto calibration
+
+        Args:
+            project_id:
+            parset_id:
+        """
         from server.webapp.tasks import check_calculation_status
-        return check_calculation_status(project_id)
-
-
-
+        print "> Checking calc state"
+        calc_state = check_calculation_status(project_id, parset_id, 'autofit')
+        pprint.pprint(calc_state, indent=2)
+        if calc_state['status'] == 'error':
+            raise Exception(calc_state['error_text'])
+        return calc_state
 
 file_upload_form_parser = RequestParser()
 file_upload_form_parser.add_argument('file', type=AllowedSafeFilenameStorage, location='files', required=True)
 
 
-class ParsetsData(Resource):
+class ParsetUploadDownload(Resource):
     """
     Export and import of the existing parset in / from pickled format.
     """
@@ -426,7 +424,7 @@ class ParsetsData(Resource):
 
         project_entry.save_obj(project)
 
-        result_record = save_result(project, result, parset.name)
+        result_record = update_or_create_result_record(project, result, parset.name)
         db.session.add(result_record)
 
         db.session.commit()
@@ -435,31 +433,32 @@ class ParsetsData(Resource):
 
 
 
-class ExportResultsDataAsCsv(Resource):
+class ResultsExportAsCsv(Resource):
     """
-    Export of data from an Optima Results object as a downloadable .csv file
-
     /api/results/<results_id>
-
     - GET: returns a .csv file as blob
     """
 
     method_decorators = [report_exception, login_required]
 
     def get(self, result_id):
-        current_app.logger.debug("GET /api/results/{0}".format(result_id))
-        result_record = db.session.query(ResultsDb).get(result_id)
-        if result_record is None:
+        """
+        Export of data from an Optima Results object as a downloadable .csv file
+
+        Args:
+            result_id:
+        """
+        result = load_result_by_id(result_id)
+        if result is None:
             raise Exception("Results '%s' does not exist" % result_id)
+
         load_dir = upload_dir_user(TEMPLATEDIR)
         if not load_dir:
             load_dir = TEMPLATEDIR
         filestem = 'results'
         filename = filestem + '.csv'
-        result = result_record.hydrate()
-        result.export(filestem=os.path.join(load_dir, filestem))
 
+        result.export(filestem=os.path.join(load_dir, filestem))
         response = helpers.send_from_directory(load_dir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
-
         return response

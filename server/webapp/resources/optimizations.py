@@ -1,3 +1,4 @@
+import json
 from pprint import pformat
 
 from flask import request
@@ -60,18 +61,18 @@ class OptimizationCalculation(Resource):
     @swagger.operation(summary='Launch optimization calculation')
     def post(self, project_id, optimization_id):
 
-        from server.webapp.tasks import run_optimization, start_or_report_calculation
+        from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
+        from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
-        project_record = load_project_record(project_id)
-        project = project_record.load()
+        maxtime = float(json.loads(request.data).get('maxtime'))
 
         optim = get_optimization_from_project(project, optimization_id)
         parset = project.parsets[optim.parsetname]
 
-        calc_state = start_or_report_calculation(project_id, parset.uid, 'optimization')
+        calc_state = start_or_report_calculation(
+            project_id, parset.uid, 'optim-' + optimization_name)
 
-        if not calc_state['can_start']:
-            calc_state['status'] = 'running'
+        if calc_state['status'] != 'started':
             return calc_state, 208
 
         progset = project.progsets[optim.progsetname]
@@ -86,6 +87,7 @@ class OptimizationCalculation(Resource):
             if covout_errors:
                 error_msg += "Missing: coverage-outcome parameters of:\n"
                 error_msg += pformat(covout_errors, indent=2)
+            shut_down_calculation(project_id, parset_id, 'optimization')
             raise Exception(error_msg)
 
         objectives = normalize_obj(optim.objectives)
@@ -95,35 +97,41 @@ class OptimizationCalculation(Resource):
         constraints["name"] = op.odict(constraints["name"])
 
         run_optimization.delay(
-            project_id, optim.name, parset.name, progset.name, objectives, constraints)
-
-        calc_state['status'] = 'started'
+            project_id, optim.name, parset.name, progset.name, objectives, constraints, maxtime)
 
         return calc_state, 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):
         from server.webapp.tasks import check_calculation_status
-        calc_state = check_calculation_status(project_id)
+        optimization_record = load_optimization_record(optimization_id)
+        print "> Checking calc state"
+        calc_state = check_calculation_status(
+            project_id,
+            optimization_record.parset_id,
+            'optim-' + optimization_record.name)
+        print pformat(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
         return calc_state
 
 
-
 class OptimizationGraph(Resource):
     """
     /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph
-    - GET: gets the mpld3 graphs for the optimizations
+    - POST: gets the mpld3 graphs for the optimizations
     """
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Provides optimization graph for the given project')
-    def get(self, project_id, optimization_id):
-        result_entry = db.session.query(ResultsDb)\
-            .filter_by(project_id=project_id, calculation_type='optimization')\
-            .first()
-        if not result_entry:
-            return {"result_id": None}
+    def post(self, optimization_id):
+        args = normalize_obj(json.loads(request.data))
+        which = args.get('which')
+        if which is not None:
+            which = map(str, which)
+
+        result = load_result_by_optimization_id(optimization_id)
+        if result is None:
+            return {}
         else:
-            return make_mpld3_graph_dict(result_entry.hydrate())
+            return make_mpld3_graph_dict(result, which)

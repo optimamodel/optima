@@ -23,7 +23,7 @@ from server.webapp.parse import get_default_populations
 from server.webapp.resources.common import (
     file_resource, file_upload_form_parser, report_exception, verify_admin_request)
 from server.webapp.dataio import (
-    load_project_record, load_project, save_result, delete_spreadsheet, get_project_parameters,
+    load_project_record, load_project, update_or_create_result_record, delete_spreadsheet, get_project_parameters,
     load_project_program_summaries)
 
 
@@ -533,7 +533,7 @@ class ProjectSpreadsheet(Resource):
         db.session.add(project_record)
 
         result = project.results[-1]
-        result_record = save_result(project, result, parset_name, "calibration")
+        result_record = update_or_create_result_record(project, result, parset.name, "calibration")
         print ">>>> Store result(calibration) '%s'" % (result.name)
         db.session.add(result_record)
 
@@ -770,7 +770,7 @@ class ProjectData(Resource):
 
         if project_instance.data:
             assert (project_instance.parsets)
-            result_record = save_result(project, result)
+            result_record = update_or_create_result_record(project, result)
             db.session.add(result_record)
 
         db.session.commit()
@@ -808,6 +808,12 @@ class ProjectFromData(Resource):
         project = op.loadobj(uploaded_file)
         project.name = project_name
 
+        project.uid = op.uuid()
+        for parset in project.parsets.values():
+            parset.uid = op.uuid()
+        for result in project.results.values():
+            result.uid = op.uuid()
+
         from optima.makespreadsheet import default_datastart, default_dataend
         datastart = default_datastart
         dataend = default_dataend
@@ -834,7 +840,7 @@ class ProjectFromData(Resource):
         db.session.flush()
 
         if result is not None:
-            result_record = save_result(project, result)
+            result_record = update_or_create_result_record(project, result)
             db.session.add(result_record)
 
         db.session.commit()
@@ -887,6 +893,38 @@ class ProjectCopy(Resource):
 
         new_project_record.save_obj(project)
 
+        project_record.name = new_project_name
+        db.session.add(new_project_record)
+        # change the creation and update time
+        new_project_record.created = datetime.now(dateutil.tz.tzutc())
+        new_project_record.updated = datetime.now(dateutil.tz.tzutc())
+        db.session.flush()  # this updates the project ID to the new value
+
+        # Question, why not use datetime.utcnow() instead
+        # of dateutil.tz.tzutc()?
+        # it's the same, without the need to import more
+        new_project_id = project_record.id
+
+        if project_result_exists:
+            # copy each result
+            for result_record in project_record.results:
+                if result_record.calculation_type != ResultsDb.DEFAULT_CALCULATION_TYPE:
+                    continue
+                result = op.loads(result_record.blob)
+                parset_name = result.parset.name
+                new_parset = [r for r in new_project.parsets.values() if r.name == parset_name]
+                if not new_parset:
+                    raise Exception(
+                        "Could not find copied parset for result in copied project {}".format(project_id))
+                result_record.parset_id = new_parset[0].uid
+                db.session.expunge(result_record)
+                make_transient(result_record)
+                # set the id to None to ensure no duplicate ID
+                result_record.id = None
+                db.session.add(result_record)
+        db.session.commit()
+        # let's not copy working project, it should be either saved or
+        # discarded
         payload = {
             'project': project_id,
             'user': project_user_id,

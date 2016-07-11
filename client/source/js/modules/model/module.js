@@ -46,7 +46,7 @@ define([
         .state('model.auto', {
           url: '/auto',
           templateUrl: 'js/modules/model/autofit.html',
-          controller: 'ModelAutoCalibrationController',
+          controller: 'ModelCalibrationController',
           resolve: {
             parameters: function (Model) {
               //return Model.getCalibrateParameters().$promise;
