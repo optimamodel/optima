@@ -33,7 +33,6 @@ class ScenarioSimulationGraphs(Resource):
     """
     /api/project/<project-id>/scenarios/results
     - GET: Run scenarios and returns the graphs
-    - POST: Returns stored graphs with optional which
     """
     method_decorators = [report_exception, login_required]
 
