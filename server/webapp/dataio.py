@@ -295,7 +295,7 @@ def delete_optimization_result(
         calculation_type="optimization"
     )
     for record in records:
-        result = record.hydrate()
+        result = record.load()
         if result.name == result_name:
             db_session.delete(record)
     db_session.commit()
@@ -326,7 +326,7 @@ def load_result_by_optimization(project, optimization):
         calculation_type="optimization")
 
     for result_record in result_records:
-        result = result_record.hydrate()
+        result = result_record.load()
         print ">>> Matching optim result '%s' == '%s'" % (result.name, result_name)
         if result.name == result_name:
             return result
