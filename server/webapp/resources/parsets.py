@@ -481,6 +481,8 @@ class ExportResultsDataAsCsv(Resource):
         args = normalize_obj(request.get_json())
         which = args.get('which')
         result_record = db.session.query(ResultsDb).get(result_id)
+        if result_record is None:
+            return {}
         result = result_record.hydrate()
         return make_mpld3_graph_dict(result, which)
 

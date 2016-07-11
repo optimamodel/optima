@@ -508,28 +508,19 @@ def save_scenario_summaries(project_id, scenario_summaries):
 
 
 def make_scenarios_graphs(project_id):
-    project = load_project(project_id)
-    project.runscenarios()
-    result = project.results[-1]
     db.session\
         .query(ResultsDb)\
         .filter_by(project_id=project_id, calculation_type="scenarios")\
         .delete()
+    db.session.commit()
+    project = load_project(project_id)
+    project.runscenarios()
+    result = project.results[-1]
     record = update_or_create_result_record(
         project_id, result, 'default', 'scenarios')
     db.session.add(record)
     db.session.commit()
     return make_mpld3_graph_dict(result)
-
-
-def load_scenarios_graphs(project_id, which):
-    result_record = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, calculation_type='scenarios').first()
-    if result_record is None:
-        return {}
-    else:
-        result = result_record.hydrate()
-        return make_mpld3_graph_dict(result, which)
 
 
 ############################################
