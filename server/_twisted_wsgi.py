@@ -1,5 +1,4 @@
 import sys
-import os
 
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString

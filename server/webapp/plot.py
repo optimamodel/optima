@@ -28,7 +28,8 @@ def convert_to_mpld3(figure):
 
     figure.set_size_inches(5.5, 2)
 
-    is_stack_plot = False
+    # is_stack_plot = False
+
     if len(figure.axes) == 1:
         ax = figure.axes[0]
         legend = ax.get_legend()
