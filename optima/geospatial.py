@@ -173,8 +173,8 @@ def makesheet():
                 wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].pops[bestindex][col-1][refind])
                 wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].pops[bestindex][col-1][refind])
             col += 2
-            wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].total[bestindex][refind])
-            wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].total[bestindex][refind])
+            wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].tot[bestindex][refind])
+            wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].tot[bestindex][refind])
             col += 1
             wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)))
             wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
@@ -284,12 +284,12 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
             
             # 'Actual' total ratios.
             if rowindex == 1:
-                popratio['total'] = []
-                prevfactors['total'] = []
-                plhivratio['total'] = []
-            popratio['total'].append(wspopsize.cell_value(rowindex, npops+3))
-            prevfactors['total'].append(wsprev.cell_value(rowindex, npops+3))
-            plhivratio['total'].append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
+                popratio['tot'] = []
+                prevfactors['tot'] = []
+                plhivratio['tot'] = []
+            popratio['tot'].append(wspopsize.cell_value(rowindex, npops+3))
+            prevfactors['tot'].append(wsprev.cell_value(rowindex, npops+3))
+            plhivratio['tot'].append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
             
             # Population group ratios.
             for popid in xrange(npops):
@@ -322,11 +322,11 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
     # Important note. Calibration value will be used as the denominator! So ratios can sum to be different from 1.
     # This allows for 'incomplete' subdivisions, e.g. a country into 2 of 3 states.
     popdenom = wspopsize.cell_value(ndistricts+2, npops+3)
-    popratio['total'] = [x/popdenom for x in popratio['total']]
+    popratio['tot'] = [x/popdenom for x in popratio['tot']]
     prevdenom = wsprev.cell_value(ndistricts+2, npops+3)
-    prevfactors['total'] = [x/prevdenom for x in prevfactors['total']]
+    prevfactors['tot'] = [x/prevdenom for x in prevfactors['tot']]
     plhivdenom = wspopsize.cell_value(ndistricts+2, npops+3)*wsprev.cell_value(ndistricts+2, npops+3)
-    plhivratio['total'] = [x/plhivdenom for x in plhivratio['total']]        
+    plhivratio['tot'] = [x/plhivdenom for x in plhivratio['tot']]        
     for popid in xrange(npops):
         colindex = popid + 1
         popname = poplist[popid]
@@ -361,28 +361,28 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
                 x[popid] = [z*popratio[popname][c] for z in x[popid]]
             for x in newproject.data['hivprev']:
                 x[popid] = [z*prevfactors[popname][c] for z in x[popid]]
-        newproject.data['numcirc'] = [[y*plhivratio['total'][c] for y in x] for x in newproject.data['numcirc']]
-        newproject.data['numtx'] = [[y*plhivratio['total'][c] for y in x] for x in newproject.data['numtx']]
-        newproject.data['numpmtct'] = [[y*plhivratio['total'][c] for y in x] for x in newproject.data['numpmtct']]
-        newproject.data['numost'] = [[y*plhivratio['total'][c] for y in x] for x in newproject.data['numost']]
+        newproject.data['numcirc'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numcirc']]
+        newproject.data['numtx'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numtx']]
+        newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
+        newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
         
         # Scale calibration.
         for popid in xrange(npops):
             popname = poplist[popid]
             newproject.parsets[-1].pars[bestindex]['popsize'].p[popname][0] *= popratio[popname][c]
             newproject.parsets[-1].pars[bestindex]['initprev'].y[popname] *= prevfactors[popname][c]
-            newproject.parsets[-1].pars[bestindex]['numcirc'].y[popname] *= plhivratio['total'][c]
-        newproject.parsets[-1].pars[bestindex]['numtx'].y['total'] *= plhivratio['total'][c]
-        newproject.parsets[-1].pars[bestindex]['numpmtct'].y['total'] *= plhivratio['total'][c]
-        newproject.parsets[-1].pars[bestindex]['numost'].y['total'] *= plhivratio['total'][c]
+            newproject.parsets[-1].pars[bestindex]['numcirc'].y[popname] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars[bestindex]['numtx'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars[bestindex]['numpmtct'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars[bestindex]['numost'].y['tot'] *= plhivratio['tot'][c]
         
         # Scale programs.
         if len(project.progsets) > 0:
             for progid in newproject.progsets[-1].programs:
                 program = newproject.progsets[-1].programs[progid]
-                program.costcovdata['cost'] = [x*popratio['total'][c] for x in program.costcovdata['cost']]
+                program.costcovdata['cost'] = [x*popratio['tot'][c] for x in program.costcovdata['cost']]
                 if not program.costcovdata['coverage'] == [None]:
-                    program.costcovdata['coverage'] = [x*popratio['total'][c] for x in program.costcovdata['coverage']]
+                    program.costcovdata['coverage'] = [x*popratio['tot'][c] for x in program.costcovdata['coverage']]
             
         ### -----------------------------------------------------------------------------------------
 
@@ -411,15 +411,15 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
     project.runsim(project.parsets[-1].name)
     
     ## 6. Save each project file into the directory
-#        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-total', 'popsize-pops']) 
+#        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
     if checkplots: 
-        plotresults(project.parsets[-1].getresults(), toplot=['popsize-total', 'popsize-pops'])
-        plotresults(project.parsets[-1].getresults(), toplot=['prev-total', 'prev-pops'])
+        plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
+        plotresults(project.parsets[-1].getresults(), toplot=['prev-tot', 'prev-pops'])
     for subproject in projlist:
-#            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-total', 'popsize-pops'])
+#            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
         if checkplots:
-            plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-total', 'popsize-pops'])
-            plotresults(subproject.parsets[-1].getresults(), toplot=['prev-total', 'prev-pops'])
+            plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
+            plotresults(subproject.parsets[-1].getresults(), toplot=['prev-tot', 'prev-pops'])
         saveobj(destination+os.sep+subproject.name+'.prj', subproject)
         
     return None
