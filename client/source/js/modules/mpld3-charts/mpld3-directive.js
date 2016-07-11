@@ -415,7 +415,7 @@ define(
     });
   }
 
-  module.directive('optimaGraphs', function ($http) {
+  module.directive('optimaGraphs', function ($http, toastr) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/mpld3-charts/optima-graphs.html',
@@ -476,6 +476,7 @@ define(
             {which: getSelectors()})
           .success(function (response) {
             scope.graphs = response.graphs;
+            toastr.success('Graphs updated');
           });
         };
 
