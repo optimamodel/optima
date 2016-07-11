@@ -38,7 +38,6 @@ from server.webapp.parse import (
 
 
 import optima as op
-from optima.utils import saves
 
 def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None, authenticate=True):
     from sqlalchemy.orm import defaultload
