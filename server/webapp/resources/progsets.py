@@ -1,18 +1,15 @@
 import uuid
-import pprint
-from pprint import pprint
-from datetime import datetime
-import dateutil
 
-import mpld3
+from pprint import pprint
+
 from flask import current_app, request, helpers
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with, marshal, fields
+from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
     get_progset_summaries, save_progset_summaries, load_project,
-    load_project_record, load_program, load_parset, get_progset_summary,
+    load_project_record, get_progset_summary,
     get_target_popsizes, load_parameters_from_progset_parset,
     get_progset_from_project, get_progset_summary, get_parset_from_project,
     parse_outcomes_from_progset, get_program_from_progset, save_program_summary,
@@ -21,7 +18,7 @@ from server.webapp.dataio import (
 from server.webapp.dbconn import db
 from server.webapp.exceptions import (ProgsetDoesNotExist)
 from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
-from server.webapp.utils import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
+from server.webapp.utils import Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
 
 
 progset_parser = RequestParser()
@@ -68,22 +65,11 @@ class Progsets(Resource):
 
 class Progset(Resource):
     """
-    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
-
-    Download progset - is this ever used?
-
     PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
 
     Update existing progset
     """
     method_decorators = [report_exception, login_required]
-
-    @swagger.operation(description='Download progset with the given id.')
-    def get(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = load_progset_record(project_id, progset_id)
-        progset_entry.get_extra_data()
-        return progset_entry
 
     @swagger.operation(description='Update progset with the given id.')
     def put(self, project_id, progset_id):

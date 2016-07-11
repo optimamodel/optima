@@ -1,22 +1,21 @@
 import uuid
 import os
-from datetime import datetime
 import pprint
 import json
 
-import dateutil
 from flask import current_app, helpers, request
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with, fields
+from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_result,
+    load_project_record, TEMPLATEDIR, upload_dir_user, load_result,
+    update_or_create_result_record, delete_result, load_result_by_id,
     load_project, load_parset, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ResultsDb
-from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
+from server.webapp.exceptions import ParsetAlreadyExists
 from server.webapp.parse import get_parameters_from_parset, put_parameters_in_parset
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser, normalize_obj
@@ -47,8 +46,8 @@ class Parsets(Resource):
     @swagger.operation(description='Download all parsets for project')
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
-        project_entry = load_project_record(project_id)
-        project = project_entry.load()
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
         return {"parsets": load_parset_list(project)}
 
@@ -60,8 +59,8 @@ class Parsets(Resource):
         name = args['name']
         parset_id = args.get('parset_id')
 
-        project_entry = load_project_record(project_id)
-        project = project_entry.load()
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
         if name in project.parsets:
             raise ParsetAlreadyExists(project_id, name)
@@ -78,8 +77,8 @@ class Parsets(Resource):
             original_parset = get_parset_from_project(project, parset_id)
             parset_name = original_parset.name
             project.copyparset(orig=parset_name, new=name)
-            project_entry.save_obj(project)
-            db.session.add(project_entry)
+            project_record.save_obj(project)
+            db.session.add(project_record)
 
         db.session.commit()
 
@@ -106,12 +105,12 @@ class ParsetRenameDelete(Resource):
     def delete(self, project_id, parset_id):
 
         current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
-        project_entry = load_project_record(project_id, raise_exception=True)
-        project = project_entry.load()
+        project_record = load_project_record(project_id, raise_exception=True)
+        project = project_record.load()
 
         parset = load_parset(project, parset_id)
         project.parsets.pop(parset.name)
-        project_entry.save_obj(project)
+        project_record.save_obj(project)
 
         # TODO: also delete the corresponding calibration results
         db.session.query(ResultsDb).filter_by(
@@ -195,7 +194,7 @@ class ParsetCalibration(Resource):
             project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
-            result_record = save_result(project, result, parset.name, calculation_type)
+            result_record = update_or_create_result_record(project, result, parset.name, calculation_type)
             db.session.add(result_record)
             db.session.flush()
             db.session.commit()
@@ -207,8 +206,7 @@ class ParsetCalibration(Resource):
         payload = {
             "calibration": {
                 "parset_id": parset_id,
-                "parameters": get_parset_parameters(parset),
-                "graphs": graphs,
+                "parameters": get_parameters_from_parset(parset),
                 "resultId": result.uid,
             }
         }
@@ -272,7 +270,9 @@ class ParsetCalibration(Resource):
 
             print "> Simulating model from uploaded parameters"
             result = project.runsim(simpars=parset.interp())
-            save_result(project_id, result, parset.name, 'calibration')
+            result_record = update_or_create_result_record(project_id, result, parset.name, 'calibration')
+            db.session.add(result_record)
+            db.session.commit()
 
         print "> Generate graphs"
         graphs = make_mpld3_graph_dict(result, which)
@@ -406,8 +406,8 @@ class ParsetUploadDownload(Resource):
         args = file_upload_form_parser.parse_args()
         uploaded_file = args['file']
 
-        project_entry = load_project_record(project_id, raise_exception=True)
-        project = project_entry.load()
+        project_record = load_project_record(project_id, raise_exception=True)
+        project = project_record.load()
 
         parset = op.loadobj(uploaded_file)
         parset.project = project
@@ -418,7 +418,7 @@ class ParsetUploadDownload(Resource):
         result = project.runsim(parset.name)
         current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
 
-        project_entry.save_obj(project)
+        project_record.save_obj(project)
 
         result_record = update_or_create_result_record(project, result, parset.name)
         db.session.add(result_record)
