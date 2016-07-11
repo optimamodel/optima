@@ -1,29 +1,13 @@
-from datetime import datetime
-from pprint import pprint
-
-import dateutil
 import os
-from flask_restful import fields, marshal
+from flask_restful import fields
 from flask_restful_swagger import swagger
 from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import deferred
 
 import optima as op
-from optima import saves
 from server.webapp.dbconn import db, redis
-from server.webapp.exceptions import DuplicateProgram
-from server.webapp.exceptions import ParsetDoesNotExist
-from server.webapp.parse import (
-    parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata,
-    parse_default_program_summaries, parse_outcomes_from_progset, put_outcomes_into_progset, convert_pars_list,
-    convert_program_list)
-from server.webapp.utils import normalize_obj
 from server import serialise
-
-
-def log_var(name, obj):
-    current_app.logger.debug("%s = \n%s\n" % (name, pprint.pformat(obj, indent=2)))
 
 
 @swagger.model
