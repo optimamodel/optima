@@ -65,7 +65,7 @@ from server.webapp.resources.project import (
     ProjectData, ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
     DefaultPopulations)
 from server.webapp.resources.progsets import (
-    Progsets, Progset, ProgsetData, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
+    Progsets, Progset, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
     Parsets, ParsetUploadDownload, ParsetRenameDelete, ParsetCalibration, ParsetAutofit,
     ResultsExportAsCsv)
@@ -102,7 +102,6 @@ api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scena
 
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
-api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
 api.add_resource(ProgsetParameters,
      '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')

@@ -11,9 +11,8 @@ from server.webapp.dataio import (
     get_progset_summaries, save_progset_summaries, load_project, load_project_record,
     get_target_popsizes, load_parameters_from_progset_parset,
     get_progset_from_project, get_progset_summary, get_parset_from_project,
-    parse_outcomes_from_progset, get_program_from_progset, save_program_summary,
-    put_outcomes_into_progset,
-    check_project_exists)
+    get_program_from_progset, save_program_summary, check_project_exists)
+from server.webapp.parse import parse_outcomes_from_progset, put_outcomes_into_progset
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import Json, RequestParser, normalize_obj
 
