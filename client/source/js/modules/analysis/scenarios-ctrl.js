@@ -38,10 +38,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.runScenarios = function () {
+      $scope.graphs = {};
       $http.get(
         '/api/project/' + $scope.project.id + '/scenarios/results')
       .success(function (data) {
-        $scope.graphs = {};
         $scope.graphs = data.graphs;
         console.log($scope.graphs);
       });
