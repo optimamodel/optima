@@ -120,20 +120,20 @@ class ResultsDb(db.Model):
     # When deleting a parset we only delete results of type CALIBRATION
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='SET NULL'))
     calculation_type = db.Column(db.Text)
-    blob = db.Column(db.LargeBinary)
 
-    def __init__(self, parset_id, project_id, calculation_type, blob, id=None):
+    def __init__(self, parset_id, project_id, calculation_type, id=None):
         self.parset_id = parset_id
         self.project_id = project_id
         self.calculation_type = calculation_type
-        self.blob = blob
         if id:
             self.id = id
 
-    def hydrate(self):
-        result = op.loads(self.blob)
-        print ">>>>>>> Hydrate result(%s) '%s'" % (self.calculation_type, result.name)
-        return result
+    def load(self):
+        return serialise.loads(redis.get("result-" + self.id.hex))
+
+    def save_obj(self, obj):
+        redis.set("result-" + self.id.hex, serialise.dumps(obj))
+        print("Saved result-" + self.id.hex)
 
 
 class WorkingProjectDb(db.Model):  # pylint: disable=R0903

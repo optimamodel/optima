@@ -231,14 +231,14 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCUL
     result_record = load_result_record(project_id, parset_id, calculation_type)
     if result_record is None:
         return None
-    return result_record.hydrate()
+    return result_record.load()
 
 
 def load_result_by_id(result_id):
     result_record = db.session.query(ResultsDb).get(result_id)
     if result_record is None:
         return None
-    return result_record.hydrate()
+    return result_record.load()
 
 
 def update_or_create_result_record(
@@ -252,21 +252,20 @@ def update_or_create_result_record(
         db_session = db.session
 
     result_record = db_session.query(ResultsDb).get(result.uid)
-
-    blob = op.saves(result)
     if result_record is not None:
-        result_record.blob = blob
         print ">>> Updating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
     else:
         parset = project.parsets[parset_name]
         result_record = ResultsDb(
             parset_id=parset.uid,
             project_id=project.uid,
-            calculation_type=calculation_type,
-            blob=blob)
+            calculation_type=calculation_type)
         print ">>> Creating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
 
     result_record.id = result.uid
+    result_record.save_obj(result)
+    db_session.add(result_record)
+    db_session.commit()
 
     return result_record
 
