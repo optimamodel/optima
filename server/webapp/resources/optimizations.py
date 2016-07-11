@@ -8,10 +8,8 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record, get_optimization_from_project, get_progset_from_project, get_parset_from_project,
+    load_project_record, get_optimization_from_project, load_result_by_optimization_id,
     get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries)
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import ResultsDb
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj
@@ -62,15 +60,17 @@ class OptimizationCalculation(Resource):
     def post(self, project_id, optimization_id):
 
         from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
-        from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
         maxtime = float(json.loads(request.data).get('maxtime'))
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
         optim = get_optimization_from_project(project, optimization_id)
         parset = project.parsets[optim.parsetname]
 
         calc_state = start_or_report_calculation(
-            project_id, parset.uid, 'optim-' + optimization_name)
+            project_id, parset.uid, 'optim-' + optim.name)
 
         if calc_state['status'] != 'started':
             return calc_state, 208
@@ -87,7 +87,7 @@ class OptimizationCalculation(Resource):
             if covout_errors:
                 error_msg += "Missing: coverage-outcome parameters of:\n"
                 error_msg += pformat(covout_errors, indent=2)
-            shut_down_calculation(project_id, parset_id, 'optimization')
+            shut_down_calculation(project_id, parset.uid, 'optimization')
             raise Exception(error_msg)
 
         objectives = normalize_obj(optim.objectives)
@@ -104,12 +104,18 @@ class OptimizationCalculation(Resource):
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):
         from server.webapp.tasks import check_calculation_status
-        optimization_record = load_optimization_record(optimization_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        optim = get_optimization_from_project(project, optimization_id)
+        parset = project.parsets[optim.parsetname]
+
         print "> Checking calc state"
         calc_state = check_calculation_status(
             project_id,
-            optimization_record.parset_id,
-            'optim-' + optimization_record.name)
+            parset.uid,
+            'optim-' + optim.name)
         print pformat(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
