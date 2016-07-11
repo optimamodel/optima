@@ -8,7 +8,7 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record, get_optimization_from_project, load_result_by_optimization_id,
+    load_project_record, get_optimization_from_project, load_result_by_optimization, load_project,
     get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries)
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
@@ -130,13 +130,15 @@ class OptimizationGraph(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Provides optimization graph for the given project')
-    def post(self, optimization_id):
+    def post(self, project_id, optimization_id):
         args = normalize_obj(json.loads(request.data))
         which = args.get('which')
         if which is not None:
             which = map(str, which)
 
-        result = load_result_by_optimization_id(optimization_id)
+        project = load_project(project_id)
+
+        result = load_result_by_optimization(project, optimization)
         if result is None:
             return {}
         else:

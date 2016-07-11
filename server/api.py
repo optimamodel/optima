@@ -95,7 +95,7 @@ api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
-api.add_resource(OptimizationGraph, '/api/optimizations/<uuid:optimization_id>/graph')
+api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
 
 api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')

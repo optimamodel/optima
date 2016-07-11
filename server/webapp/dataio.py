@@ -1,7 +1,4 @@
-from flask.ext.restful import marshal
-
-__doc__ = """
-
+"""
 dataio.py contains all the functions that fetch and saves optima objects to/from database
 and the file system. These functions abstracts out the data i/o for the web-server
 api calls.
@@ -15,9 +12,6 @@ Parsed data structures should have suffix _summary
 
 
 import os
-from datetime import datetime
-import dateutil
-from pprint import pprint
 from functools import partial
 from uuid import UUID
 
@@ -25,24 +19,21 @@ from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ResultsDb
+from server.webapp.dbmodels import ProjectDb, ResultsDb, WorkingProjectDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
 from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
     parse_default_program_summaries, parse_parameters_of_parset_list, convert_pars_list,
     parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
-    revert_costcovdata, parse_outcomes_from_progset, revert_ccopars, put_outcomes_into_progset,
-    revert_pars_list,
+    revert_costcovdata, revert_ccopars, revert_pars_list,
 )
 
 
 import optima as op
 
 def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None, authenticate=True):
-    from sqlalchemy.orm import defaultload
     from server.webapp.exceptions import ProjectDoesNotExist
-
 
     if not db_session:
         db_session = db.session
@@ -325,21 +316,16 @@ def save_result(
     db_session.commit()
 
 
-def load_optimization_record(optimization_id):
-    return db.session.query(OptimizationsDb).get(optimization_id)
+def load_result_by_optimization(project, optimization):
 
-
-def load_result_by_optimization_id(optimization_id):
-    optimization_record = db.session.query(OptimizationsDb).get(optimization_id)
-    if optimization_record is None:
-        return None
-
-    result_name = "optim-" + optimization_record.name
+    result_name = "optim-" + optimization.name
+    parset_id = project.parsets[optimization.parsetname].uid
 
     result_records = db.session.query(ResultsDb).filter_by(
-        project_id=optimization_record.project_id,
-        parset_id=optimization_record.parset_id,
+        project_id=project.uid,
+        parset_id=parset_id,
         calculation_type="optimization")
+
     for result_record in result_records:
         result = result_record.hydrate()
         print ">>> Matching optim result '%s' == '%s'" % (result.name, result_name)
@@ -791,10 +777,9 @@ def set_values_on_project(project, args):
 
 
 def get_project_summary_from_record(project_record):
-    project_id = project_record.id
     try:
         project = project_record.load()
-    except Exception as e:
+    except:
         raise
         return {
             'id': project_record.id,

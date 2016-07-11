@@ -287,8 +287,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var which = getSelectors();
       console.log('which', which);
       $http.post(
-        '/api/optimizations/' + $scope.state.activeOptimization.id
-          + '/graph',
+          '/api/project/' + $scope.state.activeProject.id + '/optimizations/'
+          + $scope.state.activeOptimization.id + '/graph',
         { which: which})
       .success(function (response) {
         if (response.graphs) {
