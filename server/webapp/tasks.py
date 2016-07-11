@@ -5,16 +5,14 @@ import pprint
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from server.api import app, redis
+from server.api import app
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
-from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import (update_or_create_result_record, load_project_record,
-    update_or_create_parset_record, delete_result, delete_optimization_result)
+from server.webapp.dataio import (
+    update_or_create_result_record, load_project_record, delete_result,
+    delete_optimization_result)
 from server.webapp.utils import normalize_obj
 
-import optima as op
 from celery import Celery
-import optima as op
 
 db = SQLAlchemy(app)
 
@@ -115,6 +113,7 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     print "> Put on celery, a job of '%s'" % work_type
 
     db_session = init_db_session()
+    project_record = load_project_record(project_id)
 
     # if any work_log exists for this project that has started,
     # then this calculation is blocked from starting
@@ -146,7 +145,6 @@ def start_or_report_calculation(project_id, parset_id, work_type):
         work_log_id = work_log_record.id
         calc_state = parse_work_log_record(work_log_record)
 
-        project = project_record.load()
         working_project_record = db_session.query(WorkingProjectDb).get(project_id)
         if working_project_record is None:
             print ">> Create working project"
@@ -163,6 +161,9 @@ def start_or_report_calculation(project_id, parset_id, work_type):
             working_project_record.is_working = True
             working_project_record.work_log_id = work_log_id
         db_session.add(working_project_record)
+
+        project = project_record.load()
+        working_project_record.save_obj(project)
 
     db_session.commit()
     close_db_session(db_session)
@@ -275,7 +276,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
     if result:
 
         print(">> Save autofitted parset '%s'" % parset_name)
-        parset = working_project.parsets[parset_name]
+        parset = project.parsets[parset_name]
 
         project_record = load_project_record(project_id, authenticate=False, db_session=db_session)
         project = project_record.load()
@@ -285,7 +286,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
         delete_result(project_id, parset.uid, 'calibration', db_session=db_session)
         delete_result(project_id, parset.uid, 'autofit', db_session=db_session)
 
-        result_record = save_result(
+        result_record = update_or_create_result_record(
             project, result, parset_name, 'autofit', db_session=db_session)
         db_session.flush()
         db_session.add(result_record)
