@@ -387,12 +387,50 @@ def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
 
 
 
-############################################
+########################################################################
+#
 # Scenario functions
-############################################
+#
+# Data structure of a JSON scenario summary
+#
+# scenario_summary:
+#     id: uuid_string
+#     progset_id: uuid_string -or- null # since parameter scenarios don't have progsets
+#     parset_id: uuid_string
+#     name: string
+#     active: boolean
+#     years: list of number
+#     scenario_type: "parameter", "coverage" or "budget"
+#     ---
+#     pars:
+#     	- name: string
+#     	  for: string -or- [1 string] -or- [2 strings]
+#     	  startyear: number
+#     	  endyear: number
+#     	  startval: number
+#     	  endval: number
+#     	- ...
+#      -or-
+#     budget:
+#     	- program: string
+#     	  values: [number -or- null] # same length as years
+#     	- ...
+#      -or-
+#     coverage:
+#     	- program: string
+#     	  values: [number -or- null] # same length as years
+#     	- ...
+
 
 
 def get_parameters_for_scenarios(project_id):
+    """
+    Returns parameters that can be modified in a scenario:
+        <parsetID>:
+            <parameterShort>:
+                - val: number
+                - label: string
+    """
     parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
     parsets = {str(record.id): record.hydrate() for record in parset_records}
     y_keys = {
@@ -403,41 +441,18 @@ def get_parameters_for_scenarios(project_id):
                     'label': ' - '.join(k) if isinstance(k, tuple) else k
                 }
                 for k in par.y.keys()
-                ]
+            ]
             for par in parset.pars[0].values()
             if hasattr(par, 'y') and par.visible
-            }
-        for id, parset in parsets.iteritems()
         }
+        for id, parset in parsets.iteritems()
+    }
     return y_keys
 
 
 def parse_scenario_summary_from_record(scenario_record):
     """
-
-    Args:
-        scenario_record:
-
-    Returns:
-    {
-        'id': scenario_record.id,
-        'progset_id': scenario_record.progset_id,
-        'scenario_type': scenario_record.scenario_type,
-        'active': scenario_record.active,
-        'name': scenario_record.name,
-        'parset_id': scenario_record.parset_id,
-        'budgets': [
-          {
-            "program": "VMMC",
-            "values": [ null ]
-          },
-          },
-          {
-            "program": "HTC",
-            "values": [ 33333 ]
-          },
-          "years": [ 2020 ],
-    }
+    Returns scenario_summary as defined above
     """
     result = {
         'id': scenario_record.id,
