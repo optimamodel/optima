@@ -38,36 +38,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.runScenarios = function () {
+      $scope.graphs = {};
       $http.get(
         '/api/project/' + $scope.project.id + '/scenarios/results')
-      .success(function (data) {
-        $scope.graphs = data.graphs;
-      });
-    };
-
-    function getSelectors() {
-      if ($scope.graphs) {
-        var selectors = $scope.graphs.selectors;
-        if (selectors) {
-          var which = _.filter(selectors, function(selector) {
-            return selector.checked;
-          })
-          .map(function(selector) {
-            return selector.key;
-          });
-          console.log('which', which)
-          if (which.length > 0) {
-            return which;
-          }
-        }
-      }
-      return null;
-    }
-
-    $scope.updateGraphs = function() {
-      $http.post(
-        '/api/project/' + $scope.project.id + '/scenarios/results',
-        {which: getSelectors()})
       .success(function (data) {
         $scope.graphs = data.graphs;
       });

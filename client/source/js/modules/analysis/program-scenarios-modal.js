@@ -54,7 +54,7 @@ define(['angular'], function(module) {
           do {
             $scope.scenario.name = "Scenario " + i;
             i += 1;
-          } while ($scope.scenarioExists());
+          } while ($scope.checkScenarioExists());
 
         }
 

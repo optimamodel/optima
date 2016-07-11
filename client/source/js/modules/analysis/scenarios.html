@@ -42,16 +42,32 @@
             <td>{{ getParsetName(scenario) }}</td>
             <td>{{ getProgramSetName(scenario) }}</td>
             <td>{{ scenario.scenario_type }}</td>
+
             <td style="white-space: nowrap; width:200px; max-width:200px">
-              <button class="btn" ng-click="openModal(scenario, 'edit', $event)">Edit</button>
-              <button class="btn" ng-click="openModal(scenario, 'copy', $event)">Copy</button>
-              &nbsp; &nbsp; &nbsp;
-              <span class="delete" ng-click="openModal(scenario, 'delete', $event)">X</span>
+                <a class="fa fa-pencil"
+                   ng-click="openModal(scenario, 'edit', $event)">
+                </a>
+                &nbsp;
+                <i class="fa fa-copy"
+                   ng-click="openModal(scenario, 'copy', $event)">
+                </i>
+                &nbsp;
+                <i class="fa fa-times"
+                   ng-click="openModal(scenario, 'delete', $event)">
+                </i>
             </td>
           </tr>
 
           <tr>
             <td colspan="6" class="text-right">
+              <div style="float: left">
+                <button
+                    class="btn"
+                    ng-click="runScenarios()"
+                    ng-disabled="!isRunnable()">
+                  Run scenarios
+                </button>
+              </div>
               <p class="error-hint" style="" ng-show="isMissingProgramSet">
                 Please create a program set to add budget and coverage scenario.
                 <a ui-sref="programs.manageProgramSet">Define/manage program set</a>
@@ -60,38 +76,19 @@
                   class="btn"
                   ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
                   ng-disabled="isMissingProgramSet">
-                Add a budget scenario
+                + budget scenario
               </button>
               <button
                   class="btn"
                   ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
                   ng-disabled="isMissingProgramSet">
-                Add a coverage scenario
+                + coverage scenario
               </button>
               <button
                   class="btn"
                   ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
-                Add a parameter scenario
+                + parameter scenario
               </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td colspan="6" class="text-right">
-              <div style="float:right">
-                <button
-                    class="btn"
-                    ng-click="runScenarios()"
-                    ng-disabled="!isRunnable()">
-                  Run scenarios
-                </button>
-                <button
-                    class="btn"
-                    ng-click="updateGraphs()"
-                    ng-disabled="!graphs">
-                  Update Graphs
-                </button>
-              </div>
             </td>
           </tr>
 

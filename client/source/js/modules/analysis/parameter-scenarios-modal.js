@@ -19,7 +19,7 @@ define(['angular'], function (module) {
         resetEditPar();
       }
 
-      $scope.scenarioExists = function () {
+      $scope.checkScenarioExists = function () {
         var t = $scope.scenario;
         return _.some(scenarios, function (s) { return t.name === s.name && t.id !== s.id; });
       };
@@ -34,7 +34,7 @@ define(['angular'], function (module) {
         do {
           $scope.scenario.name = "Scenario " + i;
           i += 1;
-        } while ($scope.scenarioExists());
+        } while ($scope.checkScenarioExists());
       };
 
       $scope.getParsInScenario = function () {
