@@ -1,4 +1,4 @@
-define(['angular'], function(module) {
+define(['angular', 'underscore'], function(module, _) {
 
   'use strict';
 
@@ -32,11 +32,11 @@ define(['angular'], function(module) {
           }
         }
 
-        $scope.checkScenarioExists = function() {
-          var s = $scope.scenario;
-          return _.some(scenarios, function(s) {
-            return s.name === s.name && s.id !== s.id;
-          });
+        $scope.checkForClashingName = function(scenario) {
+          function hasClash(s) {
+            return s.name == scenario.name && s.id != scenario.id;
+          }
+          return _.some(scenarios, hasClash);
         };
 
         function initNewScenario() {
@@ -54,7 +54,7 @@ define(['angular'], function(module) {
           do {
             $scope.scenario.name = "Scenario " + i;
             i += 1;
-          } while ($scope.checkScenarioExists());
+          } while ($scope.checkForClashingName($scope.scenario));
 
         }
 

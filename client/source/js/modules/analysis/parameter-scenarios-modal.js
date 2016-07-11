@@ -19,9 +19,12 @@ define(['angular'], function (module) {
         resetEditPar();
       }
 
-      $scope.checkScenarioExists = function () {
-        var t = $scope.scenario;
-        return _.some(scenarios, function (s) { return t.name === s.name && t.id !== s.id; });
+      $scope.checkForClashingName = function(scenario) {
+        function hasClash(s) {
+          return s.name == scenario.name && s.id != scenario.id;
+        }
+
+        return _.some(scenarios, hasClash);
       };
 
       var initNewScenario = function() {
@@ -34,7 +37,7 @@ define(['angular'], function (module) {
         do {
           $scope.scenario.name = "Scenario " + i;
           i += 1;
-        } while ($scope.checkScenarioExists());
+        } while ($scope.checkForClashingName(scenario));
       };
 
       $scope.getParsInScenario = function () {
