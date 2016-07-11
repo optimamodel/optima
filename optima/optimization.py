@@ -336,7 +336,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         outcome = 0 # Preallocate objective value
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
-            thisoutcome = results.main['num'+key].total[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
 
         # Output results
@@ -356,7 +356,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         target = odict()
         targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
         for key in objectives['keys']:
-            thisresult = results.main['num'+key].total[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             baseline[key] = float(thisresult[baseind])
             final[key] = float(thisresult[finalind])
             if targetfrac[key] is not None:
