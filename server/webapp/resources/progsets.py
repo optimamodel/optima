@@ -2,23 +2,21 @@ import uuid
 
 from pprint import pprint
 
-from flask import current_app, request, helpers
+from flask import current_app, request
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
-    get_progset_summaries, save_progset_summaries, load_project,
-    load_project_record, get_progset_summary,
+    get_progset_summaries, save_progset_summaries, load_project, load_project_record,
     get_target_popsizes, load_parameters_from_progset_parset,
     get_progset_from_project, get_progset_summary, get_parset_from_project,
     parse_outcomes_from_progset, get_program_from_progset, save_program_summary,
     put_outcomes_into_progset,
     check_project_exists)
 from server.webapp.dbconn import db
-from server.webapp.exceptions import (ProgsetDoesNotExist)
 from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
-from server.webapp.utils import Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
+from server.webapp.utils import Json, RequestParser, normalize_obj
 
 
 progset_parser = RequestParser()
@@ -96,73 +94,6 @@ class Progset(Resource):
 
         project_record.save_obj(project)
         return '', 204
-
-
-class ProgsetData(Resource):
-
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(
-        produces='application/x-gzip',
-        description='Download progset with the given id as Binary.',
-        notes="""
-            if progset exists, returns it
-            if progset does not exist, returns an error.
-        """,
-
-    )
-    def get(self, project_id, progset_id):
-        current_app.logger.debug("GET /api/project/{}/progsets/{}/data".format(project_id, progset_id))
-        progset_entry = load_progset_record(project_id, progset_id)
-
-        loaddir = upload_dir_user(TEMPLATEDIR)
-        if not loaddir:
-            loaddir = TEMPLATEDIR
-
-        filename = progset_entry.as_file(loaddir)
-
-        return helpers.send_from_directory(loaddir, filename)
-
-    @swagger.operation(
-        summary='Uploads data for already created progset',
-        parameters=file_upload_form_parser.swagger_parameters()
-    )
-    @marshal_with(file_resource)
-    def post(self, project_id, progset_id):
-        """
-        Uploads Data file, uses it to update the progrset and program models.
-        Precondition: model should exist.
-        """
-        from server.webapp.parse import get_default_program_summaries
-
-        current_app.logger.debug("POST /api/project/{}/progsets/{}/data".format(project_id, progset_id))
-
-        args = file_upload_form_parser.parse_args()
-        uploaded_file = args['file']
-
-        source_filename = uploaded_file.source_filename
-
-        progset_entry = load_progset_record(project_id, progset_id)
-
-        project_entry = load_project_record(project_id)
-        project = project_entry.hydrate()
-        if project.data != {}:
-            program_list = get_default_program_summaries(project)
-        else:
-            program_list = []
-
-        from optima.utils import loadobj
-        new_progset = loadobj(uploaded_file)
-        progset_entry.restore(new_progset, program_list)
-        db.session.add(progset_entry)
-
-        db.session.commit()
-
-        reply = {
-            'file': source_filename,
-            'result': 'Progset %s is updated' % progset_entry.name,
-        }
-        return reply
 
 
 class ProgsetParameters(Resource):
