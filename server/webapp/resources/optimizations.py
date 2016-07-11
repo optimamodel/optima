@@ -137,6 +137,7 @@ class OptimizationGraph(Resource):
             which = map(str, which)
 
         project = load_project(project_id)
+        optimization = get_optimization_from_project(project, optimization_id)
 
         result = load_result_by_optimization(project, optimization)
         if result is None:
