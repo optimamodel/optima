@@ -81,9 +81,15 @@ class Project(object):
         Don't include the spreadsheet or the results when pickling/serialising;
         these will be fetched and serialised explicitly.
         """
+        # Make a copy of the inner dict...
         d = dict(self.__dict__)
+
         d["spreadsheet"] = None
-        d["results"] = odict()
+        if not d.get("_saveresults", False):
+            d["results"] = odict()
+
+        if "_saveresults" in d:
+            del d["_saveresults"]
         return d
 
 
@@ -332,13 +338,11 @@ class Project(object):
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
         if filename is None: filename = self.name+'.prj'
         self.filename = os.path.abspath(filename) # Store file path
+
         if saveresults:
-            saveobj(filename, self, verbose=verbose)
-        else:
-            tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
-            tmpproject.cleanresults() # Get rid of all results
-            saveobj(filename, tmpproject, verbose=verbose) # Save it to file
-            del tmpproject # Don't need it hanging around any more
+            self._saveresults = True
+
+        saveobj(filename, self, verbose=verbose) # Save it to file
         return None
 
 
