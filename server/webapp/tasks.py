@@ -355,7 +355,7 @@ def run_optimization(
     if result:
         delete_optimization_result(project_id, result.name, db_session)
         result_record = update_or_create_result_record(
-            project_id, result, parset, 'optimization', db_session=db_session)
+            project, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_record)
         db_session.flush()
         work_log_record.result_id = result_record.id
