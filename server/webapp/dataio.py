@@ -243,21 +243,6 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCUL
         return None
     return result_record.hydrate()
 
-def save_result(
-        project, result, parset_name='default',
-        calculation_type=ResultsDb.CALIBRATION_TYPE,
-        db_session=None):
-
-    if not db_session:
-        db_session=db.session
-
-    # find relevant parset for the result
-    print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
-    parsets = project.parsets.values()
-    parset = [item for item in parsets if item.name == parset_name]
-    if parset:
-        parset = parset[0]
-    else:
 
 def load_result_by_id(result_id):
     result_record = db.session.query(ResultsDb).get(result_id)
@@ -737,3 +722,98 @@ def get_default_optimization_summaries(project):
         defaults_by_progset_id[progset_id] = default
 
     return normalize_obj(defaults_by_progset_id)
+
+
+
+def get_populations_from_project(project):
+
+    project_pops = project.data.get("pops")
+
+    populations = []
+    for i in range(len(project_pops['short'])):
+        new_pop = {
+            'name': project_pops['long'][i],
+            'short': project_pops['short'][i],
+            'female': project_pops['female'][i],
+            'male': project_pops['male'][i],
+            'injects': project_pops['injects'][i],
+            'sexworker': project_pops['sexworker'][i],
+            'age_from': int(project_pops['age'][i][0]),
+            'age_to': int(project_pops['age'][i][1])
+            }
+        populations.append(new_pop)
+
+    return populations
+
+
+def set_populations_on_project(project, populations):
+
+    finished_populations = op.odict()
+
+    finished_populations['long'] = []
+    finished_populations['short'] = []
+    finished_populations['female'] = []
+    finished_populations['male'] = []
+    finished_populations['age'] = []
+    finished_populations['injects'] = []
+    finished_populations['sexworker'] = []
+
+    for _pop in populations:
+        pop = dict(_pop)
+        finished_populations['long'].append(pop.pop('name'))
+        finished_populations['short'].append(pop.pop('short'))
+        finished_populations['female'].append(pop.pop('female'))
+        finished_populations['male'].append(pop.pop('male'))
+        finished_populations['age'].append((pop.pop('age_from'),
+                                            pop.pop('age_to')))
+        finished_populations['injects'].append(pop.pop('injects'))
+        finished_populations['sexworker'].append(pop.pop('sexworker'))
+        if pop:
+            assert False, pop
+
+    if project.data.get("pops") != finished_populations:
+        # We need to delete the data here off the project?
+        project.data = {}
+
+    project.data["pops"] = finished_populations
+    project.data["npops"] = len(populations)
+
+
+def set_values_on_project(project, args):
+
+    set_populations_on_project(project, args.get('populations', {}))
+    project.name = args["name"]
+
+    if not project.settings:
+        project.settings = op.Settings()
+
+    project.settings.start = args["datastart"]
+    project.settings.end = args["dataend"]
+
+
+def get_project_summary_from_record(project_record):
+    project_id = project_record.id
+    try:
+        project = project_record.load()
+    except Exception as e:
+        raise
+        return {
+            'id': project_record.id,
+            'name': "Failed loading"
+            }
+
+    result = {
+        'id': project_record.id,
+        'name': project.name,
+        'user_id': project_record.user_id,
+        'dataStart': project.data.get('years', ["<no data>"])[0],
+        'dataEnd': project.data.get('years', ["<no data>"])[-1],
+        'populations': get_populations_from_project(project),
+        'nProgram': 0,
+        'creation_time': project.created,
+        'updated_time': project.modified,
+        'data_upload_time': project.spreadsheetdate,
+        'has_data': project.data != {},
+        'has_econ': "econ" in project.data
+    }
+    return result

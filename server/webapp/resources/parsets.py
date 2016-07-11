@@ -201,11 +201,7 @@ class ParsetCalibration(Resource):
             db.session.commit()
         else:
             print "> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
-        else:
-            print "> Runsim for new calibration results and store"
-            project = load_project(project_id, autofit=autofit)
-            result = project.runsim(simpars=parset.interp())
-            save_result(project_id, result, parset.name, calculation_type)
+
 
         print "> Generating graphs"
         payload = {
