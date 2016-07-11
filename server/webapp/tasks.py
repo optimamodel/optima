@@ -239,7 +239,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
     work_log_id = working_project_record.work_log_id
     work_log = db_session.query(WorkLogDb).get(work_log_id)
 
-    project = working_project_record.loads()
+    project = working_project_record.load()
 
     close_db_session(db_session)
 
@@ -316,7 +316,7 @@ def run_optimization(
     work_log = db_session.query(WorkLogDb).get(work_log_id)
     close_db_session(db_session)
 
-    project = working_project_record.loads()
+    project = working_project_record.load()
 
     if not objectives['budget']:
         objectives['budget'] = 1000000
