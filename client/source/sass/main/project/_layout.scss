@@ -1,9 +1,9 @@
 .layout {
-  $footer-height: 30px;
-  $header-height: 113px;
+  /*$footer-height: 30px;*/
+  $header-height: 86px;
 
   height: 100%;
-  padding-bottom: $footer-height;
+  /*padding-bottom: $footer-height;*/
   padding-top: $header-height;
   margin-top: -$header-height;
 
@@ -14,12 +14,12 @@
 
   &_cnt {
     padding: 22px 30px;
-    padding-bottom: 40px;
+    /*padding-bottom: 40px;*/
   }
 
-  &_footer {
-    margin-top: -$footer-height;
-  }
+  /*&_footer {*/
+    /*margin-top: -$footer-height;*/
+  /*}*/
 }
 
 .flex__medium_space_between {
