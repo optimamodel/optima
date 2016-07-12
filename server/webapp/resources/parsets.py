@@ -11,7 +11,7 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_result,
+    load_project_record, TEMPLATEDIR, upload_dir_user, update_or_create_result_record, load_result,
     load_project, load_result_record, load_parset_record, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
@@ -69,7 +69,7 @@ class Parsets(Resource):
             result = project.runsim(name)
             project_record.restore(project)
             db.session.add(project_record)
-            result_record = save_result(project_id, result, name)
+            result_record = update_or_create_result_record(project_id, result, name)
             db.session.add(result_record)
         else:
             # COPY parset of parset_id to name
@@ -211,7 +211,7 @@ class ParsetsCalibration(Resource):
             project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
-            result_record = save_result(project_id, result, parset.name, calculation_type)
+            result_record = update_or_create_result_record(project_id, result, parset.name, calculation_type)
             db.session.add(result_record)
             db.session.flush()
             db.session.commit()
@@ -263,7 +263,7 @@ class ParsetsCalibration(Resource):
             parset_record.pars = op.saves(parset.pars)
             parset_record.updated = datetime.now(dateutil.tz.tzutc())
             db.session.add(parset_record)
-            result_record = save_result(project_id, result, parset.name, calculation_type)
+            result_record = update_or_create_result_record(project_id, result, parset.name, calculation_type)
         elif autofit:
             result_record = load_result_record(project_id, parset_id, calculation_type)
             result = result_record.hydrate()
@@ -272,7 +272,7 @@ class ParsetsCalibration(Resource):
                 which.insert(0, 'improvement')
         else:
             print "> Saving temporary calibration graphs", result.uid
-            result_record = save_result(project_id, result, parset.name, "temp-" + calculation_type)
+            result_record = update_or_create_result_record(project_id, result, parset.name, "temp-" + calculation_type)
         db.session.add(result_record)
         db.session.commit()
 
@@ -438,7 +438,7 @@ class ParsetsData(Resource):
         db.session.add(project_entry)  # todo: do we need to log that project was updated?
         db.session.flush()
 
-        result_record = save_result(project_entry.id, result, parset_entry.name)
+        result_record = update_or_create_result_record(project_entry.id, result, parset_entry.name)
         db.session.add(result_record)
 
         db.session.commit()
