@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-import simplejson as json
-
+import ast
 import optima
 import numpy
 import datetime
@@ -89,9 +88,7 @@ def dumps(obj):
     schema = default(obj)
     new_registry = {x[0]:x[1] for x in obj_registry.values()}
 
-    dumped = json.dumps({
-        "registry": new_registry,
-        "schema": schema}, ensure_ascii=False, separators=(',',':'))
+    dumped = repr({"registry": new_registry, "schema": schema})
 
     print("Serialised:", "\n".join(saved_types))
 
@@ -101,7 +98,7 @@ def dumps(obj):
 
 def loads(input):
 
-    a = json.loads(zlib.decompress(input))
+    a = ast.literal_eval(zlib.decompress(input))
 
     registry = a["registry"]
     schema = a["schema"]
