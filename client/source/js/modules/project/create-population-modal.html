@@ -8,7 +8,7 @@
       </div>
       <div class="8 1++">
         <input class="txbox __block" ng-model="population.name" required autofocus>
-        <div class="error-hint" ng-show="populationExists('name')"> Population with this name already exists, please choose a different name. </div>
+        <div class="error-hint" ng-show="doesPopulationAttrClash('name')"> Population with this name already exists, please choose a different name. </div>
       </div>
     </div>
 
@@ -18,7 +18,7 @@
       </div>
       <div class="5 4++">
         <input class="txbox __block" ng-model="population.short" required>
-        <div class="error-hint" ng-show="populationExists('short')"> Population with this short name already exists, please choose a different short name. </div>
+        <div class="error-hint" ng-show="doesPopulationAttrClash('short')"> Population with this short name already exists, please choose a different short name. </div>
       </div>
     </div>
 

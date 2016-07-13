@@ -16,7 +16,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.state = {maxtime: '10'};
 
     // Check if current active project has spreadsheet uploaded for it.
-    if (!activeProjectInfo.has_data) {
+    if (!activeProjectInfo.hasData) {
       modalService.inform(
         function (){ },
         'Okay',

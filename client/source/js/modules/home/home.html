@@ -43,13 +43,13 @@
             {{ ::project.dataEnd }}
           </td>
           <td>
-            {{ ::project.creation_time | date:'yyyy-MM-dd HH:mm:ss'}}
+            {{ ::project.creationTime | date:'yyyy-MM-dd HH:mm:ss'}}
           </td>
           <td>
-            {{ ::project.updated_time ? (project.updated_time | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}
+            {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}
           </td>
           <td>
-            {{ project.data_upload_time ? (project.data_upload_time | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
+            {{ project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
           </td>
         </tr>
       </tbody>

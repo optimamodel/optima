@@ -40,7 +40,7 @@ define(['./../module', 'underscore'], function (module, _) {
       vm.yearSelector = _.map(years, function(y) { return {'label': y, 'value': y} });
 
       // Stop here if spreadsheet has not been uploaded
-      if (!vm.openProject.has_data) {
+      if (!vm.openProject.hasData) {
         modalService.inform(
           function () { },
           'Okay',

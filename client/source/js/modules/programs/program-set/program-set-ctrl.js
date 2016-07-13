@@ -9,7 +9,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     var parameters;
 
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
-    if (!openProject.has_data) {
+    if (!openProject.hasData) {
       modalService.inform(
         function (){ },
         'Okay',

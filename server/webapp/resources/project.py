@@ -1,31 +1,30 @@
 import os
 from datetime import datetime
-import dateutil
+import json
 
+import dateutil
 from flask import current_app, helpers, request, Response
 from flask.ext.login import current_user, login_required
 from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
-
 from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
 
 import optima as op
-
+from server.webapp.dataio import (
+    get_populations_from_project, set_populations_on_project, set_project_summary_on_project,
+    get_project_summary_from_project_record,
+    load_project_record, load_project, update_or_create_result_record,
+    get_project_parameters, load_project_program_summaries, save_project_with_new_uids)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
-from server.webapp.utils import (
-    secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
-    templatepath, upload_dir_user)
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.parse import get_default_populations
 from server.webapp.resources.common import (
     file_resource, file_upload_form_parser, report_exception, verify_admin_request)
-from server.webapp.dataio import (
-    get_populations_from_project, set_populations_on_project, set_values_on_project,
-    get_project_summary_from_record,
-    load_project_record, load_project, update_or_create_result_record,
-    get_project_parameters, load_project_program_summaries)
+from server.webapp.utils import (
+    secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
+    templatepath, upload_dir_user)
 
 
 class ProjectBase(Resource):
@@ -36,7 +35,7 @@ class ProjectBase(Resource):
 
     def get(self):
         project_records = self.get_query().all()
-        return {'projects': map(get_project_summary_from_record, project_records)}
+        return {'projects': map(get_project_summary_from_project_record, project_records)}
 
 
 population_parser = RequestParser()
@@ -54,8 +53,8 @@ population_parser.add_arguments({
 project_parser = RequestParser()
 project_parser.add_arguments({
     'name': {'required': True, 'type': str},
-    'datastart': {'type': int, 'default': op.default_datastart},
-    'dataend': {'type': int, 'default': op.default_dataend},
+    'dataStart': {'type': int, 'default': op.default_datastart},
+    'dataEnd': {'type': int, 'default': op.default_dataend},
     # FIXME: programs should be a "SubParser" with its own Parser
     # 'populations': {'type': (population_parser), 'required': True},
     'populations': {'type': dict, 'required': True, 'action': 'append'},
@@ -67,8 +66,8 @@ project_update_parser.add_arguments({
     'name': {'type': str},
     'populations': {'type': dict, 'action': 'append'},
     'canUpdate': {'type': bool, 'default': False},
-    'datastart': {'type': int, 'default': None},
-    'dataend': {'type': int, 'default': None}
+    'dataStart': {'type': int, 'default': None},
+    'dataEnd': {'type': int, 'default': None}
 })
 
 
@@ -154,7 +153,7 @@ class Projects(ProjectBase):
         db.session.commit()
 
         project.uid = project_entry.id
-        project.data["years"] = (args['datastart'], args['dataend'])
+        project.data["years"] = (args['dataStart'], args['dataEnd'])
 
         project_entry.save_obj(project)
 
@@ -163,8 +162,8 @@ class Projects(ProjectBase):
         op.makespreadsheet(
             path,
             pops=args['populations'],
-            datastart=args['datastart'],
-            dataend=args['dataend'])
+            datastart=args['dataStart'],
+            dataend=args['dataEnd'])
 
         current_app.logger.debug(
             "new_project_template: %s" % new_project_template)
@@ -185,32 +184,11 @@ class Projects(ProjectBase):
     )
     @report_exception
     def delete(self):
-        # dirty hack in case the wsgi layer didn't put json data where it belongs
-        from flask import request
-        import json
-
-        class FakeRequest:
-            def __init__(self, data):
-                self.json = json.loads(data)
-
-        try:
-            req = FakeRequest(request.data)
-        except ValueError:
-            req = request
-        # end of dirty hack
-
-        args = bulk_project_parser.parse_args(req=req)
-
-        projects = [
-            load_project_record(id, raise_exception=True)
-            for id in args['projects']
-            ]
-
-        for project in projects:
-            project.delete()
-
+        project_ids = json.loads(request.data)['projects']
+        for project_id in project_ids:
+            record = load_project_record(project_id, raise_exception=True)
+            record.recursive_delete()
         db.session.commit()
-
         return '', 204
 
 
@@ -235,7 +213,7 @@ class Project(Resource):
                         str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
 
-        return get_project_summary_from_record(project_entry)
+        return get_project_summary_from_project_record(project_entry)
 
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -267,7 +245,7 @@ class Project(Resource):
             raise ProjectDoesNotExist(id=project_id)
 
         project = project_entry.load()
-        set_values_on_project(project, args)
+        set_project_summary_on_project(project, args)
 
         current_app.logger.debug(
             "Editing project %s by user %s:%s" % (
@@ -287,8 +265,8 @@ class Project(Resource):
         op.makespreadsheet(
             path,
             pops=args['populations'],
-            datastart=args["datastart"],
-            dataend=args["dataend"])
+            datastart=args["dataStart"],
+            dataend=args["dataEnd"])
 
 
         current_app.logger.debug(
@@ -693,59 +671,27 @@ project_upload_form_parser.add_arguments({
 
 class ProjectFromData(Resource):
     """
-    Import of a new project from pickled format.
+    /api/project/data
+    - POST: upload a .PRJ file which is a project in python-pickled format    Import of a new project from pickled format.
     """
     method_decorators = [report_exception, login_required]
 
     @report_exception
     def post(self):
-        user_id = current_user.id
-
         args = project_upload_form_parser.parse_args()
         uploaded_file = args['file']
         project_name = args['name']
 
-        source_filename = uploaded_file.source_filename
-
+        print "> Upload project '%s'" % args['name']
         project = op.loadobj(uploaded_file)
         project.name = project_name
-
-        project.uid = op.uuid()
-        for parset in project.parsets.values():
-            parset.uid = op.uuid()
-        for result in project.results.values():
-            result.uid = op.uuid()
-
-        print(">>>> Process project upload")
-
-        project_record = ProjectDb(user_id)
-
-        # New project ID needs to be generated before calling restore
-        db.session.add(project_record)
-        db.session.flush()
-
-        project.uid = project_record.id
-
-        result = None
-        if project.data:
-            assert (project.parsets)
-            result = project.runsim()
-
-            print('>>>> Runsim for project: "%s"' % (project_name))
-
-        project_record.save_obj(project)
-        db.session.flush()
-
-        if result is not None:
-            result_record = update_or_create_result_record(project, result)
-            db.session.add(result_record)
-
-        db.session.commit()
+        save_project_with_new_uids(project, current_user.id)
+        print "> Upload end"
 
         response = {
-            'file': source_filename,
+            'file': uploaded_file.source_filename,
             'name': project_name,
-            'id': str(project_record.id)
+            'id': str(project.uid)
         }
         return response, 201
 

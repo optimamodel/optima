@@ -63,36 +63,6 @@ def load_project_record(project_id, all_data=False, raise_exception=False, db_se
     return project_record
 
 
-def check_project_exists(project_id):
-    project_record = load_project_record(project_id)
-    if project_record is None:
-        raise ProjectDoesNotExist(id=project_id)
-
-
-def _load_project_child(
-        project_id, record_id, record_class, exception_class, raise_exception=True):
-    cu = current_user
-
-    record = db.session.query(record_class).get(record_id)
-    if record is None:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    if record.project_id != project_id:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    if not cu.is_admin and record.project.user_id != cu.id:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    print ">>> Fetching record '%s' of '%s'" % (record.name, repr(record_class))
-
-    return record
-
 def save_data_spreadsheet(name, folder=None):
     if folder is None:
         folder = current_app.config['UPLOAD_FOLDER']
@@ -519,9 +489,6 @@ def get_progset_summary(progset):
     return progset_summary
 
 def get_progset_summaries(project):
-    """
-
-    """
     progset_summaries = map(get_progset_summary, project.progsets.values())
     return {'progsets': normalize_obj(progset_summaries)}
 
@@ -625,7 +592,6 @@ def get_optimization_summaries(project):
 
         optimizations.append(optim)
 
-
     return optimizations
 
 
@@ -708,95 +674,116 @@ def get_default_optimization_summaries(project):
     return normalize_obj(defaults_by_progset_id)
 
 
-
 def get_populations_from_project(project):
-
-    project_pops = project.data.get("pops")
-
+    data_pops = normalize_obj(project.data.get("pops"))
     populations = []
-    for i in range(len(project_pops['short'])):
-        new_pop = {
-            'name': project_pops['long'][i],
-            'short': project_pops['short'][i],
-            'female': project_pops['female'][i],
-            'male': project_pops['male'][i],
-            'injects': project_pops['injects'][i],
-            'sexworker': project_pops['sexworker'][i],
-            'age_from': int(project_pops['age'][i][0]),
-            'age_to': int(project_pops['age'][i][1])
-            }
-        populations.append(new_pop)
-
+    for i in range(len(data_pops['short'])):
+        population = {
+            'short': data_pops['short'][i],
+            'name': data_pops['long'][i],
+            'male': bool(data_pops['male'][i]),
+            'female': bool(data_pops['female'][i]),
+            'age_from': int(data_pops['age'][i][0]),
+            'age_to': int(data_pops['age'][i][1]),
+            'injects': bool(data_pops['injects'][i]),
+            'sexworker': bool(data_pops['sexworker'][i]),
+        }
+        populations.append(population)
     return populations
 
 
 def set_populations_on_project(project, populations):
+    """
+    <odist>
+     - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
+     - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
+     - male: [0, 1, 1, 1, 1, 0]
+     - female: [1, 0, 0, 0, 0, 1]
+     - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
+     - injects: [0, 0, 0, 1, 0, 0]
+     - sexworker: [1, 0, 0, 0, 0, 0]
+    """
+    data_pops = op.odict()
 
-    finished_populations = op.odict()
+    for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
+        data_pops[key] = []
 
-    finished_populations['long'] = []
-    finished_populations['short'] = []
-    finished_populations['female'] = []
-    finished_populations['male'] = []
-    finished_populations['age'] = []
-    finished_populations['injects'] = []
-    finished_populations['sexworker'] = []
+    for pop in populations:
+        data_pops['short'].append(pop['short'])
+        data_pops['long'].append(pop['name'])
+        data_pops['male'].append(int(pop['male']))
+        data_pops['female'].append(int(pop['female']))
+        data_pops['age'].append((int(pop['age_from']), int(pop['age_to'])))
+        data_pops['injects'].append(int(pop['injects']))
+        data_pops['sexworker'].append(int(pop['sexworker']))
 
-    for _pop in populations:
-        pop = dict(_pop)
-        finished_populations['long'].append(pop.pop('name'))
-        finished_populations['short'].append(pop.pop('short'))
-        finished_populations['female'].append(pop.pop('female'))
-        finished_populations['male'].append(pop.pop('male'))
-        finished_populations['age'].append((pop.pop('age_from'),
-                                            pop.pop('age_to')))
-        finished_populations['injects'].append(pop.pop('injects'))
-        finished_populations['sexworker'].append(pop.pop('sexworker'))
-        if pop:
-            assert False, pop
-
-    if project.data.get("pops") != finished_populations:
+    if project.data.get("pops") != data_pops:
         # We need to delete the data here off the project?
         project.data = {}
 
-    project.data["pops"] = finished_populations
+    project.data["pops"] = data_pops
+
     project.data["npops"] = len(populations)
 
 
-def set_values_on_project(project, args):
+def set_project_summary_on_project(project, summary):
 
-    set_populations_on_project(project, args.get('populations', {}))
-    project.name = args["name"]
+    set_populations_on_project(project, summary.get('populations', {}))
+    project.name = summary["name"]
 
     if not project.settings:
         project.settings = op.Settings()
 
-    project.settings.start = args["datastart"]
-    project.settings.end = args["dataend"]
+    project.settings.start = summary["dataStart"]
+    project.settings.end = summary["dataEnd"]
 
 
-def get_project_summary_from_record(project_record):
+def get_project_summary_from_project_record(project_record):
     try:
         project = project_record.load()
     except:
-        raise
         return {
             'id': project_record.id,
             'name': "Failed loading"
-            }
-
+        }
+    years = project.data.get('years')
+    if years:
+        data_start = years[0]
+        data_end = years[-1]
+    else:
+        data_start = project.settings.start
+        data_end = project.settings.end
     result = {
         'id': project_record.id,
         'name': project.name,
-        'user_id': project_record.user_id,
-        'dataStart': project.data.get('years', ["<no data>"])[0],
-        'dataEnd': project.data.get('years', ["<no data>"])[-1],
+        'userId': project_record.user_id,
+        'dataStart': data_start,
+        'dataEnd': data_end,
         'populations': get_populations_from_project(project),
         'nProgram': 0,
-        'creation_time': project.created,
-        'updated_time': project.modified,
-        'data_upload_time': project.spreadsheetdate,
-        'has_data': project.data != {},
-        'has_econ': "econ" in project.data
+        'creationTime': project.created,
+        'updatedTime': project.modified,
+        'dataUploadTime': project.spreadsheetdate,
+        'hasData': project.data != {},
+        'hasEcon': "econ" in project.data
     }
     return result
+
+
+def save_project_with_new_uids(project, user_id):
+    project_record = ProjectDb(user_id)
+    db.session.add(project_record)
+    db.session.flush()
+
+    project.uid = project_record.id
+
+    # TODO: these need to double-checked for consistency
+    for parset in project.parsets.values():
+        parset.uid = op.uuid()
+    for result in project.results.values():
+        result.uid = op.uuid()
+
+    project_record.save_obj(project)
+    db.session.flush()
+
+    db.session.commit()

@@ -19,14 +19,14 @@
     <div class="section">
       <div class="3">
         <b>First year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.dataStart" required>
         <div class="error-hint" ng-show="invalidDataStart()"> Please enter a first year from 1900 to 2100 </div>
       </div>
     </div>
     <div class="section">
       <div class="3">
          <b>Final year for data entry</b>
-         <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.dataend" required>
+         <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.dataEnd" required>
          <div class="error-hint" ng-show="invalidDataEnd()"> Please enter a final year from 1900 to 2100, greater than the first year </div>
       </div>
     </div>
@@ -73,7 +73,7 @@
     </div>
 
     <div class="section">
-      <button class="btn __green" type="submit">{{ submit }}</button>
+      <button class="btn __green" type="submit">{{ submitButtonText }}</button>
     </div>
 
     <input type="hidden" id="edit_params" name="edit_params" value = "{{ editParams }}">

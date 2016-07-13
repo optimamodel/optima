@@ -65,7 +65,6 @@ class ProjectDb(db.Model):
     user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
     results = db.relationship('ResultsDb', backref='project')
 
-
     def __init__(self, user_id):
         self.user_id = user_id
 
@@ -77,12 +76,13 @@ class ProjectDb(db.Model):
         redis.set(self.id.hex, serialise.dumps(obj))
         print("Saved " + self.id.hex)
 
+
     def as_file(self, loaddir, filename=None):
         filename = os.path.join(loaddir, self.id.hex + ".prj")
         op.saveobj(filename, self.load())
         return self.id.hex + ".prj"
-    def recursive_delete(self, synchronize_session=False):
 
+    def recursive_delete(self, synchronize_session=False):
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
         db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)

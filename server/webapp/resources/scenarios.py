@@ -4,7 +4,7 @@ from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
-    load_project_record, check_project_exists, get_scenario_summaries,
+    load_project_record, get_scenario_summaries,
     save_scenario_summaries, get_parset_keys_with_y_values)
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
@@ -21,8 +21,6 @@ class Scenarios(Resource):
 
     @swagger.operation()
     def get(self, project_id):
-        check_project_exists(project_id)
-
         project_record = load_project_record(project_id)
         project = project_record.load()
 

@@ -9,9 +9,9 @@ define(['./module', 'underscore'], function (module) {
       console.log(project);
       if (project && project.data) {
         $scope.project = project.data;
-        $scope.project.creation_time = Date.parse($scope.project.creation_time);
-        $scope.project.updated_time = Date.parse($scope.project.updated_time);
-        $scope.project.data_upload_time = Date.parse($scope.project.data_upload_time);
+        $scope.project.creationTime = Date.parse($scope.project.creationTime);
+        $scope.project.updatedTime = Date.parse($scope.project.updatedTime);
+        $scope.project.dataUploadTime = Date.parse($scope.project.dataUploadTime);
       }
     };
 
