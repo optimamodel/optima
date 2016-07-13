@@ -6,7 +6,7 @@ from optima import OptimaException, dcp, today, odict, printv, findinds, runmode
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
     def __init__(self, name=None, parsetname=None, t=None, active=True):
-        self.uuid = uuid()
+        self.uid = uuid()
         self.name = name
         self.parsetname = parsetname
         self.t = t
