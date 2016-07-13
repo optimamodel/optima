@@ -35,7 +35,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     usecascade   = settings.usecascade # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin # Maximum fraction of people to move on a single timestep
     eps          = settings.eps # Define another small number to avoid divide-by-zero errors
-    if not(hasattr(settings,'forcsepopsize')): settings.forcepopsize = True # WARNING TEMP, for legacy support
+    if not(hasattr(settings,'forcepopsize')): settings.forcepopsize = True # WARNING TEMP, for legacy support
     forcepopsize = settings.forcepopsize # Whether or not to force the population size to match the parameters
 		
     if verbose is None: verbose = settings.verbose # Verbosity of output
