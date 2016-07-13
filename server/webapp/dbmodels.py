@@ -73,7 +73,13 @@ class ProjectDb(db.Model):
         return serialise.loads(redis_entry)
 
     def save_obj(self, obj):
-        redis.set(self.id.hex, serialise.dumps(obj))
+
+        # Copy the project, only save what we want...
+        new_project = dcp(obj)
+        new_project.spreadsheet = None
+        new_project.results = op.odict()
+
+        redis.set(self.id.hex, serialise.dumps(new_project))
         print("Saved " + self.id.hex)
 
 
