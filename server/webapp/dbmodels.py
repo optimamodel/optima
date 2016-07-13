@@ -85,7 +85,7 @@ class ProjectDb(db.Model):
 
     def as_file(self, loaddir, filename=None):
         filename = os.path.join(loaddir, self.id.hex + ".prj")
-        op.saveobj(filename, self.load())
+        op.savedbobj(filename, self.load())
         return self.id.hex + ".prj"
 
     def recursive_delete(self, synchronize_session=False):
