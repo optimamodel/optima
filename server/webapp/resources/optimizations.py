@@ -1,3 +1,4 @@
+import json
 from pprint import pformat
 
 from flask import request
@@ -7,9 +8,8 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
+    load_project_record, get_optimization_from_project, load_result_by_optimization, load_project,
     get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries)
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj
@@ -25,15 +25,26 @@ class Optimizations(Resource):
     method_decorators = [report_exception, login_required]
 
     def get(self, project_id):
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
         return {
-            'optimizations': get_optimization_summaries(project_id),
-            'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project_id)
+            'optimizations': get_optimization_summaries(project),
+            'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project)
         }
 
     def post(self, project_id):
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
         optimization_summaries = normalize_obj(request.get_json(force=True))
-        save_optimization_summaries(project_id, optimization_summaries)
-        return {'optimizations': get_optimization_summaries(project_id)}
+        save_optimization_summaries(project, optimization_summaries)
+
+        project_record.save_obj(project)
+
+        return {'optimizations': get_optimization_summaries(project)}
 
 
 class OptimizationCalculation(Resource):
@@ -48,26 +59,23 @@ class OptimizationCalculation(Resource):
     @swagger.operation(summary='Launch optimization calculation')
     def post(self, project_id, optimization_id):
 
-        from server.webapp.tasks import run_optimization, start_or_report_calculation
-        from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
+        from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
 
-        optimization_record = OptimizationsDb.query.get(optimization_id)
-        optimization_name = optimization_record.name
-        parset_id = optimization_record.parset_id
+        maxtime = float(json.loads(request.data).get('maxtime'))
 
-        calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
-        if not calc_state['can_start']:
-            calc_state['status'] = 'running'
+        optim = get_optimization_from_project(project, optimization_id)
+        parset = project.parsets[optim.parsetname]
+
+        calc_state = start_or_report_calculation(
+            project_id, parset.uid, 'optim-' + optim.name)
+
+        if calc_state['status'] != 'started':
             return calc_state, 208
 
-        parset_entry = ParsetsDb.query.get(parset_id)
-        parset_name = parset_entry.name
-
-        progset_id = optimization_record.progset_id
-        progset_entry = ProgsetsDb.query.get(progset_id)
-        progset = progset_entry.hydrate()
-        progset_name = progset_entry.name
+        progset = project.progsets[optim.progsetname]
 
         if not progset.readytooptimize():
             error_msg = "Not ready to optimize\n"
@@ -79,44 +87,60 @@ class OptimizationCalculation(Resource):
             if covout_errors:
                 error_msg += "Missing: coverage-outcome parameters of:\n"
                 error_msg += pformat(covout_errors, indent=2)
+            shut_down_calculation(project_id, parset.uid, 'optimization')
             raise Exception(error_msg)
 
-        objectives = normalize_obj(optimization_record.objectives)
-        constraints = normalize_obj(optimization_record.constraints)
+        objectives = normalize_obj(optim.objectives)
+        constraints = normalize_obj(optim.constraints)
         constraints["max"] = op.odict(constraints["max"])
         constraints["min"] = op.odict(constraints["min"])
         constraints["name"] = op.odict(constraints["name"])
 
         run_optimization.delay(
-            project_id, optimization_name, parset_name, progset_name, objectives, constraints)
-
-        calc_state['status'] = 'started'
+            project_id, optim.name, parset.name, progset.name, objectives, constraints, maxtime)
 
         return calc_state, 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):
         from server.webapp.tasks import check_calculation_status
-        calc_state = check_calculation_status(project_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        optim = get_optimization_from_project(project, optimization_id)
+        parset = project.parsets[optim.parsetname]
+
+        print "> Checking calc state"
+        calc_state = check_calculation_status(
+            project_id,
+            parset.uid,
+            'optim-' + optim.name)
+        print pformat(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
         return calc_state
 
 
-
 class OptimizationGraph(Resource):
     """
     /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph
-    - GET: gets the mpld3 graphs for the optimizations
+    - POST: gets the mpld3 graphs for the optimizations
     """
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Provides optimization graph for the given project')
-    def get(self, project_id, optimization_id):
-        result_entry = db.session.query(ResultsDb)\
-            .filter_by(project_id=project_id, calculation_type='optimization')\
-            .first()
-        if not result_entry:
-            return {"result_id": None}
+    def post(self, project_id, optimization_id):
+        args = normalize_obj(json.loads(request.data))
+        which = args.get('which')
+        if which is not None:
+            which = map(str, which)
+
+        project = load_project(project_id)
+        optimization = get_optimization_from_project(project, optimization_id)
+
+        result = load_result_by_optimization(project, optimization)
+        if result is None:
+            return {}
         else:
-            return make_mpld3_graph_dict(result_entry.hydrate())
+            return make_mpld3_graph_dict(result, which)

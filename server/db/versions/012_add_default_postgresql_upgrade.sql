@@ -1,1 +1,0 @@
-ALTER TABLE projects ALTER COLUMN created SET DEFAULT now();

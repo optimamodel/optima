@@ -20,7 +20,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
       console.log("loading ykeys", $scope.ykeys);
 
-      $scope.isMissingModelData = !project.has_data;
+      $scope.isMissingModelData = !project.hasData;
       $scope.isMissingProgramSet = progsets.length == 0;
     }
 

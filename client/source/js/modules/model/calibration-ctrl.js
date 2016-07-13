@@ -1,7 +1,8 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, info, modalService, $upload, $modal, $timeout) {
+  module.controller('ModelCalibrationController', function (
+      $scope, $http, info, modalService, $upload, $modal, $timeout, toastr) {
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
@@ -15,7 +16,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.state = {maxtime: '10'};
 
     // Check if current active project has spreadsheet uploaded for it.
-    if (!activeProjectInfo.has_data) {
+    if (!activeProjectInfo.hasData) {
       modalService.inform(
         function (){ },
         'Okay',
@@ -33,6 +34,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if(parsets) {
           $scope.parsets = parsets;
           $scope.activeParset = parsets[0];
+          initPollAutoCalibration();
           $scope.getGraphs();
         }
       });
@@ -69,18 +71,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Sending parameters to re-process graphs for active parset
     $scope.processGraphs = function(shouldSave) {
-      var payload = {};
-      if($scope.parameters) {
-        payload.parameters = $scope.parameters;
+      if(!$scope.parameters) {
+        return;
       }
-      payload.which = getSelectors();
-      var url = '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration';
+      var url = '/api/project/' + activeProjectInfo.id
+                + '/parsets/' + $scope.activeParset.id
+                + '/calibration';
       if (shouldSave) {
         url = url + '?doSave=true';
       }
-      console.log('update pars', payload)
-      $http.put(url, payload)
+      var payload = {
+        parameters: $scope.parameters,
+        which: getSelectors()
+      };
+      console.log('active parset', $scope.activeParset);
+      console.log('uploaded parameters', payload);
+      $http.post(url, payload)
       .success(function (response) {
+        toastr.success('Updated parameters and graphs')
         setCalibrationData(response.calibration);
       });
     };
@@ -92,9 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     // Set calibration data in scope
     var setCalibrationData = function(calibration) {
       $scope.graphs = calibration.graphs;
-      console.log($scope.graphs);
-      console.log("selectors", _.pluck($scope.graphs.selectors, 'key'));
-      console.log("graph_selectors", $scope.graphs.graph_selectors);
+      console.log(calibration);
       defaultParameters = calibration.parameters;
       $scope.parameters = angular.copy(calibration.parameters);
       $scope.resultId = calibration.resultId;
@@ -273,39 +279,61 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.secondsRun = 0;
           $scope.setMaxtime = data.maxtime;
           pollAutoCalibration();
-        } else if(response.status === 'running') {
-          $scope.statusMessage = 'Autofit already running.'
+        } else if(response.status === 'blocked') {
+          $scope.statusMessage = 'Another calculation on this project is already running.'
         }
       })
     };
 
-    var pollAutoCalibration = function() {
-      $http.get('/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id +'/automatic_calibration')
-        .success(function(response) {
-          if(response.status === 'completed') {
-            getAutoCalibratedGraphs();
-            $scope.statusMessage = 'Autofit completed.';
-            $timeout.cancel($scope.pollTimer);
-          } else if(response.status === 'started'){
-            $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
-            $scope.statusMessage = "Running: " + $scope.secondsRun + " s.";
-            $scope.secondsRun += 1;
-          }
-        });
+    var initPollAutoCalibration = function() {
+      $http.get(
+        '/api/project/' + activeProjectInfo.id
+        +  '/parsets/' + $scope.activeParset.id
+        + '/automatic_calibration')
+      .success(function(response) {
+        if (response.status === 'started') {
+          pollAutoCalibration();
+        }
+      });
     };
 
-    var getAutoCalibratedGraphs = function() {
-      var payload = {};
-      if($scope.parameters) {
-        payload.parameters = $scope.parameters;
-      }
-      payload.which = getSelectors();
-      $http.put(
+    var pollAutoCalibration = function() {
+      $http.get(
+          '/api/project/' + activeProjectInfo.id
+            + '/parsets/' + $scope.activeParset.id
+            + '/automatic_calibration')
+      .success(function(response) {
+        if (response.status === 'completed') {
+          $scope.getAutoCalibratedGraphs();
+          $scope.statusMessage = '';
+          toastr.success('Autofit completed');
+          $timeout.cancel($scope.pollTimer);
+        } else if (response.status === 'error') {
+          $scope.statusMessage = 'Error in running autofit.';
+          $timeout.cancel($scope.pollTimer);
+        } else if (response.status === 'started') {
+          var start = new Date(response.start_time);
+          var now = new Date();
+          var diff = now.getTime() - start.getTime();
+          var seconds = diff / 1000;
+          $scope.statusMessage = "Autofit running for " + parseInt(seconds) + " s";
+          $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
+        }
+      });
+    };
+
+    $scope.getAutoCalibratedGraphs = function() {
+      $http.post(
         '/api/project/' + activeProjectInfo.id
           + '/parsets' + '/' + $scope.activeParset.id
-          + '/calibration?autofit=true',
-        payload)
+          + '/calibration',
+        {
+          autofit: true,
+          which: getSelectors(),
+          parsetId: $scope.activeParset.id
+        })
       .success(function(response) {
+        toastr.success('Autofitted graphs uploaded');
         setCalibrationData(response.calibration);
       });
     };

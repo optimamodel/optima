@@ -39,7 +39,7 @@ define ['angular-mocks', 'Source/modules/analysis/optimization-ctrl'], ->
           modalService: {}
           cfpLoadingBar: {}
           optimizations: []
-          info: { has_data: true }
+          info: { hasData: true }
         }
 
     # describe 'yearsAreRequired()', ->

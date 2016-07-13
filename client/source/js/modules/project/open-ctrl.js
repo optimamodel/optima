@@ -24,9 +24,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.projects = _.map(projects.data.projects, function(project){
-        project.creation_time = Date.parse(project.creation_time);
-        project.updated_time = Date.parse(project.updated_time);
-        project.data_upload_time = Date.parse(project.data_upload_time);
+        project.creationTime = Date.parse(project.creationTime);
+        project.updatedTime = Date.parse(project.updatedTime);
+        project.dataUploadTime = Date.parse(project.dataUploadTime);
         return project;
       });
 

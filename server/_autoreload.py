@@ -40,6 +40,7 @@ except ImportError:
 # in the threading module. See http://code.djangoproject.com/ticket/2330 .
 try:
     import threading
+    threading
 except ImportError:
     pass
 

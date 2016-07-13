@@ -1,25 +1,20 @@
 import uuid
-import pprint
-from pprint import pprint
-from datetime import datetime
-import dateutil
 
-import mpld3
-from flask import current_app, request, helpers
+from pprint import pprint
+
+from flask import current_app, request
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with, marshal, fields
+from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
-    get_progset_summaries, save_progset_summaries,
-    load_project_record, load_progset_record, load_program, load_parset,
-    update_or_create_program_record, get_target_popsizes, load_parameters_from_progset_parset,
-    check_project_exists)
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
-from server.webapp.exceptions import (ProgsetDoesNotExist)
-from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
-from server.webapp.utils import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
+    get_progset_summaries, save_progset_summaries, load_project, load_project_record,
+    get_target_popsizes, load_parameters_from_progset_parset,
+    get_progset_from_project, get_progset_summary, get_parset_from_project,
+    get_program_from_progset, save_program_summary)
+from server.webapp.parse import parse_outcomes_from_progset, put_outcomes_into_progset
+from server.webapp.resources.common import report_exception
+from server.webapp.utils import Json, RequestParser, normalize_obj
 
 
 progset_parser = RequestParser()
@@ -40,139 +35,58 @@ class Progsets(Resource):
 
     @swagger.operation(description='Download progsets')
     def get(self, project_id):
-        
-        check_project_exists(project_id)
-        return get_progset_summaries(project_id)
-        
+        project = load_project(project_id)
+
+        return get_progset_summaries(project)
+
 
     @swagger.operation(description='Save progset')
     def post(self, project_id):
-
-        check_project_exists(project_id)
-         
         data = normalize_obj(request.get_json(force=True))
         current_app.logger.debug("DATA progsets for project_id %s is :/n %s" % (project_id, pprint(data)))
-        save_progset_summaries(project_id,data)
-        return get_progset_summaries(project_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        save_progset_summaries(project, data)
+        project_record.save_obj(project)
+
+        return get_progset_summaries(project)
 
 
 class Progset(Resource):
     """
-    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
-
-    Download progset - is this ever used?
-
     PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
 
     Update existing progset
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(description='Download progset with the given id.')
-    @marshal_with(ProgsetsDb.resource_fields)
-    def get(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = load_progset_record(project_id, progset_id)
-        progset_entry.get_extra_data()
-        return progset_entry
-
     @swagger.operation(description='Update progset with the given id.')
-    @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        args = progset_parser.parse_args()
+        data = normalize_obj(request.get_json(force=True))
 
-        progset_record = load_progset_record(project_id, progset_id)
-        progset_record.name = args['name']
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
-        program_summaries = normalize_obj(args.get('programs', []))
-        progset_record.update_from_program_summaries(program_summaries, progset_id)
-        progset_record.get_extra_data()
+        save_progset_summaries(project, data, progset_id=progset_id)
+        project_record.save_obj(project)
 
-        db.session.commit()
-        return progset_record
+        return get_progset_summary(project.progsets[data["name"]])
 
     @swagger.operation(description='Delete progset with the given id.')
     def delete(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
 
-        if progset_entry.project_id != project_id:
-            raise ProgsetDoesNotExist(id=progset_id)
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
-        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
-        db.session.delete(progset_entry)
-        db.session.commit()
+        progset = get_progset_from_project(project, progset_id)
+        project.progsets.pop(progset.name)
+
+        project_record.save_obj(project)
         return '', 204
-
-
-class ProgsetData(Resource):
-
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(
-        produces='application/x-gzip',
-        description='Download progset with the given id as Binary.',
-        notes="""
-            if progset exists, returns it
-            if progset does not exist, returns an error.
-        """,
-
-    )
-    def get(self, project_id, progset_id):
-        current_app.logger.debug("GET /api/project/{}/progsets/{}/data".format(project_id, progset_id))
-        progset_entry = load_progset_record(project_id, progset_id)
-
-        loaddir = upload_dir_user(TEMPLATEDIR)
-        if not loaddir:
-            loaddir = TEMPLATEDIR
-
-        filename = progset_entry.as_file(loaddir)
-
-        return helpers.send_from_directory(loaddir, filename)
-
-    @swagger.operation(
-        summary='Uploads data for already created progset',
-        parameters=file_upload_form_parser.swagger_parameters()
-    )
-    @marshal_with(file_resource)
-    def post(self, project_id, progset_id):
-        """
-        Uploads Data file, uses it to update the progrset and program models.
-        Precondition: model should exist.
-        """
-        from server.webapp.parse import get_default_program_summaries
-
-        current_app.logger.debug("POST /api/project/{}/progsets/{}/data".format(project_id, progset_id))
-
-        args = file_upload_form_parser.parse_args()
-        uploaded_file = args['file']
-
-        source_filename = uploaded_file.source_filename
-
-        progset_entry = load_progset_record(project_id, progset_id)
-
-        project_entry = load_project_record(project_id)
-        project = project_entry.hydrate()
-        if project.data != {}:
-            program_list = get_default_program_summaries(project)
-        else:
-            program_list = []
-
-        from optima.utils import loadobj
-        new_progset = loadobj(uploaded_file)
-        progset_entry.restore(new_progset, program_list)
-        db.session.add(progset_entry)
-
-        db.session.commit()
-
-        reply = {
-            'file': source_filename,
-            'result': 'Progset %s is updated' % progset_entry.name,
-        }
-        return reply
 
 
 class ProgsetParameters(Resource):
@@ -184,7 +98,12 @@ class ProgsetParameters(Resource):
     """
     @swagger.operation(description='Get parameters sets for the selected progset')
     def get(self, project_id, progset_id, parset_id):
-        return load_parameters_from_progset_parset(project_id, progset_id, parset_id)
+
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+        parset = get_parset_from_project(project, parset_id)
+
+        return load_parameters_from_progset_parset(project, progset, parset)
 
 
 
@@ -204,24 +123,39 @@ class ProgsetEffects(Resource):
 
     @swagger.operation(summary='Get List of existing Progset effects for the selected progset')
     def get(self, project_id, progset_id):
-        from server.webapp.dataio import load_progset_record
-        progset_record = load_progset_record(project_id, progset_id)
-        return { 'effects': progset_record.effects }
+
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+
+        outcomes = parse_outcomes_from_progset(progset)
+
+        # Bosco needs to fix this...
+
+        return { 'effects': [{
+            "parset": parset.uid,
+            "parameters": outcomes,
+
+        } for parset in project.parsets.values()]}
 
     @swagger.operation(summary='Saves a list of outcomes')
     def put(self, project_id, progset_id):
-        effects = request.get_json(force=True)
-        from server.webapp.dataio import load_progset_record
-        progset_record = load_progset_record(project_id, progset_id)
-        db.session.add(progset_record)
-        db.session.flush()
-        effects = normalize_obj(effects)
-        pprint(effects)
-        progset_record.effects = effects
-        db.session.commit()
-        progset_record = load_progset_record(project_id, progset_id)
-        return { 'effects': progset_record.effects }
+        effects = normalize_obj(request.get_json(force=True))
 
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+        progset = get_progset_from_project(project, progset_id)
+
+        put_outcomes_into_progset(effects[0]["parameters"], progset)
+
+        project_record.save_obj(project)
+
+        outcomes = parse_outcomes_from_progset(progset)
+
+        return { 'effects': [{
+            "parset": parset.uid,
+            "parameters": outcomes,
+
+        } for parset in project.parsets.values()]}
 
 
 query_program_parser = RequestParser()
@@ -278,12 +212,18 @@ class Program(Resource):
     def post(self, project_id, progset_id):
         args = query_program_parser.parse_args()
         program_summary = normalize_obj(args['program'])
-        program_record = update_or_create_program_record(
-            project_id, progset_id, program_summary['short'],
-            program_summary)
-        db.session.add(program_record)
-        db.session.flush()
-        db.session.commit()
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        progset = get_progset_from_project(project, progset_id)
+
+        save_program_summary(progset, program_summary)
+
+        progset.updateprogset()
+
+        project_record.save_obj(project)
+
         return 204
 
 
@@ -297,7 +237,13 @@ class ProgramPopSizes(Resource):
     method_decorators = [report_exception, login_required]
 
     def get(self, project_id, progset_id, program_id, parset_id):
-        payload = get_target_popsizes(project_id, parset_id, progset_id, program_id)
+
+        project = load_project(project_id)
+        parset = get_parset_from_project(project, parset_id)
+        progset = get_progset_from_project(project, progset_id)
+        program = get_program_from_progset(progset, program_id)
+
+        payload = get_target_popsizes(project, parset, progset, program)
         return payload, 201
 
 
@@ -332,20 +278,27 @@ class ProgramCostcovGraph(Resource):
         args = costcov_graph_parser.parse_args()
         parset_id = args['parset_id']
 
+        print '>>>> Generating plot...'
+
         try:
             t = map(int, args['t'].split(','))
         except ValueError:
-            raise ValueError("t must be a year or a comma-separated list of years.")
+            t = None
+
+        if t is None:
+            return {}
 
         plotoptions = {}
         for x in ['caption', 'xupperlim', 'perperson']:
             if args.get(x):
                 plotoptions[x] = args[x]
 
-        program = load_program(project_id, progset_id, program_id)
-        parset = load_parset(project_id, parset_id)
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+
+        program = get_program_from_progset(progset, program_id)
+        parset = get_parset_from_project(project, parset_id)
         plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
+        print '>>>> plot', plot
         from server.webapp.plot import convert_to_mpld3
         return convert_to_mpld3(plot)
-
-

@@ -4,7 +4,7 @@ from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
-    load_project_record, check_project_exists, get_scenario_summaries,
+    load_project_record, get_scenario_summaries,
     save_scenario_summaries, get_parset_keys_with_y_values)
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
@@ -21,16 +21,25 @@ class Scenarios(Resource):
 
     @swagger.operation()
     def get(self, project_id):
-        check_project_exists(project_id)
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
         return {
-            'scenarios': get_scenario_summaries(project_id),
-            'ykeysByParsetId': get_parset_keys_with_y_values(project_id)
+            'scenarios': get_scenario_summaries(project),
+            'ykeysByParsetId': get_parset_keys_with_y_values(project)
         }
 
     def put(self, project_id):
         data = normalize_obj(request.get_json(force=True))
-        save_scenario_summaries(project_id, data['scenarios'])
-        return {'scenarios': get_scenario_summaries(project_id)}
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        save_scenario_summaries(project, data['scenarios'])
+
+        project_record.save_obj(project)
+
+        return {'scenarios': get_scenario_summaries(project)}
 
 
 class ScenarioSimulationGraphs(Resource):
@@ -43,8 +52,6 @@ class ScenarioSimulationGraphs(Resource):
     @swagger.operation()
     def get(self, project_id):
         project_entry = load_project_record(project_id)
-        project = project_entry.hydrate()
+        project = project_entry.load()
         project.runscenarios()
         return make_mpld3_graph_dict(project.results[-1])
-
-

@@ -750,6 +750,50 @@ def loadobj(filename, verbose=True):
     return obj
 
 
+
+def savedbobj(filename, obj, verbose=True):
+    ''' Save an object to file '''
+    from ._serialize import dumps
+    dumped = dumps(obj)
+
+    with open(filename, 'wb') as fileobj:
+        fileobj.write(dumped)
+    if verbose: print('Object saved to "%s"' % filename)
+    return None
+
+
+def loaddbobj(filename, verbose=True):
+    ''' Load a saved file (pickle or JSON)'''
+    try:
+        import cPickle as pickle  # For Python 2 compatibility
+    except:
+        import pickle
+    from gzip import GzipFile
+
+    # Handle loading of either filename or file object
+    if isinstance(filename, basestring): argtype='filename'
+    else: argtype = 'fileobj'
+    kwargs = {'mode': 'rb', argtype: filename}
+
+    try:
+        from ._serialize import loads
+
+        if argtype == "fileobj":
+            read = filename.read()
+        else:
+            with open(filename, 'rb') as f:
+                read = f.read()
+
+        obj = loads(read)
+    except:
+        if argtype == "fileobj":
+            filename.seek(0)
+        with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
+
+    if verbose: print('Object loaded from "%s"' % filename)
+    return obj
+
+
 def cleanresults(filelist=None):
     ''' Remove results from one file or many files '''
     from glob import glob

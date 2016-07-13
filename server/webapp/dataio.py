@@ -1,7 +1,4 @@
-from flask.ext.restful import marshal
-
-__doc__ = """
-
+"""
 dataio.py contains all the functions that fetch and saves optima objects to/from database
 and the file system. These functions abstracts out the data i/o for the web-server
 api calls.
@@ -15,140 +12,55 @@ Parsed data structures should have suffix _summary
 
 
 import os
-from datetime import datetime
-import dateutil
-from pprint import pprint
+from functools import partial
+from uuid import UUID
 
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import (
-    ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb,
-    ScenariosDb, OptimizationsDb)
+from server.webapp.dbmodels import ProjectDb, ResultsDb, WorkingProjectDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
 from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
-    parse_default_program_summaries, parse_parameters_of_parset_list,
-    parse_parameters_from_progset_parset)
+    parse_default_program_summaries, parse_parameters_of_parset_list, convert_pars_list,
+    parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
+    revert_costcovdata, revert_ccopars, revert_pars_list,
+)
 
 
 import optima as op
-from optima.utils import saves
 
-
-def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None):
-    from sqlalchemy.orm import defaultload
+def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None, authenticate=True):
     from server.webapp.exceptions import ProjectDoesNotExist
+
     if not db_session:
         db_session = db.session
-    cu = current_user
-    # current_app.logger.debug("getting project {} for user {} (admin:{})".format(
-    #     project_id,
-    #     cu.id if not cu.is_anonymous() else None,
-    #     cu.is_admin if not cu.is_anonymous else False
-    # ))
-    if cu.is_anonymous():
-        if raise_exception:
-            abort(401)
-        else:
-            return None
-    if cu.is_admin:
+
+    if authenticate:
+        cu = current_user
+        # current_app.logger.debug("getting project {} for user {} (admin:{})".format(
+        #     project_id,
+        #     cu.id if not cu.is_anonymous() else None,
+        #     cu.is_admin if not cu.is_anonymous else False
+        # ))
+        if cu.is_anonymous():
+            if raise_exception:
+                abort(401)
+            else:
+                return None
+    if authenticate is False or cu.is_admin:
         query = db_session.query(ProjectDb).filter_by(id=project_id)
     else:
         query = db_session.query(ProjectDb).filter_by(id=project_id, user_id=cu.id)
-    if all_data:
-        query = query.options(
-            # undefer('model'),
-            # defaultload(ProjectDb.working_project).undefer('model'),
-            defaultload(ProjectDb.project_data).undefer('meta'))
+
     project_record = query.first()
     if project_record is None:
         current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
         if raise_exception:
             raise ProjectDoesNotExist(id=project_id)
     return project_record
-
-
-def check_project_exists(project_id):
-    project_record = load_project_record(project_id)
-    if project_record is None:
-        raise ProjectDoesNotExist(id=project_id)
-
-
-def _load_project_child(
-        project_id, record_id, record_class, exception_class, raise_exception=True):
-    cu = current_user
-
-    record = db.session.query(record_class).get(record_id)
-    if record is None:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    if record.project_id != project_id:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    if not cu.is_admin and record.project.user_id != cu.id:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    print ">>> Fetching record '%s' of '%s'" % (record.name, repr(record_class))
-
-    return record
-
-
-def load_progset_record(project_id, progset_id, raise_exception=True):
-    return _load_project_child(
-        project_id, progset_id, ProgsetsDb, ProgsetDoesNotExist, raise_exception)
-
-
-def load_parset_record(project_id, parset_id, raise_exception=True):
-    return _load_project_child(
-        project_id, parset_id, ParsetsDb, ParsetDoesNotExist, raise_exception)
-
-
-def load_program_record(project_id, progset_id, program_id, raise_exception=True):
-    cu = current_user
-    current_app.logger.debug("getting project {} for user {}".format(progset_id, cu.id))
-
-    progset_record = load_progset_record(
-        project_id, progset_id, raise_exception=raise_exception)
-
-    program_record = db.session.query(ProgramsDb).get(program_id)
-
-    if program_record.progset_id != progset_record.id:
-        if raise_exception:
-            raise ProgramDoesNotExist(id=program_id)
-        return None
-
-    return program_record
-
-
-def load_scenario_record(project_id, scenario_id, raise_exception=True):
-    from server.webapp.dbmodels import ScenariosDb
-    from server.webapp.exceptions import ScenarioDoesNotExist
-
-    cu = current_user
-    current_app.logger.debug("getting scenario {} for user {}".format(scenario_id, cu.id))
-
-    scenario_record = db.session.query(ScenariosDb).get(scenario_id)
-
-    if scenario_record is None:
-        if raise_exception:
-            raise ScenarioDoesNotExist(id=scenario_id)
-        return None
-
-    if scenario_record.project_id != project_id:
-        if raise_exception:
-            raise ScenarioDoesNotExist(id=scenario_id)
-        return None
-
-    return scenario_record
 
 
 def save_data_spreadsheet(name, folder=None):
@@ -169,129 +81,115 @@ def delete_spreadsheet(name, user_id=None):
         if os.path.exists(spreadsheet_file):
             os.remove(spreadsheet_file)
 
-
-def update_or_create_parset_record(project_id, name, parset, db_session=None):
-    if db_session is None:
-        db_session = db.session
-    parset_record = db_session.query(ParsetsDb).filter_by(id=parset.uid, project_id=project_id).first()
-    if parset_record is None:
-        parset_record = ParsetsDb(
-            id=parset.uid,
-            project_id=project_id,
-            name=name,
-            created=parset.created or datetime.now(dateutil.tz.tzutc()),
-            updated=parset.modified or datetime.now(dateutil.tz.tzutc()),
-            pars=saves(parset.pars)
-        )
-
-        db_session.add(parset_record)
-    else:
-        db_session.query(ResultsDb).filter_by(project_id=project_id, parset_id=parset_record.id).delete()
-        parset_record.updated = datetime.now(dateutil.tz.tzutc())
-        parset_record.name = name
-        parset_record.pars = saves(parset.pars)
-        db_session.add(parset_record)
-    return parset_record
-
-
-def update_or_create_progset_record(project_id, name, progset):
-    progset_record = ProgsetsDb.query \
-        .filter_by(project_id=project_id, name=name) \
-        .first()
-
-    if progset_record is None:
-        progset_record = ProgsetsDb(
-            project_id=project_id,
-            name=name,
-            created=progset.created or datetime.now(dateutil.tz.tzutc()),
-            updated=datetime.now(dateutil.tz.tzutc())
-        )
-        db.session.add(progset_record)
-        db.session.flush()
-    else:
-        progset_record.updated = datetime.now(dateutil.tz.tzutc())
-        db.session.add(progset_record)
-
-    return progset_record
-
-
-def update_or_create_program_record(project_id, progset_id, short, program_summary):
-    program_record = ProgramsDb.query\
-        .filter_by(short=short, project_id=project_id, progset_id=progset_id)\
-        .first()
-    if program_record is None:
-        program_record = ProgramsDb(
-            project_id=project_id,
-            progset_id=progset_id,
-            short=short,
-            name=program_summary.get('name', ''),
-            created=datetime.now(dateutil.tz.tzutc()),
-        )
-    program_record.update_from_summary(program_summary)
-    db.session.add(program_record)
-    return program_record
-
-
 def load_project(project_id, autofit=False, raise_exception=True):
     if not autofit:
         project_record = load_project_record(project_id, raise_exception=raise_exception)
         if project_record is None:
             raise ProjectDoesNotExist(id=project_id)
-        project = project_record.hydrate()
+        project = project_record.load()
     else:  # todo bail out if no working project
         working_project_record = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
         if working_project_record is None:
             raise ProjectDoesNotExist(id=project_id)
-        project = op.loads(working_project_record.project)
+        project = working_project_record.load()
     return project
 
 
-def load_program(project_id, progset_id, program_id):
-    program_entry = load_program_record(project_id, progset_id, program_id)
-    if program_entry is None:
-        raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-    return program_entry.hydrate()
+def load_parset(project, parset_id):
+
+    for parset in project.parsets.values():
+        if parset.uid == parset_id:
+            return parset
 
 
-def load_parset(project_id, parset_id):
-    from server.webapp.dbmodels import ParsetsDb
-    from server.webapp.exceptions import ParsetDoesNotExist
 
-    parset_record = db.session.query(ParsetsDb).get(parset_id)
-    if parset_record is None:
-        if raise_exception:
-            raise ParsetDoesNotExist(id=parset_id)
-        return None
+def load_parset_list(project):
+    parsets = []
 
-    if parset_record.project_id != project_id:
-        if raise_exception:
-            raise ParsetDoesNotExist(id=parset_id)
-        return None
+    for parset in project.parsets.values():
 
-    return parset_record.hydrate()
+        parsets.append({
+            "id": parset.uid,
+            "project_id": project.uid,
+            "pars": parset.pars,
+            "updated": parset.modified,
+            "created": parset.created,
+            "name": parset.name
+        })
 
-
-def load_parset_list(project_id):
-    parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
-    return [parset_record.hydrate() for parset_record in parset_records]
+    return parsets
 
 
-def get_project_parameters(project_id):
-    return parse_parameters_of_parset_list(load_parset_list(project_id))
+def get_project_parameters(project):
+    return parse_parameters_of_parset_list(project.parsets.values())
 
 
 def get_parset_from_project(project, parset_id):
+    if not isinstance(parset_id, UUID):
+        parset_id = UUID(parset_id)
+
     parsets = [
         project.parsets[key]
         for key in project.parsets
         if project.parsets[key].uid == parset_id
     ]
     if not parsets:
-        raise ParsetDoesNotExist(project_id=project_id, id=parset_id)
+        raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
     return parsets[0]
 
 
-def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
+def get_progset_from_project(project, progset_id):
+    if not isinstance(progset_id, UUID):
+        progset_id = UUID(progset_id)
+
+    progsets = [
+        project.progsets[key]
+        for key in project.progsets
+        if project.progsets[key].uid == progset_id
+    ]
+    if not progsets:
+        raise ProgsetDoesNotExist(project_id=project.uid, id=progset_id)
+    return progsets[0]
+
+
+def get_optimization_from_project(project, optim_id):
+    if not isinstance(optim_id, UUID):
+        optim_id = UUID(optim_id)
+
+    optims = [
+        project.optims[key]
+        for key in project.optims
+        if project.optims[key].uid == optim_id
+    ]
+    if not optims:
+        raise ValueError("Optimisation does not exist", project_id=project.uid, id=optim_id)
+    return optims[0]
+
+
+def get_program_from_progset(progset, program_id, include_inactive=False):
+
+    if not isinstance(program_id, UUID):
+        program_id = UUID(program_id)
+
+    if include_inactive:
+        progset_programs = {}
+        progset_programs.update(progset.programs)
+        progset_programs.update(progset.inactive_programs)
+    else:
+        progset_programs = progset.programs
+
+    programs = [
+        progset_programs[key]
+        for key in progset_programs
+        if progset_programs[key].uid == program_id
+    ]
+    if not programs:
+        raise ProgramDoesNotExist(id=program_id)
+    return programs[0]
+
+
+
+def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
     result_record = db.session.query(ResultsDb).filter_by(
         project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
     if result_record is None:
@@ -299,96 +197,145 @@ def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRA
     return result_record
 
 
-def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
+def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
     result_record = load_result_record(project_id, parset_id, calculation_type)
     if result_record is None:
         return None
-    return result_record.hydrate()
+    return result_record.load()
+
+
+def load_result_by_id(result_id):
+    result_record = db.session.query(ResultsDb).get(result_id)
+    if result_record is None:
+        return None
+    return result_record.load()
+
+
+def update_or_create_result_record(
+        project,
+        result,
+        parset_name='default',
+        calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
+        db_session=None):
+
+    if db_session is None:
+        db_session = db.session
+
+    result_record = db_session.query(ResultsDb).get(result.uid)
+    if result_record is not None:
+        print ">>> Updating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+    else:
+        parset = project.parsets[parset_name]
+        result_record = ResultsDb(
+            parset_id=parset.uid,
+            project_id=project.uid,
+            calculation_type=calculation_type)
+        print ">>> Creating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+
+    result_record.id = result.uid
+    result_record.save_obj(result)
+    db_session.add(result_record)
+    db_session.commit()
+
+    return result_record
+
+
+def delete_result(
+        project_id, parset_id, calculation_type, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    records = db_session.query(ResultsDb).filter_by(
+        project_id=project_id,
+        parset_id=parset_id,
+        calculation_type=calculation_type
+    )
+    records.delete()
+    db_session.commit()
+
+
+def delete_optimization_result(
+        project_id, result_name, db_session=None):
+    if db_session is None:
+        db_session = db.session
+
+    print ">>> Deleting outdated result '%s' of an optimization" % result_name
+
+    records = db_session.query(ResultsDb).filter_by(
+        project_id=project_id,
+        calculation_type="optimization"
+    )
+    for record in records:
+        result = record.load()
+        if result.name == result_name:
+            db_session.delete(record)
+    db_session.commit()
 
 
 def save_result(
         project_id, result, parset_name='default',
-        calculation_type=ResultsDb.CALIBRATION_TYPE,
+        calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
         db_session=None):
+    if db_session is None:
+        db_session = db.session
+    result_record = update_or_create_result_record(
+        project_id, result, parset_name=parset_name,
+        calculation_type=calculation_type, db_session=db_session)
+    db_session.add(result_record)
+    db_session.flush()
+    db_session.commit()
 
-    if not db_session:
-        db_session=db.session
 
-    # find relevant parset for the result
-    print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
-    parsets = db_session.query(ParsetsDb).filter_by(project_id=project_id)
-    parset = [item for item in parsets if item.name == parset_name]
-    if parset:
-        parset = parset[0]
-    else:
-        raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
+def load_result_by_optimization(project, optimization):
 
-    # update results (after runsim is invoked)
-    result_records = db_session.query(ResultsDb).filter_by(project_id=project_id)
-    result_records = [item for item in result_records
-                     if item.parset_id == parset.id
-                        and item.calculation_type == calculation_type]
+    result_name = "optim-" + optimization.name
+    parset_id = project.parsets[optimization.parsetname].uid
 
-    blob = op.saves(result)
-    if result_records:
-        if len(result_records) > 1:
-            abort(500, "Found multiple records for result (%s) of parset '%s'" % calculation_type, parset.name)
-        result_record = result_records[0]
-        result_record.blob = blob
-        print "> Updating results", result.uid
+    result_records = db.session.query(ResultsDb).filter_by(
+        project_id=project.uid,
+        parset_id=parset_id,
+        calculation_type="optimization")
 
-    if not result_records:
-        result_record = ResultsDb(
-            parset_id=str(parset.id),
-            project_id=project_id,
-            calculation_type=calculation_type,
-            blob=blob)
-        print "> Creating results", result.uid
+    for result_record in result_records:
+        result = result_record.load()
+        print ">>> Matching optim result '%s' == '%s'" % (result.name, result_name)
+        if result.name == result_name:
+            return result
 
-    result_id = str(result.uid)
-    result_record.id = result_id
-
-    return result_record
+    return None
 
 
 def load_project_program_summaries(project_id):
     return parse_default_program_summaries(load_project(project_id, raise_exception=True))
 
 
-def get_project_years(project_id):
-    settings = load_project(project_id).settings
+def get_project_years(project):
+    settings = project.settings
     return range(int(settings.start), int(settings.end) + 1)
 
 
-def get_target_popsizes(project_id, parset_id, progset_id, program_id):
-    program = load_program(project_id, progset_id, program_id)
-    parset = load_parset(project_id, parset_id)
-    years = get_project_years(project_id)
+def get_target_popsizes(project, parset, progset, program):
+
+    years = get_project_years(project)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
     return normalize_obj(dict(zip(years, popsizes)))
 
 
-def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
-    progset_record = load_progset_record(project_id, progset_id)
-    progset = progset_record.hydrate()
+def load_parameters_from_progset_parset(project, progset, parset):
+
     print ">>> Fetching target parameters from progset '%s'", progset.name
     progset.gettargetpops()
     progset.gettargetpars()
     progset.gettargetpartypes()
 
-    parset_record = load_parset_record(project_id, parset_id)
-    parset = parset_record.hydrate()
-
-    settings = load_project(project_id).settings
+    settings = project.settings
 
     return parse_parameters_from_progset_parset(settings, progset, parset)
 
 
-def get_parset_keys_with_y_values(project_id):
-    parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
-    parsets = {str(record.id): record.hydrate() for record in parset_records}
+def get_parset_keys_with_y_values(project):
+
     y_keys = {
-        id: {
+        str(parset.uid): {
             par.short: [
                 {
                     'val': k,
@@ -399,12 +346,12 @@ def get_parset_keys_with_y_values(project_id):
             for par in parset.pars[0].values()
             if hasattr(par, 'y') and par.visible
             }
-        for id, parset in parsets.iteritems()
+        for parset in project.parsets.values()
         }
     return y_keys
 
 
-def get_scenario_summary_from_record(scenario_record):
+def get_scenario_summary(project, scenario):
     """
 
     Args:
@@ -431,162 +378,224 @@ def get_scenario_summary_from_record(scenario_record):
           "years": [ 2020 ],
     }
     """
+    extra_data = {}
+
+    # budget, coverage, parameter, any others?
+    if isinstance(scenario, op.Parscen):
+        scenario_type = "parameter"
+        extra_data["pars"] = revert_pars_list(scenario.pars)
+    elif isinstance(scenario, op.Coveragescen):
+        scenario_type = "coverage"
+        extra_data["coverage"] = scenario.coverage
+    elif isinstance(scenario, op.Budgetscen):
+        scenario_type = "budget"
+        extra_data["budget"] = [{"program": x, "values": y} for x, y in scenario.budget.iteritems()]
+
+    if hasattr(scenario, "progsetname"):
+        progset_id = project.progsets[scenario.progsetname].uid
+    else:
+        progset_id = None
+
     result = {
-        'id': scenario_record.id,
-        'progset_id': scenario_record.progset_id, # could be None if parameter scenario
-        'scenario_type': scenario_record.scenario_type,
-        'active': scenario_record.active,
-        'name': scenario_record.name,
-        'parset_id': str(scenario_record.parset_id),
+        'id': scenario.uid,
+        'progset_id': progset_id, # could be None if parameter scenario
+        'scenario_type': scenario_type,
+        'active': scenario.active,
+        'name': scenario.name,
+        'years': scenario.t,
+        'parset_id': project.parsets[scenario.parsetname].uid,
     }
-    result.update(scenario_record.blob)
+    result.update(extra_data)
     return result
 
 
-def update_or_create_scenario_record(project_id, scenario_summary):
-    scenario_id = scenario_summary.pop("id", None)
+def get_scenario_summaries(project):
 
-    # put scenario type specific keys in blob
-    blob = {}
-    for blob_key in ['pars', 'budget', 'coverage', 'years']:
-        value = scenario_summary.pop(blob_key, None)
-        if value is not None:
-            blob[blob_key] = value
-
-    if 'years' in blob:
-        blob['years'] = map(int, blob['years'])
-
-    if scenario_id is None:
-        record = ScenariosDb(project_id, blob=blob, **scenario_summary)
-    else:
-        record = ScenariosDb.query.filter_by(id=scenario_id).first()
-        record.blob = blob
-        for key, value in scenario_summary.items():
-            setattr(record, key, value)
-
-    db.session.add(record)
-    db.session.flush()
-    # print("Saving scenario to database")
-    # pprint(scenario_summary)
-    # pprint(get_scenario_summary_from_record(record))
-    return record
-
-
-def get_scenario_summaries(project_id):
-    scenario_records = db.session.query(ScenariosDb).filter_by(project_id=project_id).all()
-    scenario_summaries = map(get_scenario_summary_from_record, scenario_records)
+    scenario_summaries = map(partial(get_scenario_summary, project), project.scens.values())
     return normalize_obj(scenario_summaries)
 
 
-def save_scenario_summaries(project_id, scenario_summaries):
+def save_scenario_summaries(project, scenario_summaries):
     # delete any records with id's that aren't in summaries
-    existing_scenario_ids = [
-        scenario_summary['id']
-        for scenario_summary in scenario_summaries
-        if scenario_summary.get('id', False)
-    ]
-    db.session.query(ScenariosDb) \
-        .filter_by(project_id=project_id) \
-        .filter(~ScenariosDb.id.in_(existing_scenario_ids)) \
-        .delete(synchronize_session='fetch')
-    db.session.flush()
 
-    for scenario_summary in scenario_summaries:
-        # this hack is needed for parameter scenarios that don't have progsets
-        if scenario_summary['progset_id'] == 'None':
-            scenario_summary['progset_id'] = None
-        print(">>> Saving scenario")
-        pprint(scenario_summary, indent=2)
-        update_or_create_scenario_record(project_id, scenario_summary)
-    db.session.commit()
+    project.scens = op.odict()
+
+    for s in scenario_summaries:
+
+        if s["parset_id"]:
+            parset_name = get_parset_from_project(project, s["parset_id"]).name
+        else:
+            parset_name = False
+
+        kwargs = {
+            "name": s["name"],
+            "active": s["active"],
+            "parsetname": parset_name,
+            "t": s.get("years"),
+
+        }
+
+        if "progset_id" in s and s["progset_id"]:
+            progset_name = get_progset_from_project(project, s["progset_id"]).name
+
+        if s["scenario_type"] == "parameter":
+            par = op.Parscen(
+                pars=convert_pars_list(s["pars"]),
+                **kwargs)
+
+        elif s["scenario_type"] == "coverage":
+            par = op.Coveragescen(
+                coverage=s["coverage"],
+                progsetname=progset_name,
+                **kwargs)
+        elif s["scenario_type"] == "budget":
+            budget = op.odict({x["program"]:x["values"] for x in s["budget"]})
+
+            par = op.Budgetscen(
+                budget=budget,
+                progsetname=progset_name,
+                **kwargs)
+
+        if s.get("id"):
+            par.uid = UUID(s["id"])
+
+        project.scens[par.name] = par
 
 
-def get_program_summary_from_program_record(program_record):
-    """
-    Extract required fields from Program object
-    
-    Field names taken to be consistent with dbModels.ProgramsDb resource fields
-    
-    @TODO: optimizable field needs to be made consistent within ProgramDb
-    """
-    program_summary = {
-        'id': program_record.id,
-        'progset_id': program_record.progset_id,
-        'project_id': program_record.project_id,
-        'category': program_record.category,
-        'short': program_record.short,
-        'name': program_record.name,
-        'targetpars': program_record.pars, #NOTE change in field name
-        'active': program_record.active,
-        'populations': program_record.targetpops, #NOTE change in field name
-        'criteria': program_record.criteria,
-        'created': program_record.created,
-        'updated': program_record.updated,
-        'ccopars': program_record.ccopars,
-        'costcov': program_record.costcov,
-        #'optimizable': program_record.optimizable,
-    }
-    return program_summary
 
-def get_progset_summary_from_record(progset_record):
+
+def get_progset_summary(progset):
     """
 
     @TODO: targetpartypes and readytooptimize fields needs to be made consistent within ProgsetDb
 
     """
 
+    active_programs = map(partial(parse_program_summary, progset=progset, active=True), progset.programs.values()),
+
+    inactive_programs_list = getattr(progset, "inactive_programs", {})
+    inactive_programs = map(partial(parse_program_summary, progset=progset, active=False), inactive_programs_list.values()),
+
+
     progset_summary = {
-        'id': progset_record.id,
-        'project_id': progset_record.project_id,
-        'name': progset_record.name,
-        'created': progset_record.created,
-        'updated': progset_record.updated,
-        'programs': map(get_program_summary_from_program_record,progset_record.programs),
+        'id': progset.uid,
+        'name': progset.name,
+        'created': progset.created,
+        'updated': progset.modified,
+        'programs': list(active_programs[0]) + list(inactive_programs[0]),
         #'targetpartypes': progset_record.targetpartypes,
         #'readytooptimize': progset_record.readytooptimize
     }
     return progset_summary
 
-def get_progset_summaries(project_id):
+def get_progset_summaries(project):
+    progset_summaries = map(get_progset_summary, project.progsets.values())
+    return {'progsets': normalize_obj(progset_summaries)}
+
+
+def save_program_summary(progset, summary):
+
+    try:
+        program = get_program_from_progset(progset, summary["id"], include_inactive=True)
+
+        # It exists, so remove it first...
+        try:
+            progset.programs.pop(program.short)
+        except KeyError:
+            progset.inactive_programs.pop(program.short)
+
+        program_id = program.uid
+    except ProgramDoesNotExist:
+        program_id = None
+        pass
+
+    program = op.Program(
+        short=summary["short"],
+        name=summary["name"],
+        category=summary["category"],
+        targetpars=revert_targetpars(summary["targetpars"]),
+        targetpops=summary["populations"],
+        criteria=summary["criteria"],
+        ccopars=revert_ccopars(summary["ccopars"]),
+        costcovdata=revert_costcovdata(summary["costcov"]))
+
+    if program_id:
+        program.uid = program_id
+
+    if summary["active"]:
+        progset.addprograms(program)
+    else:
+        progset.inactive_programs[program.short] = program
+
+    progset.updateprogset()
+
+
+def save_progset_summaries(project, progset_summaries, progset_id=None):
     """
-    
+
     """
-    progset_records = db.session.query(ProgsetsDb).filter_by(project_id=project_id).all()   
-    progset_summaries = map(get_progset_summary_from_record, progset_records)
-  
-    return { 'progsets': normalize_obj(progset_summaries)}
-  
-
-
-def save_progset_summaries(project_id, progset_summaries):
-    """
-
-    """ 
-
     progset_name = progset_summaries['name']
     progset_programs = progset_summaries['programs']
-    
+
+    if progset_name not in project.progsets:
+        if progset_id:
+            # It may have changed, so try getting via ID if we have it...
+            progset = get_progset_from_project(project, progset_id)
+            project.progsets.pop(progset.name)
+
+            # Update the name and its reflection in the project.
+            progset.name = progset_name
+            project.progsets[progset_name] = progset
+        else:
+            # Probably a new one.
+            project.progsets[progset_name] = op.Programset(name=progset_name)
+    progset = project.progsets[progset_name]
+
+    # Clear the current programs...
+    progset.programs = op.odict()
+    progset.inactive_programs = op.odict()
+
+    for p in progset_programs:
+        save_program_summary(progset, p)
+
+    progset.updateprogset()
+
     current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
-   
-    progset_record = ProgsetsDb(project_id=project_id, name=progset_name)
-    # need to flush first to force the generation of progset_record.id if new
-    db.session.add(progset_record)
-    db.session.flush()
-       
-    progset_record.update_from_program_summaries(progset_programs, progset_record.id)
-    progset_record.get_extra_data()
-    db.session.commit()
-       
 
 
-def get_optimization_summaries(project_id):
-    optimization_records = db.session.query(OptimizationsDb) \
-        .filter_by(project_id=project_id).all()
-    result = marshal(optimization_records, OptimizationsDb.resource_fields)
-    return normalize_obj(result)
 
 
-def save_optimization_summaries(project_id, optimization_summaries):
+def get_optimization_summaries(project):
+
+    optimizations = []
+
+    for o in project.optims.values():
+
+        optim = {
+            "id": o.uid,
+            "name": o.name,
+            "objectives": o.objectives,
+            "constraints": o.constraints,
+        }
+
+        optim["which"] = o.objectives["which"]
+
+        if o.parsetname:
+            optim["parset_id"] = project.parsets[o.parsetname].uid
+        else:
+            optim["parset_id"] = None
+
+        if o.progsetname:
+            optim["progset_id"] = project.progsets[o.progsetname].uid
+        else:
+            optim["progset_id"] = None
+
+        optimizations.append(optim)
+
+    return optimizations
+
+
+def save_optimization_summaries(project, optimization_summaries):
     """
     The optimization summary is generated by the web-client and by the parsing
     algorithm for project.optims objects.
@@ -626,54 +635,33 @@ def save_optimization_summaries(project_id, optimization_summaries):
              'progset_id': 'cfa49dcc-2b8b-11e6-8a08-57d606501764',
              'which': 'outcomes'}
     """
-
-    existing_ids = [
-        summary['id']
-        for summary in optimization_summaries
-        if summary.get('id', False)
-    ]
-
-    db.session.query(OptimizationsDb) \
-        .filter_by(project_id=project_id) \
-        .filter(~OptimizationsDb.id.in_(existing_ids)) \
-        .delete(synchronize_session='fetch')
-    db.session.flush()
+    new_optims = op.odict()
 
     for summary in optimization_summaries:
         id = summary.get('id', None)
 
         if id is None:
-            record = OptimizationsDb(
-                project_id=project_id,
-                parset_id=summary['parset_id'],
-                progset_id=summary['progset_id'],
-                name=summary['name'],
-                which=summary['which'])
+            optim = op.Optim(project=project)
         else:
-            record = db.session.query(OptimizationsDb).get(id)
+            optim = get_optimization_from_project(project, id)
 
-        record.update(
-            constraints=summary['constraints'],
-            objectives=summary['objectives'])
+        optim.name = summary["name"]
+        optim.parsetname = get_parset_from_project(project, summary["parset_id"]).name
+        optim.progsetname = get_progset_from_project(project, summary["progset_id"]).name
+        optim.objectives = summary["objectives"]
+        optim.objectives["which"] = summary["which"]
+        if "constraints" in summary:
+            optim.constraints = summary["constraints"]
 
-        # verb = "Creating" if id is None else "Updating"
-        # print ">>>", verb, " optimizaton", summary['name']
-        # pprint(summary)
+        new_optims[summary["name"]] = optim
 
-        db.session.add(record)
-        db.session.flush()
-
-    db.session.commit()
+    project.optims = new_optims
 
 
-def get_default_optimization_summaries(project_id):
-    project = load_project(project_id)
-    progset_records = ProgsetsDb.query.filter_by(project_id=project_id).all()
-
+def get_default_optimization_summaries(project):
     defaults_by_progset_id = {}
-    for progset_record in progset_records:
-        progset = progset_record.hydrate()
-        progset_id = progset_record.id
+    for progset in project.progsets.values():
+        progset_id = progset.uid
         default = {
             'constraints': op.defaultconstraints(project=project, progset=progset),
             'objectives': {}
@@ -684,3 +672,118 @@ def get_default_optimization_summaries(project_id):
         defaults_by_progset_id[progset_id] = default
 
     return normalize_obj(defaults_by_progset_id)
+
+
+def get_populations_from_project(project):
+    data_pops = normalize_obj(project.data.get("pops"))
+    populations = []
+    for i in range(len(data_pops['short'])):
+        population = {
+            'short': data_pops['short'][i],
+            'name': data_pops['long'][i],
+            'male': bool(data_pops['male'][i]),
+            'female': bool(data_pops['female'][i]),
+            'age_from': int(data_pops['age'][i][0]),
+            'age_to': int(data_pops['age'][i][1]),
+            'injects': bool(data_pops['injects'][i]),
+            'sexworker': bool(data_pops['sexworker'][i]),
+        }
+        populations.append(population)
+    return populations
+
+
+def set_populations_on_project(project, populations):
+    """
+    <odist>
+     - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
+     - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
+     - male: [0, 1, 1, 1, 1, 0]
+     - female: [1, 0, 0, 0, 0, 1]
+     - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
+     - injects: [0, 0, 0, 1, 0, 0]
+     - sexworker: [1, 0, 0, 0, 0, 0]
+    """
+    data_pops = op.odict()
+
+    for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
+        data_pops[key] = []
+
+    for pop in populations:
+        data_pops['short'].append(pop['short'])
+        data_pops['long'].append(pop['name'])
+        data_pops['male'].append(int(pop['male']))
+        data_pops['female'].append(int(pop['female']))
+        data_pops['age'].append((int(pop['age_from']), int(pop['age_to'])))
+        data_pops['injects'].append(int(pop['injects']))
+        data_pops['sexworker'].append(int(pop['sexworker']))
+
+    if project.data.get("pops") != data_pops:
+        # We need to delete the data here off the project?
+        project.data = {}
+
+    project.data["pops"] = data_pops
+
+    project.data["npops"] = len(populations)
+
+
+def set_project_summary_on_project(project, summary):
+
+    set_populations_on_project(project, summary.get('populations', {}))
+    project.name = summary["name"]
+
+    if not project.settings:
+        project.settings = op.Settings()
+
+    project.settings.start = summary["dataStart"]
+    project.settings.end = summary["dataEnd"]
+
+
+def get_project_summary_from_project_record(project_record):
+    try:
+        project = project_record.load()
+    except:
+        return {
+            'id': project_record.id,
+            'name': "Failed loading"
+        }
+    years = project.data.get('years')
+    if years:
+        data_start = years[0]
+        data_end = years[-1]
+    else:
+        data_start = project.settings.start
+        data_end = project.settings.end
+    result = {
+        'id': project_record.id,
+        'name': project.name,
+        'userId': project_record.user_id,
+        'dataStart': data_start,
+        'dataEnd': data_end,
+        'populations': get_populations_from_project(project),
+        'nProgram': 0,
+        'creationTime': project.created,
+        'updatedTime': project.modified,
+        'dataUploadTime': project.spreadsheetdate,
+        'hasData': project.data != {},
+        'hasEcon': "econ" in project.data
+    }
+    return result
+
+
+def save_project_with_new_uids(project, user_id):
+    project_record = ProjectDb(user_id)
+    db.session.add(project_record)
+    db.session.flush()
+
+    project.uid = project_record.id
+
+    # TODO: these need to double-checked for consistency
+    for parset in project.parsets.values():
+        parset.uid = op.uuid()
+    for result in project.results.values():
+        result.uid = op.uuid()
+
+    project_record.save_obj(project)
+    db.session.flush()
+
+    db.session.commit()
