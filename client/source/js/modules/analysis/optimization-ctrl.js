@@ -6,7 +6,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initialize() {
 
-      if (!activeProject.data.has_data) {
+      if (!activeProject.data.hasData) {
         modalService.inform(
           function () {
           },
@@ -20,6 +20,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.state = {
         activeProject: activeProject.data,
+        maxtime: 10,
         optimizations: []
       };
 
@@ -40,7 +41,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             '/api/project/' + $scope.state.activeProject.id + '/optimizations')
           .success(function (response) {
 
-            console.log('loading optimizations', JSON.stringify(response, null, 2));
+            console.log('loading optimizations', response);
             $scope.state.optimizations = response.optimizations;
             $scope.defaultOptimizationsByProgsetId = response.defaultOptimizationsByProgsetId;
 
@@ -51,6 +52,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
 
             selectDefaultProgsetAndParset($scope.state.activeOptimization);
+
           });
         });
       });
@@ -103,6 +105,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.state.objectives = objectives[optimization.which];
       $scope.optimizationCharts = [];
       $scope.selectors = [];
+      $scope.graphs = {};
+      // run once just in case an optimization was running
+      $scope.statusMessage = '';
+      initPollOptimizations();
       $scope.getOptimizationGraphs();
     };
 
@@ -191,23 +197,39 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       optimizationForm.end.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.end));
     };
 
-    $scope.runOptimizations = function() {
+    $scope.startOptimization = function() {
       if($scope.state.activeOptimization.id) {
         $http.post(
           '/api/project/' + $scope.state.activeProject.id
-          + '/optimizations/' + $scope.state.activeOptimization.id
-          + '/results')
+            + '/optimizations/' + $scope.state.activeOptimization.id
+            + '/results',
+          { maxtime: $scope.state.maxtime })
         .success(function (response) {
           if (response.status === 'started') {
             $scope.statusMessage = 'Optimization started.';
             $scope.errorMessage = '';
             $scope.seconds = 0;
             pollOptimizations();
-          } else if (response.status === 'running') {
-            $scope.statusMessage = 'Optimization already running.'
+          } else if (response.status === 'blocked') {
+            $scope.statusMessage = 'Another calculation on this project is already running.'
           }
         });
       }
+    };
+
+    var initPollOptimizations = function() {
+      if (_.isUndefined($scope.state.activeOptimization.id)) {
+        return;
+      }
+      $http.get(
+        '/api/project/' + $scope.state.activeProject.id
+        + '/optimizations/' + $scope.state.activeOptimization.id
+        + '/results')
+      .success(function(response) {
+        if (response.status === 'started') {
+          pollOptimizations();
+        }
+      });
     };
 
     var pollOptimizations = function() {
@@ -216,14 +238,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         + '/optimizations/' + $scope.state.activeOptimization.id
         + '/results')
       .success(function(response) {
-        if(response.status === 'completed') {
+        if (response.status === 'completed') {
+          $scope.statusMessage = '';
+          toastr.success('Optimization completed');
           $scope.getOptimizationGraphs();
-          $scope.statusMessage = 'Optimization successfully completed updating graphs.';
           $timeout.cancel($scope.pollTimer);
+        } else if(response.status === 'error') {
+          $timeout.cancel($scope.pollTimer);
+          $scope.statusMessage = 'Optimization failed';
+          $scope.errorMessage = response.error_text;
         } else if(response.status === 'started'){
-          $scope.pollTimer = $timeout(pollOptimizations, 2000);
-          $scope.seconds += 2;
-          $scope.statusMessage = "Optimization running for " + $scope.seconds + "s"
+          var start = new Date(response.start_time);
+          var now = new Date();
+          var diff = now.getTime() - start.getTime();
+          var seconds = parseInt(diff / 1000);
+          $scope.statusMessage = "Optimization running for " + seconds + " s";
+          $scope.pollTimer = $timeout(pollOptimizations, 1000);
         }
       })
       .error(function() {
@@ -232,38 +262,44 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
-    var clearStatusMessage = function() {
-      $timeout(function() {
-        $scope.statusMessage = '';
-      }, 5000);
-    };
-
-    $scope.getOptimizationGraphs = function() {
-      var data = {};
-      if($scope.state.activeOptimization.id) {
-        if ($scope.selectors) {
-          var selectors = _.filter($scope.selectors, function (selector) {
+    function getSelectors() {
+      if ($scope.graphs) {
+        var selectors = $scope.graphs.selectors;
+        if (selectors) {
+          var which = _.filter(selectors, function(selector) {
             return selector.checked;
-          }).map(function (selector) {
+          })
+          .map(function(selector) {
             return selector.key;
           });
-          if (selectors && selectors.length > 0) {
-            data.which = selectors;
+          if (which.length > 0) {
+            return which;
           }
         }
-        $http.get(
-          '/api/project/' + $scope.state.activeProject.id
-          + '/optimizations/' + $scope.state.activeOptimization.id
-          + '/graph',
-          {params: data})
-        .success(function (response) {
-          clearStatusMessage();
-          $scope.graphs = response.graphs;
-        })
-        .error(function() {
-          clearStatusMessage();
-        });
       }
+      return null;
+    }
+
+    $scope.getOptimizationGraphs = function() {
+      if (!$scope.state.activeOptimization.id) {
+        return;
+      }
+      var which = getSelectors();
+      console.log('which', which);
+      $http.post(
+          '/api/project/' + $scope.state.activeProject.id + '/optimizations/'
+          + $scope.state.activeOptimization.id + '/graph',
+        { which: which})
+      .success(function (response) {
+        if (response.graphs) {
+          toastr.success('Graphs loaded');
+          console.log('response', response);
+          $scope.graphs = response.graphs;
+        }
+      })
+      .error(function(response) {
+        toastr.error('response');
+      });
     };
 
     // Opens modal to add / rename / copy optimization
@@ -303,15 +339,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   });
 });
-
-//todo: add validations, comment code
-
-// this is to be replaced by an api
-var constraints = {
-  'max': {'MSM programs': null, 'HTC mobile': null, 'ART': null, 'VMMC': null, 'HTC workplace': null, 'Condoms': null, 'PMTCT': null, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': null, 'FSW programs': null},
-  'name': {'MSM programs': 'Programs for men who have sex with men', 'HTC mobile': 'HIV testing and counseling - mobile clinics', 'ART': 'Antiretroviral therapy', 'VMMC': 'Voluntary medical male circumcision', 'HTC workplace': 'HIV testing and counseling - workplace programs', 'Condoms': 'Condom promotion and distribution', 'PMTCT': 'Prevention of mother-to-child transmission', 'Other': 'Other', 'MGMT': 'Management', 'HTC medical': 'HIV testing and counseling - medical facilities', 'FSW programs': 'Programs for female sex workers and clients'},
-  'min': {'MSM programs': 0.0, 'HTC mobile': 0.0, 'ART': 1.0, 'VMMC': 0.0, 'HTC workplace': 0.0, 'Condoms': 0.0, 'PMTCT': 0.0, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': 0.0, 'FSW programs': 0.0}
-};
 
 // this is to be replaced by an api
 var objectives = {

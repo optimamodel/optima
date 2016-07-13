@@ -1,11 +1,12 @@
 ## Imports
 from numpy import append, array
-from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber
+from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid
 
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
     def __init__(self, name=None, parsetname=None, t=None, active=True):
+        self.uid = uuid()
         self.name = name
         self.parsetname = parsetname
         self.t = t
@@ -129,7 +130,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         pops = range(npops) if scenpar['for'] > npops else [scenpar['for']]
                     elif type(scenpar['for']) in [list, type(array([]))]: #... if its a population.
                         pops = scenpar['for']
-                    elif scenpar['for']=='total': #... if its a population.
+                    elif scenpar['for']=='tot': #... if its a population.
                         pops = [scenpar['for']]
                     else: 
                         errormsg = 'Unrecognized population or partnership type: %s' % scenpar['for']

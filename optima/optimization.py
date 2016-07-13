@@ -336,7 +336,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         outcome = 0 # Preallocate objective value
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
-            thisoutcome = results.main['num'+key].total[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
 
         # Output results
@@ -356,7 +356,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         target = odict()
         targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
         for key in objectives['keys']:
-            thisresult = results.main['num'+key].total[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             baseline[key] = float(thisresult[baseind])
             final[key] = float(thisresult[finalind])
             if targetfrac[key] is not None:
@@ -434,10 +434,11 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
 
 
 
-def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, overwritebudget=None, ccsample='best'):
+def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, overwritebudget=None, ccsample='best'):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
+    if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
     totalbudget = dcp(optim.objectives['budget'])
@@ -482,7 +483,7 @@ def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbo
 
 
 
-def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, fundingchange=1.2, tolerance=1e-2, ccsample='best'):
+def minmoney(project=None, optim=None, name=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, fundingchange=1.2, tolerance=1e-2, ccsample='best'):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
 
@@ -490,6 +491,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     '''
 
     ## Handle budget and remove fixed costs
+    if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])

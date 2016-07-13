@@ -28,18 +28,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Version: 2016jan30 by cliffk
 """
 
-## Specify the version, for the purposes of figuring out which version was used to create a project
-from ._version import __version__, __date__
-
-
 optimalicense = '''
-Optima HIV version %s (%s)
-Copyright 2016 by the Optima Consortium
-''' % (__version__, __date__)
+Optima HIV -- HIV optimization and analysis tool
+Copyright (C) 2016 by the Optima Consortium
+'''
 print(optimalicense)
 
 
 
+
+## Specify the version, for the purposes of figuring out which version was used to create a project
+from ._version import __version__
 
 # Create an empty list to stored failed imports
 _failed = [] 
@@ -69,7 +68,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, cleanresults, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, cleanresults, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, loadobj, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, saveobj, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
 
 
 #####################################################################################################################

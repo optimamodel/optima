@@ -17,7 +17,7 @@ from numpy import arange, array, concatenate as cat, linspace, shape
 from optima import OptimaException, defaultrepr, printv, dcp, isnumber
 
 
-class Settings():
+class Settings(object):
     def __init__(self, verbose=2):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
