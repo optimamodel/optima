@@ -63,36 +63,6 @@ def load_project_record(project_id, all_data=False, raise_exception=False, db_se
     return project_record
 
 
-def check_project_exists(project_id):
-    project_record = load_project_record(project_id)
-    if project_record is None:
-        raise ProjectDoesNotExist(id=project_id)
-
-
-def _load_project_child(
-        project_id, record_id, record_class, exception_class, raise_exception=True):
-    cu = current_user
-
-    record = db.session.query(record_class).get(record_id)
-    if record is None:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    if record.project_id != project_id:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    if not cu.is_admin and record.project.user_id != cu.id:
-        if raise_exception:
-            raise exception_class(id=record_id)
-        return None
-
-    print ">>> Fetching record '%s' of '%s'" % (record.name, repr(record_class))
-
-    return record
-
 def save_data_spreadsheet(name, folder=None):
     if folder is None:
         folder = current_app.config['UPLOAD_FOLDER']
@@ -519,9 +489,6 @@ def get_progset_summary(progset):
     return progset_summary
 
 def get_progset_summaries(project):
-    """
-
-    """
     progset_summaries = map(get_progset_summary, project.progsets.values())
     return {'progsets': normalize_obj(progset_summaries)}
 
@@ -624,7 +591,6 @@ def get_optimization_summaries(project):
             optim["progset_id"] = None
 
         optimizations.append(optim)
-
 
     return optimizations
 

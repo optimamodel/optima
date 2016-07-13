@@ -193,15 +193,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
       promise
         .success(function (response, status, headers, config) {
-            var newProjectId = headers()['x-project-id'];
-            var blob = new Blob(
-                [response],
-                { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, ($scope.projectParams.name + '.xlsx'));
-            // update active project
-            activeProject.setActiveProjectFor(
-                $scope.projectParams.name, newProjectId, UserManager.data);
-            $state.go('home');
+          var newProjectId = headers()['x-project-id'];
+          var blob = new Blob(
+              [response],
+              { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          saveAs(blob, ($scope.projectParams.name + '.xlsx'));
+          // update active project
+          activeProject.setActiveProjectFor(
+              $scope.projectParams.name, newProjectId, UserManager.data);
+          $state.go('home');
         });
     }
 
