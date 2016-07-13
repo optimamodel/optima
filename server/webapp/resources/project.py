@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import json
 
 import dateutil
 from flask import current_app, helpers, request, Response
@@ -183,32 +184,11 @@ class Projects(ProjectBase):
     )
     @report_exception
     def delete(self):
-        # dirty hack in case the wsgi layer didn't put json data where it belongs
-        from flask import request
-        import json
-
-        class FakeRequest:
-            def __init__(self, data):
-                self.json = json.loads(data)
-
-        try:
-            req = FakeRequest(request.data)
-        except ValueError:
-            req = request
-        # end of dirty hack
-
-        args = bulk_project_parser.parse_args(req=req)
-
-        projects = [
-            load_project_record(id, raise_exception=True)
-            for id in args['projects']
-            ]
-
-        for project in projects:
-            project.delete()
-
+        project_ids = json.loads(request.data)['projects']
+        for project_id in project_ids:
+            record = load_project_record(project_id, raise_exception=True)
+            record.recursive_delete()
         db.session.commit()
-
         return '', 204
 
 

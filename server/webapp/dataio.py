@@ -780,7 +780,6 @@ def get_project_summary_from_project_record(project_record):
             'id': project_record.id,
             'name': "Failed loading"
         }
-
     years = project.data.get('years')
     if years:
         data_start = years[0]
