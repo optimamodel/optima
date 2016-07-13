@@ -86,7 +86,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var dataend = parseInt($scope.projectParams.dataend)
         if (dataend < 1900 || 2100 < dataend) {
           return true;
-        };
+        }
         if ($scope.invalidDataStart()) {
           return false;
         }

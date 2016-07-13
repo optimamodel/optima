@@ -9,25 +9,21 @@ define(['./module', 'angular'], function (module, angular) {
       $scope.isNew = !population.name;
       $scope.population = angular.copy(population);
       $scope.population.active = true;
-      populations = _.filter(populations, function(p) {
+      $scope.otherPopulations = _.filter(populations, function(p) {
         return p.short !== $scope.population.short;
       });
     }
 
-    $scope.populationExists = function(key) {
-      return _.find(populations, function(population) {
-        return $scope.population[key] === population[key];
+    $scope.doesPopulationAttrClash = function(key) {
+      return _.find($scope.otherPopulations, function(otherPopulation) {
+        return $scope.population[key] === otherPopulation[key];
       });
     };
 
     $scope.isFormValid = function() {
-      if (!$scope.populationExists('name')
-          && !$scope.populationExists('short')
-          && !$scope.PopulationForm.$invalid) {
-        return true;
-      } else {
-        return false;
-      }
+      return (!$scope.doesPopulationAttrClash('name')
+          && !$scope.doesPopulationAttrClash('short')
+          && !$scope.PopulationForm.$invalid);
     };
 
     $scope.submit = function (form) {
