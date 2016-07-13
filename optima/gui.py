@@ -638,7 +638,6 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
                     plotdata = vstack([plotdata, thisplot])
         plotdata = plotdata[1:,:] # Remove header
         allplotdata.append(plotdata)
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     
     ## Do plotting
