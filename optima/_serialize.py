@@ -96,7 +96,7 @@ def dumps(obj):
 
     dumped = repr({"registry": new_registry, "schema": schema})
 
-    # print("Serialised:\n", "\n".join(saved_types))
+    # print("Serialized:\n", "\n".join(saved_types))
 
     return zlib.compress(dumped, 6)
 

@@ -753,7 +753,7 @@ def loadobj(filename, verbose=True):
 
 def savedbobj(filename, obj, verbose=True):
     ''' Save an object to file '''
-    from ._serialise import dumps
+    from ._serialize import dumps
     dumped = dumps(obj)
 
     with open(filename, 'wb') as fileobj:
@@ -776,7 +776,7 @@ def loaddbobj(filename, verbose=True):
     kwargs = {'mode': 'rb', argtype: filename}
 
     try:
-        from ._serialise import loads
+        from ._serialize import loads
 
         if argtype == "fileobj":
             read = filename.read()

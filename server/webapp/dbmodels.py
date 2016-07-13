@@ -7,7 +7,7 @@ from sqlalchemy.orm import deferred
 
 import optima as op
 from server.webapp.dbconn import db, redis
-from server import serialise
+from server import serialize
 
 
 @swagger.model
@@ -70,7 +70,7 @@ class ProjectDb(db.Model):
 
     def load(self):
         redis_entry = redis.get(self.id.hex)
-        return serialise.loads(redis_entry)
+        return serialize.loads(redis_entry)
 
     def save_obj(self, obj):
 
@@ -79,7 +79,7 @@ class ProjectDb(db.Model):
         new_project.spreadsheet = None
         new_project.results = op.odict()
 
-        redis.set(self.id.hex, serialise.dumps(new_project))
+        redis.set(self.id.hex, serialize.dumps(new_project))
         print("Saved " + self.id.hex)
 
 
@@ -135,10 +135,10 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
-        return serialise.loads(redis.get("result-" + self.id.hex))
+        return serialize.loads(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
-        redis.set("result-" + self.id.hex, serialise.dumps(obj))
+        redis.set("result-" + self.id.hex, serialize.dumps(obj))
         print("Saved result-" + self.id.hex)
 
 
@@ -160,10 +160,10 @@ class WorkingProjectDb(db.Model):  # pylint: disable=R0903
         self.work_log_id = work_log_id
 
     def load(self):
-        return serialise.loads(redis.get("working-" + self.id.hex))
+        return serialize.loads(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
-        redis.set("working-" + self.id.hex, serialise.dumps(obj))
+        redis.set("working-" + self.id.hex, serialize.dumps(obj))
         print("Saved working-" + self.id.hex)
 
 
