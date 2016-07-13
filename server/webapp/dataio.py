@@ -754,28 +754,28 @@ def set_populations_on_project(project, populations):
     if project.data.get("pops") != data_pops:
         # We need to delete the data here off the project?
         project.data = {}
+
     project.data["pops"] = data_pops
 
     project.data["npops"] = len(populations)
 
 
-def set_values_on_project(project, args):
+def set_project_summary_on_project(project, summary):
 
-    set_populations_on_project(project, args.get('populations', {}))
-    project.name = args["name"]
+    set_populations_on_project(project, summary.get('populations', {}))
+    project.name = summary["name"]
 
     if not project.settings:
         project.settings = op.Settings()
 
-    project.settings.start = args["dataStart"]
-    project.settings.end = args["dataEnd"]
+    project.settings.start = summary["dataStart"]
+    project.settings.end = summary["dataEnd"]
 
 
-def get_project_summary_from_record(project_record):
+def get_project_summary_from_project_record(project_record):
     try:
         project = project_record.load()
     except:
-        raise
         return {
             'id': project_record.id,
             'name': "Failed loading"
@@ -803,3 +803,22 @@ def get_project_summary_from_record(project_record):
         'hasEcon': "econ" in project.data
     }
     return result
+
+
+def save_project_with_new_uids(project, user_id):
+    project_record = ProjectDb(user_id)
+    db.session.add(project_record)
+    db.session.flush()
+
+    project.uid = project_record.id
+
+    # TODO: these need to double-checked for consistency
+    for parset in project.parsets.values():
+        parset.uid = op.uuid()
+    for result in project.results.values():
+        result.uid = op.uuid()
+
+    project_record.save_obj(project)
+    db.session.flush()
+
+    db.session.commit()

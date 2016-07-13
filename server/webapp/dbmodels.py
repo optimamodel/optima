@@ -83,7 +83,6 @@ class ProjectDb(db.Model):
         return self.id.hex + ".prj"
 
     def recursive_delete(self, synchronize_session=False):
-
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
         db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
