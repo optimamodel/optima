@@ -785,12 +785,19 @@ def get_project_summary_from_record(project_record):
             'name': "Failed loading"
             }
 
+    years = project.data.get('years')
+    if years:
+        data_start = years[0]
+        data_end = years[-1]
+    else:
+        data_start = project.settings.start
+        data_end = project.settings.end
     result = {
         'id': project_record.id,
         'name': project.name,
         'user_id': project_record.user_id,
-        'dataStart': project.data.get('years', [None])[0],
-        'dataEnd': project.data.get('years', [None])[-1],
+        'dataStart': data_start,
+        'dataEnd': data_end,
         'populations': get_populations_from_project(project),
         'nProgram': 0,
         'creation_time': project.created,
