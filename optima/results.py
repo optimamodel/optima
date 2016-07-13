@@ -34,7 +34,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -58,6 +58,7 @@ class Resultset(object):
         
         # Fundamental quantities -- populated by project.runsim()
         self.raw = raw
+        self.pars = pars # Keep pars
         self.simpars = simpars # ...and sim parameters
         self.tvec = raw[0]['tvec'] # Copy time vector
         self.dt   = self.tvec[1] - self.tvec[0] # And pull out dt since useful
