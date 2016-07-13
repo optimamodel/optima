@@ -708,52 +708,52 @@ def get_default_optimization_summaries(project):
     return normalize_obj(defaults_by_progset_id)
 
 
-
 def get_populations_from_project(project):
-
-    project_pops = project.data.get("pops")
-
-    populations = []
+    """
+    <odist>
+     - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
+     - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
+     - male: [0, 1, 1, 1, 1, 0]
+     - female: [1, 0, 0, 0, 0, 1]
+     - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
+     - injects: [0, 0, 0, 1, 0, 0]
+     - sexworker: [1, 0, 0, 0, 0, 0]
+    """
+    project_pops = normalize_obj(project.data.get("pops"))
+    result = []
     for i in range(len(project_pops['short'])):
         new_pop = {
-            'name': project_pops['long'][i],
             'short': project_pops['short'][i],
-            'female': project_pops['female'][i],
-            'male': project_pops['male'][i],
-            'injects': project_pops['injects'][i],
-            'sexworker': project_pops['sexworker'][i],
+            'name': project_pops['long'][i],
+            'male': bool(project_pops['male'][i]),
+            'female': bool(project_pops['female'][i]),
             'age_from': int(project_pops['age'][i][0]),
-            'age_to': int(project_pops['age'][i][1])
-            }
-        populations.append(new_pop)
+            'age_to': int(project_pops['age'][i][1]),
+            'injects': bool(project_pops['injects'][i]),
+            'sexworker': bool(project_pops['sexworker'][i]),
+        }
+        result.append(new_pop)
+    return result
 
-    return populations
+
+def convert_to_datapop(populations):
+    result = op.odict()
+    for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
+        result[key] = []
+    for pop in populations:
+        result['short'].append(pop['short'])
+        result['long'].append(pop['name'])
+        result['male'].append(int(pop['male']))
+        result['female'].append(int(pop['female']))
+        result['age'].append((int(pop['age_from']), int(pop['age_to'])))
+        result['injects'].append(int(pop['injects']))
+        result['sexworker'].append(int(pop['sexworker']))
+    return result
 
 
 def set_populations_on_project(project, populations):
 
-    finished_populations = op.odict()
-
-    finished_populations['long'] = []
-    finished_populations['short'] = []
-    finished_populations['female'] = []
-    finished_populations['male'] = []
-    finished_populations['age'] = []
-    finished_populations['injects'] = []
-    finished_populations['sexworker'] = []
-
-    for _pop in populations:
-        pop = dict(_pop)
-        finished_populations['long'].append(pop.pop('name'))
-        finished_populations['short'].append(pop.pop('short'))
-        finished_populations['female'].append(pop.pop('female'))
-        finished_populations['male'].append(pop.pop('male'))
-        finished_populations['age'].append((pop.pop('age_from'),
-                                            pop.pop('age_to')))
-        finished_populations['injects'].append(pop.pop('injects'))
-        finished_populations['sexworker'].append(pop.pop('sexworker'))
-        if pop:
-            assert False, pop
+    finished_populations = convert_to_datapop(populations)
 
     if project.data.get("pops") != finished_populations:
         # We need to delete the data here off the project?
@@ -789,8 +789,8 @@ def get_project_summary_from_record(project_record):
         'id': project_record.id,
         'name': project.name,
         'user_id': project_record.user_id,
-        'dataStart': project.data.get('years', ["<no data>"])[0],
-        'dataEnd': project.data.get('years', ["<no data>"])[-1],
+        'dataStart': project.data.get('years', [None])[0],
+        'dataEnd': project.data.get('years', [None])[-1],
         'populations': get_populations_from_project(project),
         'nProgram': 0,
         'creation_time': project.created,

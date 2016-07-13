@@ -701,10 +701,11 @@ class ProjectFromData(Resource):
     def post(self):
         user_id = current_user.id
 
+        print "> Upload project"
+
         args = project_upload_form_parser.parse_args()
         uploaded_file = args['file']
         project_name = args['name']
-
         source_filename = uploaded_file.source_filename
 
         project = op.loadobj(uploaded_file)
@@ -722,6 +723,7 @@ class ProjectFromData(Resource):
 
         # New project ID needs to be generated before calling restore
         db.session.add(project_record)
+        # flush() creates new project_record.id
         db.session.flush()
 
         project.uid = project_record.id
@@ -741,6 +743,8 @@ class ProjectFromData(Resource):
             db.session.add(result_record)
 
         db.session.commit()
+
+        print "> Upload project end"
 
         response = {
             'file': source_filename,
