@@ -4,9 +4,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProjectEconomicDataController',
     function ($scope, projects, modalService, $upload, $state, info, projectApiService, $modal) {
       var activeProjectInfo = info.data;
-      $scope.hasEconData = activeProjectInfo.has_econ;
+      $scope.hasEconData = activeProjectInfo.hasEcon;
 
-      if (!activeProjectInfo.has_data) {
+      if (!activeProjectInfo.hasData) {
         modalService.inform(
           function (){ },
           'Okay',

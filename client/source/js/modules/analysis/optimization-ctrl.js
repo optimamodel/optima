@@ -6,7 +6,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initialize() {
 
-      if (!activeProject.data.has_data) {
+      if (!activeProject.data.hasData) {
         modalService.inform(
           function () {
           },

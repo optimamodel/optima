@@ -54,8 +54,8 @@ population_parser.add_arguments({
 project_parser = RequestParser()
 project_parser.add_arguments({
     'name': {'required': True, 'type': str},
-    'datastart': {'type': int, 'default': op.default_datastart},
-    'dataend': {'type': int, 'default': op.default_dataend},
+    'dataStart': {'type': int, 'default': op.default_datastart},
+    'dataEnd': {'type': int, 'default': op.default_dataend},
     # FIXME: programs should be a "SubParser" with its own Parser
     # 'populations': {'type': (population_parser), 'required': True},
     'populations': {'type': dict, 'required': True, 'action': 'append'},
@@ -67,8 +67,8 @@ project_update_parser.add_arguments({
     'name': {'type': str},
     'populations': {'type': dict, 'action': 'append'},
     'canUpdate': {'type': bool, 'default': False},
-    'datastart': {'type': int, 'default': None},
-    'dataend': {'type': int, 'default': None}
+    'dataStart': {'type': int, 'default': None},
+    'dataEnd': {'type': int, 'default': None}
 })
 
 
@@ -154,7 +154,7 @@ class Projects(ProjectBase):
         db.session.commit()
 
         project.uid = project_entry.id
-        project.data["years"] = (args['datastart'], args['dataend'])
+        project.data["years"] = (args['dataStart'], args['dataEnd'])
 
         project_entry.save_obj(project)
 
@@ -163,8 +163,8 @@ class Projects(ProjectBase):
         op.makespreadsheet(
             path,
             pops=args['populations'],
-            datastart=args['datastart'],
-            dataend=args['dataend'])
+            datastart=args['dataStart'],
+            dataend=args['dataEnd'])
 
         current_app.logger.debug(
             "new_project_template: %s" % new_project_template)
@@ -287,8 +287,8 @@ class Project(Resource):
         op.makespreadsheet(
             path,
             pops=args['populations'],
-            datastart=args["datastart"],
-            dataend=args["dataend"])
+            datastart=args["dataStart"],
+            dataend=args["dataEnd"])
 
 
         current_app.logger.debug(

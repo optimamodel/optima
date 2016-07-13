@@ -709,6 +709,24 @@ def get_default_optimization_summaries(project):
 
 
 def get_populations_from_project(project):
+    data_pops = normalize_obj(project.data.get("pops"))
+    populations = []
+    for i in range(len(data_pops['short'])):
+        population = {
+            'short': data_pops['short'][i],
+            'name': data_pops['long'][i],
+            'male': bool(data_pops['male'][i]),
+            'female': bool(data_pops['female'][i]),
+            'age_from': int(data_pops['age'][i][0]),
+            'age_to': int(data_pops['age'][i][1]),
+            'injects': bool(data_pops['injects'][i]),
+            'sexworker': bool(data_pops['sexworker'][i]),
+        }
+        populations.append(population)
+    return populations
+
+
+def set_populations_on_project(project, populations):
     """
     <odist>
      - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
@@ -719,47 +737,25 @@ def get_populations_from_project(project):
      - injects: [0, 0, 0, 1, 0, 0]
      - sexworker: [1, 0, 0, 0, 0, 0]
     """
-    project_pops = normalize_obj(project.data.get("pops"))
-    result = []
-    for i in range(len(project_pops['short'])):
-        new_pop = {
-            'short': project_pops['short'][i],
-            'name': project_pops['long'][i],
-            'male': bool(project_pops['male'][i]),
-            'female': bool(project_pops['female'][i]),
-            'age_from': int(project_pops['age'][i][0]),
-            'age_to': int(project_pops['age'][i][1]),
-            'injects': bool(project_pops['injects'][i]),
-            'sexworker': bool(project_pops['sexworker'][i]),
-        }
-        result.append(new_pop)
-    return result
+    data_pops = op.odict()
 
-
-def convert_to_datapop(populations):
-    result = op.odict()
     for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
-        result[key] = []
+        data_pops[key] = []
+
     for pop in populations:
-        result['short'].append(pop['short'])
-        result['long'].append(pop['name'])
-        result['male'].append(int(pop['male']))
-        result['female'].append(int(pop['female']))
-        result['age'].append((int(pop['age_from']), int(pop['age_to'])))
-        result['injects'].append(int(pop['injects']))
-        result['sexworker'].append(int(pop['sexworker']))
-    return result
+        data_pops['short'].append(pop['short'])
+        data_pops['long'].append(pop['name'])
+        data_pops['male'].append(int(pop['male']))
+        data_pops['female'].append(int(pop['female']))
+        data_pops['age'].append((int(pop['age_from']), int(pop['age_to'])))
+        data_pops['injects'].append(int(pop['injects']))
+        data_pops['sexworker'].append(int(pop['sexworker']))
 
-
-def set_populations_on_project(project, populations):
-
-    finished_populations = convert_to_datapop(populations)
-
-    if project.data.get("pops") != finished_populations:
+    if project.data.get("pops") != data_pops:
         # We need to delete the data here off the project?
         project.data = {}
+    project.data["pops"] = data_pops
 
-    project.data["pops"] = finished_populations
     project.data["npops"] = len(populations)
 
 
@@ -771,8 +767,8 @@ def set_values_on_project(project, args):
     if not project.settings:
         project.settings = op.Settings()
 
-    project.settings.start = args["datastart"]
-    project.settings.end = args["dataend"]
+    project.settings.start = args["dataStart"]
+    project.settings.end = args["dataEnd"]
 
 
 def get_project_summary_from_record(project_record):
@@ -783,7 +779,7 @@ def get_project_summary_from_record(project_record):
         return {
             'id': project_record.id,
             'name': "Failed loading"
-            }
+        }
 
     years = project.data.get('years')
     if years:
@@ -795,15 +791,15 @@ def get_project_summary_from_record(project_record):
     result = {
         'id': project_record.id,
         'name': project.name,
-        'user_id': project_record.user_id,
+        'userId': project_record.user_id,
         'dataStart': data_start,
         'dataEnd': data_end,
         'populations': get_populations_from_project(project),
         'nProgram': 0,
-        'creation_time': project.created,
-        'updated_time': project.modified,
-        'data_upload_time': project.spreadsheetdate,
-        'has_data': project.data != {},
-        'has_econ': "econ" in project.data
+        'creationTime': project.created,
+        'updatedTime': project.modified,
+        'dataUploadTime': project.spreadsheetdate,
+        'hasData': project.data != {},
+        'hasEcon': "econ" in project.data
     }
     return result

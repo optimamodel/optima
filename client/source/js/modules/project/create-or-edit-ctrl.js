@@ -28,8 +28,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if (activeProject.isSet()) {
           $scope.projectParams.id = $scope.projectInfo.id;
           $scope.projectParams.name = $scope.projectInfo.name;
-          $scope.projectParams.datastart = $scope.projectInfo.dataStart;
-          $scope.projectParams.dataend = $scope.projectInfo.dataEnd;
+          $scope.projectParams.dataStart = $scope.projectInfo.dataStart;
+          $scope.projectParams.dataEnd = $scope.projectInfo.dataEnd;
         }
 
         var newPopulations = _($scope.projectInfo.populations).filter(isNotInScopePopulations);
@@ -74,26 +74,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.invalidDataStart = function() {
-      if ($scope.projectParams.datastart) {
-        var datastart = parseInt($scope.projectParams.datastart)
-        return datastart < 1900 || 2100 < datastart;
+      if ($scope.projectParams.dataStart) {
+        var dataStart = parseInt($scope.projectParams.dataStart)
+        return dataStart < 1900 || 2100 < dataStart;
       }
-      return !$scope.projectParams.datastart; 
+      return !$scope.projectParams.dataStart; 
     };
 
     $scope.invalidDataEnd = function() {
-      if ($scope.projectParams.dataend) {
-        var dataend = parseInt($scope.projectParams.dataend)
-        if (dataend < 1900 || 2100 < dataend) {
+      if ($scope.projectParams.dataEnd) {
+        var dataEnd = parseInt($scope.projectParams.dataEnd)
+        if (dataEnd < 1900 || 2100 < dataEnd) {
           return true;
         }
         if ($scope.invalidDataStart()) {
           return false;
         }
-        var datastart = parseInt($scope.projectParams.datastart)
-        return dataend <= datastart;
+        var dataStart = parseInt($scope.projectParams.dataStart)
+        return dataEnd <= dataStart;
       }
-      return !$scope.projectParams.dataend;  
+      return !$scope.projectParams.dataEnd;  
     };
 
     $scope.invalidPopulationSelected = function() {
