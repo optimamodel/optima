@@ -17,14 +17,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.projectInfo = info ? info.data : void 0;
 
-      $scope.submit = "Create project & Optima template";
+      $scope.submitButtonText = "Create project & Optima template";
       $scope.populations = populations.data.populations;
       console.log('default populations', $scope.populations);
 
       if (isEditMode()) {
-        // change submit button name
-        $scope.submit = "Save project & Optima template";
-
+        $scope.submitButtonText = "Save project & Optima template";
         $scope.editParams.isEdit = true;
 
         if (activeProject.isSet()) {
@@ -34,21 +32,35 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.projectParams.dataend = $scope.projectInfo.dataEnd;
         }
 
-        $scope.populations = $scope.populations.concat(_($scope.projectInfo.populations).filter(function(projectPopulation) {
-          return !_.find($scope.populations, function(population) {
-            return projectPopulation.name === population.name && projectPopulation.short === population.short;
-          });
-        }));
+        var newPopulations = _($scope.projectInfo.populations).filter(isNotInScopePopulations);
+        $scope.populations = $scope.populations.concat(newPopulations);
 
+        // replace population attrs in $scope.populations
+        // by $scope.projectInfo.populations
         _($scope.populations).each(function(population) {
-          var source = findByName($scope.projectInfo.populations, population);
+          var source = findByShortAndName($scope.projectInfo.populations, population);
           if (source) {
             population.active = true;
             _.extend(population, source);
           }
         });
-
       }
+    }
+
+    function isNotInScopePopulations(testPopulation) {
+      function sameAsTestPopulation(population) {
+        return testPopulation.name === population.name
+            && testPopulation.short === population.short;
+      }
+      return !_.find($scope.populations, sameAsTestPopulation);
+    }
+
+    function isEditMode(){
+      return $state.current.name == "project.edit";
+    }
+
+    function findByShortAndName(arr, obj){
+        return _.findWhere(arr, {short: obj.short, name: obj.name});
     }
 
     $scope.projectExists = function () {
@@ -91,14 +103,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return !result;
     };
 
-    function isEditMode(){
-      return $state.current.name == "project.edit";
-    }
-
-    function findByName(arr,obj){
-        return _.findWhere(arr, {short: obj.short, name: obj.name});
-    }
-
     function openPopulationModal(population) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-population-modal.html',
@@ -114,9 +118,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     }
 
-    /**
-     * Opens a model to create population, push on successful save
-     */
     $scope.openAddPopulationModal = function ($event) {
       if ($event) {
         $event.preventDefault();
@@ -130,9 +131,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       );
     };
 
-    /**
-     * Opens a modal for editing an existing population.
-     */
     $scope.openEditPopulationModal = function ($event, population) {
       if ($event) {
         $event.preventDefault();
@@ -145,9 +143,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       );
     };
 
-    /**
-     * Copies existing population, push on successful save
-     */
     $scope.copyPopulationAndOpenModal = function ($event, existingPopulation) {
       if ($event) {
         $event.preventDefault();
@@ -163,11 +158,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       );
     };
 
-    /**
-     * Returns a collection of active entries, with active & $$hasKey removed
-     */
-    function toCleanArray(collection) {
-      return _(collection).chain()
+    function getSelectedPopulations() {
+      var populations = $scope.populations;
+      return _(populations).chain()
         .where({ active: true })
         .map(function (item) {
           var cl = _(item).omit(['active', '$$hashKey']);
@@ -185,16 +178,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .value();
     }
 
-    function continueSubmitForm( selectedPopulations ) {
+    function submit() {
+      var populations = getSelectedPopulations();
       var params, promise;
       if ($scope.editParams.isEdit) {
         params = angular.copy($scope.projectParams);
-        params.populations = selectedPopulations;
+        params.populations = populations;
         promise = projectApiService.updateProject(
             $scope.projectInfo.id, params);
       } else {
         params = angular.copy($scope.projectParams);
-        params.populations = selectedPopulations;
+        params.populations = populations;
         promise = projectApiService.createProject(params);
       }
       promise
@@ -232,39 +226,37 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return false;
       }
 
-      var selectedPopulations = toCleanArray($scope.populations);
-
-      if ( $state.current.name == "project.edit" ) {
+      if ($state.current.name == "project.edit") {
         var message;
-        if ( !angular.equals(
-                selectedPopulations,$scope.projectInfo.populations ) ) {
+        if (!angular.equals(
+                $scope.populations, $scope.projectInfo.populations)) {
           $scope.editParams.canUpdate =
-              selectedPopulations.length == $scope.projectInfo.populations.length;
+              $scope.populations.length == $scope.projectInfo.populations.length;
           message = 'You have made changes to populations. All existing data will be lost. Would you like to continue?';
           if ($scope.editParams.canUpdate) {
             message = 'You have changed some population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
           }
           modalService.confirm(
-            function () { continueSubmitForm( selectedPopulations ); },
-            function () {},
-            'Yes, save this project',
-            'No',
-            message,
-            'Save Project?'
+              submit,
+              function() {},
+              'Yes, save this project',
+              'No',
+              message,
+              'Save Project?'
           );
         } else {
           message = 'No parameters have been changed. Do you intend to reload the original data and start from scratch?';
           modalService.confirm(
-            function () { continueSubmitForm( selectedPopulations ); },
-            function () {},
-            'Yes, reload this project',
-            'No',
-            message,
-            'Reload project?'
+              submit,
+              function() {},
+              'Yes, reload this project',
+              'No',
+              message,
+              'Reload project?'
           );
         }
       } else {
-        continueSubmitForm( selectedPopulations );
+        submit();
       }
     };
 
