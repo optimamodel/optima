@@ -28,39 +28,58 @@ from server.webapp.parse import (
     parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
     revert_costcovdata, revert_ccopars, revert_pars_list,
 )
-
+from server.webapp.exceptions import ProjectDoesNotExist
 
 import optima as op
 
-def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None, authenticate=True):
-    from server.webapp.exceptions import ProjectDoesNotExist
 
+def authenticate_current_user():
+    current_app.logger.debug("authenticating user {} (admin:{})".format(
+        current_user.id if not current_user.is_anonymous() else None,
+        current_user.is_admin if not current_user.is_anonymous else False
+    ))
+    if current_user.is_anonymous():
+        if raise_exception:
+            abort(401)
+        else:
+            return None
+
+
+def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=True):
     if not db_session:
         db_session = db.session
 
     if authenticate:
-        cu = current_user
-        # current_app.logger.debug("getting project {} for user {} (admin:{})".format(
-        #     project_id,
-        #     cu.id if not cu.is_anonymous() else None,
-        #     cu.is_admin if not cu.is_anonymous else False
-        # ))
-        if cu.is_anonymous():
-            if raise_exception:
-                abort(401)
-            else:
-                return None
-    if authenticate is False or cu.is_admin:
+        authenticate_current_user()
+
+    if authenticate is False or current_user.is_admin:
         query = db_session.query(ProjectDb).filter_by(id=project_id)
     else:
-        query = db_session.query(ProjectDb).filter_by(id=project_id, user_id=cu.id)
+        query = db_session.query(ProjectDb).filter_by(
+            id=project_id, user_id=current_user.id)
 
     project_record = query.first()
+
     if project_record is None:
         current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
         if raise_exception:
             raise ProjectDoesNotExist(id=project_id)
+
     return project_record
+
+
+def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
+    if not db_session:
+        db_session = db.session
+    project_record = load_project_record(
+        project_id, raise_exception=raise_exception,
+        db_session=db_session, authenticate=authenticate)
+    if project_record is None:
+        if raise_exception:
+            raise ProjectDoesNotExist(id=project_id)
+        else:
+            return None
+    return project_record.load()
 
 
 def save_data_spreadsheet(name, folder=None):
@@ -80,27 +99,6 @@ def delete_spreadsheet(name, user_id=None):
             spreadsheet_file = helpers.safe_join(user_dir, name + '.xlsx')
         if os.path.exists(spreadsheet_file):
             os.remove(spreadsheet_file)
-
-def load_project(project_id, autofit=False, raise_exception=True):
-    if not autofit:
-        project_record = load_project_record(project_id, raise_exception=raise_exception)
-        if project_record is None:
-            raise ProjectDoesNotExist(id=project_id)
-        project = project_record.load()
-    else:  # todo bail out if no working project
-        working_project_record = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
-        if working_project_record is None:
-            raise ProjectDoesNotExist(id=project_id)
-        project = working_project_record.load()
-    return project
-
-
-def load_parset(project, parset_id):
-
-    for parset in project.parsets.values():
-        if parset.uid == parset_id:
-            return parset
-
 
 
 def load_parset_list(project):
@@ -127,15 +125,10 @@ def get_project_parameters(project):
 def get_parset_from_project(project, parset_id):
     if not isinstance(parset_id, UUID):
         parset_id = UUID(parset_id)
-
-    parsets = [
-        project.parsets[key]
-        for key in project.parsets
-        if project.parsets[key].uid == parset_id
-    ]
-    if not parsets:
-        raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
-    return parsets[0]
+    for parset in project.parsets.values():
+        if parset.uid == parset_id:
+            return parset
+    raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
 
 
 def get_progset_from_project(project, progset_id):
@@ -277,8 +270,9 @@ def save_result(
         db_session=None):
     if db_session is None:
         db_session = db.session
+    project = load_project(project_id)
     result_record = update_or_create_result_record(
-        project_id, result, parset_name=parset_name,
+        project, result, parset_name=parset_name,
         calculation_type=calculation_type, db_session=db_session)
     db_session.add(result_record)
     db_session.flush()

@@ -12,7 +12,7 @@ import optima as op
 from server.webapp.dataio import (
     load_project_record, TEMPLATEDIR, upload_dir_user, load_result,
     update_or_create_result_record, delete_result, load_result_by_id,
-    load_project, load_parset, load_parset_list, get_parset_from_project)
+    load_project, get_parset_from_project, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ResultsDb
 from server.webapp.exceptions import ParsetAlreadyExists
@@ -108,7 +108,7 @@ class ParsetRenameDelete(Resource):
         project_record = load_project_record(project_id, raise_exception=True)
         project = project_record.load()
 
-        parset = load_parset(project, parset_id)
+        parset = get_parset_from_project(project, parset_id)
         project.parsets.pop(parset.name)
         project_record.save_obj(project)
 
@@ -133,7 +133,7 @@ class ParsetRenameDelete(Resource):
         project_record = load_project_record(project_id, raise_exception=True)
         project = project_record.load()
 
-        parset = load_parset(project, parset_id)
+        parset = get_parset_from_project(project, parset_id)
         project.parsets.rename(parset.name, name)
         parset.name = name
 
@@ -186,7 +186,7 @@ class ParsetCalibration(Resource):
         print "> Calculation type: %s, autofit: %s" % (calculation_type, autofit)
 
         project = load_project(project_id)
-        parset = load_parset(project, parset_id)
+        parset = get_parset_from_project(project, parset_id)
         result = load_result(project.uid, parset.uid, calculation_type)
 
         if result is None:
@@ -270,7 +270,7 @@ class ParsetCalibration(Resource):
 
             print "> Simulating model from uploaded parameters"
             result = project.runsim(simpars=parset.interp())
-            result_record = update_or_create_result_record(project_id, result, parset.name, 'calibration')
+            result_record = update_or_create_result_record(project, result, parset.name, 'calibration')
             db.session.add(result_record)
             db.session.commit()
 
@@ -321,7 +321,7 @@ class ParsetAutofit(Resource):
         """
         from server.webapp.tasks import run_autofit, start_or_report_calculation
         project = load_project(project_id)
-        parset = load_parset(project, parset_id)
+        parset = get_parset_from_project(project, parset_id)
 
         maxtime = json.loads(request.data).get('maxtime')
         calc_status = start_or_report_calculation(project_id, parset_id, 'autofit')
@@ -375,7 +375,7 @@ class ParsetUploadDownload(Resource):
         project_record = load_project_record(project_id)
         project = project_record.load()
 
-        parset = load_parset(project, parset_id)
+        parset = get_parset_from_project(project, parset_id)
         parset.project = None
 
         # return result as a file
