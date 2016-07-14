@@ -101,12 +101,6 @@ def delete_spreadsheet(name, user_id=None):
             os.remove(spreadsheet_file)
 
 
-def load_parset(project, parset_id):
-    for parset in project.parsets.values():
-        if parset.uid == parset_id:
-            return parset
-
-
 def load_parset_list(project):
     parsets = []
 
