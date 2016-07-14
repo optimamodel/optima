@@ -746,6 +746,7 @@ def get_project_summary_from_project_record(project_record):
             'id': project_record.id,
             'name': "Failed loading"
         }
+
     years = project.data.get('years')
     if years:
         data_start = years[0]
@@ -753,6 +754,13 @@ def get_project_summary_from_project_record(project_record):
     else:
         data_start = project.settings.start
         data_end = project.settings.end
+
+    n_program = 0
+    for progsets in project.progsets.values():
+        this_n_program = len(progsets.programs.values())
+        if this_n_program > n_program:
+            n_program = this_n_program
+
     result = {
         'id': project_record.id,
         'name': project.name,
@@ -760,7 +768,7 @@ def get_project_summary_from_project_record(project_record):
         'dataStart': data_start,
         'dataEnd': data_end,
         'populations': get_populations_from_project(project),
-        'nProgram': 0,
+        'nProgram': n_program,
         'creationTime': project.created,
         'updatedTime': project.modified,
         'dataUploadTime': project.spreadsheetdate,
