@@ -689,7 +689,6 @@ class ProjectFromData(Resource):
         project = loaddbobj(uploaded_file)
         project.name = project_name
         save_project_with_new_uids(project, current_user.id)
-        print "> Upload end"
 
         response = {
             'file': uploaded_file.source_filename,

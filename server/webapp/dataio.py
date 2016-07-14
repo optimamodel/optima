@@ -1,4 +1,9 @@
-"""
+from flask.ext.restful import marshal
+
+from server.webapp.plot import make_mpld3_graph_dict
+
+__doc__ = """
+
 dataio.py contains all the functions that fetch and saves optima objects to/from database
 and the file system. These functions abstracts out the data i/o for the web-server
 api calls.
@@ -249,8 +254,51 @@ def load_parameters_from_progset_parset(project, progset, parset):
     return parse_parameters_from_progset_parset(settings, progset, parset)
 
 
-def get_parset_keys_with_y_values(project):
+########################################################################
+#
+# Scenario functions
+#
+# Data structure of a JSON scenario summary
+#
+# scenario_summary:
+#     id: uuid_string
+#     progset_id: uuid_string -or- null # since parameter scenarios don't have progsets
+#     parset_id: uuid_string
+#     name: string
+#     active: boolean
+#     years: list of number
+#     scenario_type: "parameter", "coverage" or "budget"
+#     ---
+#     pars:
+#     	- name: string
+#     	  for: string -or- [1 string] -or- [2 strings]
+#     	  startyear: number
+#     	  endyear: number
+#     	  startval: number
+#     	  endval: number
+#     	- ...
+#      -or-
+#     budget:
+#     	- program: string
+#     	  values: [number -or- null] # same length as years
+#     	- ...
+#      -or-
+#     coverage:
+#     	- program: string
+#     	  values: [number -or- null] # same length as years
+#     	- ...
 
+
+
+def get_parameters_for_scenarios(project):
+    """
+    Returns parameters that can be modified in a scenario:
+        <parsetID>:
+            <parameterShort>:
+                - val: number
+                - label: string
+    """
+    parsets = {key: value for key, value in project.parsets.items()}
     y_keys = {
         str(parset.uid): {
             par.short: [
@@ -259,41 +307,18 @@ def get_parset_keys_with_y_values(project):
                     'label': ' - '.join(k) if isinstance(k, tuple) else k
                 }
                 for k in par.y.keys()
-                ]
+            ]
             for par in parset.pars[0].values()
             if hasattr(par, 'y') and par.visible
-            }
-        for parset in project.parsets.values()
         }
+        for id, parset in parsets.iteritems()
+    }
     return y_keys
 
 
 def get_scenario_summary(project, scenario):
     """
-
-    Args:
-        scenario_record:
-
-    Returns:
-    {
-        'id': scenario_record.id,
-        'progset_id': scenario_record.progset_id,
-        'scenario_type': scenario_record.scenario_type,
-        'active': scenario_record.active,
-        'name': scenario_record.name,
-        'parset_id': scenario_record.parset_id,
-        'budgets': [
-          {
-            "program": "VMMC",
-            "values": [ null ]
-          },
-          },
-          {
-            "program": "HTC",
-            "values": [ 33333 ]
-          },
-          "years": [ 2020 ],
-    }
+    Returns scenario_summary as defined above
     """
     extra_data = {}
 
@@ -386,6 +411,22 @@ def save_scenario_summaries(project, scenario_summaries):
         project.scens[scen.name] = scen
 
 
+def make_scenarios_graphs(project_id):
+    db.session\
+        .query(ResultsDb)\
+        .filter_by(project_id=project_id, calculation_type="scenarios")\
+        .delete()
+    db.session.commit()
+    project = load_project(project_id)
+    project.runscenarios()
+    result = project.results[-1]
+    record = update_or_create_result_record(
+        project, result, 'default', 'scenarios')
+    db.session.add(record)
+    db.session.commit()
+    return make_mpld3_graph_dict(result)
+
+
 ## PROGRAMS
 
 def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=True):
@@ -423,6 +464,7 @@ def load_project(project_id, raise_exception=True, db_session=None, authenticate
         else:
             return None
     return project_record.load()
+
 
 
 def get_program_from_progset(progset, program_id, include_inactive=False):

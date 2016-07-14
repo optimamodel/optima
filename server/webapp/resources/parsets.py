@@ -10,9 +10,9 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record, TEMPLATEDIR, upload_dir_user, load_result,
-    update_or_create_result_record, delete_result, load_result_by_id,
-    load_project, get_parset_from_project, load_parset_list, get_parset_from_project)
+    delete_result, load_result_by_id, load_project_record,
+    TEMPLATEDIR, upload_dir_user, update_or_create_result_record,
+    load_result, load_project, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ResultsDb
 from server.webapp.exceptions import ParsetAlreadyExists
@@ -433,6 +433,7 @@ class ResultsExportAsCsv(Resource):
     """
     /api/results/<results_id>
     - GET: returns a .csv file as blob
+    - POST: returns graphs of a result_id, using which selectors
     """
 
     method_decorators = [report_exception, login_required]
@@ -458,3 +459,13 @@ class ResultsExportAsCsv(Resource):
         response = helpers.send_from_directory(load_dir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
         return response
+
+    def post(self, result_id):
+        args = normalize_obj(request.get_json())
+        which = args.get('which')
+        result_record = db.session.query(ResultsDb).get(result_id)
+        if result_record is None:
+            return {}
+        result = result_record.hydrate()
+        return make_mpld3_graph_dict(result, which)
+

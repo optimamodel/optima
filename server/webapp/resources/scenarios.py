@@ -1,14 +1,13 @@
 from flask import request
 from flask.ext.login import login_required
 from flask_restful import Resource
-from flask_restful_swagger import swagger
 
-from server.webapp.dataio import (
-    load_project_record, get_scenario_summaries,
-    save_scenario_summaries, get_parset_keys_with_y_values)
-from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj
+from server.webapp.dataio import (
+    load_project_record, get_scenario_summaries,
+    save_scenario_summaries,
+    get_parameters_for_scenarios, make_scenarios_graphs)
 
 
 class Scenarios(Resource):
@@ -19,14 +18,13 @@ class Scenarios(Resource):
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation()
     def get(self, project_id):
         project_record = load_project_record(project_id)
         project = project_record.load()
 
         return {
             'scenarios': get_scenario_summaries(project),
-            'ykeysByParsetId': get_parset_keys_with_y_values(project)
+            'ykeysByParsetId': get_parameters_for_scenarios(project)
         }
 
     def put(self, project_id):
@@ -49,9 +47,6 @@ class ScenarioSimulationGraphs(Resource):
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation()
     def get(self, project_id):
-        project_entry = load_project_record(project_id)
-        project = project_entry.load()
-        project.runscenarios()
-        return make_mpld3_graph_dict(project.results[-1])
+        return make_scenarios_graphs(project_id)
+

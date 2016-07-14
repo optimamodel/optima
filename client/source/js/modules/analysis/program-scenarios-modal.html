@@ -7,7 +7,7 @@
 <div class="o-form__field-wrap">
   <label> Name </label>
   <input class="txbox" type="text" ng-model="scenario.name" required/>
-  <div class="error-hint" ng-show="scenarioExists()">
+  <div class="error-hint" ng-show="checkScenarioExists()">
     Scenario with this name already exists, please choose a different name.
   </div>
 </div>
