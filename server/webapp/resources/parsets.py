@@ -270,7 +270,7 @@ class ParsetCalibration(Resource):
 
             print "> Simulating model from uploaded parameters"
             result = project.runsim(simpars=parset.interp())
-            result_record = update_or_create_result_record(project_id, result, parset.name, 'calibration')
+            result_record = update_or_create_result_record(project, result, parset.name, 'calibration')
             db.session.add(result_record)
             db.session.commit()
 

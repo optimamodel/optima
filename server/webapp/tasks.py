@@ -248,7 +248,6 @@ def run_autofit(project_id, parset_name, maxtime=60):
     status = 'completed'
     try:
         assert work_log.status == "started"
-        parset = get_parset_from_project_by_id
         parset = get_parset_from_project_by_id(project, work_log.parset_id)
         assert parset_name == parset.name
         project.autofit(
