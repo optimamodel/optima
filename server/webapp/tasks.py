@@ -277,7 +277,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
         print(">> Save autofitted parset '%s'" % parset_name)
         parset = project.parsets[parset_name]
 
-        project = load_project(project_id, authenticate=False, db_session=db_session)
+        project_record = load_project_record(project_id, authenticate=False, db_session=db_session)
         project.parsets[parset_name] = parset
         project_record.save_obj(project)
 
