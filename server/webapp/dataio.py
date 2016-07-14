@@ -313,8 +313,15 @@ def get_scenario_summary(project, scenario):
     else:
         progset_id = None
 
+    if hasattr(scenario, "uid"):
+        scenario_id = scenario.uid
+    elif hasattr(scenario, "uuid"):
+        scenario_id = scenario.uuid
+    else:
+        scenario_id = op.uuid()
+
     result = {
-        'id': scenario.uid,
+        'id': scenario_id,
         'progset_id': progset_id, # could be None if parameter scenario
         'scenario_type': scenario_type,
         'active': scenario.active,
@@ -356,27 +363,27 @@ def save_scenario_summaries(project, scenario_summaries):
             progset_name = get_progset_from_project(project, s["progset_id"]).name
 
         if s["scenario_type"] == "parameter":
-            par = op.Parscen(
+            scen = op.Parscen(
                 pars=convert_pars_list(s["pars"]),
                 **kwargs)
 
         elif s["scenario_type"] == "coverage":
-            par = op.Coveragescen(
+            scen = op.Coveragescen(
                 coverage=s["coverage"],
                 progsetname=progset_name,
                 **kwargs)
         elif s["scenario_type"] == "budget":
             budget = op.odict({x["program"]:x["values"] for x in s["budget"]})
 
-            par = op.Budgetscen(
+            scen = op.Budgetscen(
                 budget=budget,
                 progsetname=progset_name,
                 **kwargs)
 
         if s.get("id"):
-            par.uid = UUID(s["id"])
+            scen.uid = UUID(s["id"])
 
-        project.scens[par.name] = par
+        project.scens[scen.name] = scen
 
 
 ## PROGRAMS
