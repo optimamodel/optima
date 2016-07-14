@@ -13,7 +13,7 @@ class Scen(object):
         self.active = active
         self.resultsref = None
         self.scenparset = None # Store the actual parset generated
-
+    
     def __repr__(self):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
@@ -26,15 +26,8 @@ class Scen(object):
             return results
         else:
             print('WARNING, no results associated with this scenario')
-
-    def __setstate__(self, state):
-        self.__dict__ = state
-
-        # Make sure we have a UUID...
-        if not hasattr(self, "uid"):
-            self.uid = uuid()
-
-
+    
+    
 
 class Parscen(Scen):
     ''' An object for storing a single parameter scenario '''
@@ -70,9 +63,9 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     Run all the scenarios.
     Version: 2016jan22 by cliffk
     """
-
+    
     printv('Running scenarios...', 1, verbose)
-
+    
     # Make sure scenarios exist
     if project is None: raise OptimaException('First argument to runscenarios() must be a project')
     if len(project.scens)==0:  # Create scenario list if not existing
@@ -80,7 +73,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
         project.addscenlist(defaultscens)
     scenlist = [scen for scen in project.scens.values() if scen.active==True]
     nscens = len(scenlist)
-
+    
     # Convert the list of scenarios to the actual parameters to use in the model
     scenparsets = makescenarios(project=project, scenlist=scenlist, verbose=verbose)
 
@@ -99,12 +92,12 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
         # Run model and add results
         result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
-        allresults.append(result)
+        allresults.append(result) 
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
-
+    
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
-
+    
     return multires
 
 
@@ -116,8 +109,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
-
-        try:
+        
+        try: 
             thisparset = dcp(project.parsets[scen.parsetname])
             thisparset.project = project # Replace copy of project with pointer -- WARNING, hacky
         except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
@@ -139,7 +132,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         pops = scenpar['for']
                     elif scenpar['for']=='tot': #... if its a population.
                         pops = [scenpar['for']]
-                    else:
+                    else: 
                         errormsg = 'Unrecognized population or partnership type: %s' % scenpar['for']
                         raise OptimaException(errormsg)
 
@@ -154,36 +147,36 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         if last_t < max(thispar.t[pop]):
                             thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
                             thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
-
+                        
                         # Append the last good year, and then the new years
                         thispar.t[pop] = append(thispar.t[pop], last_t)
-                        thispar.y[pop] = append(thispar.y[pop], last_y[pop])
+                        thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
                         thispar.t[pop] = append(thispar.t[pop], scenpar['startyear'])
-                        thispar.y[pop] = append(thispar.y[pop], scenpar['startval'])
-
+                        thispar.y[pop] = append(thispar.y[pop], scenpar['startval']) 
+                        
                         # Add end year values if supplied
-                        if scenpar['endyear']:
+                        if scenpar['endyear']: 
                             thispar.t[pop] = append(thispar.t[pop], scenpar['endyear'])
                             thispar.y[pop] = append(thispar.y[pop], scenpar['endval'])
-
+                        
                         if len(thispar.t[pop])!=len(thispar.y[pop]):
                             raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t), len(thispar.y)))
-
+                        
                     thisparset.pars[pardictno][scenpar['name']] = thispar # WARNING, not sure if this is needed???
-
+    
         elif isinstance(scen,Progscen):
 
             try: thisprogset = dcp(project.progsets[scen.progsetname])
             except: raise OptimaException('Failed to extract progset "%s" from this project:\n%s' % (scen.progset, project))
-
+            
             try: results = project.parsets[scen.parsetname].getresults() # See if there are results already associated with this parset
             except:
                 results = None
 
             if isnumber(scen.t): scen.t = [scen.t]
-
+            
             if isinstance(scen, Budgetscen):
-
+                
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
                 tmpbudget = dcp(thisprogset.getdefaultbudget())
                 if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
@@ -194,17 +187,17 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
                 tmpbudget.update(scen.budget)
                 scen.budget = tmpbudget
-
+                
                 # Ensure budget values are lists
                 for budgetkey, budgetentry in scen.budget.iteritems():
                     if isnumber(budgetentry):
                         scen.budget[budgetkey] = [budgetentry]
-
+                
                 # Figure out coverage
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
 
             elif isinstance(scen, Coveragescen):
-
+                
                 # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
                 tmpbudget = dcp(thisprogset.getdefaultbudget())
                 tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # WARNING, IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
@@ -231,14 +224,14 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             scen.pars = thisparsdict
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
                 thisparset.pars[pardictno] = thisparsdict
-
-        else:
+            
+        else: 
             errormsg = 'Unrecognized program scenario type.'
             raise OptimaException(errormsg)
-
+            
 
         scenparsets[scen.name] = thisparset
-
+        
     return scenparsets
 
 
@@ -248,14 +241,14 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 def defaultscenarios(parset=None, verbose=2):
     """ Define a list of default scenarios -- only "Current conditions" by default """
     if parset is None: raise OptimaException('You need to supply a parset to generate default scenarios')
-
+    
     scenlist = [Parscen()]
-
+    
     ## Current conditions
     scenlist[0].name = 'Current conditions'
     scenlist[0].parset = parset
     scenlist[0].pars = [] # No changes
-
+    
     return scenlist
 
 
@@ -263,16 +256,16 @@ def defaultscenarios(parset=None, verbose=2):
 def getparvalues(parset, scenpar):
     """
     Return the default parameter values from simpars for a given scenario parameter.
-
+    
     defaultvals = getparvalues(parset, scenariolist[1]['pars'][2])
-
+    
     Version: 2016jan30
     """
     npops = len(parset.pars[0]['popkeys'])
     simpars = parset.interp(start=scenpar['startyear'], end=scenpar['endyear'])
 
     original = simpars[scenpar['names'][0]]
-
+    
     if scenpar['pops'] < npops: # It's for a specific population, get the value
         original = original[scenpar['pops'],:]
     else:
@@ -283,3 +276,7 @@ def getparvalues(parset, scenpar):
     startval = original[initialindex][0]
     endval = original[finalindex][0]
     return [startval, endval]
+        
+
+
+

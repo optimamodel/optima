@@ -1,13 +1,13 @@
 from __future__ import print_function
 
-import simplejson as json
-
+import ast
 import optima
 import numpy
 import datetime
 import types
 import uuid
 import zlib
+import math
 
 from dateutil import parser, tz
 from twisted.python.reflect import qual, namedAny
@@ -45,9 +45,14 @@ def dumps(obj):
         elif isinstance(r, tuple):
             o = {"obj": "tuple", "val": [default(x) for x in r]}
 
-        elif isinstance(r, (str, unicode, float, int, long, types.NoneType, bool)):
+        elif isinstance(r, (str, unicode, int, long, types.NoneType, bool)):
             o = r
-            pass
+
+        elif isinstance(r, float):
+            if math.isnan(r):
+                o = {"obj": "float", "val": "nan"}
+            else:
+                o = r
 
         elif isinstance(r, list):
             o = [default(x) for x in r]
@@ -55,7 +60,7 @@ def dumps(obj):
         elif isinstance(r, dict):
             o = {}
             for x,y in r.items():
-                o[x] = default(y)
+                o[default(x)] = default(y)
 
         else:
             if not r in obj_registry:
@@ -89,11 +94,9 @@ def dumps(obj):
     schema = default(obj)
     new_registry = {x[0]:x[1] for x in obj_registry.values()}
 
-    dumped = json.dumps({
-        "registry": new_registry,
-        "schema": schema}, ensure_ascii=False, separators=(',',':'))
+    dumped = repr({"registry": new_registry, "schema": schema})
 
-    print("Serialised:", "\n".join(saved_types))
+    # print("Serialized:\n", "\n".join(saved_types))
 
     return zlib.compress(dumped, 6)
 
@@ -101,7 +104,7 @@ def dumps(obj):
 
 def loads(input):
 
-    a = json.loads(zlib.decompress(input))
+    a = ast.literal_eval(zlib.decompress(input))
 
     registry = a["registry"]
     schema = a["schema"]
@@ -122,7 +125,7 @@ def loads(input):
                 if obj == "ref":
 
                     ref = o["ref"]
-                    return decode(registry[str(ref)])
+                    return decode(registry[ref])
 
                 elif obj == "obj":
 
@@ -167,6 +170,9 @@ def loads(input):
 
                 elif obj == "tuple":
                     o = tuple([decode(x) for x in val])
+
+                elif obj == "float":
+                    o = float(val)
 
                 else:
                     assert False, str(o)[0:1000]

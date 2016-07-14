@@ -723,7 +723,37 @@ def gitinfo():
 
 def saveobj(filename, obj, verbose=True):
     ''' Save an object to file '''
-    from ._serialise import dumps
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    
+    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
+    if verbose: print('Object saved to "%s"' % filename)
+    return None
+
+
+def loadobj(filename, verbose=True):
+    ''' Load a saved file '''
+    try:
+        import cPickle as pickle  # For Python 2 compatibility
+    except:
+        import pickle
+    from gzip import GzipFile
+    
+    # Handle loading of either filename or file object
+    if isinstance(filename, basestring): argtype='filename'
+    else: argtype = 'fileobj'
+    kwargs = {'mode': 'rb', argtype: filename}
+
+    with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
+    if verbose: print('Object loaded from "%s"' % filename)
+    return obj
+
+
+
+def savedbobj(filename, obj, verbose=True):
+    ''' Save an object to file '''
+    from ._serialize import dumps
     dumped = dumps(obj)
 
     with open(filename, 'wb') as fileobj:
@@ -732,7 +762,7 @@ def saveobj(filename, obj, verbose=True):
     return None
 
 
-def loadobj(filename, verbose=True):
+def loaddbobj(filename, verbose=True):
     ''' Load a saved file (pickle or JSON)'''
     try:
         import cPickle as pickle  # For Python 2 compatibility
@@ -746,7 +776,7 @@ def loadobj(filename, verbose=True):
     kwargs = {'mode': 'rb', argtype: filename}
 
     try:
-        from ._serialise import loads
+        from ._serialize import loads
 
         if argtype == "fileobj":
             read = filename.read()
