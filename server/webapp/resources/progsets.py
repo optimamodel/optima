@@ -36,7 +36,6 @@ class Progsets(Resource):
     @swagger.operation(description='Download progsets')
     def get(self, project_id):
         project = load_project(project_id)
-
         return get_progset_summaries(project)
 
 
@@ -56,7 +55,7 @@ class Progsets(Resource):
 
 class Progset(Resource):
     """
-    PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
+    PUT /api/project/<uuid:project_id>/progset/<uuid:progset_id>
 
     Update existing progset
     """
@@ -73,7 +72,7 @@ class Progset(Resource):
         save_progset_summaries(project, data, progset_id=progset_id)
         project_record.save_obj(project)
 
-        return get_progset_summary(project.progsets[data["name"]])
+        return get_progset_summary(project, data["name"])
 
     @swagger.operation(description='Delete progset with the given id.')
     def delete(self, project_id, progset_id):

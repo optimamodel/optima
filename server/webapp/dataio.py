@@ -14,6 +14,7 @@ Parsed data structures should have suffix _summary
 import os
 from functools import partial
 from uuid import UUID
+import pprint
 
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
@@ -43,43 +44,6 @@ def authenticate_current_user():
             abort(401)
         else:
             return None
-
-
-def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=True):
-    if not db_session:
-        db_session = db.session
-
-    if authenticate:
-        authenticate_current_user()
-
-    if authenticate is False or current_user.is_admin:
-        query = db_session.query(ProjectDb).filter_by(id=project_id)
-    else:
-        query = db_session.query(ProjectDb).filter_by(
-            id=project_id, user_id=current_user.id)
-
-    project_record = query.first()
-
-    if project_record is None:
-        current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
-        if raise_exception:
-            raise ProjectDoesNotExist(id=project_id)
-
-    return project_record
-
-
-def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
-    if not db_session:
-        db_session = db.session
-    project_record = load_project_record(
-        project_id, raise_exception=raise_exception,
-        db_session=db_session, authenticate=authenticate)
-    if project_record is None:
-        if raise_exception:
-            raise ProjectDoesNotExist(id=project_id)
-        else:
-            return None
-    return project_record.load()
 
 
 def save_data_spreadsheet(name, folder=None):
@@ -131,20 +95,6 @@ def get_parset_from_project(project, parset_id):
     raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
 
 
-def get_progset_from_project(project, progset_id):
-    if not isinstance(progset_id, UUID):
-        progset_id = UUID(progset_id)
-
-    progsets = [
-        project.progsets[key]
-        for key in project.progsets
-        if project.progsets[key].uid == progset_id
-    ]
-    if not progsets:
-        raise ProgsetDoesNotExist(project_id=project.uid, id=progset_id)
-    return progsets[0]
-
-
 def get_optimization_from_project(project, optim_id):
     if not isinstance(optim_id, UUID):
         optim_id = UUID(optim_id)
@@ -157,29 +107,6 @@ def get_optimization_from_project(project, optim_id):
     if not optims:
         raise ValueError("Optimisation does not exist", project_id=project.uid, id=optim_id)
     return optims[0]
-
-
-def get_program_from_progset(progset, program_id, include_inactive=False):
-
-    if not isinstance(program_id, UUID):
-        program_id = UUID(program_id)
-
-    if include_inactive:
-        progset_programs = {}
-        progset_programs.update(progset.programs)
-        progset_programs.update(progset.inactive_programs)
-    else:
-        progset_programs = progset.programs
-
-    programs = [
-        progset_programs[key]
-        for key in progset_programs
-        if progset_programs[key].uid == program_id
-    ]
-    if not programs:
-        raise ProgramDoesNotExist(id=program_id)
-    return programs[0]
-
 
 
 def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
@@ -296,10 +223,6 @@ def load_result_by_optimization(project, optimization):
             return result
 
     return None
-
-
-def load_project_program_summaries(project_id):
-    return parse_default_program_summaries(load_project(project_id, raise_exception=True))
 
 
 def get_project_years(project):
@@ -456,34 +379,139 @@ def save_scenario_summaries(project, scenario_summaries):
         project.scens[par.name] = par
 
 
+## PROGRAMS
+
+def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=True):
+    if not db_session:
+        db_session = db.session
+
+    if authenticate:
+        authenticate_current_user()
+
+    if authenticate is False or current_user.is_admin:
+        query = db_session.query(ProjectDb).filter_by(id=project_id)
+    else:
+        query = db_session.query(ProjectDb).filter_by(
+            id=project_id, user_id=current_user.id)
+
+    project_record = query.first()
+
+    if project_record is None:
+        current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
+        if raise_exception:
+            raise ProjectDoesNotExist(id=project_id)
+
+    return project_record
 
 
-def get_progset_summary(progset):
+def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
+    if not db_session:
+        db_session = db.session
+    project_record = load_project_record(
+        project_id, raise_exception=raise_exception,
+        db_session=db_session, authenticate=authenticate)
+    if project_record is None:
+        if raise_exception:
+            raise ProjectDoesNotExist(id=project_id)
+        else:
+            return None
+    return project_record.load()
+
+
+def get_program_from_progset(progset, program_id, include_inactive=False):
+
+    if not isinstance(program_id, UUID):
+        program_id = UUID(program_id)
+
+    if include_inactive:
+        progset_programs = {}
+        progset_programs.update(progset.programs)
+        progset_programs.update(progset.inactive_programs)
+    else:
+        progset_programs = progset.programs
+
+    programs = [
+        progset_programs[key]
+        for key in progset_programs
+        if progset_programs[key].uid == program_id
+    ]
+    if not programs:
+        raise ProgramDoesNotExist(id=program_id)
+    return programs[0]
+
+
+
+def get_progset_from_project(project, progset_id):
+    if not isinstance(progset_id, UUID):
+        progset_id = UUID(progset_id)
+
+    progsets = [
+        project.progsets[key]
+        for key in project.progsets
+        if project.progsets[key].uid == progset_id
+    ]
+    if not progsets:
+        raise ProgsetDoesNotExist(project_id=project.uid, id=progset_id)
+    return progsets[0]
+
+
+def load_project_program_summaries(project_id):
+    project = load_project(project_id, raise_exception=True)
+    return parse_default_program_summaries(project)
+
+
+def get_progset_summary(project, progset_name):
     """
 
     @TODO: targetpartypes and readytooptimize fields needs to be made consistent within ProgsetDb
 
     """
 
+    progset = project.progsets[progset_name]
+
     active_programs = map(partial(parse_program_summary, progset=progset, active=True), progset.programs.values()),
+    inactive_programs_odict = getattr(progset, "inactive_programs", {})
+    inactive_programs = map(partial(parse_program_summary, progset=progset, active=False), inactive_programs_odict.values()),
+    programs = list(active_programs[0]) + list(inactive_programs[0])
 
-    inactive_programs_list = getattr(progset, "inactive_programs", {})
-    inactive_programs = map(partial(parse_program_summary, progset=progset, active=False), inactive_programs_list.values()),
+    default_programs = parse_default_program_summaries(project)
 
+    # Overwrite with default name and category if applicable
+    loaded_program_shorts = []
+    default_program_by_short = {p['short']: p for p in default_programs}
+    for program in programs:
+        short = program['short']
+        if short in default_program_by_short:
+            default_program = default_program_by_short[short]
+            if not program['name']:
+                program['name'] = default_program['name']
+            program['category'] = default_program['category']
+        loaded_program_shorts.append(short)
+
+    # append any default programs as inactive if not already in project
+    for program in default_programs:
+        if program['short'] not in loaded_program_shorts:
+            programs.append(program)
+
+    for program in programs:
+        if program['category'] == 'No category':
+            program['category'] = 'Other'
 
     progset_summary = {
         'id': progset.uid,
         'name': progset.name,
         'created': progset.created,
         'updated': progset.modified,
-        'programs': list(active_programs[0]) + list(inactive_programs[0]),
+        'programs': programs,
         #'targetpartypes': progset_record.targetpartypes,
         #'readytooptimize': progset_record.readytooptimize
     }
     return progset_summary
 
+
 def get_progset_summaries(project):
-    progset_summaries = map(get_progset_summary, project.progsets.values())
+    progset_summaries = [
+        get_progset_summary(project, name) for name in project.progsets]
     return {'progsets': normalize_obj(progset_summaries)}
 
 
@@ -557,7 +585,7 @@ def save_progset_summaries(project, progset_summaries, progset_id=None):
     current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
 
 
-
+################
 
 def get_optimization_summaries(project):
 
