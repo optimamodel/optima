@@ -51,6 +51,197 @@ def authenticate_current_user():
             return None
 
 
+def get_project_years(project):
+    settings = project.settings
+    return range(int(settings.start), int(settings.end) + 1)
+
+
+def get_target_popsizes(project, parset, progset, program):
+
+    years = get_project_years(project)
+    popsizes = program.gettargetpopsize(t=years, parset=parset)
+    return normalize_obj(dict(zip(years, popsizes)))
+
+
+def load_parameters_from_progset_parset(project, progset, parset):
+
+    print ">>> Fetching target parameters from progset '%s'", progset.name
+    progset.gettargetpops()
+    progset.gettargetpars()
+    progset.gettargetpartypes()
+
+    settings = project.settings
+
+    return parse_parameters_from_progset_parset(settings, progset, parset)
+
+
+## POPULATIONS
+
+def get_populations_from_project(project):
+    data_pops = normalize_obj(project.data.get("pops"))
+    populations = []
+    for i in range(len(data_pops['short'])):
+        population = {
+            'short': data_pops['short'][i],
+            'name': data_pops['long'][i],
+            'male': bool(data_pops['male'][i]),
+            'female': bool(data_pops['female'][i]),
+            'age_from': int(data_pops['age'][i][0]),
+            'age_to': int(data_pops['age'][i][1]),
+            'injects': bool(data_pops['injects'][i]),
+            'sexworker': bool(data_pops['sexworker'][i]),
+        }
+        populations.append(population)
+    return populations
+
+
+def set_populations_on_project(project, populations):
+    """
+    <odist>
+     - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
+     - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
+     - male: [0, 1, 1, 1, 1, 0]
+     - female: [1, 0, 0, 0, 0, 1]
+     - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
+     - injects: [0, 0, 0, 1, 0, 0]
+     - sexworker: [1, 0, 0, 0, 0, 0]
+    """
+    data_pops = op.odict()
+
+    for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
+        data_pops[key] = []
+
+    for pop in populations:
+        data_pops['short'].append(pop['short'])
+        data_pops['long'].append(pop['name'])
+        data_pops['male'].append(int(pop['male']))
+        data_pops['female'].append(int(pop['female']))
+        data_pops['age'].append((int(pop['age_from']), int(pop['age_to'])))
+        data_pops['injects'].append(int(pop['injects']))
+        data_pops['sexworker'].append(int(pop['sexworker']))
+
+    if project.data.get("pops") != data_pops:
+        # We need to delete the data here off the project?
+        project.data = {}
+
+    project.data["pops"] = data_pops
+
+    project.data["npops"] = len(populations)
+
+
+## PROJECT
+
+def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=True):
+    if not db_session:
+        db_session = db.session
+
+    if authenticate:
+        authenticate_current_user()
+
+    if authenticate is False or current_user.is_admin:
+        query = db_session.query(ProjectDb).filter_by(id=project_id)
+    else:
+        query = db_session.query(ProjectDb).filter_by(
+            id=project_id, user_id=current_user.id)
+
+    project_record = query.first()
+
+    if project_record is None:
+        current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
+        if raise_exception:
+            raise ProjectDoesNotExist(id=project_id)
+
+    return project_record
+
+
+def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
+    if not db_session:
+        db_session = db.session
+    project_record = load_project_record(
+        project_id, raise_exception=raise_exception,
+        db_session=db_session, authenticate=authenticate)
+    if project_record is None:
+        if raise_exception:
+            raise ProjectDoesNotExist(id=project_id)
+        else:
+            return None
+    return project_record.load()
+
+
+
+def set_project_summary_on_project(project, summary):
+
+    set_populations_on_project(project, summary.get('populations', {}))
+    project.name = summary["name"]
+
+    if not project.settings:
+        project.settings = op.Settings()
+
+    project.settings.start = summary["dataStart"]
+    project.settings.end = summary["dataEnd"]
+
+
+def get_project_summary_from_project_record(project_record):
+    try:
+        project = project_record.load()
+    except:
+        return {
+            'id': project_record.id,
+            'name': "Failed loading"
+        }
+
+    years = project.data.get('years')
+    if years:
+        data_start = years[0]
+        data_end = years[-1]
+    else:
+        data_start = project.settings.start
+        data_end = project.settings.end
+
+    n_program = 0
+    for progsets in project.progsets.values():
+        this_n_program = len(progsets.programs.values())
+        if this_n_program > n_program:
+            n_program = this_n_program
+
+    result = {
+        'id': project_record.id,
+        'name': project.name,
+        'userId': project_record.user_id,
+        'dataStart': data_start,
+        'dataEnd': data_end,
+        'populations': get_populations_from_project(project),
+        'nProgram': n_program,
+        'creationTime': project.created,
+        'updatedTime': project.modified,
+        'dataUploadTime': project.spreadsheetdate,
+        'hasData': project.data != {},
+        'hasEcon': "econ" in project.data
+    }
+    return result
+
+
+def save_project_with_new_uids(project, user_id):
+    project_record = ProjectDb(user_id)
+    db.session.add(project_record)
+    db.session.flush()
+
+    project.uid = project_record.id
+
+    # TODO: these need to double-checked for consistency
+    for parset in project.parsets.values():
+        parset.uid = op.uuid()
+    for result in project.results.values():
+        result.uid = op.uuid()
+
+    project_record.save_obj(project)
+    db.session.flush()
+
+    db.session.commit()
+
+
+## SPREADSHEETS
+
 def save_data_spreadsheet(name, folder=None):
     if folder is None:
         folder = current_app.config['UPLOAD_FOLDER']
@@ -69,6 +260,8 @@ def delete_spreadsheet(name, user_id=None):
         if os.path.exists(spreadsheet_file):
             os.remove(spreadsheet_file)
 
+
+## PARSET
 
 def load_parset_list(project):
     parsets = []
@@ -100,19 +293,7 @@ def get_parset_from_project(project, parset_id):
     raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
 
 
-def get_optimization_from_project(project, optim_id):
-    if not isinstance(optim_id, UUID):
-        optim_id = UUID(optim_id)
-
-    optims = [
-        project.optims[key]
-        for key in project.optims
-        if project.optims[key].uid == optim_id
-    ]
-    if not optims:
-        raise ValueError("Optimisation does not exist", project_id=project.uid, id=optim_id)
-    return optims[0]
-
+# RESULT
 
 def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
     result_record = db.session.query(ResultsDb).filter_by(
@@ -178,24 +359,6 @@ def delete_result(
     db_session.commit()
 
 
-def delete_optimization_result(
-        project_id, result_name, db_session=None):
-    if db_session is None:
-        db_session = db.session
-
-    print ">>> Deleting outdated result '%s' of an optimization" % result_name
-
-    records = db_session.query(ResultsDb).filter_by(
-        project_id=project_id,
-        calculation_type="optimization"
-    )
-    for record in records:
-        result = record.load()
-        if result.name == result_name:
-            db_session.delete(record)
-    db_session.commit()
-
-
 def save_result(
         project_id, result, parset_name='default',
         calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
@@ -230,64 +393,40 @@ def load_result_by_optimization(project, optimization):
     return None
 
 
-def get_project_years(project):
-    settings = project.settings
-    return range(int(settings.start), int(settings.end) + 1)
 
+## SCENARIOS
 
-def get_target_popsizes(project, parset, progset, program):
+'''
+Data structure of a JSON scenario summary
 
-    years = get_project_years(project)
-    popsizes = program.gettargetpopsize(t=years, parset=parset)
-    return normalize_obj(dict(zip(years, popsizes)))
-
-
-def load_parameters_from_progset_parset(project, progset, parset):
-
-    print ">>> Fetching target parameters from progset '%s'", progset.name
-    progset.gettargetpops()
-    progset.gettargetpars()
-    progset.gettargetpartypes()
-
-    settings = project.settings
-
-    return parse_parameters_from_progset_parset(settings, progset, parset)
-
-
-########################################################################
-#
-# Scenario functions
-#
-# Data structure of a JSON scenario summary
-#
-# scenario_summary:
-#     id: uuid_string
-#     progset_id: uuid_string -or- null # since parameter scenarios don't have progsets
-#     parset_id: uuid_string
-#     name: string
-#     active: boolean
-#     years: list of number
-#     scenario_type: "parameter", "coverage" or "budget"
-#     ---
-#     pars:
-#     	- name: string
-#     	  for: string -or- [1 string] -or- [2 strings]
-#     	  startyear: number
-#     	  endyear: number
-#     	  startval: number
-#     	  endval: number
-#     	- ...
-#      -or-
-#     budget:
-#     	- program: string
-#     	  values: [number -or- null] # same length as years
-#     	- ...
-#      -or-
-#     coverage:
-#     	- program: string
-#     	  values: [number -or- null] # same length as years
-#     	- ...
-
+scenario_summary:
+    id: uuid_string
+    progset_id: uuid_string -or- null # since parameter scenarios don't have progsets
+    parset_id: uuid_string
+    name: string
+    active: boolean
+    years: list of number
+    scenario_type: "parameter", "coverage" or "budget"
+    ---
+    pars:
+        - name: string
+          for: string -or- [1 string] -or- [2 strings]
+          startyear: number
+          endyear: number
+          startval: number
+          endval: number
+        - ...
+     -or-
+    budget:
+        - program: string
+          values: [number -or- null] # same length as years
+        - ...
+     -or-
+    coverage:
+        - program: string
+          values: [number -or- null] # same length as years
+        - ...
+'''
 
 
 def get_parameters_for_scenarios(project):
@@ -359,7 +498,6 @@ def get_scenario_summary(project, scenario):
 
 
 def get_scenario_summaries(project):
-
     scenario_summaries = map(partial(get_scenario_summary, project), project.scens.values())
     return normalize_obj(scenario_summaries)
 
@@ -428,44 +566,6 @@ def make_scenarios_graphs(project_id):
 
 
 ## PROGRAMS
-
-def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=True):
-    if not db_session:
-        db_session = db.session
-
-    if authenticate:
-        authenticate_current_user()
-
-    if authenticate is False or current_user.is_admin:
-        query = db_session.query(ProjectDb).filter_by(id=project_id)
-    else:
-        query = db_session.query(ProjectDb).filter_by(
-            id=project_id, user_id=current_user.id)
-
-    project_record = query.first()
-
-    if project_record is None:
-        current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
-        if raise_exception:
-            raise ProjectDoesNotExist(id=project_id)
-
-    return project_record
-
-
-def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
-    if not db_session:
-        db_session = db.session
-    project_record = load_project_record(
-        project_id, raise_exception=raise_exception,
-        db_session=db_session, authenticate=authenticate)
-    if project_record is None:
-        if raise_exception:
-            raise ProjectDoesNotExist(id=project_id)
-        else:
-            return None
-    return project_record.load()
-
-
 
 def get_program_from_progset(progset, program_id, include_inactive=False):
 
@@ -634,7 +734,40 @@ def save_progset_summaries(project, progset_summaries, progset_id=None):
     current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
 
 
-################
+## OPTIMIZATION
+
+def delete_optimization_result(
+        project_id, result_name, db_session=None):
+    if db_session is None:
+        db_session = db.session
+
+    print ">>> Deleting outdated result '%s' of an optimization" % result_name
+
+    records = db_session.query(ResultsDb).filter_by(
+        project_id=project_id,
+        calculation_type="optimization"
+    )
+    for record in records:
+        result = record.load()
+        if result.name == result_name:
+            db_session.delete(record)
+    db_session.commit()
+
+
+
+def get_optimization_from_project(project, optim_id):
+    if not isinstance(optim_id, UUID):
+        optim_id = UUID(optim_id)
+
+    optims = [
+        project.optims[key]
+        for key in project.optims
+        if project.optims[key].uid == optim_id
+    ]
+    if not optims:
+        raise ValueError("Optimisation does not exist", project_id=project.uid, id=optim_id)
+    return optims[0]
+
 
 def get_optimization_summaries(project):
 
@@ -745,124 +878,3 @@ def get_default_optimization_summaries(project):
     return normalize_obj(defaults_by_progset_id)
 
 
-def get_populations_from_project(project):
-    data_pops = normalize_obj(project.data.get("pops"))
-    populations = []
-    for i in range(len(data_pops['short'])):
-        population = {
-            'short': data_pops['short'][i],
-            'name': data_pops['long'][i],
-            'male': bool(data_pops['male'][i]),
-            'female': bool(data_pops['female'][i]),
-            'age_from': int(data_pops['age'][i][0]),
-            'age_to': int(data_pops['age'][i][1]),
-            'injects': bool(data_pops['injects'][i]),
-            'sexworker': bool(data_pops['sexworker'][i]),
-        }
-        populations.append(population)
-    return populations
-
-
-def set_populations_on_project(project, populations):
-    """
-    <odist>
-     - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
-     - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
-     - male: [0, 1, 1, 1, 1, 0]
-     - female: [1, 0, 0, 0, 0, 1]
-     - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
-     - injects: [0, 0, 0, 1, 0, 0]
-     - sexworker: [1, 0, 0, 0, 0, 0]
-    """
-    data_pops = op.odict()
-
-    for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
-        data_pops[key] = []
-
-    for pop in populations:
-        data_pops['short'].append(pop['short'])
-        data_pops['long'].append(pop['name'])
-        data_pops['male'].append(int(pop['male']))
-        data_pops['female'].append(int(pop['female']))
-        data_pops['age'].append((int(pop['age_from']), int(pop['age_to'])))
-        data_pops['injects'].append(int(pop['injects']))
-        data_pops['sexworker'].append(int(pop['sexworker']))
-
-    if project.data.get("pops") != data_pops:
-        # We need to delete the data here off the project?
-        project.data = {}
-
-    project.data["pops"] = data_pops
-
-    project.data["npops"] = len(populations)
-
-
-def set_project_summary_on_project(project, summary):
-
-    set_populations_on_project(project, summary.get('populations', {}))
-    project.name = summary["name"]
-
-    if not project.settings:
-        project.settings = op.Settings()
-
-    project.settings.start = summary["dataStart"]
-    project.settings.end = summary["dataEnd"]
-
-
-def get_project_summary_from_project_record(project_record):
-    try:
-        project = project_record.load()
-    except:
-        return {
-            'id': project_record.id,
-            'name': "Failed loading"
-        }
-
-    years = project.data.get('years')
-    if years:
-        data_start = years[0]
-        data_end = years[-1]
-    else:
-        data_start = project.settings.start
-        data_end = project.settings.end
-
-    n_program = 0
-    for progsets in project.progsets.values():
-        this_n_program = len(progsets.programs.values())
-        if this_n_program > n_program:
-            n_program = this_n_program
-
-    result = {
-        'id': project_record.id,
-        'name': project.name,
-        'userId': project_record.user_id,
-        'dataStart': data_start,
-        'dataEnd': data_end,
-        'populations': get_populations_from_project(project),
-        'nProgram': n_program,
-        'creationTime': project.created,
-        'updatedTime': project.modified,
-        'dataUploadTime': project.spreadsheetdate,
-        'hasData': project.data != {},
-        'hasEcon': "econ" in project.data
-    }
-    return result
-
-
-def save_project_with_new_uids(project, user_id):
-    project_record = ProjectDb(user_id)
-    db.session.add(project_record)
-    db.session.flush()
-
-    project.uid = project_record.id
-
-    # TODO: these need to double-checked for consistency
-    for parset in project.parsets.values():
-        parset.uid = op.uuid()
-    for result in project.results.values():
-        result.uid = op.uuid()
-
-    project_record.save_obj(project)
-    db.session.flush()
-
-    db.session.commit()
