@@ -466,6 +466,6 @@ class ResultsExportAsCsv(Resource):
         result_record = db.session.query(ResultsDb).get(result_id)
         if result_record is None:
             return {}
-        result = result_record.hydrate()
+        result = result_record.load()
         return make_mpld3_graph_dict(result, which)
 
