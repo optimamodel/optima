@@ -105,8 +105,7 @@ class OptimizationCalculation(Resource):
     def get(self, project_id, optimization_id):
         from server.webapp.tasks import check_calculation_status
 
-        project_record = load_project_record(project_id)
-        project = project_record.load()
+        project = load_project(project_id)
 
         optim = get_optimization_from_project(project, optimization_id)
         parset = project.parsets[optim.parsetname]

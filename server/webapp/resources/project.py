@@ -11,6 +11,7 @@ from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
 
 import optima as op
+
 from server.webapp.dataio import (
     get_populations_from_project, set_populations_on_project, set_project_summary_on_project,
     get_project_summary_from_project_record,
@@ -636,7 +637,8 @@ class ProjectData(Resource):
         if project_record is None:
             raise ProjectDoesNotExist(project_id)
 
-        project = op.loaddbobj(uploaded_file)
+        from optima.utils import loaddbobj
+        project = loaddbobj(uploaded_file)
 
         if project.data:
             assert (project.parsets)
@@ -683,7 +685,8 @@ class ProjectFromData(Resource):
         project_name = args['name']
 
         print "> Upload project '%s'" % args['name']
-        project = op.loaddbobj(uploaded_file)
+        from optima.utils import loaddbobj
+        project = loaddbobj(uploaded_file)
         project.name = project_name
         save_project_with_new_uids(project, current_user.id)
         print "> Upload end"

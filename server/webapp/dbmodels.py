@@ -8,7 +8,7 @@ from sqlalchemy.orm import deferred
 import optima as op
 from server.webapp.dbconn import db, redis
 from server import serialize
-
+from copy import deepcopy as dcp
 
 @swagger.model
 class UserDb(db.Model):
@@ -70,7 +70,12 @@ class ProjectDb(db.Model):
 
     def load(self):
         redis_entry = redis.get(self.id.hex)
-        return serialize.loads(redis_entry)
+        project = serialize.loads(redis_entry)
+        for progset in project.progsets.values():
+            if not hasattr(progset, 'inactive_pograms'):
+                progset.inactive_programs = op.odict()
+        print(">> Loaded project " + self.id.hex)
+        return project
 
     def save_obj(self, obj):
 
@@ -80,7 +85,7 @@ class ProjectDb(db.Model):
         new_project.results = op.odict()
 
         redis.set(self.id.hex, serialize.dumps(new_project))
-        print("Saved " + self.id.hex)
+        print(">> Saved project " + self.id.hex)
 
 
     def as_file(self, loaddir, filename=None):

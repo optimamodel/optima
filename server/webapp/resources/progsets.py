@@ -218,6 +218,7 @@ class Program(Resource):
 
         progset = get_progset_from_project(project, progset_id)
 
+        print("> Saving program " + program_summary['name'])
         save_program_summary(progset, program_summary)
 
         progset.updateprogset()
