@@ -44,8 +44,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     printv('Running model...', 1, verbose)
     
     # Initialize arrays
-    raw_inci       = zeros((npops, npts)) # Total incidence
-    raw_infmatrix  = zeros((npops, nstates, npops, npts)) # Infections matrix
+    raw_inci       = zeros((npops, npts)) # Total incidence acquired by each population
+    raw_inciby     = zeros((nstates, npts)) # Total incidence transmitted by each health state
     raw_mtct       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
     raw_diag       = zeros((npops, npts)) # Number diagnosed per timestep
     raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
@@ -461,11 +461,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ## Set up
         # New infections -- through pre-calculated force of infection
         infmatrix = einsum('ijkl,j,j,ij->ijkl', forceinffull, force, inhomo, people[sus, :, t])
-        newinfections = infmatrix.sum(axis=(2,3)) # Infections acquired through sex and injecting
-        newinfectionstransmitted = infmatrix.sum(axis=(1,2)) # Infections transmitted through sex and injecting
+        infections_to = infmatrix.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
+        infections_by = infmatrix.sum(axis=(1,2)) # Infections transmitted through sex and injecting - by health state who transmits
 
-        if abs(newinfectionstransmitted.sum() - newinfections.sum()) > 1:
-            errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (newinfectionstransmitted.sum(), newinfections.sum(), t)
+        if abs(infections_to.sum() - infections_by.sum()) > 1:
+            errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (infections_by.sum(), infections_to.sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
             
@@ -498,9 +498,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for index in sus:
             otherdeaths[index] = dt * people[sus[index],:,t] * background
             raw_otherdeath[:,t] += otherdeaths[index]/dt    # Save annual other deaths 
-        dS = -newinfections - otherdeaths # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw_inci[:,t] = (newinfections.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
-        raw_infmatrix[:,:,:,t] = infmatrix.sum(axis=0) /float(dt)
+        dS = -infections_to - otherdeaths # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
+        raw_inci[:,t] = (infections_to.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
+        raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /float(dt)
 
         ## Undiagnosed
         if not(isnan(propdx[t])):
@@ -535,7 +535,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
             raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
 
-        dU[0] = dU[0] + newinfections.sum(axis=0) # Now add newly infected people
+        dU[0] = dU[0] + infections_to.sum(axis=0) # Now add newly infected people
         
 
 
@@ -920,7 +920,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['popkeys']    = popkeys
     raw['people']     = people
     raw['inci']       = raw_inci
-    raw['infmatrix']  = raw_infmatrix
+    raw['inciby']     = raw_inciby
     raw['mtct']       = raw_mtct
     raw['diag']       = raw_diag
     raw['newtreat']   = raw_newtreat
