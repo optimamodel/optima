@@ -57,6 +57,7 @@ def load_user_from_request(request):  # pylint: disable=redefined-outer-name
 def unauthorized_handler():
     abort(401)
 
+
 from server.webapp.utils import OptimaJSONEncoder
 from server.webapp.resources.user import (
     User, UserDetail, CurrentUser, UserLogin, UserLogout)
@@ -165,13 +166,12 @@ def init_db():
 
     # clear dangling tasks from the last session
     from server.webapp.dbconn import db
-    from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
+    from server.webapp.dbmodels import WorkLogDb
     work_logs = db.session.query(WorkLogDb)
     print "> Deleting dangling work_logs", work_logs.count()
+    for work_log in work_logs:
+        work_log.cleanup()
     work_logs.delete()
-    work_projects = db.session.query(WorkingProjectDb)
-    print "> Deleting dangling work_projects", work_projects.count()
-    work_projects.delete()
     db.session.commit()
 
 def init_logger():

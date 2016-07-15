@@ -25,7 +25,7 @@ from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ResultsDb, WorkingProjectDb
+from server.webapp.dbmodels import ProjectDb, ResultsDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
 from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
@@ -57,22 +57,9 @@ def get_project_years(project):
 
 
 def get_target_popsizes(project, parset, progset, program):
-
     years = get_project_years(project)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
     return normalize_obj(dict(zip(years, popsizes)))
-
-
-def load_parameters_from_progset_parset(project, progset, parset):
-
-    print ">>> Fetching target parameters from progset '%s'", progset.name
-    progset.gettargetpops()
-    progset.gettargetpars()
-    progset.gettargetpartypes()
-
-    settings = project.settings
-
-    return parse_parameters_from_progset_parset(settings, progset, parset)
 
 
 ## POPULATIONS
@@ -293,6 +280,43 @@ def get_parset_from_project(project, parset_id):
     raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
 
 
+def load_parameters_from_progset_parset(project, progset, parset):
+    print ">>> Fetching target parameters from progset '%s'", progset.name
+    progset.gettargetpops()
+    progset.gettargetpars()
+    progset.gettargetpartypes()
+
+    settings = project.settings
+
+    return parse_parameters_from_progset_parset(settings, progset, parset)
+
+
+def get_parameters_for_scenarios(project):
+    """
+    Returns parameters that can be modified in a scenario:
+        <parsetID>:
+            <parameterShort>:
+                - val: number
+                - label: string
+    """
+    parsets = {key: value for key, value in project.parsets.items()}
+    y_keys = {
+        str(parset.uid): {
+            par.short: [
+                {
+                    'val': k,
+                    'label': ' - '.join(k) if isinstance(k, tuple) else k
+                }
+                for k in par.y.keys()
+            ]
+            for par in parset.pars[0].values()
+            if hasattr(par, 'y') and par.visible
+        }
+        for id, parset in parsets.iteritems()
+    }
+    return y_keys
+
+
 # RESULT
 
 def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
@@ -393,7 +417,6 @@ def load_result_by_optimization(project, optimization):
     return None
 
 
-
 ## SCENARIOS
 
 '''
@@ -427,32 +450,6 @@ scenario_summary:
           values: [number -or- null] # same length as years
         - ...
 '''
-
-
-def get_parameters_for_scenarios(project):
-    """
-    Returns parameters that can be modified in a scenario:
-        <parsetID>:
-            <parameterShort>:
-                - val: number
-                - label: string
-    """
-    parsets = {key: value for key, value in project.parsets.items()}
-    y_keys = {
-        str(parset.uid): {
-            par.short: [
-                {
-                    'val': k,
-                    'label': ' - '.join(k) if isinstance(k, tuple) else k
-                }
-                for k in par.y.keys()
-            ]
-            for par in parset.pars[0].values()
-            if hasattr(par, 'y') and par.visible
-        }
-        for id, parset in parsets.iteritems()
-    }
-    return y_keys
 
 
 def get_scenario_summary(project, scenario):

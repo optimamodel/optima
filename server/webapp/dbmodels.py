@@ -10,6 +10,7 @@ from server.webapp.dbconn import db, redis
 from server import serialize
 from copy import deepcopy as dcp
 
+
 @swagger.model
 class UserDb(db.Model):
 
@@ -69,24 +70,21 @@ class ProjectDb(db.Model):
         self.user_id = user_id
 
     def load(self):
+        print(">> Load project " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
         project = serialize.loads(redis_entry)
         for progset in project.progsets.values():
-            if not hasattr(progset, 'inactive_pograms'):
+            if not hasattr(progset, 'inactive_programs'):
                 progset.inactive_programs = op.odict()
-        print(">> Loaded project " + self.id.hex)
         return project
 
     def save_obj(self, obj):
-
+        print(">> Save project " + self.id.hex)
         # Copy the project, only save what we want...
         new_project = dcp(obj)
         new_project.spreadsheet = None
         new_project.results = op.odict()
-
         redis.set(self.id.hex, serialize.dumps(new_project))
-        print(">> Saved project " + self.id.hex)
-
 
     def as_file(self, loaddir, filename=None):
         filename = os.path.join(loaddir, self.id.hex + ".prj")
@@ -143,33 +141,8 @@ class ResultsDb(db.Model):
         return serialize.loads(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
+        print("> Save result-" + self.id.hex)
         redis.set("result-" + self.id.hex, serialize.dumps(obj))
-        print("Saved result-" + self.id.hex)
-
-
-class WorkingProjectDb(db.Model):  # pylint: disable=R0903
-
-    __tablename__ = 'working_projects'
-
-    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
-    is_working = db.Column(db.Boolean, unique=False, default=False)
-    work_type = db.Column(db.String(32), default=None)
-    parset_id = db.Column(UUID(True)) # not sure if we should make it foreign key here
-    work_log_id = db.Column(UUID(True), default=None)
-
-    def __init__(self, project_id, parset_id, is_working=False, work_type=None, work_log_id=None):  # pylint: disable=R0913
-        self.id = project_id
-        self.parset_id = parset_id
-        self.is_working = is_working
-        self.work_type = work_type
-        self.work_log_id = work_log_id
-
-    def load(self):
-        return serialize.loads(redis.get("working-" + self.id.hex))
-
-    def save_obj(self, obj):
-        redis.set("working-" + self.id.hex, serialize.dumps(obj))
-        print("Saved working-" + self.id.hex)
 
 
 class WorkLogDb(db.Model):  # pylint: disable=R0903
@@ -192,6 +165,18 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
         self.project_id = project_id
         self.parset_id = parset_id
         self.work_type = work_type
+
+    def load(self):
+        print("> Load working-" + self.id.hex)
+        return serialize.loads(redis.get("working-" + self.id.hex))
+
+    def save_obj(self, obj):
+        print("> Save working-" + self.id.hex)
+        redis.set("working-" + self.id.hex, serialize.dumps(obj))
+
+    def cleanup(self):
+        print("> Cleanup working-" + self.id.hex)
+        redis.delete("working-" + self.id.hex)
 
 
 class ProjectEconDb(db.Model):  # pylint: disable=R0903
