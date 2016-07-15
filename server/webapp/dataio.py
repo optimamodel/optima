@@ -1,6 +1,3 @@
-from flask.ext.restful import marshal
-
-from server.webapp.plot import make_mpld3_graph_dict
 
 __doc__ = """
 
@@ -23,6 +20,7 @@ import pprint
 
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
+from flask.ext.restful import marshal
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb
@@ -32,9 +30,11 @@ from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
     parse_default_program_summaries, parse_parameters_of_parset_list, convert_pars_list,
     parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
-    revert_costcovdata, revert_ccopars, revert_pars_list,
+    revert_costcovdata, revert_ccopars, revert_pars_list, get_parameters_from_parset,
+    set_parameters_on_parset
 )
-from server.webapp.exceptions import ProjectDoesNotExist
+from server.webapp.plot import make_mpld3_graph_dict
+
 
 import optima as op
 
@@ -118,7 +118,7 @@ def set_populations_on_project(project, populations):
 
 ## PROJECT
 
-def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=True):
+def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=False):
     if not db_session:
         db_session = db.session
 
@@ -154,6 +154,14 @@ def load_project(project_id, raise_exception=True, db_session=None, authenticate
             return None
     return project_record.load()
 
+
+def update_project(project, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    project_record = load_project_record(project.uid)
+    project_record.save_obj(project)
+    db_session.add(project_record)
+    db_session.commit()
 
 
 def set_project_summary_on_project(project, summary):
@@ -248,27 +256,8 @@ def delete_spreadsheet(name, user_id=None):
             os.remove(spreadsheet_file)
 
 
+
 ## PARSET
-
-def load_parset_list(project):
-    parsets = []
-
-    for parset in project.parsets.values():
-
-        parsets.append({
-            "id": parset.uid,
-            "project_id": project.uid,
-            "pars": parset.pars,
-            "updated": parset.modified,
-            "created": parset.created,
-            "name": parset.name
-        })
-
-    return parsets
-
-
-def get_project_parameters(project):
-    return parse_parameters_of_parset_list(project.parsets.values())
 
 
 def get_parset_from_project(project, parset_id):
@@ -278,6 +267,84 @@ def get_parset_from_project(project, parset_id):
         if parset.uid == parset_id:
             return parset
     raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
+
+
+def copy_parset(project_id, parset_id, new_parset_name):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    original_parset = get_parset_from_project(project, parset_id)
+    original_parset_name = original_parset.name
+    project.copyparset(orig=original_parset_name, new=new_parset_name)
+    project.parsets[new_parset_name].uid = op.uuid()
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def delete_parset(project_id, parset_id):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    parset = get_parset_from_project(project, parset_id)
+    project.parsets.pop(parset.name)
+    db.session.query(ResultsDb).filter_by(
+        project_id=project_id, parset_id=parset_id).delete()
+
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def rename_parset(project_id, parset_id, new_parset_name):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    parset = get_parset_from_project(project, parset_id)
+    project.parsets.rename(parset.name, new_parset_name)
+
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def create_parset(project_id, new_parset_name):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    if new_parset_name in project.parsets:
+        raise ParsetAlreadyExists(project_id, new_parset_name)
+    project.makeparset(new_parset_name, overwrite=False)
+
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def get_parset_summaries(project):
+    parset_summaries = []
+
+    for parset in project.parsets.values():
+
+        parset_summaries.append({
+            "id": parset.uid,
+            "project_id": project.uid,
+            "pars": parset.pars,
+            "updated": parset.modified,
+            "created": parset.created,
+            "name": parset.name
+        })
+
+    return parset_summaries
+
+
+def load_parset_summaries(project_id):
+    project = load_project(project_id)
+    return get_parset_summaries(project)
+
+
+def get_project_parameters(project):
+    return parse_parameters_of_parset_list(project.parsets.values())
 
 
 def load_parameters_from_progset_parset(project, progset, parset):
@@ -317,6 +384,61 @@ def get_parameters_for_scenarios(project):
     return y_keys
 
 
+def load_parameters(project_id, parset_id):
+    project = load_project(project_id)
+    parset = get_parset_from_project(project, parset_id)
+    return get_parameters_from_parset(parset)
+
+
+def save_parameters(project_id, parset_id, parameters):
+    project = load_project(project_id)
+    parset = get_parset_from_project(project, parset_id)
+
+    print ">> Updating parset '%s'" % parset.name
+    set_parameters_on_parset(parameters, parset)
+    delete_result(project_id, parset_id, "calibration")
+    delete_result(project_id, parset_id, "autofit")
+    update_project(project)
+
+
+def generate_parset_graphs(
+        project_id, parset_id, calculation_type, which=None,
+        parameters=None):
+
+    project = load_project(project_id)
+    parset = get_parset_from_project(project, parset_id)
+
+    if parameters is not None:
+        print ">> Updating parset '%s'" % parset.name
+        set_parameters_on_parset(parameters, parset)
+        delete_result(project_id, parset_id, "calibration")
+        delete_result(project_id, parset_id, "autofit")
+        update_project(project)
+
+    result = load_result(project.uid, parset.uid, calculation_type)
+    if result is None:
+        print ">> Runsim for for parset '%s'" % parset.name
+        simparslist = parset.interp()
+        result = project.runsim(simpars=simparslist)
+        result_record = update_or_create_result_record(project, result, parset.name, calculation_type)
+        db.session.add(result_record)
+        db.session.commit()
+
+    assert result is not None
+
+    print ">> Generating graphs for parset '%s'" % parset.name
+    graph_dict = make_mpld3_graph_dict(result, which)
+
+    return {
+        "calibration": {
+            "parset_id": parset_id,
+            "parameters": get_parameters_from_parset(parset),
+            "resultId": result.uid,
+            "graphs": graph_dict["graphs"]
+        }
+    }
+
+
 # RESULT
 
 def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
@@ -334,10 +456,23 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCUL
     return result_record.load()
 
 
+def load_result_dir_filename(result_id):
+    load_dir = upload_dir_user(TEMPLATEDIR)
+    if not load_dir:
+        load_dir = TEMPLATEDIR
+    filestem = 'results'
+    filename = filestem + '.csv'
+
+    result = load_result_by_id(result_id)
+    result.export(filestem=os.path.join(load_dir, filestem))
+
+    return load_dir, filename
+
+
 def load_result_by_id(result_id):
     result_record = db.session.query(ResultsDb).get(result_id)
     if result_record is None:
-        return None
+        raise Exception("Results '%s' does not exist" % result_id)
     return result_record.load()
 
 

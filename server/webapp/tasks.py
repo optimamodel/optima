@@ -212,7 +212,7 @@ def check_calculation_status(project_id, parset_id, work_type):
 
 
 @celery_instance.task()
-def run_autofit(project_id, parset_name, maxtime=60):
+def run_autofit(project_id, parset_id, maxtime=60):
     import traceback
     print "> Start autofit for project %s" % project_id
 
@@ -220,6 +220,8 @@ def run_autofit(project_id, parset_name, maxtime=60):
     work_log = db_session.query(WorkLogDb).filter_by(project_id=project_id).first()
     work_log_id = work_log.id
     project = work_log.load()
+    parset = get_parset_from_project_by_id(project, parset_id)
+    parset_name = parset.name
     close_db_session(db_session)
 
     result = None
@@ -227,8 +229,6 @@ def run_autofit(project_id, parset_name, maxtime=60):
     status = 'completed'
     try:
         assert work_log.status == "started"
-        parset = get_parset_from_project_by_id(project, work_log.parset_id)
-        assert parset_name == parset.name
         project.autofit(
             name=str(parset_name),
             orig=str(parset_name),
@@ -254,7 +254,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
         print(">> Save autofitted parset '%s'" % parset_name)
         parset = project.parsets[parset_name]
 
-        project_record = load_project_record(project_id, authenticate=False, db_session=db_session)
+        project_record = load_project_record(project_id, db_session=db_session)
         project.parsets[parset_name] = parset
         project_record.save_obj(project)
 

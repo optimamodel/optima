@@ -194,7 +194,7 @@ def get_parameters_from_parset(parset, ind=0):
     return parameters
 
 
-def put_parameters_in_parset(parameters, parset, i_set=0):
+def set_parameters_on_parset(parameters, parset, i_set=0):
     pars = parset.pars[i_set]
     for p_dict in parameters:
         key = p_dict['key']

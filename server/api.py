@@ -69,7 +69,7 @@ from server.webapp.resources.progsets import (
     Progsets, Progset, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
     Parsets, ParsetUploadDownload, ParsetRenameDelete, ParsetCalibration, ParsetAutofit,
-    ResultsExportAsCsv)
+    ResultsExport)
 from server.webapp.resources.progsets import ProgramCostcovGraph
 from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs
 from server.webapp.resources.optimizations import (
@@ -123,7 +123,7 @@ api.add_resource(ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uu
 api.add_resource(ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 api.add_resource(ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
 api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
-api.add_resource(ResultsExportAsCsv, '/api/results/<uuid:result_id>')
+api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
 
 app.register_blueprint(api_blueprint, url_prefix='')
 

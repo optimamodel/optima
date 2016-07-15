@@ -11,7 +11,8 @@
          padding: 0;">
 
     <div ng-if="graphs"
-         style="width:100%">
+         style="width:100%;
+         border-bottom: 1px solid #EEE">
       <export-all-charts
           name="Export Graphs">
       </export-all-charts>
@@ -21,6 +22,7 @@
           ng-click="exportAllData()">
         Export Figure Data CSV
       </button>
+      <br clear="all">
     </div>
 
     <div
