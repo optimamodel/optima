@@ -31,6 +31,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     allpeople    = zeros((npops, npts))    # Population sizes
     effhivprev   = zeros((npops, 1))       # HIV effective prevalence (prevalence times infectiousness), overall
     effallprev   = zeros((nstates, npops)) # HIV effective prevalence (prevalence times infectiousness), by health state
+    inhomo       = zeros(npops)    # Inhomogeneity calculations
     usecascade   = settings.usecascade     # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin   # Maximum fraction of people to move on a single timestep
     eps          = settings.eps            # Define another small number to avoid divide-by-zero errors
@@ -186,7 +187,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     # Force of infection metaparameter
     force = simpars['force']
-    inhomo = simpars['inhomo']
+    inhomopar = simpars['inhomo']
 
     # Births and transitions
     birth = simpars['birth']
@@ -404,7 +405,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
-            c = inhomo[pop]
+            c = inhomopar[pop]
             thisprev = sum(people[allplhiv,pop,t]) / allpeople[pop,t] 
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
 
