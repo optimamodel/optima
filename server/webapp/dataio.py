@@ -281,7 +281,7 @@ def get_parset_from_project(project, parset_id):
 
 
 def load_parameters_from_progset_parset(project, progset, parset):
-    print ">>> Fetching target parameters from progset '%s'", progset.name
+    print ">> Fetching target parameters from progset '%s'", progset.name
     progset.gettargetpops()
     progset.gettargetpars()
     progset.gettargetpartypes()
@@ -353,14 +353,14 @@ def update_or_create_result_record(
 
     result_record = db_session.query(ResultsDb).get(result.uid)
     if result_record is not None:
-        print ">>> Updating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+        print ">> Updating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
     else:
         parset = project.parsets[parset_name]
         result_record = ResultsDb(
             parset_id=parset.uid,
             project_id=project.uid,
             calculation_type=calculation_type)
-        print ">>> Creating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+        print ">> Creating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
 
     result_record.id = result.uid
     result_record.save_obj(result)
@@ -410,7 +410,6 @@ def load_result_by_optimization(project, optimization):
 
     for result_record in result_records:
         result = result_record.load()
-        print ">>> Matching optim result '%s' == '%s'" % (result.name, result_name)
         if result.name == result_name:
             return result
 
@@ -738,7 +737,7 @@ def delete_optimization_result(
     if db_session is None:
         db_session = db.session
 
-    print ">>> Deleting outdated result '%s' of an optimization" % result_name
+    print ">> Deleting outdated result '%s' of an optimization" % result_name
 
     records = db_session.query(ResultsDb).filter_by(
         project_id=project_id,

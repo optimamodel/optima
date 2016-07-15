@@ -116,9 +116,9 @@ def start_or_report_calculation(project_id, parset_id, work_type):
 
     # if any work_log exists for this project that has started,
     # then this calculation is blocked from starting
+    is_ready_to_start = True
     work_log_records = db_session.query(WorkLogDb).filter_by(
         project_id=project_id, parset_id=parset_id, work_type=work_type)
-    is_ready_to_start = True
     if work_log_records:
         for work_log_record in work_log_records:
             if work_log_record.status == 'started':
@@ -134,7 +134,6 @@ def start_or_report_calculation(project_id, parset_id, work_type):
             for work_log in work_log_records:
                 work_log.cleanup()
             work_log_records.delete()
-            db_session.flush()
 
         # create a work_log status is 'started by default'
         print ">> Create work log"

@@ -141,7 +141,7 @@ class ResultsDb(db.Model):
         return serialize.loads(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
-        print("> Save result-" + self.id.hex)
+        print(">> Save result-" + self.id.hex)
         redis.set("result-" + self.id.hex, serialize.dumps(obj))
 
 
@@ -167,15 +167,15 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
         self.work_type = work_type
 
     def load(self):
-        print("> Load working-" + self.id.hex)
+        print(">> Load working-" + self.id.hex)
         return serialize.loads(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
-        print("> Save working-" + self.id.hex)
+        print(">> Save working-" + self.id.hex)
         redis.set("working-" + self.id.hex, serialize.dumps(obj))
 
     def cleanup(self):
-        print("> Cleanup working-" + self.id.hex)
+        print(">> Cleanup working-" + self.id.hex)
         redis.delete("working-" + self.id.hex)
 
 

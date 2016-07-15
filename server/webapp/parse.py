@@ -190,7 +190,7 @@ def get_parameters_from_parset(parset, ind=0):
                         "label": '%s -- %s' % (par.name, str(subkey)),
                     })
             else:
-                print('Parameter type "%s" not implemented!' % par.fittable)
+                print('>> Parameter type "%s" not implemented!' % par.fittable)
     return parameters
 
 
@@ -211,7 +211,7 @@ def put_parameters_in_parset(parameters, parset, i_set=0):
         elif par_type == 'const':
             pars[key].y = value
         else:
-            print('Parameter type "%s" not implemented!' % par_type)
+            print('>> Parameter type "%s" not implemented!' % par_type)
 
 
 def print_parset(parset):
@@ -235,7 +235,7 @@ def print_parset(parset):
 
 
 def parse_parameters_from_progset_parset(settings, progset, parset):
-    print ">>> Parsing parameters"
+    print ">> Parsing parameters"
 
     def convert(limit):
         return settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
