@@ -35,6 +35,9 @@ def dumps(obj):
         elif isinstance(r, numpy.bool_):
             o = bool(r)
 
+        elif isinstance(r, numpy.int32):
+            o = long(r)
+
         elif r == numpy.nan:
             o = {"obj": "numpy.NaN"}
 

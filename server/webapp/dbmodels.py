@@ -75,7 +75,7 @@ class ProjectDb(db.Model):
     def save_obj(self, obj):
 
         # Copy the project, only save what we want...
-        new_project = dcp(obj)
+        new_project = op.dcp(obj)
         new_project.spreadsheet = None
         new_project.results = op.odict()
 
@@ -88,14 +88,19 @@ class ProjectDb(db.Model):
         op.savedbobj(filename, self.load())
         return self.id.hex + ".prj"
 
-    def recursive_delete(self, synchronize_session=False):
+    def delete_dependent_objects(self, synchronize_session=False):
         str_project_id = str(self.id)
-        # delete all relevant entries explicitly
         db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
-        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.flush()
+
+    def recursive_delete(self, synchronize_session=False):
+        str_project_id = str(self.id)
+        # delete all relevant entries explicitly
+        self.delete_dependent_objects(synchronize_session=synchronize_session)
+        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.flush()
 

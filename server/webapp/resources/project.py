@@ -636,10 +636,17 @@ class ProjectData(Resource):
         if project_record is None:
             raise ProjectDoesNotExist(project_id)
 
-        project = op.loaddbobj(uploaded_file)
+        old_project = project_record.load()
 
         # Migrate it, so that older projects can be uploaded okay
-        project = migrateproject(project)
+        project = op.migrateproject(op.loaddbobj(uploaded_file))
+
+        # Make sure they have the same name and uid...
+        project.name = old_project.name
+        project.uid = old_project.uid
+
+        # Delete dependent objects, as the uids might be different and such
+        project_record.delete_dependent_objects()
 
         if project.data:
             assert (project.parsets)
@@ -647,7 +654,7 @@ class ProjectData(Resource):
             current_app.logger.info(
                 "runsim result for project %s: %s" % (project_id, result))
 
-        project_record.restore(project)
+        project_record.save_obj(project)
         db.session.add(project_record)
         db.session.flush()
 
@@ -660,7 +667,7 @@ class ProjectData(Resource):
 
         reply = {
             'file': source_filename,
-            'result': 'Project %s is updated' % project_record.name,
+            'result': 'Project %s is updated' % project.name,
         }
         return reply
 
@@ -687,6 +694,10 @@ class ProjectFromData(Resource):
 
         print "> Upload project '%s'" % args['name']
         project = op.loaddbobj(uploaded_file)
+
+        # Migrate it, so that older projects can be uploaded okay
+        project = op.migrateproject(project)
+
         project.name = project_name
         save_project_with_new_uids(project, current_user.id)
         print "> Upload end"
