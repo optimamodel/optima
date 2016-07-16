@@ -11,9 +11,9 @@ import os
 
 refresh = 0 # Creates defaultpeople.ppl rather than copares
 eps = 1e-3 # Don't expect a totally exact match
-filename = '2016jul13.npy'
+filename = '2016jul16.npy'
 
-P = op.defaults.defaultproject('generalized')
+P = op.defaults.defaultproject('best')
 P.results = op.odict() # Clear
 P.runsim()
 
