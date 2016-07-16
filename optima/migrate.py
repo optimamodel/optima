@@ -19,7 +19,7 @@ def migrateproject(project):
     """
     while project.version != __version__:
         if not project.version in _MIGRATIONS:
-            raise ValueError("We can't upgrade version %s" %( project.__version__,)
+            raise ValueError("We can't upgrade version %s" % (project.__version__,))
 
         upgrader = _MIGRATIONS[project.version]
         upgrader(project)
