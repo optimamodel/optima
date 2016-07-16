@@ -26,7 +26,7 @@ else:
     oldraw = op.loadobj(filename)
     for key in ['people'] + oldraw.keys(): # Do all keys, but make sure people is first
         if type(oldraw[key])==type(array([])):
-            diffraw = newraw[key]-oldraw[key]
+            diffraw = abs(newraw[key]-oldraw[key])
             if (diffraw>eps).any(): # If not every element is a real number >0, throw an error
                 if key!='people':
                     errormsg = 'WARNING, key "%s" does not match! Total mismatch: %s' % (key, sum(abs(diffraw)))
