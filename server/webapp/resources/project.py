@@ -638,6 +638,9 @@ class ProjectData(Resource):
 
         project = op.loaddbobj(uploaded_file)
 
+        # Migrate it, so that older projects can be uploaded okay
+        project = migrateproject(project)
+
         if project.data:
             assert (project.parsets)
             result = project.runsim()
