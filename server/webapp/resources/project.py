@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 import optima as op
 
 from server.webapp.dataio import (
-    get_populations_from_project, set_populations_on_project, set_project_summary_on_project,
+    get_populations_from_project, set_populations_on_project,
     get_project_summary_from_project_record, load_project_summary, update_project_with_spreadsheet_download,
     load_project_record, load_project, update_or_create_result_record,
     get_project_parameters, load_project_program_summaries, save_project_with_new_uids)
@@ -25,7 +25,7 @@ from server.webapp.resources.common import (
     file_resource, file_upload_form_parser, report_exception, verify_admin_request)
 from server.webapp.utils import (
     secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
-    templatepath, upload_dir_user)
+    templatepath, upload_dir_user, normalize_obj)
 
 
 class ProjectsAll(Resource):
@@ -37,49 +37,44 @@ class ProjectsAll(Resource):
     @swagger.operation(summary="List all projects (for admins)")
     def get(self):
         project_records = ProjectDb.query.all()
-        return {'projects': map(get_project_summary_from_project_record, project_records)}
+        return {
+            'projects':
+                map(get_project_summary_from_project_record, project_records)
+        }
 
 
-population_parser = RequestParser()
-population_parser.add_arguments({
-    'short': {'required': True, 'location': 'json'},
-    'name': {'required': True, 'location': 'json'},
-    'female': {'type': bool, 'required': True, 'location': 'json'},
-    'male': {'type': bool, 'required': True, 'location': 'json'},
-    'injects': {'type': bool, 'required': True, 'location': 'json'},
-    'sexworker': {'type': bool, 'required': True, 'location': 'json'},
-    'age_from': {'type': int, 'location': 'json'},
-    'age_to': {'type': int, 'location': 'json'},
-})
+def create_project_with_spreadsheet_download(user_id, project_summary):
+    project_entry = ProjectDb(user_id=user_id)
+    db.session.add(project_entry)
+    db.session.flush()
 
-project_parser = RequestParser()
-project_parser.add_arguments({
-    'name': {'required': True, 'type': str},
-    'dataStart': {'type': int, 'default': op.default_datastart},
-    'dataEnd': {'type': int, 'default': op.default_dataend},
-    # FIXME: programs should be a "SubParser" with its own Parser
-    # 'populations': {'type': (population_parser), 'required': True},
-    'populations': {'type': dict, 'required': True, 'action': 'append'},
-})
+    project = op.Project(name=project_summary["name"])
+    project.uid = project_entry.id
+    set_populations_on_project(project, project_summary["populations"])
+    project.data["years"] = (
+        project_summary['dataStart'], project_summary['dataEnd'])
+    project_entry.save_obj(project)
+    db.session.commit()
 
-# editing datastart & dataend currently is not allowed
-project_update_parser = RequestParser()
-project_update_parser.add_arguments({
-    'name': {'type': str},
-    'populations': {'type': dict, 'action': 'append'},
-    'canUpdate': {'type': bool, 'default': False},
-    'dataStart': {'type': int, 'default': None},
-    'dataEnd': {'type': int, 'default': None}
-})
+    new_project_template = secure_filename(
+        "{}.xlsx".format(project_summary['name']))
+    path = templatepath(new_project_template)
+    op.makespreadsheet(
+        path,
+        pops=project_summary['populations'],
+        datastart=project_summary['dataStart'],
+        dataend=project_summary['dataEnd'])
+
+    print("> Project data template: %s" % new_project_template)
+
+    return project.uid, upload_dir_user(TEMPLATEDIR), new_project_template
 
 
-
-
-
-bulk_project_parser = RequestParser()
-bulk_project_parser.add_arguments({
-    'projects': {'required': True, 'action': 'append'},
-})
+def delete_projects(project_ids):
+    for project_id in project_ids:
+        record = load_project_record(project_id, raise_exception=True)
+        record.recursive_delete()
+    db.session.commit()
 
 
 class Projects(Resource):
@@ -98,72 +93,20 @@ class Projects(Resource):
 
     @swagger.operation(summary="Create new project")
     def post(self):
-        current_app.logger.info(
-            "create request: {} {}".format(request, request.data, request.headers))
-
-        args = project_parser.parse_args()
-        user_id = current_user.id
-
-        current_app.logger.debug("createProject data: %s" % args)
-
-        # create new project
-        current_app.logger.debug("Creating new project %s by user %s:%s" % (
-            args['name'], user_id, current_user.email))
-        project_entry = ProjectDb(
-            user_id=user_id
-        )
-
-        project = op.Project(
-            name = args["name"]
-        )
-        set_populations_on_project(project, args["populations"])
-
-        current_app.logger.debug(
-            'Creating new project: %s' % project.name)
-
-        # Save to db
-        current_app.logger.debug("About to persist project %s for user %s" % (
-            project.name, project_entry.user_id))
-
-        db.session.add(project_entry)
-        db.session.commit()
-
-        project.uid = project_entry.id
-        project.data["years"] = (args['dataStart'], args['dataEnd'])
-
-        project_entry.save_obj(project)
-
-        new_project_template = secure_filename("{}.xlsx".format(args['name']))
-        path = templatepath(new_project_template)
-        op.makespreadsheet(
-            path,
-            pops=args['populations'],
-            datastart=args['dataStart'],
-            dataend=args['dataEnd'])
-
-        current_app.logger.debug(
-            "new_project_template: %s" % new_project_template)
-        (dirname, basename) = (
-            upload_dir_user(TEMPLATEDIR), new_project_template)
+        summary = normalize_obj(request.get_json())
+        project_id, dirname, basename = create_project_with_spreadsheet_download(current_user.id, summary)
         response = helpers.send_from_directory(
             dirname,
             basename,
             as_attachment=True,
-            attachment_filename=new_project_template)
-        # response.headers['X-project-id'] = project_entry.id
+            attachment_filename=basename)
         response.status_code = 201
+        response.headers['X-project-id'] = project_id
         return response
 
-    @swagger.operation(
-        summary="Bulk delete for project with the provided ids",
-        parameters=bulk_project_parser.swagger_parameters()
-    )
+    @swagger.operation(summary="Bulk delete for project with the provided ids")
     def delete(self):
-        project_ids = json.loads(request.data)['projects']
-        for project_id in project_ids:
-            record = load_project_record(project_id, raise_exception=True)
-            record.recursive_delete()
-        db.session.commit()
+        delete_projects(json.loads(request.data)['projects'])
         return '', 204
 
 
@@ -185,8 +128,10 @@ class Project(Resource):
         """
         PUT /api/project/<uuid:project_id>
         Updates the project with the given id.
+
+        Post-arg: project_summary
         """
-        project_summary = project_update_parser.parse_args()
+        project_summary = normalize_obj(request.get_json())
         dirname, basename = update_project_with_spreadsheet_download(
             project_id, project_summary)
         print("> Project template: %s" % basename)
@@ -688,24 +633,14 @@ class Portfolio(Resource):
     of the projects that have to be collated.
     """
 
-    @swagger.operation(
-        produces='application/x-zip',
-        summary='Download data for projects with the given ids as a zip file',
-        parameters=bulk_project_parser.swagger_parameters()
-    )
+    @swagger.operation(summary='Download data for projects with the given ids as a zip file')
     @report_exception
     @login_required
     def post(self):
         from zipfile import ZipFile
         from uuid import uuid4
-
-        for arg in bulk_project_parser.args:
-            print('{} location: {}'.format(arg.name, arg.location))
-
-        current_app.logger.debug("Download Portfolio (/api/project/portfolio)")
-        args = bulk_project_parser.parse_args()
-        current_app.logger.debug(
-            "Portfolio requested for projects {}".format(args['projects']))
+        args = normalize_obj(request.get_json())
+        print("> Portfolio requested for projects {}".format(args['projects']))
 
         loaddir = upload_dir_user(TEMPLATEDIR)
         if not loaddir:
@@ -713,8 +648,7 @@ class Portfolio(Resource):
 
         projects = [
             load_project_record(id, raise_exception=True).as_file(loaddir)
-            for id in args['projects']
-            ]
+            for id in args['projects']]
 
         zipfile_name = '{}.zip'.format(uuid4())
         zipfile_server_name = os.path.join(loaddir, zipfile_name)
@@ -733,10 +667,9 @@ class DefaultPrograms(Resource):
     Packaged in api-service but used in program-set-ctrl to get the default set
     of programs when creating a new program set.
     """
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(summary="Returns default programs, their categories and parameters")
-    @report_exception
-    @login_required
     def get(self, project_id):
         return {"programs": load_project_program_summaries(project_id)}
 
@@ -748,13 +681,11 @@ class DefaultParameters(Resource):
     Returns all available parameters with their properties. Used by
     program-set in the program modal.
     """
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(summary="List default parameters")
-    @report_exception
-    @login_required
     def get(self, project_id):
         project = load_project(project_id)
-
         return {'parameters': get_project_parameters(project)}
 
 
@@ -764,9 +695,8 @@ class DefaultPopulations(Resource):
 
     Report populations in projects in the project management page
     """
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(summary='Returns default populations')
-    @report_exception
-    @login_required
     def get(self):
         return {'populations': get_default_populations()}

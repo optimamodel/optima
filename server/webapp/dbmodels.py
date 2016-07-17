@@ -87,8 +87,9 @@ class ProjectDb(db.Model):
         redis.set(self.id.hex, serialize.dumps(new_project))
 
     def as_file(self, loaddir, filename=None):
+        from optima.utils import savedbobj
         filename = os.path.join(loaddir, self.id.hex + ".prj")
-        op.savedbobj(filename, self.load())
+        savedbobj(filename, self.load())
         return self.id.hex + ".prj"
 
     def recursive_delete(self, synchronize_session=False):
