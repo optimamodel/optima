@@ -20,7 +20,7 @@ import pprint
 
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
-from flask.ext.restful import marshal
+from werkzeug.utils import secure_filename
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb
@@ -35,6 +35,9 @@ from server.webapp.parse import (
 )
 from server.webapp.plot import make_mpld3_graph_dict
 
+from server.webapp.utils import (
+    secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
+    templatepath, upload_dir_user)
 
 import optima as op
 
@@ -164,6 +167,17 @@ def update_project(project, db_session=None):
     db_session.commit()
 
 
+def update_project_with_fn(project_id, update_project_fn, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    update_project_fn(project)
+    project_record.save_obj(project)
+    db_session.add(project_record)
+    db_session.commit()
+
+
 def set_project_summary_on_project(project, summary):
 
     set_populations_on_project(project, summary.get('populations', {}))
@@ -199,7 +213,7 @@ def get_project_summary_from_project_record(project_record):
         if this_n_program > n_program:
             n_program = this_n_program
 
-    result = {
+    project_summary = {
         'id': project_record.id,
         'name': project.name,
         'userId': project_record.user_id,
@@ -213,8 +227,35 @@ def get_project_summary_from_project_record(project_record):
         'hasData': project.data != {},
         'hasEcon': "econ" in project.data
     }
-    return result
+    return project_summary
 
+
+def load_project_summary(project_id):
+    project_entry = load_project_record(project_id)
+    return get_project_summary_from_project_record(project_entry)
+
+
+def update_project_with_spreadsheet_download(project_id, project_summary):
+    project_entry = load_project_record(project_id)
+    project = project_entry.load()
+    set_project_summary_on_project(project, project_summary)
+    project_entry.save_obj(project)
+    db.session.add(project_entry)
+    db.session.commit()
+
+    secure_project_name = secure_filename(project.name)
+    new_project_template = secure_project_name
+    path = templatepath(secure_project_name)
+    op.makespreadsheet(
+        path,
+        pops=project_summary['populations'],
+        datastart=project_summary["dataStart"],
+        dataend=project_summary["dataEnd"])
+
+    (dirname, basename) = (
+        upload_dir_user(TEMPLATEDIR), new_project_template)
+
+    return dirname, basename
 
 def save_project_with_new_uids(project, user_id):
     project_record = ProjectDb(user_id)
@@ -270,55 +311,44 @@ def get_parset_from_project(project, parset_id):
 
 
 def copy_parset(project_id, parset_id, new_parset_name):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
 
-    original_parset = get_parset_from_project(project, parset_id)
-    original_parset_name = original_parset.name
-    project.copyparset(orig=original_parset_name, new=new_parset_name)
-    project.parsets[new_parset_name].uid = op.uuid()
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
+    def update_project_fn(project):
+        original_parset = get_parset_from_project(project, parset_id)
+        original_parset_name = original_parset.name
+        project.copyparset(orig=original_parset_name, new=new_parset_name)
+        project.parsets[new_parset_name].uid = op.uuid()
+
+    update_project_with_fn(project_id, update_project_fn)
 
 
 def delete_parset(project_id, parset_id):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
 
-    parset = get_parset_from_project(project, parset_id)
-    project.parsets.pop(parset.name)
+    def update_project_fn(project):
+        parset = get_parset_from_project(project, parset_id)
+        project.parsets.pop(parset.name)
+
+    update_project_with_fn(project_id, update_project_fn)
     db.session.query(ResultsDb).filter_by(
         project_id=project_id, parset_id=parset_id).delete()
 
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
-
 
 def rename_parset(project_id, parset_id, new_parset_name):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
 
-    parset = get_parset_from_project(project, parset_id)
-    project.parsets.rename(parset.name, new_parset_name)
+    def update_project_fn(project):
+        parset = get_parset_from_project(project, parset_id)
+        project.parsets.rename(parset.name, new_parset_name)
 
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
+    update_project_with_fn(project_id, update_project_fn)
 
 
 def create_parset(project_id, new_parset_name):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
 
-    if new_parset_name in project.parsets:
-        raise ParsetAlreadyExists(project_id, new_parset_name)
-    project.makeparset(new_parset_name, overwrite=False)
+    def update_project_fn(project):
+        if new_parset_name in project.parsets:
+            raise ParsetAlreadyExists(project_id, new_parset_name)
+        project.makeparset(new_parset_name, overwrite=False)
 
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
+    update_project_with_fn(project_id, update_project_fn)
 
 
 def get_parset_summaries(project):
@@ -391,14 +421,16 @@ def load_parameters(project_id, parset_id):
 
 
 def save_parameters(project_id, parset_id, parameters):
-    project = load_project(project_id)
-    parset = get_parset_from_project(project, parset_id)
 
-    print ">> Updating parset '%s'" % parset.name
-    set_parameters_on_parset(parameters, parset)
+    def update_project_fn(project):
+        parset = get_parset_from_project(project, parset_id)
+        print ">> Updating parset '%s'" % parset.name
+        set_parameters_on_parset(parameters, parset)
+
+    update_project_with_fn(project_id, update_project_fn)
+
     delete_result(project_id, parset_id, "calibration")
     delete_result(project_id, parset_id, "autofit")
-    update_project(project)
 
 
 def generate_parset_graphs(

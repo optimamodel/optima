@@ -14,7 +14,7 @@ import optima as op
 
 from server.webapp.dataio import (
     get_populations_from_project, set_populations_on_project, set_project_summary_on_project,
-    get_project_summary_from_project_record,
+    get_project_summary_from_project_record, load_project_summary, update_project_with_spreadsheet_download,
     load_project_record, load_project, update_or_create_result_record,
     get_project_parameters, load_project_program_summaries, save_project_with_new_uids)
 from server.webapp.dbconn import db
@@ -28,14 +28,15 @@ from server.webapp.utils import (
     templatepath, upload_dir_user)
 
 
-class ProjectBase(Resource):
-    method_decorators = [report_exception, login_required]
+class ProjectsAll(Resource):
+    """
+    A collection of all projects.
+    """
+    method_decorators = [report_exception, verify_admin_request]
 
-    def get_query(self):
-        return ProjectDb.query
-
+    @swagger.operation(summary="List all projects (for admins)")
     def get(self):
-        project_records = self.get_query().all()
+        project_records = ProjectDb.query.all()
         return {'projects': map(get_project_summary_from_project_record, project_records)}
 
 
@@ -72,20 +73,7 @@ project_update_parser.add_arguments({
 })
 
 
-class ProjectsAll(ProjectBase):
-    """
-    A collection of all projects.
-    """
 
-    @swagger.operation(
-        responseClass=ProjectDb.__name__,
-        summary='List All Projects',
-        note='Requires admin priviledges'
-    )
-    @report_exception
-    @verify_admin_request
-    def get(self):
-        return super(ProjectsAll, self).get()
 
 
 bulk_project_parser = RequestParser()
@@ -94,34 +82,21 @@ bulk_project_parser.add_arguments({
 })
 
 
-class Projects(ProjectBase):
+class Projects(Resource):
     """
     /api/project
 
     - GET: used in open/manage page to get project lists
     """
 
-    def get_query(self):
-        return super(Projects, self).get_query().filter_by(user_id=current_user.id)
+    method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        responseClass=ProjectDb.__name__,
-        summary="List all project for current user"
-    )
-    @report_exception
+    @swagger.operation(summary="List all project for current user")
     def get(self):
-        return super(Projects, self).get()
+        project_records = ProjectDb.query.filter_by(user_id=current_user.id).all()
+        return {'projects': map(get_project_summary_from_project_record, project_records)}
 
-    @swagger.operation(
-        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        summary='Create a new Project with the given name and provided parameters.',
-        notes="""Creates the project with the given name and provided parameters.
-            Result: on the backend, new project is stored,
-            spreadsheet with specified name and parameters given back to the user.""",
-        parameters=project_parser.swagger_parameters()
-    )
-    @report_exception
-    @login_required
+    @swagger.operation(summary="Create new project")
     def post(self):
         current_app.logger.info(
             "create request: {} {}".format(request, request.data, request.headers))
@@ -175,7 +150,7 @@ class Projects(ProjectBase):
             basename,
             as_attachment=True,
             attachment_filename=new_project_template)
-        response.headers['X-project-id'] = project_entry.id
+        # response.headers['X-project-id'] = project_entry.id
         response.status_code = 201
         return response
 
@@ -183,7 +158,6 @@ class Projects(ProjectBase):
         summary="Bulk delete for project with the provided ids",
         parameters=bulk_project_parser.swagger_parameters()
     )
-    @report_exception
     def delete(self):
         project_ids = json.loads(request.data)['projects']
         for project_id in project_ids:
@@ -196,111 +170,39 @@ class Projects(ProjectBase):
 class Project(Resource):
     """
     /api/project/<uuid:project_id>
-
-    - GET: get active project summary
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        responseClass=ProjectDb.__name__,
-        summary='Open a Project'
-    )
-    @report_exception
+    @swagger.operation(summary='Open a Project')
     def get(self, project_id):
-        project_entry = ProjectDb.query.get(project_id)
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
-        if not current_user.is_admin and \
-                        str(project_entry.user_id) != str(current_user.id):
-            raise Unauthorized
+        """
+        GET /api/project/<uuid:project_id>
+        """
+        return load_project_summary(project_id)
 
-        return get_project_summary_from_project_record(project_entry)
-
-    @swagger.operation(
-        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        summary='Update a Project'
-    )
-    @report_exception
+    @swagger.operation(summary='Update a Project')
     def put(self, project_id):
         """
+        PUT /api/project/<uuid:project_id>
         Updates the project with the given id.
-        This happens after users edit the project.
         """
-        current_app.logger.debug(
-            "updateProject %s for user %s" % (
-                project_id, current_user.email))
-
-        args = project_update_parser.parse_args()
-
-        current_app.logger.debug(
-            "project %s is in edit mode" % project_id)
-        current_app.logger.debug(args)
-
-        # can_update = args.pop('canUpdate', False) we'll calculate it based on DB
-        # info + request info
-        current_app.logger.debug("updateProject data: %s" % args)
-
-        # Check whether we are editing a project
-        project_entry = load_project_record(project_id) if project_id else None
-        if not project_entry:
-            raise ProjectDoesNotExist(id=project_id)
-
-        project = project_entry.load()
-        set_project_summary_on_project(project, args)
-
-        current_app.logger.debug(
-            "Editing project %s by user %s:%s" % (
-                project.name, current_user.id, current_user.email))
-
-        # Save to db
-        current_app.logger.debug("About to persist project %s for user %s" % (
-            project.name, project_entry.user_id))
-        db.session.add(project_entry)
-        db.session.commit()
-        project_entry.save_obj(project)
-
-        secure_project_name = secure_filename(project.name)
-        new_project_template = secure_project_name
-
-        path = templatepath(secure_project_name)
-        op.makespreadsheet(
-            path,
-            pops=args['populations'],
-            datastart=args["dataStart"],
-            dataend=args["dataEnd"])
-
-
-        current_app.logger.debug(
-            "new_project_template: %s" % new_project_template)
-        (dirname, basename) = (
-            upload_dir_user(TEMPLATEDIR), new_project_template)
+        project_summary = project_update_parser.parse_args()
+        dirname, basename = update_project_with_spreadsheet_download(
+            project_id, project_summary)
+        print("> Project template: %s" % basename)
         response = helpers.send_from_directory(
             dirname,
             basename,
             as_attachment=True,
-            attachment_filename=new_project_template)
-        response.headers['X-project-id'] = project_entry.id
+            attachment_filename=basename)
+        response.headers['X-project-id'] = project_id
         return response
 
-    @swagger.operation(
-        responseClass=ProjectDb.__name__,
-        summary='Deletes the given project (and eventually, corresponding excel files)'
-    )
-    @report_exception
+    @swagger.operation(summary='Deletes project')
     def delete(self, project_id):
-        current_app.logger.debug("deleteProject %s" % project_id)
-        # only loads the project if current user is either owner or admin
         project_entry = load_project_record(project_id)
-
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
-
         project_entry.recursive_delete()
-
         db.session.commit()
-        current_app.logger.debug(
-            "project %s is deleted by user %s" % (project_id, current_user.id))
-
         return '', 204
 
 

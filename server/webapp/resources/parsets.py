@@ -7,10 +7,9 @@ from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
-    load_result_by_id,
-    copy_parset, create_parset, load_parset_summaries,
-    rename_parset, delete_parset, generate_parset_graphs,
-    load_result_dir_filename, load_parameters, save_parameters)
+    load_result_by_id, copy_parset, create_parset, load_parset_summaries,
+    rename_parset, delete_parset, generate_parset_graphs, load_result_dir_filename,
+    load_parameters, save_parameters)
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser, normalize_obj
