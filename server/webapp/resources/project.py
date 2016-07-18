@@ -5,7 +5,7 @@ import dateutil
 
 from flask import current_app, helpers, request, Response
 from flask.ext.login import current_user, login_required
-from flask_restful import Resource, marshal_with, fields
+from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
 from werkzeug.utils import secure_filename
 
@@ -503,7 +503,6 @@ class ProjectEcon(Resource):
         parameters=file_upload_form_parser.swagger_parameters()
     )
     @report_exception
-    @marshal_with(file_resource)
     def post(self, project_id):
 
         DATADIR = current_app.config['UPLOAD_FOLDER']
