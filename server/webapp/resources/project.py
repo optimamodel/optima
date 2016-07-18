@@ -321,8 +321,51 @@ class ProjectFromData(Resource):
         return response, 201
 
 
+def copy_project(project_id, new_project_name):
+    # Get project row for current user with project name
+    project_record = load_project_record(
+        project_id, raise_exception=True)
+    user_id = project_record.user_id
+
+    project = project_record.load()
+    project.name = new_project_name
+    parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
+    print parset_name_by_id
+    save_project_as_new(project, user_id)
+
+    copy_project_id = project.uid
+
+    result_records = project_record.results
+    if result_records:
+        # copy each result
+        for result_record in result_records:
+            # reset the parset_id in results to new project
+            result = result_record.load()
+            parset_name = parset_name_by_id[result_record.parset_id]
+            new_parset = [r for r in project.parsets.values() if r.name == parset_name]
+            if not new_parset:
+                raise Exception(
+                    "Could not find copied parset for result in copied project {}".format(project_id))
+            copy_parset_id = new_parset[0].uid
+            result_record.parset_id = copy_parset_id
+
+            copy_result_record = ResultsDb(
+                copy_parset_id, copy_project_id, result_record.calculation_type)
+            db.session.add(copy_result_record)
+            db.session.flush()
+
+            # serializes result with new
+            result.uid = copy_result_record.id
+            copy_result_record.save_obj(result)
+
+    db.session.commit()
+
+    return copy_project_id
+
+
 class ProjectCopy(Resource):
     method_decorators = [report_exception, login_required]
+
     @swagger.operation(summary='Copies the given project to a different name')
     def post(self, project_id):
         """
@@ -331,47 +374,13 @@ class ProjectCopy(Resource):
             to: new project name
         """
         args = normalize_obj(request.get_json())
-
         new_project_name = args['to']
-
-        # Get project row for current user with project name
-        project_record = load_project_record(
-            project_id, raise_exception=True)
-        user_id = project_record.user_id
-
-        project = project_record.load()
-        project.name = new_project_name
-        save_project_as_new(project, user_id)
-
-        copy_project_id = project.uid
-
-        result_records = project_record.results
-        if result_records:
-            # copy each result
-            for result_record in result_records:
-                result = op.loads(result_record.blob)
-                result_record.project_id = copy_project_id
-
-                # reset the parset_id in results to new project
-                parset_name = result.parset.name
-                new_parset = [r for r in project.parsets.values() if r.name == parset_name]
-                if not new_parset:
-                    raise Exception(
-                        "Could not find copied parset for result in copied project {}".format(project_id))
-                copy_parset_id = new_parset[0].uid
-                result_record.parset_id = copy_parset_id
-
-                # resets result_record into a new record
-                db.session.expunge(result_record)
-                result_record.id = None
-                db.session.add(result_record)
-
-        db.session.commit()
+        copy_project_id = copy_project(project_id, new_project_name)
+        print("> Copied project %s -> %s" % (project_id, copy_project_id))
 
         payload = {
             'project': project_id,
-            'user': user_id,
-            'copy_id': project.uid
+            'copy_id': copy_project_id
         }
         return payload
 
@@ -446,8 +455,6 @@ class DefaultPopulations(Resource):
         Returns default populations for project management
         """
         return {'populations': get_default_populations()}
-
-
 
 
 class ProjectEcon(Resource):
