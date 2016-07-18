@@ -16,6 +16,8 @@ Parsed data structures should have suffix _summary
 import os
 from functools import partial
 from uuid import UUID
+from datetime import datetime
+import dateutil
 import pprint
 
 from flask import helpers, current_app, abort
@@ -26,18 +28,17 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
-from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
-    parse_default_program_summaries, parse_parameters_of_parset_list, convert_pars_list,
+    parse_default_program_summaries, get_project_parameters, convert_pars_list,
     parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
     revert_costcovdata, revert_ccopars, revert_pars_list, get_parameters_from_parset,
     set_parameters_on_parset
 )
 from server.webapp.plot import make_mpld3_graph_dict
-
 from server.webapp.utils import (
-    secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
-    templatepath, upload_dir_user)
+    TEMPLATEDIR, upload_dir_user, normalize_obj, templatepath,
+    secure_filename_input, AllowedSafeFilenameStorage, RequestParser,
+    TEMPLATEDIR, templatepath, upload_dir_user)
 
 import optima as op
 
@@ -137,7 +138,6 @@ def load_project_record(project_id, raise_exception=False, db_session=None, auth
     project_record = query.first()
 
     if project_record is None:
-        current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
         if raise_exception:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -163,6 +163,8 @@ def update_project(project, db_session=None):
         db_session = db.session
     project_record = load_project_record(project.uid)
     project_record.save_obj(project)
+    project.modified = datetime.now(dateutil.tz.tzutc())
+    project_record.updated = project.modified
     db_session.add(project_record)
     db_session.commit()
 
@@ -173,6 +175,8 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
     project_record = load_project_record(project_id)
     project = project_record.load()
     update_project_fn(project)
+    project.modified = datetime.now(dateutil.tz.tzutc())
+    project_record.updated = project.modified
     project_record.save_obj(project)
     db_session.add(project_record)
     db_session.commit()
@@ -190,7 +194,7 @@ def set_project_summary_on_project(project, summary):
     project.settings.end = summary["dataEnd"]
 
 
-def get_project_summary_from_project_record(project_record):
+def load_project_summary_from_project_record(project_record):
     try:
         project = project_record.load()
     except:
@@ -232,7 +236,49 @@ def get_project_summary_from_project_record(project_record):
 
 def load_project_summary(project_id):
     project_entry = load_project_record(project_id)
-    return get_project_summary_from_project_record(project_entry)
+    return load_project_summary_from_project_record(project_entry)
+
+
+def load_project_summaries(user_id=None):
+    if user_id is None:
+        query = ProjectDb.query
+    else:
+        query = ProjectDb.query.filter_by(user_id=current_user.id)
+    return map(load_project_summary_from_project_record, query.all())
+
+
+def create_project_with_spreadsheet_download(user_id, project_summary):
+    project_entry = ProjectDb(user_id=user_id)
+    db.session.add(project_entry)
+    db.session.flush()
+
+    project = op.Project(name=project_summary["name"])
+    project.uid = project_entry.id
+    set_populations_on_project(project, project_summary["populations"])
+    project.data["years"] = (
+        project_summary['dataStart'], project_summary['dataEnd'])
+    project_entry.save_obj(project)
+    db.session.commit()
+
+    new_project_template = secure_filename(
+        "{}.xlsx".format(project_summary['name']))
+    path = templatepath(new_project_template)
+    op.makespreadsheet(
+        path,
+        pops=project_summary['populations'],
+        datastart=project_summary['dataStart'],
+        dataend=project_summary['dataEnd'])
+
+    print("> Project data template: %s" % new_project_template)
+
+    return project.uid, upload_dir_user(TEMPLATEDIR), new_project_template
+
+
+def delete_projects(project_ids):
+    for project_id in project_ids:
+        record = load_project_record(project_id, raise_exception=True)
+        record.recursive_delete()
+    db.session.commit()
 
 
 def update_project_with_spreadsheet_download(project_id, project_summary):
@@ -257,7 +303,8 @@ def update_project_with_spreadsheet_download(project_id, project_summary):
 
     return dirname, basename
 
-def save_project_with_new_uids(project, user_id):
+
+def save_project_as_new(project, user_id):
     project_record = ProjectDb(user_id)
     db.session.add(project_record)
     db.session.flush()
@@ -269,6 +316,11 @@ def save_project_with_new_uids(project, user_id):
         parset.uid = op.uuid()
     for result in project.results.values():
         result.uid = op.uuid()
+
+    project.created = datetime.now(dateutil.tz.tzutc())
+    project.modified = datetime.now(dateutil.tz.tzutc())
+    project_record.created = project.created
+    project_record.updated = project.modified
 
     project_record.save_obj(project)
     db.session.flush()
@@ -373,8 +425,8 @@ def load_parset_summaries(project_id):
     return get_parset_summaries(project)
 
 
-def get_project_parameters(project):
-    return parse_parameters_of_parset_list(project.parsets.values())
+def load_project_parameters(project_id):
+    return get_project_parameters(load_project(project_id))
 
 
 def load_parameters_from_progset_parset(project, progset, parset):

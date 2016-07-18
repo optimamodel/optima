@@ -286,7 +286,8 @@ parameter_fields = {
 }
 
 
-def parse_parameters_of_parset_list(parset_list):
+def get_project_parameters(project):
+    parset_list = project.parsets.values()
     default_pars = [par['short'] for par in loadpartable(partable)]
     parameters = []
     added_par_keys = set()
