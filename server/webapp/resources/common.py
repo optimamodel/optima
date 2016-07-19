@@ -3,21 +3,8 @@ from functools import wraps
 
 from flask import current_app, request, make_response, jsonify, abort
 from flask.ext.login import current_user
-from flask_restful import fields
 
 from server.webapp.dbmodels import UserDb
-from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser
-
-
-file_resource = {
-    'file': fields.String,
-    'result': fields.String,
-}
-
-
-file_upload_form_parser = RequestParser()
-file_upload_form_parser.add_argument(
-    'file', type=AllowedSafeFilenameStorage, location='files', required=True)
 
 
 # api decorators

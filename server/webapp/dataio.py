@@ -29,8 +29,8 @@ from werkzeug.utils import secure_filename
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.parse import parse_default_program_summaries, \
-    get_project_parameters, parse_parameters_from_progset_parset, \
+from server.webapp.parse import get_default_program_summaries, \
+    get_project_parameters, get_parameters_from_progset_parset, \
     get_parameters_from_parset, set_parameters_on_parset, \
     get_progset_from_project, get_populations_from_project, \
     set_populations_on_project, set_project_summary_on_project, \
@@ -39,8 +39,8 @@ from server.webapp.parse import parse_default_program_summaries, \
     get_scenario_summaries, get_parameters_for_scenarios, \
     get_optimization_summaries, get_default_optimization_summaries, \
     set_optimization_summaries_on_project, get_optimization_from_project, \
-    get_project_years, get_program_from_progset, get_project_years, get_progset_summaries, \
-    set_progset_summaries_on_project, get_progset_summary, parse_outcomes_from_progset, put_outcomes_into_progset, \
+    get_program_from_progset, get_project_years, get_progset_summaries, \
+    set_progset_summaries_on_project, get_progset_summary, get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
     set_program_summary_on_progset
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.utils import (
@@ -380,7 +380,7 @@ def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
 
     settings = project.settings
 
-    return parse_parameters_from_progset_parset(settings, progset, parset)
+    return get_parameters_from_progset_parset(settings, progset, parset)
 
 
 def load_parameters(project_id, parset_id):
@@ -552,6 +552,11 @@ def load_result_by_optimization(project, optimization):
     return None
 
 
+def load_result_mpld3_graphs(result_id, which):
+    result = load_result_by_id(result_id)
+    return make_mpld3_graph_dict(result, which)
+
+
 ## SCENARIOS
 
 
@@ -590,15 +595,98 @@ def load_scenario_summaries(project_id):
         'ykeysByParsetId': get_parameters_for_scenarios(project)
     }
 
-## PROGRAMS
-
-
-def load_project_program_summaries(project_id):
-    project = load_project(project_id, raise_exception=True)
-    return parse_default_program_summaries(project)
-
 
 ## OPTIMIZATION
+
+def load_optimization_summaries(project_id):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    return {
+        'optimizations': get_optimization_summaries(project),
+        'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project)
+    }
+
+
+def save_optimization_summaries(project_id, optimization_summaries):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    set_optimization_summaries_on_project(project, optimization_summaries)
+    project_record.save_obj(project)
+    return {'optimizations': get_optimization_summaries(project)}
+
+
+def load_optimization_graphs(project_id, optimization_id, which):
+    project = load_project(project_id)
+    optimization = get_optimization_from_project(project, optimization_id)
+
+    result = load_result_by_optimization(project, optimization)
+    if result is None:
+        return {}
+    else:
+        return make_mpld3_graph_dict(result, which)
+
+
+def check_optimization(project_id, optimization_id):
+    from server.webapp.tasks import check_calculation_status
+
+    project = load_project(project_id)
+
+    optim = get_optimization_from_project(project, optimization_id)
+    parset = project.parsets[optim.parsetname]
+
+    print "> Checking calc state"
+    calc_state = check_calculation_status(
+        project_id,
+        parset.uid,
+        'optim-' + optim.name)
+    print pformat(calc_state, indent=2)
+    if calc_state['status'] == 'error':
+        raise Exception(calc_state['error_text'])
+    return calc_state
+
+
+def launch_optimization(project_id, optimization_id, maxtime):
+
+    from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
+
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    optim = get_optimization_from_project(project, optimization_id)
+    parset = project.parsets[optim.parsetname]
+
+    calc_state = start_or_report_calculation(
+        project_id, parset.uid, 'optim-' + optim.name)
+
+    if calc_state['status'] != 'started':
+        return calc_state, 208
+
+    progset = project.progsets[optim.progsetname]
+
+    if not progset.readytooptimize():
+        error_msg = "Not ready to optimize\n"
+        costcov_errors = progset.hasallcostcovpars(detail=True)
+        if costcov_errors:
+            error_msg += "Missing: cost-coverage parameters of:\n"
+            error_msg += pformat(costcov_errors, indent=2)
+        covout_errors = progset.hasallcovoutpars(detail=True)
+        if covout_errors:
+            error_msg += "Missing: coverage-outcome parameters of:\n"
+            error_msg += pformat(covout_errors, indent=2)
+        shut_down_calculation(project_id, parset.uid, 'optimization')
+        raise Exception(error_msg)
+
+    objectives = normalize_obj(optim.objectives)
+    constraints = normalize_obj(optim.constraints)
+    constraints["max"] = op.odict(constraints["max"])
+    constraints["min"] = op.odict(constraints["min"])
+    constraints["name"] = op.odict(constraints["name"])
+
+    run_optimization.delay(
+        project_id, optim.name, parset.name, progset.name, objectives, constraints, maxtime)
+
+    return calc_state
+
 
 def delete_optimization_result(
         project_id, result_name, db_session=None):
@@ -765,99 +853,7 @@ def delete_econ(project_id):
     db.session.commit()
 
 
-def load_result_mpld3_graphs(result_id, which):
-    result = load_result_by_id(result_id)
-    return make_mpld3_graph_dict(result, which)
-
-
-def load_optimization_summaries(project_id):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-    return {
-        'optimizations': get_optimization_summaries(project),
-        'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project)
-    }
-
-
-def save_optimization_summaries(project_id, optimization_summaries):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-    set_optimization_summaries_on_project(project, optimization_summaries)
-    project_record.save_obj(project)
-    return {'optimizations': get_optimization_summaries(project)}
-
-
-def load_optimization_graphs(project_id, optimization_id, which):
-    project = load_project(project_id)
-    optimization = get_optimization_from_project(project, optimization_id)
-
-    result = load_result_by_optimization(project, optimization)
-    if result is None:
-        return {}
-    else:
-        return make_mpld3_graph_dict(result, which)
-
-
-def check_optimization(project_id, optimization_id):
-    from server.webapp.tasks import check_calculation_status
-
-    project = load_project(project_id)
-
-    optim = get_optimization_from_project(project, optimization_id)
-    parset = project.parsets[optim.parsetname]
-
-    print "> Checking calc state"
-    calc_state = check_calculation_status(
-        project_id,
-        parset.uid,
-        'optim-' + optim.name)
-    print pformat(calc_state, indent=2)
-    if calc_state['status'] == 'error':
-        raise Exception(calc_state['error_text'])
-    return calc_state
-
-
-def launch_optimization(project_id, optimization_id, maxtime):
-
-    from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
-
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-
-    optim = get_optimization_from_project(project, optimization_id)
-    parset = project.parsets[optim.parsetname]
-
-    calc_state = start_or_report_calculation(
-        project_id, parset.uid, 'optim-' + optim.name)
-
-    if calc_state['status'] != 'started':
-        return calc_state, 208
-
-    progset = project.progsets[optim.progsetname]
-
-    if not progset.readytooptimize():
-        error_msg = "Not ready to optimize\n"
-        costcov_errors = progset.hasallcostcovpars(detail=True)
-        if costcov_errors:
-            error_msg += "Missing: cost-coverage parameters of:\n"
-            error_msg += pformat(costcov_errors, indent=2)
-        covout_errors = progset.hasallcovoutpars(detail=True)
-        if covout_errors:
-            error_msg += "Missing: coverage-outcome parameters of:\n"
-            error_msg += pformat(covout_errors, indent=2)
-        shut_down_calculation(project_id, parset.uid, 'optimization')
-        raise Exception(error_msg)
-
-    objectives = normalize_obj(optim.objectives)
-    constraints = normalize_obj(optim.constraints)
-    constraints["max"] = op.odict(constraints["max"])
-    constraints["min"] = op.odict(constraints["min"])
-    constraints["name"] = op.odict(constraints["name"])
-
-    run_optimization.delay(
-        project_id, optim.name, parset.name, progset.name, objectives, constraints, maxtime)
-
-    return calc_state
+## PROGRAMS
 
 
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
@@ -868,6 +864,11 @@ def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     years = get_project_years(project)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
     return normalize_obj(dict(zip(years, popsizes)))
+
+
+def load_project_program_summaries(project_id):
+    project = load_project(project_id, raise_exception=True)
+    return get_default_program_summaries(project)
 
 
 def load_progset_summaries(project_id):
@@ -909,7 +910,7 @@ def load_progset_outcomes(project_id, progset_id):
     project = load_project(project_id)
     progset = get_progset_from_project(project, progset_id)
 
-    outcomes = parse_outcomes_from_progset(progset)
+    outcomes = get_outcome_summaries_from_progset(progset)
 
     # Bosco needs to fix this...
 
@@ -926,11 +927,11 @@ def save_outcome_summaries(project_id, progset_id, outcome_summaries):
     project = project_record.load()
     progset = get_progset_from_project(project, progset_id)
     parameters = outcome_summaries["parameters"]
-    put_outcomes_into_progset(parameters, progset)
+    set_outcome_summaries_on_progset(parameters, progset)
 
     project_record.save_obj(project)
 
-    outcomes = parse_outcomes_from_progset(progset)
+    outcomes = get_outcome_summaries_from_progset(progset)
 
     return {'effects': [{
                             "parset": parset.uid,

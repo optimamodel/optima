@@ -3,9 +3,10 @@ from flask.ext.login import login_required
 from flask_restful import Resource
 from flask_restful_swagger import swagger
 
-from server.webapp.dataio import load_parameters_from_progset_parset, load_target_popsizes, load_progset_summaries, \
-    save_progset_summaries, save_progset_summary, delete_progset, load_progset_outcomes, save_outcome_summaries, \
-    save_program, load_costcov_graph
+from server.webapp.dataio import load_parameters_from_progset_parset, \
+    load_target_popsizes, load_progset_summaries, save_progset_summaries, \
+    save_progset_summary, delete_progset, load_progset_outcomes, \
+    save_outcome_summaries, save_program, load_costcov_graph
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj, get_post_data_json
 
@@ -89,8 +90,7 @@ class Program(Resource):
         POST /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program
         data-json: programs: program_summary
         """
-        args = get_post_data_json()
-        program_summary = normalize_obj(args['program'])
+        program_summary = get_post_data_json()['program']
         save_program(project_id, progset_id, program_summary)
         return 204
 
@@ -122,13 +122,13 @@ class ProgramCostcovGraph(Resource):
             perperson: cost per person shown as data point
         """
         args = request.args
+
         parset_id = args['parset_id']
 
         try:
             t = map(int, args['t'].split(','))
         except ValueError:
             t = None
-
         if t is None:
             return {}
 

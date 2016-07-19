@@ -72,33 +72,6 @@ class SubParser:
         return self.child_parser.parse_args(req=SubRequest(item_to_parse))
 
 
-class AllowedFileTypeMixin(object):
-    "Mixin used of FileStorage subclasses to check the uploaded filetype"
-
-    def __init__(self, *args, **kwargs):
-        super(AllowedFileTypeMixin, self).__init__(*args, **kwargs)
-        if not allowed_file(self.filename):
-            raise ValueError('File type of {} is not accepted!'.format(self.filename))
-
-
-class SafeFilenameStorage(FileStorage):
-
-    def __init__(self, *args, **kwargs):
-        super(SafeFilenameStorage, self).__init__(*args, **kwargs)
-        if self.filename == 'file' and hasattr(self.stream, 'filename'):
-            self.filename = self.stream.filename
-        self.source_filename = self.filename
-        self.filename = secure_filename(self.filename)
-
-
-class AllowedFiletypeStorage(AllowedFileTypeMixin, FileStorage):
-    pass
-
-
-class AllowedSafeFilenameStorage(AllowedFileTypeMixin, SafeFilenameStorage):
-    pass
-
-
 class RequestParser(OrigReqParser):
 
     def __init__(self, *args, **kwargs):

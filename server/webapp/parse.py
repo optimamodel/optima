@@ -374,7 +374,7 @@ program_summary
 """
 
 
-def parse_targetpars(targetpars):
+def convert_program_targetpars(targetpars):
     parameters = defaultdict(list)
     for parameter in targetpars:
         short = parameter['param']
@@ -394,7 +394,7 @@ def make_pop_tuple(pop):
     return str(pop) if type(pop) in (str, unicode) else tuple(map(str, pop))
 
 
-def revert_targetpars(pars):
+def revert_program_targetpars(pars):
     if pars is None:
         return []
     targetpars = []
@@ -408,7 +408,7 @@ def revert_targetpars(pars):
     return targetpars
 
 
-def parse_costcovdata(costcovdata):
+def convert_program_costcovdata(costcovdata):
     if costcovdata is None:
         return None
     result = []
@@ -430,7 +430,7 @@ pluck = lambda l, k: [e[k] for e in l]
 to_nan = lambda v: v if v is not None and v != "" else nan
 
 
-def revert_costcovdata(costcov):
+def revert_program_costcovdata(costcov):
     result = {}
     if costcov:
         costcov = normalize_obj(costcov)
@@ -442,7 +442,7 @@ def revert_costcovdata(costcov):
     return result
 
 
-def revert_ccopars(ccopars):
+def revert_program_ccopars(ccopars):
     result = None
     if ccopars:
         result = op.odict({
@@ -453,7 +453,7 @@ def revert_ccopars(ccopars):
     return result
 
 
-def parse_program_summary(program, progset, active):
+def get_program_summary(program, progset, active):
     result = {
         'id': program.uid,
         'progset_id': progset.uid if progset else None,
@@ -462,17 +462,17 @@ def parse_program_summary(program, progset, active):
         'short': program.short,
         'populations': normalize_obj(program.targetpops),
         'criteria': program.criteria,
-        'targetpars': parse_targetpars(program.targetpars),
+        'targetpars': convert_program_targetpars(program.targetpars),
         'ccopars': normalize_obj(program.costcovfn.ccopars),
         'category': program.category,
-        'costcov': parse_costcovdata(program.costcovdata),
+        'costcov': convert_program_costcovdata(program.costcovdata),
         'optimizable': program.optimizable()
     }
     return result
 
 
-def parse_default_program_summaries(project):
-    return [parse_program_summary(p, None, False) for p in defaultprograms(project)]
+def get_default_program_summaries(project):
+    return [get_program_summary(p, None, False) for p in defaultprograms(project)]
 
 
 # PROGSET OUTCOMES
@@ -500,7 +500,7 @@ Progset outcome data structure:
     ]
 '''
 
-def parse_outcomes_from_progset(progset):
+def get_outcome_summaries_from_progset(progset):
     outcomes = []
     for par_short in progset.targetpartypes:
         pop_keys = progset.progs_by_targetpar(par_short).keys()
@@ -537,7 +537,7 @@ def parse_outcomes_from_progset(progset):
     return outcomes
 
 
-def put_outcomes_into_progset(outcomes, progset):
+def set_outcome_summaries_on_progset(outcomes, progset):
     for outcome in outcomes:
         for year in outcome['years']:
             par_short = outcome['name']
@@ -575,12 +575,12 @@ def get_progset_summary(project, progset_name):
 
     progset = project.progsets[progset_name]
 
-    active_programs = map(partial(parse_program_summary, progset=progset, active=True), progset.programs.values()),
+    active_programs = map(partial(get_program_summary, progset=progset, active=True), progset.programs.values()),
     inactive_programs_odict = getattr(progset, "inactive_programs", {})
-    inactive_programs = map(partial(parse_program_summary, progset=progset, active=False), inactive_programs_odict.values()),
+    inactive_programs = map(partial(get_program_summary, progset=progset, active=False), inactive_programs_odict.values()),
     programs = list(active_programs[0]) + list(inactive_programs[0])
 
-    default_programs = parse_default_program_summaries(project)
+    default_programs = get_default_program_summaries(project)
 
     # Overwrite with default name and category if applicable
     loaded_program_shorts = []
@@ -677,11 +677,11 @@ def set_program_summary_on_progset(progset, summary):
         short=summary["short"],
         name=summary["name"],
         category=summary["category"],
-        targetpars=revert_targetpars(summary["targetpars"]),
+        targetpars=revert_program_targetpars(summary["targetpars"]),
         targetpops=summary["populations"],
         criteria=summary["criteria"],
-        ccopars=revert_ccopars(summary["ccopars"]),
-        costcovdata=revert_costcovdata(summary["costcov"]))
+        ccopars=revert_program_ccopars(summary["ccopars"]),
+        costcovdata=revert_program_costcovdata(summary["costcov"]))
 
     if program_id:
         program.uid = program_id
@@ -727,7 +727,7 @@ def set_progset_summaries_on_project(project, progset_summaries, progset_id=None
     current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
 
 
-def parse_parameters_from_progset_parset(settings, progset, parset):
+def get_parameters_from_progset_parset(settings, progset, parset):
     def convert(limit):
         return settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
 
@@ -809,7 +809,7 @@ def force_tuple_list(item):
         return item
 
 
-def convert_pars_list(pars):
+def convert_scenario_pars(pars):
     result = []
     for par in pars:
         result.append({
@@ -823,7 +823,7 @@ def convert_pars_list(pars):
     return result
 
 
-def revert_pars_list(pars):
+def revert_scenario_pars(pars):
     result = []
     for par in pars:
         result.append({
@@ -872,7 +872,7 @@ def get_scenario_summary(project, scenario):
     # budget, coverage, parameter, any others?
     if isinstance(scenario, op.Parscen):
         scenario_type = "parameter"
-        extra_data["pars"] = revert_pars_list(scenario.pars)
+        extra_data["pars"] = revert_scenario_pars(scenario.pars)
     elif isinstance(scenario, op.Coveragescen):
         scenario_type = "coverage"
         extra_data["coverage"] = scenario.coverage
@@ -935,7 +935,7 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 
         if s["scenario_type"] == "parameter":
             scen = op.Parscen(
-                pars=convert_pars_list(s["pars"]),
+                pars=convert_scenario_pars(s["pars"]),
                 **kwargs)
 
         elif s["scenario_type"] == "coverage":
