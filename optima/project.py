@@ -287,6 +287,7 @@ class Project(object):
         if result.name is None: keyname = str(result.uid)
         else: keyname = result.name
         self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=overwrite) # Use UID for key but keep name
+        self.modified = today()
         return keyname # Can be useful to know what ended up being chosen
     
     def rmresult(self, name=-1):
@@ -303,17 +304,21 @@ class Project(object):
             validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(self.results))]
             errormsg = 'Could not remove result "%s": choices are:\n%s' % (name, '\n'.join(validchoices))
             raise OptimaException(errormsg)
+        self.modified = today()
+        return None
     
     
     def cleanresults(self):
         ''' Remove all results '''
         self.results = odict() # Just replace with an empty odict, as at initialization
+        self.modified = today()
         return None
     
     
     def addscenlist(self, scenlist): 
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
+        self.modified = today()
         return None
     
     
@@ -381,6 +386,7 @@ class Project(object):
             keyname = self.addresult(result=results, overwrite=overwrite)
             if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
+        self.modified = today()
         return results
 
 
@@ -405,6 +411,7 @@ class Project(object):
                     if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
                     if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
         
+        self.modified = today()
         return None
         
         
@@ -566,6 +573,7 @@ class Project(object):
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
+        self.modified = today()
         return None        
     
     def getBOC(self, objectives):
@@ -589,6 +597,7 @@ class Project(object):
             print('Deleting an old BOC...')
             ind = self.getBOC(objectives = objectives).uid
             self.rmresult(str(ind))
+        self.modified = today()
         return None
     
     
