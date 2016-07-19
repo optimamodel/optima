@@ -2,9 +2,11 @@ import optima as op
 
 
 def _TwoToTwoOneMigration(project):
-
+    """
+    Migration between Optima 2.0 and 2.1.
+    """
     for scen in project.scens.values():
-        if not hasattr(scen, "uid"):
+        if not hasattr(scen, 'uid'):
             scen.uid = op.uuid()
 
     project.version = "2.1"
@@ -13,6 +15,7 @@ def _TwoToTwoOneMigration(project):
 _MIGRATIONS = {
     '2.0': _TwoToTwoOneMigration
 }
+
 
 def migrateproject(project):
     """
