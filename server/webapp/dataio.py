@@ -541,38 +541,6 @@ def load_result_by_optimization(project, optimization):
 
 ## SCENARIOS
 
-'''
-Data structure of a JSON scenario summary
-
-scenario_summary:
-    id: uuid_string
-    progset_id: uuid_string -or- null # since parameter scenarios don't have progsets
-    parset_id: uuid_string
-    name: string
-    active: boolean
-    years: list of number
-    scenario_type: "parameter", "coverage" or "budget"
-    ---
-    pars:
-        - name: string
-          for: string -or- [1 string] -or- [2 strings]
-          startyear: number
-          endyear: number
-          startval: number
-          endval: number
-        - ...
-     -or-
-    budget:
-        - program: string
-          values: [number -or- null] # same length as years
-        - ...
-     -or-
-    coverage:
-        - program: string
-          values: [number -or- null] # same length as years
-        - ...
-'''
-
 
 def make_scenarios_graphs(project_id):
     db.session\

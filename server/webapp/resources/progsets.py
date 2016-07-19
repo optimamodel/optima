@@ -13,7 +13,7 @@ from server.webapp.parse import (
     parse_outcomes_from_progset, put_outcomes_into_progset,
     get_target_popsizes, get_parset_from_project, get_progset_summary,
     get_progset_summaries, set_program_summary_on_progset,
-    set_progset_summaries_on_project)
+    set_progset_summaries_on_project, get_progset_from_project, get_program_from_progset)
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import Json, RequestParser, normalize_obj
 
