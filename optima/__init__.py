@@ -68,7 +68,11 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, cleanresults, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, loadobj, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, saveobj, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj, savedbobj, loaddbobj
+from .utils import blank, checkmem, cleanresults, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
+
+## Data I/O
+from . import dataio
+from .dataio import loadobj, loaddbobj, saveobj, savedbobj # CK: may want to tidy up
 
 
 #####################################################################################################################

@@ -13,6 +13,114 @@ from dateutil import parser, tz
 from twisted.python.reflect import qual, namedAny
 
 
+
+
+def saveobj(filename, obj, verbose=True):
+    ''' Save an object to file '''
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    
+    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
+    if verbose: print('Object saved to "%s"' % filename)
+    return None
+
+
+def loadobj(filename, verbose=True):
+    ''' Load a saved file '''
+    try:
+        import cPickle as pickle  # For Python 2 compatibility
+    except:
+        import pickle
+    from gzip import GzipFile
+    
+    # Handle loading of either filename or file object
+    if isinstance(filename, basestring): argtype='filename'
+    else: argtype = 'fileobj'
+    kwargs = {'mode': 'rb', argtype: filename}
+
+    with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
+    if verbose: print('Object loaded from "%s"' % filename)
+    return obj
+
+
+
+def savedbobj(filename, obj, verbose=True):
+    ''' Save an object to file '''
+    from ._serialize import dumps
+    dumped = dumps(obj)
+
+    with open(filename, 'wb') as fileobj:
+        fileobj.write(dumped)
+    if verbose: print('Object saved to "%s"' % filename)
+    return None
+
+
+def loaddbobj(filename, verbose=True):
+    ''' Load a saved file (pickle or JSON)'''
+    try:
+        import cPickle as pickle  # For Python 2 compatibility
+    except:
+        import pickle
+    from gzip import GzipFile
+
+    # Handle loading of either filename or file object
+    if isinstance(filename, basestring): argtype='filename'
+    else: argtype = 'fileobj'
+    kwargs = {'mode': 'rb', argtype: filename}
+
+    try:
+        from ._serialize import loads
+
+        if argtype == "fileobj":
+            read = filename.read()
+        else:
+            with open(filename, 'rb') as f:
+                read = f.read()
+
+        obj = loads(read)
+    except:
+        if argtype == "fileobj":
+            filename.seek(0)
+        with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
+
+    if verbose: print('Object loaded from "%s"' % filename)
+    return obj
+
+
+def saves(obj):
+    ''' Save an object to a string in gzip-compatible way'''
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    from cStringIO import StringIO
+    from contextlib import closing
+    result = None
+    with closing(StringIO()) as output:
+        with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
+            pickle.dump(obj, fileobj, protocol=2)
+        output.seek(0)
+        result = output.read()
+    return result
+
+
+def loads(source):
+    ''' Load an object from a string in gzip-compatible way'''
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    from cStringIO import StringIO
+    from contextlib import closing
+    with closing(StringIO(source)) as output:
+        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
+            obj = pickle.load(fileobj)
+    return obj
+
+
+
+
+
+
 def dumps(obj):
 
     obj_registry = {}
