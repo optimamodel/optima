@@ -1,53 +1,38 @@
-from flask import request
 from flask.ext.login import login_required
 from flask_restful import Resource
 
+from server.webapp.dataio import make_scenarios_graphs, save_scenario_summaries, load_scenario_summaries
 from server.webapp.resources.common import report_exception
-from server.webapp.utils import normalize_obj
-from server.webapp.dataio import (
-    load_project_record, make_scenarios_graphs)
-from server.webapp.parse import (
-    get_parameters_for_scenarios, get_scenario_summaries,
-    set_scenario_summaries_on_project)
+from server.webapp.utils import get_post_data_json
 
 
 class Scenarios(Resource):
-    """
-    /api/project/<uuid:project_id>/scenarios
-    - GET: get scenarios for a project
-    - PUT: update scenarios; returns scenarios so client-side can check
-    """
     method_decorators = [report_exception, login_required]
 
+    @swagger.operation(summary='get scenarios for a project')
     def get(self, project_id):
-        project_record = load_project_record(project_id)
-        project = project_record.load()
+        """
+        GET /api/project/<uuid:project_id>/scenarios
+        """
+        return load_scenario_summaries(project_id)
 
-        return {
-            'scenarios': get_scenario_summaries(project),
-            'ykeysByParsetId': get_parameters_for_scenarios(project)
-        }
-
+    @swagger.operation(summary='update scenarios; returns scenarios so client-side can check')
     def put(self, project_id):
-        data = normalize_obj(request.get_json(force=True))
-
-        project_record = load_project_record(project_id)
-        project = project_record.load()
-
-        set_scenario_summaries_on_project(project, data['scenarios'])
-
-        project_record.save_obj(project)
-
-        return {'scenarios': get_scenario_summaries(project)}
-
+        """
+        PUT /api/project/<uuid:project_id>/scenarios
+        data-josn: scenarios: scenario_summaries
+        """
+        data = get_post_data_json()
+        scenario_summaries = data['scenarios']
+        return save_scenario_summaries(project_id, scenario_summaries)
 
 class ScenarioSimulationGraphs(Resource):
-    """
-    /api/project/<project-id>/scenarios/results
-    - GET: Run scenarios and returns the graphs
-    """
     method_decorators = [report_exception, login_required]
 
+    @swagger.operation(summary='Run scenarios and returns the graphs')
     def get(self, project_id):
+        """
+        GET /api/project/<project-id>/scenarios/results
+        """
         return make_scenarios_graphs(project_id)
 

@@ -33,7 +33,8 @@ from server.webapp.parse import (
     parse_default_program_summaries, get_project_parameters, parse_parameters_from_progset_parset, get_parameters_from_parset,
     set_parameters_on_parset,
     get_populations_from_project, set_populations_on_project, set_project_summary_on_project,
-    get_project_summary_from_project, get_parset_from_project, get_parset_summaries)
+    get_project_summary_from_project, get_parset_from_project, get_parset_summaries, set_scenario_summaries_on_project,
+    get_scenario_summaries, get_parameters_for_scenarios)
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.utils import (
     TEMPLATEDIR, templatepath, upload_dir_user)
@@ -558,6 +559,25 @@ def make_scenarios_graphs(project_id):
     return make_mpld3_graph_dict(result)
 
 
+def save_scenario_summaries(project_id, scenario_summaries):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    set_scenario_summaries_on_project(project, scenario_summaries)
+
+    project_record.save_obj(project)
+
+    return {'scenarios': get_scenario_summaries(project)}
+
+
+def load_scenario_summaries(project_id):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    return {
+        'scenarios': get_scenario_summaries(project),
+        'ykeysByParsetId': get_parameters_for_scenarios(project)
+    }
+
 ## PROGRAMS
 
 
@@ -736,3 +756,5 @@ def delete_econ(project_id):
 def load_result_mpld3_graphs(result_id, which):
     result = load_result_by_id(result_id)
     return make_mpld3_graph_dict(result, which)
+
+
