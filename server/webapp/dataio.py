@@ -194,15 +194,8 @@ def set_project_summary_on_project(project, summary):
     project.settings.end = summary["dataEnd"]
 
 
-def load_project_summary_from_project_record(project_record):
-    try:
-        project = project_record.load()
-    except:
-        return {
-            'id': project_record.id,
-            'name': "Failed loading"
-        }
 
+def get_project_summary_from_project(project):
     years = project.data.get('years')
     if years:
         data_start = years[0]
@@ -218,9 +211,8 @@ def load_project_summary_from_project_record(project_record):
             n_program = this_n_program
 
     project_summary = {
-        'id': project_record.id,
+        'id': project.uid,
         'name': project.name,
-        'userId': project_record.user_id,
         'dataStart': data_start,
         'dataEnd': data_end,
         'populations': get_populations_from_project(project),
@@ -231,6 +223,19 @@ def load_project_summary_from_project_record(project_record):
         'hasData': project.data != {},
         'hasEcon': "econ" in project.data
     }
+    return project_summary
+
+
+def load_project_summary_from_project_record(project_record):
+    try:
+        project = project_record.load()
+    except:
+        return {
+            'id': project_record.id,
+            'name': "Failed loading"
+        }
+    project_summary = get_project_summary_from_project(project)
+    project_summary['userId'] = project_record.user_id
     return project_summary
 
 
