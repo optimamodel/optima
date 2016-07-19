@@ -1,10 +1,11 @@
+import json
 import os
 from collections import OrderedDict
 
 import flask.json
 import numpy as np
 
-from flask import current_app
+from flask import current_app, request
 from flask.ext.restful.reqparse import RequestParser as OrigReqParser
 from validate_email import validate_email
 from werkzeug.datastructures import FileStorage
@@ -296,3 +297,25 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
         obj = normalize_obj(obj)
 
         return flask.json.JSONEncoder.default(self, obj)
+
+
+def get_post_data_json():
+    return normalize_obj(json.loads(request.data))
+
+
+def get_upload_file(server_dirname):
+    """
+    Returns the server filename for an uploaded file,
+    handled by the current flask request
+
+    Args:
+        server_dirname: directory on server to store the filen
+    """
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    full_filename = os.path.join(server_dirname, filename)
+
+    print "> Upload file '%s'" % file.filename
+    file.save(full_filename)
+
+    return full_filename

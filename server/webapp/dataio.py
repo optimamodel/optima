@@ -1,3 +1,6 @@
+from zipfile import ZipFile
+
+from optima.utils import loaddbobj
 
 __doc__ = """
 
@@ -15,17 +18,16 @@ Parsed data structures should have suffix _summary
 
 import os
 from functools import partial
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime
 import dateutil
-import pprint
 
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 from werkzeug.utils import secure_filename
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ResultsDb
+from server.webapp.dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
 from server.webapp.parse import (
@@ -36,9 +38,7 @@ from server.webapp.parse import (
 )
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.utils import (
-    TEMPLATEDIR, upload_dir_user, normalize_obj, templatepath,
-    secure_filename_input, AllowedSafeFilenameStorage, RequestParser,
-    TEMPLATEDIR, templatepath, upload_dir_user)
+    normalize_obj, TEMPLATEDIR, templatepath, upload_dir_user)
 
 import optima as op
 
@@ -122,7 +122,7 @@ def set_populations_on_project(project, populations):
 
 ## PROJECT
 
-def load_project_record(project_id, raise_exception=False, db_session=None, authenticate=False):
+def load_project_record(project_id, raise_exception=True, db_session=None, authenticate=False):
     if not db_session:
         db_session = db.session
 
@@ -281,7 +281,7 @@ def delete_projects(project_ids):
     db.session.commit()
 
 
-def update_project_with_spreadsheet_download(project_id, project_summary):
+def update_project_followed_by_template_data_spreadsheet(project_id, project_summary):
     project_entry = load_project_record(project_id)
     project = project_entry.load()
     set_project_summary_on_project(project, project_summary)
@@ -1093,3 +1093,211 @@ def get_default_optimization_summaries(project):
     return normalize_obj(defaults_by_progset_id)
 
 
+def copy_project(project_id, new_project_name):
+    # Get project row for current user with project name
+    project_record = load_project_record(
+        project_id, raise_exception=True)
+    user_id = project_record.user_id
+
+    project = project_record.load()
+    project.name = new_project_name
+    parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
+    save_project_as_new(project, user_id)
+
+    copy_project_id = project.uid
+
+    # copy each result
+    result_records = project_record.results
+    if result_records:
+        for result_record in result_records:
+            # reset the parset_id in results to new project
+            result = result_record.load()
+            parset_name = parset_name_by_id[result_record.parset_id]
+            new_parset = [r for r in project.parsets.values() if r.name == parset_name]
+            if not new_parset:
+                raise Exception(
+                    "Could not find copied parset for result in copied project {}".format(project_id))
+            copy_parset_id = new_parset[0].uid
+
+            copy_result_record = ResultsDb(
+                copy_parset_id, copy_project_id, result_record.calculation_type)
+            db.session.add(copy_result_record)
+            db.session.flush()
+
+            # serializes result with new
+            result.uid = copy_result_record.id
+            copy_result_record.save_obj(result)
+
+    db.session.commit()
+
+    return copy_project_id
+
+
+def create_project_from_prj(prj_filename, project_name, user_id):
+    project = loaddbobj(prj_filename)
+    project.name = project_name
+    save_project_as_new(project, user_id)
+    return project.uid
+
+
+def download_project(project_id):
+    project_record = load_project_record(project_id, raise_exception=True)
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    filename = project_record.as_file(dirname)
+    return dirname, filename
+
+
+def update_project_from_prj(project_id, prj_filename):
+    project = loaddbobj(prj_filename)
+    project_record = load_project_record(project_id)
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def load_data_spreadsheet_binary(project_id):
+    data_record = ProjectDataDb.query.get(project_id)
+    if data_record is not None:
+        binary = data_record.meta
+        if len(binary.meta) > 0:
+            project = load_project(project_id)
+            server_fname = secure_filename('{}.xlsx'.format(project.name))
+            return server_fname, binary
+    return None, None
+
+
+def load_template_data_spreadsheet(project_id):
+    project = load_project(project_id)
+    fname = secure_filename('{}.xlsx'.format(project.name))
+    server_fname = templatepath(fname)
+    op.makespreadsheet(
+        server_fname,
+        pops=get_populations_from_project(project),
+        datastart=int(project.data["years"][0]),
+        dataend=int(project.data["years"][-1]))
+    return upload_dir_user(TEMPLATEDIR), fname
+
+
+def load_econ_spreadsheet_binary(project_id):
+    econ_record = ProjectEconDb.query.get(project_id)
+    if econ_record is not None:
+        binary = econ_record.meta
+        if len(binary.meta) > 0:
+            project = load_project(project_id)
+            server_fname = secure_filename('{}_economics.xlsx'.format(project.name))
+            return server_fname, binary
+    return None, None
+
+
+def load_template_econ_spreadsheet(project_id):
+    project = load_project(project_id)
+    fname = secure_filename('{}_economics.xlsx'.format(project.name))
+    server_fname = templatepath(fname)
+    op.makeeconspreadsheet(
+        server_fname,
+        datastart=int(project.data["years"][0]),
+        dataend=int(project.data["years"][-1]))
+    return upload_dir_user(TEMPLATEDIR), fname
+
+
+def update_project_from_data_spreadsheet(project_id, full_filename):
+    project_record = load_project_record(project_id, raise_exception=True)
+    project = project_record.load()
+
+    parset_name = "default"
+    parset_names = project.parsets.keys()
+    basename = os.path.basename(full_filename)
+    if parset_name in parset_names:
+        parset_name = "uploaded from " + basename
+        i = 0
+        while parset_name in parset_names:
+            i += 1
+            parset_name = "uploaded_from_%s (%d)" % (basename, i)
+
+    project.loadspreadsheet(full_filename, parset_name, makedefaults=True)
+    project_record.save_obj(project)
+
+    # importing spreadsheet will also runsim to project.results[-1]
+    result = project.results[-1]
+    result_record = update_or_create_result_record(
+        project, result, parset_name, "calibration")
+
+    # save the binary data of spreadsheet for later download
+    with open(full_filename, 'rb') as f:
+        try:
+            data_record = ProjectDataDb.query.get(project_id)
+            data_record.meta = f.read()
+        except:
+            data_record = ProjectDataDb(project_id, f.read())
+
+    db.session.add(data_record)
+    db.session.add(project_record)
+    db.session.add(result_record)
+    db.session.commit()
+
+
+def load_zip_of_prj_files(project_ids):
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+
+    prjs = [load_project_record(id).as_file(dirname) for id in project_ids]
+
+    zip_fname = '{}.zip'.format(uuid4())
+    server_zip_fname = os.path.join(dirname, zip_fname)
+    with ZipFile(server_zip_fname, 'w') as zipfile:
+        for prj in prjs:
+            zipfile.write(os.path.join(dirname, prj), 'portfolio/{}'.format(prj))
+
+    return dirname, zip_fname
+
+
+def update_project_from_econ_spreadsheet(project_id, econ_spreadsheet_fname):
+    project_record = load_project_record(project_id, raise_exception=True)
+    project = project_record.load()
+
+    project.loadeconomics(econ_spreadsheet_fname)
+    project_record.save_obj(project)
+    db.session.add(project_record)
+
+    with open(econ_spreadsheet_fname, 'rb') as f:
+        binary = f.read()
+        upload_time = datetime.now(dateutil.tz.tzutc())
+        econ_record = ProjectEconDb.query.get(project.id)
+        if econ_record is not None:
+            econ_record.meta = binary
+            econ_record.updated = upload_time
+        else:
+            econ_record = ProjectEconDb(
+                project_id=project.id,
+                meta=binary,
+                updated=upload_time)
+        db.session.add(econ_record)
+
+    db.session.commit()
+
+    return econ_spreadsheet_fname
+
+
+def load_project_name(project_id):
+    return load_project(project_id).name
+
+
+def delete_econ(project_id):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    if 'econ' not in project.data:
+        raise Exception("No economoics data found in project %s" % project_id)
+    del project.data['econ']
+    project_record.save_obj(project)
+    db.session.add(project_record)
+
+    econ_record = ProjectEconDb.query.get(project.id)
+    if econ_record is None or len(econ_record.meta) == 0:
+        db.session.delete(econ_record)
+    else:
+        raise Exception("No economics data has been uploaded")
+
+    db.session.commit()

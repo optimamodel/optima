@@ -62,9 +62,9 @@ from server.webapp.utils import OptimaJSONEncoder
 from server.webapp.resources.user import (
     User, UserDetail, CurrentUser, UserLogin, UserLogout)
 from server.webapp.resources.project import (
-    Projects, ProjectsAll, Project, ProjectCopy, ProjectSpreadsheet, ProjectEcon,
-    ProjectData, ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
-    DefaultPopulations)
+    Projects, ProjectsAll, Project, ProjectCopy, ProjectDataSpreadsheet, ProjectEcon,
+    ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
+    DefaultPopulations, ProjectData)
 from server.webapp.resources.progsets import (
     Progsets, Progset, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
@@ -91,7 +91,7 @@ api.add_resource(Project, '/api/project/<uuid:project_id>')
 api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
 api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
-api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
