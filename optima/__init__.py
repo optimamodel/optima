@@ -193,6 +193,7 @@ except:
 
 # Finally, load defaults
 from . import defaults
+from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms
 
 # And really finally, load other random things that don't matter
 try:
