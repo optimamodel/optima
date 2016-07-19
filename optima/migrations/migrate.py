@@ -2,7 +2,7 @@ import optima as op
 
 def addscenuid(project, **kwargs):
     """
-    Migration between Optima 2.0 and 2.1.
+    Migration between Optima 2.0.0 and 2.0.1.
     """
     for scen in project.scens.values():
         if not hasattr(scen, 'uid'):
@@ -13,14 +13,12 @@ def addscenuid(project, **kwargs):
 
 def addforcepopsize(project, **kwargs):
     """
-    Migration between Optima 2.0 and 2.1.
+    Migration between Optima 2.0.1 and 2.0.2.
     """
     if not hasattr(project.settings, 'forcepopsize'):
         project.settings.forcepopsize = True
     project.version = "2.0.2"
     return None
-
-
 
 
 migrations = {
