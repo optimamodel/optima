@@ -2,11 +2,11 @@
 """
 This file performs all necessary imports, so Optima can be used either as
 
-from .optima import Project, Parameters [etc.] [preferred]
+from optima import Project, Parameters [etc.] [preferred]
 or
 import optima as op
 or
-from .optima import *
+from optima import *
 
 
 Now, the legal part:
