@@ -88,7 +88,7 @@ class Project(object):
         output += '     Optimizations: %i\n'    % len(self.optims)
         output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
-        output += '    Optima version: %0.1f\n' % self.version
+        output += '    Optima version: %s\n'    % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
