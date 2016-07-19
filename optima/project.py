@@ -390,14 +390,14 @@ class Project(object):
         return results
 
 
-    def resetparset(self, name=None, orig='default'):
+    def refreshparset(self, name=None, orig='default'):
         '''
         Reset the chosen (or all) parsets to reflect the parameter values from the spreadsheet (or another parset).
         
         Usage:
-            P.resetparset() # Refresh all parsets in the project to match 'default'
-            P.resetparset(name='calibrated') # Reset parset 'calibrated' to match 'default'
-            P.resetparset(name=['default', 'bugaboo'], orig='calibrated') # Reset parsets 'default' and 'bugaboo' to match 'calibrated'
+            P.refreshparset() # Refresh all parsets in the project to match 'default'
+            P.refreshparset(name='calibrated') # Reset parset 'calibrated' to match 'default'
+            P.refreshparset(name=['default', 'bugaboo'], orig='calibrated') # Reset parsets 'default' and 'bugaboo' to match 'calibrated'
         '''
         
         if name is None: name = self.parsets.keys() # If none is given, use all
