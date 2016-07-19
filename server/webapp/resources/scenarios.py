@@ -5,9 +5,10 @@ from flask_restful import Resource
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj
 from server.webapp.dataio import (
-    load_project_record, get_scenario_summaries,
-    save_scenario_summaries,
-    get_parameters_for_scenarios, make_scenarios_graphs)
+    load_project_record, make_scenarios_graphs)
+from server.webapp.parse import (
+    get_parameters_for_scenarios, get_scenario_summaries,
+    set_scenario_summaries_on_project)
 
 
 class Scenarios(Resource):
@@ -33,7 +34,7 @@ class Scenarios(Resource):
         project_record = load_project_record(project_id)
         project = project_record.load()
 
-        save_scenario_summaries(project, data['scenarios'])
+        set_scenario_summaries_on_project(project, data['scenarios'])
 
         project_record.save_obj(project)
 

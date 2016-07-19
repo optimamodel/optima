@@ -8,8 +8,9 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record, get_optimization_from_project, load_result_by_optimization, load_project,
-    get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries)
+    load_project_record, load_result_by_optimization, load_project)
+from server.webapp.parse import get_default_optimization_summaries, get_optimization_from_project, \
+    get_optimization_summaries, set_optimization_summaries_on_project
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj
@@ -40,7 +41,7 @@ class Optimizations(Resource):
         project = project_record.load()
 
         optimization_summaries = normalize_obj(request.get_json(force=True))
-        save_optimization_summaries(project, optimization_summaries)
+        set_optimization_summaries_on_project(project, optimization_summaries)
 
         project_record.save_obj(project)
 

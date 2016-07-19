@@ -8,11 +8,12 @@ from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
-    get_progset_summaries, save_progset_summaries, load_project, load_project_record,
-    get_target_popsizes, load_parameters_from_progset_parset,
-    get_progset_from_project, get_progset_summary, get_parset_from_project,
-    get_program_from_progset, save_program_summary)
-from server.webapp.parse import parse_outcomes_from_progset, put_outcomes_into_progset
+    load_project, load_project_record, load_parameters_from_progset_parset)
+from server.webapp.parse import (
+    parse_outcomes_from_progset, put_outcomes_into_progset,
+    get_target_popsizes, get_parset_from_project, get_progset_summary,
+    get_progset_summaries, set_program_summary_on_progset,
+    set_progset_summaries_on_project)
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import Json, RequestParser, normalize_obj
 
@@ -47,7 +48,7 @@ class Progsets(Resource):
         project_record = load_project_record(project_id)
         project = project_record.load()
 
-        save_progset_summaries(project, data)
+        set_progset_summaries_on_project(project, data)
         project_record.save_obj(project)
 
         return get_progset_summaries(project)
@@ -69,7 +70,7 @@ class Progset(Resource):
         project_record = load_project_record(project_id)
         project = project_record.load()
 
-        save_progset_summaries(project, data, progset_id=progset_id)
+        set_progset_summaries_on_project(project, data, progset_id=progset_id)
         project_record.save_obj(project)
 
         return get_progset_summary(project, data["name"])
@@ -218,7 +219,7 @@ class Program(Resource):
         progset = get_progset_from_project(project, progset_id)
 
         print("> Saving program " + program_summary['name'])
-        save_program_summary(progset, program_summary)
+        set_program_summary_on_progset(progset, program_summary)
 
         progset.updateprogset()
 
