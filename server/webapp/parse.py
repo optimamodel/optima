@@ -11,21 +11,18 @@ Nomenclature:
 There should be no references to the database or web-handlers.
 """
 
-
-from functools import partial
-from uuid import UUID
 from collections import defaultdict
+from functools import partial
 from pprint import pprint
+from uuid import UUID
 
 from flask import current_app
 from flask.ext.restful import fields, marshal
-
 from numpy import nan
 
 import optima as op
 from optima import loadpartable, partable, Par
 from optima.defaults import defaultprograms
-
 from server.webapp.exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 from server.webapp.utils import normalize_obj
 
@@ -336,10 +333,45 @@ def print_parset(parset):
 
 # PROGRAMS
 
-def get_target_popsizes(project, parset, progset, program):
-    years = get_project_years(project)
-    popsizes = program.gettargetpopsize(t=years, parset=parset)
-    return normalize_obj(dict(zip(years, popsizes)))
+"""
+program_summary
+{
+  'active': True,
+  'category': 'Care and treatment',
+  'ccopars': { 'saturation': [[0.9, 0.9]],
+               't': [2016],
+               'unitcost': [[1.136849845773715, 1.136849845773715]]},
+  'costcov': [ { 'cost': 16616289, 'coverage': 8173260, 'year': 2012},
+               { 'cost': 234234, 'coverage': 324234, 'year': 2013}],
+  'created': 'Mon, 02 May 2016 05:27:48 -0000',
+  'criteria': { 'hivstatus': 'allstates', 'pregnant': False},
+  'id': '9b5db736-1026-11e6-8ffc-f36c0fc28d89',
+  'name': 'HIV testing and counseling',
+  'optimizable': True,
+  'populations': [ 'FSW',
+                   'Clients',
+                   'Male Children 0-14',
+                   'Female Children 0-14',
+                   'Males 15-49',
+                   'Females 15-49',
+                   'Males 50+',
+                   'Females 50+'],
+  'progset_id': '9b55945c-1026-11e6-8ffc-130aba4858d2',
+  'project_id': '9b118ef6-1026-11e6-8ffc-571b10a45a1c',
+  'short': 'HTC',
+  'targetpars': [ { 'active': True,
+                    'param': 'hivtest',
+                    'pops': [ 'FSW',
+                              'Clients',
+                              'Male Children 0-14',
+                              'Female Children 0-14',
+                              'Males 15-49',
+                              'Females 15-49',
+                              'Males 50+',
+                              'Females 50+']}],
+  'updated': 'Mon, 02 May 2016 06:22:29 -0000'
+}
+"""
 
 
 def parse_targetpars(targetpars):

@@ -93,6 +93,7 @@ api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
+api.add_resource(Portfolio, '/api/project/portfolio')
 
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
@@ -106,7 +107,6 @@ api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_
 api.add_resource(ProgsetParameters,
      '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
-api.add_resource(Portfolio, '/api/project/portfolio')
 
 api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
 api.add_resource(DefaultPopulations, '/api/project/populations')

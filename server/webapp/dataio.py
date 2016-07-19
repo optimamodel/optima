@@ -28,15 +28,21 @@ from werkzeug.utils import secure_filename
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
-from server.webapp.exceptions import (
-    ProjectDoesNotExist)
-from server.webapp.parse import (
-    parse_default_program_summaries, get_project_parameters, parse_parameters_from_progset_parset, get_parameters_from_parset,
-    set_parameters_on_parset,
-    get_populations_from_project, set_populations_on_project, set_project_summary_on_project,
-    get_project_summary_from_project, get_parset_from_project, get_parset_summaries, set_scenario_summaries_on_project,
-    get_scenario_summaries, get_parameters_for_scenarios, get_optimization_summaries,
-    get_default_optimization_summaries, set_optimization_summaries_on_project, get_optimization_from_project)
+from server.webapp.exceptions import ProjectDoesNotExist
+from server.webapp.parse import parse_default_program_summaries, \
+    get_project_parameters, parse_parameters_from_progset_parset, \
+    get_parameters_from_parset, set_parameters_on_parset, \
+    get_progset_from_project, get_populations_from_project, \
+    set_populations_on_project, set_project_summary_on_project, \
+    get_project_summary_from_project, get_parset_from_project, \
+    get_parset_summaries, set_scenario_summaries_on_project, \
+    get_scenario_summaries, get_parameters_for_scenarios, \
+    get_optimization_summaries, get_default_optimization_summaries, \
+    set_optimization_summaries_on_project, get_optimization_from_project, \
+    get_project_years, get_program_from_progset, get_project_years, get_progset_summaries, \
+    set_progset_summaries_on_project, get_progset_summary, parse_outcomes_from_progset, put_outcomes_into_progset, \
+    set_program_summary_on_progset
+
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.utils import (
     TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj)
@@ -362,8 +368,13 @@ def load_project_parameters(project_id):
     return get_project_parameters(load_project(project_id))
 
 
-def load_parameters_from_progset_parset(project, progset, parset):
+def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
+    project = load_project(project_id)
+    progset = get_progset_from_project(project, progset_id)
+    parset = get_parset_from_project(project, parset_id)
+
     print ">> Fetching target parameters from progset '%s'", progset.name
+
     progset.gettargetpops()
     progset.gettargetpars()
     progset.gettargetpartypes()
@@ -848,3 +859,108 @@ def launch_optimization(project_id, optimization_id, maxtime):
         project_id, optim.name, parset.name, progset.name, objectives, constraints, maxtime)
 
     return calc_state
+
+
+def load_target_popsizes(project_id, parset_id, progset_id, program_id):
+    project = load_project(project_id)
+    parset = get_parset_from_project(project, parset_id)
+    progset = get_progset_from_project(project, progset_id)
+    program = get_program_from_progset(progset, program_id)
+    years = get_project_years(project)
+    popsizes = program.gettargetpopsize(t=years, parset=parset)
+    return normalize_obj(dict(zip(years, popsizes)))
+
+
+def load_progset_summaries(project_id):
+    project = load_project(project_id)
+    return get_progset_summaries(project)
+
+
+def save_progset_summaries(project_id, progset_summaries):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    set_progset_summaries_on_project(project, progset_summaries)
+    project_record.save_obj(project)
+
+    return get_progset_summaries(project)
+
+
+def save_progset_summary(project_id, progset_id, progset_summary):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    set_progset_summaries_on_project(project, progset_summary, progset_id=progset_id)
+    project_record.save_obj(project)
+
+    return get_progset_summary(project, progset_summary["name"])
+
+
+def delete_progset(project_id, progset_id):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    progset = get_progset_from_project(project, progset_id)
+    project.progsets.pop(progset.name)
+
+    project_record.save_obj(project)
+
+
+def load_progset_outcomes(project_id, progset_id):
+    project = load_project(project_id)
+    progset = get_progset_from_project(project, progset_id)
+
+    outcomes = parse_outcomes_from_progset(progset)
+
+    # Bosco needs to fix this...
+
+    return {'effects': [{
+                            "parset": parset.uid,
+                            "parameters": outcomes,
+
+                        } for parset in project.parsets.values()]}
+
+
+def save_outcome_summaries(project_id, progset_id, outcome_summaries):
+
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    progset = get_progset_from_project(project, progset_id)
+    parameters = outcome_summaries["parameters"]
+    put_outcomes_into_progset(parameters, progset)
+
+    project_record.save_obj(project)
+
+    outcomes = parse_outcomes_from_progset(progset)
+
+    return {'effects': [{
+                            "parset": parset.uid,
+                            "parameters": outcomes,
+
+                        } for parset in project.parsets.values()]}
+
+
+def save_program(project_id, progset_id, program_summary):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    progset = get_progset_from_project(project, progset_id)
+
+    print("> Saving program " + program_summary['name'])
+    set_program_summary_on_progset(progset, program_summary)
+
+    progset.updateprogset()
+
+    project_record.save_obj(project)
+
+
+def load_costcov_graph(project_id, progset_id, program_id, parset_id, t, plotoptions):
+    project = load_project(project_id)
+    progset = get_progset_from_project(project, progset_id)
+
+    program = get_program_from_progset(progset, program_id)
+    parset = get_parset_from_project(project, parset_id)
+    plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
+    print '>>>> plot', plot
+    from server.webapp.plot import convert_to_mpld3
+    return convert_to_mpld3(plot)
