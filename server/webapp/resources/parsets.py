@@ -384,7 +384,7 @@ class ParsetUploadDownload(Resource):
             loaddir = TEMPLATEDIR
 
         filename = project.uid.hex + "-" + parset.uid.hex + ".prst"
-        op.savedbobj(os.path.join(loaddir, filename), parset)
+        op.saveobj(os.path.join(loaddir, filename), parset)
 
         response = helpers.send_from_directory(loaddir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
@@ -409,7 +409,7 @@ class ParsetUploadDownload(Resource):
         project_record = load_project_record(project_id, raise_exception=True)
         project = project_record.load()
 
-        parset = op.loaddbobj(uploaded_file)
+        parset = op.loadobj(uploaded_file)
         parset.project = project
         project.parsets[parset.name] = parset
 

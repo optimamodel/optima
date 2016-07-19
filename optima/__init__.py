@@ -72,7 +72,7 @@ from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, g
 
 ## Data I/O
 from . import dataio
-from .dataio import loadobj, loaddbobj, saveobj, savedbobj # CK: may want to tidy up
+from .dataio import loadobj, saveobj # CK: may want to tidy up
 
 
 #####################################################################################################################
