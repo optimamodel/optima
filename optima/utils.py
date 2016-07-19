@@ -3,7 +3,7 @@
 ##############################################################################
 
 
-def printv(string, thisverbose=1, verbose=2, newline=True):
+def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     '''
     Optionally print a message and automatically indent. The idea is that
     a global or shared "verbose" variable is defined, which is passed to
@@ -26,7 +26,7 @@ def printv(string, thisverbose=1, verbose=2, newline=True):
     '''
     if thisverbose>4 or verbose>4: print('Warning, verbosity should be from 0-4 (this message: %i; current: %i)' % (thisverbose, verbose))
     if verbose>=thisverbose: # Only print if sufficiently verbose
-        indents = '  '*thisverbose # Create automatic indenting
+        indents = '  '*thisverbose*bool(indent) # Create automatic indenting
         if newline: print(indents+str(string)) # Actually print
         else: print(indents+str(string)), # Actually print
     return None
