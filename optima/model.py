@@ -35,7 +35,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     usecascade   = settings.usecascade     # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin   # Maximum fraction of people to move on a single timestep
     eps          = settings.eps            # Define another small number to avoid divide-by-zero errors
-    if not(hasattr(settings,'forcsepopsize')): settings.forcepopsize = True # WARNING TEMP, for legacy support
     forcepopsize = settings.forcepopsize   # Whether or not to force the population size to match the parameters
 		
     if verbose is None: verbose = settings.verbose # Verbosity of output
@@ -959,5 +958,5 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     except: 
         printv('Running model failed; running again with debugging...', 1, verbose)
         raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests
-    results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, simpars=simpars, data=data, domake=True) # Create structure for storing results
+    results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True) # Create structure for storing results
     return results
