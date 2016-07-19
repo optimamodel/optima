@@ -512,9 +512,14 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     labels = project.settings.statelabels
     
     if people is None:
-        if ind is None: ind=-1
-        if simind is None: people = project.results[ind].raw[0]['people'] # Try to get default people to plot
-        else: people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  indcex
+        if ind is None: ind = -1
+        if simind is None: simind = 0
+        if type(project.results[ind])==Resultset:
+            people = project.results[ind].raw[0]['people'] # Try to get default people to plot
+        elif type(project.results[ind])==Multiresultset:
+            people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  index -- WARNING, confused about indices
+        else:
+            raise OptimaException("Results don't seem to be either a Resultset or a Multiresultset: %s" % type(project.results[ind]))
     
     plotstyles = odict([
     ('susreg',   ('|','|')), 
