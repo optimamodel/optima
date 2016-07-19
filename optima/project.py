@@ -287,6 +287,7 @@ class Project(object):
         if result.name is None: keyname = str(result.uid)
         else: keyname = result.name
         self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=overwrite) # Use UID for key but keep name
+        self.modified = today()
         return keyname # Can be useful to know what ended up being chosen
     
     def rmresult(self, name=-1):
@@ -303,17 +304,21 @@ class Project(object):
             validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(self.results))]
             errormsg = 'Could not remove result "%s": choices are:\n%s' % (name, '\n'.join(validchoices))
             raise OptimaException(errormsg)
+        self.modified = today()
+        return None
     
     
     def cleanresults(self):
         ''' Remove all results '''
         self.results = odict() # Just replace with an empty odict, as at initialization
+        self.modified = today()
         return None
     
     
     def addscenlist(self, scenlist): 
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
+        self.modified = today()
         return None
     
     
@@ -381,8 +386,35 @@ class Project(object):
             keyname = self.addresult(result=results, overwrite=overwrite)
             if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
+        self.modified = today()
         return results
 
+
+    def refreshparset(self, name=None, orig='default'):
+        '''
+        Reset the chosen (or all) parsets to reflect the parameter values from the spreadsheet (or another parset).
+        
+        Usage:
+            P.refreshparset() # Refresh all parsets in the project to match 'default'
+            P.refreshparset(name='calibrated') # Reset parset 'calibrated' to match 'default'
+            P.refreshparset(name=['default', 'bugaboo'], orig='calibrated') # Reset parsets 'default' and 'bugaboo' to match 'calibrated'
+        '''
+        
+        if name is None: name = self.parsets.keys() # If none is given, use all
+        if type(name)!=list: name = [name] # Make sure it's a list
+        origpars = self.parsets[orig].pars[0] # "Original" parameters to copy from (based on data)
+        for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
+            keys = parset.pars[0].keys() # Assume all pars structures have the same keys
+            for i in range(len(parset.pars)): # Loop over each set of pars
+                newpars = parset.pars[i]
+                for key in keys:
+                    if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
+                    if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
+        
+        self.modified = today()
+        return None
+        
+        
 
     def reconcileparsets(self, name=None, orig=None):
         ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
@@ -541,6 +573,7 @@ class Project(object):
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
+        self.modified = today()
         return None        
     
     def getBOC(self, objectives):
@@ -564,6 +597,7 @@ class Project(object):
             print('Deleting an old BOC...')
             ind = self.getBOC(objectives = objectives).uid
             self.rmresult(str(ind))
+        self.modified = today()
         return None
     
     
