@@ -1,5 +1,6 @@
 from flask.ext.login import login_required
 from flask_restful import Resource
+from flask_restful_swagger import swagger
 
 from server.webapp.dataio import make_scenarios_graphs, save_scenario_summaries, load_scenario_summaries
 from server.webapp.resources.common import report_exception

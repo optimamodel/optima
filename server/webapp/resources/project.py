@@ -16,20 +16,18 @@ from flask.ext.login import current_user, login_required
 from flask_restful import Resource
 from flask_restful_swagger import swagger
 
-from server.webapp.dataio import (
-    load_project_summary, update_project_followed_by_template_data_spreadsheet,
-    load_project_parameters,
-    load_project_program_summaries, load_project_summaries,
-    create_project_with_spreadsheet_download, delete_projects, copy_project,
-    create_project_from_prj, download_project, update_project_from_prj,
-    load_data_spreadsheet_binary, load_template_data_spreadsheet,
-    update_project_from_data_spreadsheet, load_zip_of_prj_files, update_project_from_econ_spreadsheet,
-    load_project_name, delete_econ)
+from server.webapp.dataio import load_project_summary, \
+    update_project_followed_by_template_data_spreadsheet, \
+    load_project_parameters, load_project_program_summaries, \
+    load_project_summaries, create_project_with_spreadsheet_download, \
+    delete_projects, copy_project, create_project_from_prj, \
+    download_project, update_project_from_prj, \
+    load_data_spreadsheet_binary, load_template_data_spreadsheet, \
+    update_project_from_data_spreadsheet, load_zip_of_prj_files, \
+    update_project_from_econ_spreadsheet, load_project_name, delete_econ
 from server.webapp.parse import get_default_populations
-from server.webapp.resources.common import (
-    report_exception, verify_admin_request)
-from server.webapp.utils import (
-    get_post_data_json, get_upload_file)
+from server.webapp.resources.common import report_exception, verify_admin_request
+from server.webapp.utils import get_post_data_json, get_upload_file
 
 
 class ProjectsAll(Resource):

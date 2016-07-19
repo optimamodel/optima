@@ -1,3 +1,4 @@
+from pprint import pformat
 from zipfile import ZipFile
 
 from optima.utils import loaddbobj
@@ -34,10 +35,11 @@ from server.webapp.parse import (
     set_parameters_on_parset,
     get_populations_from_project, set_populations_on_project, set_project_summary_on_project,
     get_project_summary_from_project, get_parset_from_project, get_parset_summaries, set_scenario_summaries_on_project,
-    get_scenario_summaries, get_parameters_for_scenarios)
+    get_scenario_summaries, get_parameters_for_scenarios, get_optimization_summaries,
+    get_default_optimization_summaries, set_optimization_summaries_on_project, get_optimization_from_project)
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.utils import (
-    TEMPLATEDIR, templatepath, upload_dir_user)
+    TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj)
 
 import optima as op
 
@@ -758,3 +760,91 @@ def load_result_mpld3_graphs(result_id, which):
     return make_mpld3_graph_dict(result, which)
 
 
+def load_optimization_summaries(project_id):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    return {
+        'optimizations': get_optimization_summaries(project),
+        'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project)
+    }
+
+
+def save_optimization_summaries(project_id, optimization_summaries):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    set_optimization_summaries_on_project(project, optimization_summaries)
+    project_record.save_obj(project)
+    return {'optimizations': get_optimization_summaries(project)}
+
+
+def load_optimization_graphs(project_id, optimization_id, which):
+    project = load_project(project_id)
+    optimization = get_optimization_from_project(project, optimization_id)
+
+    result = load_result_by_optimization(project, optimization)
+    if result is None:
+        return {}
+    else:
+        return make_mpld3_graph_dict(result, which)
+
+
+def check_optimization_calc_state(project_id, optimization_id):
+    from server.webapp.tasks import check_calculation_status
+
+    project = load_project(project_id)
+
+    optim = get_optimization_from_project(project, optimization_id)
+    parset = project.parsets[optim.parsetname]
+
+    print "> Checking calc state"
+    calc_state = check_calculation_status(
+        project_id,
+        parset.uid,
+        'optim-' + optim.name)
+    print pformat(calc_state, indent=2)
+    if calc_state['status'] == 'error':
+        raise Exception(calc_state['error_text'])
+    return calc_state
+
+
+def launch_optimization(project_id, optimization_id, maxtime):
+
+    from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
+
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    optim = get_optimization_from_project(project, optimization_id)
+    parset = project.parsets[optim.parsetname]
+
+    calc_state = start_or_report_calculation(
+        project_id, parset.uid, 'optim-' + optim.name)
+
+    if calc_state['status'] != 'started':
+        return calc_state, 208
+
+    progset = project.progsets[optim.progsetname]
+
+    if not progset.readytooptimize():
+        error_msg = "Not ready to optimize\n"
+        costcov_errors = progset.hasallcostcovpars(detail=True)
+        if costcov_errors:
+            error_msg += "Missing: cost-coverage parameters of:\n"
+            error_msg += pformat(costcov_errors, indent=2)
+        covout_errors = progset.hasallcovoutpars(detail=True)
+        if covout_errors:
+            error_msg += "Missing: coverage-outcome parameters of:\n"
+            error_msg += pformat(covout_errors, indent=2)
+        shut_down_calculation(project_id, parset.uid, 'optimization')
+        raise Exception(error_msg)
+
+    objectives = normalize_obj(optim.objectives)
+    constraints = normalize_obj(optim.constraints)
+    constraints["max"] = op.odict(constraints["max"])
+    constraints["min"] = op.odict(constraints["min"])
+    constraints["name"] = op.odict(constraints["name"])
+
+    run_optimization.delay(
+        project_id, optim.name, parset.name, progset.name, objectives, constraints, maxtime)
+
+    return calc_state
