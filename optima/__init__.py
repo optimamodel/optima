@@ -99,7 +99,7 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 
 ## Define the model parameters
 from . import parameters as _parameters
-from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, applylimits, comparepars # Parameter and Parameterset classes
+from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
 
 ## Define and run the model
 from . import model as _model
@@ -197,6 +197,7 @@ except:
 
 # Finally, load defaults
 from . import defaults
+from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms
 
 # And really finally, load other random things that don't matter
 try:
