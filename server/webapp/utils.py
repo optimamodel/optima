@@ -95,7 +95,7 @@ class SafeFilenameStorage(FileStorage):
 
 class AllowedFiletypeStorage(AllowedFileTypeMixin, FileStorage):
     pass
-
+3
 
 class AllowedSafeFilenameStorage(AllowedFileTypeMixin, SafeFilenameStorage):
     pass
@@ -313,9 +313,9 @@ def get_upload_file(server_dirname):
     """
     file = request.files['file']
     filename = secure_filename(file.filename)
-    full_filename = os.path.join(server_dirname, filename)
+    server_filename = os.path.join(server_dirname, filename)
 
     print "> Upload file '%s'" % file.filename
-    file.save(full_filename)
+    file.save(server_dirname)
 
-    return full_filename
+    return server_filename

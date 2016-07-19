@@ -1,5 +1,4 @@
-_doc_ = """
-
+__doc__ = """
 parse.py
 ========
 
@@ -9,7 +8,7 @@ Nomenclature:
  - get_*_from_* to extract data structures
  - set_*_on_* to modify a PyOptima object with data structure
 
-There should be no references to the database or web-handlers here.
+There should be no references to the database or web-handlers.
 """
 
 
@@ -234,22 +233,22 @@ def get_parset_summaries(project):
 
 '''
 Parameters data structure:
-    [
-      {
-        "value": 13044975.57899749,
-        "type": "exp",
-        "subkey": "Males 15-49",
-        "key": "popsize",
-        "label": "Population size -- Males 15-49"
-      },
-      {
-        "value": 0.7,
-        "type": "const",
-        "subkey": null,
-        "key": "recovgt350",
-        "label": "Treatment recovery rate into CD4>350 (%/year)"
-      },
-    ]
+[
+  {
+    "value": 13044975.57899749,
+    "type": "exp",
+    "subkey": "Males 15-49",
+    "key": "popsize",
+    "label": "Population size -- Males 15-49"
+  },
+  {
+    "value": 0.7,
+    "type": "const",
+    "subkey": null,
+    "key": "recovgt350",
+    "label": "Treatment recovery rate into CD4>350 (%/year)"
+  },
+]
 '''
 
 def get_parameters_from_parset(parset, ind=0):
@@ -539,9 +538,7 @@ def put_outcomes_into_progset(outcomes, progset):
 
 def get_progset_summary(project, progset_name):
     """
-
     @TODO: targetpartypes and readytooptimize fields needs to be made consistent within ProgsetDb
-
     """
 
     progset = project.progsets[progset_name]
@@ -699,8 +696,6 @@ def set_progset_summaries_on_project(project, progset_summaries, progset_id=None
 
 
 def parse_parameters_from_progset_parset(settings, progset, parset):
-    print ">> Parsing parameters"
-
     def convert(limit):
         return settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
 
