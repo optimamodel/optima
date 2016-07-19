@@ -788,7 +788,7 @@ def load_optimization_graphs(project_id, optimization_id, which):
         return make_mpld3_graph_dict(result, which)
 
 
-def check_optimization_calc_state(project_id, optimization_id):
+def check_optimization(project_id, optimization_id):
     from server.webapp.tasks import check_calculation_status
 
     project = load_project(project_id)

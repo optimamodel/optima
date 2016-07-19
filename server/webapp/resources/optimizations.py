@@ -3,7 +3,7 @@ from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import load_optimization_summaries, save_optimization_summaries, \
-    load_optimization_graphs, check_optimization_calc_state, launch_optimization
+    load_optimization_graphs, check_optimization, launch_optimization
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import get_post_data_json
 
@@ -29,12 +29,6 @@ class Optimizations(Resource):
 
 
 class OptimizationCalculation(Resource):
-    """
-    /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results
-
-    - POST: launch the optimization for a project
-    - GET: poll running optimization for a project
-    """
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(summary='Launch optimization calculation')
@@ -51,7 +45,7 @@ class OptimizationCalculation(Resource):
         """
         GET /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results
         """
-        return check_optimization_calc_state(project_id, optimization_id)
+        return check_optimization(project_id, optimization_id)
 
 
 class OptimizationGraph(Resource):
@@ -64,4 +58,4 @@ class OptimizationGraph(Resource):
         post-json: which: list of graphs to display
         """
         which = get_post_data_json().get('which')
-        load_optimization_graphs(project_id, optimization_id, which)
+        return load_optimization_graphs(project_id, optimization_id, which)
