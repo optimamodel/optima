@@ -731,3 +731,8 @@ def delete_econ(project_id):
         raise Exception("No economics data has been uploaded")
 
     db.session.commit()
+
+
+def load_result_mpld3_graphs(result_id, which):
+    result = load_result_by_id(result_id)
+    return make_mpld3_graph_dict(result, which)

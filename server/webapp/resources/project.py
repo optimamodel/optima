@@ -9,7 +9,6 @@ JSON compatible summaries of PyOptima objects.
 There should be no direct references to PyOptima objects, underlying file
 structure or the database.
 """
-
 import os
 
 from flask import current_app, helpers, request, Response
@@ -318,3 +317,5 @@ class ProjectEcon(Resource):
         DELETE /api/project/<uuid:project_id>/economics
         """
         delete_econ(project_id)
+
+
