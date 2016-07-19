@@ -56,12 +56,12 @@ class Portfolio(object):
         output += '        Number of projects: %i\n' % len(self.projects)
         output += 'Number of GA Optimizations: %i\n' % len(self.gaoptims)
         output += '\n'
-        output += '            Optima version: %0.1f\n' % self.version
-        output += '              Date created: %s\n'    % getdate(self.created)
-        output += '             Date modified: %s\n'    % getdate(self.modified)
-        output += '                Git branch: %s\n'    % self.gitbranch
-        output += '               Git version: %s\n'    % self.gitversion
-        output += '                       UID: %s\n'    % self.uid
+        output += '            Optima version: %s\n' % self.version
+        output += '              Date created: %s\n' % getdate(self.created)
+        output += '             Date modified: %s\n' % getdate(self.modified)
+        output += '                Git branch: %s\n' % self.gitbranch
+        output += '               Git version: %s\n' % self.gitversion
+        output += '                       UID: %s\n' % self.uid
         output += '============================================================\n'
         output += objrepr(self)
         return output
@@ -395,7 +395,7 @@ class GAOptim(object):
         output = '============================================================\n'
         output += '      GAOptim name: %s\n'    % self.name
         output += '\n'
-        output += '    Optima version: %0.1f\n' % self.version
+        output += '    Optima version: %s\n'    % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '        Git branch: %s\n'    % self.gitbranch
