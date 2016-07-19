@@ -23,6 +23,7 @@ from numpy import nan
 import optima as op
 from optima import loadpartable, partable, Par
 from optima.defaults import defaultprograms
+
 from server.webapp.exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 from server.webapp.utils import normalize_obj
 
@@ -510,13 +511,11 @@ def get_outcome_summaries_from_progset(progset):
             outcome = {
                 'name': par_short,
                 'pop': pop_key,
+                'interact': covout.interaction,
                 'years': [
                     {
                         'intercept_upper': covout.ccopars['intercept'][i_year][1],
                         'intercept_lower': covout.ccopars['intercept'][i_year][0],
-                        'interact': covout.ccopars['interact'][i_year]
-                        if 'interact' in covout.ccopars.keys()
-                        else 'random',
                         'programs': [
                             {
                                 'name': program_name,
@@ -548,7 +547,6 @@ def set_outcome_summaries_on_progset(outcomes, progset):
             ccopar = {
                 'intercept': (year['intercept_lower'], year['intercept_upper']),
                 't': int(year['year']),
-                'interact': year['interact'],
             }
 
             for program in year["programs"]:
@@ -563,6 +561,8 @@ def set_outcome_summaries_on_progset(outcomes, progset):
             poptuple = tuple(outcome['pop']) if islist else outcome['pop']
             if poptuple in covout:
                 covout[poptuple].addccopar(ccopar, overwrite=True)
+
+            covout[poptuple].interaction = outcome['interact']
 
 
 # PROGETS

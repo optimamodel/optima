@@ -112,7 +112,7 @@ define(['./../module', 'underscore'], function (module, _) {
 
     function submitOutcomeSetsOfProgset() {
       var outcomeSets = vm.outcomeSets;
-      console.log('submitting outcomes', outcomeSets);
+      consoleLogJson('submitting outcomes', outcomeSets);
       $http.put(
         '/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgset.id + '/effects',
         outcomeSets)
@@ -205,8 +205,8 @@ define(['./../module', 'underscore'], function (module, _) {
         outcomes.push({
           name: vm.selectedParameter.short,
           pop: pop,
+          interact: "random",
           years: [{
-            interact: "random",
             intercept_lower: null,
             intercept_upper: null,
             programs: [],
@@ -350,7 +350,7 @@ define(['./../module', 'underscore'], function (module, _) {
               attr: {type: "string"}
             });
             cells.push({
-              value: year.interact,
+              value: outcome.interact,
               attr: {
                 type: "selector",
                 options: [
@@ -408,12 +408,12 @@ define(['./../module', 'underscore'], function (module, _) {
           outcome = {
             name: parShort,
             pop: row.cells[0].value,
+            interact: row.cells[3].value,
             years: []
           };
 
           year = {
             year: row.cells[1].value,
-            interact: row.cells[3].value,
             intercept_lower: row.cells[4].value,
             intercept_upper: row.cells[5].value,
             programs: []

@@ -10,6 +10,8 @@ from server.webapp.dataio import load_parameters_from_progset_parset, \
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj, get_post_data_json
 
+import pprint
+
 
 class Progsets(Resource):
     method_decorators = [report_exception, login_required]

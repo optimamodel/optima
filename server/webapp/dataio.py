@@ -1,4 +1,4 @@
-from pprint import pformat
+from pprint import pformat, pprint
 from zipfile import ZipFile
 
 from optima.utils import loaddbobj
@@ -42,9 +42,10 @@ from server.webapp.parse import get_default_program_summaries, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
     set_progset_summaries_on_project, get_progset_summary, get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
     set_program_summary_on_progset
-from server.webapp.plot import make_mpld3_graph_dict
+from server.webapp.plot import make_mpld3_graph_dict, convert_to_mpld3
 from server.webapp.utils import (
     TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj)
+
 
 import optima as op
 
@@ -907,11 +908,12 @@ def delete_progset(project_id, progset_id):
 
 
 def load_progset_outcomes(project_id, progset_id):
+    print "> Load progset outcomes"
     project = load_project(project_id)
     progset = get_progset_from_project(project, progset_id)
 
     outcomes = get_outcome_summaries_from_progset(progset)
-
+    pprint(outcomes)
     # Bosco needs to fix this...
 
     return {'effects': [{
@@ -922,11 +924,10 @@ def load_progset_outcomes(project_id, progset_id):
 
 
 def save_outcome_summaries(project_id, progset_id, outcome_summaries):
-
     project_record = load_project_record(project_id)
     project = project_record.load()
     progset = get_progset_from_project(project, progset_id)
-    parameters = outcome_summaries["parameters"]
+    parameters = outcome_summaries[0]["parameters"]
     set_outcome_summaries_on_progset(parameters, progset)
 
     project_record.save_obj(project)
@@ -961,6 +962,5 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t, plotopt
     program = get_program_from_progset(progset, program_id)
     parset = get_parset_from_project(project, parset_id)
     plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
-    print '>>>> plot', plot
-    from server.webapp.plot import convert_to_mpld3
+
     return convert_to_mpld3(plot)
