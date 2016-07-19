@@ -7,8 +7,7 @@ from server.webapp.dataio import load_parameters_from_progset_parset, load_targe
     save_progset_summaries, save_progset_summary, delete_progset, load_progset_outcomes, save_outcome_summaries, \
     save_program, load_costcov_graph
 from server.webapp.resources.common import report_exception
-from server.webapp.utils import normalize_obj, \
-    get_post_data_json
+from server.webapp.utils import normalize_obj, get_post_data_json
 
 
 class Progsets(Resource):
@@ -109,10 +108,6 @@ class ProgramPopSizes(Resource):
 
 
 class ProgramCostcovGraph(Resource):
-    """
-    Costcoverage graph for a Program and a Parset (for population sizes).
-    """
-
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(summary='Returns an mpld3 dict that can be displayed with the mpld3 plugin')
@@ -143,4 +138,5 @@ class ProgramCostcovGraph(Resource):
                 plotoptions[x] = args[x]
 
         print '>>>> Generating plot...'
-        return load_costcov_graph(project_id, progset_id, program_id, parset_id, t, plotoptions)
+        return load_costcov_graph(
+            project_id, progset_id, program_id, parset_id, t, plotoptions)

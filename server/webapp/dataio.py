@@ -42,7 +42,6 @@ from server.webapp.parse import parse_default_program_summaries, \
     get_project_years, get_program_from_progset, get_project_years, get_progset_summaries, \
     set_progset_summaries_on_project, get_progset_summary, parse_outcomes_from_progset, put_outcomes_into_progset, \
     set_program_summary_on_progset
-
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.utils import (
     TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj)
