@@ -47,7 +47,6 @@ def loadobj(filename, verbose=True):
 
 def savedbobj(filename, obj, verbose=True):
     ''' Save an object to file '''
-    from ._serialize import dumps
     dumped = dumps(obj)
 
     with open(filename, 'wb') as fileobj:
