@@ -627,7 +627,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
 def comparepars(pars1=None, pars2=None, ind=0):
     ''' 
     Function to compare two sets of pars. Example usage:
-    compareparsets(P.parsets[0], P.parsets[1])
+    comparepars(P.parsets[0], P.parsets[1])
     '''
     if type(pars1)==Parameterset: pars1 = pars1.pars[ind] # If parset is supplied instead of pars, use that instead
     if type(pars2)==Parameterset: pars2 = pars2.pars[ind]
@@ -643,6 +643,52 @@ def comparepars(pars1=None, pars2=None, ind=0):
                 msg += '%s\n' % pars1[key].y
                 msg += 'vs\n'
                 msg += '%s\n' % pars2[key].y
+                msg += '\n\n'
+                print(msg)
+    if count==0: print('All %i parameters match' % nkeys)
+    else:        print('%i of %i parameters did not match' % (count, nkeys))
+    return None
+
+
+
+def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
+    ''' 
+    Function to compare two sets of simpars, like what's stored in results.
+    comparesimpars(P.results[0].simpars[0][0], Q.results[0].simpars[0])
+    '''
+    keys = pars1.keys()
+    nkeys = 0
+    count = 0
+    for key in keys:
+        nkeys += 1
+        thispar1 = pars1[key]
+        thispar2 = pars2[key]
+        if isinstance(thispar1,dict): keys2 = thispar1.keys()
+        else: keys2 = [None]
+        for key2 in keys2:
+            if key2 is not None:
+                this1 = array(thispar1[key2])
+                this2 = array(thispar2[key2])
+                key2str = '(%s)' % str(key2)
+            else:
+                this1 = array(thispar1)
+                this2 = array(thispar2)
+                key2str = ''
+            if len(shape(this1))==2:
+                pars1str = str(this1[inds2][inds])
+                pars2str = str(this2[inds2][inds])
+            elif len(shape(this1))==1:
+                pars1str = str(this1[inds])
+                pars2str = str(this2[inds])
+            else:
+                pars1str = str(this1)
+                pars2str = str(this2)
+            if pars1str != pars2str: # Convert to string representation for testing equality
+                count += 1
+                msg = 'Parameter "%s" %s differs:\n' % (key, key2str)
+                msg += '%s\n' % pars1str
+                msg += 'vs\n'
+                msg += '%s\n' % pars2str
                 msg += '\n\n'
                 print(msg)
     if count==0: print('All %i parameters match' % nkeys)
