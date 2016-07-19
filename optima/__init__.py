@@ -125,9 +125,6 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 from . import plotting as _plotting 
 from .plotting import getplotselections, makeplots
 
-## Migration functions
-from .migrate import migrateproject
-
 
 #####################################################################################################################
 ### Want to add more modules to Optima? Do that above this line (unless they're non-essential plotting functions)
@@ -199,9 +196,10 @@ from . import defaults
 
 # And really finally, load other random things that don't matter
 try:
-    from . import misc
+    from . import migrations
+    from .migrations.migrate import migrateproject
 except:
-    _failed.append('misc')
+    _failed.append('migrations')
     
 
 if not len(_failed): del _failed # If it's empty, don't bother keeping it
