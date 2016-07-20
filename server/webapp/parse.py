@@ -660,7 +660,11 @@ def get_progset_from_project(project, progset_id):
 def set_program_summary_on_progset(progset, summary):
 
     try:
-        program = get_program_from_progset(progset, summary["id"], include_inactive=True)
+        program_id = summary.get("id")
+        if program_id is None:
+            raise ProgramDoesNotExist
+
+        program = get_program_from_progset(progset, program_id, include_inactive=True)
 
         # It exists, so remove it first...
         try:
@@ -673,15 +677,30 @@ def set_program_summary_on_progset(progset, summary):
         program_id = None
         pass
 
+    if "ccopars" in summary:
+        ccopars = revert_program_ccopars(summary["ccopars"])
+    else:
+        ccopars = None
+
+    if "targetpars" in summary:
+        targetpars = revert_program_targetpars(summary["targetpars"])
+    else:
+        targetpars = None
+
+    if "costcov" in summary:
+        costcov = revert_program_costcovdata(summary["costcov"])
+    else:
+        costcov = None
+
     program = op.Program(
         short=summary["short"],
         name=summary["name"],
         category=summary["category"],
-        targetpars=revert_program_targetpars(summary["targetpars"]),
+        targetpars=targetpars,
         targetpops=summary["populations"],
         criteria=summary["criteria"],
-        ccopars=revert_program_ccopars(summary["ccopars"]),
-        costcovdata=revert_program_costcovdata(summary["costcov"]))
+        ccopars=ccopars,
+        costcovdata=costcov)
 
     if program_id:
         program.uid = program_id

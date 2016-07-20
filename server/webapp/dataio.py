@@ -12,6 +12,8 @@ Function call pairs are load_*/save_* and refers to saving to database.
 Database record variables should have suffix _record
 
 Parsed data structures should have suffix _summary
+
+All parameters and return types are either id's, json-summaries, or mpld3 graphs
 """
 
 
