@@ -45,7 +45,7 @@ from server.webapp.parse import get_default_program_summaries, \
     get_optimization_summaries, get_default_optimization_summaries, \
     set_optimization_summaries_on_project, get_optimization_from_project, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
-    set_progset_summaries_on_project, get_progset_summary, \
+    set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
     set_program_summary_on_progset
 from server.webapp.plot import make_mpld3_graph_dict, convert_to_mpld3
@@ -884,23 +884,19 @@ def load_progset_summaries(project_id):
     return get_progset_summaries(project)
 
 
-def save_progset_summaries(project_id, progset_summaries):
+def create_progset(project_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-
-    set_progset_summaries_on_project(project, progset_summaries)
+    set_progset_summary_on_project(project, progset_summary)
     project_record.save_obj(project)
+    return get_progset_summary(project, progset_summary["name"])
 
-    return get_progset_summaries(project)
 
-
-def save_progset_summary(project_id, progset_id, progset_summary):
+def save_progset(project_id, progset_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-
-    set_progset_summaries_on_project(project, progset_summary, progset_id=progset_id)
+    set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
-
     return get_progset_summary(project, progset_summary["name"])
 
 
@@ -920,7 +916,6 @@ def load_progset_outcomes(project_id, progset_id):
     progset = get_progset_from_project(project, progset_id)
 
     outcomes = get_outcome_summaries_from_progset(progset)
-    pprint(outcomes)
     # Bosco needs to fix this...
 
     return {'effects': [{

@@ -14,8 +14,7 @@
     <div style="display: flex;justify-content: flex-start;">
       <select id="programSet-selection" name="programSet-selection" class="txbox"
               ng-model="activeProgramSet"
-              ng-change="setActiveProgramSet(activeProgramSet)"
-              ng-options="res.name for res in programSetList"
+              ng-options="p.name for p in programSetList"
               style="width: 20%;">
       </select>
       <button ng-click="addProgramSet()" type="button" class="btn" style="margin-left:2%">New program set</button>
@@ -60,7 +59,7 @@
       <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
     </div>
     <div class="section" style="margin-top: 20px">
-      <button class="btn" type="submit" ng-click="saveProgramSet()" ng-disabled="!activeProgramSet">Save program set</button>
+      <button class="btn" type="submit" ng-click="saveActiveProgramSet()" ng-disabled="!activeProgramSet">Save program set</button>
     </div>
   </div>
 </div>

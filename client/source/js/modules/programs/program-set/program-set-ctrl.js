@@ -60,17 +60,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       return categories;
     };
 
-    // This method is called by <select> to change current active program
-    $scope.setActiveProgramSet = function(activeProgramSet) {
-      $scope.activeProgramSet = activeProgramSet;
-    };
-
     // Open pop-up to add new programSet
     $scope.addProgramSet = function () {
       var add = function (name) {
         var newProgramSet = {name:name, programs: angular.copy(defaultPrograms.programs)};
         $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = newProgramSet;
         $scope.activeProgramSet = newProgramSet;
+        $scope.saveActiveProgramSet('Progset added');
       };
       programSetModalService.openProgramSetModal(add, 'Add program set', $scope.programSetList, null, 'Add');
     };
@@ -82,6 +78,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         var rename = function (name) {
           $scope.activeProgramSet.name = name;
+          $scope.saveActiveProgramSet('Progset renamed');
         };
         programSetModalService.openProgramSetModal(rename, 'Rename program set', $scope.programSetList, $scope.activeProgramSet.name, 'Update', true);
       }
@@ -108,7 +105,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Upload programs data
     $scope.uploadProgramSet = function() {
       if(!$scope.activeProgramSet.id) {
         modalService.inform(
@@ -131,7 +127,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Delete a programSet from $scope.programSetList and also from DB is it was saved.
     $scope.deleteProgramSet = function () {
       if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
@@ -156,18 +151,22 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    var deleteProgramSetFromPage = function() {
-      $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
+    function deleteProgramSetFromPage() {
+      $scope.programSetList = _.filter($scope.programSetList, function(programSet) {
         return programSet.name !== $scope.activeProgramSet.name;
       });
-      if($scope.programSetList && $scope.programSetList.length > 0) {
+
+      if ($scope.programSetList && $scope.programSetList.length > 0) {
         $scope.activeProgramSet = $scope.programSetList[0];
+        console.log('set active program set', $scope.activeProgramSet.name);
       } else {
         $scope.activeProgramSet = undefined;
+        console.log('undefined active program set');
       }
-    };
 
-    // Copy a program-set
+      toastr.success("Program set deleted");
+    }
+
     $scope.copyProgramSet = function () {
       if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
@@ -176,41 +175,41 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           var copiedProgramSet = {name: name, programs: $scope.activeProgramSet.programs};
           $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
           $scope.activeProgramSet = copiedProgramSet;
+          $scope.saveActiveProgramSet("Program set copied");
         };
         programSetModalService.openProgramSetModal(
             copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy', 'Copy');
       }
-    };
+    }
 
-    // Save a programSet to DB
-    $scope.saveProgramSet = function() {
-      var errorMessage;
-      if (!$scope.activeProgramSet || !$scope.activeProgramSet.name) {
-        errorMessage = 'Please create a new program set before trying to save it.';
+    $scope.saveActiveProgramSet = function(msg) {
+      if (!msg) {
+        msg = 'Changes saved';
       }
-      if (errorMessage) {
+      var programSet = $scope.activeProgramSet;
+      if (!programSet || !programSet.name) {
         modalService.inform(
           function (){ },
           'Okay',
-          errorMessage,
+          'Please create a new program set before trying to save it.',
           'Cannot proceed'
         );
       } else {
         var method, url;
-        if ($scope.activeProgramSet.id) {
+        if (programSet.id) {
           method = 'PUT';
-          url = '/api/project/' + project.id + '/progset/' + $scope.activeProgramSet.id;
+          url = '/api/project/' + project.id + '/progset/' + programSet.id;
         } else {
           method = 'POST';
           url = '/api/project/' + project.id + '/progsets';
         }
-        $http({
-          url: url, method: method, data: $scope.activeProgramSet})
+        $http(
+          {url: url, method: method, data: programSet})
         .success(function (response) {
           if(response.id) {
             $scope.activeProgramSet.id = response.id;
           }
-          toastr.success('Program set was saved');
+          toastr.success(msg);
         });
       }
     };
@@ -225,6 +224,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .result
         .then(function (newProgram) {
           $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
+          $scope.saveActiveProgramSet("Changes saved");
         });
     };
 
@@ -241,6 +241,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .result
         .then(function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
+          $scope.saveActiveProgramSet("Program added");
         });
     };
 
@@ -260,6 +261,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .result
         .then(function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
+          $scope.saveActiveProgramSet("Copied program");
         });
     };
 

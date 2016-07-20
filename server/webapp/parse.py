@@ -725,12 +725,16 @@ def set_program_summary_on_progset(progset, summary):
     progset.updateprogset()
 
 
-def set_progset_summaries_on_project(project, progset_summaries, progset_id=None):
+def set_progset_summary_on_project(project, progset_summary, progset_id=None):
+    """
+    Updates/creates a progset from a progset_summary, with the addition
+    of inactive_programs that are taken from the default programs
+    generated from pyOptima.
     """
 
-    """
-    progset_name = progset_summaries['name']
-    progset_programs = progset_summaries['programs']
+    print(">> Finding progset '%s'" % progset_summary['name'])
+    progset_name = progset_summary['name']
+    progset_programs = progset_summary['programs']
 
     if progset_name not in project.progsets:
         if progset_id:
@@ -744,18 +748,20 @@ def set_progset_summaries_on_project(project, progset_summaries, progset_id=None
         else:
             # Probably a new one.
             project.progsets[progset_name] = op.Programset(name=progset_name)
+
     progset = project.progsets[progset_name]
 
     # Clear the current programs...
     progset.programs = op.odict()
     progset.inactive_programs = op.odict()
 
+    print(">> Setting %d programs" % len(progset_programs))
     for p in progset_programs:
         set_program_summary_on_progset(progset, p)
 
     progset.updateprogset()
 
-    current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
+    print("> Created/updated program %s" % progset_name)
 
 
 def get_parameters_from_progset_parset(settings, progset, parset):
