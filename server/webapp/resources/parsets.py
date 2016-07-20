@@ -7,7 +7,7 @@ from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import copy_parset, create_parset, load_parset_summaries, \
-    rename_parset, delete_parset, generate_parset_graphs, load_result_dir_filename, \
+    rename_parset, delete_parset, generate_parset_graphs, load_result_csv, \
     load_parameters, save_parameters, load_result_mpld3_graphs
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import get_post_data_json, get_upload_file
@@ -171,7 +171,7 @@ class ResultsExport(Resource):
         """
         GET /api/results/<results_id>
         """
-        load_dir, filename = load_result_dir_filename(result_id)
+        load_dir, filename = load_result_csv(result_id)
         response = helpers.send_from_directory(load_dir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
         return response
