@@ -879,6 +879,12 @@ def load_project_program_summaries(project_id):
     return get_default_program_summaries(project)
 
 
+def load_progset_summary(project_id, progset_id):
+    project = load_project(project_id)
+    progset = get_progset_from_project(project, progset_id)
+    return get_progset_summary(project, progset.name)
+
+
 def load_progset_summaries(project_id):
     project = load_project(project_id)
     return get_progset_summaries(project)

@@ -84,47 +84,28 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Download  programs data
     $scope.downloadProgramSet = function() {
-      if(!$scope.activeProgramSet.id) {
-        modalService.inform(
-          _.noopt,
-          'Okay',
-          'Please save the program set to proceed.',
-          'Cannot proceed'
-        );
-      } else {
-        $http
-          .get(
-            '/api/project/' + project.id +  '/progsets' + '/' + $scope.activeProgramSet.id +'/data',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
-          .success(function (response) {
-            var blob = new Blob([response], { type: 'application/octet-stream' });
-            saveAs(blob, ($scope.activeProgramSet.name + '.prj'));
-          });
-      }
+      var data = JSON.stringify($scope.activeProgramSet, null, 2);
+      var blob = new Blob([data], { type: 'application/octet-stream' });
+      saveAs(blob, ($scope.activeProgramSet.name + '.progset.json'));
     };
 
+    // Upload parameter-set data
     $scope.uploadProgramSet = function() {
-      if(!$scope.activeProgramSet.id) {
-        modalService.inform(
-          function (){ },
-          'Okay',
-          'Please save the program set to proceed.',
-          'Cannot proceed'
-        );
-      } else {
-        angular
-          .element('<input type=\'file\'>')
-          .change(function (event) {
+      angular
+        .element('<input type=\'file\'>')
+        .change(
+          function(event) {
             $upload.upload({
-              url: '/api/project/' + project.id + '/progsets' + '/' + $scope.activeProgramSet.id + '/data',
+              url: '/api/project/' + project.id
+                    + '/progset/' + $scope.activeProgramSet.id
+                    + '/data',
               file: event.target.files[0]
-            }).success(function () {
+            }).success(function() {
               window.location.reload();
             });
-          }).click();
-      }
+          })
+        .click();
     };
 
     $scope.deleteProgramSet = function () {
@@ -180,7 +161,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         programSetModalService.openProgramSetModal(
             copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy', 'Copy');
       }
-    }
+    };
 
     $scope.saveActiveProgramSet = function(msg) {
       if (!msg) {

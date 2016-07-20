@@ -624,7 +624,7 @@ def get_progset_summary(project, progset_name):
         #'targetpartypes': progset_record.targetpartypes,
         #'readytooptimize': progset_record.readytooptimize
     }
-    return progset_summary
+    return normalize_obj(progset_summary)
 
 
 def get_progset_summaries(project):
