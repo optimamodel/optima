@@ -70,7 +70,7 @@ def get_default_populations():
 
 
 """
-PyOptima Population data['pop'] structure;
+PyOptima Population project.data['pops'] structure;
 <odist>
  - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
  - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
@@ -79,6 +79,18 @@ PyOptima Population data['pop'] structure;
  - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
  - injects: [0, 0, 0, 1, 0, 0]
  - sexworker: [1, 0, 0, 0, 0, 0]
+
+populations data structure (based on the pops parameter in makespreadsheets):
+-
+  short: string
+  name: string
+  male: bool
+  female: bool
+  age_from: int
+  age_to: int
+  injects: bool
+  sexworker: bool
+- ...
 """
 
 
