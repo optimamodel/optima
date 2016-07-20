@@ -60,17 +60,6 @@ class Progset(Resource):
 class ProgsetUploadDownload(Resource):
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(summary="Return a JSON file of the parameters")
-    def get(self, project_id, progset_id):
-        """
-        GET /api/project/<uuid:project_id>/progset/<uuid:progset_id>/data
-        """
-        print("> Download JSON file of progset %s" % progset_id)
-        progset_summary = load_progset_summary(project_id, progset_id)
-        response = make_response(json.dumps(progset_summary, indent=2))
-        response.headers["Content-Disposition"] = "attachment; filename=parset.json"
-        return response
-
     @swagger.operation(summary="Update from JSON file of the parameters")
     def post(self, project_id, progset_id):
         """

@@ -9,8 +9,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     var parameters;
 
     function initialize() {
-      // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
-      if (!project.hasData) {
+      var isDataSpreadsheetNotUploaded = !project.hasData;
+
+      if (isDataSpreadsheetNotUploaded) {
         modalService.inform(
           function() { },
           'Okay',
@@ -21,20 +22,20 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         return;
       }
 
-      // Get the list of saved programs from DB and set the first one as active
+      // Load program sets; set first as acctive
       $http
         .get('/api/project/' + project.id + '/progsets')
         .success(function(response) {
           if (response.progsets) {
             $scope.programSetList = response.progsets;
-            console.log("loaded_programs = ", $scope.programSetList);
+            console.log("loaded_programs", $scope.programSetList);
             if (response.progsets && response.progsets.length > 0) {
               $scope.activeProgramSet = response.progsets[0];
             }
           }
         });
 
-      // Fetching default categories and programs for the open project
+      // Load a default set of inactive programs for new
       projectApiService
         .getDefault(project.id)
         .success(function(response) {
@@ -42,7 +43,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           console.log("default_programs = ", defaultPrograms);
         });
 
-      // Get the list of default parameters for the project
+      // Load parameters that can be used to set custom programs
       $http
         .get('/api/project/' + project.id + '/parameters')
         .success(function(response) {
@@ -85,12 +86,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadProgramSet = function() {
-      var data = JSON.stringify($scope.activeProgramSet, null, 2);
+      var data = JSON.stringify(angular.copy($scope.activeProgramSet), null, 2);
       var blob = new Blob([data], { type: 'application/octet-stream' });
       saveAs(blob, ($scope.activeProgramSet.name + '.progset.json'));
     };
 
-    // Upload parameter-set data
     $scope.uploadProgramSet = function() {
       angular
         .element('<input type=\'file\'>')
@@ -195,7 +195,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Opens a modal for editing an existing program.
     $scope.openEditProgramModal = function ($event, program) {
       var editProgram = angular.copy(program);
       editProgram.short = editProgram.short || editProgram.short;
@@ -207,10 +206,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
           $scope.saveActiveProgramSet("Changes saved");
         });
-    };
-
-    $scope.changeProgramActive = function(program) {
-        $scope.saveActiveProgramSet("Program active state saved");
     };
 
     // Creates a new program and opens a modal for editing.
@@ -230,7 +225,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
-    // Makes a copy of an existing program and opens a modal for editing.
     $scope.copyProgram = function ($event, existingProgram) {
       if ($event) {
         $event.preventDefault();
