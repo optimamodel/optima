@@ -228,6 +228,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
+    $scope.changeProgramActive = function(program) {
+        $scope.saveActiveProgramSet("Program active state saved");
+    };
+
     // Creates a new program and opens a modal for editing.
     $scope.openAddProgramModal = function ($event) {
       if ($event) {
