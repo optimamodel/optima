@@ -45,7 +45,7 @@ def migrate(project, verbose=2):
     """
     while str(project.version) != str(op.__version__):
         if not str(project.version) in migrations:
-            raise ValueError("We can't upgrade version %s to latest version (%s)" % (project.version, op.__version__))
+            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.__version__))
 
         upgrader = migrations[str(project.version)]
 
