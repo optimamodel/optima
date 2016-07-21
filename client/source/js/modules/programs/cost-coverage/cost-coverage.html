@@ -34,87 +34,148 @@
 
   <div ng-if="vm.selectedProgset && vm.selectedParset">
 
-    <div style="padding: 40px 0 0px;border-bottom: 1px solid gray;display: flex;">
+    <div style="
+            padding: 40px 0 0px;
+            border-bottom: 1px solid gray;
+            display: flex;">
 
-    <span
-      class="small_bordered_section" ng-repeat="tab in vm.tabs"
-      ng-class="{yellowBg: vm.activeTab === tab.slug}"
-      ng-click="vm.selectTab(tab.slug)">{{tab.name}}</span>
-    </div>
-
-    <!-- Cost functions tab -->
-    <div ng-if="vm.activeTab === 'cost'"
-         ng-include="'js/modules/programs/cost-coverage/cost/cost.html'">
-    </div>
-
-    <!-- Outcome functions tab -->
-    <div class="c-tab" ng-if="vm.activeTab === 'outcome'">
-
-      <div class="c-select">
-        <label class="c-select__label">
-          Select parameter:
-        </label>
-        <select
-          class="txbox c-select__input"
-          ng-options="parameter.name for parameter in vm.parameters"
-          ng-change="vm.changeParameter()"
-          ng-model="vm.selectedParameter">
-        </select>
+      <span
+        class="small_bordered_section" ng-repeat="tab in vm.tabs"
+        ng-class="{yellowBg: vm.activeTab === tab.slug}"
+        ng-click="vm.selectTab(tab.slug)">{{tab.name}}</span>
       </div>
 
-      <br>
-      <h2>Possible outcomes for the parameter "{{vm.selectedParameter.name}}"</h2>
+      <!-- Cost functions tab -->
+      <div ng-if="vm.activeTab === 'cost'"
+           ng-include="'js/modules/programs/cost-coverage/cost/cost.html'">
+      </div>
 
-      <table class="table table-bordered" ng-model="vm.table">
+      <!-- Outcome functions tab -->
+      <div class="c-tab" ng-if="vm.activeTab === 'outcome'">
 
-        <tr>
-          <th ng-repeat="title in vm.table.titles"> {{title}}</th>
-          <th>Manage</th>
-        </tr>
+        <div style="margin: 40px 0 50px 0;">
+          <span style="display: inline; margin-right: 0.5em;">
+            Program outcomes for the parameter
+          </span>
+          <select
+            class="txbox c-select__input"
+            style="display: inline; width: 25em;"
+            ng-options="parameter.name for parameter in vm.parameters"
+            ng-change="vm.changeParameter()"
+            ng-model="vm.selectedParameter">
+          </select>
+        </div>
 
-        <tr style="{{row.attr.style}}" ng-repeat="row in vm.table.rows track by $index">
+        <div ng-repeat="outcome in vm.selectedOutcomes">
 
-          <td style="{{cell.attr.style}}" ng-repeat="cell in row.cells">
-            <div ng-if="!row.attr.isSkip">
-              <span ng-if='cell.attr.type=="selector"'>
-                <span ng-if="row.attr.isEdit">
-                  <select
-                      ng-model="cell.value"
-                      ng-options="o.value as o.label for o in cell.attr.options">
-                  </select>
-                </span>
-              </span>
-              <span ng-if='!row.attr.isEdit || cell.attr.type=="string"'>
-                <span ng-if="cell.label">{{cell.label}}</span>
-                <span ng-if="!cell.label">{{cell.value}}</span>
-              </span>
-              <input
+          <style>
+            .mytable th, .mytable td {
+              padding: 10px;
+              vertical-align: top;
+            }
+          </style>
+
+          <table
+              class="mytable"
+              ng-repeat="yearEntry in outcome.years"
+              cellpadding="10px"
+              style="
+                  width: 100%;
+                  border-top: 1px solid #999;
+                  border-bottom: 1px solid #999;
+                  border-spacing: 10px;">
+            <tr style="border-bottom: 1px solid #DDD">
+              <th>
+                Population /
+                <br>
+                Partnerships
+              </th>
+              <th>Year</th>
+              <th>Description of program impact</th>
+              <th>
+                Parameter Value
+                <br>
+                ({{vm.selectedParameter.limits[0]}}
+                -
+                {{vm.selectedParameter.limits[1]}})
+              </th>
+            </tr>
+
+            <tr>
+              <td>{{vm.makePopKeyLabel(outcome.pop)}}</td>
+              <td>{{yearEntry.year}}</td>
+              <td>
+                "{{vm.selectedParameter.name}}"
+                in the absence of any programs targeting this parameter
+                <br>
+                <br>
+                <b>Program Effects</b>
+              </td>
+              <td style="width:12em">
+                <input
+                  style="width:4em"
                   type="number"
-                  ng-if='row.attr.isEdit && cell.attr.type=="input"'
-                  ng-model="row.cells[$index].value">
-              </input>
-            </div>
-          </td>
+                  ng-model="yearEntry.intercept_lower">
+                -
+                <input
+                  style="width:4em"
+                  type="number"
+                  ng-model="yearEntry.intercept_upper">
+              </td>
+            </tr>
 
-          <td>
-            <div ng-if="!row.attr.isSkip">
-              <span ng-if="!row.attr.isEdit" >
-                <i class="fa fa-pencil"
-                   ng-click="row.attr.startEdit()">
-                </i>
-              </span>
-              <span ng-if="row.attr.isEdit">
-                <i class="fa fa-check"
-                   ng-click="row.attr.acceptEdit()">
-                </i>
-              </span>
-            </div>
-          </td>
+            <tr ng-repeat="program in yearEntry.programs">
+              <td></td>
+              <td></td>
+              <td>
+                "{{vm.selectedParameter.name}}"
+                under maximal attainable coverage of
+                "{{vm.getProgramName(program.name)}}"
+              </td>
+              <td style="width:12em">
+                <input
+                  style="width:4em"
+                  type="number"
+                  ng-model="program.intercept_lower">
+                -
+                <input
+                  style="width:4em"
+                  type="number"
+                  ng-model="program.intercept_upper">
+              </td>
+            </tr>
 
-        </tr>
+            <tr>
+              <td></td>
+              <td></td>
+              <td>
+                <b>Program interactions</b>:
+                &nbsp; &nbsp;
+                <input
+                    type="radio"
+                    ng-model="outcome.interact"
+                    value="random">
+                <label> random </label> &nbsp; &nbsp;
+                <input
+                    type="radio"
+                    ng-model="outcome.interact"
+                    ng-value="nested">
+                <label> nested </label> &nbsp; &nbsp;
+                <input
+                    type="radio"
+                    ng-model="outcome.interact"
+                    value="additive">
+                <label> additive </label>
+                <br>
+                <br>
+              </td>
+              <td></td>
+            </tr>
 
-      </table>
+          </table>
 
-    </div>
+        </div>
+
+      </div>
   </div>
 </div>

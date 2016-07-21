@@ -6,6 +6,28 @@ define(['./../module', 'underscore'], function (module, _) {
       'ModelCostCoverageController',
       function ($scope, toastr, $http, $state, activeProject, modalService) {
 
+      // [
+      //   {
+      //     "interact": "random",
+      //     "name": "numtx",
+      //     "pop": "tot",
+      //     "years": [
+      //       {
+      //         "intercept_lower": null,
+      //         "intercept_upper": null,
+      //         "programs": [
+      //           {
+      //             "name": "ART",
+      //             "intercept_lower": null,
+      //             "intercept_upper": null
+      //           }
+      //         ],
+      //         "year": 2016
+      //       }
+      //     ]
+      //   }
+      // ]
+
     var vm = this;
 
     function consoleLogJson(name, val) {
@@ -31,6 +53,8 @@ define(['./../module', 'underscore'], function (module, _) {
 
       vm.selectTab = selectTab;
       vm.submit = submitOutcomes;
+      vm.getProgramName = getProgramName;
+      vm.makePopKeyLabel = makePopKeyLabel;
       vm.changeParameter = changeParameter;
       vm.changeProgsetAndParset = changeProgsetAndParset;
 
@@ -229,10 +253,6 @@ define(['./../module', 'underscore'], function (module, _) {
 
     }
 
-    function hasNotBeenAdded(program, programSelector) {
-      return _.filter(programSelector, { 'value': program.short }).length == 0;
-    }
-
     function buildParameterSelectors() {
       vm.interactSelector = [
         {'value': 'random', 'label': 'random'},
@@ -248,6 +268,10 @@ define(['./../module', 'underscore'], function (module, _) {
         });
       });
 
+    function hasNotBeenAdded(program, programSelector) {
+      return _.filter(programSelector, { 'value': program.short }).length == 0;
+    }
+
       vm.programSelector = [{'label': '<none>', 'value': ''}];
       _.each(vm.selectedParameter.populations, function(population) {
         _.each(population.programs, function(program) {
@@ -258,171 +282,15 @@ define(['./../module', 'underscore'], function (module, _) {
       });
     }
 
-    function makeBlankRow() {
-      var blankCell = {label: '', attr: {style: "padding:1px"}};
-      var blankCells = _(6).times(function() { return angular.copy(blankCell); });
-      return {
-        attr: {
-          style: "background-color:#DDD",
-          isEdit: false,
-          isSkip: true
-        },
-        cells: blankCells
-      };
-    }
-
-    function makeEditFn(row) {
-      function innerFn() { row.attr.isEdit = true; }
-      return innerFn;
-    }
-
-    function makeAcceptEditFn(row) {
-      function innerFn() {
-        console.log('accept');
-        row.attr.isEdit = false;
-        validateTable();
-      }
-      return innerFn;
-    }
-
-    function buildTable() {
-
-      vm.table = {
-        titles: [
-          'Population / Partnerships', 'Year', 'Program Impact', 'Interact',
-          'Parameter Values - Low', 'Parameter Values - High'],
-        attr: {},
-        rows: []
-      };
-
-      var cells;
-
-      // vm.table.rows.push(makeBlankRow());
-
-      // cells = [
-      //   {}, {},
-      //   {attr: {type: "string"}, value: 'Absolute limits of parameter values'},
-      //   {},
-      //   {attr: {type: "string"}, value: vm.selectedParameter.limits[0]},
-      //   {attr: {type: "string"}, value: vm.selectedParameter.limits[1]}];
-      // vm.table.rows.push({attr: {isSkip: true}, cells: cells});
-
-      _.each(vm.outcomes, function (outcome) {
-        if (outcome.name == vm.selectedParameter.short) {
-          _.each(outcome.years, function (year) {
-
-            var pop = outcome.pop;
-
-            vm.table.rows.push(makeBlankRow());
-
-            cells = [];
-            cells.push({label: makePopKeyLabel(pop), value: pop, attr: {type: "string"}});
-            cells.push({value: year.year, attr: {type: "string"}});
-            cells.push({
-              label: 'Parameter values in the absence of any program',
-              attr: {type: "string"}
-            });
-            cells.push({
-              value: outcome.interact,
-              attr: {
-                type: "selector",
-                options: [
-                  {label: "random", value: "random"},
-                  {label: "nested", value: "nested"},
-                  {label: "additive", value: "additive"}
-                ]
-              }
-            });
-            cells.push({value: year.intercept_lower, attr: {type: "input"}});
-            cells.push({value: year.intercept_upper, attr: {type: "input"}});
-
-            var row = {attr: {isEdit: false}, cells: cells};
-            row.attr.startEdit = makeEditFn(row);
-            row.attr.acceptEdit = makeAcceptEditFn(row);
-            vm.table.rows.push(row);
-
-            _.each(year.programs, function (program) {
-              cells = [{}, {}];
-              cells.push({
-                label: 'Maximal achievable parameter values under "'
-                        + getProgramName(program.name)
-                        + '"',
-                value: program.name,
-                attr: {type: "string"}
-              });
-              cells.push({});
-              cells.push({value: program.intercept_lower, attr: {type: "input"}});
-              cells.push({value: program.intercept_upper, attr: {type: "input"}});
-
-              var row = {attr: {isEdit: false}, cells: cells};
-              row.attr.startEdit = makeEditFn(row);
-              row.attr.acceptEdit = makeAcceptEditFn(row);
-              vm.table.rows.push(row);
-            });
-          });
-        }
-      });
-    }
-
-    function validateTable() {
-      console.log("submit table", angular.copy(vm.table.rows));
-      var parShort = vm.selectedParameter.short;
-      var outcome;
-      var year;
-      var programs;
-      var newOutcomes = [];
-
-      _.each(vm.table.rows, function(row) {
-        if (row.attr.isSkip) {
-          return;
-        }
-
-        if (row.cells[0].value) {
-          outcome = {
-            name: parShort,
-            pop: row.cells[0].value,
-            interact: row.cells[3].value,
-            years: []
-          };
-
-          year = {
-            year: row.cells[1].value,
-            intercept_lower: row.cells[4].value,
-            intercept_upper: row.cells[5].value,
-            programs: []
-          };
-          outcome.years.push(year);
-
-          programs = year.programs;
-
-          newOutcomes.push(outcome);
-          return;
-        }
-
-        programs.push({
-          name: row.cells[2].value,
-          intercept_lower: row.cells[4].value,
-          intercept_upper: row.cells[5].value,
-        });
-      });
-
-      var iteratee = _.iteratee({'name': parShort});
-      var oldOutcomes = _.filter(vm.outcomes, iteratee);
-      var keepOutcomes = _.reject(vm.outcomes, iteratee);
-      vm.outcomes = keepOutcomes.concat(newOutcomes);
-
-      consoleLogJson("old outcomes", oldOutcomes);
-      consoleLogJson("new outcomes", newOutcomes);
-
-      submitOutcomes();
-    }
-
     function changeParameter() {
       addIncompletePops();
       addMissingYear();
       addIncompletePrograms();
+      vm.selectedOutcomes = _.filter(vm.outcomes, function(outcome) {
+        return outcome.name == vm.selectedParameter.short;
+      });
+      consoleLogJson('selected outcomes', vm.selectedOutcomes);
       buildParameterSelectors();
-      buildTable();
     }
 
     initialize();
