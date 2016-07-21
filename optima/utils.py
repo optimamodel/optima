@@ -3,7 +3,7 @@
 ##############################################################################
 
 
-def printv(string, thisverbose=1, verbose=2, newline=True):
+def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     '''
     Optionally print a message and automatically indent. The idea is that
     a global or shared "verbose" variable is defined, which is passed to
@@ -26,7 +26,7 @@ def printv(string, thisverbose=1, verbose=2, newline=True):
     '''
     if thisverbose>4 or verbose>4: print('Warning, verbosity should be from 0-4 (this message: %i; current: %i)' % (thisverbose, verbose))
     if verbose>=thisverbose: # Only print if sufficiently verbose
-        indents = '  '*thisverbose # Create automatic indenting
+        indents = '  '*thisverbose*bool(indent) # Create automatic indenting
         if newline: print(indents+str(string)) # Actually print
         else: print(indents+str(string)), # Actually print
     return None
@@ -721,124 +721,6 @@ def gitinfo():
 ##############################################################################
 
 
-def saveobj(filename, obj, verbose=True):
-    ''' Save an object to file '''
-    try: import cPickle as pickle # For Python 2 compatibility
-    except: import pickle
-    from gzip import GzipFile
-    
-    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
-    if verbose: print('Object saved to "%s"' % filename)
-    return None
-
-
-def loadobj(filename, verbose=True):
-    ''' Load a saved file '''
-    try:
-        import cPickle as pickle  # For Python 2 compatibility
-    except:
-        import pickle
-    from gzip import GzipFile
-    
-    # Handle loading of either filename or file object
-    if isinstance(filename, basestring): argtype='filename'
-    else: argtype = 'fileobj'
-    kwargs = {'mode': 'rb', argtype: filename}
-
-    with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
-    if verbose: print('Object loaded from "%s"' % filename)
-    return obj
-
-
-
-def savedbobj(filename, obj, verbose=True):
-    ''' Save an object to file '''
-    from ._serialize import dumps
-    dumped = dumps(obj)
-
-    with open(filename, 'wb') as fileobj:
-        fileobj.write(dumped)
-    if verbose: print('Object saved to "%s"' % filename)
-    return None
-
-
-def loaddbobj(filename, verbose=True):
-    ''' Load a saved file (pickle or JSON)'''
-    try:
-        import cPickle as pickle  # For Python 2 compatibility
-    except:
-        import pickle
-    from gzip import GzipFile
-
-    # Handle loading of either filename or file object
-    if isinstance(filename, basestring): argtype='filename'
-    else: argtype = 'fileobj'
-    kwargs = {'mode': 'rb', argtype: filename}
-
-    try:
-        from ._serialize import loads
-
-        if argtype == "fileobj":
-            read = filename.read()
-        else:
-            with open(filename, 'rb') as f:
-                read = f.read()
-
-        obj = loads(read)
-    except:
-        if argtype == "fileobj":
-            filename.seek(0)
-        with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
-
-    if verbose: print('Object loaded from "%s"' % filename)
-    return obj
-
-
-def cleanresults(filelist=None):
-    ''' Remove results from one file or many files '''
-    from glob import glob
-    if filelist is None: 
-        filelist = glob('*.prj')
-        ans = raw_input('About to remove results from the following files:\n%s\n\nAre you sure? y/[n]\n' % filelist)
-        if ans!='y': 
-            print('\nResults removal aborted.')
-            return None
-    if isinstance(filelist, (str, unicode)): filelist = [filelist]
-    for filename in filelist:
-        P = loadobj(filename)
-        P.cleanresults()
-        saveobj(filename, P)
-    print('\nDone.')
-    return None
-
-
-def saves(obj):
-    ''' Save an object to a string in gzip-compatible way'''
-    try: import cPickle as pickle # For Python 2 compatibility
-    except: import pickle
-    from gzip import GzipFile
-    from cStringIO import StringIO
-    from contextlib import closing
-    result = None
-    with closing(StringIO()) as output:
-        with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
-            pickle.dump(obj, fileobj, protocol=2)
-        output.seek(0)
-        result = output.read()
-    return result
-
-
-def loads(source):
-    ''' Load an object from a string in gzip-compatible way'''
-    try: import cPickle as pickle # For Python 2 compatibility
-    except: import pickle
-    from gzip import GzipFile
-    from cStringIO import StringIO
-    from contextlib import closing
-    with closing(StringIO(source)) as output:
-        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
-            obj = pickle.load(fileobj)
-    return obj
 
 
 def getdate(obj, which='modified', fmt='str'):
@@ -865,17 +747,6 @@ def getdate(obj, which='modified', fmt='str'):
                 return dateobj.strftime(dateformat)
         elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
         else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)
-    
-    
-    
-def setdate(obj):
-    ''' Update the last modified date '''
-    from datetime import datetime
-    obj.modified = datetime.today()
-    return None
-
-
-
 
 
 

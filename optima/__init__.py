@@ -2,11 +2,11 @@
 """
 This file performs all necessary imports, so Optima can be used either as
 
-from .optima import Project, Parameters [etc.] [preferred]
+from optima import Project, Parameters [etc.] [preferred]
 or
 import optima as op
 or
-from .optima import *
+from optima import *
 
 
 Now, the legal part:
@@ -68,7 +68,11 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, cleanresults, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, loadobj, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, saveobj, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
+
+## Data I/O
+from . import dataio
+from .dataio import loadobj, saveobj # CK: may want to tidy up
 
 
 #####################################################################################################################
@@ -197,9 +201,10 @@ from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultp
 
 # And really finally, load other random things that don't matter
 try:
-    from . import misc
+    from . import migrations
+    from .migrations.migrate import migrate
 except:
-    _failed.append('misc')
+    _failed.append('migrations')
     
 
 if not len(_failed): del _failed # If it's empty, don't bother keeping it

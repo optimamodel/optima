@@ -7,7 +7,7 @@ from sqlalchemy.orm import deferred
 
 import optima as op
 from server.webapp.dbconn import db, redis
-from server import serialize
+from optima import dataio
 
 
 @swagger.model
@@ -70,32 +70,37 @@ class ProjectDb(db.Model):
 
     def load(self):
         redis_entry = redis.get(self.id.hex)
-        return serialize.loads(redis_entry)
+        return dataio.loads(redis_entry)
 
     def save_obj(self, obj):
 
         # Copy the project, only save what we want...
-        new_project = dcp(obj)
+        new_project = op.dcp(obj)
         new_project.spreadsheet = None
         new_project.results = op.odict()
 
-        redis.set(self.id.hex, serialize.dumps(new_project))
+        redis.set(self.id.hex, dataio.dumps(new_project))
         print("Saved " + self.id.hex)
 
 
     def as_file(self, loaddir, filename=None):
         filename = os.path.join(loaddir, self.id.hex + ".prj")
-        op.savedbobj(filename, self.load())
+        op.saveobj(filename, self.load())
         return self.id.hex + ".prj"
+
+    def delete_dependent_objects(self, synchronize_session=False):
+        str_project_id = str(self.id)
+        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.flush()
 
     def recursive_delete(self, synchronize_session=False):
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        self.delete_dependent_objects(synchronize_session=synchronize_session)
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
-        db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
-        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
-        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.flush()
 
@@ -135,10 +140,10 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
-        return serialize.loads(redis.get("result-" + self.id.hex))
+        return dataio.loads(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
-        redis.set("result-" + self.id.hex, serialize.dumps(obj))
+        redis.set("result-" + self.id.hex, dataio.dumps(obj))
         print("Saved result-" + self.id.hex)
 
 
@@ -160,10 +165,10 @@ class WorkingProjectDb(db.Model):  # pylint: disable=R0903
         self.work_log_id = work_log_id
 
     def load(self):
-        return serialize.loads(redis.get("working-" + self.id.hex))
+        return dataio.loads(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
-        redis.set("working-" + self.id.hex, serialize.dumps(obj))
+        redis.set("working-" + self.id.hex, dataio.dumps(obj))
         print("Saved working-" + self.id.hex)
 
 
