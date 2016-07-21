@@ -1,22 +1,26 @@
 <!-- Cost functions tab -->
 <div class="c-tab" ng-controller="CostController">
-  <div style="width: 40%">
 
-    <label>
-      Select a program:<br>
-      <select
-          class="txbox"
-          ng-options="p.name for p in vm.programs"
-          ng-change="changeSelectedProgram()"
-          ng-model="selectedProgram">
-      </select>
-    </label>
-
+  <div style="width: 100%; margin: 40px 0px 40px;">
+    <h3 style="display: inline;">Cost-coverage function for the program</h3>
+    <select
+        class="txbox"
+        style="margin-left: 0.5em; display: inline; width: 25em;"
+        ng-options="p.name for p in vm.programs"
+        ng-change="changeSelectedProgram()"
+        ng-model="selectedProgram">
+    </select>
   </div>
+
   <div ng-if="selectedProgram">
 
-    <div style="display: flex; margin-top: 2%">
-      <div class="chart-container" style="width:30%">
+    <div style="
+          display: flex;
+          width: 100%;
+          margin-top: 20px">
+
+      <div class="chart-container"
+           style="flex: 1 1;">
 
         <div mpld3-chart="chartData"
              style="width: 100%"
@@ -29,7 +33,8 @@
 
       </div>
 
-      <div class="flex-column margin_left">
+      <div style="flex: 0 0 580px;" class="flex-column margin_left">
+
         <div class="flex-column">
 
           <h3>Parameters for defining cost function</h3>
