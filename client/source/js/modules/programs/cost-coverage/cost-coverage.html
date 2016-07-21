@@ -34,16 +34,48 @@
 
   <div ng-if="vm.selectedProgset && vm.selectedParset">
 
-    <div style="
-            padding: 40px 0 0px;
-            border-bottom: 1px solid gray;
-            display: flex;">
+    <style>
+      .selectTab {
+        border-top: 1px solid gray;
+        border-left: 1px solid gray;
+        border-right: 1px solid gray;
+      }
+      .notSelectTab {
+        border-bottom: 1px solid gray;
+        padding-bottom: 2px;
+        color: #999;
+      }
+    </style>
 
-      <span
-        class="small_bordered_section" ng-repeat="tab in vm.tabs"
-        ng-class="{yellowBg: vm.activeTab === tab.slug}"
-        ng-click="vm.selectTab(tab.slug)">{{tab.name}}</span>
+    <div style="
+          margin-top: 50px;
+          display: flex;
+          width: 100%">
+      <div style="
+              border-bottom: 1px solid gray;
+              flex: 0 0 15px">
       </div>
+      <div 
+          style="
+            flex: 0 0 15em;
+            text-align: center;
+            cursor: pointer;
+            padding: 15px 15px 5px 15px;"
+          ng-repeat="tab in vm.tabs"
+          ng-class="(vm.activeTab != tab.slug) ? 'notSelectTab' : 'selectTab'"
+          ng-click="vm.selectTab(tab.slug)">
+        {{tab.name}}
+      </div>
+      <div style="
+              border-bottom: 1px solid gray;
+              flex: 1 1;">
+      </div>
+    </div>
+
+    <div style="
+            padding: 10px 0 0px;
+            width: 100%;
+            display: flex;">
 
       <!-- Cost functions tab -->
       <div ng-if="vm.activeTab === 'cost'"
@@ -54,9 +86,9 @@
       <div class="c-tab" ng-if="vm.activeTab === 'outcome'">
 
         <div style="margin: 40px 0 50px 0;">
-          <span style="display: inline; margin-right: 0.5em;">
+          <h3 style="display: inline; margin-right: 0.5em;">
             Program outcomes for the parameter
-          </span>
+          </h3>
           <select
             class="txbox c-select__input"
             style="display: inline; width: 25em;"

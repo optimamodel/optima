@@ -2,7 +2,9 @@
 <div class="c-tab" ng-controller="CostController">
 
   <div style="width: 100%; margin: 40px 0px 40px;">
+
     <h3 style="display: inline;">Cost-coverage function for the program</h3>
+
     <select
         class="txbox"
         style="margin-left: 0.5em; display: inline; width: 25em;"
@@ -10,6 +12,7 @@
         ng-change="changeSelectedProgram()"
         ng-model="selectedProgram">
     </select>
+
   </div>
 
   <div ng-if="selectedProgram">
@@ -19,35 +22,34 @@
           width: 100%;
           margin-top: 20px">
 
-      <div class="chart-container"
-           style="flex: 1 1;">
+      <div class="chart-container" style="flex: 1 1;">
 
         <div mpld3-chart="chartData"
              style="width: 100%"
              chart-id="{{ chartData.id }}"
              ng-if="chartData">
         </div>
+
         <div class="c-caption" ng-if="displayCaption">
           {{displayCaption}}
         </div>
 
       </div>
 
-      <div style="flex: 0 0 580px;" class="flex-column margin_left">
+      <div style="flex: 0 0 580px;"
+           class="flex-column margin_left">
 
         <div class="flex-column">
-
           <h3>Parameters for defining cost function</h3>
           <entry-table table="ccoparsTable"></entry-table>
-
         </div>
-        <br>
-        <br>
-        <div class="flex-column">
 
+        <br>
+        <br>
+
+        <div class="flex-column">
           <h3>Historical cost and coverage data</h3>
           <entry-table table="costcovTable"></entry-table>
-
         </div>
 
         <!--<div class="flex-column margin_top">-->
