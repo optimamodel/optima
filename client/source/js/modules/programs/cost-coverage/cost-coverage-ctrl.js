@@ -86,39 +86,21 @@ define(['./../module', 'underscore'], function (module, _) {
         + '/progsets/' + vm.selectedProgset.id
         + '/effects')
       .success(function (response) {
-        vm.outcomeSets = response.effects;
-        console.log('outcome sets =', vm.outcomeSets);
+        vm.outcomes = response;
+        console.log('outcome sets =', vm.outcomes);
         changeParset();
       })
     }
 
-    function getOutcomeSetForSelectedParset() {
-      var outcomeSets = _.filter(vm.outcomeSets, {parset: vm.selectedParset.id});
-      if (outcomeSets.length === 0) {
-        var newOutcomeSet = {
-          parset: vm.selectedParset.id,
-          parameters: []
-        };
-        vm.outcomeSets.push(newOutcomeSet);
-        return newOutcomeSet;
-      } else {
-        return outcomeSets[0];
-      }
-    }
-
-    function getOutcomesForSelectedParset() {
-      return getOutcomeSetForSelectedParset().parameters;
-    }
-
     function submitOutcomeSetsOfProgset() {
-      var outcomeSets = vm.outcomeSets;
-      consoleLogJson('submitting outcomes', outcomeSets);
+      var outcomes = angular.copy(vm.outcomes);
+      consoleLogJson('submitting outcomes', outcomes);
       $http.put(
         '/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgset.id + '/effects',
-        outcomeSets)
-      .success(function (result) {
+        outcomes)
+      .success(function (response) {
         toastr.success('Outcomes were saved');
-        vm.outcomeSets = result.effects;
+        vm.outcomes = response;
         changeParameter();
       });
     }
@@ -159,30 +141,14 @@ define(['./../module', 'underscore'], function (module, _) {
       return typeof popKey === 'string' ? popKey : popKey.join(' <-> ');
     }
 
-    function extractLabelFromSelector(selector, value) {
-      var option = _.find(selector, function(option) {
-        // hack: compare stringified lists
-        return "" + option.value === "" + value;
-      });
-      return option ? option.label : value;
-    }
-
-    function getOptVal(val, defaultVal) {
-      if (val === "" || _.isUndefined(val)) {
-        return defaultVal;
-      }
-      return val;
-    }
-
     function getProgramName(short) {
       var selector = _.findWhere(vm.programSelector, {value:short});
       return selector.label;
-
     }
 
     function addIncompletePops() {
 
-      var outcomes = getOutcomesForSelectedParset();
+      var outcomes = vm.outcomes;
       var existingPops = [];
 
       _.each(outcomes, function (outcome) {
@@ -220,7 +186,7 @@ define(['./../module', 'underscore'], function (module, _) {
 
     function addIncompletePrograms() {
 
-      _.each(getOutcomesForSelectedParset(), function (outcome) {
+      _.each(vm.outcomes, function (outcome) {
 
         if (outcome.name != vm.selectedParameter.short) {
           return;
@@ -334,7 +300,7 @@ define(['./../module', 'underscore'], function (module, _) {
       //   {attr: {type: "string"}, value: vm.selectedParameter.limits[1]}];
       // vm.table.rows.push({attr: {isSkip: true}, cells: cells});
 
-      _.each(getOutcomesForSelectedParset(), function (outcome) {
+      _.each(vm.outcomes, function (outcome) {
         if (outcome.name == vm.selectedParameter.short) {
           _.each(outcome.years, function (year) {
 
@@ -434,10 +400,9 @@ define(['./../module', 'underscore'], function (module, _) {
       });
 
       var iteratee = _.iteratee({'name': parShort});
-      var outcomeSet = getOutcomeSetForSelectedParset();
-      var oldOutcomes = _.filter(outcomeSet.parameters, iteratee);
-      var keepOutcomes = _.reject(outcomeSet.parameters, iteratee);
-      outcomeSet.parameters = keepOutcomes.concat(newOutcomes);
+      var oldOutcomes = _.filter(vm.outcomes, iteratee);
+      var keepOutcomes = _.reject(vm.outcomes, iteratee);
+      vm.outcomes = keepOutcomes.concat(newOutcomes);
 
       consoleLogJson("old outcomes", oldOutcomes);
       consoleLogJson("new outcomes", newOutcomes);

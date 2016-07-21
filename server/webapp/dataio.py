@@ -916,37 +916,20 @@ def delete_progset(project_id, progset_id):
     project_record.save_obj(project)
 
 
-def load_progset_outcomes(project_id, progset_id):
-    print "> Load progset outcomes"
+def load_progset_outcome_summaries(project_id, progset_id):
     project = load_project(project_id)
     progset = get_progset_from_project(project, progset_id)
-
     outcomes = get_outcome_summaries_from_progset(progset)
-    # Bosco needs to fix this...
-
-    return {'effects': [{
-                            "parset": parset.uid,
-                            "parameters": outcomes,
-
-                        } for parset in project.parsets.values()]}
+    return outcomes
 
 
 def save_outcome_summaries(project_id, progset_id, outcome_summaries):
     project_record = load_project_record(project_id)
     project = project_record.load()
     progset = get_progset_from_project(project, progset_id)
-    parameters = outcome_summaries[0]["parameters"]
-    set_outcome_summaries_on_progset(parameters, progset)
-
+    set_outcome_summaries_on_progset(outcome_summaries, progset)
     project_record.save_obj(project)
-
-    outcomes = get_outcome_summaries_from_progset(progset)
-
-    return {'effects': [{
-                            "parset": parset.uid,
-                            "parameters": outcomes,
-
-                        } for parset in project.parsets.values()]}
+    return get_outcome_summaries_from_progset(progset)
 
 
 def save_program(project_id, progset_id, program_summary):

@@ -7,7 +7,7 @@ from flask_restful_swagger import swagger
 
 from server.webapp.dataio import load_parameters_from_progset_parset, \
     load_target_popsizes, load_progset_summaries, create_progset, \
-    save_progset, delete_progset, load_progset_outcomes, \
+    save_progset, delete_progset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_costcov_graph, \
     load_progset_summary
 from server.webapp.resources.common import report_exception
@@ -82,7 +82,7 @@ class ProgsetParameters(Resource):
         return load_parameters_from_progset_parset(project_id, progset_id, parset_id)
 
 
-class ProgsetEffects(Resource):
+class ProgsetOutcomes(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(summary='Returns list of outcomes for a progset')
@@ -90,7 +90,7 @@ class ProgsetEffects(Resource):
         """
         GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
         """
-        return load_progset_outcomes(project_id, progset_id)
+        return load_progset_outcome_summaries(project_id, progset_id)
 
     @swagger.operation(summary='Saves the outcomes of a given progset, used in outcome page')
     def put(self, project_id, progset_id):
