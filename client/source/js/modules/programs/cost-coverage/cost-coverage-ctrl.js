@@ -30,7 +30,7 @@ define(['./../module', 'underscore'], function (module, _) {
       ];
 
       vm.selectTab = selectTab;
-      vm.submit = submitOutcomeSetsOfProgset;
+      vm.submit = submitOutcomes;
       vm.changeParameter = changeParameter;
       vm.changeProgsetAndParset = changeProgsetAndParset;
 
@@ -87,12 +87,12 @@ define(['./../module', 'underscore'], function (module, _) {
         + '/effects')
       .success(function (response) {
         vm.outcomes = response;
-        console.log('outcome sets =', vm.outcomes);
+        console.log('outcome summaries', vm.outcomes);
         changeParset();
       })
     }
 
-    function submitOutcomeSetsOfProgset() {
+    function submitOutcomes() {
       var outcomes = angular.copy(vm.outcomes);
       consoleLogJson('submitting outcomes', outcomes);
       $http.put(
@@ -148,40 +148,47 @@ define(['./../module', 'underscore'], function (module, _) {
 
     function addIncompletePops() {
 
-      var outcomes = vm.outcomes;
       var existingPops = [];
-
-      _.each(outcomes, function (outcome) {
+      _.each(vm.outcomes, function(outcome) {
         if (outcome.name == vm.selectedParameter.short) {
           existingPops.push(outcome.pop);
         }
       });
+      console.log('existing pop in outcome', existingPops);
 
       var missingPops = [];
-      _.each(vm.selectedParameter.populations, function (population) {
-        var findPop = _.find(existingPops, function (pop) {
+      _.each(vm.selectedParameter.populations, function(population) {
+        var findPop = _.find(existingPops, function(pop) {
           return "" + pop == "" + population.pop
         });
         if (!findPop) {
           missingPops.push(population.pop);
         }
       });
+      console.log('missing pop in outcome', missingPops);
 
       _.each(missingPops, function(pop) {
         outcomes.push({
           name: vm.selectedParameter.short,
           pop: pop,
           interact: "random",
-          years: [{
+          years: []
+        })
+      });
+    }
+
+    function addMissingYear() {
+      _.each(vm.outcomes, function (outcome) {
+        var years = outcome.years;
+        if (years.length == 0) {
+          years.push({
             intercept_lower: null,
             intercept_upper: null,
             programs: [],
             year: 2016 // TODO: need to double check
-
-          }]
-        })
+          });
+        }
       });
-
     }
 
     function addIncompletePrograms() {
@@ -407,11 +414,12 @@ define(['./../module', 'underscore'], function (module, _) {
       consoleLogJson("old outcomes", oldOutcomes);
       consoleLogJson("new outcomes", newOutcomes);
 
-      submitOutcomeSetsOfProgset();
+      submitOutcomes();
     }
 
     function changeParameter() {
       addIncompletePops();
+      addMissingYear();
       addIncompletePrograms();
       buildParameterSelectors();
       buildTable();
