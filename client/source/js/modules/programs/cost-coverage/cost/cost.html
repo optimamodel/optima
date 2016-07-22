@@ -1,13 +1,13 @@
 <!-- Cost functions tab -->
 <div style="width: 100%;" class="c-tab" ng-controller="CostController">
 
-  <div style="width: 100%; margin: 10px 0px 20px;">
+  <div style="width: 100%; margin: 10px 0px 40px;">
 
     <label>Select program</label>
 
     <select
         class="txbox"
-        style="margin-left: 0.5em; display: inline; width: 25em;"
+        style="margin-left: 0.5em; display: inline; width: 30em;"
         ng-options="p.name for p in vm.programs"
         ng-change="changeSelectedProgram()"
         ng-model="selectedProgram">

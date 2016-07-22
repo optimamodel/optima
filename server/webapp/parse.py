@@ -115,6 +115,7 @@ def get_populations_from_project(project):
 def set_populations_on_project(project, populations):
     data_pops = op.odict()
 
+    pprint(populations, indent=2)
     for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
         data_pops[key] = []
 

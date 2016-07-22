@@ -6,19 +6,19 @@
 
   <div style="width: 100%">
 
-    Select program set &nbsp;
+    Select program set
     <select
       class="txbox"
-      style="width: 15em; display: inline; margin-right: 2em; "
+      style="width: 15em; display: inline; margin-left: 0.5em; margin-right: 2em; "
       ng-options="progset as progset.name for progset in vm.progsets"
       ng-change="vm.changeProgsetAndParset()"
       ng-model="vm.selectedProgset">
     </select>
 
-    Select parameter set &nbsp;
+    Select parameter set
     <select
       class="txbox"
-      style="width: 15em; display: inline;"
+      style="width: 15em; display: inline; margin-left: 0.5em; "
       ng-options="parset as parset.name for parset in vm.parsets"
       ng-change="vm.changeProgsetAndParset()"
       ng-model="vm.selectedParset">
@@ -79,13 +79,13 @@
       <!-- Outcome functions tab -->
       <div style="width: 100%;" ng-if="vm.activeTab === 'outcome'">
 
-        <div style="margin: 10px 0 40px 0;">
+        <div style="margin: 30px 0 40px 0;">
           <label>
             Select parameter
           </label>
           <select
             class="txbox c-select__input"
-            style="display: inline; width: 25em; left: 0.5em;"
+            style="display: inline; width: 30em; margin-left: 0.5em; "
             ng-options="parameter.name for parameter in vm.parameters"
             ng-change="vm.changeParameter()"
             ng-model="vm.selectedParameter">
@@ -135,7 +135,7 @@
                 in the absence of any programs targeting this parameter
                 <br>
                 <br>
-                <b>Program Effects</b>
+                <i>Program Effects</i>
               </td>
               <td style="width:12em">
                 <input
@@ -175,7 +175,7 @@
               <td></td>
               <td></td>
               <td>
-                <b>Program interactions</b>:
+                <i>Program interactions</i>:
                 &nbsp; &nbsp;
                 <input
                     type="radio"
