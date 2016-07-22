@@ -50,6 +50,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
     raw_death      = zeros((npops, npts)) # Number of deaths per timestep
     raw_otherdeath = zeros((npops, npts)) # Number of other deaths per timestep
+    raw_propdx     = zeros(npts)          # Proportion diagnosed per timestep
+    raw_proptx     = zeros(npts)          # Proportion on treatment per timestep
     
     # Biological and failure parameters -- death etc
     prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50']]) # Ugly, but fast
@@ -734,13 +736,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Or, do not use the cascade
         else: 
             
+            currplhiv = people[allplhiv,:,t].sum() # WARNING, is this slow?
+            currdx    = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
+            currtx    = people[alltx,:,t].sum()
+            raw_propdx[t] = currdx/currplhiv
+            raw_proptx[t] = currtx/currdx
+            
             # WARNING, copied from above!!
-            if not(isnan(proptx[t])):
-                currdx = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
-                currtx = people[alltx,:,t].sum()
-                totnewtreat =  max(0,proptx[t] * currdx - currtx)
-            else:
-                totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
+            if not(isnan(proptx[t])): totnewtreat =  max(0,proptx[t] * currdx - currtx)
+            else:                     totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
             tmpnewtreat = totnewtreat # Copy for modification later
 
             ## Diagnosed
@@ -770,7 +774,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 dD.insert(0, inflows - outflows - newtreat[cd4])
                 raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
                 raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                
+            
             
             ## 1st-line treatment
             for cd4 in range(ncd4):
@@ -914,7 +918,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[errstate,errpop,t+1] = 0.0 # Reset
                 
     
-    raw                 = odict()    # Sim output structure
+    raw               = odict()    # Sim output structure
     raw['tvec']       = tvec
     raw['popkeys']    = popkeys
     raw['people']     = people
@@ -925,6 +929,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['newtreat']   = raw_newtreat
     raw['death']      = raw_death
     raw['otherdeath'] = raw_otherdeath
+    raw['propdx']     = raw_propdx # WARNING, not used in results
+    raw['proptx']     = raw_proptx
     
     return raw # Return raw results
 
