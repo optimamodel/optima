@@ -744,7 +744,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
             # WARNING, copied from above!!
             if not(isnan(proptx[t])): 
-                tmpnewdx = raw_propdx[t]*infections_to.sum() # To avoid a timestep mismatch, make a rough guess how many newly diagnosed people there will be next timestep
+                tmpnewdx = raw_propdx[t]*infections_to.sum() # To avoid a timestep mismatch, make a rough guess how many newly diagnosed people there will be next timestep -- ignore deaths, among other things
                 totnewtreat =  max(0,proptx[t] * (currdx + tmpnewdx) - currtx)
             else:                     
                 totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
