@@ -620,6 +620,8 @@ def get_progset_summary(project, progset_name):
     for program_summary in program_summaries:
         if program_summary['category'] == 'No category':
             program_summary['category'] = 'Other'
+        if not program_summary['name']:
+            program_summary['name'] = program_summary['short']
 
     progset_summary = {
         'id': progset.uid,
