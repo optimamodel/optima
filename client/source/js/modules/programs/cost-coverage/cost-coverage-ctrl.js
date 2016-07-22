@@ -52,7 +52,7 @@ define(['./../module', 'underscore'], function (module, _) {
       ];
 
       vm.selectTab = selectTab;
-      vm.submit = submitOutcomes;
+      vm.submitOutcomes = submitOutcomes;
       vm.getProgramName = getProgramName;
       vm.makePopKeyLabel = makePopKeyLabel;
       vm.changeParameter = changeParameter;

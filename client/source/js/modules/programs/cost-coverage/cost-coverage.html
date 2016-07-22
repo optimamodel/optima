@@ -79,7 +79,7 @@
       <!-- Outcome functions tab -->
       <div style="width: 100%;" ng-if="vm.activeTab === 'outcome'">
 
-        <div style="margin: 30px 0 40px 0;">
+        <div style="margin: 30px 0 20px 0;">
           <label>
             Select parameter
           </label>
@@ -91,6 +91,10 @@
             ng-model="vm.selectedParameter">
           </select>
         </div>
+
+        <button class="btn __m" ng-click="vm.submitOutcomes()">Save outcome functions</button>
+        <br>
+        <br>
 
         <div ng-repeat="outcome in vm.selectedOutcomes">
 
