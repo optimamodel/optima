@@ -9,10 +9,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
         $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
-        load_projects(projects.data.projects);
+        loadProjects(projects.data.projects);
       }
 
-      function load_projects(projects) {
+      function loadProjects(projects) {
         $scope.projects = _.map(projects, function(project) {
           project.creationTime = Date.parse(project.creationTime);
           project.updatedTime = Date.parse(project.updatedTime);
@@ -72,33 +72,31 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
-      /**
-       * Opens an existing project using name and id.
-       */
       $scope.open = function (name, id) {
         activeProject.setActiveProjectFor(name, id, UserManager.data);
         $state.go('home');
       };
 
+      function getUniqueName(name, otherNames) {
+        var i = 0;
+        var uniqueName = name;
+        while (_.indexOf(otherNames, uniqueName) >= 0) {
+          i += 1;
+          uniqueName = name + ' (' + i + ')';
+        }
+        return uniqueName;
+      }
 
-      /**
-       * Copy an existing project using name and id.
-       */
       $scope.copy = function(name, id) {
-        modalService.showPrompt(
-          "Copy project?",
-          "New project name",
-          function(newName) {
-            projectApiService.copyProject(id, newName).success(function (response) {
-              projectApiService
-                  .getProjectList()
-                  .success(function(response) {
-                    toastr.success('Copied project ' + newName);
-                    load_projects(response.projects);
-                  });
+        var otherNames = _.pluck($scope.projects, 'name');
+        var newName = getUniqueName(name + '(Copy)', otherNames);
+        projectApiService.copyProject(id, newName).success(function (response) {
+          projectApiService.getProjectList()
+            .success(function(response) {
+              toastr.success('Copied project ' + newName);
+              loadProjects(response.projects);
             });
-          }
-        );
+        });
       };
 
       /**
