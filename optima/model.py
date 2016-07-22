@@ -764,7 +764,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     thisnewtreat = min(tmpnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
                     newtreat[cd4] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
                     newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # RS: I think it would be much nicer to do this with rates
-                    tmpnewtreat -= thisnewtreat # Adjust the number of available treatment spots
+                    tmpnewtreat -= newtreat[cd4].sum() # Adjust the number of available treatment spots
                     tmpnewtreat = max(tmpnewtreat,0.) # Prevent it going negative
 
                 dD.insert(0, inflows - outflows - newtreat[cd4])
