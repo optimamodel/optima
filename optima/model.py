@@ -50,6 +50,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
     raw_death      = zeros((npops, npts)) # Number of deaths per timestep
     raw_otherdeath = zeros((npops, npts)) # Number of other deaths per timestep
+    raw_propdx     = zeros(npts)          # Proportion diagnosed per timestep
+    raw_proptx     = zeros(npts)          # Proportion on treatment per timestep
     
     # Biological and failure parameters -- death etc
     prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50']]) # Ugly, but fast
@@ -734,12 +736,17 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Or, do not use the cascade
         else: 
             
+            currplhiv = people[allplhiv,:,t].sum() # WARNING, is this slow?
+            currdx    = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
+            currtx    = people[alltx,:,t].sum()
+            raw_propdx[t] = currdx/currplhiv
+            raw_proptx[t] = currtx/currdx
+            
             # WARNING, copied from above!!
-            if not(isnan(proptx[t])):
-                currdx = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
-                currtx = people[alltx,:,t].sum()
-                totnewtreat =  max(0,proptx[t] * currdx - currtx)
-            else:
+            if not(isnan(proptx[t])): 
+                tmpnewdx = raw_propdx[t]*infections_to.sum() # To avoid a timestep mismatch, make a rough guess how many newly diagnosed people there will be next timestep -- ignore deaths, among other things
+                totnewtreat =  max(0,proptx[t] * (currdx + tmpnewdx) - currtx)
+            else:                     
                 totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
             tmpnewtreat = totnewtreat # Copy for modification later
 
@@ -764,13 +771,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     thisnewtreat = min(tmpnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
                     newtreat[cd4] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
                     newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # RS: I think it would be much nicer to do this with rates
-                    tmpnewtreat -= thisnewtreat # Adjust the number of available treatment spots
+                    tmpnewtreat -= newtreat[cd4].sum() # Adjust the number of available treatment spots
                     tmpnewtreat = max(tmpnewtreat,0.) # Prevent it going negative
 
                 dD.insert(0, inflows - outflows - newtreat[cd4])
                 raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
                 raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                
+            
             
             ## 1st-line treatment
             for cd4 in range(ncd4):
@@ -914,7 +921,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[errstate,errpop,t+1] = 0.0 # Reset
                 
     
-    raw                 = odict()    # Sim output structure
+    raw               = odict()    # Sim output structure
     raw['tvec']       = tvec
     raw['popkeys']    = popkeys
     raw['people']     = people
@@ -925,6 +932,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['newtreat']   = raw_newtreat
     raw['death']      = raw_death
     raw['otherdeath'] = raw_otherdeath
+    raw['propdx']     = raw_propdx # WARNING, not used in results
+    raw['proptx']     = raw_proptx
     
     return raw # Return raw results
 
@@ -939,15 +948,16 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     
     Version: 2016jan23 by cliffk    
     '''
-    if simpars is None:
-        if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
-        simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
     if start is None: start = project.settings.start
-    if end is None: start = project.settings.end
-    if dt is None: start = project.settings.dt
+    if end is None: end = project.settings.end
+    if dt is None: dt = project.settings.dt
+    if simpars is None:
+        if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
+        simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
+
     try:
         raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
         # Append final people array to sim output

@@ -512,14 +512,9 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     labels = project.settings.statelabels
     
     if people is None:
-        if ind is None: ind = -1
-        if simind is None: simind = 0
-        if type(project.results[ind])==Resultset:
-            people = project.results[ind].raw[0]['people'] # Try to get default people to plot
-        elif type(project.results[ind])==Multiresultset:
-            people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  index -- WARNING, confused about indices
-        else:
-            raise OptimaException("Results don't seem to be either a Resultset or a Multiresultset: %s" % type(project.results[ind]))
+        if ind is None: ind=-1
+        if simind is None: people = project.results[ind].raw[0]['people'] # Try to get default people to plot
+        else: people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  indcex
     
     plotstyles = odict([
     ('susreg',   ('|','|')), 
@@ -698,6 +693,9 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
                     try:
                         this = plotdata[nplt,:]
                         ax.set_title(this[0])
+                        if   type(this[1])==odict:
+                            if len(this[1].keys())==1:  this[1] = this[1][0]
+                            elif len(this[1].keys())>1: raise OptimaException('Expecting a number or an array or even an odict with one key, but got an odict with multiple keys (%s)' % this[0])
                         if   isnumber(this[1]):        ax.plot(tvec, 0*tvec+this[1])
                         elif len(this[1])==0:          ax.set_title(this[0]+' is empty')
                         elif len(this[1])==1:          ax.plot(tvec, 0*tvec+this[1])
