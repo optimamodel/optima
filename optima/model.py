@@ -948,15 +948,16 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     
     Version: 2016jan23 by cliffk    
     '''
-    if simpars is None:
-        if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
-        simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
     if start is None: start = project.settings.start
-    if end is None: start = project.settings.end
-    if dt is None: start = project.settings.dt
+    if end is None: end = project.settings.end
+    if dt is None: dt = project.settings.dt
+    if simpars is None:
+        if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
+        simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
+
     try:
         raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
         # Append final people array to sim output
