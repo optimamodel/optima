@@ -4,6 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ModelCalibrationController', function (
       $scope, $http, info, modalService, $upload, $modal, $timeout, toastr) {
 
+
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
       console.log(JSON.stringify(val, null, 2));
@@ -11,33 +12,37 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var activeProjectInfo = info.data;
     var defaultParameters;
-    $scope.parsets = [];
-    $scope.activeParset = undefined;
-    $scope.state = {maxtime: '10'};
 
-    // Check if current active project has spreadsheet uploaded for it.
-    if (!activeProjectInfo.hasData) {
-      modalService.inform(
-        function (){ },
-        'Okay',
-        'Please upload spreadsheet to proceed.',
-        'Cannot proceed'
-      );
-      $scope.missingData = true;
-      return;
-    }
+    function initialize() {
 
-    // Fetching list of parsets for open project
-    $http.get('/api/project/' + activeProjectInfo.id + '/parsets').
-      success(function (response) {
+      $scope.parsets = [];
+      $scope.activeParset = undefined;
+      $scope.state = {maxtime: '10'};
+
+      // Check if current active project has spreadsheet uploaded for it.
+      if (!activeProjectInfo.hasData) {
+        modalService.inform(
+            function() {
+            },
+            'Okay',
+            'Please upload spreadsheet to proceed.',
+            'Cannot proceed'
+        );
+        $scope.missingData = true;
+        return;
+      }
+
+      // Fetching list of parsets for open project
+      $http.get('/api/project/' + activeProjectInfo.id + '/parsets').success(function(response) {
         var parsets = response.parsets;
-        if(parsets) {
+        if (parsets) {
           $scope.parsets = parsets;
           $scope.activeParset = parsets[0];
           initPollAutoCalibration();
           $scope.getGraphs();
         }
       });
+    }
 
     function getSelectors() {
       if ($scope.graphs) {
@@ -61,11 +66,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     // Fetching graphs for active parset
     $scope.getGraphs = function() {
       $http.get(
-          '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration',
-          {which: getSelectors()})
+        '/api/project/' + activeProjectInfo.id
+        + '/parsets/' + $scope.activeParset.id
+        + '/calibration',
+        {which: getSelectors()})
       .success(function (response) {
         setCalibrationData(response.calibration);
-        // console.log(JSON.stringify(response.calibration.parameters, null, 2))
       });
     };
 
@@ -327,16 +333,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         '/api/project/' + activeProjectInfo.id
           + '/parsets' + '/' + $scope.activeParset.id
           + '/calibration',
-        {
-          autofit: true,
-          which: getSelectors(),
-          parsetId: $scope.activeParset.id
-        })
+          {which: getSelectors()})
       .success(function(response) {
-        toastr.success('Autofitted graphs uploaded');
+        toastr.success('Graphs uploaded');
         setCalibrationData(response.calibration);
       });
     };
+
+    initialize();
 
   });
 });

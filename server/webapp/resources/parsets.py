@@ -7,7 +7,7 @@ from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import copy_parset, create_parset, load_parset_summaries, \
-    rename_parset, delete_parset, generate_parset_graphs, load_result_csv, \
+    rename_parset, delete_parset, load_parset_graphs, load_result_csv, \
     load_parameters, save_parameters, load_result_mpld3_graphs
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import get_post_data_json, get_upload_file
@@ -80,9 +80,9 @@ class ParsetCalibration(Resource):
             autofit: boolean - true loads the results from the autofit parameters
         """
         autofit = request.args.get('autofit', False)
-        calculation_type = 'autofit' if autofit else "calibration"
-        print "> Get calibration graphs for %s" % (calculation_type)
-        return generate_parset_graphs(project_id, parset_id, calculation_type)
+        # calculation_type = 'autofit' if autofit else "calibration"
+        # print "> Get calibration graphs for %s" % (calculation_type)
+        return load_parset_graphs(project_id, parset_id, "calibration")
 
     @swagger.operation(description='Updates a parset and returns the graphs for a parset_id')
     def post(self, project_id, parset_id):
@@ -95,12 +95,12 @@ class ParsetCalibration(Resource):
         """
         args = get_post_data_json()
         autofit = args.get('autofit', False)
-        calculation_type = 'autofit' if autofit else "calibration"
+        # calculation_type = 'autofit' if autofit else "calibration"
         parameters = args.get('parameters')
         which = args.get('which')
-        print "> Update calibration graphs for %s" % (calculation_type)
-        return generate_parset_graphs(
-            project_id, parset_id, calculation_type, which, parameters)
+        # print "> Update calibration graphs for %s" % (calculation_type)
+        return load_parset_graphs(
+            project_id, parset_id, "calibration", which, parameters)
 
 
 class ParsetAutofit(Resource):

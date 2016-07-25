@@ -58,7 +58,6 @@ def parse_work_log_record(work_log):
         'error_text': work_log.error,
         'start_time': work_log.start_time,
         'stop_time': work_log.stop_time,
-        'result_id': work_log.result_id,
         'project_id': work_log.project_id,
         'work_type': work_log.work_type
     }
@@ -107,7 +106,6 @@ def start_or_report_calculation(project_id, work_type):
             'error_text': str
             'start_time': datetime
             'stop_time': datetime
-            'result_id': uuid of Results
             'work_type': 'autofit' or 'optim-*'
         }
     """
@@ -187,7 +185,6 @@ def check_calculation_status(project_id, work_type):
             'error_text': str
             'start_time': datetime
             'stop_time': datetime
-            'result_id': uuid of Results
             'work_type': 'autofit' or 'optim-*'
         }
     """
@@ -205,7 +202,6 @@ def check_calculation_status(project_id, work_type):
             'error_text': None,
             'start_time': None,
             'stop_time': None,
-            'result_id': None,
             'work_type': ''
         }
     close_db_session(db_session)
@@ -221,15 +217,12 @@ def run_autofit(project_id, parset_id, maxtime=60):
     work_log = db_session.query(WorkLogDb).filter_by(
         project_id=project_id, work_type='autofit-' + str(parset_id)).first()
     work_log_id = work_log.id
-    project = work_log.load()
-    parset = get_parset_from_project_by_id(project, parset_id)
-    parset_name = parset.name
     close_db_session(db_session)
 
-    result = None
-    error_text = ""
-    status = 'completed'
     try:
+        project = work_log.load()
+        parset = get_parset_from_project_by_id(project, parset_id)
+        parset_name = parset.name
         assert work_log.status == "started"
         project.autofit(
             name=str(parset_name),
@@ -237,11 +230,14 @@ def run_autofit(project_id, parset_id, maxtime=60):
             maxtime=maxtime
         )
         result = project.parsets[str(parset_name)].getresults()
+        error_text = ""
+        status = 'completed'
     except Exception:
         var = traceback.format_exc()
         print ">> Error in autofit"
         error_text = var
         status = 'error'
+        result = None
 
     db_session = init_db_session()
     work_log = db_session.query(WorkLogDb).get(work_log_id)
@@ -252,23 +248,18 @@ def run_autofit(project_id, parset_id, maxtime=60):
     db_session.add(work_log)
 
     if result:
-
         print(">> Save autofitted parset '%s'" % parset_name)
         parset = project.parsets[parset_name]
 
         project_record = load_project_record(project_id, db_session=db_session)
         project.parsets[parset_name] = parset
         project_record.save_obj(project)
-
-        delete_result(project_id, parset.uid, 'calibration', db_session=db_session)
-        delete_result(project_id, parset.uid, 'autofit', db_session=db_session)
-
         result_record = update_or_create_result_record(
-            project, result, parset_name, 'autofit', db_session=db_session)
-        db_session.flush()
+            project, result, parset_name, 'calibration', db_session=db_session)
+        print ">> Save result '%s'" % result.name
         db_session.add(result_record)
-        work_log.result_id = result_record.id
 
+    db_session.flush()
     db_session.commit()
     close_db_session(db_session)
 
@@ -330,15 +321,6 @@ def run_optimization(project_id, optimization_id, maxtime):
             status='error'
             result = None
 
-    db_session = init_db_session()
-    work_log_record = db_session.query(WorkLogDb).get(work_log_id)
-    work_log_record.status = status
-    work_log_record.error = error_text
-    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
-    work_log_record.cleanup()
-    db_session.commit()
-    close_db_session(db_session)
-
     if result:
         db_session = init_db_session()
         delete_optimization_result(project_id, result.name, db_session)
@@ -349,5 +331,13 @@ def run_optimization(project_id, optimization_id, maxtime):
         db_session.commit()
         close_db_session(db_session)
 
+    db_session = init_db_session()
+    work_log_record = db_session.query(WorkLogDb).get(work_log_id)
+    work_log_record.status = status
+    work_log_record.error = error_text
+    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    work_log_record.cleanup()
+    db_session.commit()
+    close_db_session(db_session)
 
     print "> Finish optimization"

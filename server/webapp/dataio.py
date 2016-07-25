@@ -227,6 +227,8 @@ def save_project_as_new(project, user_id):
         parset.uid = op.uuid()
     for result in project.results.values():
         result.uid = op.uuid()
+    for optim in project.optims.values():
+        optim.uid = op.uuid()
 
     project.created = datetime.now(dateutil.tz.tzutc())
     project.modified = datetime.now(dateutil.tz.tzutc())
@@ -407,7 +409,7 @@ def save_parameters(project_id, parset_id, parameters):
     delete_result(project_id, parset_id, "autofit")
 
 
-def generate_parset_graphs(
+def load_parset_graphs(
         project_id, parset_id, calculation_type, which=None,
         parameters=None):
 
@@ -418,14 +420,12 @@ def generate_parset_graphs(
         print ">> Updating parset '%s'" % parset.name
         set_parameters_on_parset(parameters, parset)
         delete_result(project_id, parset_id, "calibration")
-        delete_result(project_id, parset_id, "autofit")
         update_project(project)
 
     result = load_result(project.uid, parset.uid, calculation_type)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
-        simparslist = parset.interp()
-        result = project.runsim(simpars=simparslist)
+        result = project.runsim(simpars=parset.interp())
         result_record = update_or_create_result_record(project, result, parset.name, calculation_type)
         db.session.add(result_record)
         db.session.commit()
@@ -493,7 +493,6 @@ def update_or_create_result_record(
     result_record.id = result.uid
     result_record.save_obj(result)
     db_session.add(result_record)
-    db_session.commit()
 
     return result_record
 
@@ -544,6 +543,7 @@ def load_result_by_optimization(project, optimization):
     result_name = "optim-" + optimization.name
     parset_id = project.parsets[optimization.parsetname].uid
 
+    print(">> Loading result '%s'" % result_name)
     result_records = db.session.query(ResultsDb).filter_by(
         project_id=project.uid,
         parset_id=parset_id,
@@ -553,6 +553,8 @@ def load_result_by_optimization(project, optimization):
         result = result_record.load()
         if result.name == result_name:
             return result
+
+    print(">> Not found result '%s'" % (optimization.name))
 
     return None
 
@@ -627,6 +629,7 @@ def load_optimization_graphs(project_id, optimization_id, which):
     if result is None:
         return {}
     else:
+        print("> Loading graphs for result '%s'" % result.name)
         return make_mpld3_graph_dict(result, which)
 
 
