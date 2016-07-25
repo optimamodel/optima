@@ -89,7 +89,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.copy = function(name, id) {
         var otherNames = _.pluck($scope.projects, 'name');
-        var newName = getUniqueName(name + ' (Copy)', otherNames);
+        var newName = getUniqueName(name, otherNames);
         projectApiService.copyProject(id, newName).success(function (response) {
           projectApiService.getProjectList()
             .success(function(response) {
