@@ -38,7 +38,7 @@ class OptimizationCalculation(Resource):
         data-json: maxtime: time to run in int
         """
         maxtime = get_post_data_json().get('maxtime')
-        return launch_optimization(project_id, optimization_id, maxtime), 201
+        return launch_optimization(project_id, optimization_id, int(maxtime)), 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):

@@ -155,18 +155,16 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
     work_status = db.Enum('started', 'completed', 'cancelled', 'error', 'blocked', name='work_status')
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
-    work_type = db.Column(db.String(32), default=None)
+    work_type = db.Column(db.String(128), default=None)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
-    parset_id = db.Column(UUID(True))
     result_id = db.Column(UUID(True), default=None)
     start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     stop_time = db.Column(db.DateTime(timezone=True), default=None)
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
 
-    def __init__(self, project_id, parset_id, work_type=None):
+    def __init__(self, project_id, work_type=None):
         self.project_id = project_id
-        self.parset_id = parset_id
         self.work_type = work_type
 
     def load(self):

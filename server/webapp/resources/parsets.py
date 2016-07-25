@@ -115,7 +115,7 @@ class ParsetAutofit(Resource):
         """
         from server.webapp.tasks import run_autofit, start_or_report_calculation
         maxtime = get_post_data_json().get('maxtime')
-        calc_status = start_or_report_calculation(project_id, parset_id, 'autofit')
+        calc_status = start_or_report_calculation(project_id, 'autofit-' + str(parset_id))
         if calc_status['status'] != "blocked":
             print "> Starting autofit for %s s" % maxtime
             run_autofit.delay(project_id, parset_id, maxtime)
@@ -129,7 +129,7 @@ class ParsetAutofit(Resource):
         """
         from server.webapp.tasks import check_calculation_status
         print "> Checking calc state"
-        calc_state = check_calculation_status(project_id, parset_id, 'autofit')
+        calc_state = check_calculation_status(project_id, 'autofit-' + str(parset_id))
         pprint.pprint(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])

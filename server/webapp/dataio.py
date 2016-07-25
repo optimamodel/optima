@@ -623,7 +623,6 @@ def save_optimization_summaries(project_id, optimization_summaries):
 def load_optimization_graphs(project_id, optimization_id, which):
     project = load_project(project_id)
     optimization = get_optimization_from_project(project, optimization_id)
-
     result = load_result_by_optimization(project, optimization)
     if result is None:
         return {}
@@ -633,66 +632,22 @@ def load_optimization_graphs(project_id, optimization_id, which):
 
 def check_optimization(project_id, optimization_id):
     from server.webapp.tasks import check_calculation_status
-
-    project = load_project(project_id)
-
-    optim = get_optimization_from_project(project, optimization_id)
-    parset = project.parsets[optim.parsetname]
-
     calc_state = check_calculation_status(
-        project_id,
-        parset.uid,
-        'optim-' + optim.name)
-
-    print "> Checking calc state"
-    print pformat(calc_state, indent=2)
-
+        project_id, 'optim-' + str(optimization_id))
+    print("> Checking calc state")
+    print(pformat(calc_state, indent=2))
     if calc_state['status'] == 'error':
         raise Exception(calc_state['error_text'])
-
     return calc_state
 
 
 def launch_optimization(project_id, optimization_id, maxtime):
-
     from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
-
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-
-    optim = get_optimization_from_project(project, optimization_id)
-    parset = project.parsets[optim.parsetname]
-
     calc_state = start_or_report_calculation(
-        project_id, parset.uid, 'optim-' + optim.name)
-
+        project_id, 'optim-' + str(optimization_id))
     if calc_state['status'] != 'started':
         return calc_state, 208
-
-    progset = project.progsets[optim.progsetname]
-
-    if not progset.readytooptimize():
-        error_msg = "Not ready to optimize\n"
-        costcov_errors = progset.hasallcostcovpars(detail=True)
-        if costcov_errors:
-            error_msg += "Missing: cost-coverage parameters of:\n"
-            error_msg += pformat(costcov_errors, indent=2)
-        covout_errors = progset.hasallcovoutpars(detail=True)
-        if covout_errors:
-            error_msg += "Missing: coverage-outcome parameters of:\n"
-            error_msg += pformat(covout_errors, indent=2)
-        shut_down_calculation(project_id, parset.uid, 'optimization')
-        raise Exception(error_msg)
-
-    objectives = normalize_obj(optim.objectives)
-    constraints = normalize_obj(optim.constraints)
-    constraints["max"] = op.odict(constraints["max"])
-    constraints["min"] = op.odict(constraints["min"])
-    constraints["name"] = op.odict(constraints["name"])
-
-    run_optimization.delay(
-        project_id, optim.name, parset.name, progset.name, objectives, constraints, maxtime)
-
+    run_optimization.delay(project_id, optimization_id, maxtime)
     return calc_state
 
 

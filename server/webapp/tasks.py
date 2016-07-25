@@ -7,10 +7,13 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 from server.api import app
 from server.webapp.dbmodels import WorkLogDb
-from server.webapp.dataio import (
-    update_or_create_result_record, load_project, load_project_record,
-    delete_result, delete_optimization_result)
+from server.webapp.dataio import update_or_create_result_record, \
+    load_project, load_project_record, delete_result, \
+    delete_optimization_result
+from server.webapp.parse import get_optimization_from_project
 from server.webapp.utils import normalize_obj
+
+import optima as op
 
 from celery import Celery
 
@@ -76,7 +79,7 @@ def close_db_session(db_session):
     db_session.bind.dispose() # pylint: disable=E1101
 
 
-def start_or_report_calculation(project_id, parset_id, work_type):
+def start_or_report_calculation(project_id, work_type):
     """
     Checks and sets up a WorkLog and WorkingProject for async calculation.
     A WorkingProject takes a given project, a chosen parset and a type of
@@ -94,7 +97,6 @@ def start_or_report_calculation(project_id, parset_id, work_type):
 
     Args:
         project_id: uuid of project that will be extracted and pickled for async calc
-        parset_id: uuid of chosen parset for the calculation
         work_type: "autofit" or "optimization"
 
     Returns:
@@ -118,7 +120,7 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     # then this calculation is blocked from starting
     is_ready_to_start = True
     work_log_records = db_session.query(WorkLogDb).filter_by(
-        project_id=project_id, parset_id=parset_id, work_type=work_type)
+        project_id=project_id, work_type=work_type)
     if work_log_records:
         for work_log_record in work_log_records:
             if work_log_record.status == 'started':
@@ -138,7 +140,7 @@ def start_or_report_calculation(project_id, parset_id, work_type):
         # create a work_log status is 'started by default'
         print ">> Create work log"
         work_log_record = WorkLogDb(
-            project_id=project_id, parset_id=parset_id, work_type=work_type)
+            project_id=project_id, work_type=work_type)
         work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
         db_session.add(work_log_record)
         db_session.flush()
@@ -153,7 +155,7 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     return calc_state
 
 
-def shut_down_calculation(project_id, parset_id, work_type):
+def shut_down_calculation(project_id, work_type):
     """
     Deletes all associated work_log_record's associated with these
     parameters so that the celery tasks with these parameters can
@@ -162,18 +164,17 @@ def shut_down_calculation(project_id, parset_id, work_type):
 
     Args:
         project_id: uuid of project that will be extracted and pickled for async calc
-        parset_id: uuid of chosen parset for the calculation
         work_type: "autofit" or "optimization"
     """
     db_session = init_db_session()
     work_log_records = db_session.query(WorkLogDb).filter_by(
-        project_id=project_id, parset_id=parset_id, work_type=work_type)
+        project_id=project_id, work_type=work_type)
     work_log_records.delete()
     db_session.commit()
     close_db_session(db_session)
 
 
-def check_calculation_status(project_id, parset_id, work_type):
+def check_calculation_status(project_id, work_type):
     """
     Checks the current calculation state of a project.
 
@@ -193,7 +194,7 @@ def check_calculation_status(project_id, parset_id, work_type):
 
     db_session = init_db_session()
     work_log_record = db_session.query(WorkLogDb)\
-        .filter_by(project_id=project_id, parset_id=parset_id, work_type=work_type)\
+        .filter_by(project_id=project_id, work_type=work_type)\
         .first()
     if work_log_record:
         print ">> Found existing job of '%s' with same project" % work_type
@@ -217,7 +218,8 @@ def run_autofit(project_id, parset_id, maxtime=60):
     print "> Start autofit for project %s" % project_id
 
     db_session = init_db_session()
-    work_log = db_session.query(WorkLogDb).filter_by(project_id=project_id).first()
+    work_log = db_session.query(WorkLogDb).filter_by(
+        project_id=project_id, work_type='autofit-' + str(parset_id)).first()
     work_log_id = work_log.id
     project = work_log.load()
     parset = get_parset_from_project_by_id(project, parset_id)
@@ -275,46 +277,58 @@ def run_autofit(project_id, parset_id, maxtime=60):
 
 
 @celery_instance.task()
-def run_optimization(
-        project_id, optimization_name, parset_name, progset_name,
-        objectives, constraints, maxtime):
+def run_optimization(project_id, optimization_id, maxtime):
     import traceback
 
-    print "> Start optimization '%s'" % optimization_name
-    print_odict("objectives", objectives)
-    print_odict("constraints", constraints)
-    print(">> maxtime = %f" % maxtime)
-
     db_session = init_db_session()
-    work_log = db_session.query(WorkLogDb).filter_by(project_id=project_id).first()
+    work_log = db_session.query(WorkLogDb).filter_by(
+        project_id=project_id, work_type='optim-' + str(optimization_id)).first()
     work_log_id = work_log.id
     project = work_log.load()
     close_db_session(db_session)
 
-    if not objectives['budget']:
-        objectives['budget'] = 1000000
-
-    error_text = ""
-    status = 'completed'
-    result = None
-    try:
-        # sanity check
-        assert work_log.status == "started"
-        parset = get_parset_from_project_by_id(project, work_log.parset_id)
-        assert parset_name == parset.name
-        result = project.optimize(
-            name=optimization_name,
-            parsetname=parset_name,
-            progsetname=progset_name,
-            objectives=objectives,
-            constraints=constraints,
-            maxtime=maxtime,
-        )
-    except Exception:
-        var = traceback.format_exc()
-        print ">> Error in calculation"
-        error_text = var
-        status='error'
+    optim = get_optimization_from_project(project, optimization_id)
+    progset = project.progsets[optim.progsetname]
+    if not progset.readytooptimize():
+        error_text = "Not ready to optimize\n"
+        costcov_errors = progset.hasallcostcovpars(detail=True)
+        if costcov_errors:
+            error_text += "Missing: cost-coverage parameters of:\n"
+            error_text += pformat(costcov_errors, indent=2)
+        covout_errors = progset.hasallcovoutpars(detail=True)
+        if covout_errors:
+            error_text += "Missing: coverage-outcome parameters of:\n"
+            error_text += pformat(covout_errors, indent=2)
+        result = None
+        status = 'cancelled'
+    else:
+        try:
+            assert work_log.status == "started"
+            print "> Start optimization '%s'" % optim.name
+            objectives = normalize_obj(optim.objectives)
+            constraints = normalize_obj(optim.constraints)
+            constraints["max"] = op.odict(constraints["max"])
+            constraints["min"] = op.odict(constraints["min"])
+            constraints["name"] = op.odict(constraints["name"])
+            print_odict("objectives", objectives)
+            print_odict("constraints", constraints)
+            print(">> maxtime = %f" % maxtime)
+            result = project.optimize(
+                name=optim.name,
+                parsetname=optim.parsetname,
+                progsetname=optim.progsetname,
+                objectives=objectives,
+                constraints=constraints,
+                maxtime=maxtime,
+            )
+            error_text = ""
+            status = 'completed'
+        except Exception:
+            var = traceback.format_exc()
+            print "> Error in calculation"
+            error_text = var
+            status='error'
+            result = None
 
     db_session = init_db_session()
     work_log_record = db_session.query(WorkLogDb).get(work_log_id)
@@ -322,16 +336,18 @@ def run_optimization(
     work_log_record.error = error_text
     work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
     work_log_record.cleanup()
-
-    if result:
-        delete_optimization_result(project_id, result.name, db_session)
-        result_record = update_or_create_result_record(
-            project, result, parset_name, 'optimization', db_session=db_session)
-        db_session.add(result_record)
-        db_session.flush()
-        work_log_record.result_id = result_record.id
-
     db_session.commit()
     close_db_session(db_session)
+
+    if result:
+        db_session = init_db_session()
+        delete_optimization_result(project_id, result.name, db_session)
+        result_record = update_or_create_result_record(
+            project, result, optim.parsetname, 'optimization', db_session=db_session)
+        db_session.add(result_record)
+        db_session.flush()
+        db_session.commit()
+        close_db_session(db_session)
+
 
     print "> Finish optimization"
