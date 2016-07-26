@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.factory('globalOptimizationPoller', ['$http', '$timeout', function($http, $timeout) {
 
-    var optimPolls = {}
+    var optimPolls = {};
 
     function getOptimPoll(optimId) {
       if (!(optimId in optimPolls)) {
@@ -204,6 +204,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if (response.status === 'started') {
           initPollOptimizations();
         } else {
+          $scope.statusMessage = 'Loading graphs...';
           $scope.getOptimizationGraphs();
         }
       });
@@ -327,9 +328,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return;
       }
       if (response.status === 'completed') {
-        $scope.statusMessage = '';
+        $scope.statusMessage = 'Loading graphs...';
         toastr.success('Optimization completed');
-        console.log('Get graphs of', $scope.state.activeOptimization.name)
         $scope.getOptimizationGraphs();
       } else if (response.status === 'error') {
         $scope.statusMessage = 'Optimization failed';
@@ -382,6 +382,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.graphs = response.graphs;
         }
         $scope.state.isRunnable = true;
+        $scope.statusMessage = '';
       })
       .error(function(response) {
         $scope.state.isRunnable = true;
