@@ -215,10 +215,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.state.activeOptimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
-        var rename = function (name) {
-          $scope.state.activeOptimization.name = name;
-        };
-        openOptimizationModal(rename, 'Rename optimization', $scope.state.optimizations, $scope.state.activeOptimization.name, 'Rename', true);
+        openOptimizationModal(
+          function(name) {
+            $scope.state.activeOptimization.name = name;
+            saveOptimizations();
+          },
+          'Rename optimization',
+          $scope.state.optimizations,
+          $scope.state.activeOptimization.name,
+          'Rename',
+          true);
       }
     };
 
@@ -227,13 +233,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.state.activeOptimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
-        var rename = function (name) {
-          var copyOptimization = angular.copy($scope.state.activeOptimization);
-          copyOptimization.name = name;
-          $scope.setActiveOptimization(copyOptimization);
-          $scope.state.optimizations.push($scope.state.activeOptimization);
-        };
-        openOptimizationModal(rename, 'Copy optimization', $scope.optimizations, $scope.state.activeOptimization.name + ' copy', 'Copy');
+        openOptimizationModal(
+          function (name) {
+            var copyOptimization = angular.copy($scope.state.activeOptimization);
+            copyOptimization.name = name;
+            $scope.setActiveOptimization(copyOptimization);
+            $scope.state.optimizations.push($scope.state.activeOptimization);
+            saveOptimizations();
+          },
+          'Copy optimization',
+          $scope.optimizations,
+          $scope.state.activeOptimization.name + ' copy',
+          'Copy');
       }
     };
 
@@ -253,25 +264,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     }
 
-    var removeActiveOptimization = function () {
-      $scope.state.optimizations = _.filter($scope.state.optimizations, function (optimization) {
-        return optimization.name !== $scope.state.activeOptimization.name;
-      });
-      if($scope.state.optimizations && $scope.state.optimizations.length > 0) {
-        $scope.state.activeOptimization = $scope.state.optimizations[0];
-      } else {
-        $scope.state.activeOptimization = undefined;
-      }
-      saveOptimizations();
-    };
-
-    // Delete optimization
     $scope.deleteOptimization = function() {
       if (!$scope.state.activeOptimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
         modalService.confirm(
-          function () { removeActiveOptimization() },
+          function () {
+            function isActive(optimization) {
+              return optimization.name !== $scope.state.activeOptimization.name;
+            }
+            $scope.state.optimizations = _.filter($scope.state.optimizations, isActive);
+            if($scope.state.optimizations && $scope.state.optimizations.length > 0) {
+              $scope.state.activeOptimization = $scope.state.optimizations[0];
+            } else {
+              $scope.state.activeOptimization = undefined;
+            }
+            saveOptimizations();
+          },
           _.noop,
           'Yes, remove this optimization',
           'No',
