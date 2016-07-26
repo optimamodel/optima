@@ -4,12 +4,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.factory('globalOptimizationPoller', ['$http', '$timeout', function($http, $timeout) {
 
-    var optimPolls = {
-      'date': new Date(),
-    };
+    var optimPolls = {}
 
     function getOptimPoll(optimId) {
       if (!(optimId in optimPolls)) {
+        console.log('Creating polling slot for', optimId)
         optimPolls[optimId] = {isRunning: false}
       }
       return optimPolls[optimId];
@@ -22,11 +21,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       optimPoll.callback = callback;
       optimPoll.name = optimName;
 
-      console.log('Init polling', optimPoll);
-
       if (!optimPoll.isRunning) {
 
-        console.log('Launch polling', optimName);
+        console.log('Launch polling for', optimName, optimId);
+        optimPoll.isRunning = true;
 
         function poller() {
           var optimPoll = getOptimPoll(optimId);
@@ -49,18 +47,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
         poller();
 
-        optimPoll.isRunning = true;
       } else {
-        console.log('Taking over polling', optimName);
+        console.log('Taking over polling', optimName, optimId);
       }
 
     }
 
     function end(optimId) {
       var optimPoll = getOptimPoll(optimId);
-      console.log('Stopping poller for', optimId, optimPolls);
-      optimPoll.isRunning = false;
-      $timeout.cancel(optimPoll.timer);
+      console.log('Stopping polling for', optimId, optimPoll);
+      if (optimPoll.isRunning) {
+        optimPoll.isRunning = false;
+        $timeout.cancel(optimPoll.timer);
+      }
     }
 
     return {
@@ -94,6 +93,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.state = {
         activeProject: activeProject.data,
         maxtime: 10,
+        isRunnable: false,
         optimizations: []
       };
 
@@ -172,11 +172,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       openOptimizationModal(addNewOptimization, 'Add optimization', $scope.state.optimizations, null, 'Add');
     };
 
+    $scope.checkNotSavable = function() {
+      return !$scope.state.activeOptimization;
+    };
+
+    $scope.checkNotRunnable = function() {
+      return !$scope.state.activeOptimization || !$scope.state.activeOptimization.id || !$scope.state.isRunnable;
+    };
+
     $scope.setActiveOptimization = function(optimization) {
       if ($scope.state.activeOptimization) {
         globalOptimizationPoller.end($scope.state.activeOptimization.id);
       }
 
+      $scope.state.isRunnable = false;
       $scope.state.activeOptimization = optimization;
       $scope.state.constraintKeys = _.keys(optimization.constraints.name);
       $scope.state.objectives = objectives[optimization.which];
@@ -287,6 +296,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.startOptimization = function() {
       if($scope.state.activeOptimization.id) {
+        $scope.state.isRunnable = false;
         $http.post(
           '/api/project/' + $scope.state.activeProject.id
             + '/optimizations/' + $scope.state.activeOptimization.id
@@ -324,6 +334,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       } else if (response.status === 'error') {
         $scope.statusMessage = 'Optimization failed';
         $scope.errorMessage = response.error_text;
+        $scope.state.isRunnable = true;
       } else if (response.status === 'started') {
         var start = new Date(response.start_time);
         var now = new Date();
@@ -333,6 +344,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         $scope.errorMessage = response.error_text;
         $scope.statusMessage = 'Error polling optimization.';
+        $scope.state.isRunnable = true;
       }
     }
 
@@ -369,8 +381,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           toastr.success('Graphs loaded');
           $scope.graphs = response.graphs;
         }
+        $scope.state.isRunnable = true;
       })
       .error(function(response) {
+        $scope.state.isRunnable = true;
         toastr.error('response');
       });
     };

@@ -33,14 +33,14 @@
             value="Save Optimization"
             class="updateGraph btn"
             ng-click="saveOptimizationForm(optimizationForm)"
-            ng-disabled="!state.activeOptimization"/>
+            ng-disabled="checkNotSavale()"/>
         &nbsp;
         <input
             type="button"
             value="Run Optimization"
             class="updateGraph btn"
             ng-click="startOptimization()"
-            ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/>
+            ng-disabled="checkNotRunnable()"/>
         &nbsp;
         &nbsp;
         Run optimization for about
