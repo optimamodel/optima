@@ -629,7 +629,7 @@ def load_optimization_graphs(project_id, optimization_id, which):
     if result is None:
         return {}
     else:
-        print("> Loading graphs for result '%s'" % result.name)
+        print(">> Loading graphs for result '%s'" % result.name)
         return make_mpld3_graph_dict(result, which)
 
 

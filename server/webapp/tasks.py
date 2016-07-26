@@ -211,7 +211,8 @@ def check_calculation_status(project_id, work_type):
 @celery_instance.task()
 def run_autofit(project_id, parset_id, maxtime=60):
     import traceback
-    print "> Start autofit for project %s" % project_id
+    print "> Start autofit for project '%s' work_type='%s'" % (
+        project_id, 'autofit-' + str(parset_id))
 
     db_session = init_db_session()
     work_log = db_session.query(WorkLogDb).filter_by(
@@ -221,23 +222,41 @@ def run_autofit(project_id, parset_id, maxtime=60):
 
     try:
         project = work_log.load()
-        parset = get_parset_from_project_by_id(project, parset_id)
-        parset_name = parset.name
+        orig_parset = get_parset_from_project_by_id(project, parset_id)
+        orig_parset_name = orig_parset.name
+        autofit_parset_name = "autofit-"+str(orig_parset_name)
         assert work_log.status == "started"
         project.autofit(
-            name=str(parset_name),
-            orig=str(parset_name),
+            name=orig_parset_name,
+            orig=orig_parset_name,
             maxtime=maxtime
         )
-        result = project.parsets[str(parset_name)].getresults()
+        autofit_parset = project.parsets[orig_parset_name]
+        result = project.parsets[orig_parset_name].getresults()
         error_text = ""
         status = 'completed'
     except Exception:
-        var = traceback.format_exc()
-        print ">> Error in autofit"
-        error_text = var
+        error_text = traceback.format_exc()
+        print(">> Error in autofit")
+        print(error_text)
         status = 'error'
         result = None
+
+    if result:
+        print(">> Save autofitted parset '%s' to '%s' " % (autofit_parset, orig_parset_name))
+        db_session = init_db_session()
+        project_record = load_project_record(project_id, db_session=db_session)
+        autofit_parset.uid = orig_parset.uid
+        project.parsets[autofit_parset_name] = autofit_parset
+        project_record.save_obj(project)
+        db_session.add(project_record)
+        result.uid = op.uuid()
+        result_record = update_or_create_result_record(
+            project, result, orig_parset_name, 'calibration', db_session=db_session)
+        print ">> Save result '%s'" % result.name
+        db_session.add(result_record)
+        db_session.commit()
+        close_db_session(db_session)
 
     db_session = init_db_session()
     work_log = db_session.query(WorkLogDb).get(work_log_id)
@@ -246,20 +265,6 @@ def run_autofit(project_id, parset_id, maxtime=60):
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
     work_log.cleanup()
     db_session.add(work_log)
-
-    if result:
-        print(">> Save autofitted parset '%s'" % parset_name)
-        parset = project.parsets[parset_name]
-
-        project_record = load_project_record(project_id, db_session=db_session)
-        project.parsets[parset_name] = parset
-        project_record.save_obj(project)
-        result_record = update_or_create_result_record(
-            project, result, parset_name, 'calibration', db_session=db_session)
-        print ">> Save result '%s'" % result.name
-        db_session.add(result_record)
-
-    db_session.flush()
     db_session.commit()
     close_db_session(db_session)
 
@@ -285,25 +290,25 @@ def run_optimization(project_id, optimization_id, maxtime):
         costcov_errors = progset.hasallcostcovpars(detail=True)
         if costcov_errors:
             error_text += "Missing: cost-coverage parameters of:\n"
-            error_text += pformat(costcov_errors, indent=2)
+            error_text += pprint.pformat(costcov_errors, indent=2)
         covout_errors = progset.hasallcovoutpars(detail=True)
         if covout_errors:
             error_text += "Missing: coverage-outcome parameters of:\n"
-            error_text += pformat(covout_errors, indent=2)
+            error_text += pprint.pformat(covout_errors, indent=2)
         result = None
-        status = 'cancelled'
+        status = 'error'
     else:
         try:
             assert work_log.status == "started"
-            print "> Start optimization '%s'" % optim.name
+            print ">> Start optimization '%s'" % optim.name
             objectives = normalize_obj(optim.objectives)
             constraints = normalize_obj(optim.constraints)
             constraints["max"] = op.odict(constraints["max"])
             constraints["min"] = op.odict(constraints["min"])
             constraints["name"] = op.odict(constraints["name"])
+            print(">> maxtime = %f" % maxtime)
             print_odict("objectives", objectives)
             print_odict("constraints", constraints)
-            print(">> maxtime = %f" % maxtime)
             result = project.optimize(
                 name=optim.name,
                 parsetname=optim.parsetname,
@@ -316,7 +321,8 @@ def run_optimization(project_id, optimization_id, maxtime):
             status = 'completed'
         except Exception:
             var = traceback.format_exc()
-            print "> Error in calculation"
+            print(">> Error in calculation")
+            print(var)
             error_text = var
             status='error'
             result = None
@@ -324,6 +330,7 @@ def run_optimization(project_id, optimization_id, maxtime):
     if result:
         db_session = init_db_session()
         delete_optimization_result(project_id, result.name, db_session)
+        result.uid = op.uuid()
         result_record = update_or_create_result_record(
             project, result, optim.parsetname, 'optimization', db_session=db_session)
         db_session.add(result_record)

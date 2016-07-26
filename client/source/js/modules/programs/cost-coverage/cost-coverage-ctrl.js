@@ -120,7 +120,9 @@ define(['./../module', 'underscore'], function (module, _) {
       var outcomes = angular.copy(vm.outcomes);
       consoleLogJson('submitting outcomes', outcomes);
       $http.put(
-        '/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgset.id + '/effects',
+        '/api/project/' + vm.openProject.id
+        + '/progsets/' + vm.selectedProgset.id
+        + '/effects',
         outcomes)
       .success(function (response) {
         toastr.success('Outcomes were saved');
