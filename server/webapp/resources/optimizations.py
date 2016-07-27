@@ -31,16 +31,6 @@ class Optimizations(Resource):
         return save_optimization_summaries(project_id, optimization_summaries)
 
 
-@swagger.operation(summary="Update from JSON file of the parameters")
-def post(self, project_id, parset_id):
-    """
-    POST /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data
-    file-upload
-    """
-    par_json = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-    print("> Upload parset JSON file '%s'" % par_json)
-
-
 class OptimizationUpload(Resource):
     method_decorators = [report_exception, login_required]
 

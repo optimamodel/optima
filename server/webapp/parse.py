@@ -1107,7 +1107,9 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
 
         if id is None:
             optim = op.Optim(project=project)
+            print(">> Creating new optimization '%s'" % optim.uid)
         else:
+            print(">> Updating optimization '%s'" % id)
             optim = get_optimization_from_project(project, id)
 
         optim.name = summary["name"]

@@ -129,7 +129,6 @@ class ResultsDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     parset_id = db.Column(UUID(True))
-    # When deleting a parset we only delete results of type CALIBRATION
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='SET NULL'))
     calculation_type = db.Column(db.Text)
 

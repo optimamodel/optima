@@ -28,22 +28,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         function poller() {
           var optimPoll = getOptimPoll(optimId);
-          $http.get(
-            '/api/project/' + optimPoll.projectId
-            + '/optimizations/' + optimPoll.optimId
-            + '/results')
-          .success(function(response) {
-            if (response.status === 'started') {
-              optimPoll.timer = $timeout(poller, 1000);
-            } else {
+          $http
+            .get(
+              '/api/project/' + optimPoll.projectId
+              + '/optimizations/' + optimPoll.optimId
+              + '/results')
+            .success(function(response) {
+              if (response.status === 'started') {
+                optimPoll.timer = $timeout(poller, 1000);
+              } else {
+                end(optimId);
+              }
+              optimPoll.callback(optimId, response);
+            })
+            .error(function(response) {
               end(optimId);
-            }
-            optimPoll.callback(optimId, response);
-          })
-          .error(function() {
-            end(optimId);
-            optimPoll.callback(optimId, response);
-          });
+              optimPoll.callback(optimId, response);
+            });
         }
         poller();
 
@@ -175,32 +176,39 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.graphs = {};
       $scope.statusMessage = '';
 
-      $http.get(
-        '/api/project/' + $scope.state.activeProject.id
+      // not a new optimization
+      if ($scope.state.activeOptimization.id) {
+        $http.get(
+          '/api/project/' + $scope.state.activeProject.id
           + '/optimizations/' + $scope.state.activeOptimization.id
           + '/results')
-      .success(function (response) {
-        if (response.status === 'started') {
-          initPollOptimizations();
-        } else {
-          $scope.statusMessage = 'Loading graphs...';
-          $scope.getOptimizationGraphs();
-        }
-      });
+          .success(function(response) {
+            if (response.status === 'started') {
+              initPollOptimizations();
+            } else {
+              $scope.statusMessage = 'Checking for pre-calculated figures...';
+              $scope.getOptimizationGraphs();
+            }
+          });
+      }
     };
 
     function loadOptimizations(response) {
       toastr.success('Saved optimization');
+      var name = null;
+      if (!_.isUndefined($scope.state.activeOptimization)) {
+        name = $scope.state.activeOptimization.name;
+      }
       $scope.state.optimizations = response.optimizations;
       console.log('returned saved optimizations', $scope.state.optimizations);
-      if (!_.isUndefined($scope.state.activeOptimization)) {
-        var name = $scope.state.activeOptimization.name;
-        $scope.state.activeOptimization = _.findWhere($scope.state.optimizations, { 'name': name });
+      if (name !== null) {
+        $scope.state.activeOptimization = _.findWhere(
+            $scope.state.optimizations, { 'name': name });
       }
     }
 
     function saveOptimizations() {
-      console.log('saving', $scope.state.optimizations);
+      console.log('saving optimizations', $scope.state.optimizations);
       $http.post(
         '/api/project/' + $scope.state.activeProject.id + '/optimizations',
         $scope.state.optimizations)
@@ -265,7 +273,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         'Add optimization',
         $scope.state.optimizations,
         null,
-          'Add');
+        'Add');
     };
 
     $scope.renameOptimization = function () {
@@ -293,6 +301,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           function (name) {
             var copyOptimization = angular.copy($scope.state.activeOptimization);
             copyOptimization.name = name;
+            delete copyOptimization.id;
             $scope.setActiveOptimization(copyOptimization);
             $scope.state.optimizations.push($scope.state.activeOptimization);
             saveOptimizations();
@@ -362,10 +371,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.validateOptimizationForm = function(optimizationForm) {
-      optimizationForm.progset.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.progset_id));
-      optimizationForm.parset.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.parset_id));
-      optimizationForm.start.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.start));
-      optimizationForm.end.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.end));
+      optimizationForm.progset.$setValidity(
+          "required",
+          !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.progset_id));
+      optimizationForm.parset.$setValidity(
+          "required",
+          !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.parset_id));
+      optimizationForm.start.$setValidity(
+          "required",
+          !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.start));
+      optimizationForm.end.$setValidity(
+          "required",
+          !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.end));
     };
 
     $scope.startOptimization = function() {
@@ -403,10 +420,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.statusMessage = 'Loading graphs...';
         toastr.success('Optimization completed');
         $scope.getOptimizationGraphs();
-      } else if (response.status === 'error') {
-        $scope.statusMessage = 'Optimization failed';
-        $scope.errorMessage = response.error_text;
-        $scope.state.isRunnable = true;
       } else if (response.status === 'started') {
         var start = new Date(response.start_time);
         var now = new Date();
@@ -414,8 +427,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var seconds = parseInt(diff / 1000);
         $scope.statusMessage = "Optimization running for " + seconds + " s";
       } else {
-        $scope.errorMessage = response.error_text;
-        $scope.statusMessage = 'Error polling optimization.';
+        $scope.statusMessage = 'Optimization failed';
         $scope.state.isRunnable = true;
       }
     }

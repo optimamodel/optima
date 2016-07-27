@@ -208,19 +208,36 @@ def check_calculation_status(project_id, work_type):
     return result
 
 
+def clear_work_log(project_id, work_type):
+    print(">> Deleting work logs of '%s'" % work_type)
+    db_session = init_db_session()
+    work_logs = db_session.query(WorkLogDb).filter_by(project_id=project_id, work_type=work_type)
+    for work_log in work_logs:
+        work_log.cleanup()
+    work_logs.delete()
+    db_session.commit()
+    close_db_session(db_session)
+
+
 @celery_instance.task()
 def run_autofit(project_id, parset_id, maxtime=60):
     import traceback
-    print "> Start autofit for project '%s' work_type='%s'" % (
-        project_id, 'autofit-' + str(parset_id))
+
+    work_type = 'autofit-' + str(parset_id)
+    print("> Start autofit for project '%s' work_type='%s'" % (project_id, work_type))
 
     db_session = init_db_session()
     work_log = db_session.query(WorkLogDb).filter_by(
-        project_id=project_id, work_type='autofit-' + str(parset_id)).first()
-    work_log_id = work_log.id
+        project_id=project_id, work_type=work_type).first()
     close_db_session(db_session)
 
+    if work_log is None:
+        print("> Error: couldn't find work log")
+        return
+
+    result = None
     try:
+        work_log_id = work_log.id
         project = work_log.load()
         orig_parset = get_parset_from_project_by_id(project, parset_id)
         orig_parset_name = orig_parset.name
@@ -237,10 +254,9 @@ def run_autofit(project_id, parset_id, maxtime=60):
         status = 'completed'
     except Exception:
         error_text = traceback.format_exc()
+        status = 'error'
         print(">> Error in autofit")
         print(error_text)
-        status = 'error'
-        result = None
 
     if result:
         print(">> Save autofitted parset '%s' to '%s' " % (autofit_parset, orig_parset_name))
@@ -253,7 +269,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
         result.uid = op.uuid()
         result_record = update_or_create_result_record(
             project, result, orig_parset_name, 'calibration', db_session=db_session)
-        print ">> Save result '%s'" % result.name
+        print(">> Save result '%s'" % result.name)
         db_session.add(result_record)
         db_session.commit()
         close_db_session(db_session)
@@ -268,7 +284,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
     db_session.commit()
     close_db_session(db_session)
 
-    print "> Finish autofit"
+    print("> Finish autofit")
 
 
 
@@ -279,27 +295,40 @@ def run_optimization(project_id, optimization_id, maxtime):
     db_session = init_db_session()
     work_log = db_session.query(WorkLogDb).filter_by(
         project_id=project_id, work_type='optim-' + str(optimization_id)).first()
-    work_log_id = work_log.id
-    project = work_log.load()
     close_db_session(db_session)
 
-    optim = get_optimization_from_project(project, optimization_id)
-    progset = project.progsets[optim.progsetname]
-    if not progset.readytooptimize():
-        error_text = "Not ready to optimize\n"
-        costcov_errors = progset.hasallcostcovpars(detail=True)
-        if costcov_errors:
-            error_text += "Missing: cost-coverage parameters of:\n"
-            error_text += pprint.pformat(costcov_errors, indent=2)
-        covout_errors = progset.hasallcovoutpars(detail=True)
-        if covout_errors:
-            error_text += "Missing: coverage-outcome parameters of:\n"
-            error_text += pprint.pformat(covout_errors, indent=2)
-        result = None
+    if work_log is None:
+        print(">> Error: couldn't find work log")
+        return
+
+    result = None
+    status = 'started'
+    error_text = ""
+    try:
+        assert work_log.status == "started"
+        work_log_id = work_log.id
+        project = work_log.load()
+        optim = get_optimization_from_project(project, optimization_id)
+        progset = project.progsets[optim.progsetname]
+        if not progset.readytooptimize():
+            status = 'error'
+            error_text = "Not ready to optimize\n"
+            costcov_errors = progset.hasallcostcovpars(detail=True)
+            if costcov_errors:
+                error_text += "Missing: cost-coverage parameters of:\n"
+                error_text += pprint.pformat(costcov_errors, indent=2)
+            covout_errors = progset.hasallcovoutpars(detail=True)
+            if covout_errors:
+                error_text += "Missing: coverage-outcome parameters of:\n"
+                error_text += pprint.pformat(covout_errors, indent=2)
+    except Exception:
         status = 'error'
-    else:
+        error_text = traceback.format_exc()
+        print(">> Error in initialization")
+        print(error_text)
+
+    if status == 'started':
         try:
-            assert work_log.status == "started"
             print ">> Start optimization '%s'" % optim.name
             objectives = normalize_obj(optim.objectives)
             constraints = normalize_obj(optim.constraints)
@@ -317,15 +346,12 @@ def run_optimization(project_id, optimization_id, maxtime):
                 constraints=constraints,
                 maxtime=maxtime,
             )
-            error_text = ""
             status = 'completed'
         except Exception:
-            var = traceback.format_exc()
+            status = 'error'
+            error_text = traceback.format_exc()
             print(">> Error in calculation")
-            print(var)
-            error_text = var
-            status='error'
-            result = None
+            print(error_text)
 
     if result:
         db_session = init_db_session()
@@ -334,7 +360,6 @@ def run_optimization(project_id, optimization_id, maxtime):
         result_record = update_or_create_result_record(
             project, result, optim.parsetname, 'optimization', db_session=db_session)
         db_session.add(result_record)
-        db_session.flush()
         db_session.commit()
         close_db_session(db_session)
 
@@ -347,4 +372,4 @@ def run_optimization(project_id, optimization_id, maxtime):
     db_session.commit()
     close_db_session(db_session)
 
-    print "> Finish optimization"
+    print ">> Finish optimization"
