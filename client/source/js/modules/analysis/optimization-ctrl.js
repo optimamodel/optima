@@ -354,8 +354,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               url: '/api/project/' + $scope.state.activeProject.id
                     + '/optimization/' + $scope.state.activeOptimization.id
                     + '/upload',
-              file: event.target.files[0],
-              fields: {optimId: $scope.state.activeOptimization.id}
+              file: event.target.files[0]
             }).success(function(response) {
               loadOptimizations(response);
             });

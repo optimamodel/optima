@@ -9,7 +9,7 @@ from server.webapp.dataio import load_parameters_from_progset_parset, \
     load_target_popsizes, load_progset_summaries, create_progset, \
     save_progset, delete_progset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_costcov_graph, \
-    load_progset_summary
+    upload_progset
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import get_post_data_json, get_upload_file
 
@@ -66,10 +66,10 @@ class ProgsetUploadDownload(Resource):
         POST /api/project/<uuid:project_id>/progset/<uuid:progset_id>/data
         file-upload
         """
-        progset_json = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        print("> Upload progset JSON file '%s'" % progset_json)
-        progset_summary = json.load(open(progset_json))
-        return save_progset(project_id, progset_id, progset_summary)
+        json_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        print("> Upload progset JSON file '%s'" % json_fname)
+        progset_summary = json.load(open(json_fname))
+        return upload_progset(project_id, progset_id, progset_summary)
 
 
 class ProgsetParameters(Resource):
