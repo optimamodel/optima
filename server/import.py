@@ -11,8 +11,11 @@ from hashlib import sha224
 @click.option('--username', default='test')
 @click.option('--password', default='test')
 @click.option('--overwrite', default=False)
-@click.argument('projectpath', nargs=-1, type=click.Path(exists=True))
-def main(projectpath, new, username, password, overwrite):
+@click.argument('project_paths', nargs=-1, type=click.Path(exists=True))
+def main(project_paths, new, username, password, overwrite):
+
+    project_paths = list(set([click.format_filename(x) for x in project_paths]))
+    click.echo("Preparing to upload %s projects to %s..." % (len(project_paths), new))
 
     new_session = requests.Session()
 
@@ -38,7 +41,7 @@ def main(projectpath, new, username, password, overwrite):
 
     projects = {x["name"]:x for x in new_projects}
 
-    for project_path in list(set([click.format_filename(x) for x in projectpath])):
+    for project_path in project_paths:
         project_name = os.path.basename(project_path)[:-4]
 
         f = open(project_path, 'rb')

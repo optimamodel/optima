@@ -9,7 +9,8 @@ from hashlib import sha224
 @click.option('--old', default="http://athena.optimamodel.com")
 @click.option('--username', default='test')
 @click.option('--password', default='test')
-def main(old, new, username, password):
+@click.option('--overwrite', default=False)
+def main(old, username, password, overwrite):
 
     old_session = requests.Session()
 
@@ -27,7 +28,10 @@ def main(old, new, username, password):
         sys.exit(1)
     click.echo("Logged in as %s on old server" % (old_login.json()["displayName"],))
 
-    project_path = '%sprojects' % (user,)
+    old_projects = old_session.get(old + "/api/project").json()["projects"]
+    click.echo("Downloading projects...")
+
+    project_path = '%sprojects' % (username,)
 
     try:
         os.makedirs(project_path)
@@ -39,8 +43,11 @@ def main(old, new, username, password):
         url = old + "/api/project/" + project["id"] + "/data"
 
         if os.path.isfile(project_path +  "/" + project["name"] + ".prj"):
-            click.echo("Downloaded already, skipping...")
-            continue
+            if overwrite:
+                click.echo("Downloaded already, overwriting...")
+            else:
+                click.echo("Downloaded already, skipping (set --overwrite=True if you want to overwrite)")
+                continue
 
         download = old_session.get(url)
 
