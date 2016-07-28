@@ -235,21 +235,27 @@ def run_autofit(project_id, parset_id, maxtime=60):
         print("> Error: couldn't find work log")
         return
 
+    work_log_id = work_log.id
+
     result = None
     try:
-        work_log_id = work_log.id
         project = work_log.load()
         orig_parset = get_parset_from_project_by_id(project, parset_id)
         orig_parset_name = orig_parset.name
         autofit_parset_name = "autofit-"+str(orig_parset_name)
-        assert work_log.status == "started"
         project.autofit(
-            name=orig_parset_name,
+            name=autofit_parset_name,
             orig=orig_parset_name,
             maxtime=maxtime
         )
-        autofit_parset = project.parsets[orig_parset_name]
-        result = project.parsets[orig_parset_name].getresults()
+        autofit_parset = project.parsets[autofit_parset_name]
+        autofit_parset.uid = orig_parset.uid
+        del project.parsets[orig_parset_name]
+        project.parsets[orig_parset_name] = autofit_parset
+
+        result = project.parsets[autofit_parset_name].getresults()
+        result.uid = op.uuid()
+
         error_text = ""
         status = 'completed'
     except Exception:
@@ -259,14 +265,12 @@ def run_autofit(project_id, parset_id, maxtime=60):
         print(error_text)
 
     if result:
-        print(">> Save autofitted parset '%s' to '%s' " % (autofit_parset, orig_parset_name))
+        print(">> Save autofitted parset '%s' to '%s' " % (autofit_parset_name, orig_parset_name))
         db_session = init_db_session()
         project_record = load_project_record(project_id, db_session=db_session)
-        autofit_parset.uid = orig_parset.uid
-        project.parsets[autofit_parset_name] = autofit_parset
         project_record.save_obj(project)
         db_session.add(project_record)
-        result.uid = op.uuid()
+        delete_result(project_id, parset_id, 'calibration', db_session=db_session)
         result_record = update_or_create_result_record(
             project, result, orig_parset_name, 'calibration', db_session=db_session)
         print(">> Save result '%s'" % result.name)
@@ -301,12 +305,12 @@ def run_optimization(project_id, optimization_id, maxtime):
         print(">> Error: couldn't find work log")
         return
 
+    work_log_id = work_log.id
+
     result = None
     status = 'started'
     error_text = ""
     try:
-        assert work_log.status == "started"
-        work_log_id = work_log.id
         project = work_log.load()
         optim = get_optimization_from_project(project, optimization_id)
         progset = project.progsets[optim.progsetname]
@@ -346,6 +350,7 @@ def run_optimization(project_id, optimization_id, maxtime):
                 constraints=constraints,
                 maxtime=maxtime,
             )
+            result.uid = op.uuid()
             status = 'completed'
         except Exception:
             status = 'error'
@@ -356,7 +361,6 @@ def run_optimization(project_id, optimization_id, maxtime):
     if result:
         db_session = init_db_session()
         delete_optimization_result(project_id, result.name, db_session)
-        result.uid = op.uuid()
         result_record = update_or_create_result_record(
             project, result, optim.parsetname, 'optimization', db_session=db_session)
         db_session.add(result_record)

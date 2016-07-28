@@ -445,6 +445,17 @@ def load_parset_graphs(
     }
 
 
+def launch_autofit(project_id, parset_id, maxtime):
+    from server.webapp.tasks import run_autofit, start_or_report_calculation
+    work_type = 'autofit-' + str(parset_id)
+    calc_status = start_or_report_calculation(project_id, work_type)
+    if calc_status['status'] != "blocked":
+        print "> Starting autofit for %s s" % maxtime
+        run_autofit.delay(project_id, parset_id, maxtime)
+        calc_status['maxtime'] = maxtime
+    return calc_status
+
+
 # RESULT
 
 def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
@@ -506,6 +517,8 @@ def delete_result(
         parset_id=parset_id,
         calculation_type=calculation_type
     )
+    for record in records:
+        record.cleanup()
     records.delete()
     db_session.commit()
 

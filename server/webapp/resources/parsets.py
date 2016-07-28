@@ -8,7 +8,7 @@ from flask_restful_swagger import swagger
 
 from server.webapp.dataio import copy_parset, create_parset, load_parset_summaries, \
     rename_parset, delete_parset, load_parset_graphs, load_result_csv, \
-    load_parameters, save_parameters, load_result_mpld3_graphs
+    load_parameters, save_parameters, load_result_mpld3_graphs, launch_autofit
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import get_post_data_json, get_upload_file
 
@@ -113,14 +113,8 @@ class ParsetAutofit(Resource):
         data-json:
             maxtime: int - number of seconds to run
         """
-        from server.webapp.tasks import run_autofit, start_or_report_calculation
         maxtime = get_post_data_json().get('maxtime')
-        calc_status = start_or_report_calculation(project_id, 'autofit-' + str(parset_id))
-        if calc_status['status'] != "blocked":
-            print "> Starting autofit for %s s" % maxtime
-            run_autofit.delay(project_id, parset_id, maxtime)
-            calc_status['maxtime'] = maxtime
-        return calc_status
+        return launch_autofit(project_id, parset_id, maxtime)
 
     @swagger.operation(summary='Returns the calc status for the current job')
     def get(self, project_id, parset_id):

@@ -146,6 +146,10 @@ class ResultsDb(db.Model):
         print(">> Save result-" + self.id.hex)
         redis.set("result-" + self.id.hex, serialize.dumps(obj))
 
+    def cleanup(self):
+        print(">> Cleanup result-" + self.id.hex)
+        redis.delete("result-" + self.id.hex)
+
 
 class WorkLogDb(db.Model):  # pylint: disable=R0903
 
