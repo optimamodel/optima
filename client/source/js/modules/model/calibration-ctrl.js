@@ -57,7 +57,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .map(function(selector) {
             return selector.key;
           });
-          console.log('which', which)
           if (which.length > 0) {
             return which;
           }
@@ -66,15 +65,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return null;
     }
 
-    function loadParsetGraphResponse(response) {
+    function loadParametersAndGraphs(response) {
       console.log(response);
       $scope.graphs = response.graphs;
       $scope.parameters = angular.copy(response.parameters);
     }
 
-    $scope.changeActiveParset = function() {
-      $scope.getGraphs();
-    };
+    function fetchParameters() {
+      return $scope.parameters;
+    }
 
     $scope.getGraphs = function() {
       $http
@@ -84,7 +83,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             + '/calibration',
           {which: getSelectors()})
         .success(function (response) {
-          loadParsetGraphResponse(response);
+          loadParametersAndGraphs(response);
           toastr.success('Loaded graphs');
         });
     };
@@ -99,12 +98,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             + '/parsets/' + $scope.state.parset.id
             + '/calibration?doSave=true',
           {
-            parameters: $scope.parameters,
+            parameters: fetchParameters(),
             which: getSelectors()
           })
         .success(function (response) {
           toastr.success('Updated parameters and loaded graphs');
-          loadParsetGraphResponse(response);
+          loadParametersAndGraphs(response);
         });
     };
 
@@ -118,7 +117,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.parsets = response;
             $scope.state.parset = response[response.length - 1];
             toastr.success('Created parset');
-            $scope.changeActiveParset();
+            $scope.getGraphs();
           });
       }
       openParameterSetModal(
@@ -191,7 +190,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               if($scope.parsets.length > 0) {
                 $scope.state.parset = $scope.parsets[0];
                 toastr.success('Deleted parset');
-                $scope.changeActiveParset();
+                $scope.getGraphs();
               }
             });
         }
@@ -241,8 +240,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                    + '/data',
             file: event.target.files[0]
           }).success(function(response) {
-            loadParsetGraphResponse(response);
-            $scope.changeActiveParset()
+            loadParametersAndGraphs(response);
+            $scope.getGraphs()
           });
         }).click();
     };
@@ -358,7 +357,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           {which: getSelectors()})
         .success(function(response) {
           toastr.success('Graphs uploaded');
-          loadParsetGraphResponse(response);
+          loadParametersAndGraphs(response);
         });
     };
 

@@ -260,11 +260,13 @@ def copy_project(project_id, new_project_name):
         for result_record in result_records:
             # reset the parset_id in results to new project
             result = result_record.load()
-            parset_name = parset_name_by_id[result_record.parset_id]
+            parset_id = result_record.parset_id
+            if parset_id not in parset_name_by_id:
+                continue
+            parset_name = parset_name_by_id[parset_id]
             new_parset = [r for r in project.parsets.values() if r.name == parset_name]
             if not new_parset:
-                raise Exception(
-                    "Could not find copied parset for result in copied project {}".format(project_id))
+                continue
             copy_parset_id = new_parset[0].uid
 
             copy_result_record = ResultsDb(
