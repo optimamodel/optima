@@ -31,10 +31,24 @@ def addforcepopsize(project, **kwargs):
     return None
 
 
+def delimmediatecare(project, **kwargs):
+    """
+    Migration between Optima 2.0.2 and 2.0.3.
+    """
+    if hasattr(project, 'parsets'):
+        for ps in project.parsets.values():
+            if ps.pars[0].get('immediatecare'): del ps.pars[0]['immediatecare']
+    if hasattr(project, 'data'):
+        if project.data.get('immediatecare'): del project.data['immediatecare']
+    project.version = "2.0.3"
+    return None
+
+
 migrations = {
 '2.0': versiontostr,
 '2.0.0': addscenuid,
 '2.0.1': addforcepopsize,
+'2.0.2': delimmediatecare,
 }
 
 
