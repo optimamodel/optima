@@ -278,7 +278,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             initpeople[undx, p]     = undiagnosed
             if usecascade:
                 
-                initpropcare = 1. - exp(-dt/linktocare[p,0]) # Initial proportion of diagnosed people in care
+                initpropcare = 1. - exp(-dt/(max(eps,linktocare[p,0]))) # Initial proportion of diagnosed people in care
                 initproplost = 1. - exp(-leavecare[p,0])  # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
                 
                 initpeople[dx,   p] = diagnosed*initpropcare
@@ -568,8 +568,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     newlinkcaredx[cd4]   = fractiontocare * people[dx[cd4],:,t] # diagnosed moving into care
                     newlinkcarelost[cd4] = fractiontocare * people[lost[cd4],:,t] # lost moving into care
                 else:
-                    newlinkcaredx[cd4]   = (1.-exp(-dt/linktocare[:,t])) * people[dx[cd4],:,t] # diagnosed moving into care
-                    newlinkcarelost[cd4] = (1.-exp(-dt/linktocare[:,t])) * people[lost[cd4],:,t] # lost moving into care
+                    newlinkcaredx[cd4]   = (1.-exp(-dt/maximum(eps,linktocare[:,t]))) * people[dx[cd4],:,t] # diagnosed moving into care
+                    newlinkcarelost[cd4] = (1.-exp(-dt/maximum(eps,linktocare[:,t]))) * people[lost[cd4],:,t] # lost moving into care
                 inflows = progin + newdiagnoses[cd4]
                 outflows = progout + hivdeaths + otherdeaths + newlinkcaredx[cd4] # NB, only newlinkcaredx flows out from here!
                 dD.append(inflows - outflows)
