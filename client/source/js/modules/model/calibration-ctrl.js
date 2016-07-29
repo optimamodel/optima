@@ -241,6 +241,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                    + '/data',
             file: event.target.files[0]
           }).success(function(response) {
+            loadParsetGraphResponse(response);
             $scope.changeActiveParset()
           });
         }).click();
