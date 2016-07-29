@@ -16,13 +16,13 @@ Version: 2016feb03 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-#'makeproject',
-#'parametercheck',
+'makeproject',
+'parametercheck',
 #'resultsaddition',
 #'saveload',
 'loadspreadsheet',
 #'loadeconomics',
-#'runsim'
+'runsim'
 ]
 
 ##############################################################################

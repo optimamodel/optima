@@ -1,7 +1,7 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
-from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title
+from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, ylim, title
 from matplotlib.widgets import CheckButtons, Button
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
@@ -553,6 +553,7 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     ylabel('Number of people')
     title(plottitle)
     xlim((tvec[0], tvec[-1]))
+    ylim((0, 200000))
     for st in range(nstates-1,-1,-1):
         this = ppl[:,st]
         if sum(this): 
