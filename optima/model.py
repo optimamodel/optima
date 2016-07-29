@@ -278,11 +278,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             initpeople[undx, p]     = undiagnosed
             if usecascade:
                 
-                initpropcare = 1. - exp(-simpars['linktocare'][p,0]/dt) # Initial proportion of diagnosed people in care
-                initproplost = 1. - exp(-simpars['leavecare'][p,0])  # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
+                initpropcare = 1. - exp(-dt/linktocare[p,0]) # Initial proportion of diagnosed people in care
+                initproplost = 1. - exp(-leavecare[p,0])  # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
                 
-                initpeople[dx,   p] = diagnosed*(1.-initpropcare)
-                initpeople[care, p] = diagnosed*initpropcare
+                initpeople[dx,   p] = diagnosed*initpropcare
+                initpeople[care, p] = diagnosed*(1.-initpropcare)
                 initpeople[usvl, p] = treatment * (1.-treatvs[0]) * (1.-initproplost)
                 initpeople[svl,  p] = treatment * treatvs[0]      * (1.-initproplost)
                 initpeople[off,  p] = treatment * initproplost * stoppropcare
@@ -298,9 +298,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             printv(errormsg, 1, verbose)
             initpeople[initpeople<0] = 0.0
             
-    people[:,:,0] = initpeople # No it hasn't, so run equilibration
-    
-    
+    people[:,:,0] = initpeople
+        
+#    if usecascade: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     ##################################################################################################################
     ### Compute the effective numbers of acts outside the time loop
@@ -569,8 +569,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     newlinkcaredx[cd4]   = fractiontocare * people[dx[cd4],:,t] # diagnosed moving into care
                     newlinkcarelost[cd4] = fractiontocare * people[lost[cd4],:,t] # lost moving into care
                 else:
-                    newlinkcaredx[cd4]   = (1.-exp(-linktocare[:,t]/dt)) * people[dx[cd4],:,t] # diagnosed moving into care
-                    newlinkcarelost[cd4] = (1.-exp(-linktocare[:,t]/dt)) * people[lost[cd4],:,t] # lost moving into care
+                    newlinkcaredx[cd4]   = (1.-exp(-dt/linktocare[:,t])) * people[dx[cd4],:,t] # diagnosed moving into care
+                    newlinkcarelost[cd4] = (1.-exp(-dt/linktocare[:,t])) * people[lost[cd4],:,t] # lost moving into care
                 inflows = progin + newdiagnoses[cd4]
                 outflows = progout + hivdeaths + otherdeaths + newlinkcaredx[cd4] # NB, only newlinkcaredx flows out from here!
                 dD.append(inflows - outflows)
