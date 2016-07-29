@@ -13,8 +13,8 @@
     <select id="programSet-selection"
             name="programSet-selection"
             class="updateGraph txbox"
-            ng-model="activeParset"
-            ng-change="getGraphs()"
+            ng-model="state.parset"
+            ng-change="changeActiveParset()"
             ng-options="parset.name for parset in parsets"
             style="width: 20%;">
     </select>

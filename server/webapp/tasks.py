@@ -249,6 +249,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
             maxtime=maxtime
         )
         autofit_parset = project.parsets[autofit_parset_name]
+        autofit_parset.name = orig_parset.name
         autofit_parset.uid = orig_parset.uid
         del project.parsets[orig_parset_name]
         project.parsets[orig_parset_name] = autofit_parset

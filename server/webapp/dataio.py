@@ -122,7 +122,7 @@ def update_project(project, db_session=None):
 def update_project_with_fn(project_id, update_project_fn, db_session=None):
     if db_session is None:
         db_session = db.session
-    project_record = load_project_record(project_id)
+    project_record = load_project_record(project_id, db_session=db_session)
     project = project_record.load()
     update_project_fn(project)
     project.modified = datetime.now(dateutil.tz.tzutc())
@@ -350,7 +350,12 @@ def rename_parset(project_id, parset_id, new_parset_name):
 
     def update_project_fn(project):
         parset = get_parset_from_project(project, parset_id)
-        project.parsets.rename(parset.name, new_parset_name)
+        old_parset_name = parset.name
+        parset.name = new_parset_name
+        print(">> old parsets '%s'" % project.parsets.keys())
+        del project.parsets[old_parset_name]
+        project.parsets[new_parset_name] = parset
+        print(">> new parsets '%s'" % project.parsets.keys())
 
     update_project_with_fn(project_id, update_project_fn)
 
@@ -436,12 +441,8 @@ def load_parset_graphs(
     graph_dict = make_mpld3_graph_dict(result, which)
 
     return {
-        "calibration": {
-            "parset_id": parset_id,
-            "parameters": get_parameters_from_parset(parset),
-            "resultId": result.uid,
-            "graphs": graph_dict["graphs"]
-        }
+        "parameters": get_parameters_from_parset(parset),
+        "graphs": graph_dict["graphs"]
     }
 
 

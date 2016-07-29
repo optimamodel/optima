@@ -2,25 +2,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function (
-      $scope, $http, info, modalService, $upload, $modal, $timeout, toastr) {
-
+      $scope, $http, info, modalService, $upload,
+      $modal, $timeout, toastr) {
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
       console.log(JSON.stringify(val, null, 2));
     }
 
-    var activeProjectInfo = info.data;
-    var defaultParameters;
+    var project = info.data;
 
     function initialize() {
 
       $scope.parsets = [];
-      $scope.activeParset = undefined;
-      $scope.state = {maxtime: '10'};
+      $scope.state = {
+        maxtime: '10',
+        parset: undefined
+      };
 
-      // Check if current active project has spreadsheet uploaded for it.
-      if (!activeProjectInfo.hasData) {
+      // Check if project has spreadsheet uploaded
+      if (!project.hasData) {
         modalService.inform(
             function() {
             },
@@ -33,15 +34,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // Fetching list of parsets for open project
-      $http.get('/api/project/' + activeProjectInfo.id + '/parsets').success(function(response) {
-        var parsets = response.parsets;
-        if (parsets) {
-          $scope.parsets = parsets;
-          $scope.activeParset = parsets[0];
-          initPollAutoCalibration();
-          $scope.getGraphs();
-        }
-      });
+      $http
+        .get('/api/project/' + project.id + '/parsets')
+        .success(function(response) {
+          var parsets = response.parsets;
+          if (parsets) {
+            $scope.parsets = parsets;
+            $scope.state.parset = parsets[0];
+            initPollAutoCalibration();
+            $scope.getGraphs();
+          }
+        });
     }
 
     function getSelectors() {
@@ -63,182 +66,190 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return null;
     }
 
-    // Fetching graphs for active parset
-    $scope.getGraphs = function() {
-      $http.get(
-        '/api/project/' + activeProjectInfo.id
-        + '/parsets/' + $scope.activeParset.id
-        + '/calibration',
-        {which: getSelectors()})
-      .success(function (response) {
-        setCalibrationData(response.calibration);
-      });
+    function loadParsetGraphResponse(response) {
+      console.log(response);
+      $scope.graphs = response.graphs;
+      $scope.parameters = angular.copy(response.parameters);
+    }
+
+    $scope.changeActiveParset = function() {
+      $scope.getGraphs();
     };
 
-    // Sending parameters to re-process graphs for active parset
-    $scope.processGraphs = function(shouldSave) {
+    $scope.getGraphs = function() {
+      $http
+        .get(
+          '/api/project/' + project.id
+            + '/parsets/' + $scope.state.parset.id
+            + '/calibration',
+          {which: getSelectors()})
+        .success(function (response) {
+          loadParsetGraphResponse(response);
+          toastr.success('Loaded graphs');
+        });
+    };
+
+    $scope.saveAndUpdateGraphs = function() {
       if(!$scope.parameters) {
         return;
       }
-      var url = '/api/project/' + activeProjectInfo.id
-                + '/parsets/' + $scope.activeParset.id
-                + '/calibration';
-      if (shouldSave) {
-        url = url + '?doSave=true';
-      }
-      var payload = {
-        parameters: $scope.parameters,
-        which: getSelectors()
-      };
-      console.log('active parset', $scope.activeParset);
-      console.log('uploaded parameters', payload);
-      $http.post(url, payload)
-      .success(function (response) {
-        toastr.success('Updated parameters and graphs')
-        setCalibrationData(response.calibration);
-      });
-    };
-
-    $scope.processGraphsAndSave = function() {
-      $scope.processGraphs(true);
-    }
-
-    // Set calibration data in scope
-    var setCalibrationData = function(calibration) {
-      $scope.graphs = calibration.graphs;
-      console.log(calibration);
-      defaultParameters = calibration.parameters;
-      $scope.parameters = angular.copy(calibration.parameters);
-      $scope.resultId = calibration.resultId;
-    };
-
-    $scope.exportData = function() {
-      console.log('resultId', $scope.resultId);
-      $http.get(
-        '/api/results/' + $scope.resultId,
-        {
-          headers: {'Content-type': 'application/octet-stream'},
-          responseType: 'blob'
-        })
-      .success(function (response) {
-        var blob = new Blob([response], { type: 'application/octet-stream' });
-        saveAs(blob, ('export_graphs.csv'));
-      });
-    }
-
-    // Reset changes made in parameters
-    $scope.resetParameters = function() {
-      $scope.parameters = angular.copy(defaultParameters);
-    };
-
-    // Add parameter set
-    $scope.addParameterSet = function() {
-      var add = function (name) {
-        $http.post(
-            '/api/project/' + activeProjectInfo.id + '/parsets',
-            { name: name})
-        .success(function(response) {
-          $scope.parsets = response;
-          $scope.activeParset = response[response.length - 1];
+      $http
+        .post(
+          '/api/project/' + project.id
+            + '/parsets/' + $scope.state.parset.id
+            + '/calibration?doSave=true',
+          {
+            parameters: $scope.parameters,
+            which: getSelectors()
+          })
+        .success(function (response) {
+          toastr.success('Updated parameters and loaded graphs');
+          loadParsetGraphResponse(response);
         });
-      };
-      openParameterSetModal(add, 'Add parameter set', $scope.parsets, null, 'Add');
     };
 
-    // Copy parameter set
-    $scope.copyParameterSet = function() {
-      if (!$scope.activeParset) {
-        modalService.informError([{message: 'No parameter set selected.'}]);
-      } else {
-        var rename = function (name) {
-          $http.post('/api/project/' + activeProjectInfo.id + '/parsets', {
-            name: name,
-            parset_id: $scope.activeParset.id
-          }).success(function (response) {
+    $scope.addParameterSet = function() {
+      function add(name) {
+        $http
+          .post(
+            '/api/project/' + project.id + '/parsets',
+            {name: name})
+          .success(function(response) {
             $scope.parsets = response;
-            $scope.activeParset = response[response.length - 1];
+            $scope.state.parset = response[response.length - 1];
+            toastr.success('Created parset');
+            $scope.changeActiveParset();
           });
-        };
-        openParameterSetModal(rename, 'Copy parameter set', $scope.parsets, $scope.activeParset.name + ' copy', 'Copy');
+      }
+      openParameterSetModal(
+        add, 'Add parameter set', $scope.parsets, null, 'Add');
+    };
+
+    $scope.copyParameterSet = function() {
+      if (!$scope.state.parset) {
+        modalService.informError(
+          [{message: 'No parameter set selected.'}]);
+      } else {
+        function rename(name) {
+          $http
+            .post(
+              '/api/project/' + project.id + '/parsets',
+              {
+                name: name,
+                parset_id: $scope.state.parset.id
+              })
+            .success(function (response) {
+              $scope.parsets = response;
+              $scope.state.parset = response[response.length - 1];
+              toastr.success('Copied parset');
+            });
+        }
+        openParameterSetModal(
+          rename, 'Copy parameter set', $scope.parsets,
+          $scope.state.parset.name + ' copy', 'Copy');
       }
     };
 
-    // Rename parameter set
     $scope.renameParameterSet = function() {
-      if (!$scope.activeParset) {
-        modalService.informError([{message: 'No parameter set selected.'}]);
+      if (!$scope.state.parset) {
+        modalService.informError(
+          [{message: 'No parameter set selected.'}]);
       } else {
-        var rename = function (name) {
-          $http.put('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id, {
-            name: name
-          }).success(function () {
-            $scope.activeParset.name = name;
-          });
-        };
-        openParameterSetModal(rename, 'Rename parameter set', $scope.parsets, $scope.activeParset.name, 'Rename', true);
+        function rename(name) {
+          $http
+            .put(
+                '/api/project/' + project.id
+                  + '/parsets/' + $scope.state.parset.id,
+                { name: name})
+            .success(function () {
+              $scope.state.parset.name = name;
+              toastr.success('Copied parset');
+            });
+        }
+        openParameterSetModal(
+          rename, 'Rename parameter set', $scope.parsets,
+          $scope.state.parset.name, 'Rename', true);
       }
     };
 
-    // Delete parameter set
     $scope.deleteParameterSet = function() {
-      if (!$scope.activeParset) {
-        modalService.informError([{message: 'No parameter set selected.'}]);
+      if (!$scope.state.parset) {
+        modalService.informError(
+          [{message: 'No parameter set selected.'}]);
       } else {
-        var remove = function () {
-          $http.delete('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id)
+        function remove() {
+          $http
+            .delete(
+              '/api/project/' + project.id
+              + '/parsets/' + $scope.state.parset.id)
             .success(function() {
-              $scope.parsets = _.filter($scope.parsets, function (parset) {
-                return parset.id !== $scope.activeParset.id;
-              });
+              $scope.parsets = _.filter(
+                $scope.parsets, function (parset) {
+                  return parset.id !== $scope.state.parset.id;
+                }
+              );
               if($scope.parsets.length > 0) {
-                $scope.activeParset = $scope.parsets[0];
+                $scope.state.parset = $scope.parsets[0];
+                toastr.success('Deleted parset');
+                $scope.changeActiveParset();
               }
             });
-        };
+        }
         // This has been temporarily commented out: https://trello.com/c/omuvJSYD/853-reuploading-spreadsheets-fails-in-several-ways
-        // if ($scope.activeParset.name === "default") {
+        // if ($scope.state.parset.name === "default") {
         if ( false ) {
-          modalService.informError([{message: 'Deleting the default parameter set is not permitted.'}]);
+          modalService.informError(
+            [{message: 'Deleting the default parameter set is not permitted.'}]);
         } else {
           modalService.confirm(
-            function () {
-              remove()
-            }, function () {
-            }, 'Yes, remove this parameter set', 'No',
-            'Are you sure you want to permanently remove parameter set "' + $scope.activeParset.name + '"?',
+            remove,
+            function () {},
+            'Yes, remove this parameter set',
+            'No',
+            'Are you sure you want to permanently remove parameter set "'
+              + $scope.state.parset.name + '"?',
             'Delete parameter set'
           );
         }
       }
     };
 
-    // Download  parameter-set data
     $scope.downloadParameterSet = function() {
-      $http.get('/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id +'/data',
-        {headers: {'Content-type': 'application/octet-stream'},
-          responseType:'blob'})
+      $http
+        .get(
+          '/api/project/' + project.id
+            + '/parsets/' + $scope.state.parset.id
+            + '/data',
+          {
+            headers: {'Content-type': 'application/octet-stream'},
+            responseType: 'blob'
+          })
         .success(function (response) {
-          var blob = new Blob([response], { type: 'application/octet-stream' });
-          saveAs(blob, ($scope.activeParset.name + '.par.json'));
+          var blob = new Blob(
+            [response], {type: 'application/octet-stream'});
+          saveAs(blob, ($scope.state.parset.name + '.par.json'));
         });
     };
 
-    // Upload parameter-set data
     $scope.uploadParameterSet = function() {
       angular
         .element('<input type=\'file\'>')
         .change(function(event){
           $upload.upload({
-            url: '/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id + '/data',
+            url: '/api/project/' + project.id
+                   + '/parsets/' + $scope.state.parset.id
+                   + '/data',
             file: event.target.files[0]
-          }).success(function () {
-            window.location.reload();
+          }).success(function(response) {
+            $scope.changeActiveParset()
           });
         }).click();
     };
 
-    // Opens modal to add / rename / copy parameter set
-    var openParameterSetModal = function (callback, title, parameterSetList, parameterSetName, operation, isRename) {
+    function openParameterSetModal(
+      callback, title, parameterSetList, parameterSetName,
+      operation, isRename) {
+
       var onModalKeyDown = function (event) {
         if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
       };
@@ -254,17 +265,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             modalInstance.close();
           };
           $scope.isUniqueName = function (parameterSetForm) {
-            var exists = _(parameterSetList).some(function(item) {
-                return item.name == $scope.name;
-              }) && $scope.name !== parameterSetName && $scope.name !== $scope.newParameterSetName;
-            if(isRename) {
-              parameterSetForm.parameterSetName.$setValidity("parameterSetUpdated", $scope.name !== parameterSetName);
+            function isSameName(item) { return item.name == $scope.name; }
+            var exists = _(parameterSetList).some(isSameName)
+                  && $scope.name !== parameterSetName
+                  && $scope.name !== $scope.newParameterSetName;
+            if (isRename) {
+              parameterSetForm.parameterSetName.$setValidity(
+                "parameterSetUpdated", $scope.name !== parameterSetName);
             }
-            parameterSetForm.parameterSetName.$setValidity("parameterSetExists", !exists);
+            parameterSetForm.parameterSetName.$setValidity(
+              "parameterSetExists", !exists);
             return exists;
           };
           $document.on('keydown', onModalKeyDown); // observe
-          $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
+          $scope.$on(
+            '$destroy',
+            function () { $document.off('keydown', onModalKeyDown); });  // unobserve
         }]
       });
       return modalInstance;
@@ -275,69 +291,74 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ($scope.state.maxtime) {
         data.maxtime = Number($scope.state.maxtime);
       }
-      $http.post(
-        '/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id +'/automatic_calibration',
-        data
-      )
-      .success(function(response) {
-        if(response.status === 'started') {
-          $scope.statusMessage = 'Autofit started.';
-          $scope.secondsRun = 0;
-          $scope.setMaxtime = data.maxtime;
-          pollAutoCalibration();
-        } else if(response.status === 'blocked') {
-          $scope.statusMessage = 'Another calculation on this project is already running.'
-        }
-      })
+      $http
+        .post(
+          '/api/project/' + project.id
+          +  '/parsets/' + $scope.state.parset.id
+          + '/automatic_calibration',
+          data)
+        .success(function(response) {
+          if(response.status === 'started') {
+            $scope.statusMessage = 'Autofit started.';
+            $scope.secondsRun = 0;
+            $scope.setMaxtime = data.maxtime;
+            pollAutoCalibration();
+          } else if(response.status === 'blocked') {
+            $scope.statusMessage = 'Another calculation on this project is already running.'
+          }
+        })
     };
 
-    var initPollAutoCalibration = function() {
-      $http.get(
-        '/api/project/' + activeProjectInfo.id
-        +  '/parsets/' + $scope.activeParset.id
-        + '/automatic_calibration')
-      .success(function(response) {
-        if (response.status === 'started') {
-          pollAutoCalibration();
-        }
-      });
-    };
+    function initPollAutoCalibration() {
+      $http
+        .get(
+          '/api/project/' + project.id
+          +  '/parsets/' + $scope.state.parset.id
+          + '/automatic_calibration')
+        .success(function(response) {
+          if (response.status === 'started') {
+            pollAutoCalibration();
+          }
+        });
+    }
 
-    var pollAutoCalibration = function() {
-      $http.get(
-          '/api/project/' + activeProjectInfo.id
-            + '/parsets/' + $scope.activeParset.id
+    function pollAutoCalibration() {
+      $http
+        .get(
+          '/api/project/' + project.id
+            + '/parsets/' + $scope.state.parset.id
             + '/automatic_calibration')
-      .success(function(response) {
-        if (response.status === 'completed') {
-          $scope.getAutoCalibratedGraphs();
-          $scope.statusMessage = '';
-          toastr.success('Autofit completed');
-          $timeout.cancel($scope.pollTimer);
-        } else if (response.status === 'error') {
-          $scope.statusMessage = 'Error in running autofit.';
-          $timeout.cancel($scope.pollTimer);
-        } else if (response.status === 'started') {
-          var start = new Date(response.start_time);
-          var now = new Date();
-          var diff = now.getTime() - start.getTime();
-          var seconds = diff / 1000;
-          $scope.statusMessage = "Autofit running for " + parseInt(seconds) + " s";
-          $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
-        }
-      });
-    };
+        .success(function(response) {
+          if (response.status === 'completed') {
+            $scope.getAutoCalibratedGraphs();
+            $scope.statusMessage = '';
+            toastr.success('Autofit completed');
+            $timeout.cancel($scope.pollTimer);
+          } else if (response.status === 'error') {
+            $scope.statusMessage = 'Error in running autofit.';
+            $timeout.cancel($scope.pollTimer);
+          } else if (response.status === 'started') {
+            var start = new Date(response.start_time);
+            var now = new Date();
+            var diff = now.getTime() - start.getTime();
+            var seconds = diff / 1000;
+            $scope.statusMessage = "Autofit running for " + parseInt(seconds) + " s";
+            $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
+          }
+        });
+    }
 
     $scope.getAutoCalibratedGraphs = function() {
-      $http.post(
-        '/api/project/' + activeProjectInfo.id
-          + '/parsets' + '/' + $scope.activeParset.id
-          + '/calibration',
+      $http
+        .post(
+          '/api/project/' + project.id
+            + '/parsets' + '/' + $scope.state.parset.id
+            + '/calibration',
           {which: getSelectors()})
-      .success(function(response) {
-        toastr.success('Graphs uploaded');
-        setCalibrationData(response.calibration);
-      });
+        .success(function(response) {
+          toastr.success('Graphs uploaded');
+          loadParsetGraphResponse(response);
+        });
     };
 
     initialize();
