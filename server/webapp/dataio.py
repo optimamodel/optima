@@ -638,9 +638,15 @@ def save_optimization_summaries(project_id, optimization_summaries):
     return {'optimizations': get_optimization_summaries(project)}
 
 
-def upload_optimization_summary(project_id, optimization_summary):
-    summaries = save_optimization_summaries(project_id, [optimization_summary])
-    return {'optimization': summaries}
+def upload_optimization_summary(project_id, optimization_id, optimization_summary):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    old_optim = get_optimization_from_project(project, optimization_id)
+    optimization_summary['id'] = optimization_id
+    optimization_summary['name'] = old_optim.name
+    set_optimization_summaries_on_project(project, [optimization_summary])
+    project_record.save_obj(project)
+    return {'optimizations': get_optimization_summaries(project)}
 
 
 def load_optimization_graphs(project_id, optimization_id, which):

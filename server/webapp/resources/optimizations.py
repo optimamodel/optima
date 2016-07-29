@@ -42,8 +42,7 @@ class OptimizationUpload(Resource):
         """
         optim_json = get_upload_file(current_app.config['UPLOAD_FOLDER'])
         optim_summary = json.load(open(optim_json))
-        optim_summary['id'] = optimization_id
-        return save_optimization_summaries(project_id, [optim_summary])
+        return upload_optimization_summary(project_id, optimization_id, optim_summary)
 
 
 class OptimizationCalculation(Resource):
