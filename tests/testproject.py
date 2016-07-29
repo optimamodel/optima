@@ -175,11 +175,11 @@ if 'loadspreadsheet' in tests:
     from optima import Project
     
     print('  Create a project from a spreadsheet')
-    P = Project(spreadsheet='simple.xlsx',dorun=False)
+    P = Project(spreadsheet='simple.xlsx')
     
     print('  Load a project, then load a spreadsheet')
     Q = Project()
-    Q.loadspreadsheet('simple.xlsx',dorun=False)
+    Q.loadspreadsheet('simple.xlsx')
     
     assert Q.data['const']['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
     

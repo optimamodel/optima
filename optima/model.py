@@ -71,7 +71,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
         stoppropcare  = simpars['stoppropcare']  # Proportion of people lost-to-follow-up who are actually still in care (transferred)
         # Behavioural transitions between stages [npop,npts]
-        linktocare    = simpars['linktocare']    # rate of linkage to care (P/T)
+        linktocare    = simpars['linktocare']    # mean time before being linked to care
         stoprate      = simpars['stoprate']      # Percentage of people who receive ART in year who stop taking ART (%/year) (P/T)
         leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
         
@@ -238,7 +238,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
     
         # Calculate equilibrium for each population separately
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         initnumtx = minimum(simpars['numtx'][0], allinfected.sum()/(1+eps)) # Don't allow there to be more people on treatment than infected
         for p in range(npops):
             # Set up basic calculations
@@ -279,7 +278,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             initpeople[undx, p]     = undiagnosed
             if usecascade:
                 
-                initpropcare = 1. - exp(-simpars['linktocare'][p,0]) # roughly estimating equilibrium proportion of diagnosed people in care
+                initpropcare = 1. - exp(-simpars['linktocare'][p,0]/dt) # Initial proportion of diagnosed people in care
                 initproplost = 1. - exp(-simpars['leavecare'][p,0])  # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
                 
                 initpeople[dx,   p] = diagnosed*(1.-initpropcare)
@@ -570,9 +569,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     newlinkcaredx[cd4]   = fractiontocare * people[dx[cd4],:,t] # diagnosed moving into care
                     newlinkcarelost[cd4] = fractiontocare * people[lost[cd4],:,t] # lost moving into care
                 else:
-                    newlinkcaredx[cd4]   = linktocare[:,t] * dt * people[dx[cd4],:,t] # diagnosed moving into care
-                    newlinkcarelost[cd4] = linktocare[:,t] * dt * people[lost[cd4],:,t] # lost moving into care
-                inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) # some go immediately into care after testing
+                    newlinkcaredx[cd4]   = (1.-exp(-linktocare[:,t]/dt)) * people[dx[cd4],:,t] # diagnosed moving into care
+                    newlinkcarelost[cd4] = (1.-exp(-linktocare[:,t]/dt)) * people[lost[cd4],:,t] # lost moving into care
+                inflows = progin + newdiagnoses[cd4]
                 outflows = progout + hivdeaths + otherdeaths + newlinkcaredx[cd4] # NB, only newlinkcaredx flows out from here!
                 dD.append(inflows - outflows)
                 raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
@@ -602,7 +601,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 hivdeaths   = dt * people[care[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[care[cd4],:,t] * background
                 leavecareCD[cd4] = dt * people[care[cd4],:,t] * leavecare[:,t]
-                inflows = progin + newdiagnoses[cd4]*immediatecare[:,t] + newlinkcaredx[cd4] + newlinkcarelost[cd4] # People move in from both diagnosed and lost states
+                inflows = progin + newlinkcaredx[cd4] + newlinkcarelost[cd4] # People move in from both diagnosed and lost states
                 outflows = progout + hivdeaths + otherdeaths + leavecareCD[cd4]
 
                 if totnewtreat: # Move people onto treatment if there are spots available
@@ -626,7 +625,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 currsupp  = currentsupp.sum(axis=0)
                 currusupp = currentusupp.sum(axis=0)
                 newsupptot = (propsupp[t]*currusupp - currsupp).sum()
-            # 40% progress, 40% recover, 20% don't change cd4 count
+
             for cd4 in range(ncd4):
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[usvl[cd4-1],:,t]*progusvl
@@ -650,9 +649,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     virallysupp[cd4] = newsupptot * currentusupp[cd4,:] / (eps+currentusupp.sum()) # pull out evenly among usupp
                 else:
                     virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t]
-                propdead          = dt * (death[cd4]*deathtx + background)
                 stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * stoprate[:,t] * stoppropcare  # People stopping ART but still in care
-                stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * (1.-stoppropcare-propdead)  # People stopping ART and lost to followup
+                stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * (1.-stoppropcare)  # People stopping ART and lost to followup
                 inflows  = progin  + recovin  + newtreat[cd4]*(1.-treatvs[t]) # NB, treatvs will take care of the last 90... 
                 outflows = progout + recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysupp[cd4]
                 dUSVL.append(inflows - outflows)
@@ -674,9 +672,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]
                 otherdeaths        = dt * currentsupp[cd4,:] * background
                 failing[cd4]       = dt * currentsupp[cd4,:] * biofailure[t]
-                propdead           = dt * (death[cd4] + background)
                 stopSVLincare[cd4] = dt * currentsupp[cd4,:] * stoprate[:,t] * stoppropcare  # People stopping ART but still in care
-                stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * (1.-stoppropcare-propdead) # People stopping ART and lost to followup
+                stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * (1.-stoppropcare) # People stopping ART and lost to followup
                 inflows = recovin + virallysupp[cd4] + newtreat[cd4]*treatvs[t]
                 outflows = recovout + hivdeaths + otherdeaths + failing[cd4] + stopSVLincare[cd4] + stopSVLlost[cd4]
                 dSVL.append(inflows - outflows)
