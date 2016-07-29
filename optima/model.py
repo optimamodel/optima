@@ -71,7 +71,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
         stoppropcare  = simpars['stoppropcare']  # Proportion of people lost-to-follow-up who are actually still in care (transferred)
         # Behavioural transitions between stages [npop,npts]
-        immediatecare = simpars['immediatecare'] # Linkage to care from diagnosis within 1 month (%) (P)
         linktocare    = simpars['linktocare']    # rate of linkage to care (P/T)
         stoprate      = simpars['stoprate']      # Percentage of people who receive ART in year who stop taking ART (%/year) (P/T)
         leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
@@ -106,8 +105,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = (1.0-simpars['effdx']) # Include diagnosis efficacy
     if usecascade:
-        efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # (~30%) reduction in transmission probability for usVL
-        efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # (~96%) reduction in transmission probability for sVL
+        efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # reduction in transmission probability for usVL
+        efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # reduction in transmission probability for sVL
     else:
         txfactor = dxfactor * ((1-simpars['efftxsupp'])*treatvs + (1-simpars['efftxunsupp'])*(1-treatvs)) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
 
@@ -239,6 +238,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
     
         # Calculate equilibrium for each population separately
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         initnumtx = minimum(simpars['numtx'][0], allinfected.sum()/(1+eps)) # Don't allow there to be more people on treatment than infected
         for p in range(npops):
             # Set up basic calculations

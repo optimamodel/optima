@@ -16,13 +16,13 @@ Version: 2016feb03 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'makeproject',
-'parametercheck',
+#'makeproject',
+#'parametercheck',
 #'resultsaddition',
 #'saveload',
 'loadspreadsheet',
 #'loadeconomics',
-'runsim'
+#'runsim'
 ]
 
 ##############################################################################
@@ -175,11 +175,11 @@ if 'loadspreadsheet' in tests:
     from optima import Project
     
     print('  Create a project from a spreadsheet')
-    P = Project(spreadsheet='simple.xlsx')
+    P = Project(spreadsheet='simple.xlsx',dorun=False)
     
     print('  Load a project, then load a spreadsheet')
     Q = Project()
-    Q.loadspreadsheet('simple.xlsx')
+    Q.loadspreadsheet('simple.xlsx',dorun=False)
     
     assert Q.data['const']['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
     
