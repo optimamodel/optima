@@ -1,7 +1,6 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, floor, ones, power as npow
-from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset, intexp
-from math import pow as mpow
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, floor, power as npow
+from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
     """
