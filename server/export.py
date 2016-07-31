@@ -9,11 +9,11 @@ from hashlib import sha224
 @click.argument('server')
 @click.argument('savelocation')
 @click.option('--username', default='test',
-              help="Username for logging on to the server.")
+              help="Username for logging on to the server. Default: test")
 @click.option('--password', default='test',
-              help="Password for logging on to the server.")
+              help="Password for logging on to the server. Default: test")
 @click.option('--overwrite', default=False, type=bool,
-              help="Whether or not to overwrite local projects with server ones.")
+              help="Whether or not to overwrite local projects with server ones. Default: False.")
 def main(server, username, password, overwrite, savelocation):
     """
     A utility for downloading projects from Optima 2.0+ servers, per user.
@@ -21,12 +21,16 @@ def main(server, username, password, overwrite, savelocation):
     An example:
 
     \b
-         server.py --username=batman --password=batcar! http://athena.optimamodel.com batprojects
+         python export.py --username=batman --password=batcar! http://athena.optimamodel.com batprojects
 
     The command above will log into http://athena.optimamodel.com as the user
     'batman' with the password 'batcar!', and download all of that user's
     projects into the folder 'batprojects' in the current directory.
     """
+    # Make sure that we don't send duplicate /s
+    if server[-1:] == "/":
+        server = server[:-1]
+
     old_session = requests.Session()
 
     click.echo('Logging in as %s...' % (username,))
