@@ -423,35 +423,33 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
+            thisforceinfsex[susreg,:]       = 1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t]
+            thisforceinfsex[progcirc,:]     = 1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t]
             if wholeacts[t]:
-                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]), int(wholeacts[t]))*(1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t])
-                thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]), int(wholeacts[t]))*(1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t])
-            else:
-                thisforceinfsex[susreg,:]       = 1 - (1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t])
-                thisforceinfsex[progcirc,:]     = 1 - (1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t])
+                thisforceinfsex[susreg,:]   *= npow((1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]), int(wholeacts[t]))
+                thisforceinfsex[progcirc,:] *= npow((1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]), int(wholeacts[t]))
                 
-            forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * (1-thisforceinfsex)
+            forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * thisforceinfsex
                  
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effallprev[:,pop2]']:
+                for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
             
         # Injection-related infections -- force-of-infection in pop1 due to pop2
         for pop1,pop2,wholeacts,fracacts in injactslist:
             
+            thisforceinfinj = 1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]*fracacts[t]
             if wholeacts[t]:
-                thisforceinfinj = 1 - npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))*(1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]*fracacts[t])
-            else:
-                thisforceinfinj = 1 - (1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]*fracacts[t])
+                thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
                 
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * (1-thisforceinfinj)
+                forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * thisforceinfinj
             
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'osteff[t]', 'effhivprev[:,pop2]']:
+                for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effhivprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
         
