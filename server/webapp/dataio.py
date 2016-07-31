@@ -676,6 +676,9 @@ def get_default_optimization_summaries(project):
 
 def get_populations_from_project(project):
     data_pops = normalize_obj(project.data.get("pops"))
+
+    if not data_pops:
+        return []
     populations = []
     for i in range(len(data_pops['short'])):
         population = {

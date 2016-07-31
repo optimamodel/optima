@@ -47,7 +47,7 @@ def hashed_password(password_str):
 
 def secure_filename_input(orig_name):
     return secure_filename(orig_name)
- 
+
 
 class SubRequest:
 
