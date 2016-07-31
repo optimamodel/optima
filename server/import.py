@@ -38,13 +38,13 @@ def main(server, project_paths, username, password, overwrite):
 
     # Make sure we've got a list of files, not folders
     project_paths_tmp = list(set([click.format_filename(x) for x in project_paths]))
-    project_path = []
+    project_paths = []
 
     for x in project_paths_tmp:
-        if os.path.isdir(x):
-            project_path.extend(glob.glob(x + "/*.prj"))
+        if not os.path.isfile(x):
+            project_paths.extend(glob.glob(x + "/*.prj"))
         else:
-            project_path.append(x)
+            project_paths.append(x)
 
     click.echo("Preparing to upload %s projects to %s..." % (len(project_paths), server))
 
@@ -68,8 +68,6 @@ def main(server, project_paths, username, password, overwrite):
     click.echo("First, getting the projects off the new server.")
 
     new_projects = new_session.get(server + "/api/project").json()["projects"]
-    new_project_names = [x["name"] for x in new_projects]
-
     projects = {x["name"]:x for x in new_projects}
 
     for project_path in project_paths:
