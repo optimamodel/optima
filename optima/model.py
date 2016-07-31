@@ -422,14 +422,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         # Define force-of-infection matrix
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
-        forceinffull = zeros((len(sus), npops, nstates, npops)) 
-        
+        forceinffull = 1.-zeros((len(sus), npops, nstates, npops))
+
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
-            thisforceinfsex = 1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])
+            thisforceinfsex = (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
             if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
-            forceinffull[:,pop1,:,pop2] = 1 - (1-forceinffull[:,pop1,:,pop2]) * thisforceinfsex #* noshiftprob[pop1]
+            forceinffull[:,pop1,:,pop2] *= thisforceinfsex 
                  
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
@@ -444,7 +444,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
                 
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * thisforceinfinj #* noshiftprob[pop1]
+                forceinffull[index,pop1,:,pop2] *= thisforceinfinj
             
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
@@ -452,8 +452,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
         
-
-
+        forceinffull = 1.-forceinffull
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         ##############################################################################################################
         ### The ODEs
