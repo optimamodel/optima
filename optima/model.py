@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, floor, power as npow
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, floor, ones, power as npow
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset, intexp
 from math import pow as mpow
 
@@ -180,10 +180,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     effmtct   = simpars['mtctbreast']*simpars['breast'] + simpars['mtctnobreast']*(1-simpars['breast']) # Effective MTCT transmission
     pmtcteff  = (1 - simpars['effpmtct']) * effmtct         # Effective MTCT transmission whilst on PMTCT
 
-    # Calculate these things outside of the time loop
-    susregeff = einsum('ab,ab,ab->ab',prepeff,stieff,circeff)
-    progcirceff = einsum('ab,a->ab',susregeff,circconst*male+female)
-    
+    allcirceff = einsum('i,j',[1,circconst],male)+einsum('i,j',[1,1],female)
+    alleff = einsum('ab,ab,ab,ca->abc',prepeff,stieff,circeff,allcirceff)
+
     # Force of infection metaparameter
     force = simpars['force']
     inhomopar = simpars['inhomo']
@@ -418,17 +417,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         # Reset force-of-infection vector and matrix for each population group, handling circs and uncircs separately
         forceinffull = zeros((len(sus), npops, nstates, npops)) # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
-        thisforceinfsex = zeros((len(sus), nstates))
+#        thisforceinfsex = zeros((len(sus), nstates))
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
-            thisforceinfsex[susreg,:]       = 1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t]
-            thisforceinfsex[progcirc,:]     = 1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t]
-            if wholeacts[t]:
-                thisforceinfsex[susreg,:]   *= npow((1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]), int(wholeacts[t]))
-                thisforceinfsex[progcirc,:] *= npow((1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]), int(wholeacts[t]))
-                
+            thisforceinfsex = 1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])
+            if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
             forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * thisforceinfsex
                  
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
@@ -440,9 +435,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Injection-related infections -- force-of-infection in pop1 due to pop2
         for pop1,pop2,wholeacts,fracacts in injactslist:
             
-            thisforceinfinj = 1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]*fracacts[t]
-            if wholeacts[t]:
-                thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
+            thisforceinfinj = 1-sharing[pop1,t]*fracacts[t]*transinj*osteff[t],effallprev[:,pop2]
+            if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
                 
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
                 forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * thisforceinfinj
