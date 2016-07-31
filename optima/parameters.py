@@ -49,9 +49,8 @@ Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	
 Condom use for regular acts	condreg	(0, 1)	pship	timepar	meta	other	0	0	1	random
 Condom use for casual acts	condcas	(0, 1)	pship	timepar	meta	other	0	0	1	random
 Condom use for commercial acts	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	random
-Immediate linkage to care	immediatecare	(0, 1)	pop	timepar	meta	cascade	1	0	1	random
 Viral suppression when initiating ART	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
-HIV-diagnosed people linked to care (per year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
+Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 Rate of ART re-initiation (per year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 Rate of people on ART who stop (per year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random

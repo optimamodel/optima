@@ -584,8 +584,7 @@ class OptimaSpreadsheet:
     
     def generate_casc(self):
         current_row = 0
-        current_row = self.emit_ref_years_block('Linkage to care from diagnosis within 1 month (%)',                             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Average time taken to be linked to care (years)',                               current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',      current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Biological failure rate (%/year)',                                                  current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
