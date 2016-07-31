@@ -454,19 +454,6 @@ def vec2obj(orig=None, newvec=None, inds=None):
     
     return new
 
-def intexp(x, exp):
-    
-    from numpy import ones, array
-    x = promotetoarray(x)
-    result = ones(len(x))
-    curexp = array(x)
-    while True:
-        if exp%2 == 1:
-            result *= curexp
-        exp >>= 1
-        if not exp: break
-        curexp *= curexp
-    return result
 
 
 

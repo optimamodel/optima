@@ -201,6 +201,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 if agetransit[p1,p2]: agetransitlist.append((p1,p2))
                 if risktransit[p1,p2]: risktransitlist.append((p1,p2))
     
+    notransitprob = (1-risktransit.sum(axis=0))*(1-agetransit.sum(axis=0))
+    
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
     birthinflows = birthtransit.sum(axis=0)             # Find populations with birth inflows
@@ -381,7 +383,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     for t in range(npts): # Loop over time
         printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
-        
+
+        # Calculate the background death rate and the probability of not dying or moving to another subpopulation
+        background   = simpars['death'][:, t] # make OST affect this death rates
+        noshiftprob = (1-background)*notransitprob
+
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         if not usecascade: alltrans[tx] = cd4trans*txfactor[t]
         for pop in range(npops): # Loop over each population group
@@ -415,16 +421,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ## Calculate force-of-infection (forceinf)
         ###############################################################################
         
-        # Reset force-of-infection vector and matrix for each population group, handling circs and uncircs separately
-        forceinffull = zeros((len(sus), npops, nstates, npops)) # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
-#        thisforceinfsex = zeros((len(sus), nstates))
+        # Define force-of-infection matrix
+        # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
+        forceinffull = zeros((len(sus), npops, nstates, npops)) 
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
             thisforceinfsex = 1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])
             if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
-            forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * thisforceinfsex
+            forceinffull[:,pop1,:,pop2] = 1 - (1-forceinffull[:,pop1,:,pop2]) * thisforceinfsex #* noshiftprob[pop1]
                  
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
@@ -436,11 +442,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for pop1,pop2,wholeacts,fracacts in injactslist:
             
             thisforceinfinj = 1-sharing[pop1,t]*fracacts[t]*transinj*osteff[t]*effallprev[:,pop2]
-            if wholeacts[t]:
-                thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
+            if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
                 
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * thisforceinfinj
+                forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * thisforceinfinj #* noshiftprob[pop1]
             
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
@@ -488,14 +493,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         else:
             newtreat        = [0] * ncd4
 
-        background   = simpars['death'][:, t] # make OST effect this death rates
         
         ## Susceptibles
         otherdeaths = zeros((len(sus), npops)) 
         for index in sus:
             otherdeaths[index] = dt * people[sus[index],:,t] * background
             raw_otherdeath[:,t] += otherdeaths[index]/dt    # Save annual other deaths 
-        dS = -infections_to - otherdeaths # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
+        dS = -infections_to - otherdeaths # Change in number of susceptibles -- death rate already taken into account in 
         raw_inci[:,t] = (infections_to.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
         raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /float(dt)
 
