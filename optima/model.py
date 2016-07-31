@@ -1,6 +1,7 @@
 ## Imports
 from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, floor, power as npow
-from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
+from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset, intexp
+from math import pow as mpow
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
     """
@@ -180,11 +181,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     pmtcteff  = (1 - simpars['effpmtct']) * effmtct         # Effective MTCT transmission whilst on PMTCT
 
     # Calculate these things outside of the time loop
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                
     susregeff = einsum('ab,ab,ab->ab',prepeff,stieff,circeff)
     progcirceff = einsum('ab,a->ab',susregeff,circconst*male+female)
     
-
     # Force of infection metaparameter
     force = simpars['force']
     inhomopar = simpars['inhomo']
@@ -311,7 +310,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     for act in ['reg','cas','com']:
         for key in simpars['acts'+act]:
             this = odict()
-            this['acts'] = simpars['acts'+act][key]
+            this['wholeacts'] = floor(dt*simpars['acts'+act][key])
+            this['fracacts'] = dt*simpars['acts'+act][key] - this['wholeacts'] # Probability of an additional act
+
             if simpars['cond'+act].get(key) is not None:
                 condkey = simpars['cond'+act][key]
             elif simpars['cond'+act].get((key[1],key[0])) is not None:
@@ -339,7 +340,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             sexactslist.append(this)
             
             # Error checking
-            for key in ['acts', 'cond']:
+            for key in ['wholeacts', 'fracacts', 'cond']:
                 if debug and not(all(this[key]>=0)):
                     errormsg = 'Invalid sexual behavior parameter "%s": values are:\n%s' % (key, this[key])
                     if die: raise OptimaException(errormsg)
@@ -350,14 +351,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Injection
     for key in simpars['actsinj']:
         this = odict()
-        this['acts'] = simpars['actsinj'][key]
+        this['wholeacts'] = floor(dt*simpars['actsinj'][key])
+        this['fracacts'] = dt*simpars['actsinj'][key] - this['wholeacts']
+        
         this['pop1'] = popkeys.index(key[0])
         this['pop2'] = popkeys.index(key[1])
         injactslist.append(this)
     
     # Convert from dicts to tuples to be faster
-    for i,this in enumerate(sexactslist): sexactslist[i] = tuple([this['pop1'],this['pop2'],this['acts'],this['cond'],this['trans']])
-    for i,this in enumerate(injactslist): injactslist[i] = tuple([this['pop1'],this['pop2'],this['acts']])
+    for i,this in enumerate(sexactslist): sexactslist[i] = tuple([this['pop1'],this['pop2'],this['wholeacts'],this['fracacts'],this['cond'],this['trans']])
+    for i,this in enumerate(injactslist): injactslist[i] = tuple([this['pop1'],this['pop2'],this['wholeacts'],this['fracacts']])
     
     
     ## Births precalculation
@@ -418,15 +421,17 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         thisforceinfsex = zeros((len(sus), nstates))
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
-        for pop1,pop2,acts,cond,thistrans in sexactslist:
-            exponent = dt*cond[t]*acts[t]*effallprev[:,pop2] # Make it so this only has to be calculated once
-            
+        for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
-            thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*susregeff[pop1,t]),   exponent)
-            thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*progcirceff[pop1,t]), exponent)    
+            if wholeacts[t]:
+                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]), int(wholeacts[t]))*(1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t])
+                thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]), int(wholeacts[t]))*(1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t])
+            else:
+                thisforceinfsex[susreg,:]       = 1 - (1-thistrans*susregeff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t])
+                thisforceinfsex[progcirc,:]     = 1 - (1-thistrans*progcirceff[pop1,t]*effallprev[:,pop2]*cond[t]*fracacts[t])
+                
             forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * (1-thisforceinfsex)
-                
-                
+                 
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effallprev[:,pop2]']:
@@ -434,9 +439,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 raise OptimaException(errormsg)
             
         # Injection-related infections -- force-of-infection in pop1 due to pop2
-        for pop1,pop2,effinj in injactslist:
+        for pop1,pop2,wholeacts,fracacts in injactslist:
             
-            thisforceinfinj = 1 - npow((1-transinj), (dt*sharing[pop1,t]*effinj[t]*osteff[t]*effallprev[:,pop2]))
+            if wholeacts[t]:
+                thisforceinfinj = 1 - npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))*(1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]*fracacts[t])
+            else:
+                thisforceinfinj = 1 - (1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]*fracacts[t])
+                
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
                 forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * (1-thisforceinfinj)
             
