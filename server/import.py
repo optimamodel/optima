@@ -7,15 +7,15 @@ import glob
 from hashlib import sha224
 
 @click.command()
-@click.option('--new', default="http://localhost:8080")
+@click.argument('server', default="http://localhost:8080")
 @click.option('--username', default='test')
 @click.option('--password', default='test')
 @click.option('--overwrite', default=False)
 @click.argument('project_paths', nargs=-1, type=click.Path(exists=True))
-def main(project_paths, new, username, password, overwrite):
+def main(project_paths, server, username, password, overwrite):
 
     project_paths = list(set([click.format_filename(x) for x in project_paths]))
-    click.echo("Preparing to upload %s projects to %s..." % (len(project_paths), new))
+    click.echo("Preparing to upload %s projects to %s..." % (len(project_paths), server))
 
     new_session = requests.Session()
 
@@ -25,7 +25,7 @@ def main(project_paths, new, username, password, overwrite):
     password = hashed_password.hexdigest()
 
     # New server login
-    new_login = new_session.post(new + "/api/user/login",
+    new_login = new_session.post(server + "/api/user/login",
                                  json={'username': username,
                                        'password': password})
     if not new_login.status_code == 200:
@@ -36,7 +36,7 @@ def main(project_paths, new, username, password, overwrite):
     click.echo("Uploading...")
     click.echo("First, getting the projects off the new server.")
 
-    new_projects = new_session.get(new + "/api/project").json()["projects"]
+    new_projects = new_session.get(server + "/api/project").json()["projects"]
     new_project_names = [x["name"] for x in new_projects]
 
     projects = {x["name"]:x for x in new_projects}
@@ -47,7 +47,6 @@ def main(project_paths, new, username, password, overwrite):
         f = open(project_path, 'rb')
 
         if project_name in projects.keys():
-
             if overwrite:
                 click.echo("will overwrite %s" % (project_name,))
                 # todo!!!!!
@@ -60,7 +59,7 @@ def main(project_paths, new, username, password, overwrite):
         else:
             # New upload
             new_project_upload = new_session.post(
-                new + "/api/project/data",
+                server + "/api/project/data",
                 data={"name": project_name},
                 files={"file": (project_name + ".prj", f)})
             click.echo("Uploaded %s" % (project_name,))
