@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, power as npow
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, floor, power as npow
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
@@ -180,9 +180,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     pmtcteff  = (1 - simpars['effpmtct']) * effmtct         # Effective MTCT transmission whilst on PMTCT
 
     # Calculate these things outside of the time loop
-    prepsti = prepeff*stieff
-    prepsticirceff = prepsti*circeff
-    prepsticircconst = prepsti*circconst
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                
+    susregeff = einsum('ab,ab,ab->ab',prepeff,stieff,circeff)
+    progcirceff = einsum('ab,a->ab',susregeff,circconst*male+female)
     
 
     # Force of infection metaparameter
@@ -373,7 +373,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
                 
                 
-                
     ##################################################################################################################
     ### Run the model -- numerically integrate over time
     ##################################################################################################################
@@ -422,14 +421,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for pop1,pop2,acts,cond,thistrans in sexactslist:
             exponent = dt*cond[t]*acts[t]*effallprev[:,pop2] # Make it so this only has to be calculated once
             
-            if male[pop1]: # Separate FOI calcs for circs vs uncircs
-                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsticirceff[pop1,t]),   exponent)
-                thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*prepsticircconst[pop1,t]), exponent)    
-                forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * (1-thisforceinfsex)
+
+            thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*susregeff[pop1,t]),   exponent)
+            thisforceinfsex[progcirc,:]     = 1 - npow((1-thistrans*progcirceff[pop1,t]), exponent)    
+            forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2])   * (1-thisforceinfsex)
                 
-            else: # Only have uncircs for females
-                thisforceinfsex[susreg,:]       = 1 - npow((1-thistrans*prepsti[pop1,t]), exponent)
-                forceinffull[:,pop1,:,pop2]     = 1 - (1-forceinffull[:,pop1,:,pop2]) * (1-thisforceinfsex)
                 
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
