@@ -15,11 +15,11 @@
           port: 9001,
           repo: "github.com/optimamodel/optima.git",
           branch: develop
-        }
+        },
         {
           name: legacy,
           domain: ui.optimamodel.com,
-          port: 9002,
+          port: 9005,
           repo: "github.com/optimamodel/optima.git",
           branch: backport-twisted-to-master
         }

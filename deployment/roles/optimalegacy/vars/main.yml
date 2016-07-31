@@ -3,7 +3,7 @@ port: "{{ app.port }}"
 giturl: "{{ app.giturl }}"
 
 dir: "/home/{{ user }}/installations/{{ app.name }}"
-daemon: "/software/anaconda/bin/python server/api/_twisted_wsgi.py"
+daemon: "/software/anaconda/bin/python server/src/_twisted_wsgi.py"
 daemon_opts: "{{ port }}"
 service_name: "{{ app.name }}"
 branch: "{{ app.branch }}"
