@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, floor, power as npow
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan, einsum, floor, ones, power as npow
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
@@ -417,14 +417,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         
         ###############################################################################
-        ## Calculate force-of-infection (forceinf)
+        ## Calculate probability of getting infected
         ###############################################################################
         
-        # Define force-of-infection matrix
+        # Probability of getting infection. In the first stage of construction, we actually store this as the probability of NOT getting infected
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
-        forceinffull = 1.-zeros((len(sus), npops, nstates, npops))
+        forceinffull = ones((len(sus), npops, nstates, npops))
 
-        # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
+        # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
         for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
             thisforceinfsex = (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
@@ -437,13 +437,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
             
-        # Injection-related infections -- force-of-infection in pop1 due to pop2
+        # Injection-related infections -- probability of pop1 getting infected by pop2
         for pop1,pop2,wholeacts,fracacts in injactslist:
             
             thisforceinfinj = 1-sharing[pop1,t]*fracacts[t]*transinj*osteff[t]*effallprev[:,pop2]
             if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
                 
-            for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
+            for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
                 forceinffull[index,pop1,:,pop2] *= thisforceinfinj
             
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
@@ -452,23 +452,24 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
         
-        forceinffull = 1.-forceinffull
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        # Probability of getting infected is one minus forceinffull times any scaling factors
+        forceinffull = einsum('ijkl,j,j->ijkl', 1.-forceinffull, force, inhomo)
+        infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
+        infections_by = forceinffull.sum(axis=(1,3)) # Infections transmitted through sex and injecting - by health state who transmits
+
+        if abs(infections_to.sum() - infections_by.sum()) > 1:
+            errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (infections_by.sum(), infections_to.sum(), t)
+            if die: raise OptimaException(errormsg)
+            else: printv(errormsg, 1, verbose)
+
 
         ##############################################################################################################
         ### The ODEs
         ##############################################################################################################
     
         ## Set up
-        # New infections -- through pre-calculated force of infection
-        infmatrix = einsum('ijkl,j,j,ij->ijkl', forceinffull, force, inhomo, people[sus, :, t])
-        infections_to = infmatrix.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
-        infections_by = infmatrix.sum(axis=(1,2)) # Infections transmitted through sex and injecting - by health state who transmits
-
-        if abs(infections_to.sum() - infections_by.sum()) > 1:
-            errormsg = 'Number of infections caused (%f) is not equal to infections acquired (%f) at time %i' % (infections_by.sum(), infections_to.sum(), t)
-            if die: raise OptimaException(errormsg)
-            else: printv(errormsg, 1, verbose)
+        # New infections -- using pre-calculated probability of infection, scaled by probability of not shifting.
+        infmatrix = einsum('ijkl,ij,j->ijkl', forceinffull, people[sus,:,t], noshiftprob)
             
         # Initalise / reset arrays
         dU = []; dD = []
@@ -498,7 +499,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for index in sus:
             otherdeaths[index] = dt * people[sus[index],:,t] * background
             raw_otherdeath[:,t] += otherdeaths[index]/dt    # Save annual other deaths 
-        dS = -infections_to - otherdeaths # Change in number of susceptibles -- death rate already taken into account in 
+        dS = -infmatrix.sum(axis=(2,3)) - otherdeaths # Change in number of susceptibles -- death rate already taken into account in 
         raw_inci[:,t] = (infections_to.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
         raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /float(dt)
 
