@@ -435,8 +435,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Injection-related infections -- force-of-infection in pop1 due to pop2
         for pop1,pop2,wholeacts,fracacts in injactslist:
             
-            thisforceinfinj = 1-sharing[pop1,t]*fracacts[t]*transinj*osteff[t],effallprev[:,pop2]
-            if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
+            thisforceinfinj = 1-sharing[pop1,t]*fracacts[t]*transinj*osteff[t]*effallprev[:,pop2]
+            if wholeacts[t]:
+                thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
                 
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
                 forceinffull[index,pop1,:,pop2] = 1 - (1-forceinffull[index,pop1,:,pop2]) * thisforceinfinj
