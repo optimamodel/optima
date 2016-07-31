@@ -35,7 +35,6 @@ define({
     'angular-messages': ['angular'],
     'angular-resource': ['angular'],
     'ng-file-upload': ['angular'],
-    'radar-chart-d3': ['d3'],
     'saveAs': ['canvas2blob'],
     'ui.bootstrap': ['angular'],
     'ui.router' : ['angular'],
