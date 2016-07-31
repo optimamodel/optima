@@ -26,3 +26,4 @@ sqlparse==0.1.13
 xlrd==0.9.3
 mpld3==0.2
 pylint==1.4.3
+twisted

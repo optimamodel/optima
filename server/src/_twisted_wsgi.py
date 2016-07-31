@@ -9,7 +9,7 @@ from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
 
-from . import api
+import api
 
 
 def run():
