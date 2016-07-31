@@ -49,10 +49,6 @@ def secure_filename_input(orig_name):
     return secure_filename(orig_name)
 
 
-def Json(orig):
-    return orig
-
-
 class SubRequest:
 
     def __init__(self, orig_dict):
