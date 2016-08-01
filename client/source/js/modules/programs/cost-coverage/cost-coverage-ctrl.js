@@ -30,11 +30,6 @@ define(['./../module', 'underscore'], function (module, _) {
 
     var vm = this;
 
-    function consoleLogJson(name, val) {
-      console.log(name + ' = ');
-      console.log(JSON.stringify(val, null, 2));
-    }
-
     function initialize() {
       vm.openProject = activeProject.data;
       console.log('vm.openProject', vm.openProject);
@@ -97,6 +92,11 @@ define(['./../module', 'underscore'], function (module, _) {
       });
     }
 
+    function consoleLogJson(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
+
     function changeProgsetAndParset() {
       if (vm.selectedProgset === undefined) {
         return;
@@ -117,6 +117,7 @@ define(['./../module', 'underscore'], function (module, _) {
         vm.outcomes = response;
         console.log('outcome summaries', vm.outcomes);
         changeParset();
+        vm.changeSelectedProgram();
       })
     }
 
@@ -132,12 +133,12 @@ define(['./../module', 'underscore'], function (module, _) {
         vm.state.popsizes = response;
 
         vm.state.yearSelector = [];
-        var years = _.keys($scope.popsizes);
+        var years = _.keys(vm.state.popsizes);
         years.forEach(function(year) {
           vm.state.yearSelector.push({'value':year, 'label':year.toString()});
         });
 
-        buildTables();
+        buildCostFunctionTables();
         vm.updateGraph();
       });
     };
@@ -164,6 +165,7 @@ define(['./../module', 'underscore'], function (module, _) {
       if (vm.state.dispCost) {
         url += '&perperson=1';
       }
+      console.log('fetch graphs');
       $http
         .get(url)
         .success(
@@ -179,12 +181,12 @@ define(['./../module', 'underscore'], function (module, _) {
     };
 
     var saveSelectedProgram = function() {
-      var payload = { 'program': $scope.selectedProgram };
+      var payload = { 'program': vm.state.selectedProgram };
       // consoleLogJson("payload", payload);
       $http
         .post(
-          '/api/project/' + $scope.vm.openProject.id
-            + '/progsets/' + $scope.selectedProgram.progset_id
+          '/api/project/' + vm.openProject.id
+            + '/progsets/' + vm.state.selectedProgram.progset_id
             + '/program',
           payload)
         .success(function() {
@@ -202,6 +204,48 @@ define(['./../module', 'underscore'], function (module, _) {
       }
       return val;
     }
+
+    // $scope.Math = window.Math;
+
+    // ccDataForm.cost.$setValidity("required", !angular.isUndefined($scope.state.newCCData.cost));
+    // ccDataForm.coverage.$setValidity("required", !angular.isUndefined($scope.state.newCCData.coverage));
+    // ccDataForm.year.$setValidity("valid", isValidCCDataYear());
+
+    // var isValidCCDataYear = function() {
+    //   if ($scope.state.newCCData.year) {
+    //     if ($scope.state.newCCData.year >= $scope.vm.openProject.dataStart ||
+    //       $scope.state.newCCData.year <= $scope.vm.openProject.dataEnd) {
+    //       var recordExisting = _.filter($scope.state.ccData, function(ccData) {
+    //         return ccData.year === $scope.state.newCCData.year;
+    //       });
+    //       if(recordExisting.length === 0) {
+    //         return true;
+    //       }
+    //     }
+    //   }
+    //   return false;
+    // };
+
+    // cpDataForm.splower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_lower));
+    // cpDataForm.spupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_upper));
+    // cpDataForm.uclower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_lower));
+    // cpDataForm.ucupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_upper));
+    // cpDataForm.year.$setValidity("valid", isValidCPDataYear());
+
+    // var isValidCPDataYear = function() {
+    //   if ($scope.state.newCPData.year) {
+    //     if ($scope.state.newCPData.year >= $scope.vm.openProject.dataStart ||
+    //       $scope.state.newCPData.year <= $scope.vm.openProject.dataEnd) {
+    //       var recordExisting = _.filter($scope.state.cpData, function(cpData) {
+    //         return cpData.year === $scope.state.newCPData.year;
+    //       });
+    //       if(recordExisting.length === 0) {
+    //         return true;
+    //       }
+    //     }
+    //   }
+    //   return false;
+    // };
 
     var validateCostcovTable = function(table) {
       var costcov = [];
@@ -257,7 +301,7 @@ define(['./../module', 'underscore'], function (module, _) {
       return result;
     };
 
-    var buildTables = function() {
+    var buildCostFunctionTables = function() {
 
       vm.state.ccoparsTable = {
         titles: [
@@ -293,7 +337,7 @@ define(['./../module', 'underscore'], function (module, _) {
         widths: ["5em", "5em", "5em"],
         displayRowFns: [],
         selectors: [getYearSelectors],
-        options: [$scope.yearSelector],
+        options: [vm.state.yearSelector],
         validateFn: validateCostcovTable,
       };
       var table = vm.state.costcovTable;
@@ -303,8 +347,6 @@ define(['./../module', 'underscore'], function (module, _) {
       console.log("costcovTable", vm.state.costcovTable);
 
     };
-
-
 
 
 

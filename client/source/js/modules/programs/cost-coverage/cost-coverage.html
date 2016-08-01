@@ -101,14 +101,14 @@
 
               <div class="chart-container" style="flex: 1 1;">
 
-                <div mpld3-chart="chartData"
+                <div mpld3-chart="vm.state.chartData"
                      style="width: 100%"
-                     chart-id="{{ chartData.id }}"
-                     ng-if="chartData">
+                     chart-id="{{ vm.state.chartData.id }}"
+                     ng-if="vm.state.chartData">
                 </div>
 
-                <div class="c-caption" ng-if="displayCaption">
-                  {{displayCaption}}
+                <div class="c-caption" ng-if="vm.statedisplayCaption">
+                  {{vm.statedisplayCaption}}
                 </div>
 
               </div>
@@ -129,6 +129,35 @@
                   <entry-table table="vm.state.costcovTable"></entry-table>
                 </div>
               </div>
+
+              <!--<div class="flex-column margin_top">-->
+
+                  <!--<h3>Options for displaying curves</h3>-->
+                  <!--<div>-->
+                    <!--Specify the maximum coverage shown on the plot:-->
+                    <!--<input-->
+                        <!--placeholder="e.g. 1000000"-->
+                        <!--class="txbox __inline __xl"-->
+                        <!--ng-model="maxFunc"-->
+                        <!--type="number"/>-->
+                  <!--</div>-->
+                  <!--<div>-->
+                    <!--Display program costs in dollar spent per-->
+                    <!--person in the targeted population-->
+                    <!--<input-->
+                        <!--type="checkbox"-->
+                        <!--ng-model="dispCost"/>-->
+                  <!--</div>-->
+
+                <!--</div>-->
+
+                <!--<div class="flex-column margin_top">-->
+
+                  <!--<h3>Captions: warning - not saved in database at the moment</h3>-->
+                  <!--<textarea ng-model="remarks"/>-->
+
+                <!--</div>-->
+
             </div>
           </div>
         </div>
