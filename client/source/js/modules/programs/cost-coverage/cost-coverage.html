@@ -9,7 +9,11 @@
     Select program set
     <select
       class="txbox"
-      style="width: 15em; display: inline; margin-left: 0.5em; margin-right: 2em; "
+      style="
+        width: 15em;
+        display: inline;
+        margin-left: 0.5em;
+        margin-right: 2em; "
       ng-options="progset as progset.name for progset in vm.progsets"
       ng-change="vm.changeProgsetAndParset()"
       ng-model="vm.selectedProgset">
@@ -18,7 +22,10 @@
     Select parameter set
     <select
       class="txbox"
-      style="width: 15em; display: inline; margin-left: 0.5em; "
+      style="
+        width: 15em;
+        display: inline;
+        margin-left: 0.5em; "
       ng-options="parset as parset.name for parset in vm.parsets"
       ng-change="vm.changeProgsetAndParset()"
       ng-model="vm.selectedParset">
@@ -56,9 +63,7 @@
             cursor: pointer;
             padding: 15px 10px 5px 10px;"
           ng-repeat="tab in vm.tabs"
-          ng-class="(vm.activeTab != tab.slug)
-                      ? 'notSelectTab'
-                      : 'selectTab'"
+          ng-class="(vm.activeTab != tab.slug) ? 'notSelectTab' : 'selectTab'"
           ng-click="vm.selectTab(tab.slug)">
         <h2>{{tab.name}}</h2>
       </div>
@@ -68,107 +73,70 @@
 
     <div style="width: 100%;">
 
+      <!-- Cost functions tab window -->
+      <div style="width: 100%;"
+           class="c-tab"
+           ng-if="vm.activeTab === 'cost'">
 
-      <!-- Cost functions tab -->
-      <div style="width: 100%;" ng-if="vm.activeTab === 'cost'">
-
-           <!--ng-include="'js/modules/programs/cost-coverage/cost/cost.html'">-->
-
-        <!-- Cost functions tab -->
-        <div style="width: 100%;" class="c-tab">
-        <!--<div style="width: 100%;" class="c-tab" ng-controller="CostController">-->
-
-          <div style="width: 100%; margin: 10px 0px 40px;">
-
-            <label>Select program</label>
-
-            <select
-                class="txbox"
-                style="margin-left: 0.5em; display: inline; width: 30em;"
-                ng-options="p.name for p in vm.programs"
-                ng-change="vm.changeSelectedProgram()"
-                ng-model="vm.state.selectedProgram">
-            </select>
-
-          </div>
-
-          <div ng-if="vm.state.selectedProgram">
-
-            <div style="
-                  display: flex;
-                  width: 100%;
-                  margin-top: 10px">
-
-              <div class="chart-container" style="flex: 1 1;">
-
-                <div mpld3-chart="vm.state.chartData"
-                     style="width: 100%"
-                     chart-id="{{ vm.state.chartData.id }}"
-                     ng-if="vm.state.chartData">
-                </div>
-
-                <div class="c-caption" ng-if="vm.statedisplayCaption">
-                  {{vm.statedisplayCaption}}
-                </div>
-
-              </div>
-
-              <div style="flex: 0 0 580px;"
-                   class="flex-column margin_left">
-
-                <div class="flex-column">
-                  <h3>Parameters for defining cost function</h3>
-                  <entry-table table="vm.state.ccoparsTable"></entry-table>
-                </div>
-
-                <br>
-                <br>
-
-                <div class="flex-column">
-                  <h3>Historical cost and coverage data</h3>
-                  <entry-table table="vm.state.costcovTable"></entry-table>
-                </div>
-              </div>
-
-              <!--<div class="flex-column margin_top">-->
-
-                  <!--<h3>Options for displaying curves</h3>-->
-                  <!--<div>-->
-                    <!--Specify the maximum coverage shown on the plot:-->
-                    <!--<input-->
-                        <!--placeholder="e.g. 1000000"-->
-                        <!--class="txbox __inline __xl"-->
-                        <!--ng-model="maxFunc"-->
-                        <!--type="number"/>-->
-                  <!--</div>-->
-                  <!--<div>-->
-                    <!--Display program costs in dollar spent per-->
-                    <!--person in the targeted population-->
-                    <!--<input-->
-                        <!--type="checkbox"-->
-                        <!--ng-model="dispCost"/>-->
-                  <!--</div>-->
-
-                <!--</div>-->
-
-                <!--<div class="flex-column margin_top">-->
-
-                  <!--<h3>Captions: warning - not saved in database at the moment</h3>-->
-                  <!--<textarea ng-model="remarks"/>-->
-
-                <!--</div>-->
-
-            </div>
-          </div>
+        <div style="
+              width: 100%;
+              margin: 10px 0px 40px;">
+          <label>Select program</label>
+          <select
+              style="
+                margin-left: 0.5em;
+                display: inline;
+                width: 30em;"
+              class="txbox"
+              ng-options="p.name for p in vm.programs"
+              ng-change="vm.changeProgram()"
+              ng-model="vm.state.selectedProgram">
+          </select>
         </div>
 
+        <div ng-if="vm.state.selectedProgram"
+             style="
+                display: flex;
+                width: 100%;
+                margin-top: 10px">
 
+          <div class="chart-container" style="flex: 1 1;">
+
+            <div mpld3-chart="vm.state.chartData"
+                 style="width: 100%"
+                 chart-id="{{ vm.state.chartData.id }}"
+                 ng-if="vm.state.chartData">
+            </div>
+
+            <div class="c-caption" ng-if="vm.statedisplayCaption">
+              {{vm.statedisplayCaption}}
+            </div>
+
+          </div>
+
+          <div style="flex: 0 0 580px;"
+               class="flex-column margin_left">
+
+            <div class="flex-column">
+              <h3>Parameters for defining cost function</h3>
+              <entry-table table="vm.state.ccoparsTable"></entry-table>
+            </div>
+
+            <br>
+            <br>
+
+            <div class="flex-column">
+              <h3>Historical cost and coverage data</h3>
+              <entry-table table="vm.state.costcovTable"></entry-table>
+            </div>
+          </div>
+
+        </div>
       </div>
 
-
-
-      <!-- Outcome functions tab -->
-      <div style="width: 100%;" ng-if="vm.activeTab === 'outcome'">
+      <!-- Outcome functions tab window -->
+      <div style="width: 100%;"
+           ng-if="vm.activeTab === 'outcome'">
 
         <div style="margin: 30px 0 20px 0;">
           <label>
@@ -176,7 +144,10 @@
           </label>
           <select
             class="txbox c-select__input"
-            style="display: inline; width: 30em; margin-left: 0.5em; "
+            style="
+              display: inline;
+              width: 30em;
+              margin-left: 0.5em; "
             ng-options="parameter.name for parameter in vm.parameters"
             ng-change="vm.changeParameter()"
             ng-model="vm.selectedParameter">
@@ -300,3 +271,33 @@
       </div>
   </div>
 </div>
+
+
+                <!--<div class="flex-column margin_top">-->
+
+                  <!--<h3>Options for displaying curves</h3>-->
+                  <!--<div>-->
+                    <!--Specify the maximum coverage shown on the plot:-->
+                    <!--<input-->
+                        <!--placeholder="e.g. 1000000"-->
+                        <!--class="txbox __inline __xl"-->
+                        <!--ng-model="maxFunc"-->
+                        <!--type="number"/>-->
+                  <!--</div>-->
+                  <!--<div>-->
+                    <!--Display program costs in dollar spent per-->
+                    <!--person in the targeted population-->
+                    <!--<input-->
+                        <!--type="checkbox"-->
+                        <!--ng-model="dispCost"/>-->
+                  <!--</div>-->
+
+                <!--</div>-->
+
+                <!--<div class="flex-column margin_top">-->
+
+                  <!--<h3>Captions: warning - not saved in database at the moment</h3>-->
+                  <!--<textarea ng-model="remarks"/>-->
+
+                <!--</div>-->
+
