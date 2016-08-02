@@ -16,7 +16,7 @@
         margin-right: 2em; "
       ng-options="progset as progset.name for progset in vm.progsets"
       ng-change="vm.changeProgsetAndParset()"
-      ng-model="vm.selectedProgset">
+      ng-model="vm.state.progset">
     </select>
 
     Select parameter set
@@ -28,12 +28,12 @@
         margin-left: 0.5em; "
       ng-options="parset as parset.name for parset in vm.parsets"
       ng-change="vm.changeProgsetAndParset()"
-      ng-model="vm.selectedParset">
+      ng-model="vm.state.parset">
     </select>
 
   </div>
 
-  <div ng-if="vm.selectedProgset && vm.selectedParset">
+  <div ng-if="vm.state.progset && vm.state.parset">
 
     <style>
       .selectTab {
@@ -90,11 +90,11 @@
               class="txbox"
               ng-options="p.name for p in vm.programs"
               ng-change="vm.changeProgram()"
-              ng-model="vm.state.selectedProgram">
+              ng-model="vm.state.program">
           </select>
         </div>
 
-        <div ng-if="vm.state.selectedProgram"
+        <div ng-if="vm.state.program"
              style="
                 display: flex;
                 width: 100%;
@@ -149,16 +149,18 @@
               width: 30em;
               margin-left: 0.5em; "
             ng-options="parameter.name for parameter in vm.parameters"
-            ng-change="vm.changeParameter()"
-            ng-model="vm.selectedParameter">
+            ng-change="vm.changeTargetParameter()"
+            ng-model="vm.state.parameter">
           </select>
         </div>
 
-        <button class="btn __m" ng-click="vm.submitOutcomes()">Save outcome functions</button>
+        <button class="btn __m" ng-click="vm.saveProgsetOutcomes()">
+          Save outcome functions
+        </button>
         <br>
         <br>
 
-        <div ng-repeat="outcome in vm.selectedOutcomes">
+        <div ng-repeat="outcome in vm.state.targetedOutcomes">
 
           <style>
             .mytable th, .mytable td {
@@ -187,9 +189,9 @@
               <th>
                 Parameter Value
                 <br>
-                ({{vm.selectedParameter.limits[0]}}
+                ({{vm.state.parameter.limits[0]}}
                 -
-                {{vm.selectedParameter.limits[1]}})
+                {{vm.state.parameter.limits[1]}})
               </th>
             </tr>
 
@@ -197,7 +199,7 @@
               <td>{{vm.makePopKeyLabel(outcome.pop)}}</td>
               <td>{{yearEntry.year}}</td>
               <td>
-                "{{vm.selectedParameter.name}}"
+                "{{vm.state.parameter.name}}"
                 in the absence of any programs targeting this parameter
                 <br>
                 <br>
@@ -220,9 +222,14 @@
               <td></td>
               <td></td>
               <td>
-                "{{vm.selectedParameter.name}}"
+                <ul>
+                  <li>
+                "{{vm.state.parameter.name}}"
                 under maximal attainable coverage of
                 "{{vm.getProgramName(program.name)}}"
+                in isolation
+                  </li>
+                </ul>
               </td>
               <td style="width:12em">
                 <input

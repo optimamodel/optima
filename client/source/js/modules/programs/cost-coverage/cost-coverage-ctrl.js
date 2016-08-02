@@ -47,7 +47,7 @@ define(['./../module', 'underscore'], function(module, _) {
             '/api/project/' + vm.project.id + '/progsets')
           .success(function(response) {
             vm.progsets = response.progsets;
-            vm.selectedProgset = vm.progsets[0];
+            vm.state.progset = vm.progsets[0];
 
             // Fetch parsets (independent of progset)
             $http
@@ -56,8 +56,8 @@ define(['./../module', 'underscore'], function(module, _) {
               .success(function(response) {
                 vm.parsets = response.parsets;
                 console.log('vm.parsets', vm.parsets);
-                vm.selectedParset = vm.parsets[0];
-                console.log('vm.selectedParset', vm.selectedParset);
+                vm.state.parset = vm.parsets[0];
+                console.log('vm.state.parset', vm.state.parset);
                 vm.changeProgsetAndParset();
               });
           });
@@ -69,18 +69,19 @@ define(['./../module', 'underscore'], function(module, _) {
       }
 
       function changeParset() {
-        console.log('vm.selectedParset', vm.selectedParset);
-        if (vm.selectedProgset && vm.selectedParset) {
+        console.log('vm.state.parset', vm.state.parset);
+        if (vm.state.progset && vm.state.parset) {
           // todo: parse the parsets directly here
-          $http.get(
-            '/api/project/' + vm.project.id
-            + '/progsets/' + vm.selectedProgset.id
-            + '/parameters/' + vm.selectedParset.id)
+          $http
+            .get(
+              '/api/project/' + vm.project.id
+                + '/progsets/' + vm.state.progset.id
+                + '/parameters/' + vm.state.parset.id)
             .success(function(parameters) {
               vm.parameters = parameters;
               console.log('vm.parameters', vm.parameters);
-              vm.selectedParameter = vm.parameters[0];
-              vm.changeParameter();
+              vm.state.parameter = vm.parameters[0];
+              vm.changeTargetParameter();
             });
         }
       }
@@ -90,16 +91,17 @@ define(['./../module', 'underscore'], function(module, _) {
         $http
           .get(
             '/api/project/' + vm.project.id
-              + '/progsets/' + vm.selectedProgset.id
-              + '/program/' + vm.state.selectedProgram.id
-              + '/parset/' + vm.selectedParset.id
+              + '/progsets/' + vm.state.progset.id
+              + '/program/' + vm.state.program.id
+              + '/parset/' + vm.state.parset.id
               + '/popsizes')
           .success(function(response) {
             vm.state.popsizes = response;
             vm.state.yearSelector = [];
             var years = _.keys(vm.state.popsizes);
             years.forEach(function(year) {
-              vm.state.yearSelector.push({'value': year, 'label': year.toString()});
+              vm.state.yearSelector.push(
+                {'value': year, 'label': year.toString()});
             });
             buildCostFunctionTables();
             vm.updateCostCovGraph();
@@ -107,22 +109,27 @@ define(['./../module', 'underscore'], function(module, _) {
       };
 
       vm.changeProgsetAndParset = function() {
-        if (vm.selectedProgset === undefined) {
+        if (vm.state.progset === undefined) {
           return;
         }
+
         function isActive(program) {
-          return program.targetpars && program.targetpars.length > 0 && program.active;
+          return program.targetpars
+            && program.targetpars.length > 0
+            && program.active;
         }
 
-        vm.programs = _.sortBy(_.filter(vm.selectedProgset.programs, isActive), 'name');
-        vm.state.selectedProgram = vm.programs[0];
+        vm.programs = _.sortBy(
+          _.filter(vm.state.progset.programs, isActive),
+          'name');
+        vm.state.program = vm.programs[0];
         vm.state.popsizes = {};
 
         // Fetch outcomes for this progset
         $http
           .get(
             '/api/project/' + vm.project.id
-              + '/progsets/' + vm.selectedProgset.id
+              + '/progsets/' + vm.state.progset.id
               + '/effects')
           .success(function(response) {
             vm.outcomes = response;
@@ -134,16 +141,16 @@ define(['./../module', 'underscore'], function(module, _) {
 
       vm.updateCostCovGraph = function() {
         vm.chartData = {};
-        var years = vm.state.selectedProgram.ccopars.t;
+        var years = vm.state.program.ccopars.t;
         if (years.length == 0) {
           vm.chartData = null;
           return;
         }
         var url = '/api/project/' + vm.project.id
-          + '/progsets/' + vm.selectedProgset.id
-          + '/programs/' + vm.state.selectedProgram.id
+          + '/progsets/' + vm.state.progset.id
+          + '/programs/' + vm.state.program.id
           + '/costcoverage/graph?t=' + years.join(',')
-          + '&parset_id=' + vm.selectedParset.id;
+          + '&parset_id=' + vm.state.parset.id;
         if (vm.state.remarks) {
           vm.state.displayCaption = angular.copy(vm.state.remarks);
           url += '&caption=' + encodeURIComponent(vm.state.remarks);
@@ -159,23 +166,23 @@ define(['./../module', 'underscore'], function(module, _) {
             url)
           .success(
             function(data) {
-              console.log('draw graph', vm.state.selectedProgram.short, data);
+              console.log('draw graph', vm.state.program.short, data);
               vm.state.chartData = data;
             })
           .error(
             function() {
-              console.log('failed graph', vm.state.selectedProgram.short);
+              console.log('failed graph', vm.state.program.short);
             }
           );
       };
 
-      function saveSelectedProgram() {
+      function saveProgram() {
         $http
           .post(
             '/api/project/' + vm.project.id
-              + '/progsets/' + vm.state.selectedProgram.progset_id
+              + '/progsets/' + vm.state.program.progset_id
               + '/program',
-            {'program': vm.state.selectedProgram})
+            {'program': vm.state.program})
           .success(function() {
             toastr.success('Cost data were saved');
             vm.updateCostCovGraph();
@@ -203,9 +210,9 @@ define(['./../module', 'underscore'], function(module, _) {
             });
           }
         });
-        vm.state.selectedProgram.costcov = costcov;
+        vm.state.program.costcov = costcov;
         console.log('save costcov', costcov);
-        saveSelectedProgram();
+        saveProgram();
       }
 
       function saveProgramCcoparsTable(table) {
@@ -217,8 +224,8 @@ define(['./../module', 'underscore'], function(module, _) {
             ccopars.unitcost.push([row[4], row[5]]);
           }
         });
-        vm.state.selectedProgram.ccopars = ccopars;
-        saveSelectedProgram();
+        vm.state.program.ccopars = ccopars;
+        saveProgram();
       }
 
       function showEstPopFn(row) {
@@ -258,7 +265,7 @@ define(['./../module', 'underscore'], function(module, _) {
           options: [vm.state.yearSelector],
           validateFn: saveProgramCcoparsTable
         };
-        var ccopars = angular.copy(vm.state.selectedProgram.ccopars);
+        var ccopars = angular.copy(vm.state.program.ccopars);
         var table = vm.state.ccoparsTable;
         if (ccopars && ccopars.t && ccopars.t.length > 0) {
           for (var iYear = 0; iYear < ccopars.t.length; iYear++) {
@@ -282,28 +289,26 @@ define(['./../module', 'underscore'], function(module, _) {
           displayRowFns: [],
           selectors: [getYearSelectors],
           options: [vm.state.yearSelector],
-          validateFn: saveProgramCostCovTable,
+          validateFn: saveProgramCostCovTable
         };
         var table = vm.state.costcovTable;
-        vm.state.selectedProgram.costcov.forEach(function(val, i, list) {
+        vm.state.program.costcov.forEach(function(val, i, list) {
           table.rows.push([val.year.toString(), val.cost, val.coverage]);
         });
         console.log("costcovTable", vm.state.costcovTable);
       }
 
-      vm.submitOutcomes = function() {
-        var outcomes = angular.copy(vm.outcomes);
-        consoleLogJson('submitting outcomes', outcomes);
+      vm.saveProgsetOutcomes = function() {
         $http.put(
           '/api/project/' + vm.project.id
-          + '/progsets/' + vm.selectedProgset.id
-          + '/effects',
-          outcomes)
-          .success(function(response) {
-            toastr.success('Outcomes were saved');
-            vm.outcomes = response;
-            vm.changeParameter();
-          });
+            + '/progsets/' + vm.state.progset.id
+            + '/effects',
+          angular.copy(vm.outcomes))
+        .success(function(response) {
+          toastr.success('Outcomes were saved');
+          vm.outcomes = response;
+          vm.changeTargetParameter();
+        });
       };
 
       vm.selectTab = function(tab) {
@@ -334,14 +339,14 @@ define(['./../module', 'underscore'], function(module, _) {
 
         var existingPops = [];
         _.each(vm.outcomes, function(outcome) {
-          if (outcome.name == vm.selectedParameter.short) {
+          if (outcome.name == vm.state.parameter.short) {
             existingPops.push(outcome.pop);
           }
         });
         console.log('existing pop in outcome', existingPops);
 
         var missingPops = [];
-        _.each(vm.selectedParameter.populations, function(population) {
+        _.each(vm.state.parameter.populations, function(population) {
           var findPop = _.find(existingPops, function(pop) {
             return "" + pop == "" + population.pop
           });
@@ -353,7 +358,7 @@ define(['./../module', 'underscore'], function(module, _) {
 
         _.each(missingPops, function(pop) {
           outcomes.push({
-            name: vm.selectedParameter.short,
+            name: vm.state.parameter.short,
             pop: pop,
             interact: "random",
             years: []
@@ -377,7 +382,7 @@ define(['./../module', 'underscore'], function(module, _) {
 
       function addIncompletePrograms() {
         _.each(vm.outcomes, function(outcome) {
-          if (outcome.name != vm.selectedParameter.short) {
+          if (outcome.name != vm.state.parameter.short) {
             return;
           }
           var pop = outcome.pop;
@@ -385,7 +390,7 @@ define(['./../module', 'underscore'], function(module, _) {
 
             var existingProgramShorts = _.pluck(year.programs, 'name');
             var missingProgramShorts = [];
-            var population = _.find(vm.selectedParameter.populations, function(population) {
+            var population = _.find(vm.state.parameter.populations, function(population) {
               return "" + population.pop == "" + pop;
             });
             if (population) {
@@ -415,7 +420,7 @@ define(['./../module', 'underscore'], function(module, _) {
         ];
 
         vm.populationSelector = [];
-        _.each(vm.selectedParameter.populations, function(population) {
+        _.each(vm.state.parameter.populations, function(population) {
           vm.populationSelector.push({
             'label': makePopulationLabel(population),
             'value': population.pop
@@ -427,7 +432,7 @@ define(['./../module', 'underscore'], function(module, _) {
         }
 
         vm.programSelector = [{'label': '<none>', 'value': ''}];
-        _.each(vm.selectedParameter.populations, function(population) {
+        _.each(vm.state.parameter.populations, function(population) {
           _.each(population.programs, function(program) {
             if (hasNotBeenAdded(program, vm.programSelector)) {
               vm.programSelector.push({'label': program.name, 'value': program.short});
@@ -436,14 +441,14 @@ define(['./../module', 'underscore'], function(module, _) {
         });
       }
 
-      vm.changeParameter = function() {
+      vm.changeTargetParameter = function() {
         addIncompletePops();
         addMissingYear();
         addIncompletePrograms();
-        vm.selectedOutcomes = _.filter(vm.outcomes, function(outcome) {
-          return outcome.name == vm.selectedParameter.short;
+        vm.state.targetedOutcomes = _.filter(vm.outcomes, function(outcome) {
+          return outcome.name == vm.state.parameter.short;
         });
-        console.log('selected outcomes', vm.selectedOutcomes);
+        console.log('selected outcomes', vm.state.targetedOutcomes);
         buildParameterSelectors();
       };
 
