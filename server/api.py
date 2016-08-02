@@ -59,21 +59,12 @@ def unauthorized_handler():
 
 
 from server.webapp.utils import OptimaJSONEncoder
-from server.webapp.resources.user import (
-    User, UserDetail, CurrentUser, UserLogin, UserLogout)
-from server.webapp.resources.project import (
-    Projects, ProjectsAll, Project, ProjectCopy, ProjectDataSpreadsheet, ProjectEcon,
-    ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
-    DefaultPopulations, ProjectData)
-from server.webapp.resources.progsets import (
-    Progsets, Progset, ProgsetParameters, ProgsetOutcomes, Program, ProgramPopSizes, ProgsetUploadDownload)
-from server.webapp.resources.parsets import (
-    Parsets, ParsetUploadDownload, ParsetRenameDelete, ParsetCalibration, ParsetAutofit,
-    ResultsExport)
-from server.webapp.resources.progsets import ProgramCostcovGraph
-from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs
-from server.webapp.resources.optimizations import (
-    Optimizations, OptimizationCalculation, OptimizationGraph, OptimizationUpload)
+from server.webapp.webhandlers import ProjectsAll, Projects, Project, ProjectData, ProjectFromData, ProjectCopy, \
+    DefaultPrograms, DefaultParameters, DefaultPopulations, Portfolio, ProjectDataSpreadsheet, ProjectEcon, Parsets, \
+    ParsetRenameDelete, ParsetCalibration, ParsetAutofit, ParsetUploadDownload, ResultsExport, Progsets, Progset, \
+    ProgsetUploadDownload, ProgsetParameters, ProgsetOutcomes, Program, ProgramPopSizes, ProgramCostcovGraph, Scenarios, \
+    ScenarioSimulationGraphs, Optimizations, OptimizationUpload, OptimizationCalculation, OptimizationGraph, User, \
+    UserDetail, CurrentUser, UserLogin, UserLogout
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 
