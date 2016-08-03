@@ -101,7 +101,7 @@
       // Initialize eligibility criteria
       if(!$scope.state.program.criteria) {
         $scope.state.program.criteria = {
-          hivstatus: 'allstates',
+          hivstatus: 'allstates', // can also be list of strings
           pregnant: false
         }
       }
@@ -238,12 +238,23 @@
           return population.short;
         });
         
-        $scope.state.program.criteria.hivstatus = _.filter(hivstatus, function(state) {
-          return $scope.state.eligibility[state];
-        }).map(function(state) {
-          return state;
-        });
-        // tot
+        $scope.state.program.criteria.hivstatus = '';
+        if ($scope.state.allHivStates) {
+          $scope.state.program.criteria.hivstatus = 'allstates';
+        } else {
+          var stateShorts = [];
+          _.each($scope.state.hivState, function(state, hivStateShort) {
+            if (state) {
+              stateShorts.push(hivStateShort);
+            }
+          });
+          if (stateShorts.length > 2) {
+            $scope.state.program.criteria.hivstatus = stateShorts;
+          } else if (stateShorts.length == 1) {
+            $scope.state.program.criteria.hivstatus = stateShorts[0];
+          }
+        }
+
         if($scope.state.program.targetpars)
 
         /**
