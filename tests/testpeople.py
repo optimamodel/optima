@@ -40,3 +40,13 @@ else:
                                     raise Exception(errormsg)
     else:
         print('People are the same, yay! (max diff in people: %s)' % abs(newraw['people']-oldraw['people']).max())
+        
+        
+from pylab import figure, plot, hold, legend
+figure()
+hold(True)
+plot(newraw['otherdeath'].sum(axis=0))
+plot(oldraw['otherdeath'].sum(axis=0))
+legend('new','old')
+
+

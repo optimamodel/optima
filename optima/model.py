@@ -186,11 +186,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     force = simpars['force']
     inhomopar = simpars['inhomo']
 
-    # Births and transitions
+    # Births, deaths and transitions
     birth = simpars['birth']
     agetransit = simpars['agetransit']*dt       # Multiply by dt here so don't have to later
     risktransit = simpars['risktransit']*dt     # Multiply by dt here so don't have to later
     birthtransit = simpars['birthtransit']*dt   # Multiply by dt here so don't have to later
+    backgrounddeath = simpars['death'][:, t]*dt
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep!
     agetransitlist = []
@@ -200,7 +201,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 if agetransit[p1,p2]: agetransitlist.append((p1,p2))
                 if risktransit[p1,p2]: risktransitlist.append((p1,p2))
     
-    notransitprob = (1-risktransit.sum(axis=0))*(1-agetransit.sum(axis=0))
     
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -377,21 +377,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
                 
     ##################################################################################################################
-    ### Run the model -- numerically integrate over time
+    ### Run the model 
     ##################################################################################################################
 
     for t in range(npts): # Loop over time
         printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
 
-        # Calculate the background death rate and the probability of not dying or moving to another subpopulation
-        background   = simpars['death'][:, t]*dt # make OST affect this death rates
-        noshiftprob = (1-background)*notransitprob
-
-        # Calculate deaths first
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-        otherdeaths = people[:,:,t] * background
-        people[:,:,t] *= (1-background)
-        raw_otherdeath[:,t] = otherdeaths.sum(axis=(0,1))    # Save annual other deaths 
+        ## Initialise the transition probabilities
+        transitions = ones((len(sus), npops, nstates, npops))
+        
 
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         if not usecascade: alltrans[tx] = cd4trans*txfactor[t]
@@ -436,7 +430,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             thisforceinfsex = (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
             if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
             forceinffull[:,pop1,:,pop2] *= thisforceinfsex 
-                 
+            
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
@@ -448,7 +442,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
             thisforceinfinj = 1-sharing[pop1,t]*fracacts[t]*transinj*osteff[t]*effallprev[:,pop2]
             if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*effallprev[:,pop2]), int(wholeacts[t]))
-                
+
             for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
                 forceinffull[index,pop1,:,pop2] *= thisforceinfinj
             
@@ -469,7 +463,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             else: printv(errormsg, 1, verbose)
 
         # New infections use the pre-calculated probability of infection, scaled by probability of not shifting.
-        infmatrix = einsum('ijkl,ij,j->ijkl', forceinffull, people[sus,:,t], noshiftprob)
+        infmatrix = einsum('ijkl,ij,j->ijkl', forceinffull, people[sus,:,t])
 
 
 
@@ -505,6 +499,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         raw_inci[:,t] = (infmatrix.sum(axis=(0,2,3)) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
         raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /float(dt)
 
+
         ## Undiagnosed
         if not(isnan(propdx[t])):
             currplhiv = people[allplhiv,:,t].sum(axis=0)
@@ -514,25 +509,23 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         for cd4 in range(ncd4):
             if cd4>0: 
-                progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
+                proginprob = dt*prog[cd4-1]
             else: 
-                progin = 0 # Cannot progress into acute stage
-            if cd4<ncd4-1: 
-                progout = dt*prog[cd4]*people[undx[cd4],:,t]
+                proginprob = 0 # Cannot progress into acute stage
+            if cd4<ncd4-1:
+                progoutprob = dt*prog[cd4]
                 testingrate[cd4] = hivtest[:,t] # Population specific testing rates
                 if cd4>=aidsind:
                     testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             else: 
-                progout = 0  # Cannot progress out of AIDS stage
+                progoutprob = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if not(isnan(propdx[t])):
-                newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
+                newdiagnoses[cd4] = fractiontodx 
             else:
-                newdiagnoses[cd4] =  testingrate[cd4] * dt * people[undx[cd4],:,t]
-            hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
-            inflows = progin  # Add in new infections after loop
-            outflows = progout + newdiagnoses[cd4] + hivdeaths
-            dU.append(inflows - outflows)
+                newdiagnoses[cd4] =  testingrate[cd4] * dt
+            hivdeaths   = dt * death[cd4]
+            dU.append(people[dx,:,t]*(progoutprob - proginprob + newdiagnoses[cd4] + hivdeaths))
             raw_diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
 
