@@ -191,7 +191,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     agetransit = simpars['agetransit']*dt       # Multiply by dt here so don't have to later
     risktransit = simpars['risktransit']*dt     # Multiply by dt here so don't have to later
     birthtransit = simpars['birthtransit']*dt   # Multiply by dt here so don't have to later
-    backgrounddeath = simpars['death'][:, t]*dt
+    backgrounddeath = simpars['death']*dt
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep!
     agetransitlist = []
@@ -374,6 +374,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if birthrates.any():
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
                 
+    ## Define allowable transitions
+    transitions = [[0,[0,1,2]],[1,[1,2],[2,[2,3]]]]
                 
                 
     ##################################################################################################################
@@ -384,7 +386,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
 
         ## Initialise the transition probabilities
-        transitions = ones((len(sus), npops, nstates, npops))
         
 
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
@@ -436,7 +437,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
-            
+
         # Injection-related infections -- probability of pop1 getting infected by pop2
         for pop1,pop2,wholeacts,fracacts in injactslist:
             
@@ -461,10 +462,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             errormsg = 'Probability of someone getting infected (%f) is not equal to probability of someone causing an infection (%f) at time %i' % (infections_by.sum(), infections_to.sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
-
-        # New infections use the pre-calculated probability of infection, scaled by probability of not shifting.
-        infmatrix = einsum('ijkl,ij,j->ijkl', forceinffull, people[sus,:,t])
-
+            
 
 
         ##############################################################################################################
@@ -494,11 +492,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             newtreat        = [0] * ncd4
 
 
-        ## Susceptibles
-        dS = -infmatrix.sum(axis=(2,3))  # Change in number of susceptibles -- death rate already taken into account
-        raw_inci[:,t] = (infmatrix.sum(axis=(0,2,3)) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
-        raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /float(dt)
-
 
         ## Undiagnosed
         if not(isnan(propdx[t])):
@@ -509,28 +502,40 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         for cd4 in range(ncd4):
             if cd4>0: 
-                proginprob = dt*prog[cd4-1]
+                progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
             else: 
-                proginprob = 0 # Cannot progress into acute stage
-            if cd4<ncd4-1:
-                progoutprob = dt*prog[cd4]
+                progin = 0 # Cannot progress into acute stage
+            if cd4<ncd4-1: 
+                progout = dt*prog[cd4]*people[undx[cd4],:,t]
                 testingrate[cd4] = hivtest[:,t] # Population specific testing rates
                 if cd4>=aidsind:
                     testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             else: 
-                progoutprob = 0  # Cannot progress out of AIDS stage
+                progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if not(isnan(propdx[t])):
-                newdiagnoses[cd4] = fractiontodx 
+                newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             else:
-                newdiagnoses[cd4] =  testingrate[cd4] * dt
-            hivdeaths   = dt * death[cd4]
-            dU.append(people[dx,:,t]*(progoutprob - proginprob + newdiagnoses[cd4] + hivdeaths))
+                newdiagnoses[cd4] =  testingrate[cd4] * dt * people[undx[cd4],:,t]
+            hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
+            otherdeaths = dt * people[undx[cd4],:,t] * backgrounddeath[:, t]
+            inflows = progin  # Add in new infections after loop
+            outflows = progout + newdiagnoses[cd4] + hivdeaths + otherdeaths
+            dU.append(inflows - outflows)
             raw_diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
+            raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
 
-        dU[0] = dU[0] + infections_to.sum(axis=0) # Now add newly infected people
+
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
+        ## Susceptibles
+        infmatrix = einsum('ijkl,ij->ijkl', forceinffull, people[sus,:,t])
+        dS = -infmatrix.sum(axis=(2,3))  # Change in number of susceptibles -- death rate already taken into account
+        raw_inci[:,t] = (infmatrix.sum(axis=(0,2,3)) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
+        raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /float(dt)
+
+        dU[0] = dU[0] + infmatrix.sum(axis=(0,2,3)) # Now add newly infected people
 
 
 
