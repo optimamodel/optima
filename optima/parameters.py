@@ -74,16 +74,15 @@ Relative transmissibility for CD4>200 (unitless)	cd4transgt200	(0, 'maxmeta')	to
 Relative transmissibility for CD4>50 (unitless)	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Relative transmissibility for CD4<50 (unitless)	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Relative transmissibility with STIs (unitless)	effsti	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
-Progression rate for acute HIV (per year)	progacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Progression rate for CD4>500 (per year)	proggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Progression rate for CD4>350 (per year)	proggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Progression rate for CD4>200 (per year)	proggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Progression rate for CD4>50 (per year)	proggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-People on unsuppressive ART who progress	progusvl	(0, 1)	tot	constant	const	const	1	None	0	None
-Treatment recovery rate into CD4>500 (per year)	recovgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Treatment recovery rate into CD4>350 (per year)	recovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Treatment recovery rate into CD4>200 (per year)	recovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Treatment recovery rate into CD4>50 (per year)	recovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression time for acute HIV (years)	progacute	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression time for CD4>500 (years)	proggt500	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression time for CD4>350 (years)	proggt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression time for CD4>200 (years)	proggt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression time for CD4>50 (years)	proggt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery time for CD4>350 (years)	recovgt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery time for CD4>200 (years)	recovgt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery time for CD4>50 (years)	recovgt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery time for CD4<50 (years)	recovlt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
 People on unsuppressive ART who recover	recovusvl	(0, 1)	tot	constant	const	const	1	None	0	None
 Death rate for acute HIV (per year)	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>500 (per year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
@@ -108,7 +107,6 @@ Disutility of CD4>200	disutilgt200	(0, 1)	tot	constant	const	const	0	None	0	None
 Disutility of CD4>50	disutilgt50	(0, 1)	tot	constant	const	const	0	None	0	None
 Disutility of CD4<50	disutillt50	(0, 1)	tot	constant	const	const	0	None	0	None
 Disutility on treatment	disutiltx	(0, 1)	tot	constant	const	const	0	None	0	None
-People lost to follow up who are still in care	stoppropcare	(0, 1)	tot	constant	const	const	1	None	0	None
 '''
 
 
@@ -443,22 +441,17 @@ def makepars(data, label=None, verbose=2):
             c += 1
     pars['birthtransit'] = birthtransit 
 
-    # Aging transitions - these are time-constant transition rates
+    # Aging transitions - these are time-constant
     agetransit = zeros((npopkeys,npopkeys))
     duration = array([age[1]-age[0]+1.0 for age in data['pops']['age']])
     for rowno,row in enumerate(data['agetransit']):
         if sum(row):
-            for colno,col in enumerate(row):
-                agetransit[rowno,colno] = col/sum(row)/duration[rowno]
+            for colno,colval in enumerate(row):
+                agetransit[rowno,colno] = colval/sum(row)/duration[rowno]
     pars['agetransit'] = agetransit
 
-    # Risk transitions - these are time-constant transition rates
-    risktransit = zeros((npopkeys,npopkeys))
-    for rowno,row in enumerate(data['risktransit']):
-        for colno, col in enumerate(row):
-            if col:
-                risktransit[rowno,colno] = 1.0/col
-    pars['risktransit'] = risktransit 
+    # Risk transitions - these are time-constant
+    pars['risktransit'] = array(data['risktransit'])
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
@@ -525,11 +518,11 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jun by cliffk
+    Version: 2016jun
     '''
     
     # Handle inputs and initialization
-    simpars = odict() # Used to be called M
+    simpars = odict() 
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']

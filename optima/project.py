@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
@@ -357,7 +357,9 @@ class Project(object):
         
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
-            simparslist = self.parsets[name].interp(start=start, end=end, dt=dt, verbose=verbose) # "self.parset[name]" is e.g. P.parset['default']
+            simparslist = []
+            for pardict in self.parsets[name].pars:
+                simparslist.append(makesimpars(pardict, start=start, end=end, dt=dt, name=name))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]

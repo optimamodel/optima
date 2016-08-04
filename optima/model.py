@@ -55,7 +55,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     
     # Biological and failure parameters -- death etc
     prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50']]) # Ugly, but fast
-    recov      = array([simpars['recovgt500'], simpars['recovgt350'], simpars['recovgt200'], simpars['recovgt50']])
+    recov      = array([simpars['recovgt350'], simpars['recovgt200'], simpars['recovgt50'], simpars['recovlt50']])
     death      = array([simpars['deathacute'], simpars['deathgt500'], simpars['deathgt350'], simpars['deathgt200'], simpars['deathgt50'], simpars['deathlt50']])
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
     cd4trans   = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
@@ -69,7 +69,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         restarttreat  = simpars['restarttreat']  # Rate of ART re-inititation (P/T)
         progusvl      = simpars['progusvl']      # Proportion of people who progress when on unsuppressive ART
         recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
-        stoppropcare  = simpars['stoppropcare']  # Proportion of people lost-to-follow-up who are actually still in care (transferred)
         # Behavioural transitions between stages [npop,npts]
         linktocare    = simpars['linktocare']    # mean time before being linked to care
         stoprate      = simpars['stoprate']      # Percentage of people who receive ART in year who stop taking ART (%/year) (P/T)
@@ -189,7 +188,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Births, deaths and transitions
     birth = simpars['birth']
     agetransit = simpars['agetransit']*dt       # Multiply by dt here so don't have to later
-    risktransit = simpars['risktransit']*dt     # Multiply by dt here so don't have to later
+    risktransit = simpars['risktransit']
     birthtransit = simpars['birthtransit']*dt   # Multiply by dt here so don't have to later
     backgrounddeath = simpars['death']*dt
     
@@ -200,7 +199,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for p2 in range(npops):
                 if agetransit[p1,p2]: agetransitlist.append((p1,p2))
                 if risktransit[p1,p2]: risktransitlist.append((p1,p2))
-    
     
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -278,14 +276,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if usecascade:
                 
                 initpropcare = 1. - exp(-dt/(max(eps,linktocare[p,0]))) # Initial proportion of diagnosed people in care
-                initproplost = 1. - exp(-leavecare[p,0])  # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
                 
                 initpeople[dx,   p] = diagnosed*initpropcare
                 initpeople[care, p] = diagnosed*(1.-initpropcare)
-                initpeople[usvl, p] = treatment * (1.-treatvs[0]) * (1.-initproplost)
-                initpeople[svl,  p] = treatment * treatvs[0]      * (1.-initproplost)
-                initpeople[off,  p] = treatment * initproplost * stoppropcare
-                initpeople[lost, p] = treatment * initproplost * (1.-stoppropcare)
+                initpeople[usvl, p] = treatment * (1.-treatvs[0])
+                initpeople[svl,  p] = treatment * treatvs[0]
             else:
                 initpeople[dx, p]   = diagnosed
                 initpeople[tx, p]   = treatment
@@ -374,8 +369,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if birthrates.any():
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
                 
-    ## Define allowable transitions
-    transitions = [[0,[0,1,2]],[1,[1,2],[2,[2,3]]]]
                 
                 
     ##################################################################################################################
@@ -831,23 +824,23 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 people[susreg, p2, t+1] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
 
             
-            ## Age-related transitions
-            for p1,p2 in agetransitlist:
-                peopleleaving = people[:, p1, t] * agetransit[p1,p2]
-                peopleleaving = minimum(peopleleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
-                people[:, p1, t+1] -= peopleleaving # Take away from pop1...
-                people[:, p2, t+1] += peopleleaving # ... then add to pop2
-                
-            
-            ## Risk-related transitions
-            for p1,p2 in risktransitlist:
-                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2]  # Number of other people who are moving pop1 -> pop2
-                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
-                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
-                # Symmetric flow in totality, but the state distribution will ideally change.                
-                people[:, p1, t+1] += peoplemoving2 - peoplemoving1
-                people[:, p2, t+1] += peoplemoving1 - peoplemoving2
-            
+#            ## Age-related transitions
+#            for p1,p2 in agetransitlist:
+#                peopleleaving = people[:, p1, t] * agetransit[p1,p2]
+#                peopleleaving = minimum(peopleleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
+#                people[:, p1, t+1] -= peopleleaving # Take away from pop1...
+#                people[:, p2, t+1] += peopleleaving # ... then add to pop2
+#                
+#            
+#            ## Risk-related transitions
+#            for p1,p2 in risktransitlist:
+#                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2]  # Number of other people who are moving pop1 -> pop2
+#                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+#                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
+#                # Symmetric flow in totality, but the state distribution will ideally change.                
+#                people[:, p1, t+1] += peoplemoving2 - peoplemoving1
+#                people[:, p2, t+1] += peoplemoving1 - peoplemoving2
+#            
             
             
             
