@@ -3,7 +3,6 @@
 
   module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories, openProject) {
     // Default list of criteria
-    var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
