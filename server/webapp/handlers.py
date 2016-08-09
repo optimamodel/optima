@@ -22,10 +22,10 @@ from flask.ext.login import login_required, current_user, login_user, logout_use
 from flask.ext.restful import Resource, marshal_with
 from flask.ext.restful_swagger import swagger
 
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import UserDb
+from .dbconn import db
+from .dbmodels import UserDb
 
-from server.webapp.dataio import load_project_summaries, create_project_with_spreadsheet_download, delete_projects, \
+from .dataio import load_project_summaries, create_project_with_spreadsheet_download, delete_projects, \
     load_project_summary, update_project_followed_by_template_data_spreadsheet, download_project, \
     update_project_from_prj, create_project_from_prj, copy_project, load_project_program_summaries, \
     load_project_parameters, load_zip_of_prj_files, load_data_spreadsheet_binary, load_template_data_spreadsheet, \
@@ -36,9 +36,9 @@ from server.webapp.dataio import load_project_summaries, create_project_with_spr
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
     upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs
-from server.webapp.exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
-from server.webapp.parse import get_default_populations
-from server.webapp.utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
+from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
+from .parse import get_default_populations
+from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
 
 
 def report_exception(api_call):

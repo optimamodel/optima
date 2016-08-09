@@ -31,10 +31,10 @@ from werkzeug.utils import secure_filename
 from optima.utils import loaddbobj
 import optima as op
 
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
-from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.parse import get_default_program_summaries, \
+from .dbconn import db
+from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
+from .exceptions import ProjectDoesNotExist
+from .parse import get_default_program_summaries, \
     get_project_parameters, get_parameters_from_progset_parset, \
     get_parameters_from_parset, set_parameters_on_parset, \
     get_progset_from_project, get_populations_from_project, \
@@ -48,8 +48,8 @@ from server.webapp.parse import get_default_program_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
     set_program_summary_on_progset
-from server.webapp.plot import make_mpld3_graph_dict, convert_to_mpld3
-from server.webapp.utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
+from .plot import make_mpld3_graph_dict, convert_to_mpld3
+from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
 
 
 
