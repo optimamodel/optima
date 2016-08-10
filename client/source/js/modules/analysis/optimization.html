@@ -124,15 +124,15 @@
             </div>
             <div ng-if="state.optimization.objectives" class="section">
               <div class="label">Objectives</div>
-              <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
-                <span style="width: 70%">{{objective.label}}</span>
+              <div style="justify-content: space-around" class="option" ng-repeat="objectiveLabel in objectiveLabels">
+                <span style="width: 70%">{{objectiveLabel.label}}</span>
                   <span style="width: 30%">
                     <input class="txbox __inline __m"
                       type="number"
-                      ng-model="state.optimization.objectives[objective.key]"
-                      name="{{objective.key}}"
+                      ng-model="state.optimization.objectives[objectiveLabel.key]"
+                      name="{{objectiveLabel.key}}"
                       ng-change="validateOptimizationForm(optimizationForm)"
-                      ng-class="{'invalid': optimizationForm[objective.key].$invalid}"/>
+                      ng-class="{'invalid': optimizationForm[objectiveLabel.key].$invalid}"/>
                   </span>
               </div>
             </div>

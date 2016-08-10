@@ -152,7 +152,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.setType = function (which) {
       $scope.state.optimization.which = which;
       $scope.state.optimization.objectives = objectiveDefaults[which];
-      $scope.state.objectives = objectives[which];
+      $scope.objectiveLabels = objectiveLabels[which];
     };
 
     $scope.checkNotSavable = function() {
@@ -171,7 +171,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.state.isRunnable = false;
       $scope.state.optimization = optimization;
       $scope.state.constraintKeys = _.keys(optimization.constraints.name);
-      $scope.state.objectives = objectives[optimization.which];
+      $scope.objectiveLabels = objectiveLabels[optimization.which];
 
       // clear screen
       $scope.optimizationCharts = [];
@@ -486,7 +486,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 });
 
 // this is to be replaced by an api
-var objectives = {
+var objectiveLabels = {
   outcomes: [
     { key: 'start', label: 'Year to begin optimization' },
     { key: 'end', label: 'Year by which to achieve objectives' },
