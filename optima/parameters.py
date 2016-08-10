@@ -74,16 +74,23 @@ Relative transmissibility for CD4>200 (unitless)	cd4transgt200	(0, 'maxmeta')	to
 Relative transmissibility for CD4>50 (unitless)	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Relative transmissibility for CD4<50 (unitless)	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Relative transmissibility with STIs (unitless)	effsti	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
-Progression time for acute HIV (years)	progacute	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Progression time for CD4>500 (years)	proggt500	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Progression time for CD4>350 (years)	proggt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Progression time for CD4>200 (years)	proggt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Progression time for CD4>50 (years)	proggt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Treatment recovery time for CD4>350 (years)	recovgt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Treatment recovery time for CD4>200 (years)	recovgt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Treatment recovery time for CD4>50 (years)	recovgt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Treatment recovery time for CD4<50 (years)	recovlt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-People on unsuppressive ART who recover	recovusvl	(0, 1)	tot	constant	const	const	1	None	0	None
+Progression time from acute HIV (years)	progacute	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>500 (years)	proggt500	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>350 (years)	proggt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>200 (years)	proggt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>50 (years)	proggt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery into CD4>500 (years)	svlrecovgt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery into CD4>350 (years)	svlrecovgt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery into CD4>200 (years)	svlrecovgt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery into CD4>50 (years)	svlrecovlt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>500 to CD4>350 on unsuppressive ART	usvlproggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Recovery from CD4>350 to CD4>500 on unsuppressive ART	usvlrecovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression from CD4>350 to CD4>200 on unsuppressive ART	usvlproggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Recovery from CD4>200 to CD4>350 on unsuppressive ART	usvlrecovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression from CD4>200 to CD4>50 on unsuppressive ART	usvlproggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Recovery from CD4>50 to CD4>200 on unsuppressive ART	usvlrecovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression from CD4>50 to CD4<50 on unsuppressive ART	usvlproggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Recovery from CD4<50 to CD4>50 on unsuppressive ART	usvlrecovlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for acute HIV (per year)	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>500 (per year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>350 (per year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
@@ -138,51 +145,51 @@ def loadpartable(inputpartable=None):
 ##  Edit there, then copy and paste from there into here; be sure to include header row
 #############################################################################################################################
 transtable = '''
-	susreg	progcirc	undx-acute	undx-gt500	undx-gt350	undx-gt200	undx-gt50	undx-lt50	dx-acute	dx-gt500	dx-gt350	dx-gt200	dx-gt50	dx-lt50	care-acute	care-gt500	care-gt350	care-gt200	care-gt50	care-lt50	usvl-acute	usvl-gt500	usvl-gt350	usvl-gt200	usvl-gt50	usvl-lt50	svl-acute	svl-gt500	svl-gt350	svl-gt200	svl-gt50	svl-lt50	lost-acute	lost-gt500	lost-gt350	lost-gt200	lost-gt50	lost-lt50	off-acute	off-gt500	off-gt350	off-gt200	off-gt50	off-lt50
-susreg	1	1	1																																									
-progcirc		1	1																																									
-undx-acute			1	1					1	1																																		
-undx-gt500				1	1					1	1																																	
-undx-gt350					1	1					1	1																																
-undx-gt200						1	1					1	1																															
-undx-gt50							1	1					1	1																														
-undx-lt50								1						1																														
-dx-acute									1	1					1	1																												
-dx-gt500										1	1					1	1																											
-dx-gt350											1	1					1	1																										
-dx-gt200												1	1					1	1																									
-dx-gt50													1	1					1	1																								
-dx-lt50														1						1																								
-care-acute															1	1					1	1																						
-care-gt500																1	1					1	1																					
-care-gt350																	1	1					1	1																				
-care-gt200																		1	1					1	1																			
-care-gt50																			1	1					1	1																		
-care-lt50																				1						1																		
-usvl-acute																					1	1					1	1					1	1					1	1				
-usvl-gt500																						1	1					1	1					1	1					1	1			
-usvl-gt350																						1	1	1				1	1	1				1	1	1				1	1	1		
-usvl-gt200																							1	1	1				1	1	1				1	1	1				1	1	1	
-usvl-gt50																								1	1	1				1	1	1				1	1	1				1	1	1
-usvl-lt50																									1	1					1	1					1	1					1	1
-svl-acute																					1	1					1	1					1	1					1	1				
-svl-gt500																						1						1						1						1				
-svl-gt350																						1	1					1	1					1	1					1	1			
-svl-gt200																							1	1					1	1					1	1					1	1		
-svl-gt50																								1	1					1	1					1	1					1	1	
-svl-lt50																									1	1					1	1					1	1					1	1
-lost-acute																					1	1					1	1					1	1					1	1				
-lost-gt500																						1	1					1	1					1	1					1	1			
-lost-gt350																							1	1					1	1					1	1					1	1		
-lost-gt200																								1	1					1	1					1	1					1	1	
-lost-gt50																									1	1					1	1					1	1					1	1
-lost-lt50																										1						1						1						1
-off-acute																					1	1					1	1					1	1					1	1				
-off-gt500																						1	1					1	1					1	1					1	1			
-off-gt350																							1	1					1	1					1	1					1	1		
-off-gt200																								1	1					1	1					1	1					1	1	
-off-gt50																									1	1					1	1					1	1					1	1
-off-lt50																										1						1						1						1
+	0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43
+0	1		1																																									
+1		1	1																																									
+2			1	1					1	1																																		
+3				1	1					1	1																																	
+4					1	1					1	1																																
+5						1	1					1	1																															
+6							1	1					1	1																														
+7								1						1																														
+8									1	1					1	1																												
+9										1	1					1	1																											
+10											1	1					1	1																										
+11												1	1					1	1																									
+12													1	1					1	1																								
+13														1						1																								
+14															1	1																	1	1										
+15																1	1																	1	1									
+16																	1	1																	1	1								
+17																		1	1																	1	1							
+18																			1	1																	1	1						
+19																				1																		1						
+20																					1	1					1	1					1	1										
+21																						1	1					1	1					1	1									
+22																						1	1	1				1	1	1				1	1	1								
+23																							1	1	1				1	1	1				1	1	1							
+24																								1	1	1				1	1	1				1	1	1						
+25																									1	1					1	1					1	1						
+26																					1	1					1	1					1	1										
+27																						1						1						1										
+28																						1	1					1	1					1	1									
+29																							1	1					1	1					1	1								
+30																								1	1					1	1					1	1							
+31																									1	1					1	1					1	1						
+32															1	1																	1	1										
+33																1	1																	1	1									
+34																	1	1																	1	1								
+35																		1	1																	1	1							
+36																			1	1																	1	1						
+37																				1																		1						
+38																																												
+39																																												
+40																																												
+41																																												
+42																																												
+43																																												
 '''
 
 def loadtranstable(npops=None,inputtranstable=None):
@@ -196,20 +203,16 @@ def loadtranstable(npops=None,inputtranstable=None):
     for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
     attrs = alllines.pop(0) # First line is tostates
     for l in range(len(alllines)): # Loop over all healthstates 
-        rawtransit.append([attrs[l+1],[],[]]) # Create a list to store states that you can move to
+        rawtransit.append([[],[]]) # Create a list to store states that you can move to
         for i,attr in enumerate(attrs): # Loop over attributes
             try:
                 if alllines[l][i] and attrs[i]:
-                    rawtransit[l][1].append(attrs[i])
-                    rawtransit[l][2].append(ones(npops))
+                    rawtransit[l][0].append(int(attrs[i]))
+                    rawtransit[l][1].append(ones(npops))
             except:
                 errormsg = 'Error processing transition line "%s"' % alllines[l]
                 raise OptimaException(errormsg)
-        rawtransit[l][1].append('hivdeath')
-        rawtransit[l][1].append('otherdeath')
-        rawtransit[l][2].append(ones(npops))
-        rawtransit[l][2].append(ones(npops))
-        rawtransit[l][2] = array(rawtransit[l][2])
+        rawtransit[l][1] = array(rawtransit[l][1])
     return rawtransit
 
 

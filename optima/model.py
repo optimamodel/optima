@@ -25,7 +25,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     tvec         = simpars['tvec']
     dt           = simpars['dt']           # Shorten dt
     npts         = len(tvec)               # Number of time points
-    ncd4         = settings.ncd4           # Shorten number of CD4 states
     nstates      = settings.nstates        # Shorten number of health states
     people       = zeros((nstates, npops, npts)) # Matrix to hold everything
     allpeople    = zeros((npops, npts))    # Population sizes
@@ -55,8 +54,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_proptx     = zeros(npts)          # Proportion on treatment per timestep
     
     # Biological and failure parameters -- death etc
-    prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50']]) # Ugly, but fast
-    recov      = array([simpars['recovgt350'], simpars['recovgt200'], simpars['recovgt50'], simpars['recovlt50']])
+    prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],0.]) # Ugly, but fast
+    svlrecov   = array([0.,0.,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']])
+    deathhiv   = array([simpars['deathacute'],simpars['deathgt500'],simpars['deathgt350'],simpars['deathgt200'],simpars['deathgt50'],simpars['deathlt50']])
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
     cd4trans   = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
 
@@ -64,13 +64,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     treatvs     = simpars['treatvs']             # viral suppression - ART initiators (P)
     biofailure    = simpars['biofailure']    # biological treatment failure rate (P/T)
     freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
-    recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
     linktocare    = simpars['linktocare']    # mean time before being linked to care
     leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
         
         
     # Disease state indices
-    hivstates= settings.hivstates   # List of HIV states
     susreg   = settings.susreg      # Susceptible, regular
     progcirc = settings.progcirc    # Susceptible, programmatically circumcised
     sus      = settings.sus         # Susceptible, both circumcised and uncircumcised
@@ -85,6 +83,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     svl     = settings.svl          # On treatment - Suppressed Viral Load
     lost    = settings.lost         # Not on ART (anymore) and lost to follow-up
     off     = settings.off          # off ART but still in care
+    
+    acute = settings.acute
+    gt500 = settings.gt500
+    gt350 = settings.gt350
+    gt200 = settings.gt200
+    gt50 = settings.gt50
+    lt50 = settings.lt50
+    allcd4 = [acute,gt500,gt350,gt200,gt50,lt50]
+    
     if debug and len(sus)!=2:
         errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
         raise OptimaException(errormsg)
@@ -92,93 +99,94 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     
     # Make time-constant, dt-dependent transitions
     ## Progression and deaths for people not on ART
-    for state in notonart:
-        fromhealthstate = rawtransit[state][0].split('-')[1]
-    
-        # Iterate over the states you could be going to  
-        for ts, tostate in enumerate(rawtransit[state][1]):
-            if tostate not in ['hivdeath','otherdeath']:
-                tohealthstate = tostate.split('-')[1]
-    
-                if fromhealthstate not in ['lt50']: # Cannot progress from this state
-    
-                    # Probabilities of transitioning
-                    if fromhealthstate == tohealthstate:
-                        rawtransit[state][2][ts] *= exp(-dt/(simpars['prog'+fromhealthstate]))
-                    else:
-                        rawtransit[state][2][ts] *= (1.-exp(-dt/(simpars['prog'+fromhealthstate])))
+    for fromstate in notonart:
+        fromhealthstate = [(fromstate in j) for j in allcd4].index(True) # CD4 count of fromstate
+        for ts, tostate in enumerate(rawtransit[fromstate][0]): # Iterate over the states you could be going to  
+            if fromstate not in lt50: # Cannot progress from this state
+                # Probabilities of transitioning
+                if any([(tostate in j) and (fromstate in j) for j in allcd4]):
+                    rawtransit[fromstate][1][ts] *= exp(-dt/(prog[fromhealthstate]))
+                else:
+                    rawtransit[fromstate][1][ts] *= 1.-exp(-dt/(prog[fromhealthstate]))
     
                 # Death probabilities
-                rawtransit[state][2][ts] *= (1.-simpars['death'+fromhealthstate]*dt)
-            if tostate == 'hivdeath':
-                rawtransit[state][2][ts] *= simpars['death'+fromhealthstate]*dt
+            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt
+#            if tostate == 'hivdeath':
+#                rawtransit[fromstate][1][ts] *= deathhiv[fromhealthstate]*dt
 
     ## Recovery and deaths for people on suppressive ART
-    for state in svl:
-        fromhealthstate = rawtransit[state][0].split('-')[1]
+    for fromstate in svl:
+        fromhealthstate = [(fromstate in j) for j in allcd4].index(True) # CD4 count of fromstate
+        for ts, tostate in enumerate(rawtransit[fromstate][0]): # Iterate over the states you could be going to  
+            if (fromstate not in acute) and (fromstate not in gt500): # You don't recover from these states
+                if any([(tostate in j) and (fromstate in j) for j in allcd4]):
+                    rawtransit[fromstate][1][ts] = exp(-dt/svlrecov[fromhealthstate])
+                else:
+                    rawtransit[fromstate][1][ts] = 1. - exp(-dt/svlrecov[fromhealthstate])
+        
+            if fromstate in acute: # You can progress from acute
+                if tostate in acute:
+                    rawtransit[fromstate][1][ts] = exp(-dt/simpars['progacute'])
+                elif tostate in gt500:
+                    rawtransit[fromstate][1][ts] = 1.-exp(-dt/simpars['progacute'])
     
-        # Iterate over the states you could be going to  
-        for ts, tostate in enumerate(rawtransit[state][1]):
-            if tostate not in ['hivdeath','otherdeath']:
-                tohealthstate = tostate.split('-')[1]
-            
-                if fromhealthstate not in ['acute','gt500']: # You don't recover from these states
-                    if fromhealthstate == tohealthstate:
-                        rawtransit[state][2][ts] = exp(-dt/simpars['recov'+fromhealthstate])
-                    else:
-                        rawtransit[state][2][ts] = 1 - exp(-dt/simpars['recov'+fromhealthstate])
-            
-                if fromhealthstate == 'acute': # You can progress from acute
-                    if tohealthstate == 'acute':
-                        rawtransit[state][2][ts] = exp(-dt/simpars['progacute'])
-                    elif tohealthstate == 'gt500':
-                        rawtransit[state][2][ts] = 1.-exp(-dt/simpars['progacute'])
+            # Death probabilities
+            rawtransit[fromstate][1][ts] *= (1.-deathhiv[fromhealthstate]*deathtx*dt)
     
-                # Death probabilities
-                rawtransit[state][2][ts] *= (1.-simpars['death'+fromhealthstate]*deathtx*dt)
-    
-            if tostate == 'hivdeath':
-                rawtransit[state][2][ts] = simpars['death'+fromhealthstate]*simpars['deathtreat']*dt
+#            if tostate == 'hivdeath':
+#                rawtransit[fromstate][1][ts] = deathhiv[fromhealthstate]*deathtx*dt
             
 
     # Recovery and progression and deaths for people on unsuppressive ART
-    for state in usvl:
-        fromhealthstate = rawtransit[state][0].split('-')[1]
+    for fromstate in usvl:
+        fromhealthstate = [(fromstate in j) for j in allcd4].index(True) # CD4 count of fromstate
     
         # Iterate over the states you could be going to  
-        for ts, tostate in enumerate(rawtransit[state][1]):
-            if tostate not in ['hivdeath','otherdeath']:
-                tohealthstate = tostate.split('-')[1]
+        for ts, tostate in enumerate(rawtransit[fromstate][0]):
+            if fromstate in acute: # You can progress from acute
+                if tostate in acute:
+                    rawtransit[fromstate][1][ts] = exp(-dt/simpars['progacute'])
+                elif tostate in gt500:
+                    rawtransit[fromstate][1][ts] = 1.-exp(-dt/simpars['progacute'])
+            if fromstate in gt500: 
+                if tostate in gt500:
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlproggt500']
+                elif tostate in gt350:
+                    rawtransit[fromstate][1][ts] = simpars['usvlproggt500']
+            if fromstate in gt350:
+                if tostate in gt500:
+                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt350']
+                elif tostate in gt350:
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt350']-simpars['usvlproggt350']
+                elif tostate in gt200:
+                    rawtransit[fromstate][1][ts] = simpars['usvlproggt350']
+            if fromstate in gt200:
+                if tostate in gt350:
+                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt200']
+                elif tostate in gt200:
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt200']-simpars['usvlproggt200']
+                elif tostate in gt50:
+                    rawtransit[fromstate][1][ts] = simpars['usvlproggt200']
+            if fromstate in gt50:
+                if tostate in gt200:
+                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt50']
+                elif tostate in gt50:
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt50']-simpars['usvlproggt50']
+                elif tostate in lt50:
+                    rawtransit[fromstate][1][ts] = simpars['usvlproggt50']
+            if fromstate in lt50:
+                if tostate in gt50:
+                    rawtransit[fromstate][1][ts] = simpars['usvlrecovlt50']
+                elif tostate in lt50:
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovlt50']
+                                    
+            # Death probabilities -- assume that treatment factor still applies to deaths
+            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*deathtx*dt
     
-                if fromhealthstate == 'acute': # You can progress from acute
-                    if tohealthstate == 'acute':
-                        rawtransit[state][2][ts] = exp(-dt/simpars['progacute'])
-                    elif tohealthstate == 'gt500':
-                        rawtransit[state][2][ts] = 1.-exp(-dt/simpars['progacute'])
-                if fromhealthstate == 'gt500': # You can progress from gt500 if you are not a recoverer
-                    if tohealthstate == 'gt500':
-                        rawtransit[state][2][ts] = recovusvl+(1.-recovusvl)*exp(-dt/simpars['proggt500'])
-                    elif tohealthstate == 'gt350':
-                        rawtransit[state][2][ts] = (1.-recovusvl)*(1.-exp(-dt/simpars['proggt500']))
-                if fromhealthstate in ['gt350','gt200','gt50']: # You can both progress and recover from these states
-                    if hivstates.index(fromhealthstate) < hivstates.index(tohealthstate):
-                        rawtransit[state][2][ts] = recovusvl*(1.-exp(-dt/simpars['recovgt350']))
-                    elif tohealthstate == fromhealthstate:
-                        rawtransit[state][2][ts] = recovusvl*exp(-dt/simpars['recovgt350']) + (1.-recovusvl)*exp(-dt/simpars['proggt350'])
-                    elif hivstates.index(fromhealthstate) > hivstates.index(tohealthstate):
-                        rawtransit[state][2][ts] = (1.-recovusvl)*(1.-exp(-dt/simpars['proggt350']))
-                elif fromhealthstate == 'lt50': # You can recover from lt50 if you are a recoverer
-                    if tohealthstate == 'lt50':
-                        rawtransit[state][2][ts] = (1.-recovusvl) + recovusvl*exp(-dt/simpars['progacute'])
-                    elif tohealthstate == 'gt50':
-                        rawtransit[state][2][ts] = recovusvl*(1.-exp(-dt/simpars['progacute']))
-                    
-                # Death probabilities -- assume that treatment factor still applies to deaths
-                rawtransit[state][2][ts] *= (1.-simpars['death'+fromhealthstate]*deathtx*dt)
-    
-            if tostate == 'hivdeath':
-                rawtransit[state][2][ts] = simpars['death'+fromhealthstate]*deathtx*dt
+#            if tostate == 'hivdeath':
+#                rawtransit[fromstate][1][ts] = deathhiv[fromhealthstate]*deathtx*dt
                 
+
     # Births, deaths and transitions
     birth = simpars['birth']
     agetransit = simpars['agetransit']*dt
@@ -186,14 +194,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     birthtransit = simpars['birthtransit']*dt
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep
-    risktransitlist = []
+    risktransitlist,agetransitlist = [],[]
     for p1 in range(npops):
             for p2 in range(npops):
-                if agetransit[p1,p2]:
-                    for state in range(nstates):
-                        rawtransit[state][2][:][p1] = 1.-agetransit[p1,p2] 
-                        rawtransit[state][2][:][p2] *= agetransit[p1,p2]
+                if agetransit[p1,p2]: agetransitlist.append((p1,p2))
+#                    for state in range(nstates):
+#                        rawtransit[state][1][:,p1] *= 1.-agetransit[p1,p2] 
+#                        rawtransit[state][1][:,p2] *= agetransit[p1,p2]
                 if risktransit[p1,p2]: risktransitlist.append((p1,p2))
+
     
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -205,11 +214,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     transinj = simpars['transinj']          # Injecting
     cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = (1.0-simpars['effdx']) # Include diagnosis efficacy
-    if usecascade:
-        efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # reduction in transmission probability for usVL
-        efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # reduction in transmission probability for sVL
-    else:
-        txfactor = dxfactor * ((1-simpars['efftxsupp'])*treatvs + (1-simpars['efftxunsupp'])*(1-treatvs)) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
+    efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # reduction in transmission probability for usVL
+    efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # reduction in transmission probability for sVL
 
     alltrans = zeros(nstates)
     alltrans[undx] = cd4trans
@@ -224,10 +230,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     
     # Proportion aware and treated (for 90/90/90)
     propdx = simpars['propdx']
-
-    if usecascade: 
-        propcare = simpars['propcare']
-        propsupp = simpars['propsupp']
+    propcare = simpars['propcare']
+    propsupp = simpars['propsupp']
     proptx = simpars['proptx']
 
     # Population sizes
@@ -342,11 +346,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             diagnosed = nevertreated * (1-fracundiagnosed)
             
             # Set rates within
-            progratios = hstack([prog, simpars['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
+            progratios = hstack([prog[:-1], simpars['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
             progratios = (1/progratios)  / sum(1/progratios) # Normalize
-            recovratios = hstack([inf, recov, efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here -- check
+            recovratios = hstack([inf, svlrecov[2:], efftreatmentrate]) 
             recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
-            
+
             # Final calculations
             undiagnosed *= progratios
             diagnosed *= progratios
@@ -530,6 +534,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
             
+        rawtransit[susreg][1][susreg] = 1. - infections_to[0]
+        rawtransit[susreg][1][rawtransit[susreg][0].index(undx[0])] = infections_to[0]
+        rawtransit[progcirc][1][susreg] = 1. - infections_to[1]
+        rawtransit[progcirc][1][rawtransit[susreg][0].index(undx[0])] = infections_to[1]
+
 
 
         ##############################################################################################################
@@ -542,75 +551,64 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             currdx = people[alldx,:,t].sum(axis=(0,1))
             currundx = currplhiv - currdx
             fractiontodx = max(0, (propdx[t]*currplhiv - currdx)/(currundx + eps))
-            for state in undx:
-                fromcd4 = rawtransit[state][0].split('-')[1]
-                for ts, tostate in enumerate(rawtransit[state][1]):
-                    if tostate not in ['hivdeath','otherdeath']:
-                        tostate = tostate.split('-')[0]
-                        if tostate=='undx': # Probability of not being tested
-                            rawtransit[state][2][ts] *= (1.-fractiontodx)
-                        else: # Probability of being tested
-                            rawtransit[state][2][ts] *= fractiontodx
+            for fromstate in undx:
+                for ts, tostate in enumerate(rawtransit[fromstate][0]):
+                    if tostate in undx: # Probability of not being tested
+                        rawtransit[fromstate][1][ts] *= (1.-fractiontodx)
+                    else: # Probability of being tested
+                        rawtransit[fromstate][1][ts] *= fractiontodx
         else:
-            for state in undx:
-                fromcd4 = rawtransit[state][0].split('-')[1]
-                for ts, tostate in enumerate(rawtransit[state][1]):
-                    if tostate not in ['hivdeath','otherdeath']:
-                        tostate = tostate.split('-')[0]
-                        if fromcd4 in ['lt50','gt50']:
-                            if tostate=='undx': # Probability of not being tested
-                                rawtransit[state][2][ts] *= (1.-aidstest[t])
-                            else: # Probability of being tested
-                                rawtransit[state][2][ts] *= aidstest[t]
-                        else:
-                            if tostate=='undx': # Probability of not being tested
-                                rawtransit[state][2][ts] = rawtransit[state][2][ts]*(1.-hivtest[:,t])
-                            else: # Probability of being tested
-                                rawtransit[state][2][ts] = rawtransit[state][2][ts]*hivtest[:,t]
+            for fromstate in undx:
+                for ts, tostate in enumerate(rawtransit[fromstate][0]):
+                    if fromstate in lt50 or fromstate in gt50:
+                        if tostate in undx: # Probability of not being tested
+                            rawtransit[fromstate][1][ts] *= (1.-aidstest[t])
+                        else: # Probability of being tested
+                            rawtransit[fromstate][1][ts] *= aidstest[t]
+                    else:
+                        if tostate in undx: # Probability of not being tested
+                            rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*(1.-hivtest[:,t])
+                        else: # Probability of being tested
+                            rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*hivtest[:,t]
 
- 
         # Diagnosed to care
-        for state in dx:
-            for ts, tostate in enumerate(rawtransit[state][1]):
-                if tostate not in ['hivdeath','otherdeath']:
-                    tostate = tostate.split('-')[0]
-                    if tostate=='dx': # Probability of not moving into care
-                        rawtransit[state][2][ts] = rawtransit[state][2][ts]*(1.-linktocare[:,t])
-                    else: # Probability of moving into care
-                        rawtransit[state][2][ts] = rawtransit[state][2][ts]*linktocare[:,t]
+        for fromstate in dx:
+            for ts, tostate in enumerate(rawtransit[fromstate][0]):
+                if tostate in dx: # Probability of not moving into care
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*(1.-linktocare[:,t])
+                else: # Probability of moving into care
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*linktocare[:,t]
 
 
         # Care to lost
-        for state in care:
-            for ts, tostate in enumerate(rawtransit[state][1]):
-                if tostate not in ['hivdeath','otherdeath']:
-                    tostate = tostate.split('-')[0]
-                    if tostate=='care': # Probability of not being lost and remaining in care
-                        rawtransit[state][2][ts] = rawtransit[state][2][ts]*(1.-leavecare[:,t])
-                    else: # Probability of being lost
-                        rawtransit[state][2][ts] = rawtransit[state][2][ts]*leavecare[:,t]
+        for fromstate in care:
+            for ts, tostate in enumerate(rawtransit[fromstate][0]):
+                if tostate in care: # Probability of not being lost and remaining in care
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*(1.-leavecare[:,t])
+                else: # Probability of being lost
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*leavecare[:,t]
 
 
         # Lost to care
-        for state in lost:
-            for ts, tostate in enumerate(rawtransit[state][1]):
-                if tostate not in ['hivdeath','otherdeath']:
-                    tostate = tostate.split('-')[0]
-                    if tostate=='lost': # Probability of not being lost and remaining in care
-                        rawtransit[state][2][ts] = rawtransit[state][2][ts]*(1.-linktocare[:,t])
-                    else: # Probability of being lost
-                        rawtransit[state][2][ts] = rawtransit[state][2][ts]*linktocare[:,t]
+        for fromstate in lost:
+            for ts, tostate in enumerate(rawtransit[fromstate][0]):
+                if tostate=='lost': # Probability of not being lost and remaining in care
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*(1.-linktocare[:,t])
+                else: # Probability of being lost
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*linktocare[:,t]
 
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
+        ##############################################################################################################
+        ### Shift people as required
+        ##############################################################################################################
         if t<npts-1:
-            for state in nstates:
-                people[state,:,t+1] = people[state,:,t]*rawtransit
-            people[state,:,t+1] = people[state,:,t]*rawtransit
+            for transition in rawtransit[:38]:
+                
+                try: people[transition[0],:,t+1] = people[transition[0],:,t]*transition[1]
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
-        ##############################################################################################################
-        ### Shift numbers of people as required
-        ##############################################################################################################
+
+
 
 
         ##############################################################################################################
