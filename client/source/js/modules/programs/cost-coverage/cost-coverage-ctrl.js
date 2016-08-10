@@ -298,38 +298,42 @@ define(['./../module', 'underscore'], function(module, _) {
         console.log("costcovTable", vm.state.costcovTable);
       }
 
-      vm.saveProgsetOutcomes = function() {
-        var outcomes = angular.copy(vm.outcomes);
+      function getFilteredOutcomes(outcomes) {
 
         function isProgramNotEmpty(program) {
           return (!_.isNull(program.intercept_lower)
-             || !_.isNull(program.intercept_lower));
+            || !_.isNull(program.intercept_lower));
         }
 
         function isYearNotEmpty(year) {
           return (!_.isNull(year.intercept_lower)
-             || !_.isNull(year.intercept_lower)
-             || year.programs.length > 0);
+            || !_.isNull(year.intercept_lower)
+            || year.programs.length > 0);
         }
 
         function isOutcomeNotEmpty(outcome) {
           return outcome.years.length > 0;
         }
 
-        _.each(outcomes, function(outcome) {
+        var filteredOutcomes = angular.copy(outcomes);
+        _.each(filteredOutcomes, function(outcome) {
           _.each(outcome.years, function(year) {
             year.programs = _.filter(year.programs, isProgramNotEmpty);
           });
           outcome.years = _.filter(outcome.years, isYearNotEmpty);
         });
-        outcomes = _.filter(outcomes, isOutcomeNotEmpty);
+        filteredOutcomes = _.filter(filteredOutcomes, isOutcomeNotEmpty);
+        consoleLogJson('filtered outcomes', filteredOutcomes);
 
-        consoleLogJson('filtered outcomes', outcomes);
+        return filteredOutcomes;
+      }
+
+      vm.saveProgsetOutcomes = function() {
         $http.put(
           '/api/project/' + vm.project.id
             + '/progsets/' + vm.state.progset.id
             + '/effects',
-          outcomes)
+          getFilteredOutcomes(vm.outcomes))
         .success(function(response) {
           toastr.success('Outcomes were saved');
           vm.outcomes = response;
