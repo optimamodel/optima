@@ -633,7 +633,11 @@ def load_optimization_summaries(project_id):
 def save_optimization_summaries(project_id, optimization_summaries):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    old_optim_ids = [o.uid for o in project.optims.values()]
     set_optimization_summaries_on_project(project, optimization_summaries)
+    new_optim_ids = [o.uid for o in project.optims.values()]
+    deleted_optim_ids = [id for id in old_optim_ids if id not in new_optim_ids]
+    print deleted_optim_ids
     project_record.save_obj(project)
     return {'optimizations': get_optimization_summaries(project)}
 
