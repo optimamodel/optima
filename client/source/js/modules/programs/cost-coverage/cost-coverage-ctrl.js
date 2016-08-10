@@ -299,11 +299,37 @@ define(['./../module', 'underscore'], function(module, _) {
       }
 
       vm.saveProgsetOutcomes = function() {
+        var outcomes = angular.copy(vm.outcomes);
+
+        function isProgramNotEmpty(program) {
+          return (!_.isNull(program.intercept_lower)
+             || !_.isNull(program.intercept_lower));
+        }
+
+        function isYearNotEmpty(year) {
+          return (!_.isNull(year.intercept_lower)
+             || !_.isNull(year.intercept_lower)
+             || year.programs.length > 0);
+        }
+
+        function isOutcomeNotEmpty(outcome) {
+          return outcome.years.length > 0;
+        }
+
+        _.each(outcomes, function(outcome) {
+          _.each(outcome.years, function(year) {
+            year.programs = _.filter(year.programs, isProgramNotEmpty);
+          });
+          outcome.years = _.filter(outcome.years, isYearNotEmpty);
+        });
+        outcomes = _.filter(outcomes, isOutcomeNotEmpty);
+
+        consoleLogJson('filtered outcomes', outcomes);
         $http.put(
           '/api/project/' + vm.project.id
             + '/progsets/' + vm.state.progset.id
             + '/effects',
-          angular.copy(vm.outcomes))
+          outcomes)
         .success(function(response) {
           toastr.success('Outcomes were saved');
           vm.outcomes = response;
