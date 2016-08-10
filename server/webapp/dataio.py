@@ -412,8 +412,8 @@ def save_parameters(project_id, parset_id, parameters):
 
     update_project_with_fn(project_id, update_project_fn)
 
-    delete_result(project_id, parset_id, "calibration")
-    delete_result(project_id, parset_id, "autofit")
+    delete_result_by_parset_id(project_id, parset_id, "calibration")
+    delete_result_by_parset_id(project_id, parset_id, "autofit")
 
 
 def load_parset_graphs(
@@ -426,7 +426,7 @@ def load_parset_graphs(
     if parameters is not None:
         print ">> Updating parset '%s'" % parset.name
         set_parameters_on_parset(parameters, parset)
-        delete_result(project_id, parset_id, "calibration")
+        delete_result_by_parset_id(project_id, parset_id, "calibration")
         update_project(project)
 
     result = load_result(project.uid, parset.uid, calculation_type)
@@ -511,7 +511,7 @@ def update_or_create_result_record(
     return result_record
 
 
-def delete_result(
+def delete_result_by_parset_id(
         project_id, parset_id, calculation_type, db_session=None):
     if db_session is None:
         db_session = db.session
@@ -693,12 +693,11 @@ def delete_result_by_name(
     if db_session is None:
         db_session = db.session
 
-    print ">> Deleting outdated result '%s'" % result_name
-
     records = db_session.query(ResultsDb).filter_by(project_id=project_id)
     for record in records:
         result = record.load()
         if result.name == result_name:
+            print ">> Deleting outdated result '%s'" % result_name
             db_session.delete(record)
     db_session.commit()
 
@@ -912,6 +911,15 @@ def delete_progset(project_id, progset_id):
     project = project_record.load()
 
     progset = get_progset_from_project(project, progset_id)
+
+    progset_name = progset.name
+    optims = [o for o in project.optims.values() if o.progsetname == progset_name]
+
+    for optim in optims:
+        result_name = 'optim-' + optim.name
+        delete_result_by_name(project.uid, result_name)
+        project.optims.pop(optim.name)
+
     project.progsets.pop(progset.name)
 
     project_record.save_obj(project)
