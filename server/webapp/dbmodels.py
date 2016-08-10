@@ -8,7 +8,7 @@ from sqlalchemy.orm import deferred
 import optima as op
 from optima._serialize import dumps, loads
 
-from server.webapp.dbconn import db, redis
+from .dbconn import db, redis
 from copy import deepcopy as dcp
 
 

@@ -5,7 +5,7 @@ import pprint
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from server.api import app
+from ..api import app
 
 from .dbmodels import WorkLogDb
 from .dataio import update_or_create_result_record, \
