@@ -633,11 +633,13 @@ def load_optimization_summaries(project_id):
 def save_optimization_summaries(project_id, optimization_summaries):
     project_record = load_project_record(project_id)
     project = project_record.load()
-    old_optim_ids = [o.uid for o in project.optims.values()]
+    old_names = [o.name for o in project.optims.values()]
     set_optimization_summaries_on_project(project, optimization_summaries)
-    new_optim_ids = [o.uid for o in project.optims.values()]
-    deleted_optim_ids = [id for id in old_optim_ids if id not in new_optim_ids]
-    print deleted_optim_ids
+    new_names = [o.name for o in project.optims.values()]
+    deleted_names = [name for name in old_names if name not in new_names]
+    deleted_result_names = ['optim-' + name for name in deleted_names]
+    for result_name in deleted_result_names:
+        delete_result_by_name(project.uid, result_name)
     project_record.save_obj(project)
     return {'optimizations': get_optimization_summaries(project)}
 
@@ -686,17 +688,14 @@ def launch_optimization(project_id, optimization_id, maxtime):
     return calc_state
 
 
-def delete_optimization_result(
+def delete_result_by_name(
         project_id, result_name, db_session=None):
     if db_session is None:
         db_session = db.session
 
-    print ">> Deleting outdated result '%s' of an optimization" % result_name
+    print ">> Deleting outdated result '%s'" % result_name
 
-    records = db_session.query(ResultsDb).filter_by(
-        project_id=project_id,
-        calculation_type="optimization"
-    )
+    records = db_session.query(ResultsDb).filter_by(project_id=project_id)
     for record in records:
         result = record.load()
         if result.name == result_name:

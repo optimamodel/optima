@@ -10,7 +10,7 @@ from ..api import app
 from .dbmodels import WorkLogDb
 from .dataio import update_or_create_result_record, \
     load_project, load_project_record, delete_result, \
-    delete_optimization_result
+    delete_result_by_name
 from .parse import get_optimization_from_project
 from .utils import normalize_obj
 
@@ -362,7 +362,7 @@ def run_optimization(project_id, optimization_id, maxtime):
 
     if result:
         db_session = init_db_session()
-        delete_optimization_result(project_id, result.name, db_session)
+        delete_result_by_name(project_id, result.name, db_session)
         result_record = update_or_create_result_record(
             project, result, optim.parsetname, 'optimization', db_session=db_session)
         db_session.add(result_record)
