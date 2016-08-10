@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 1.5 (2016jul06)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
@@ -132,6 +132,85 @@ def loadpartable(inputpartable=None):
     return rawpars
 
 
+#############################################################################################################################
+### Define the allowable transitions!
+##  NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/transitions
+##  Edit there, then copy and paste from there into here; be sure to include header row
+#############################################################################################################################
+transtable = '''
+	susreg	progcirc	undx-acute	undx-gt500	undx-gt350	undx-gt200	undx-gt50	undx-lt50	dx-acute	dx-gt500	dx-gt350	dx-gt200	dx-gt50	dx-lt50	care-acute	care-gt500	care-gt350	care-gt200	care-gt50	care-lt50	usvl-acute	usvl-gt500	usvl-gt350	usvl-gt200	usvl-gt50	usvl-lt50	svl-acute	svl-gt500	svl-gt350	svl-gt200	svl-gt50	svl-lt50	lost-acute	lost-gt500	lost-gt350	lost-gt200	lost-gt50	lost-lt50	off-acute	off-gt500	off-gt350	off-gt200	off-gt50	off-lt50
+susreg	1	1	1																																									
+progcirc		1	1																																									
+undx-acute			1	1					1	1																																		
+undx-gt500				1	1					1	1																																	
+undx-gt350					1	1					1	1																																
+undx-gt200						1	1					1	1																															
+undx-gt50							1	1					1	1																														
+undx-lt50								1						1																														
+dx-acute									1	1					1	1																												
+dx-gt500										1	1					1	1																											
+dx-gt350											1	1					1	1																										
+dx-gt200												1	1					1	1																									
+dx-gt50													1	1					1	1																								
+dx-lt50														1						1																								
+care-acute															1	1					1	1																						
+care-gt500																1	1					1	1																					
+care-gt350																	1	1					1	1																				
+care-gt200																		1	1					1	1																			
+care-gt50																			1	1					1	1																		
+care-lt50																				1						1																		
+usvl-acute																					1	1					1	1					1	1					1	1				
+usvl-gt500																						1	1					1	1					1	1					1	1			
+usvl-gt350																						1	1	1				1	1	1				1	1	1				1	1	1		
+usvl-gt200																							1	1	1				1	1	1				1	1	1				1	1	1	
+usvl-gt50																								1	1	1				1	1	1				1	1	1				1	1	1
+usvl-lt50																									1	1					1	1					1	1					1	1
+svl-acute																					1	1					1	1					1	1					1	1				
+svl-gt500																						1						1						1						1				
+svl-gt350																						1	1					1	1					1	1					1	1			
+svl-gt200																							1	1					1	1					1	1					1	1		
+svl-gt50																								1	1					1	1					1	1					1	1	
+svl-lt50																									1	1					1	1					1	1					1	1
+lost-acute																					1	1					1	1					1	1					1	1				
+lost-gt500																						1	1					1	1					1	1					1	1			
+lost-gt350																							1	1					1	1					1	1					1	1		
+lost-gt200																								1	1					1	1					1	1					1	1	
+lost-gt50																									1	1					1	1					1	1					1	1
+lost-lt50																										1						1						1						1
+off-acute																					1	1					1	1					1	1					1	1				
+off-gt500																						1	1					1	1					1	1					1	1			
+off-gt350																							1	1					1	1					1	1					1	1		
+off-gt200																								1	1					1	1					1	1					1	1	
+off-gt50																									1	1					1	1					1	1					1	1
+off-lt50																										1						1						1						1
+'''
+
+def loadtranstable(npops=None,inputtranstable=None):
+    ''' 
+    Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
+    '''
+    if inputtranstable is None: inputtranstable = transtable # Use default defined one if not supplied as an input
+    if npops is None: npops = 1 # Use just one population if not told otherwise
+    rawtransit = []
+    alllines = inputtranstable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
+    for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
+    attrs = alllines.pop(0) # First line is tostates
+    for l in range(len(alllines)): # Loop over all healthstates 
+        rawtransit.append([attrs[l+1],[],[]]) # Create a list to store states that you can move to
+        for i,attr in enumerate(attrs): # Loop over attributes
+            try:
+                if alllines[l][i] and attrs[i]:
+                    rawtransit[l][1].append(attrs[i])
+                    rawtransit[l][2].append(ones(npops))
+            except:
+                errormsg = 'Error processing transition line "%s"' % alllines[l]
+                raise OptimaException(errormsg)
+        rawtransit[l][1].append('hivdeath')
+        rawtransit[l][1].append('otherdeath')
+        rawtransit[l][2].append(ones(npops))
+        rawtransit[l][2].append(ones(npops))
+        rawtransit[l][2] = array(rawtransit[l][2])
+    return rawtransit
 
 
 
@@ -379,8 +458,10 @@ def makepars(data, label=None, verbose=2):
     mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]] # WARNING, these two lines should be consistent -- they both work, so the question is which is more elegant -- if pars['male'] is a dict then could do: [popkeys[key] for key in popkeys if pars['male'][key]]
     pars['popkeys'] = dcp(popkeys)
     
-    # Read in parameters automatically -- WARNING, not currently implemented
+    # Read in parameters automatically
     rawpars = loadpartable() # Read the parameters structure
+    pars['rawtransit'] = loadtranstable(npops=len(popkeys)) # Read the transitions
+    
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
         
@@ -525,7 +606,7 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     simpars = odict() 
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
+    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys','rawtransit']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if start is None: start=2000 # WARNING, should be a better way of declaring defaults...
     if end is None: end=2030
@@ -554,6 +635,7 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
                 raise OptimaException(errormsg)
+
 
     return simpars
 

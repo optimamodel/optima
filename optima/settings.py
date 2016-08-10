@@ -37,6 +37,7 @@ class Settings(object):
         self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
         self.off      = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
+        self.notonart = cat([self.undx,self.dx,self.care,self.lost,self.off])
 
         self.nsus     = len(self.susreg) + len(self.progcirc)
         self.ninf     = self.nhealth - self.nsus

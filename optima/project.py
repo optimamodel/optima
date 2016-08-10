@@ -359,7 +359,7 @@ class Project(object):
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = []
             for pardict in self.parsets[name].pars:
-                simparslist.append(makesimpars(pardict, start=start, end=end, dt=dt, name=name))
+                simparslist.append(makesimpars(pardict, settings=self.settings, name=name))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
