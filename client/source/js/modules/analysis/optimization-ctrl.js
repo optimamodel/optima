@@ -194,6 +194,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               $scope.getOptimizationGraphs();
             }
           });
+      } else {
+        $scope.state.isRunnable = true;
       }
     };
 
