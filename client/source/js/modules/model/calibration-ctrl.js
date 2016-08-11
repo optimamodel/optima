@@ -1,9 +1,78 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
+  module.factory('globalAutofitPoller', ['$http', '$timeout', function($http, $timeout) {
+
+    var autofitPolls = {};
+
+    function getPoll(parsetId) {
+      if (!(parsetId in autofitPolls)) {
+        console.log('Creating polling slot for', parsetId);
+        autofitPolls[parsetId] = {isRunning: false};
+      }
+      return autofitPolls[parsetId];
+    }
+
+    function start(projectId, parset, callback) {
+      var autofitPoll = getPoll(parset.id);
+      autofitPoll.parset = parset;
+      autofitPoll.projectId = projectId;
+      autofitPoll.callback = callback;
+      autofitPoll.name = parset.name;
+      var parsetId = parset.id;
+
+      if (!autofitPoll.isRunning) {
+
+        console.log('Launch polling for', parset.name, parsetId);
+        autofitPoll.isRunning = true;
+
+        function poller() {
+          var poll = getPoll(parsetId);
+          $http
+            .get(
+              '/api/project/' + projectId
+              + '/parsets/' + parsetId
+              + '/automatic_calibration')
+            .success(function(response) {
+              if (response.status === 'started') {
+                poll.timer = $timeout(poller, 1000);
+              } else {
+                end(parsetId);
+              }
+              poll.callback(parset, response);
+            })
+            .error(function(response) {
+              end(parsetId);
+              poll.callback(parset, response);
+            });
+        }
+        poller();
+
+      } else {
+        console.log('Taking over polling', parset.name, parsetId);
+      }
+
+    }
+
+    function end(parsetId) {
+      var poll = getPoll(parsetId);
+      console.log('Stopping polling for', parsetId, poll);
+      if (poll.isRunning) {
+        poll.isRunning = false;
+        $timeout.cancel(poll.timer);
+      }
+    }
+
+    return {
+      start: start,
+      end: end
+    };
+
+  }]);
+
   module.controller('ModelCalibrationController', function (
       $scope, $http, info, modalService, $upload,
-      $modal, $timeout, toastr) {
+      $modal, $timeout, toastr, globalAutofitPoller) {
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
@@ -17,17 +86,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parsets = [];
       $scope.state = {
         maxtime: '10',
+        isRunnable: false,
         parset: undefined
       };
 
       // Check if project has spreadsheet uploaded
       if (!project.hasData) {
         modalService.inform(
-            function() {
-            },
-            'Okay',
-            'Please upload spreadsheet to proceed.',
-            'Cannot proceed'
+          function() {
+          },
+          'Okay',
+          'Please upload spreadsheet to proceed.',
+          'Cannot proceed'
         );
         $scope.missingData = true;
         return;
@@ -42,7 +112,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.parsets = parsets;
             $scope.state.parset = parsets[0];
             initPollAutoCalibration();
-            $scope.getGraphs();
+            $scope.setActiveParset();
           }
         });
     }
@@ -54,9 +124,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           var which = _.filter(selectors, function(selector) {
             return selector.checked;
           })
-          .map(function(selector) {
-            return selector.key;
-          });
+            .map(function(selector) {
+              return selector.key;
+            });
           if (which.length > 0) {
             return which;
           }
@@ -75,33 +145,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return $scope.parameters;
     }
 
-    $scope.getGraphs = function() {
+    $scope.getCalibrationGraphs = function() {
       $http
         .get(
           '/api/project/' + project.id
-            + '/parsets/' + $scope.state.parset.id
-            + '/calibration',
+          + '/parsets/' + $scope.state.parset.id
+          + '/calibration',
           {which: getSelectors()})
-        .success(function (response) {
+        .success(function(response) {
           loadParametersAndGraphs(response);
           toastr.success('Loaded graphs');
+          $scope.statusMessage = '';
         });
     };
 
     $scope.saveAndUpdateGraphs = function() {
-      if(!$scope.parameters) {
+      if (!$scope.parameters) {
         return;
       }
       $http
         .post(
           '/api/project/' + project.id
-            + '/parsets/' + $scope.state.parset.id
-            + '/calibration?doSave=true',
+          + '/parsets/' + $scope.state.parset.id
+          + '/calibration?doSave=true',
           {
             parameters: fetchParameters(),
             which: getSelectors()
           })
-        .success(function (response) {
+        .success(function(response) {
           toastr.success('Updated parameters and loaded graphs');
           loadParametersAndGraphs(response);
         });
@@ -117,9 +188,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.parsets = response;
             $scope.state.parset = response[response.length - 1];
             toastr.success('Created parset');
-            $scope.getGraphs();
+            $scope.setActiveParset();
           });
       }
+
       openParameterSetModal(
         add, 'Add parameter set', $scope.parsets, null, 'Add');
     };
@@ -137,12 +209,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 name: name,
                 parset_id: $scope.state.parset.id
               })
-            .success(function (response) {
+            .success(function(response) {
               $scope.parsets = response;
               $scope.state.parset = response[response.length - 1];
               toastr.success('Copied parset');
             });
         }
+
         openParameterSetModal(
           rename, 'Copy parameter set', $scope.parsets,
           $scope.state.parset.name + ' copy', 'Copy');
@@ -157,14 +230,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         function rename(name) {
           $http
             .put(
-                '/api/project/' + project.id
-                  + '/parsets/' + $scope.state.parset.id,
-                { name: name})
-            .success(function () {
+              '/api/project/' + project.id
+              + '/parsets/' + $scope.state.parset.id,
+              {name: name})
+            .success(function() {
               $scope.state.parset.name = name;
               toastr.success('Copied parset');
             });
         }
+
         openParameterSetModal(
           rename, 'Rename parameter set', $scope.parsets,
           $scope.state.parset.name, 'Rename', true);
@@ -183,30 +257,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               + '/parsets/' + $scope.state.parset.id)
             .success(function() {
               $scope.parsets = _.filter(
-                $scope.parsets, function (parset) {
+                $scope.parsets, function(parset) {
                   return parset.id !== $scope.state.parset.id;
                 }
               );
-              if($scope.parsets.length > 0) {
+              if ($scope.parsets.length > 0) {
                 $scope.state.parset = $scope.parsets[0];
                 toastr.success('Deleted parset');
-                $scope.getGraphs();
+                $scope.setActiveParset();
               }
             });
         }
+
         // This has been temporarily commented out: https://trello.com/c/omuvJSYD/853-reuploading-spreadsheets-fails-in-several-ways
         // if ($scope.state.parset.name === "default") {
-        if ( false ) {
+        if (false) {
           modalService.informError(
             [{message: 'Deleting the default parameter set is not permitted.'}]);
         } else {
           modalService.confirm(
             remove,
-            function () {},
+            function() {
+            },
             'Yes, remove this parameter set',
             'No',
             'Are you sure you want to permanently remove parameter set "'
-              + $scope.state.parset.name + '"?',
+            + $scope.state.parset.name + '"?',
             'Delete parameter set'
           );
         }
@@ -217,13 +293,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http
         .get(
           '/api/project/' + project.id
-            + '/parsets/' + $scope.state.parset.id
-            + '/data',
+          + '/parsets/' + $scope.state.parset.id
+          + '/data',
           {
             headers: {'Content-type': 'application/octet-stream'},
             responseType: 'blob'
           })
-        .success(function (response) {
+        .success(function(response) {
           var blob = new Blob(
             [response], {type: 'application/octet-stream'});
           saveAs(blob, ($scope.state.parset.name + '.par.json'));
@@ -233,42 +309,46 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.uploadParameterSet = function() {
       angular
         .element('<input type=\'file\'>')
-        .change(function(event){
+        .change(function(event) {
           $upload.upload({
             url: '/api/project/' + project.id
-                   + '/parsets/' + $scope.state.parset.id
-                   + '/data',
+            + '/parsets/' + $scope.state.parset.id
+            + '/data',
             file: event.target.files[0]
           }).success(function(response) {
             loadParametersAndGraphs(response);
-            $scope.getGraphs()
+            $scope.setActiveParset()
           });
         }).click();
     };
 
-    function openParameterSetModal(
-      callback, title, parameterSetList, parameterSetName,
-      operation, isRename) {
+    function openParameterSetModal(callback, title, parameterSetList, parameterSetName,
+                                   operation, isRename) {
 
-      var onModalKeyDown = function (event) {
-        if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
+      var onModalKeyDown = function(event) {
+        if (event.keyCode == 27) {
+          return modalInstance.dismiss('ESC');
+        }
       };
       var modalInstance = $modal.open({
         templateUrl: 'js/modules/model/parameter-set-modal.html',
-        controller: ['$scope', '$document', function ($scope, $document) {
+        controller: ['$scope', '$document', function($scope, $document) {
           $scope.title = title;
           $scope.name = parameterSetName;
           $scope.operation = operation;
-          $scope.updateParameterSet = function () {
+          $scope.updateParameterSet = function() {
             $scope.newParameterSetName = $scope.name;
             callback($scope.name);
             modalInstance.close();
           };
-          $scope.isUniqueName = function (parameterSetForm) {
-            function isSameName(item) { return item.name == $scope.name; }
+          $scope.isUniqueName = function(parameterSetForm) {
+            function isSameName(item) {
+              return item.name == $scope.name;
+            }
+
             var exists = _(parameterSetList).some(isSameName)
-                  && $scope.name !== parameterSetName
-                  && $scope.name !== $scope.newParameterSetName;
+              && $scope.name !== parameterSetName
+              && $scope.name !== $scope.newParameterSetName;
             if (isRename) {
               parameterSetForm.parameterSetName.$setValidity(
                 "parameterSetUpdated", $scope.name !== parameterSetName);
@@ -280,11 +360,35 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $document.on('keydown', onModalKeyDown); // observe
           $scope.$on(
             '$destroy',
-            function () { $document.off('keydown', onModalKeyDown); });  // unobserve
+            function() {
+              $document.off('keydown', onModalKeyDown);
+            });  // unobserve
         }]
       });
       return modalInstance;
     }
+
+    // autofit routines
+
+    $scope.setActiveParset = function() {
+      if ($scope.state.parset.id) {
+        $http
+          .get(
+            '/api/project/' + project.id
+            + '/parsets/' + $scope.state.parset.id
+            + '/automatic_calibration')
+          .success(function(response) {
+            if (response.status === 'started') {
+              initPollAutoCalibration();
+            } else {
+              $scope.statusMessage = 'Checking for pre-calculated figures...';
+              $scope.getCalibrationGraphs();
+            }
+          });
+      } else {
+        $scope.state.isRunnable = true;
+      }
+    };
 
     $scope.startAutoCalibration = function() {
       var data = {};
@@ -294,72 +398,44 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http
         .post(
           '/api/project/' + project.id
-          +  '/parsets/' + $scope.state.parset.id
+          + '/parsets/' + $scope.state.parset.id
           + '/automatic_calibration',
           data)
         .success(function(response) {
-          if(response.status === 'started') {
+          if (response.status === 'started') {
             $scope.statusMessage = 'Autofit started.';
             $scope.secondsRun = 0;
             $scope.setMaxtime = data.maxtime;
-            pollAutoCalibration();
-          } else if(response.status === 'blocked') {
+            initPollAutoCalibration();
+          } else if (response.status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
           }
         })
     };
 
     function initPollAutoCalibration() {
-      $http
-        .get(
-          '/api/project/' + project.id
-          +  '/parsets/' + $scope.state.parset.id
-          + '/automatic_calibration')
-        .success(function(response) {
-          if (response.status === 'started') {
-            pollAutoCalibration();
-          }
-        });
+      globalAutofitPoller.start(
+        project.id,
+        $scope.state.parset,
+        pollCallBack);
     }
 
-    function pollAutoCalibration() {
-      $http
-        .get(
-          '/api/project/' + project.id
-            + '/parsets/' + $scope.state.parset.id
-            + '/automatic_calibration')
-        .success(function(response) {
-          if (response.status === 'completed') {
-            $scope.getAutoCalibratedGraphs();
-            $scope.statusMessage = '';
-            toastr.success('Autofit completed');
-            $timeout.cancel($scope.pollTimer);
-          } else if (response.status === 'error') {
-            $scope.statusMessage = 'Error in running autofit.';
-            $timeout.cancel($scope.pollTimer);
-          } else if (response.status === 'started') {
-            var start = new Date(response.start_time);
-            var now = new Date();
-            var diff = now.getTime() - start.getTime();
-            var seconds = diff / 1000;
-            $scope.statusMessage = "Autofit running for " + parseInt(seconds) + " s";
-            $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
-          }
-        });
+    function pollCallBack(parset, response) {
+      if (response.status === 'completed') {
+        $scope.statusMessage = '';
+        toastr.success('Autofit completed');
+        $scope.getCalibrationGraphs();
+      } else if (response.status === 'started') {
+        var start = new Date(response.start_time);
+        var now = new Date();
+        var diff = now.getTime() - start.getTime();
+        var seconds = diff / 1000;
+        $scope.statusMessage = "Autofit running for " + parseInt(seconds) + " s";
+      } else {
+        $scope.statusMessage = 'Autofit failed';
+        $scope.state.isRunnable = true;
+      }
     }
-
-    $scope.getAutoCalibratedGraphs = function() {
-      $http
-        .post(
-          '/api/project/' + project.id
-            + '/parsets' + '/' + $scope.state.parset.id
-            + '/calibration',
-          {which: getSelectors()})
-        .success(function(response) {
-          toastr.success('Graphs uploaded');
-          loadParametersAndGraphs(response);
-        });
-    };
 
     initialize();
 

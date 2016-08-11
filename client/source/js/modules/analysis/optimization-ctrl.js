@@ -7,56 +7,56 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var optimPolls = {};
 
     function getOptimPoll(optimId) {
-      if (!(optimId in optimPolls)) {
-        console.log('Creating polling slot for', optimId)
-        optimPolls[optimId] = {isRunning: false}
+      if (!(parsetId in optimPolls)) {
+        console.log('Creating polling slot for', parsetId)
+        optimPolls[parsetId] = {isRunning: false}
       }
-      return optimPolls[optimId];
+      return optimPolls[parsetId];
     }
 
     function start(optimName, projectId, optimId, callback) {
-      var optimPoll = getOptimPoll(optimId);
-      optimPoll.optimId = optimId;
+      var optimPoll = getOptimPoll(parsetId);
+      optimPoll.parsetId = parsetId;
       optimPoll.projectId = projectId;
       optimPoll.callback = callback;
       optimPoll.name = optimName;
 
       if (!optimPoll.isRunning) {
 
-        console.log('Launch polling for', optimName, optimId);
+        console.log('Launch polling for', optimName, parsetId);
         optimPoll.isRunning = true;
 
         function poller() {
-          var optimPoll = getOptimPoll(optimId);
+          var optimPoll = getOptimPoll(parsetId);
           $http
             .get(
               '/api/project/' + optimPoll.projectId
-              + '/optimizations/' + optimPoll.optimId
+              + '/optimizations/' + optimPoll.parsetId
               + '/results')
             .success(function(response) {
               if (response.status === 'started') {
                 optimPoll.timer = $timeout(poller, 1000);
               } else {
-                end(optimId);
+                end(parsetId);
               }
-              optimPoll.callback(optimId, response);
+              optimPoll.callback(parsetId, response);
             })
             .error(function(response) {
-              end(optimId);
-              optimPoll.callback(optimId, response);
+              end(parsetId);
+              optimPoll.callback(parsetId, response);
             });
         }
         poller();
 
       } else {
-        console.log('Taking over polling', optimName, optimId);
+        console.log('Taking over polling', optimName, parsetId);
       }
 
     }
 
     function end(optimId) {
-      var optimPoll = getOptimPoll(optimId);
-      console.log('Stopping polling for', optimId, optimPoll);
+      var optimPoll = getOptimPoll(parsetId);
+      console.log('Stopping polling for', parsetId, optimPoll);
       if (optimPoll.isRunning) {
         optimPoll.isRunning = false;
         $timeout.cancel(optimPoll.timer);
@@ -435,7 +435,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function pollCallback(optimId, response) {
-      if (optimId != $scope.state.optimization.id) {
+      if (parsetId != $scope.state.optimization.id) {
         return;
       }
       if (response.status === 'completed') {
