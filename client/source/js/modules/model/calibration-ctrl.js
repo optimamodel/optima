@@ -1,63 +1,54 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.factory('globalAutofitPoller', ['$http', '$timeout', function($http, $timeout) {
+  module.factory(
+    'globalPoller', ['$http', '$timeout', function($http, $timeout) {
 
-    var autofitPolls = {};
+    var polls = {};
 
-    function getPoll(parsetId) {
-      if (!(parsetId in autofitPolls)) {
-        console.log('Creating polling slot for', parsetId);
-        autofitPolls[parsetId] = {isRunning: false};
+    function getPoll(id) {
+      if (!(id in polls)) {
+        console.log('Creating polling slot for', id);
+        polls[id] = {isRunning: false, id: id};
       }
-      return autofitPolls[parsetId];
+      return polls[id];
     }
 
-    function start(projectId, parset, callback) {
-      var autofitPoll = getPoll(parset.id);
-      autofitPoll.parset = parset;
-      autofitPoll.projectId = projectId;
-      autofitPoll.callback = callback;
-      autofitPoll.name = parset.name;
-      var parsetId = parset.id;
+    function startPoll(id, url, callback) {
+      var poll = getPoll(id);
+      poll.url = url;
+      poll.callback = callback;
 
-      if (!autofitPoll.isRunning) {
+      if (!poll.isRunning) {
+        console.log('Launch polling for', poll.id);
+        poll.isRunning = true;
 
-        console.log('Launch polling for', parset.name, parsetId);
-        autofitPoll.isRunning = true;
-
-        function poller() {
-          var poll = getPoll(parsetId);
+        function pollWithTimeout() {
+          var poll = getPoll(id);
           $http
-            .get(
-              '/api/project/' + projectId
-              + '/parsets/' + parsetId
-              + '/automatic_calibration')
+            .get(poll.url)
             .success(function(response) {
               if (response.status === 'started') {
-                poll.timer = $timeout(poller, 1000);
+                poll.timer = $timeout(pollWithTimeout, 1000);
               } else {
-                end();
+                stopPolls();
               }
-              poll.callback(parset, response);
+              poll.callback(response);
             })
             .error(function(response) {
-              end();
-              poll.callback(parset, response);
+              stopPolls();
+              poll.callback(response);
             });
         }
-        poller();
 
-      } else {
-        console.log('Taking over polling', parset.name, parsetId);
+        pollWithTimeout();
       }
-
     }
 
-    function end() {
-      _.each(autofitPolls, function(poll) {
+    function stopPolls() {
+      _.each(polls, function(poll) {
         if (poll.isRunning) {
-          console.log('Stopping polling for', poll.name);
+          console.log('Stop polling for', poll.id);
           poll.isRunning = false;
           $timeout.cancel(poll.timer);
         }
@@ -65,15 +56,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     return {
-      start: start,
-      end: end
+      startPoll: startPoll,
+      stopPolls: stopPolls
     };
 
   }]);
 
   module.controller('ModelCalibrationController', function (
       $scope, $http, info, modalService, $upload,
-      $modal, $timeout, toastr, globalAutofitPoller) {
+      $modal, $timeout, toastr, globalPoller) {
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
@@ -383,7 +374,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.setActiveParset = function() {
       if ($scope.state.parset.id) {
 
-        globalAutofitPoller.end();
+        globalPoller.stopPolls();
         console.log('check parset autofit calc status parset', $scope.state.parset.id);
 
         $scope.state.isRunnable = false;
@@ -429,27 +420,28 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     function initPollAutoCalibration() {
-      globalAutofitPoller.start(
-        project.id,
-        $scope.state.parset,
-        pollCallBack);
-    }
-
-    function pollCallBack(parset, response) {
-      if (response.status === 'completed') {
-        $scope.statusMessage = '';
-        toastr.success('Autofit completed');
-        $scope.getCalibrationGraphs();
-      } else if (response.status === 'started') {
-        var start = new Date(response.start_time);
-        var now = new Date();
-        var diff = now.getTime() - start.getTime();
-        var seconds = diff / 1000;
-        $scope.statusMessage = "Autofit running for " + parseInt(seconds) + " s";
-      } else {
-        $scope.statusMessage = 'Autofit failed';
-        $scope.state.isRunnable = true;
-      }
+      globalPoller.startPoll(
+        $scope.state.parset.id,
+        '/api/project/' + project.id
+          + '/parsets/' + $scope.state.parset.id
+          + '/automatic_calibration',
+        function (response) {
+          if (response.status === 'completed') {
+            $scope.statusMessage = '';
+            toastr.success('Autofit completed');
+            $scope.getCalibrationGraphs();
+          } else if (response.status === 'started') {
+            var start = new Date(response.start_time);
+            var now = new Date();
+            var diff = now.getTime() - start.getTime();
+            var seconds = parseInt(diff / 1000);
+            $scope.statusMessage = "Autofit running for " + seconds + " s";
+          } else {
+            $scope.statusMessage = 'Autofit failed';
+            $scope.state.isRunnable = true;
+          }
+        }
+      );
     }
 
     initialize();
