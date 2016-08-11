@@ -10,7 +10,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     """
     
     ##################################################################################################################
-    ### Setup
+    ### Setup 
     ##################################################################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
@@ -67,29 +67,26 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     linktocare    = simpars['linktocare']    # mean time before being linked to care
     leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
         
-        
     # Disease state indices
-    susreg   = settings.susreg      # Susceptible, regular
-    progcirc = settings.progcirc    # Susceptible, programmatically circumcised
-    sus      = settings.sus         # Susceptible, both circumcised and uncircumcised
-    undx     = settings.undx        # Undiagnosed
-    dx       = settings.dx          # Diagnosed
-    alldx    = settings.alldx       # All diagnosed
-    alltx    = settings.alltx       # All on treatment
-    allplhiv = settings.allplhiv    # All PLHIV
-    notonart = settings.notonart    # All PLHIV who are not on ART    
-    care    = settings.care         # in care
-    usvl    = settings.usvl         # On treatment - Unsuppressed Viral Load
-    svl     = settings.svl          # On treatment - Suppressed Viral Load
-    lost    = settings.lost         # Not on ART (anymore) and lost to follow-up
-    off     = settings.off          # off ART but still in care
-    
-    acute = settings.acute
-    gt500 = settings.gt500
-    gt350 = settings.gt350
-    gt200 = settings.gt200
-    gt50 = settings.gt50
-    lt50 = settings.lt50
+    susreg      = settings.susreg       # Susceptible, regular
+    progcirc    = settings.progcirc     # Susceptible, programmatically circumcised
+    sus         = settings.sus          # Susceptible, both circumcised and uncircumcised
+    undx        = settings.undx         # Undiagnosed
+    dx          = settings.dx           # Diagnosed
+    alldx       = settings.alldx        # All diagnosed
+    alltx       = settings.alltx        # All on treatment
+    allplhiv    = settings.allplhiv     # All PLHIV
+    notonart    = settings.notonart     # All PLHIV who are not on ART    
+    care        = settings.care         # in care
+    usvl        = settings.usvl         # On treatment - Unsuppressed Viral Load
+    svl         = settings.svl          # On treatment - Suppressed Viral Load
+    lost        = settings.lost         # Not on ART (anymore) and lost to follow-up
+    acute       = settings.acute        # Acute
+    gt500       = settings.gt500        # >500
+    gt350       = settings.gt350        # >350
+    gt200       = settings.gt200        # >200
+    gt50 =       settings.gt50          # >50
+    lt50        = settings.lt50         # <50
     allcd4 = [acute,gt500,gt350,gt200,gt50,lt50]
     
     if debug and len(sus)!=2:
@@ -97,7 +94,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         raise OptimaException(errormsg)
 
     
-    # Make time-constant, dt-dependent transitions
+    ##################################################################################################################
+    ### Make time-constant, dt-dependent transitions 
+    ##################################################################################################################
+
     ## Progression and deaths for people not on ART
     for fromstate in notonart:
         fromhealthstate = [(fromstate in j) for j in allcd4].index(True) # CD4 count of fromstate
@@ -109,8 +109,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 else:
                     rawtransit[fromstate][1][ts] *= 1.-exp(-dt/(prog[fromhealthstate]))
     
-                # Death probabilities
-            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt
+            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt # Death probabilities
 #            if tostate == 'hivdeath':
 #                rawtransit[fromstate][1][ts] *= deathhiv[fromhealthstate]*dt
 
@@ -220,12 +219,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     alltrans = zeros(nstates)
     alltrans[undx] = cd4trans
     alltrans[dx] = cd4trans*dxfactor
-    if usecascade:
-        alltrans[care] = cd4trans*dxfactor
-        alltrans[usvl] = cd4trans*dxfactor*efftxunsupp
-        alltrans[svl] = cd4trans*dxfactor*efftxsupp
-        alltrans[lost] = cd4trans*dxfactor
-        alltrans[off] = cd4trans*dxfactor
+    alltrans[care] = cd4trans*dxfactor
+    alltrans[usvl] = cd4trans*dxfactor*efftxunsupp
+    alltrans[svl] = cd4trans*dxfactor*efftxsupp
+    alltrans[lost] = cd4trans*dxfactor
 
     
     # Proportion aware and treated (for 90/90/90)
@@ -291,9 +288,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     force = simpars['force']
     inhomopar = simpars['inhomo']
 
-    
-    
-    
+
     
     #################################################################################################################
     ### Set initial epidemic conditions 
@@ -604,19 +599,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         if t<npts-1:
             for transition in rawtransit[:38]:
                 
-                try: people[transition[0],:,t+1] = people[transition[0],:,t]*transition[1]
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                people[transition[0],:,t+1] = people[transition[0],:,t]*transition[1]
 
-
-
-
-
-        ##############################################################################################################
-        ### Update next time point and check for errors
-        ##############################################################################################################
-
-        if t<npts-1:
-           
             
             ###############################################################################
             ## Calculate births, age transitions and mother-to-child-transmission

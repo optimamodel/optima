@@ -52,8 +52,6 @@ Condom use for commercial acts	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	ran
 Viral suppression when initiating ART	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
-Rate of ART re-initiation (per year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
-Rate of people on ART who stop (per year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (per year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 Biological failure rate (per year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 PLHIV aware of their status	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None

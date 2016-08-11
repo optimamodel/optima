@@ -23,7 +23,7 @@ class Settings(object):
         self.start = 2000.0 # Default start year
         self.end = 2030.0 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
-        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
+        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
         self.ncd4 = len(self.hivstates)
         self.nhealth = len(self.healthstates)
         
@@ -36,8 +36,7 @@ class Settings(object):
         self.usvl     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
         self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
-        self.off      = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
-        self.notonart = cat([self.undx,self.dx,self.care,self.lost,self.off])
+        self.notonart = cat([self.undx,self.dx,self.care,self.lost])
 
         self.nsus     = len(self.susreg) + len(self.progcirc)
         self.ninf     = self.nhealth - self.nsus
@@ -55,8 +54,8 @@ class Settings(object):
 
         # Combined states
         self.sus       = cat([self.susreg, self.progcirc]) # All uninfected
-        self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
-        self.allcare   = cat([         self.care, self.usvl, self.svl,            self.off]) # All people in care
+        self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost]) # All people diagnosed
+        self.allcare   = cat([         self.care, self.usvl, self.svl]) # All people in care
         self.alltx     = cat([                    self.usvl, self.svl]) # All people on treatment
         self.allplhiv  = cat([self.undx, self.alldx]) # All PLHIV
         self.allstates = cat([self.sus, self.allplhiv]) # All states
