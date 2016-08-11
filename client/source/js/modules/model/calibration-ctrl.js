@@ -161,7 +161,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         })
         .error(function(response) {
           $scope.state.isRunnable = false;
-          toastr.error(response);
+          toastr.error('Error in loading graphs');
         });
     };
 

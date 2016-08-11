@@ -344,6 +344,7 @@ def delete_parset(project_id, parset_id):
         project.parsets.pop(parset.name)
 
     update_project_with_fn(project_id, update_project_fn)
+    delete_result_by_parset_id(project_id, parset_id)
     db.session.query(ResultsDb).filter_by(
         project_id=project_id, parset_id=parset_id).delete()
 
