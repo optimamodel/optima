@@ -37,12 +37,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               if (response.status === 'started') {
                 poll.timer = $timeout(poller, 1000);
               } else {
-                end(parsetId);
+                end();
               }
               poll.callback(parset, response);
             })
             .error(function(response) {
-              end(parsetId);
+              end();
               poll.callback(parset, response);
             });
         }
@@ -54,13 +54,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     }
 
-    function end(parsetId) {
-      var poll = getPoll(parsetId);
-      console.log('Stopping polling for', parsetId, poll);
-      if (poll.isRunning) {
-        poll.isRunning = false;
-        $timeout.cancel(poll.timer);
-      }
+    function end() {
+      _.each(autofitPolls, function(poll) {
+        if (poll.isRunning) {
+          console.log('Stopping polling for', poll.name);
+          poll.isRunning = false;
+          $timeout.cancel(poll.timer);
+        }
+      });
     }
 
     return {
@@ -111,7 +112,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (parsets) {
             $scope.parsets = parsets;
             $scope.state.parset = parsets[0];
-            initPollAutoCalibration();
             $scope.setActiveParset();
           }
         });
@@ -146,6 +146,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     $scope.getCalibrationGraphs = function() {
+      console.log('current parset', $scope.state.parset.id);
       $http
         .get(
           '/api/project/' + project.id
@@ -156,6 +157,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           loadParametersAndGraphs(response);
           toastr.success('Loaded graphs');
           $scope.statusMessage = '';
+          $scope.state.isRunnable = true;
+        })
+        .error(function(response) {
+          $scope.state.isRunnable = false;
+          toastr.error(response);
         });
     };
 
@@ -370,8 +376,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // autofit routines
 
+    $scope.checkNotRunnable = function() {
+      return !$scope.state.parset || !$scope.state.parset.id || !$scope.state.isRunnable;
+    };
+
     $scope.setActiveParset = function() {
       if ($scope.state.parset.id) {
+
+        globalAutofitPoller.end();
+        console.log('check parset autofit calc status parset', $scope.state.parset.id);
+
+        $scope.state.isRunnable = false;
         $http
           .get(
             '/api/project/' + project.id

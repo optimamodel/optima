@@ -53,7 +53,12 @@
       </select>
       <br>
       <br>
-      <button class="btn __m" ng-click="startAutoCalibration()">Autofit</button>
+      <button
+          class="btn __m"
+          ng-click="startAutoCalibration()"
+          ng-disabled="checkNotRunnable()">
+        Autofit
+      </button>
       <br>
       <br>
       <span style="color: #00aeef;"> {{ statusMessage }} </span>
