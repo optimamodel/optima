@@ -59,6 +59,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     deathhiv   = array([simpars['deathacute'],simpars['deathgt500'],simpars['deathgt350'],simpars['deathgt200'],simpars['deathgt50'],simpars['deathlt50']])
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
     cd4trans   = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
+    deathprob  = zeros((nstates)) # Initialise death probability array
 
     # Defined for total (not by populations) and time dependent [npts]
     treatvs     = simpars['treatvs']             # viral suppression - ART initiators (P)
@@ -110,8 +111,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     rawtransit[fromstate][1][ts] *= 1.-exp(-dt/(prog[fromhealthstate]))
     
             rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt # Death probabilities
-#            if tostate == 'hivdeath':
-#                rawtransit[fromstate][1][ts] *= deathhiv[fromhealthstate]*dt
+            deathprob[fromstate] = deathhiv[fromhealthstate]*dt
 
     ## Recovery and deaths for people on suppressive ART
     for fromstate in svl:
@@ -130,10 +130,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     rawtransit[fromstate][1][ts] = 1.-exp(-dt/simpars['progacute'])
     
             # Death probabilities
-            rawtransit[fromstate][1][ts] *= (1.-deathhiv[fromhealthstate]*deathtx*dt)
-    
-#            if tostate == 'hivdeath':
-#                rawtransit[fromstate][1][ts] = deathhiv[fromhealthstate]*deathtx*dt
+            rawtransit[fromstate][1][ts] *= (1.-deathhiv[fromhealthstate]*deathtx*dt)    
+            deathprob[fromstate] = deathhiv[fromhealthstate]*deathtx*dt
             
 
     # Recovery and progression and deaths for people on unsuppressive ART
@@ -179,12 +177,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 elif tostate in lt50:
                     rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovlt50']
                                     
-            # Death probabilities -- assume that treatment factor still applies to deaths
+            # Death probabilities
             rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*deathtx*dt
-    
-#            if tostate == 'hivdeath':
-#                rawtransit[fromstate][1][ts] = deathhiv[fromhealthstate]*deathtx*dt
-                
+            deathprob[fromstate] = deathhiv[fromhealthstate]*deathtx*dt
+
 
     # Births, deaths and transitions
     birth = simpars['birth']
@@ -529,6 +525,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
             
+        # Add these transition probabilities to the main array - WARNING, UGLY, FIX
         rawtransit[susreg][1][susreg] = 1. - infections_to[0]
         rawtransit[susreg][1][rawtransit[susreg][0].index(undx[0])] = infections_to[0]
         rawtransit[progcirc][1][susreg] = 1. - infections_to[1]
@@ -587,17 +584,43 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Lost to care
         for fromstate in lost:
             for ts, tostate in enumerate(rawtransit[fromstate][0]):
-                if tostate=='lost': # Probability of not being lost and remaining in care
+                if tostate in lost: # Probability of not being lost and remaining in care
                     rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*(1.-linktocare[:,t])
                 else: # Probability of being lost
                     rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*linktocare[:,t]
 
 
+        # USVL to SVL
+        for fromstate in usvl:
+            for ts, tostate in enumerate(rawtransit[fromstate][0]):
+                if tostate in usvl: # Probability of remaining unsuppressed
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*(1.-treatvs[t])
+                else: # Probability of being lost
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*treatvs[t]
+                
+        # SVL to USVL
+        for fromstate in svl:
+            for ts, tostate in enumerate(rawtransit[fromstate][0]):
+                if tostate in usvl: # Probability of remaining suppressed
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*(1.-biofailure[t])
+                else: # Probability of being lost
+                    rawtransit[fromstate][1][ts] = rawtransit[fromstate][1][ts]*biofailure[t]
+
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        
+        # Check that probabilities all sum to 1
+        if debug and not all([(abs(rawtransit[j][1].sum(axis=0)+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
+            wrongstatesindices = [j for j in range(nstates) if not (abs(rawtransit[j][1].sum(axis=0)+deathprob[j]-ones(npops))<eps).all()]
+            wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
+            wrongprobs = array([rawtransit[j][1].sum(axis=0)+deathprob[j] for j in wrongstatesindices])
+            errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
+            raise OptimaException(errormsg)
+        
         ##############################################################################################################
         ### Shift people as required
         ##############################################################################################################
         if t<npts-1:
-            for transition in rawtransit[:38]:
+            for transition in rawtransit:
                 
                 people[transition[0],:,t+1] = people[transition[0],:,t]*transition[1]
 
