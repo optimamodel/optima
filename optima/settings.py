@@ -175,6 +175,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     # Actually define the rates
     maxrate = safetymargin/dt
     maxpopsize = 1e9
+    maxduration = 1000.
     maxmeta = 1000.0
     maxacts = 5000.0
     
@@ -183,7 +184,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     
     # Just return the limits themselves as a dict if no input argument
     if limits is None: 
-        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxmeta':maxmeta, 'maxacts':maxacts}
+        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts}
     
     # If it's a string, convert to list, but remember this
     isstring = (type(limits)==str)
@@ -197,6 +198,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     for i,m in enumerate(limits):
         if m=='maxrate': limits[i] = maxrate
         elif m=='maxpopsize': limits[i] = maxpopsize
+        elif m=='maxduration': limits[i] = maxduration
         elif m=='maxmeta': limits[i] = maxmeta
         elif m=='maxacts': limits[i] = maxacts
         else: limits[i] = limits[i] # This leaves limits[i] untouched if it's a number or something

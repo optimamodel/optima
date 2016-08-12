@@ -32,4 +32,5 @@ factory-boy==2.6.0
 Werkzeug==0.11.2
 celery==3.1.20
 redis==2.10.5
-Twisted==16.1.0
+Twisted==16.3.0
+click==6.6

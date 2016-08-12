@@ -583,7 +583,7 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
 
 
 global plotparsbackbut, plotparsnextbut, plotparslider
-def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
+def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, die=True, **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
     
@@ -606,8 +606,8 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     if type(parslist)!=list: parslist = [parslist] # Convert to list
     try:
         for i in range(len(parslist)): parslist[i] = parslist[i].pars[0]
-    except: pass
-            
+    except: pass # Assume it's in the correct form -- a list of pars[0] odicts
+    
     allplotdata = []
     for pars in parslist:
         count = 0
@@ -693,13 +693,18 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
                     try:
                         this = plotdata[nplt,:]
                         ax.set_title(this[0])
+                        if   type(this[1])==odict:
+                            if len(this[1].keys())==1:  this[1] = this[1][0]
+                            elif len(this[1].keys())>1: raise OptimaException('Expecting a number or an array or even an odict with one key, but got an odict with multiple keys (%s)' % this[0])
                         if   isnumber(this[1]):        ax.plot(tvec, 0*tvec+this[1])
                         elif len(this[1])==0:          ax.set_title(this[0]+' is empty')
                         elif len(this[1])==1:          ax.plot(tvec, 0*tvec+this[1])
                         elif len(this[1])==len(tvec):  ax.plot(tvec, this[1])
                         else: pass # Population size, doesn't use control points
                         printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
-                    except Exception as E: print('??????: %s' % E.message)
+                    except Exception as E: 
+                        if die: raise E
+                        else: print('??????: %s' % E.message)
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
                     except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.message))

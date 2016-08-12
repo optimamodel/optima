@@ -28,7 +28,7 @@ from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 from werkzeug.utils import secure_filename
 
-from optima.utils import loaddbobj
+from optima.dataio import loadobj as loaddbobj
 import optima as op
 
 from .dbconn import db
@@ -962,3 +962,4 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t, plotopt
     plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
 
     return convert_to_mpld3(plot)
+

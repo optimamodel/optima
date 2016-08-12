@@ -34,7 +34,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -58,9 +58,8 @@ class Resultset(object):
         
         # Fundamental quantities -- populated by project.runsim()
         self.raw = raw
+        self.pars = pars # Keep pars
         self.simpars = simpars # ...and sim parameters
-        self.tvec = raw[0]['tvec'] # Copy time vector
-        self.dt   = self.tvec[1] - self.tvec[0] # And pull out dt since useful
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = project # ...and just store the whole project
@@ -170,17 +169,19 @@ class Resultset(object):
         
         # Initialize
         if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
-        if annual is False:
-            indices = arange(len(self.tvec)) # Use all indices
+        tvec = dcp(self.raw[0]['tvec'])
+        if annual is False: # Decide what to do with the time vector
+            indices = arange(len(tvec)) # Use all indices
+            self.tvec = tvec
         else: 
-            indices = arange(0, len(self.tvec), int(round(1.0/(self.tvec[1]-self.tvec[0])))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
-            self.tvec = self.tvec[indices] # Subsample time vector too
-            self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
-        allpeople = array([self.raw[i]['people'] for i in range(len(self.raw))])
-        allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
-        alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
-        alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        allmtct   = array([self.raw[i]['mtct'] for i in range(len(self.raw))])
+            indices = arange(0, len(tvec), int(round(1.0/(tvec[1]-tvec[0])))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
+            self.tvec = tvec[indices] # Subsample time vector too
+        self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
+        allpeople = dcp(array([self.raw[i]['people'] for i in range(len(self.raw))]))
+        allinci   = dcp(array([self.raw[i]['inci'] for i in range(len(self.raw))]))
+        alldeaths = dcp(array([self.raw[i]['death'] for i in range(len(self.raw))]))
+        alldiag   = dcp(array([self.raw[i]['diag'] for i in range(len(self.raw))]))
+        allmtct   = dcp(array([self.raw[i]['mtct'] for i in range(len(self.raw))]))
         allplhiv = self.settings.allplhiv
         alldx = self.settings.alldx
         alltx = self.settings.alltx
