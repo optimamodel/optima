@@ -381,8 +381,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $http
           .get(
             '/api/project/' + project.id
-            + '/parsets/' + $scope.state.parset.id
-            + '/automatic_calibration')
+              + '/parsets/' + $scope.state.parset.id
+              + '/automatic_calibration')
           .success(function(response) {
             if (response.status === 'started') {
               initPollAutoCalibration();
@@ -411,7 +411,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (response.status === 'started') {
             $scope.statusMessage = 'Autofit started.';
             $scope.secondsRun = 0;
-            $scope.setMaxtime = data.maxtime;
             initPollAutoCalibration();
           } else if (response.status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
