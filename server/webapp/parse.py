@@ -290,8 +290,24 @@ def set_parameters_on_parset(parameters, parset, i_set=0):
             print('>> Parameter type "%s" not implemented!' % par_type)
 
 
-def make_label(k):
-    return ' - '.join(k) if isinstance(k, tuple) else k
+def make_pop_label(pop):
+    return ' - '.join(pop) if isinstance(pop, tuple) else pop
+
+
+def get_par_limits(project, par):
+    """
+    Returns:
+        a list of [lower, upper]
+    """
+
+    def convert(limit):
+        if isinstance(limit, str):
+            return project.settings.convertlimits(limits=limit)
+        else:
+            return limit
+
+    return map(convert, par.limits)
+
 
 
 def get_parameters_for_scenarios(project):
@@ -299,7 +315,7 @@ def get_parameters_for_scenarios(project):
     Returns parameters that can be modified in a scenario:
         <parsetID>:
             <parameterShort>:
-                - val: number
+                - val: string -or- list of two string
                 - label: string
     """
     result = {}
@@ -310,16 +326,17 @@ def get_parameters_for_scenarios(project):
                 continue
             y_keys_of_parset[par.short] = [
                 {
-                    'val': k,
-                    'label': make_label(k)
+                    'val': pop,
+                    'label': make_pop_label(pop),
+                    'limits': get_par_limits(project, par)
                 }
-                for k in par.y.keys()
+                for pop in par.y.keys()
             ]
         result[str(parset.uid)] = y_keys_of_parset
     return result
 
 
-def get_parameters_for_program_modal(project):
+def get_parameters_for_edit_program(project):
     parameters = []
     added_par_keys = set()
     default_par_keys = [par['short'] for par in loadpartable(partable)]
@@ -343,7 +360,7 @@ def get_parameters_for_program_modal(project):
     return parameters
 
 
-def get_parameters_from_progset_parset(settings, progset, parset):
+def get_parameters_for_outcomes(project, progset_id, parset_id):
     """
     For program outcome page
 
@@ -355,12 +372,15 @@ def get_parameters_from_progset_parset(settings, progset, parset):
     Returns:
 
     """
-    def convert(limit):
-        return settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
 
-    def get_limits(par):
-        result = map(convert, par.limits)
-        return result
+    progset = get_progset_from_project(project, progset_id)
+    parset = get_parset_from_project(project, parset_id)
+
+    print ">> Fetching target parameters from progset '%s'", progset.name
+
+    progset.gettargetpops()
+    progset.gettargetpars()
+    progset.gettargetpartypes()
 
     target_par_shorts = set([p['param'] for p in progset.targetpars])
     pars = parset.pars[0]
@@ -369,7 +389,7 @@ def get_parameters_from_progset_parset(settings, progset, parset):
             'short': par_short,
             'name': pars[par_short].name,
             'coverage': pars[par_short].coverage,
-            'limits': get_limits(pars[par_short]),
+            'limits': get_par_limits(project, pars[par_short]),
             'interact': pars[par_short].proginteract,
             'populations': [
                 {

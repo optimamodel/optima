@@ -4,7 +4,8 @@ define(['angular'], function (module) {
 
   return angular.module('app.parameter-scenarios-modal', [])
     .controller('ParameterScenariosModalController', function (
-        $scope, $modalInstance, scenarios, scenario, parsets, progsets, ykeys) {
+        $scope, $modalInstance, scenarios, scenario, parsets,
+        progsets, ykeys, years) {
 
       $scope.scenario = scenario;
       $scope.parsets = parsets;
@@ -78,6 +79,11 @@ define(['angular'], function (module) {
         var pops = $scope.getPopsOfPar();
         console.log('pops', JSON.stringify(pops));
         $scope.editPar.for = pops[0].val;
+        $scope.editPar.startval = pops[0].limits[0];
+        $scope.editPar.endval = pops[0].limits[1];
+        $scope.editPar.startyear = years[0];
+        var n = years.length;
+        $scope.editPar.endyear = years[n-1];
         console.log($scope.editPar.for);
         console.log('new', $scope.editPar.name, '->', _.pluck(pops, 'val'))
       };

@@ -35,7 +35,7 @@ from .dbconn import db
 from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
 from .exceptions import ProjectDoesNotExist
 from .parse import get_default_program_summaries, \
-    get_parameters_for_program_modal, get_parameters_from_progset_parset, \
+    get_parameters_for_edit_program, get_parameters_for_outcomes, \
     get_parameters_from_parset, set_parameters_on_parset, \
     get_progset_from_project, get_populations_from_project, \
     set_populations_on_project, set_project_summary_on_project, \
@@ -379,23 +379,12 @@ def load_parset_summaries(project_id):
 
 
 def load_project_parameters(project_id):
-    return get_parameters_for_program_modal(load_project(project_id))
+    return get_parameters_for_edit_program(load_project(project_id))
 
 
 def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     project = load_project(project_id)
-    progset = get_progset_from_project(project, progset_id)
-    parset = get_parset_from_project(project, parset_id)
-
-    print ">> Fetching target parameters from progset '%s'", progset.name
-
-    progset.gettargetpops()
-    progset.gettargetpars()
-    progset.gettargetpartypes()
-
-    settings = project.settings
-
-    return get_parameters_from_progset_parset(settings, progset, parset)
+    return get_parameters_for_outcomes(project, progset_id, parset_id)
 
 
 def load_parameters(project_id, parset_id):
@@ -627,7 +616,8 @@ def load_scenario_summaries(project_id):
     project = project_record.load()
     return {
         'scenarios': get_scenario_summaries(project),
-        'ykeysByParsetId': get_parameters_for_scenarios(project)
+        'ykeysByParsetId': get_parameters_for_scenarios(project),
+        'years': get_project_years(project)
     }
 
 

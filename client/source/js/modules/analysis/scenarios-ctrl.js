@@ -12,6 +12,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parsets = parsetResponse.data.parsets;
       $scope.progsets = progsetsResponse.data.progsets;
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+      $scope.years = scenariosResponse.data.years;
       $scope.isMissingModelData = !$scope.project.hasData;
       $scope.isMissingProgramSet = $scope.progsets.length == 0;
       loadScenarios(scenariosResponse.data.scenarios);
@@ -43,7 +44,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         '/api/project/' + $scope.project.id + '/scenarios/results')
       .success(function (data) {
         $scope.graphs = data.graphs;
-        console.log($scope.graphs);
       });
     };
 
@@ -80,7 +80,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           scenario: function () { return angular.copy(scenario); },
           parsets: function () { return $scope.parsets; },
           progsets: function () { return $scope.progsets; },
-          ykeys: function () { return $scope.parametersByParsetId; }
+          ykeys: function () { return $scope.parametersByParsetId; },
+          years: function() { return $scope.years }
         }
       });
     }
