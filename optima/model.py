@@ -25,14 +25,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     tvec         = simpars['tvec']
     dt           = simpars['dt']           # Shorten dt
     npts         = len(tvec)               # Number of time points
+    ncd4         = settings.ncd4           # Shorten number of CD4 states
     nstates      = settings.nstates        # Shorten number of health states
     people       = zeros((nstates, npops, npts)) # Matrix to hold everything
     allpeople    = zeros((npops, npts))    # Population sizes
     effhivprev   = zeros((npops, 1))       # HIV effective prevalence (prevalence times infectiousness), overall
     effallprev   = zeros((nstates, npops)) # HIV effective prevalence (prevalence times infectiousness), by health state
     inhomo       = zeros(npops)    # Inhomogeneity calculations
-    usecascade   = settings.usecascade     # Whether or not the full treatment cascade should be used
-    safetymargin = settings.safetymargin   # Maximum fraction of people to move on a single timestep
     eps          = settings.eps            # Define another small number to avoid divide-by-zero errors
     forcepopsize = settings.forcepopsize   # Whether or not to force the population size to match the parameters
     rawtransit   = simpars['rawtransit']     # Raw transitions
@@ -54,19 +53,20 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_proptx     = zeros(npts)          # Proportion on treatment per timestep
     
     # Biological and failure parameters -- death etc
-    prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],0.]) # Ugly, but fast
+    prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],0.]) 
     svlrecov   = array([0.,0.,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']])
     deathhiv   = array([simpars['deathacute'],simpars['deathgt500'],simpars['deathgt350'],simpars['deathgt200'],simpars['deathgt50'],simpars['deathlt50']])
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
     cd4trans   = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
     deathprob  = zeros((nstates)) # Initialise death probability array
+    background = simpars['death']*dt
 
     # Defined for total (not by populations) and time dependent [npts]
-    treatvs     = simpars['treatvs']             # viral suppression - ART initiators (P)
-    biofailure    = simpars['biofailure']    # biological treatment failure rate (P/T)
-    freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
-    linktocare    = simpars['linktocare']    # mean time before being linked to care
-    leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
+    treatvs       = simpars['treatvs']         # viral suppression - ART initiators
+    biofailure    = simpars['biofailure']*dt    # biological treatment failure rate
+#    freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency
+    linktocare    = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # mean time before being linked to care
+    leavecare     = simpars['leavecare']*dt     # Proportion of people in care then lost to follow-up per year
         
     # Disease state indices
     susreg      = settings.susreg       # Susceptible, regular
@@ -75,6 +75,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     undx        = settings.undx         # Undiagnosed
     dx          = settings.dx           # Diagnosed
     alldx       = settings.alldx        # All diagnosed
+    allcare     = settings.allcare      # All in care
     alltx       = settings.alltx        # All on treatment
     allplhiv    = settings.allplhiv     # All PLHIV
     notonart    = settings.notonart     # All PLHIV who are not on ART    
@@ -86,9 +87,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     gt500       = settings.gt500        # >500
     gt350       = settings.gt350        # >350
     gt200       = settings.gt200        # >200
-    gt50 =       settings.gt50          # >50
+    gt50        = settings.gt50          # >50
     lt50        = settings.lt50         # <50
-    allcd4 = [acute,gt500,gt350,gt200,gt50,lt50]
+    allcd4      = [acute,gt500,gt350,gt200,gt50,lt50]
     
     if debug and len(sus)!=2:
         errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
@@ -110,7 +111,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 else:
                     rawtransit[fromstate][1][ts] *= 1.-exp(-dt/(prog[fromhealthstate]))
     
-            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt # Death probabilities
+            # Death probabilities
+            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt 
             deathprob[fromstate] = deathhiv[fromhealthstate]*dt
 
     ## Recovery and deaths for people on suppressive ART
@@ -147,35 +149,35 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     rawtransit[fromstate][1][ts] = 1.-exp(-dt/simpars['progacute'])
             if fromstate in gt500: 
                 if tostate in gt500:
-                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlproggt500']
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlproggt500']*dt
                 elif tostate in gt350:
-                    rawtransit[fromstate][1][ts] = simpars['usvlproggt500']
+                    rawtransit[fromstate][1][ts] = simpars['usvlproggt500']*dt
             if fromstate in gt350:
                 if tostate in gt500:
-                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt350']
+                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt350']*dt
                 elif tostate in gt350:
-                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt350']-simpars['usvlproggt350']
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt350']*dt-simpars['usvlproggt350']*dt
                 elif tostate in gt200:
-                    rawtransit[fromstate][1][ts] = simpars['usvlproggt350']
+                    rawtransit[fromstate][1][ts] = simpars['usvlproggt350']*dt
             if fromstate in gt200:
                 if tostate in gt350:
-                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt200']
+                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt200']*dt
                 elif tostate in gt200:
-                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt200']-simpars['usvlproggt200']
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt200']*dt-simpars['usvlproggt200']*dt
                 elif tostate in gt50:
-                    rawtransit[fromstate][1][ts] = simpars['usvlproggt200']
+                    rawtransit[fromstate][1][ts] = simpars['usvlproggt200']*dt
             if fromstate in gt50:
                 if tostate in gt200:
-                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt50']
+                    rawtransit[fromstate][1][ts] = simpars['usvlrecovgt50']*dt
                 elif tostate in gt50:
-                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt50']-simpars['usvlproggt50']
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt50']*dt-simpars['usvlproggt50']*dt
                 elif tostate in lt50:
-                    rawtransit[fromstate][1][ts] = simpars['usvlproggt50']
+                    rawtransit[fromstate][1][ts] = simpars['usvlproggt50']*dt
             if fromstate in lt50:
                 if tostate in gt50:
-                    rawtransit[fromstate][1][ts] = simpars['usvlrecovlt50']
+                    rawtransit[fromstate][1][ts] = simpars['usvlrecovlt50']*dt
                 elif tostate in lt50:
-                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovlt50']
+                    rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovlt50']*dt
                                     
             # Death probabilities
             rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*deathtx*dt
@@ -224,8 +226,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Proportion aware and treated (for 90/90/90)
     propdx = simpars['propdx']
     propcare = simpars['propcare']
-    propsupp = simpars['propsupp']
     proptx = simpars['proptx']
+    propsupp = simpars['propsupp']
 
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -351,11 +353,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             initpeople[susreg, p]   = uninfected
             initpeople[progcirc, p] = 0.0 # This is just to make it explicit that the circ compartment only keeps track of people who are programmatically circumcised while the model is running
             initpeople[undx, p]     = undiagnosed
-            initpropcare = 1. - exp(-dt/(max(eps,linktocare[p,0]))) # Initial proportion of diagnosed people in care
-            initpeople[dx,   p] = diagnosed*initpropcare
-            initpeople[care, p] = diagnosed*(1.-initpropcare)
-            initpeople[usvl, p] = treatment * (1.-treatvs[0])
-            initpeople[svl,  p] = treatment * treatvs[0]
+            initpeople[dx,   p]     = diagnosed*linktocare[p,0]
+            initpeople[care, p]     = diagnosed*(1.-linktocare[p,0])
+            initpeople[usvl, p]     = treatment * (1.-treatvs[0])
+            initpeople[svl,  p]     = treatment * treatvs[0]
         
     if debug and not(initpeople.all()>=0): # If not every element is a real number >0, throw an error
         errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
@@ -533,7 +534,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         thistransit[progcirc][1][susreg] = 1. - infections_to[1]
         thistransit[progcirc][1][thistransit[susreg][0].index(undx[0])] = infections_to[1]
 
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         ##############################################################################################################
         ### Calculate probabilities of shifting along cascade
@@ -563,7 +563,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-hivtest[:,t])
                         else: # Probability of being tested
-                            thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*hivtest[:,t]
+                            try: thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*hivtest[:,t]
+                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         # Diagnosed to care
         for fromstate in dx:
@@ -617,8 +618,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             wrongprobs = array([thistransit[j][1].sum(axis=0)+deathprob[j] for j in wrongstatesindices])
             errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
             raise OptimaException(errormsg)
-        
-        
+            
+        # Check that no probabilities are less than 0
+        if debug and any([(thistransit[k][1]<0).any() for k in range(nstates)]):
+            wrongstatesindices = [k for k in range(nstates) if (thistransit[k][1]<0.).any()]
+            wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
+            wrongprobs = array([thistransit[j][1] for j in wrongstatesindices])
+            errormsg = 'model(): Transitions are less than 0 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
+            raise OptimaException(errormsg)
+            
         
         ##############################################################################################################
         ### Shift people as required
@@ -626,33 +634,67 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         if t<npts-1:
             for transition in thistransit:
                 people[transition[0],:,t+1] = people[transition[0],:,t]*transition[1]
-
-            
+                
             ###############################################################################
-            ## Calculate births, age transitions and mother-to-child-transmission
+            ## Shift numbers of people (circs, treatment)
             ###############################################################################
             
-            ## Calculate births
-            for p1,p2,birthrates,alleligbirthrate in birthslist:
-                thisbirthrate = birthrates[t]
-                peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
-                popbirths      = thisbirthrate * people[:, p1, t].sum()
-                mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
-                mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
-                thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
-            
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                
-                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
-                popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
-                
-                raw_mtct[p2, t] += popmtct
-                
-                people[undx[0], p2, t+1] += popmtct # HIV+ babies assigned to undiagnosed compartment
-                people[susreg, p2, t+1] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
+            # Handle circumcision
+            circppl = maximum(0, minimum(numcirc[:,t], people[susreg,:,t+1])) # Don't circumcise more people than are available
+            people[susreg,:,t+1]   -= circppl
+            people[progcirc,:,t+1] += circppl 
 
+            # Handle treatment
+            currplhiv   = people[allplhiv,:,t+1].sum() 
+            currdx      = people[alldx,:,t+1].sum() # This assumes proptx refers to the proportion of diagnosed who are to be on treatment 
+            currtx      = people[alltx,:,t+1].sum()
+            totreat     = proptx[t+1]*currdx if not(isnan(proptx[t+1])) else numtx[t+1]
+            newtreat        = [0] * ncd4
+            totnewtreat = max(0, totreat - currtx)
+            currentdiagnosed = people[dx,:,t+1]
+
+            raw_propdx[t+1] = currdx/currplhiv
+            raw_proptx[t+1] = currtx/currdx
             
+            for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
+                if totnewtreat<eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
+                    thisnewtreat = min(totnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
+                    newtreat[cd4] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
+                    totnewtreat -= newtreat[cd4].sum() # Adjust the number of available treatment spots
+
+                raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
+
+                people[care[cd4],:,t+1] -= newtreat[cd4]
+                people[usvl[cd4],:,t+1] += newtreat[cd4]
+#            
+#            ###############################################################################
+#            ## Calculate births, deaths, age transitions and mother-to-child-transmission
+#            ###############################################################################
+
+#            for j in range(nstates): thistransit[j][1] = thistransit[j][1]*(1.-background[:,t])
+#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#            
+#            ## Calculate births
+#            for p1,p2,birthrates,alleligbirthrate in birthslist:
+#                thisbirthrate = birthrates[t]
+#                peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
+#                popbirths      = thisbirthrate * people[:, p1, t].sum()
+#                mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
+#                mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
+#                thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
+#            
+#                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+#                
+#                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+#                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+#                popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
+#                
+#                raw_mtct[p2, t] += popmtct
+#                
+#                people[undx[0], p2, t+1] += popmtct # HIV+ babies assigned to undiagnosed compartment
+#                people[susreg, p2, t+1] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
+#
+#            
 #            ## Age-related transitions
 #            for p1,p2 in agetransitlist:
 #                peopleleaving = people[:, p1, t] * agetransit[p1,p2]
@@ -670,55 +712,50 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 #                people[:, p1, t+1] += peoplemoving2 - peoplemoving1
 #                people[:, p2, t+1] += peoplemoving1 - peoplemoving2
 #            
-            
-            
-            
-            
-            
-            ###############################################################################
-            ## Reconcile things
-            ###############################################################################
-            
-            # Reconcile population sizes for populations with no inflows
-            thissusreg = people[susreg,noinflows,t+1] # WARNING, will break if susreg is not a scalar index!
-            thisprogcirc = people[progcirc,noinflows,t+1]
-            allsus = thissusreg+thisprogcirc
-            newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-            people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
-            people[progcirc,noinflows,t+1] += newpeople*thisprogcirc/allsus # Add new people
-            
-            # Handle circumcision
-            circppl = maximum(0, minimum(numcirc[noinflows,t], safetymargin*people[susreg,noinflows,t+1])) # Don't circumcise more people than are available
-            people[susreg,noinflows,t+1]   -= circppl
-            people[progcirc,noinflows,t+1] += circppl # And add these people into the circumcised compartment
-            
-            # Check population sizes are correct
-            actualpeople = people[:,:,t+1][:,noinflows].sum()
-            wantedpeople = popsize[noinflows,t+1].sum()
-            if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
-                errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
-                raise OptimaException(errormsg)
-            
-            # If required, scale population sizes to exactly match the parameters
-            if forcepopsize:
-                maxmismatch = 0.1 # Set the maximum allowable mismatch before throwing a warning
-                for p in range(npops):
-                    actualpeople = people[:,p,t+1].sum()
-                    wantedpeople = popsize[p,t+1]
-                    if actualpeople==0: raise Exception("Where are the people? On the roof? NO! They don't exist!")
-                    ratio = wantedpeople/actualpeople # Actual people should never be 0 or an integer so should be ok
-                    people[:,p,t+1] *= ratio # Scale to match
-                    if abs(ratio-1)>maxmismatch:
-                        errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
-                        if die: raise OptimaException(errormsg)
-                        else: printv(errormsg, 1, verbose=verbose)
+#            
+#            
+#            
+#            
+#            
+#            ###############################################################################
+#            ## Reconcile things
+#            ###############################################################################
+#            
+#            # Reconcile population sizes for populations with no inflows
+#            thissusreg = people[susreg,noinflows,t+1] # WARNING, will break if susreg is not a scalar index!
+#            thisprogcirc = people[progcirc,noinflows,t+1]
+#            allsus = thissusreg+thisprogcirc
+#            newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
+#            people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
+#            people[progcirc,noinflows,t+1] += newpeople*thisprogcirc/allsus # Add new people
+#                        
+#            # Check population sizes are correct
+#            actualpeople = people[:,:,t+1][:,noinflows].sum()
+#            wantedpeople = popsize[noinflows,t+1].sum()
+#            if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
+#                errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
+#                raise OptimaException(errormsg)
+#            
+#            # If required, scale population sizes to exactly match the parameters
+#            if forcepopsize:
+#                maxmismatch = 0.1 # Set the maximum allowable mismatch before throwing a warning
+#                for p in range(npops):
+#                    actualpeople = people[:,p,t+1].sum()
+#                    wantedpeople = popsize[p,t+1]
+#                    if actualpeople==0: raise Exception("ERROR: no people.")
+#                    ratio = wantedpeople/actualpeople # Actual people should never be 0 or an integer so should be ok
+#                    people[:,p,t+1] *= ratio # Scale to match
+#                    if abs(ratio-1)>maxmismatch:
+#                        errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
+#                        if die: raise OptimaException(errormsg)
+#                        else: printv(errormsg, 1, verbose=verbose)
             
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1])
+                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
                             if die: raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)

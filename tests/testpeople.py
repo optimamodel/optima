@@ -9,7 +9,7 @@ import optima as op
 import os
 
 
-refresh = 0 # Creates defaultpeople.ppl rather than copares
+refresh = 1 # Creates defaultpeople.ppl rather than copares
 eps = 1e5 # Don't expect a totally exact match
 filename = '2016jul16.npy'
 
@@ -42,11 +42,4 @@ else:
         print('People are the same, yay! (max diff in people: %s)' % abs(newraw['people']-oldraw['people']).max())
         
         
-from pylab import figure, plot, hold, legend
-figure()
-hold(True)
-plot(newraw['otherdeath'].sum(axis=0))
-plot(oldraw['otherdeath'].sum(axis=0))
-legend('new','old')
-
 
