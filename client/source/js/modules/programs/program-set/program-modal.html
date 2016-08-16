@@ -17,6 +17,7 @@
     }
   </style>
 
+
   <form
       class="modal-body"
       name="programForm"
@@ -64,8 +65,7 @@
     </div>
 
 
-    <div class="title"
-         style="padding-bottom: 0em">
+    <div class="title">
       Target populations
     </div>
 
@@ -136,7 +136,7 @@
 
     <div class="section_dashed_border">
 
-      <div class="well" ng-repeat="entry in state.program.targetpars">
+      <div class="well" ng-repeat="targetpar in state.program.targetpars">
 
         <div class="section grid">
 
@@ -150,15 +150,15 @@
               class="txbox"
               style="width: 500px;
                     display: inline;"
-              ng-model="entry.parameterObj"
-              ng-options="param.name for param in state.parameters"
-              ng-change="changeParameter(entry)" required>
+              ng-model="targetpar.param"
+              ng-options="p.param as p.name for p in state.parameters"
+              ng-change="changeParameter(targetpar)" required>
           </select>
 
           <span style="padding-left: 1em;">
             <input
                type="checkbox"
-               ng-model="entry.active">
+               ng-model="targetpar.active">
             Active
           </span>
 
@@ -166,9 +166,9 @@
         </div>
 
         <div class="section grid"
-             ng-if="entry.parameterObj.pships.length === 0
-                    && entry.populations
-                    && entry.populations.length > 0">
+             ng-if="targetpar.attr.pships.length === 0
+                    && targetpar.attr.populations
+                    && targetpar.attr.populations.length > 0">
           <div style="
                   padding-top: 0.2em;
                   padding-bottom: 0.5em;
@@ -178,24 +178,24 @@
           <div>
             <div
                 class="error-hint"
-                ng-show="isPopulationSelected(entry, entry.populations) && entry.parameterObj">
+                ng-show="isPopulationSelected(targetpar, targetpar.attr.populations) && targetpar.attr">
               Please select population
             </div>
             <div class="section_dashed_border no-border">
               <span class="option">
                 <input
                     type="checkbox"
-                    ng-click="clickAllPopulationsOfParameter(entry)"
-                    ng-model="entry.selectAll">
+                    ng-click="clickAllPopulationsOfParameter(targetpar)"
+                    ng-model="targetpar.attr.selectAll">
                 <span>All populations</span>
               </span>
               <span
-                  ng-repeat="population in entry.populations"
+                  ng-repeat="population in targetpar.attr.populations"
                   class="option">
                 <input
                     type="checkbox"
                     ng-model="population.added"
-                    ng-click="clickAnyPopulationOfParameter(entry, entry.populations)"/>
+                    ng-click="clickAnyPopulationOfParameter(targetpar, targetpar.attr.populations)"/>
                 <span>{{population.name}}</span>
               </span>
             </div>
@@ -203,7 +203,7 @@
         </div>
 
         <div class="section grid"
-             ng-if="entry.parameterObj.pships.length > 0">
+             ng-if="targetpar.attr.pships.length > 0">
           <div style="
                 padding-top: 0.25em;
                 padding-bottom: 0.5em;
@@ -212,23 +212,23 @@
           </div>
           <div
               class="error-hint"
-              ng-show="isPopulationSelected(entry, entry.parameterObj.pships) && entry.parameterObj">
+              ng-show="isPopulationSelected(targetpar, targetpar.attr.pships) && targetpar.attr">
             Please select partnership
           </div>
           <div class="section_dashed_border no-border"
-               ng-if="entry.parameterObj.pships.length > 0">
+               ng-if="targetpar.attr.pships.length > 0">
             <span class="option">
               <input
                  type="checkbox"
-                 ng-click="clickAllPartnershipsOfParameter(entry)"
-                 ng-model="entry.selectAll">
+                 ng-click="clickAllPartnershipsOfParameter(targetpar)"
+                 ng-model="targetpar.attr.selectAll">
               <span>All partnerships</span>
             </span>
-            <span ng-repeat="pship in entry.parameterObj.pships"
+            <span ng-repeat="pship in targetpar.attr.pships"
                   class="option">
               <input type="checkbox"
                      ng-model="pship.added"
-                     ng-click="clickAnyPartnershipOfParameter(entry, entry.parameterObj.pships)"/>
+                     ng-click="clickAnyPartnershipOfParameter(targetpar, targetpar.attr.pships)"/>
               <span>{{pship[0] + '/' + pship[1]}}</span>
             </span>
           </div>

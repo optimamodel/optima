@@ -1,7 +1,9 @@
  define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories, openProject) {
+  module.controller('ProgramModalController', function (
+    $scope, $modalInstance, program, populations, programList, modalService,
+    parameters, categories, openProject) {
     // Default list of criteria
 
     function consoleLogJson(name, val) {
@@ -9,44 +11,57 @@
       console.log(JSON.stringify(val, null, 2));
     }
 
+    function isNonemptyList(l) {
+      return (!_.isUndefined(l.length) && l.length > 0);
+    }
+
     // Initializes controller state and sets some default values in the program
-    var initialize = function () {
+    function initialize() {
 
       $scope.state = {
         selectAll: false,
         isNew: !program.name,
-        populations: angular.copy(populations),
-        parameters: parameters,
+        populations: angular.copy(populations), // all possible populations in the program
+        parameters: parameters, // all possible parameters
         categories: categories,
         program: program,
         openProject: openProject,
-        eligibility: {
-          pregnantFalse: true,
-          allstates: true
-        },
         showAddData: false,
         newAddData: {},
         progPopReadOnly: false
       };
 
+      consoleLogJson('default loaded parameters', parameters);
       /**
-       * All populations for the project will be listed for the program for user to select from.
-       * Logic below will:
-       * 1. If there is some parameter in the program which hae 'tot' population then all populations should be selected for the program.
-       * 2. set the populations which have already been selected for the program as active.
-       * 3. if all the populations have been selected for the program selectAll will be set to true.
+       All populations for the project will be listed for
+       the program for user to select from.
+
+       Logic below will:
+
+       1. If there is some parameter in the program which
+          have 'tot' population then all populations should
+          be selected for the program.
+       2. set the populations which have already been selected
+          for the program as active.
+       3. if all the populations have been selected for the
+          program selectAll will be set to true.
        */
-      var isTot = _.some($scope.state.program.targetpars, function(parameter) {
-        return parameter.pops.indexOf('tot') >= 0;
-      });
-      if(isTot) {
+
+      var isAnyTargetparForTotal = _.some(
+        $scope.state.program.targetpars,
+        function(par) { return par.pops.indexOf('tot') >= 0; }
+      );
+
+      if (isAnyTargetparForTotal) {
         $scope.state.progPopReadOnly = true;
         $scope.state.selectAll = true;
         $scope.clickAllTargetPopulations();
       } else {
-        if(program.populations && program.populations.length > 0) {
+        if (isNonemptyList(program.populations)) {
           _.forEach($scope.state.populations, function(population) {
-            population.active = (program.populations.length === 0) || (program.populations.indexOf(population.short) > -1);
+            population.active = (
+              program.populations.length === 0)
+               || (program.populations.indexOf(population.short) > -1);
           });
           $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
             return !population.active;
@@ -54,40 +69,8 @@
         }
       }
 
-      /**
-       * Section below will initialize parameters for program, it will:
-       * 1. add temporary parameterObj to each parameter, it will have parameter details from api /parameters
-       * 2. if parameterObj has partnerships, set them as added if they are already added to program
-       * 3. if parameterObj has no partnerships initialize parameter will populations from project populations,
-       *    set the populations which have already been added to the program->parameters as added.
-       * 4. set selectAll if all the partnerships / populations have already been added for the parameter.
-       */
-      _.forEach($scope.state.program.targetpars, function(parameter) {
-        parameter.parameterObj = _.find(parameters, function(param) {
-          return parameter.param === param.short;
-        });
-        if(parameter.parameterObj && parameter.parameterObj.pships && parameter.parameterObj.pships.length > 0) {
-          _.forEach(parameter.parameterObj.pships, function(pship) {
-            _.forEach(parameter.pops, function(pop) {
-              if(angular.equals(pship, pop)) {
-                pship.added = true;
-              }
-            });
-          });
-          parameter.selectAll = parameter.parameterObj.pships && parameter.pops && parameter.parameterObj.pships.length === parameter.pops.length;
-	      } else if(parameter.pops && parameter.pops.length > 0 && parameter.pops[0]!="tot") {
-          parameter.populations = angular.copy($scope.state.populations);
-          _.forEach(parameter.populations, function(population) {
-            if (_.find(parameter.pops, 
-                       function(pop) { return pop === population.short })) {
-              population.added = true;
-            } else {
-              population.added = false;
-            }
-          })
-          parameter.selectAll = parameter.populations && $scope.state.populations && parameter.populations.length === parameter.pops.length;
-        }
-      });
+      _.forEach($scope.state.program.targetpars, setAttrOfPar);
+      console.log('init targetpars', $scope.state.program.targetpars);
 
       // Set the program as active
       $scope.state.program.active = true;
@@ -118,7 +101,94 @@
       _.each($scope.hivStates, function(state) {
         $scope.state.hivState[state.short] = $scope.state.allHivStates;
       });
-    };
+    }
+
+    /**
+     * Section below will initialize parameters for program, it will:
+     * 1. add temporary attr to each parameter, it will have parameter details from api /parameters
+     * 2. if attr has partnerships, set them as added if they are already added to program
+     * 3. if attr has no partnerships initialize parameter will populations from project populations,
+     *    set the populations which have already been added to the program->parameters as added.
+     * 4. set selectAll if all the partnerships / populations have already been added for the parameter.
+
+      state.program
+        acitve:
+        name:
+        short:
+        category:
+        criteria
+        optmizable:
+        targetpars:
+          - param: string
+            pops: string -or- pop: string or 2-tuple(string)
+            attr:
+              pships: list of pop
+              name:
+              param:
+              by:
+        costcov:
+        ccopars:
+
+     */
+    function setAttrOfPar(targetpar) {
+
+      var attr = _.find(parameters, function(parameter) {
+        return targetpar.param === parameter.param;
+      });
+      if (_.isUndefined(attr)) {
+        return;
+      }
+      targetpar.attr = _.clone(attr);
+
+      consoleLogJson('raw targetpar', targetpar);
+
+      if (attr.by == "pship") {
+
+        _.forEach(targetpar.attr.pships, function(pship) {
+          _.forEach(targetpar.pops, function(pop) {
+            if(angular.equals(pship, pop)) {
+              pship.added = true;
+            }
+          });
+        });
+
+        targetpar.selectAll = targetpar.attr.pships
+                                && targetpar.pops
+                                && targetpar.attr.pships.length === targetpar.pops.length;
+      } if (targetpar.attr.by === 'tot') {
+
+        targetpar.pops = ['tot'];
+        targetpar.attr.populations = [];
+
+      } else if (attr.by == "pop") {
+
+        targetpar.attr.selectAll =
+          targetpar.attr.populations
+          && $scope.state.populations
+          && targetpar.attr.populations.length === targetpar.pops.length;
+
+        targetpar.attr.populations = [];
+
+        _.forEach($scope.state.populations, function(population) {
+          var isInTargetpar =_.find(
+            targetpar.pops,
+            function(pop) { return pop === population.short });
+          var newPopulation = angular.copy(population);
+          if (isInTargetpar) {
+            newPopulation.added = true;
+          } else {
+            newPopulation.added = false;
+          }
+          targetpar.attr.populations.push(newPopulation);
+        });
+
+      } else {
+        console.log('Error in setting targetpar');
+      }
+
+      consoleLogJson('attr targetpar', targetpar);
+
+    }
 
     $scope.clickAllHivStates = function() {
       _.forEach($scope.state.hivState, function(state, key) {
@@ -162,41 +232,42 @@
       if ($scope.state.program.targetpars == undefined) {
         $scope.state.program.targetpars = [];
       }
-
-      $scope.state.program.targetpars.push({active: true});
+      var newTargetPar = {active: true};
+      setAttrOfPar(newTargetPar);
+      $scope.state.program.targetpars.push(newTargetPar);
     };
 
-    // Ensures populations ard partnerships are added to parameterObj
-    $scope.changeParameter = function(parameter) {
-      if(parameter.parameterObj.by === 'tot'){
-        parameter.populations = [];
-      }else{
-        if(!parameter.pships || parameter.pships.length === 0) {
-          parameter.populations = $scope.state.populations;
-        }
-      }
+    /**
+     * Ensures populations ard partnerships are added to attr. Assumes that
+     * target.param has just been set by a selector. So will need to
+     * clear targetpar.pops and reset the attr for checkboxes     *
+     */
+    $scope.changeParameter = function(targetpar) {
+      targetpar.pops = [];
+      targetpar.attr = {};
+      setAttrOfPar(targetpar);
     };
 
     $scope.clickAllPopulationsOfParameter = function(parameter) {
-      _.forEach(parameter.populations, function(population) {
-        population.added = parameter.selectAll;
+      _.forEach(parameter.attr.populations, function(population) {
+        population.added = parameter.attr.selectAll;
       });
     };
 
     $scope.clickAnyPopulationOfParameter = function(parameter, populations) {
-      parameter.selectAll = !_.some(populations, function(population) {
+      parameter.attr.selectAll = !_.some(populations, function(population) {
         return !population.added;
       });
     };
 
     $scope.clickAllPartnershipsOfParameter = function(parameter) {
-      _.forEach(parameter.parameterObj.pships, function(pship) {
-        pship.added = parameter.selectAll;
+      _.forEach(parameter.attr.pships, function(pship) {
+        pship.added = parameter.attr.selectAll;
       });
     };
 
     $scope.clickAnyPartnershipOfParameter = function(parameter, pships) {
-      parameter.selectAll = !_.some(pships, function(pship) {
+      parameter.attr.selectAll = !_.some(pships, function(pship) {
         return !pship.added;
       });
     };
@@ -224,19 +295,21 @@
       }
     };
 
-    $scope.submit = function (form) {
+    $scope.submit = function(form) {
       if (form.$invalid) {
-        modalService.inform(undefined,undefined,'Please fill in the form correctly');
+        modalService.inform(undefined, undefined, 'Please fill in the form correctly');
       } else {
 
         $scope.state.showAddData = false;
 
-        $scope.state.program.populations = _.filter($scope.state.populations, function(population) {
-          return population.active;
-        }).map(function(population) {
-          return population.short;
-        });
-        
+        if ($scope.state.program.attr) {
+          $scope.state.program.populations = _.filter($scope.state.populations, function(population) {
+            return population.active;
+          }).map(function(population) {
+            return population.short;
+          });
+        }
+
         $scope.state.program.criteria.hivstatus = '';
         if ($scope.state.allHivStates) {
           $scope.state.program.criteria.hivstatus = 'allstates';
@@ -254,38 +327,34 @@
           }
         }
 
-        if($scope.state.program.targetpars)
+        if ($scope.state.program.targetpars)
 
-        /**
-         * The code below will extract the population / parameter arrays to be
-         * saved and will delete any unwanted data from it.
-         */
-        _.forEach($scope.state.program.targetpars, function(parameter) {
-          
-          parameter.param = parameter.parameterObj.short;
-          var addedPopulations = _.filter(parameter.populations, function(population){
-            return population.added;
-          });
+          /**
+           * The code below will extract the population / parameter arrays to be
+           * saved and will delete any unwanted data from it.
+           */
+          _.forEach($scope.state.program.targetpars, function(targetpar) {
 
-          if(parameter.parameterObj.by !== 'tot' && addedPopulations && addedPopulations.length > 0) {
-            parameter.pops = addedPopulations.map(function (population) {
-              return population.short;
+            targetpar.param = targetpar.attr.param;
+            var addedPopulations = _.filter(targetpar.attr.populations, function(population) {
+              return population.added;
             });
-          }else{
-            parameter.pops = ['tot'];
-          }
 
-          var selectedPartnerships = _.filter(parameter.parameterObj.pships, function(pship){
-            return pship.added;
+            if (targetpar.attr.by !== 'tot' && addedPopulations && addedPopulations.length > 0) {
+              targetpar.pops = addedPopulations.map(function(p) { return p.short; });
+            } else {
+              targetpar.pops = ['tot'];
+            }
+
+            var pships = _.filter(targetpar.attr.pships, function(p) { return p.added; });
+            if (pships && pships.length > 0) {
+              targetpar.pops = pships;
+            }
+
+            delete targetpar.attr;
+
           });
-          if(selectedPartnerships && selectedPartnerships.length > 0) {
-            parameter.pops = selectedPartnerships;
-          }
-          delete parameter.populations;
-          delete parameter.parameterObj;
-          delete parameter.selectAll;
-        });
-        
+
         $modalInstance.close($scope.state.program);
       }
     };
