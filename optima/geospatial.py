@@ -16,6 +16,9 @@ import os
 global geoguiwindow, guiportfolio
 if 1:  geoguiwindow, guiportfolio = [None]*2
 
+guiobjectives = defaultobjectives(verbose=0)
+guiobjectives['budget'] = 0.0 # Reset
+
     
     
 ## Global options
@@ -39,9 +42,10 @@ portext = '.prt'
 
 
 
-def _loadproj():
+def _loadproj(filepath=None,usegui=True):
     ''' Helper function to load a project, since used more than once '''
-    filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+projext)
+    if filepath == None and usegui:
+        filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+projext)
     project = None
     if filepath:
         try: project = loadobj(filepath, verbose=0)
@@ -60,17 +64,28 @@ def resetbudget():
     objectiveinputs['budget'].setText(str(totalbudget/budgetfactor))
     return None
 
-def warning(message):
+def warning(message,usegui=True):
     global geoguiwindow
-    QtGui.QMessageBox.warning(geoguiwindow, 'Message', message)
+    if usegui:
+        QtGui.QMessageBox.warning(geoguiwindow, 'Message', message)
+    else:
+        print(message)
     
     
-# WARNING: HARDCODING ZEROTH PROGSET AND PARSET THROUGHOUT.
-def makesheet():
-    ''' Create a geospatial spreadsheet template based on a project file '''      
+# WARNING: HARDCODING -1TH PROGSET AND PARSET THROUGHOUT. CHECK WITH CLIFF.
+def gui_makesheet():
+    ''' GUI wrapper to create a geospatial spreadsheet template based on a project file '''
+    makesheet(usegui=True)
+    
+def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None, usegui=False):
+    ''' Create a geospatial spreadsheet template based on a project file '''
+    ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
+    ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
     
     ## 1. Load a project file
-    project = _loadproj()
+    project = _loadproj(projectpath,usegui)
+    if project == None:
+        raise OptimaException('No project loaded.')
     
     bestindex = 0        
     
@@ -78,14 +93,16 @@ def makesheet():
         try: project.parsets[-1].getresults()
         except: project.runsim(name=project.parsets[-1].name)
         
-        copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
+        if usegui:
+            copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
         try: copies = int(copies)
-        except: raise OptimaException('Input cannot be converted into an integer.')
+        except: raise OptimaException('Input (number of project copies) cannot be converted into an integer.')
         
-        refyear, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'Select a reference year for which you have district data.')
+        if usegui:
+            refyear, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'Select a reference year for which you have district data.')
         refind = -1            
         try: refyear = int(refyear)
-        except: raise OptimaException('Input cannot be converted into an integer.')
+        except: raise OptimaException('Input (reference year) cannot be converted into an integer.')
         if not refyear in [int(x) for x in project.parsets[-1].getresults().tvec]:
             raise OptimaException("Input not within range of years used by aggregate project's last stored calibration.")
         else:
@@ -93,7 +110,8 @@ def makesheet():
         colwidth = 20
             
         ## 2. Get destination filename
-        spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
+        if usegui:
+            spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
         
         from xlsxwriter import Workbook
         from xlsxwriter.utility import xl_rowcol_to_cell as rc
@@ -219,35 +237,39 @@ def makesheet():
                     
                 wsalloc.set_column(0, maxcol, colwidth) # Make wider
             else:
-                warning('Warning: Loaded project is missing a program set.')
+                warning('Warning: Loaded project is missing a program set.',usegui)
         
         # 4. Generate and save spreadsheet
         try:
             workbook.close()    
-            warning('Multi-project template saved to "%s".' % spreadsheetpath)
+            warning('Multi-project template saved to "%s".' % spreadsheetpath,usegui)
         except:
-            warning('Error: Template not saved due to a workbook error!')
+            warning('Error: Template not saved due to a workbook error!',usegui)
     else:
-        warning('Error: Loaded project is missing a parameter set!')
+        warning('Error: Loaded project is missing a parameter set!',usegui)
 
     return None
     
+def gui_makeproj():
+    ''' Wrapper to create a series of project files based on a seed file and a geospatial spreadsheet '''
+    makeproj(usegui=True)
+    
 # ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
-def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
+def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplots=False, usegui=False):
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
+    ''' checkplots - To check if calibrations are rescaled nicely. '''
     
     bestindex = 0   # This could be a problem down the road...
     
-    checkplots = False       # To check if calibrations are rescaled nicely.
-    
     ## 1. Load a project file -- WARNING, could be combined with the above!
-    if projectpath is None: project = _loadproj()
-    else:                   project = loadobj(projectpath)
+    project = _loadproj(projectpath,usegui)
+    if project == None:
+        raise OptimaException('No project loaded.')
     try: project.parsets[-1].getresults()
     except: project.runsim(name=project.parsets[-1].name)
     
     ## 2. Load a spreadsheet file
-    if spreadsheetpath is None:
+    if usegui:
         spreadsheetpath = QtGui.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
     print('Spreadsheet path: %s' % spreadsheetpath)
     
@@ -257,11 +279,15 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
     wsprev = workbook.sheet_by_name('Population prevalence')
     
     ## 3. Get a destination folder
-    if destination is None:
+    if usegui:
         destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
+    print destination
     
     # Create it if t doesn't exist
-    try: runcommand('mkdir -p %s' % destination)
+    try:
+        if not os.path.exists(destination):
+            os.makedirs(destination)
+#        runcommand('mkdir -p "%s"' % destination)       # P argument seems unix specific.
     except: print('Was unable to make target directory "%s"' % destination)
     
     ## 4. Read the spreadsheet
@@ -424,18 +450,26 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
         
     return None
 
+def gui_create():
+    ''' Wrapper to create a portfolio by selecting a list of projects; silently skip files that fail '''
+    create(usegui=True)
 
-def create(doadd=False):
+def create(filepaths=None, doadd=False, addtoportfolio=None, usegui=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
     global guiportfolio, projectslistbox, guiobjectives, objectiveinputs
+    
     projectpaths = []
     projectslist = []
     if guiportfolio is None: 
         guiportfolio = Portfolio()
     if not doadd:
         guiportfolio = Portfolio()
-        projectslistbox.clear()
-    filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
+        if usegui:
+            projectslistbox.clear()
+    if doadd and addtoportfolio != None:
+        guiportfolio = addtoportfolio
+    if usegui:
+        filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
     if filepaths:
         if type(filepaths)==str: filepaths = [filepaths] # Convert to list
         for filepath in filepaths:
@@ -449,54 +483,87 @@ def create(doadd=False):
                     projectpaths.append(filepath)
                     print('Project file "%s" loaded' % filepath)
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
-        projectslistbox.addItems(projectpaths)
+        if usegui:
+            projectslistbox.addItems(projectpaths)
         guiportfolio.addprojects(projectslist)
-        resetbudget() # And reset the budget
-    return None
+        if usegui:
+            resetbudget() # And reset the budget
+    if usegui:
+        return None
+    else:
+        return dcp(guiportfolio)
 
 
-def addproj():
+def gui_addproj():
+    ''' Wrappeer to add a project -- same as creating a portfolio except don't overwrite '''
+    addproj(usegui=True)
+
+def addproj(filepaths=None, addtoportfolio=None, usegui=False):
     ''' Add a project -- same as creating a portfolio except don't overwrite '''
     global guiportfolio, guiobjectives
-    create(doadd=True)
-    resetbudget() # And reset the budget
-    return None
+    p = create(filepaths=filepaths, doadd=True, addtoportfolio=addtoportfolio, usegui=usegui)
+    if usegui:
+        resetbudget() # And reset the budget
+    return p
 
 
-def loadport():
+def gui_loadport():
+    ''' GUI wrapper to load an existing portfolio '''
+    loadport(usegui=True)
+    
+def loadport(filepath=None, usegui=False):
     ''' Load an existing portfolio '''
     global guiportfolio, projectslistbox
-    filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
+    if usegui:
+        filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
     tmpport = None
     if filepath:
         try: tmpport = loadobj(filepath, verbose=0)
         except Exception as E: 
-            warning('Could not load file "%s" because "%s"' % (filepath, E.message))
+            warning('Could not load file "%s" because "%s"' % (filepath, E.message),usegui)
             import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             return None
         if tmpport is not None: 
             if type(tmpport)==Portfolio:
                 guiportfolio = tmpport
-                projectslistbox.clear()
-                projectslistbox.addItems([proj.name for proj in guiportfolio.projects.values()])
+                if usegui:
+                    projectslistbox.clear()
+                    projectslistbox.addItems([proj.name for proj in guiportfolio.projects.values()])
                 print('Portfolio file "%s" loaded' % filepath)
             else: print('File "%s" is not an Optima portfolio file' % filepath)
-    resetbudget() # And reset the budget
-    return None
+    else:
+        warning('File path not provided. Portfolio not loaded.')
+    if usegui:
+        resetbudget() # And reset the budget
+        return None
+    else:
+        return dcp(portfolio)
 
 
-def rungeo():
+def gui_rungeo():
+    ''' Wrapper to actually run geospatial analysis!!! '''
+    rungeo(usegui=True)
+
+def rungeo(portfolio=None, objectives=None, BOCtime=300, usegui=False):
     ''' Actually run geospatial analysis!!! '''
     global guiportfolio, guiobjectives, objectiveinputs
     starttime = time()
-    for key in objectiveinputs.keys():
-        guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
-    guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
+    if portfolio != None:
+        guiportfolio = portfolio
+    if objectives != None:
+        guiobjectives = objectives
+    if usegui:
+        for key in objectiveinputs.keys():
+            guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
+        guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
     BOCobjectives = dcp(guiobjectives)
-    guiportfolio.genBOCs(BOCobjectives, maxtime=2) # WARNING temp time
+    guiportfolio.genBOCs(BOCobjectives, maxtime=BOCtime)
     guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=120) # WARNING temp time
     warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
-    return None
+    if usegui: 
+        return None
+    else:
+        return dcp(guiportfolio)
     
     
 def plotgeo():
@@ -607,10 +674,17 @@ def export(portfolio=None, filepath=None):
     return None
     
 
-def saveport():
+def gui_saveport():
+    ''' Wrapper to save the current portfolio '''
+    saveport(usegui=True)
+
+def saveport(portfolio = None, filepath = None, usegui=False):
     ''' Save the current portfolio '''
     global guiportfolio
-    filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+portext)
+    if portfolio != None:
+        guiportfolio = portfolio
+    if usegui:
+        filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+portext)
     saveobj(filepath, guiportfolio)
     return None
 
@@ -630,8 +704,8 @@ def geogui():
     '''
     global geoguiwindow, guiportfolio, guiobjectives, objectiveinputs, projectslistbox, projectinfobox
     guiportfolio = None
-    guiobjectives = defaultobjectives()
-    guiobjectives['budget'] = 0.0 # Reset
+#    guiobjectives = defaultobjectives()
+#    guiobjectives['budget'] = 0.0 # Reset
     
     ## Housekeeping
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
@@ -658,15 +732,15 @@ def geogui():
     
     ## Define button functions
     actions = odict()
-    actions['makesheet'] = makesheet
-    actions['makeproj']  = makeproj
-    actions['create']    = create
-    actions['add']       = addproj
-    actions['loadport']  = loadport
-    actions['rungeo']    = rungeo
+    actions['makesheet'] = gui_makesheet
+    actions['makeproj']  = gui_makeproj
+    actions['create']    = gui_create
+    actions['add']       = gui_addproj
+    actions['loadport']  = gui_loadport
+    actions['rungeo']    = gui_rungeo
     actions['plotgeo']   = plotgeo
     actions['export']    = export
-    actions['saveport']  = saveport
+    actions['saveport']  = gui_saveport
     actions['close']     = closewindow
     
     ## Set button locations
