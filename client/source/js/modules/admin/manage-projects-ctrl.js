@@ -1,15 +1,22 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('AdminManageProjectsController', function ($scope, $http, projects, users, activeProject, UserManager, modalService, projectApiService, $state) {
-    $scope.users = users.data.users;
-    $scope.users = _.compact(_.map(_(projects.data.projects).groupBy(function (p) {return p.userId;}), function (projects, userId) {
-      var user = _.findWhere($scope.users, {id: userId});
-      return user.id===UserManager.data.id ? undefined :{
-        projects: projects,
-        data: user
-      };
-    }));
+  module.controller('AdminManageProjectsController', function (
+    $scope, $http, projects, users, activeProject, UserManager, modalService, projectApiService, $state) {
+
+    $scope.users = _.map(
+      users.data.users,
+      function(user) {
+        return {
+          data: user,
+          projects: _.filter(
+            projects.data.projects,
+            function(p) { return p.userId == user.id; })
+        };
+      }
+    );
+
+    console.log('$scope.users', $scope.users);
 
     /**
      * Regenerates workbook for the given project `name`
