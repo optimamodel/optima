@@ -16,7 +16,6 @@ from functools import partial
 from pprint import pprint
 from uuid import UUID
 
-from flask.ext.restful import fields, marshal
 from numpy import nan
 
 import optima as op

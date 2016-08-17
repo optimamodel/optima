@@ -27,12 +27,13 @@ import dateutil
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 from werkzeug.utils import secure_filename
+from flask.ext.restful import Resource, marshal_with, marshal
 
 from optima.dataio import loadobj as loaddbobj
 import optima as op
 
 from .dbconn import db
-from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
+from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, UserDb
 from .exceptions import ProjectDoesNotExist
 from .parse import get_default_program_summaries, \
     get_parameters_for_edit_program, get_parameters_for_outcomes, \
@@ -65,6 +66,8 @@ def authenticate_current_user():
         else:
             return None
 
+def get_users():
+    return marshal(UserDb.query.all(), UserDb.resource_fields)
 
 ## PROJECT
 

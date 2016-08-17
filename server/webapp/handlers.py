@@ -19,7 +19,7 @@ from functools import wraps
 from flask import helpers, current_app, request, Response, make_response, jsonify, abort, session, flash, redirect, \
     url_for
 from flask.ext.login import login_required, current_user, login_user, logout_user
-from flask.ext.restful import Resource, marshal_with
+from flask.ext.restful import Resource, marshal_with, marshal
 from flask.ext.restful_swagger import swagger
 
 from .dbconn import db
@@ -35,7 +35,7 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_progset, delete_progset, upload_progset, load_parameters_from_progset_parset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
-    upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs
+    upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs, get_users
 from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
@@ -811,38 +811,47 @@ class UserDoesNotExist(RecordDoesNotExist):
     _model = 'user'
 
 
+def create_user(args):
+    n_user = UserDb.query.filter_by(username=args['username']).count()
+    if n_user > 0:
+        raise UserAlreadyExists(args['username'])
+
+    user = UserDb(**args)
+    db.session.add(user)
+    db.session.commit()
+
+    return user
+
 class User(Resource):
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='List users'
-    )
-    @report_exception
-    @marshal_with(UserDb.resource_fields, envelope='users')
+
+    method_decorators = [report_exception]
+
+    @swagger.operation(summary='List users')
     @verify_admin_request
     def get(self):
-        current_app.logger.debug('/api/user/list {}'.format(request.args))
-        return UserDb.query.all()
+        """
+        GET /api/user
+        Returns: a dictionary of users
+        """
+        return {'users': get_users()}
 
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='Create a user',
-        parameters=user_parser.swagger_parameters()
-    )
-    @report_exception
+    @swagger.operation(summary='Create a user')
     @marshal_with(UserDb.resource_fields)
     def post(self):
-        current_app.logger.info("create request: {} {}".format(request, request.data))
-        args = user_parser.parse_args()
-
-        same_user_count = UserDb.query.filter_by(username=args.username).count()
-
-        if same_user_count > 0:
-            raise UserAlreadyExists(args.username)
-
-        user = UserDb(**args)
-        db.session.add(user)
-        db.session.commit()
-
+        """
+        POST /api/user
+        Returns: a dictionary of users
+        """
+        print args
+        args = {
+            'name': None,
+            'email': None
+        }
+        # nullable_email
+        # hashed passwords
+        args.update(get_post_data_json())
+        print args
+        user = create_user(args)
         return user, 201
 
 
