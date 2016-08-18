@@ -532,12 +532,12 @@ def loadport(filepath=None, usegui=False):
                 print('Portfolio file "%s" loaded' % filepath)
             else: print('File "%s" is not an Optima portfolio file' % filepath)
     else:
-        warning('File path not provided. Portfolio not loaded.')
+        warning('File path not provided. Portfolio not loaded.',usegui)
     if usegui:
         resetbudget() # And reset the budget
         return None
     else:
-        return dcp(portfolio)
+        return dcp(guiportfolio)
 
 
 def gui_rungeo():
@@ -559,18 +559,21 @@ def rungeo(portfolio=None, objectives=None, BOCtime=300, usegui=False):
     BOCobjectives = dcp(guiobjectives)
     guiportfolio.genBOCs(BOCobjectives, maxtime=BOCtime)
     guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=120) # WARNING temp time
-    warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
+    warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime),usegui)
     if usegui: 
         return None
     else:
         return dcp(guiportfolio)
     
-    
-def plotgeo():
+def gui_plotgeo():
+    ''' Wrapper to actually plot geospatial analysis!!! '''
+    plotgeo(usegui=True)
+
+def plotgeo(usegui=False):
     ''' Actually plot geospatial analysis!!! '''
     global guiportfolio
     if guiportfolio is None: 
-        warning('Please load a portfolio first')
+        warning('Please load a portfolio first',usegui)
         return None
     gaoptim = guiportfolio.gaoptims[-1]
 
@@ -600,15 +603,19 @@ def plotgeo():
                           deriv=False, extrax=extrax, extray=extray)
             
     return None
-    
 
-def export(portfolio=None, filepath=None):
+def gui_export():
+    ''' Wrapper to save the current results to Excel file '''
+    export(usegui=True)
+
+def export(portfolio=None, filepath=None, usegui=False):
     ''' Save the current results to Excel file '''
     global guiportfolio
     
-    if portfolio is not None: usegui = False
-    else:                     usegui = True
-    if portfolio is not None and filepath is None: filepath = portfolio.name+'.prt'
+    if portfolio is not None:
+        guiportfolio = portfolio
+        if filepath is None:
+            filepath = portfolio.name+'.prt'
     if type(guiportfolio)!=Portfolio and usegui: warning('Warning, must load portfolio first!')
     
     from xlsxwriter import Workbook
@@ -616,12 +623,11 @@ def export(portfolio=None, filepath=None):
     
     # 1. Extract data needed from portfolio
     try:
-        if usegui: outstr = guiportfolio.gaoptims[-1].printresults() # Stored, but regenerate
-        else:      outstr = portfolio.gaoptims[-1].printresults() # Stored, but regenerate
+        outstr = guiportfolio.gaoptims[-1].printresults() # Stored, but regenerate
     except:
         errormsg = 'Warning, it does not seem that geospatial analysis has been run for this portfolio!'
-        if usegui: warning(errormsg)
-        else:      raise Exception(errormsg)
+        warning(errormsg,usegui)
+        if not usegui: raise Exception(errormsg)
         return None
     
     # 2. Create a new file dialog to save this spreadsheet
@@ -666,10 +672,9 @@ def export(portfolio=None, filepath=None):
         worksheet.set_column(0, 3, colwidth) # Make wider
         workbook.close()
         
-        if usegui: warning('Results saved to "%s".' % filepath)
-        else:      print('Results saved to "%s".' % filepath)
+        warning('Results saved to "%s".' % filepath,usegui)
     else:
-        print('Filepath not supplied: %s' % filepath)
+        warning('Filepath not supplied: %s' % filepath,usegui)
     
     return None
     
@@ -738,8 +743,8 @@ def geogui():
     actions['add']       = gui_addproj
     actions['loadport']  = gui_loadport
     actions['rungeo']    = gui_rungeo
-    actions['plotgeo']   = plotgeo
-    actions['export']    = export
+    actions['plotgeo']   = gui_plotgeo
+    actions['export']    = gui_export
     actions['saveport']  = gui_saveport
     actions['close']     = closewindow
     
