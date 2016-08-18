@@ -17,7 +17,6 @@ define(['angular'], function (module) {
         if (_.isUndefined($scope.scenario.name)) {
           initNewScenario();
         }
-        resetEditPar();
       }
 
       $scope.checkForClashingName = function(scenario) {
@@ -59,8 +58,8 @@ define(['angular'], function (module) {
         return par ? par.name : '';
       };
 
-      $scope.getPopsOfPar = function () {
-        var parName = $scope.editPar.name;
+      $scope.getPopsOfPar = function (iPar) {
+        var parName = $scope.scenario.pars[iPar].name;
         if (ykeys.hasOwnProperty($scope.scenario.parset_id)) {
           var ykeysOfParset = ykeys[$scope.scenario.parset_id];
           if (ykeysOfParset.hasOwnProperty(parName)) {
@@ -75,27 +74,24 @@ define(['angular'], function (module) {
         return [];
       };
 
-      $scope.selectNewPar = function () {
-        var pops = $scope.getPopsOfPar();
-        console.log('pops', JSON.stringify(pops));
-        $scope.editPar.for = pops[0].val;
-        $scope.editPar.startval = pops[0].limits[0];
-        $scope.editPar.endval = pops[0].limits[1];
-        $scope.editPar.startyear = years[0];
-        var n = years.length;
-        $scope.editPar.endyear = years[n-1];
-        console.log($scope.editPar.for);
-        console.log('new', $scope.editPar.name, '->', _.pluck(pops, 'val'))
-      };
-
-      var resetEditPar = function () {
-        $scope.editPar = { 'name': $scope.getParsInScenario()[0].short };
-        $scope.selectNewPar();
+      $scope.selectNewPar = function (iPar) {
+        var par = $scope.scenario.pars[iPar];
+        var pops = $scope.getPopsOfPar(iPar);
+        if (_.indexOf(_.pluck(pops, 'val', par.for) < 0) {
+          par.for = pops[0].val;
+        }
       };
 
       $scope.addPar = function () {
-        $scope.scenario.pars.push($scope.editPar);
-        resetEditPar();
+        var newPar = { 'name': $scope.getParsInScenario()[0].short };
+        newPar.startval = pops[0].limits[0];
+        newPar.endval = pops[0].limits[1];
+        newPar.startyear = new Date().getFullYear();
+        newPar.endyear = years[years.length-1];
+        $scope.scenario.pars.push(newPar);
+        var iLast = $scope.scenario.pars.length - 1;
+        $scope.selectNewPar(iLast);
+        console.log('new', newPar.name, '->', _.pluck(pops, 'val'))
       };
 
       $scope.removePar = function (i) { $scope.scenario.pars.splice(i, 1); };

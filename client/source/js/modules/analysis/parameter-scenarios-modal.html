@@ -3,16 +3,27 @@
 
 <div class="c-parsce-modal__field-wrap">
   <label> Name </label>
-  <input class="txbox" type="text" ng-model="scenario.name" required/>
-  <div class="error-hint" ng-show="checkScenarioExists()">
+  <input
+      class="txbox"
+      type="text"
+      ng-model="scenario.name"
+      required/>
+  <div
+      class="error-hint"
+      ng-show="checkScenarioExists()">
     Scenario with this name already exists, please choose a different name.
   </div>
 </div>
 
 <div class="c-parsce-modal__field-wrap">
   <label> Select a parameter set to use as baseline </label>
-  <select class="txbox" type="text" ng-model="scenario.parset_id" required
-      ng-options="parset.id as parset.name for parset in parsets"></select>
+  <select
+      class="txbox"
+      type="text"
+      ng-model="scenario.parset_id"
+      required
+      ng-options="parset.id as parset.name for parset in parsets">
+  </select>
 </div>
 
 <table class="table table-bordered" style="width:auto;">
@@ -27,46 +38,87 @@
   </tr>
 
   <tr ng-repeat="par in scenario.pars">
-    <td>{{getLongParName(par.name)}}</td>
-    <td>{{par.for}}</td>
-    <td>{{par.startyear}}</td>
-    <td>{{par.endyear}}</td>
-    <td>{{par.startval}}</td>
-    <td>{{par.endval}}</td>
     <td>
-      <span class="delete" ng-click="removePar($index)">X</span>
-    </td>
-  </tr>
-
-  <tr>
-    <td>
-      <select class="txbox __inline" style="width: 300px;" type="text" ng-model="editPar.name"
+      <select
+          class="txbox __inline"
+          style="width: 300px;"
+          type="text"
+          ng-model="par.name"
           ng-options="par.short as par.name for par in getParsInScenario()"
-          ng-change="selectNewPar()">
+          ng-change="selectNewPar($index)">
       </select>
     </td>
     <td>
-      <select class="txbox __inline" style="width: 100px;" type="text" ng-model="editPar.for"
-          ng-options="pop.val as pop.label for pop in getPopsOfPar()">
+      <select
+          class="txbox __inline"
+          style="width: 100px;"
+          type="text"
+          ng-model="par.for"
+          ng-options="pop.val as pop.label for pop in getPopsOfPar($index)">
       </select>
     </td>
-    <td><input class="txbox __inline" style="width:70px;" ng-model="editPar.startyear" type="number"/></td>
-    <td><input class="txbox __inline" style="width:70px;" ng-model="editPar.endyear" type="number"/></td>
-    <td><input class="txbox __inline" style="width:70px;" ng-model="editPar.startval" type="number"/></td>
-    <td><input class="txbox __inline" style="width:70px;" ng-model="editPar.endval" type="number"/></td>
     <td>
-      <button type="button" class="btn"
-              ng-disabled="isEditInvalid()" ng-click="addPar()">
-        add
-      </button>
+      <input
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="par.startyear"
+          type="number"/></td>
+    <td>
+      <input
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="par.endyear"
+          type="number"/>
+    </td>
+    <td>
+      <input
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="par.startval"
+          type="number"/>
+    </td>
+    <td>
+      <input
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="par.endval"
+          type="number"/>
+    </td>
+    <td>
+      <span
+          class="fa fa-trash"
+          ng-click="removePar($index)">
+      </span>
     </td>
   </tr>
 </table>
 
-<a class="modal-close" ng-click="cancel()">x</a>
+<button
+    type="button"
+    class="btn"
+    ng-click="addPar()">
+  + parameter
+</button>
 
-<div style="width:100%; text-align:center; padding-top:2em;">
-  <button class="btn" ng-click="cancel()">Cancel</button>
-  <button class="btn" ng-click="save()" >Save</button>
+<a
+  class="modal-close fa fa-times"
+  ng-click="cancel()">
+</a>
+
+<div
+  style="
+    width: 100%;
+    text-align: center;
+    padding-top: 2em;">
+  <button
+      class="btn"
+      ng-click="cancel()">
+    Cancel
+  </button>
+  <button
+      class="btn"
+      ng-click="save()" >
+    Save
+  </button>
 </div>
 
