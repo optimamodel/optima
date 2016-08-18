@@ -301,6 +301,7 @@ if 'maxcoverage' in tests:
 
     print('Running maximum coverage scenario test...')
     from optima import Coveragescen, Parscen, defaults, dcp
+    from numpy import array
     
     ## Set up default project
     P = defaults.defaultproject('generalized')
@@ -308,7 +309,7 @@ if 'maxcoverage' in tests:
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
     maxcoverage = dcp(defaultbudget) # It's just an odict, though I know this looks awful
-    for key in maxcoverage: maxcoverage[key] = array([maxcoverage[key]+1e14])
+    for key in maxcoverage: maxcoverage[key] = array([maxcoverage[key]+1e9])
     scenlist = [
         Parscen(name='Current conditions', parsetname='default', pars=[]),
         Coveragescen(name='Full coverage', parsetname='default', progsetname='default', t=[2016], coverage=maxcoverage),
