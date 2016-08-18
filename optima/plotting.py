@@ -519,12 +519,16 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
 #    fig.subplots_adjust(top=0.95) # Less space on bottom
     fig.subplots_adjust(bottom=0.50) # Less space on bottom
     
+    import pprint
     for i in range(nprogs-1,-1,-1):
         xdata = arange(nallocs)+1
         ydata = array([budget[i] for budget in budgets.values()])
         bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-#        bar(xdata, ydata, bottom=bottomdata, color=progcolors[i], linewidth=0)
-        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)        
+        print("printing debug")
+        pprint.pprint(ydata, indent=2)
+        pprint.pprint(xdata, indent=2)
+        # bar(xdata, ydata, bottom=bottomdata, color=progcolors[i], linewidth=0)
+        # barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
     
     ax.set_xlabel('Spending')
     labels = proglabels

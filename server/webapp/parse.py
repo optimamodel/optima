@@ -17,7 +17,7 @@ from pprint import pprint
 from uuid import UUID
 
 from flask.ext.restful import fields, marshal
-from numpy import nan
+from numpy import nan, array
 
 import optima as op
 from optima import loadpartable, partable, Par
@@ -910,7 +910,7 @@ def convert_scenario_pars(pars):
             'endval': par['endval'],
             'endyear': par['endyear'],
             'startval': par['startval'],
-            'for': force_tuple_list(par['for'])
+            'for': par['for'][0] if len(par['for']) == 1 else par['for']
         })
     return result
 
@@ -924,9 +924,27 @@ def revert_scenario_pars(pars):
             'endval': par['endval'],
             'endyear': par['endyear'],
             'startval': par['startval'],
-            'for': par['for'][0] if len(par['for']) == 1 else par['for']
+            'for': force_tuple_list(par['for'])
         })
     return result
+
+
+def convert_program_list(program_list):
+    items = program_list.items()
+    return [{"program": x, "values": y} for x, y in items]
+
+
+def revert_program_list(program_list):
+    result = {}
+    for entry in program_list:
+        key = entry["program"]
+        vals = entry["values"]
+        if all(v is None for v in vals):
+            continue
+        vals = [v if v is not None else 0 for v in vals]
+        result[key] = array(vals)
+    return result
+
 
 
 def get_scenario_summary(project, scenario):
@@ -938,13 +956,13 @@ def get_scenario_summary(project, scenario):
     # budget, coverage, parameter, any others?
     if isinstance(scenario, op.Parscen):
         scenario_type = "parameter"
-        extra_data["pars"] = revert_scenario_pars(scenario.pars)
+        extra_data["pars"] = convert_scenario_pars(scenario.pars)
     elif isinstance(scenario, op.Coveragescen):
         scenario_type = "coverage"
-        extra_data["coverage"] = scenario.coverage
+        extra_data["coverage"] = convert_program_list(scenario.coverage)
     elif isinstance(scenario, op.Budgetscen):
         scenario_type = "budget"
-        extra_data["budget"] = [{"program": x, "values": y} for x, y in scenario.budget.iteritems()]
+        extra_data["budget"] = convert_program_list(scenario.budget)
 
     if hasattr(scenario, "progsetname"):
         progset_id = project.progsets[scenario.progsetname].uid
@@ -973,6 +991,8 @@ def get_scenario_summary(project, scenario):
 
 def get_scenario_summaries(project):
     scenario_summaries = map(partial(get_scenario_summary, project), project.scens.values())
+    print("get scenario")
+    pprint(scenario_summaries, indent=2)
     return normalize_obj(scenario_summaries)
 
 
@@ -981,45 +1001,57 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 
     project.scens = op.odict()
 
-    for s in scenario_summaries:
+    for summary in scenario_summaries:
 
-        if s["parset_id"]:
-            parset_name = get_parset_from_project(project, s["parset_id"]).name
+        if summary["parset_id"]:
+            parset = get_parset_from_project(project, summary["parset_id"])
+            parset_name = parset.name
         else:
-            parset_name = False
+            parset_name = None
 
-        kwargs = {
-            "name": s["name"],
-            "active": s["active"],
-            "parsetname": parset_name,
-            "t": s.get("years"),
+        if summary["scenario_type"] == "parameter":
 
-        }
+            kwargs = {
+                "name": summary["name"],
+                "parsetname": parset_name,
+                'pars': revert_scenario_pars(summary.get('pars', []))
+            }
+            scen = op.Parscen(**kwargs)
 
-        if "progset_id" in s and s["progset_id"]:
-            progset_name = get_progset_from_project(project, s["progset_id"]).name
+        else:
 
-        if s["scenario_type"] == "parameter":
-            scen = op.Parscen(
-                pars=convert_scenario_pars(s["pars"]),
-                **kwargs)
+            if "progset_id" in summary and summary["progset_id"]:
+                progset = get_progset_from_project(project, summary["progset_id"])
+                progset_name = progset.name
+            else:
+                progset_name = None
 
-        elif s["scenario_type"] == "coverage":
-            scen = op.Coveragescen(
-                coverage=s["coverage"],
-                progsetname=progset_name,
-                **kwargs)
-        elif s["scenario_type"] == "budget":
-            budget = op.odict({x["program"]:x["values"] for x in s["budget"]})
+            kwargs = {
+                "name": summary["name"],
+                "parsetname": parset_name,
+                "progsetname": progset_name,
+                "t": summary.get("years")
+            }
 
-            scen = op.Budgetscen(
-                budget=budget,
-                progsetname=progset_name,
-                **kwargs)
+            if summary["scenario_type"] == "coverage":
 
-        if s.get("id"):
-            scen.uid = UUID(s["id"])
+                kwargs.update(
+                    {'coverage': revert_program_list(summary.get('coverage', []))})
+                scen = op.Coveragescen(**kwargs)
 
+            elif summary["scenario_type"] == "budget":
+
+                kwargs.update(
+                    {'budget': revert_program_list(summary.get('budget', []))})
+                scen = op.Budgetscen(**kwargs)
+
+        if summary.get("id"):
+            scen.uid = UUID(summary["id"])
+
+        print("save summary")
+        pprint(summary, indent=2)
+        print("save scen kwargs")
+        pprint(kwargs, indent=2)
         project.scens[scen.name] = scen
 
 
