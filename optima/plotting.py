@@ -12,7 +12,7 @@ Version: 2016jul06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, nditer
+from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
 
