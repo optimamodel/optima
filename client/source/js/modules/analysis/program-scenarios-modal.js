@@ -5,7 +5,7 @@ define(['angular', 'underscore'], function(module, _) {
   return angular.module('app.program-scenarios-modal', [])
       .controller('ProgramScenariosModalController', function(
           $scope, $modalInstance, modalService, scenarios, scenario,
-          parsets, progsets) {
+          parsets, progsets, years) {
 
         function initialize() {
           $scope.parsets = parsets;
@@ -25,12 +25,21 @@ define(['angular', 'underscore'], function(module, _) {
           $scope.dataEntry = new Array($scope.nProgram + 1);
 
           $scope.scenario = scenario;
-          $scope.scenario_type = $scope
-              .scenario.scenario_type.toLowerCase();
+          $scope.scenario_type = $scope.scenario.scenario_type;
+          $scope.scenario_type = $scope.scenario_type.toLowerCase();
           if (_.isUndefined($scope.scenario.parset_id)) {
             initNewScenario();
           }
+
+          convertYears();
+          revertYears();
+          console.log('converted scenario', $scope.scenario);
+
         }
+
+        $scope.getActivePrograms = function() {
+          return $scope.activePrograms;
+        };
 
         $scope.checkForClashingName = function(scenario) {
           function hasClash(s) {
@@ -41,15 +50,9 @@ define(['angular', 'underscore'], function(module, _) {
 
         function initNewScenario() {
           $scope.scenario[$scope.scenario_type] = [];
-          _.each($scope.activePrograms, function(program) {
-            $scope.scenario[$scope.scenario_type].push(
-                {'program': program.short, 'values': []}
-            );
-          });
           $scope.scenario.parset_id = $scope.parsets[0].id;
           $scope.scenario.progset_id = $scope.progsets[0].id;
           $scope.scenario.active = true;
-          $scope.scenario.years = [];
           var i = 1;
           do {
             $scope.scenario.name = "Scenario " + i;
@@ -58,44 +61,92 @@ define(['angular', 'underscore'], function(module, _) {
 
         }
 
-        $scope.getProgramsIndexRange = function() {
-          return _.range($scope.nProgram);
-        };
-
-        $scope.getYearIndexRange = function() {
-          return _.range($scope.scenario.years.length);
-        };
-
-        $scope.getDataEntryRange = function() {
-          return _.range($scope.dataEntry.length);
-        };
-
-        $scope.isDataInvalid = function() {
-          return false;
-        };
-
-        $scope.addDataEntryYear = function() {
-          $scope.scenario.years.push($scope.dataEntry[0]);
-          var changesByProgram = $scope.scenario[$scope.scenario_type];
-          for (var iData = 1; iData < $scope.dataEntry.length; iData += 1) {
-            var iProgram = iData - 1;
-            changesByProgram[iProgram].values.push($scope.dataEntry[iData]);
-          }
-          _.each($scope.dataEntry, function(v, i, l) {
-            l[i] = null;
+        $scope.addYear = function() {
+          $scope.years.push({
+            value: new Date().getFullYear(),
+            programs: []
           });
         };
+
+        $scope.addProgram = function(year) {
+          year.programs.push({
+            short: $scope.getActivePrograms()[0].short,
+            value: null,
+          });
+        };
+
+        $scope.getSelectableYears = function(year) {
+          return years;
+        };
+
+        $scope.getScenarioType = function() {
+          var s = $scope.scenario_type;
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        }
 
         $scope.removeYear = function(i) {
+          console.log('delete iyear', i);
           var changesByProgram = $scope.scenario[$scope.scenario_type];
-          $scope.scenario.years.splice(i, 1);
-          angular.forEach(changesByProgram, function(v, k) {
-            v.values.splice(i, 1);
-          });
+          $scope.years.splice(i, 1);
         };
 
+        function convertYears() {
+          console.log('original scenario', $scope.scenario);
+          $scope.years = _.map(
+            $scope.scenario.years,
+            function(year) { return {value: year, programs: []}; });
+
+          _.each(
+            $scope.scenario[$scope.scenario_type],
+            function(program) {
+              _.each(program.values, function(value, i) {
+                console.log('year', program.program, i, $scope.years[i]);
+                $scope.years[i].programs.push({
+                  'short': program.program,
+                  'value': value
+                })
+              });
+            });
+
+          console.log('input years', $scope.years);
+        }
+
+        function revertYears() {
+          console.log('input years', $scope.years);
+          $scope.scenario.years = _.pluck($scope.years, 'value');
+
+          var programShorts = _.uniq(_.flatten(_.map(
+            $scope.years,
+            function(year) {
+              return _.pluck(year.programs, 'short');
+            }
+          )));
+
+          console.log(programShorts);
+          var iProgramByShort = {};
+          _.each(programShorts, function(short, i) {
+            iProgramByShort[short] = i;
+          });
+
+          var nYear = $scope.years.length;
+          $scope.scenario[$scope.scenario_type] = _.map(
+            programShorts,
+            function(short) { return {program: short, values: new Array(nYear)}; }
+          );
+          var programList = $scope.scenario[$scope.scenario_type];
+
+          _.each($scope.years, function(year, iYear) {
+            _.each(year.programs, function(program) {
+              var iProgram = iProgramByShort[program.short];
+              programList[iProgram].values[iYear] = program.value;
+            });
+          });
+          console.log('output scenario', $scope.scenario);
+        }
+
         $scope.save = function() {
-          console.log('dialog scenario', $scope.scenario);
+          revertYears();
+          console.log('saving scenario', $scope.scenario);
           $modalInstance.close($scope.scenario);
         };
 

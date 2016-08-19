@@ -7,13 +7,10 @@ define(['angular'], function (module) {
         $scope, $modalInstance, scenarios, scenario, parsets,
         progsets, ykeys, years) {
 
-      $scope.scenario = scenario;
-      $scope.parsets = parsets;
-      $scope.progsets = progsets;
-      $scope.editPar = {};
-      var editKeys = ['startval', 'endval', 'startyear', 'endyear'];
-
       function initialize() {
+        $scope.scenario = scenario;
+        $scope.parsets = parsets;
+        $scope.progsets = progsets;
         if (_.isUndefined($scope.scenario.name)) {
           initNewScenario();
         }
@@ -45,7 +42,7 @@ define(['angular'], function (module) {
         var parset_id = $scope.scenario.parset_id;
         if (parset_id) {
           parsets = _.filter($scope.parsets, { id: parset_id });
-        };
+        }
         if (parsets.length > 0) {
           return _.filter(parsets[0].pars[0], { visible: 1 });
         }
@@ -77,26 +74,28 @@ define(['angular'], function (module) {
       $scope.selectNewPar = function (iPar) {
         var par = $scope.scenario.pars[iPar];
         var pops = $scope.getPopsOfPar(iPar);
-        if (_.indexOf(_.pluck(pops, 'val', par.for) < 0) {
+        if (_.indexOf(_.pluck(pops, 'val', par.for) < 0)) {
           par.for = pops[0].val;
         }
       };
 
       $scope.addPar = function () {
         var newPar = { 'name': $scope.getParsInScenario()[0].short };
+        $scope.scenario.pars.push(newPar);
+        var iLast = $scope.scenario.pars.length - 1;
+        $scope.selectNewPar(iLast);
+        var pops = $scope.getPopsOfPar(iLast);
         newPar.startval = pops[0].limits[0];
         newPar.endval = pops[0].limits[1];
         newPar.startyear = new Date().getFullYear();
         newPar.endyear = years[years.length-1];
-        $scope.scenario.pars.push(newPar);
-        var iLast = $scope.scenario.pars.length - 1;
-        $scope.selectNewPar(iLast);
         console.log('new', newPar.name, '->', _.pluck(pops, 'val'))
       };
 
       $scope.removePar = function (i) { $scope.scenario.pars.splice(i, 1); };
 
       $scope.isEditInvalid = function () {
+        var editKeys = ['startval', 'endval', 'startyear', 'endyear'];
         function isValidKey(k) { return !_.isFinite($scope.editPar[k]) }
         return _.some(_.map(editKeys, isValidKey));
       };
