@@ -115,6 +115,7 @@ def get_populations_from_project(project):
 def set_populations_on_project(project, populations):
     data_pops = op.odict()
 
+    pprint(populations, indent=2)
     for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
         data_pops[key] = []
 
@@ -492,26 +493,27 @@ def get_default_program_summaries(project):
 
 '''
 Progset outcome data structure:
-    [ { 'name': 'numcirc',
-        'pop': 'tot',
-        'years': [ { 'interact': 'random',
-                     'intercept_lower': 0.0,
-                     'intercept_upper': 0.0,
-                     'programs': [ { 'intercept_lower': None,
-                                     'intercept_upper': None,
-                                     'name': u'VMMC'}],
-                     'year': 2016.0}]},
-      { 'name': u'condcom',
-        'pop': (u'Clients', u'FSW'),
-        'years': [ { 'interact': 'random',
-                     'intercept_lower': 0.3,
-                     'intercept_upper': 0.6,
-                     'programs': [ { 'intercept_lower': 0.9,
-                                     'intercept_upper': 0.95,
-                                     'name': u'FSW programs'}],
-                     'year': 2016.0}]},
-    ]
+[ { 'name': 'numcirc',
+    'pop': 'tot',
+    'years': [ { 'interact': 'random',
+                 'intercept_lower': 0.0,
+                 'intercept_upper': 0.0,
+                 'programs': [ { 'intercept_lower': None,
+                                 'intercept_upper': None,
+                                 'name': u'VMMC'}],
+                 'year': 2016.0}]},
+  { 'name': u'condcom',
+    'pop': (u'Clients', u'FSW'),
+    'years': [ { 'interact': 'random',
+                 'intercept_lower': 0.3,
+                 'intercept_upper': 0.6,
+                 'programs': [ { 'intercept_lower': 0.9,
+                                 'intercept_upper': 0.95,
+                                 'name': u'FSW programs'}],
+                 'year': 2016.0}]},
+]
 '''
+
 
 def get_outcome_summaries_from_progset(progset):
     outcomes = []
@@ -519,31 +521,32 @@ def get_outcome_summaries_from_progset(progset):
         pop_keys = progset.progs_by_targetpar(par_short).keys()
         for pop_key in pop_keys:
             covout = progset.covout[par_short][pop_key]
-            n_year = len(covout.ccopars['t'])
             outcome = {
                 'name': par_short,
                 'pop': pop_key,
                 'interact': covout.interaction,
-                'years': [
-                    {
-                        'intercept_upper': covout.ccopars['intercept'][i_year][1],
-                        'intercept_lower': covout.ccopars['intercept'][i_year][0],
-                        'programs': [
-                            {
-                                'name': program_name,
-                                'intercept_lower': program_intercepts[i_year][0] if len(
-                                    program_intercepts) > i_year else None,
-                                'intercept_upper': program_intercepts[i_year][1] if len(
-                                    program_intercepts) > i_year else None,
-                            }
-                            for program_name, program_intercepts in covout.ccopars.items()
-                            if program_name not in ['intercept', 't', 'interact']
-                            ],
-                        'year': covout.ccopars['t'][i_year]
-                    }
-                    for i_year in range(n_year)
-                    ]
+                'years': []
             }
+            n_year = len(covout.ccopars['t'])
+            for i_year in range(n_year):
+                year = {
+                    'intercept_upper': covout.ccopars['intercept'][i_year][1],
+                    'intercept_lower': covout.ccopars['intercept'][i_year][0],
+                    'year': covout.ccopars['t'][i_year],
+                    'programs': []
+                }
+                for program_name, program_intercepts in covout.ccopars.items():
+                    if program_name not in ['intercept', 't', 'interact']:
+                        program = {
+                            'name': program_name,
+                            'intercept_lower': program_intercepts[i_year][0] if len(
+                                program_intercepts) > i_year else None,
+                            'intercept_upper': program_intercepts[i_year][1] if len(
+                                program_intercepts) > i_year else None,
+                        }
+                        year['programs'].append(program)
+
+                outcome['years'].append(year)
             outcomes.append(outcome)
     return outcomes
 
@@ -587,42 +590,45 @@ def get_progset_summary(project, progset_name):
 
     progset = project.progsets[progset_name]
 
-    active_programs = map(partial(get_program_summary, progset=progset, active=True), progset.programs.values()),
-    inactive_programs_odict = getattr(progset, "inactive_programs", {})
-    inactive_programs = map(partial(get_program_summary, progset=progset, active=False), inactive_programs_odict.values()),
-    programs = list(active_programs[0]) + list(inactive_programs[0])
-
-    default_programs = get_default_program_summaries(project)
+    active_program_summaries = [
+        get_program_summary(p, progset=progset, active=True)
+        for p in progset.programs.values()]
+    inactive_program_summaries = [
+        get_program_summary(p, progset=progset, active=False)
+        for p in getattr(progset, "inactive_programs", {}).values()]
+    program_summaries = active_program_summaries + inactive_program_summaries
 
     # Overwrite with default name and category if applicable
+    default_program_summaries = get_default_program_summaries(project)
     loaded_program_shorts = []
-    default_program_by_short = {p['short']: p for p in default_programs}
-    for program in programs:
-        short = program['short']
-        if short in default_program_by_short:
-            default_program = default_program_by_short[short]
-            if not program['name']:
-                program['name'] = default_program['name']
-            program['category'] = default_program['category']
+    default_program_summary_by_short = {
+        p['short']: p for p in default_program_summaries}
+    for program_summary in program_summaries:
+        short = program_summary['short']
+        if short in default_program_summary_by_short:
+            default_program_summary = default_program_summary_by_short[short]
+            if not program_summary['name']:
+                program_summary['name'] = default_program_summary['name']
+            program_summary['category'] = default_program_summary['category']
         loaded_program_shorts.append(short)
 
     # append any default programs as inactive if not already in project
-    for program in default_programs:
-        if program['short'] not in loaded_program_shorts:
-            programs.append(program)
+    for program_summary in default_program_summaries:
+        if program_summary['short'] not in loaded_program_shorts:
+            program_summaries.append(program_summary)
 
-    for program in programs:
-        if program['category'] == 'No category':
-            program['category'] = 'Other'
+    for program_summary in program_summaries:
+        if program_summary['category'] == 'No category':
+            program_summary['category'] = 'Other'
+        if not program_summary['name']:
+            program_summary['name'] = program_summary['short']
 
     progset_summary = {
         'id': progset.uid,
         'name': progset.name,
         'created': progset.created,
         'updated': progset.modified,
-        'programs': programs,
-        #'targetpartypes': progset_record.targetpartypes,
-        #'readytooptimize': progset_record.readytooptimize
+        'programs': program_summaries,
     }
     return normalize_obj(progset_summary)
 
