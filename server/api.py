@@ -66,7 +66,7 @@ from server.webapp.resources.project import (
     ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
     DefaultPopulations, ProjectData)
 from server.webapp.resources.progsets import (
-    Progsets, Progset, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
+    Progsets, Progset, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes, ProgsetUploadDownload)
 from server.webapp.resources.parsets import (
     Parsets, ParsetUploadDownload, ParsetRenameDelete, ParsetCalibration, ParsetAutofit,
     ResultsExport)
@@ -107,6 +107,7 @@ api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_
 api.add_resource(ProgsetParameters,
      '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
+api.add_resource(ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
 
 api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
 api.add_resource(DefaultPopulations, '/api/project/populations')

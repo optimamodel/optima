@@ -1,23 +1,25 @@
-from pprint import pformat, pprint
-from zipfile import ZipFile
-
-from optima.utils import loaddbobj
-
 __doc__ = """
 
-dataio.py contains all the functions that fetch and saves optima objects to/from database
+dataio.py
+=========
+
+Contains all the functions that fetches and saves optima objects to/from database
 and the file system. These functions abstracts out the data i/o for the web-server
 api calls.
 
-function call pairs are load_*/save_* and refers to saving to database.
+Function call pairs are load_*/save_* and refers to saving to database.
 
 Database record variables should have suffix _record
 
 Parsed data structures should have suffix _summary
+
+All parameters and return types are either id's, json-summaries, or mpld3 graphs
 """
 
 
 import os
+from pprint import pformat, pprint
+from zipfile import ZipFile
 from uuid import uuid4
 from datetime import datetime
 import dateutil
@@ -25,6 +27,9 @@ import dateutil
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 from werkzeug.utils import secure_filename
+
+from optima.utils import loaddbobj
+import optima as op
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
@@ -40,14 +45,13 @@ from server.webapp.parse import get_default_program_summaries, \
     get_optimization_summaries, get_default_optimization_summaries, \
     set_optimization_summaries_on_project, get_optimization_from_project, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
-    set_progset_summaries_on_project, get_progset_summary, get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
+    set_progset_summary_on_project, get_progset_summary, \
+    get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
     set_program_summary_on_progset
 from server.webapp.plot import make_mpld3_graph_dict, convert_to_mpld3
-from server.webapp.utils import (
-    TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj)
+from server.webapp.utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
 
 
-import optima as op
 
 
 def authenticate_current_user():
@@ -458,19 +462,6 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCUL
     return result_record.load()
 
 
-def load_result_dir_filename(result_id):
-    load_dir = upload_dir_user(TEMPLATEDIR)
-    if not load_dir:
-        load_dir = TEMPLATEDIR
-    filestem = 'results'
-    filename = filestem + '.csv'
-
-    result = load_result_by_id(result_id)
-    result.export(filestem=os.path.join(load_dir, filestem))
-
-    return load_dir, filename
-
-
 def load_result_by_id(result_id):
     result_record = db.session.query(ResultsDb).get(result_id)
     if result_record is None:
@@ -533,6 +524,19 @@ def save_result(
     db_session.add(result_record)
     db_session.flush()
     db_session.commit()
+
+
+def load_result_csv(result_id):
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    filestem = 'results'
+    filename = filestem + '.csv'
+
+    result = load_result_by_id(result_id)
+    result.export(filestem=os.path.join(dirname, filestem))
+
+    return dirname, filename
 
 
 def load_result_by_optimization(project, optimization):
@@ -635,14 +639,17 @@ def check_optimization(project_id, optimization_id):
     optim = get_optimization_from_project(project, optimization_id)
     parset = project.parsets[optim.parsetname]
 
-    print "> Checking calc state"
     calc_state = check_calculation_status(
         project_id,
         parset.uid,
         'optim-' + optim.name)
+
+    print "> Checking calc state"
     print pformat(calc_state, indent=2)
+
     if calc_state['status'] == 'error':
         raise Exception(calc_state['error_text'])
+
     return calc_state
 
 
@@ -872,28 +879,30 @@ def load_project_program_summaries(project_id):
     return get_default_program_summaries(project)
 
 
+def load_progset_summary(project_id, progset_id):
+    project = load_project(project_id)
+    progset = get_progset_from_project(project, progset_id)
+    return get_progset_summary(project, progset.name)
+
+
 def load_progset_summaries(project_id):
     project = load_project(project_id)
     return get_progset_summaries(project)
 
 
-def save_progset_summaries(project_id, progset_summaries):
+def create_progset(project_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-
-    set_progset_summaries_on_project(project, progset_summaries)
+    set_progset_summary_on_project(project, progset_summary)
     project_record.save_obj(project)
+    return get_progset_summary(project, progset_summary["name"])
 
-    return get_progset_summaries(project)
 
-
-def save_progset_summary(project_id, progset_id, progset_summary):
+def save_progset(project_id, progset_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-
-    set_progset_summaries_on_project(project, progset_summary, progset_id=progset_id)
+    set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
-
     return get_progset_summary(project, progset_summary["name"])
 
 
@@ -913,7 +922,6 @@ def load_progset_outcomes(project_id, progset_id):
     progset = get_progset_from_project(project, progset_id)
 
     outcomes = get_outcome_summaries_from_progset(progset)
-    pprint(outcomes)
     # Bosco needs to fix this...
 
     return {'effects': [{

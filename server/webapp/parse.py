@@ -70,7 +70,7 @@ def get_default_populations():
 
 
 """
-PyOptima Population data['pop'] structure;
+PyOptima Population project.data['pops'] structure;
 <odist>
  - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
  - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
@@ -79,6 +79,18 @@ PyOptima Population data['pop'] structure;
  - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
  - injects: [0, 0, 0, 1, 0, 0]
  - sexworker: [1, 0, 0, 0, 0, 0]
+
+populations data structure (based on the pops parameter in makespreadsheets):
+-
+  short: string
+  name: string
+  male: bool
+  female: bool
+  age_from: int
+  age_to: int
+  injects: bool
+  sexworker: bool
+- ...
 """
 
 
@@ -612,7 +624,7 @@ def get_progset_summary(project, progset_name):
         #'targetpartypes': progset_record.targetpartypes,
         #'readytooptimize': progset_record.readytooptimize
     }
-    return progset_summary
+    return normalize_obj(progset_summary)
 
 
 def get_progset_summaries(project):
@@ -660,7 +672,11 @@ def get_progset_from_project(project, progset_id):
 def set_program_summary_on_progset(progset, summary):
 
     try:
-        program = get_program_from_progset(progset, summary["id"], include_inactive=True)
+        program_id = summary.get("id")
+        if program_id is None:
+            raise ProgramDoesNotExist
+
+        program = get_program_from_progset(progset, program_id, include_inactive=True)
 
         # It exists, so remove it first...
         try:
@@ -673,15 +689,30 @@ def set_program_summary_on_progset(progset, summary):
         program_id = None
         pass
 
+    if "ccopars" in summary:
+        ccopars = revert_program_ccopars(summary["ccopars"])
+    else:
+        ccopars = None
+
+    if "targetpars" in summary:
+        targetpars = revert_program_targetpars(summary["targetpars"])
+    else:
+        targetpars = None
+
+    if "costcov" in summary:
+        costcov = revert_program_costcovdata(summary["costcov"])
+    else:
+        costcov = None
+
     program = op.Program(
         short=summary["short"],
         name=summary["name"],
         category=summary["category"],
-        targetpars=revert_program_targetpars(summary["targetpars"]),
+        targetpars=targetpars,
         targetpops=summary["populations"],
         criteria=summary["criteria"],
-        ccopars=revert_program_ccopars(summary["ccopars"]),
-        costcovdata=revert_program_costcovdata(summary["costcov"]))
+        ccopars=ccopars,
+        costcovdata=costcov)
 
     if program_id:
         program.uid = program_id
@@ -694,12 +725,16 @@ def set_program_summary_on_progset(progset, summary):
     progset.updateprogset()
 
 
-def set_progset_summaries_on_project(project, progset_summaries, progset_id=None):
+def set_progset_summary_on_project(project, progset_summary, progset_id=None):
+    """
+    Updates/creates a progset from a progset_summary, with the addition
+    of inactive_programs that are taken from the default programs
+    generated from pyOptima.
     """
 
-    """
-    progset_name = progset_summaries['name']
-    progset_programs = progset_summaries['programs']
+    print(">> Finding progset '%s'" % progset_summary['name'])
+    progset_name = progset_summary['name']
+    progset_programs = progset_summary['programs']
 
     if progset_name not in project.progsets:
         if progset_id:
@@ -713,18 +748,20 @@ def set_progset_summaries_on_project(project, progset_summaries, progset_id=None
         else:
             # Probably a new one.
             project.progsets[progset_name] = op.Programset(name=progset_name)
+
     progset = project.progsets[progset_name]
 
     # Clear the current programs...
     progset.programs = op.odict()
     progset.inactive_programs = op.odict()
 
+    print(">> Setting %d programs" % len(progset_programs))
     for p in progset_programs:
         set_program_summary_on_progset(progset, p)
 
     progset.updateprogset()
 
-    current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
+    print("> Created/updated program %s" % progset_name)
 
 
 def get_parameters_from_progset_parset(settings, progset, parset):

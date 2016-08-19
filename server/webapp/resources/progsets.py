@@ -1,14 +1,17 @@
-from flask import request
+import json
+
+from flask import request, make_response, current_app
 from flask.ext.login import login_required
 from flask_restful import Resource
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import load_parameters_from_progset_parset, \
-    load_target_popsizes, load_progset_summaries, save_progset_summaries, \
-    save_progset_summary, delete_progset, load_progset_outcomes, \
-    save_outcome_summaries, save_program, load_costcov_graph
+    load_target_popsizes, load_progset_summaries, create_progset, \
+    save_progset, delete_progset, load_progset_outcomes, \
+    save_outcome_summaries, save_program, load_costcov_graph, \
+    load_progset_summary
 from server.webapp.resources.common import report_exception
-from server.webapp.utils import normalize_obj, get_post_data_json
+from server.webapp.utils import get_post_data_json, get_upload_file
 
 import pprint
 
@@ -23,14 +26,14 @@ class Progsets(Resource):
         """
         return load_progset_summaries(project_id)
 
-    @swagger.operation(description='Update project with progset summaries')
+    @swagger.operation(description='Create a new progset')
     def post(self, project_id):
         """
         POST /api/project/<uuid:project_id>/progsets
-        data-json: progset_summaries
+        data-json: progset_summary
         """
-        progset_summaries = get_post_data_json()
-        return save_progset_summaries(project_id, progset_summaries)
+        progset_summary = get_post_data_json()
+        return create_progset(project_id, progset_summary)
 
 
 class Progset(Resource):
@@ -43,7 +46,7 @@ class Progset(Resource):
         data-json: progset_summary
         """
         progset_summary = get_post_data_json()
-        return save_progset_summary(project_id, progset_id, progset_summary)
+        return save_progset(project_id, progset_id, progset_summary)
 
     @swagger.operation(description='Delete progset with the given id.')
     def delete(self, project_id, progset_id):
@@ -52,6 +55,21 @@ class Progset(Resource):
         """
         delete_progset(project_id, progset_id)
         return '', 204
+
+
+class ProgsetUploadDownload(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Update from JSON file of the parameters")
+    def post(self, project_id, progset_id):
+        """
+        POST /api/project/<uuid:project_id>/progset/<uuid:progset_id>/data
+        file-upload
+        """
+        progset_json = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        print("> Upload progset JSON file '%s'" % progset_json)
+        progset_summary = json.load(open(progset_json))
+        return save_progset(project_id, progset_id, progset_summary)
 
 
 class ProgsetParameters(Resource):
