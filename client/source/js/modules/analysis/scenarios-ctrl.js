@@ -131,7 +131,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       } else if (action === 'delete') {
 
         var scenario = _.findWhere(newScenarios, { id: scenario.id });
-        $scope.saveScenarios(_.without(newScenarios, scenario), "Deleted scenario");
+        $scope.saveScenarios(
+            _.without(newScenarios, scenario), "Deleted scenario");
 
       }
     };

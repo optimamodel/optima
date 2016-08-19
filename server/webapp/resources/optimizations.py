@@ -1,11 +1,14 @@
 from flask.ext.login import login_required
 from flask_restful import Resource
 from flask_restful_swagger import swagger
+from flask import current_app
+
+import json
 
 from server.webapp.dataio import load_optimization_summaries, save_optimization_summaries, \
-    load_optimization_graphs, check_optimization, launch_optimization
+    load_optimization_graphs, check_optimization, launch_optimization, upload_optimization_summary
 from server.webapp.resources.common import report_exception
-from server.webapp.utils import get_post_data_json
+from server.webapp.utils import get_post_data_json, get_upload_file
 
 
 class Optimizations(Resource):
@@ -28,6 +31,20 @@ class Optimizations(Resource):
         return save_optimization_summaries(project_id, optimization_summaries)
 
 
+class OptimizationUpload(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Uploads json of optimization summary")
+    def post(self, project_id, optimization_id):
+        """
+        POST /api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload
+        data-json: optimization_summary
+        """
+        optim_json = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        optim_summary = json.load(open(optim_json))
+        return upload_optimization_summary(project_id, optimization_id, optim_summary)
+
+
 class OptimizationCalculation(Resource):
     method_decorators = [report_exception, login_required]
 
@@ -38,7 +55,7 @@ class OptimizationCalculation(Resource):
         data-json: maxtime: time to run in int
         """
         maxtime = get_post_data_json().get('maxtime')
-        return launch_optimization(project_id, optimization_id, maxtime), 201
+        return launch_optimization(project_id, optimization_id, int(maxtime)), 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):

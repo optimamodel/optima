@@ -73,7 +73,7 @@ from server.webapp.resources.parsets import (
 from server.webapp.resources.progsets import ProgramCostcovGraph
 from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs
 from server.webapp.resources.optimizations import (
-    Optimizations, OptimizationCalculation, OptimizationGraph)
+    Optimizations, OptimizationCalculation, OptimizationGraph, OptimizationUpload)
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 
@@ -98,6 +98,7 @@ api.add_resource(Portfolio, '/api/project/portfolio')
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
 api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
+api.add_resource(OptimizationUpload, '/api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload')
 
 api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')

@@ -122,7 +122,7 @@ def update_project(project, db_session=None):
 def update_project_with_fn(project_id, update_project_fn, db_session=None):
     if db_session is None:
         db_session = db.session
-    project_record = load_project_record(project_id)
+    project_record = load_project_record(project_id, db_session=db_session)
     project = project_record.load()
     update_project_fn(project)
     project.modified = datetime.now(dateutil.tz.tzutc())
@@ -227,6 +227,8 @@ def save_project_as_new(project, user_id):
         parset.uid = op.uuid()
     for result in project.results.values():
         result.uid = op.uuid()
+    for optim in project.optims.values():
+        optim.uid = op.uuid()
 
     project.created = datetime.now(dateutil.tz.tzutc())
     project.modified = datetime.now(dateutil.tz.tzutc())
@@ -258,11 +260,13 @@ def copy_project(project_id, new_project_name):
         for result_record in result_records:
             # reset the parset_id in results to new project
             result = result_record.load()
-            parset_name = parset_name_by_id[result_record.parset_id]
+            parset_id = result_record.parset_id
+            if parset_id not in parset_name_by_id:
+                continue
+            parset_name = parset_name_by_id[parset_id]
             new_parset = [r for r in project.parsets.values() if r.name == parset_name]
             if not new_parset:
-                raise Exception(
-                    "Could not find copied parset for result in copied project {}".format(project_id))
+                continue
             copy_parset_id = new_parset[0].uid
 
             copy_result_record = ResultsDb(
@@ -348,7 +352,12 @@ def rename_parset(project_id, parset_id, new_parset_name):
 
     def update_project_fn(project):
         parset = get_parset_from_project(project, parset_id)
-        project.parsets.rename(parset.name, new_parset_name)
+        old_parset_name = parset.name
+        parset.name = new_parset_name
+        print(">> old parsets '%s'" % project.parsets.keys())
+        del project.parsets[old_parset_name]
+        project.parsets[new_parset_name] = parset
+        print(">> new parsets '%s'" % project.parsets.keys())
 
     update_project_with_fn(project_id, update_project_fn)
 
@@ -407,7 +416,7 @@ def save_parameters(project_id, parset_id, parameters):
     delete_result(project_id, parset_id, "autofit")
 
 
-def generate_parset_graphs(
+def load_parset_graphs(
         project_id, parset_id, calculation_type, which=None,
         parameters=None):
 
@@ -418,14 +427,12 @@ def generate_parset_graphs(
         print ">> Updating parset '%s'" % parset.name
         set_parameters_on_parset(parameters, parset)
         delete_result(project_id, parset_id, "calibration")
-        delete_result(project_id, parset_id, "autofit")
         update_project(project)
 
     result = load_result(project.uid, parset.uid, calculation_type)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
-        simparslist = parset.interp()
-        result = project.runsim(simpars=simparslist)
+        result = project.runsim(simpars=parset.interp())
         result_record = update_or_create_result_record(project, result, parset.name, calculation_type)
         db.session.add(result_record)
         db.session.commit()
@@ -436,13 +443,20 @@ def generate_parset_graphs(
     graph_dict = make_mpld3_graph_dict(result, which)
 
     return {
-        "calibration": {
-            "parset_id": parset_id,
-            "parameters": get_parameters_from_parset(parset),
-            "resultId": result.uid,
-            "graphs": graph_dict["graphs"]
-        }
+        "parameters": get_parameters_from_parset(parset),
+        "graphs": graph_dict["graphs"]
     }
+
+
+def launch_autofit(project_id, parset_id, maxtime):
+    from server.webapp.tasks import run_autofit, start_or_report_calculation
+    work_type = 'autofit-' + str(parset_id)
+    calc_status = start_or_report_calculation(project_id, work_type)
+    if calc_status['status'] != "blocked":
+        print "> Starting autofit for %s s" % maxtime
+        run_autofit.delay(project_id, parset_id, maxtime)
+        calc_status['maxtime'] = maxtime
+    return calc_status
 
 
 # RESULT
@@ -493,7 +507,6 @@ def update_or_create_result_record(
     result_record.id = result.uid
     result_record.save_obj(result)
     db_session.add(result_record)
-    db_session.commit()
 
     return result_record
 
@@ -507,6 +520,8 @@ def delete_result(
         parset_id=parset_id,
         calculation_type=calculation_type
     )
+    for record in records:
+        record.cleanup()
     records.delete()
     db_session.commit()
 
@@ -544,6 +559,7 @@ def load_result_by_optimization(project, optimization):
     result_name = "optim-" + optimization.name
     parset_id = project.parsets[optimization.parsetname].uid
 
+    print(">> Loading result '%s'" % result_name)
     result_records = db.session.query(ResultsDb).filter_by(
         project_id=project.uid,
         parset_id=parset_id,
@@ -553,6 +569,8 @@ def load_result_by_optimization(project, optimization):
         result = result_record.load()
         if result.name == result_name:
             return result
+
+    print(">> Not found result '%s'" % (optimization.name))
 
     return None
 
@@ -620,79 +638,47 @@ def save_optimization_summaries(project_id, optimization_summaries):
     return {'optimizations': get_optimization_summaries(project)}
 
 
+def upload_optimization_summary(project_id, optimization_id, optimization_summary):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    old_optim = get_optimization_from_project(project, optimization_id)
+    optimization_summary['id'] = optimization_id
+    optimization_summary['name'] = old_optim.name
+    set_optimization_summaries_on_project(project, [optimization_summary])
+    project_record.save_obj(project)
+    return {'optimizations': get_optimization_summaries(project)}
+
+
 def load_optimization_graphs(project_id, optimization_id, which):
     project = load_project(project_id)
     optimization = get_optimization_from_project(project, optimization_id)
-
     result = load_result_by_optimization(project, optimization)
     if result is None:
         return {}
     else:
+        print(">> Loading graphs for result '%s'" % result.name)
         return make_mpld3_graph_dict(result, which)
 
 
 def check_optimization(project_id, optimization_id):
-    from server.webapp.tasks import check_calculation_status
-
-    project = load_project(project_id)
-
-    optim = get_optimization_from_project(project, optimization_id)
-    parset = project.parsets[optim.parsetname]
-
-    calc_state = check_calculation_status(
-        project_id,
-        parset.uid,
-        'optim-' + optim.name)
-
-    print "> Checking calc state"
-    print pformat(calc_state, indent=2)
-
+    from server.webapp.tasks import check_calculation_status, clear_work_log
+    work_type = 'optim-' + str(optimization_id)
+    calc_state = check_calculation_status(project_id, work_type)
+    print("> Checking calc state")
+    print(pformat(calc_state, indent=2))
     if calc_state['status'] == 'error':
+        clear_work_log(project_id, work_type)
         raise Exception(calc_state['error_text'])
-
     return calc_state
 
 
 def launch_optimization(project_id, optimization_id, maxtime):
-
     from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
-
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-
-    optim = get_optimization_from_project(project, optimization_id)
-    parset = project.parsets[optim.parsetname]
-
     calc_state = start_or_report_calculation(
-        project_id, parset.uid, 'optim-' + optim.name)
-
+        project_id, 'optim-' + str(optimization_id))
     if calc_state['status'] != 'started':
         return calc_state, 208
-
-    progset = project.progsets[optim.progsetname]
-
-    if not progset.readytooptimize():
-        error_msg = "Not ready to optimize\n"
-        costcov_errors = progset.hasallcostcovpars(detail=True)
-        if costcov_errors:
-            error_msg += "Missing: cost-coverage parameters of:\n"
-            error_msg += pformat(costcov_errors, indent=2)
-        covout_errors = progset.hasallcovoutpars(detail=True)
-        if covout_errors:
-            error_msg += "Missing: coverage-outcome parameters of:\n"
-            error_msg += pformat(covout_errors, indent=2)
-        shut_down_calculation(project_id, parset.uid, 'optimization')
-        raise Exception(error_msg)
-
-    objectives = normalize_obj(optim.objectives)
-    constraints = normalize_obj(optim.constraints)
-    constraints["max"] = op.odict(constraints["max"])
-    constraints["min"] = op.odict(constraints["min"])
-    constraints["name"] = op.odict(constraints["name"])
-
-    run_optimization.delay(
-        project_id, optim.name, parset.name, progset.name, objectives, constraints, maxtime)
-
+    run_optimization.delay(project_id, optimization_id, maxtime)
     return calc_state
 
 
@@ -901,6 +887,18 @@ def create_progset(project_id, progset_summary):
 def save_progset(project_id, progset_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
+    project_record.save_obj(project)
+    return get_progset_summary(project, progset_summary["name"])
+
+
+def upload_progset(project_id, progset_id, progset_summary):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    old_progset = get_progset_from_project(project, progset_id)
+    print(">> Upload progset '%s' into '%s'" % (progset_summary['name'], old_progset.name))
+    progset_summary['id'] = progset_id
+    progset_summary['name'] = old_progset.name
     set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
     return get_progset_summary(project, progset_summary["name"])
