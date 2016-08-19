@@ -22,7 +22,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         return;
       }
 
-      // Load program sets; set first as acctive
+      // Load program sets; set first as active
       $http
         .get('/api/project/' + project.id + '/progsets')
         .success(function(response) {
