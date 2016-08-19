@@ -75,7 +75,7 @@
           ng-options="year for year in getSelectableYears(year.value)">
       </select>
   </td>
-  <td valign="top">
+  <td width="580px" valign="top">
     <div
       style="padding-bottom: 0.5em"
       ng-repeat="program in year.programs"">
@@ -99,9 +99,12 @@
       + program
     </button>
   </td>
-  <td valign="top"
+  <td valign="top">
+    <div
       class="fa fa-times"
+      style="float: right"
       ng-click="removeYear($index)">
+    </div>
   </td>
 </table>
 
