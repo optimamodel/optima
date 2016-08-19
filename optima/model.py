@@ -62,7 +62,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     background = simpars['death']*dt
 
     # Defined for total (not by populations) and time dependent [npts]
-    treatvs       = simpars['treatvs']          # viral suppression - ART initiators
+    treatvs       = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))        # viral suppression - ART initiators
     biofailure    = simpars['biofailure']*dt    # biological treatment failure rate
     freqvlmon     = simpars['freqvlmon']*dt     # Viral load monitoring frequency
     linktocare    = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # mean time before being linked to care
@@ -353,8 +353,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             initpeople[undx, p]     = undiagnosed
             initpeople[dx,   p]     = diagnosed*linktocare[p,0]
             initpeople[care, p]     = diagnosed*(1.-linktocare[p,0])
-            initpeople[usvl, p]     = treatment * (1.-treatvs[0])
-            initpeople[svl,  p]     = treatment * treatvs[0]
+            initpeople[usvl, p]     = treatment * (1.-treatvs)
+            initpeople[svl,  p]     = treatment * treatvs
         
     if debug and not(initpeople.all()>=0): # If not every element is a real number >0, throw an error
         errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
@@ -454,10 +454,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-#            if debug and not(allpeople[pop,t]>0): 
-#                errormsg = 'No people in population %i at timestep %i (time %0.1f)' % (pop, t, tvec[t])
-#                if die: raise OptimaException(errormsg)
-#                else: printv(errormsg, 1, verbose)
+            if debug and not(allpeople[pop,t]>0): 
+                errormsg = 'No people in population %i at timestep %i (time %0.1f)' % (pop, t, tvec[t])
+                if die: raise OptimaException(errormsg)
+                else: printv(errormsg, 1, verbose)
                 
             effallprev[:,pop] = (alltrans * people[:,pop,t]) / allpeople[pop,t]
             effhivprev[pop] = sum(alltrans * people[:,pop,t]) / allpeople[pop,t]

@@ -557,7 +557,6 @@ class OptimaSpreadsheet:
         current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)',                           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)        
-        current_row = self.emit_years_block('Viral suppression when initiating ART (%)',                        current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
 
 
     def generate_opt(self):
@@ -672,6 +671,12 @@ class OptimaSpreadsheet:
             [2.20, 1.42, 2.14, 0.66], 
             [1.07, 0.90, 1.39, 0.51], 
             [7.28, 3.42, 3.58, 0.94], 
+            OptimaFormats.NUMBER),            
+        ('Average time from initiating ART to achieving viral suppression (years)',
+            ['Average'],
+            [0.20], 
+            [0.10], 
+            [0.30], 
             OptimaFormats.NUMBER),            
         ('CD4 change due to non-suppressive ART (% per year)',
             ['CD4(500) to CD4(350-500)',

@@ -49,7 +49,6 @@ Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	
 Condom use for regular acts	condreg	(0, 1)	pship	timepar	meta	other	0	0	1	random
 Condom use for casual acts	condcas	(0, 1)	pship	timepar	meta	other	0	0	1	random
 Condom use for commercial acts	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	random
-Viral suppression when initiating ART	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (per year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
@@ -81,6 +80,7 @@ Treatment recovery into CD4>500 (years)	svlrecovgt350	(0, 'maxduration')	tot	con
 Treatment recovery into CD4>350 (years)	svlrecovgt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
 Treatment recovery into CD4>200 (years)	svlrecovgt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
 Treatment recovery into CD4>50 (years)	svlrecovlt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Average time from initiating ART to achieving viral suppression (years)	treatvs	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
 Progression from CD4>500 to CD4>350 on unsuppressive ART	usvlproggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Recovery from CD4>350 to CD4>500 on unsuppressive ART	usvlrecovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Progression from CD4>350 to CD4>200 on unsuppressive ART	usvlproggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None

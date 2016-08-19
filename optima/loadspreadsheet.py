@@ -91,7 +91,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     
     # Time data -- array sizes are time x population
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
-    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast', 'treatvs']
+    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx', 'propsupp']
     sheets['Cascade']             = ['linktocare', 'leavecare', 'biofailure', 'freqvlmon']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
@@ -106,6 +106,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                            ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['svlrecovgt350', 'svlrecovgt200', 'svlrecovgt50', 'svlrecovlt50'],
+                           ['treatvs'], 
                            ['usvlproggt500', 'usvlrecovgt350', 'usvlproggt350', 'usvlrecovgt200', 'usvlproggt200', 'usvlrecovgt50', 'usvlproggt50',  'usvlrecovlt50'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathtreat', 'deathtb'],
                            ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp'],
