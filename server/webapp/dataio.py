@@ -249,9 +249,9 @@ def copy_project(project_id, new_project_name):
 
     project = project_record.load()
     project.name = new_project_name
-    parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
     save_project_as_new(project, user_id)
 
+    parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
     copy_project_id = project.uid
 
     # copy each result
