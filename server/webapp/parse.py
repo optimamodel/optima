@@ -16,7 +16,6 @@ from functools import partial
 from pprint import pprint
 from uuid import UUID
 
-from flask import current_app
 from flask.ext.restful import fields, marshal
 from numpy import nan
 
@@ -24,8 +23,8 @@ import optima as op
 from optima import loadpartable, partable, Par
 from optima.defaults import defaultprograms
 
-from server.webapp.exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
-from server.webapp.utils import normalize_obj
+from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
+from .utils import normalize_obj
 
 
 # PROJECTS

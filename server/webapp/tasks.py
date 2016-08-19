@@ -5,13 +5,14 @@ import pprint
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from server.api import app
-from server.webapp.dbmodels import WorkLogDb
-from server.webapp.dataio import update_or_create_result_record, \
-    load_project, load_project_record, delete_result, \
-    delete_optimization_result
-from server.webapp.parse import get_optimization_from_project
-from server.webapp.utils import normalize_obj
+from ..api import app
+
+from .dbmodels import WorkLogDb
+from .dataio import update_or_create_result_record, \
+    load_project, load_project_record, delete_result_by_parset_id, \
+    delete_result_by_name
+from .parse import get_optimization_from_project
+from .utils import normalize_obj
 
 import optima as op
 
@@ -271,7 +272,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
         project_record = load_project_record(project_id, db_session=db_session)
         project_record.save_obj(project)
         db_session.add(project_record)
-        delete_result(project_id, parset_id, 'calibration', db_session=db_session)
+        delete_result_by_parset_id(project_id, parset_id, 'calibration', db_session=db_session)
         result_record = update_or_create_result_record(
             project, result, orig_parset_name, 'calibration', db_session=db_session)
         print(">> Save result '%s'" % result.name)
@@ -361,7 +362,7 @@ def run_optimization(project_id, optimization_id, maxtime):
 
     if result:
         db_session = init_db_session()
-        delete_optimization_result(project_id, result.name, db_session)
+        delete_result_by_name(project_id, result.name, db_session)
         result_record = update_or_create_result_record(
             project, result, optim.parsetname, 'optimization', db_session=db_session)
         db_session.add(result_record)

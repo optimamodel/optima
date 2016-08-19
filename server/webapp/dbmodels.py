@@ -6,8 +6,9 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import deferred
 
 import optima as op
-from server.webapp.dbconn import db, redis
-from server import serialize
+from optima._serialize import dumps, loads
+
+from .dbconn import db, redis
 from copy import deepcopy as dcp
 
 
@@ -72,7 +73,7 @@ class ProjectDb(db.Model):
     def load(self):
         print(">> Load project " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        project = serialize.loads(redis_entry)
+        project = loads(redis_entry)
         for progset in project.progsets.values():
             if not hasattr(progset, 'inactive_programs'):
                 progset.inactive_programs = op.odict()
@@ -84,7 +85,7 @@ class ProjectDb(db.Model):
         new_project = dcp(obj)
         new_project.spreadsheet = None
         new_project.results = op.odict()
-        redis.set(self.id.hex, serialize.dumps(new_project))
+        redis.set(self.id.hex, dumps(new_project))
 
     def as_file(self, loaddir, filename=None):
         from optima.utils import savedbobj
@@ -140,11 +141,11 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
-        return serialize.loads(redis.get("result-" + self.id.hex))
+        return loads(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> Save result-" + self.id.hex)
-        redis.set("result-" + self.id.hex, serialize.dumps(obj))
+        redis.set("result-" + self.id.hex, dumps(obj))
 
     def cleanup(self):
         print(">> Cleanup result-" + self.id.hex)
@@ -171,11 +172,11 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     def load(self):
         print(">> Load working-" + self.id.hex)
-        return serialize.loads(redis.get("working-" + self.id.hex))
+        return loads(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> Save working-" + self.id.hex)
-        redis.set("working-" + self.id.hex, serialize.dumps(obj))
+        redis.set("working-" + self.id.hex, dumps(obj))
 
     def cleanup(self):
         print(">> Cleanup working-" + self.id.hex)

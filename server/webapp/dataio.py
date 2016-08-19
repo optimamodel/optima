@@ -31,10 +31,10 @@ from werkzeug.utils import secure_filename
 from optima.utils import loaddbobj
 import optima as op
 
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
-from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.parse import get_default_program_summaries, \
+from .dbconn import db
+from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
+from .exceptions import ProjectDoesNotExist
+from .parse import get_default_program_summaries, \
     get_project_parameters, get_parameters_from_progset_parset, \
     get_parameters_from_parset, set_parameters_on_parset, \
     get_progset_from_project, get_populations_from_project, \
@@ -48,8 +48,8 @@ from server.webapp.parse import get_default_program_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
     set_program_summary_on_progset
-from server.webapp.plot import make_mpld3_graph_dict, convert_to_mpld3
-from server.webapp.utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
+from .plot import make_mpld3_graph_dict, convert_to_mpld3
+from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
 
 
 
@@ -412,8 +412,8 @@ def save_parameters(project_id, parset_id, parameters):
 
     update_project_with_fn(project_id, update_project_fn)
 
-    delete_result(project_id, parset_id, "calibration")
-    delete_result(project_id, parset_id, "autofit")
+    delete_result_by_parset_id(project_id, parset_id, "calibration")
+    delete_result_by_parset_id(project_id, parset_id, "autofit")
 
 
 def load_parset_graphs(
@@ -426,7 +426,7 @@ def load_parset_graphs(
     if parameters is not None:
         print ">> Updating parset '%s'" % parset.name
         set_parameters_on_parset(parameters, parset)
-        delete_result(project_id, parset_id, "calibration")
+        delete_result_by_parset_id(project_id, parset_id, "calibration")
         update_project(project)
 
     result = load_result(project.uid, parset.uid, calculation_type)
@@ -511,7 +511,7 @@ def update_or_create_result_record(
     return result_record
 
 
-def delete_result(
+def delete_result_by_parset_id(
         project_id, parset_id, calculation_type, db_session=None):
     if db_session is None:
         db_session = db.session
@@ -633,7 +633,13 @@ def load_optimization_summaries(project_id):
 def save_optimization_summaries(project_id, optimization_summaries):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    old_names = [o.name for o in project.optims.values()]
     set_optimization_summaries_on_project(project, optimization_summaries)
+    new_names = [o.name for o in project.optims.values()]
+    deleted_names = [name for name in old_names if name not in new_names]
+    deleted_result_names = ['optim-' + name for name in deleted_names]
+    for result_name in deleted_result_names:
+        delete_result_by_name(project.uid, result_name)
     project_record.save_obj(project)
     return {'optimizations': get_optimization_summaries(project)}
 
@@ -682,20 +688,16 @@ def launch_optimization(project_id, optimization_id, maxtime):
     return calc_state
 
 
-def delete_optimization_result(
+def delete_result_by_name(
         project_id, result_name, db_session=None):
     if db_session is None:
         db_session = db.session
 
-    print ">> Deleting outdated result '%s' of an optimization" % result_name
-
-    records = db_session.query(ResultsDb).filter_by(
-        project_id=project_id,
-        calculation_type="optimization"
-    )
+    records = db_session.query(ResultsDb).filter_by(project_id=project_id)
     for record in records:
         result = record.load()
         if result.name == result_name:
+            print ">> Deleting outdated result '%s'" % result_name
             db_session.delete(record)
     db_session.commit()
 
@@ -909,6 +911,15 @@ def delete_progset(project_id, progset_id):
     project = project_record.load()
 
     progset = get_progset_from_project(project, progset_id)
+
+    progset_name = progset.name
+    optims = [o for o in project.optims.values() if o.progsetname == progset_name]
+
+    for optim in optims:
+        result_name = 'optim-' + optim.name
+        delete_result_by_name(project.uid, result_name)
+        project.optims.pop(optim.name)
+
     project.progsets.pop(progset.name)
 
     project_record.save_obj(project)

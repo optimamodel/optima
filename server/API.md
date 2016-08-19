@@ -88,7 +88,7 @@ Program:
         coverage: list of [float or None]
     self.category: "No Category", string
     self.criteria:
-        hivstatus: 'allstates"
+        hivstatus: 'allstates', -or- list of strings ['gt200'...]
         pregnant: boolean
     self.targetcomposition:
  
