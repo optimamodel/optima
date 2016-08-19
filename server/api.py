@@ -57,18 +57,19 @@ def load_user_from_request(request):  # pylint: disable=redefined-outer-name
 def unauthorized_handler():
     abort(401)
 
+
 from server.webapp.utils import OptimaJSONEncoder
 from server.webapp.resources.user import (
     User, UserDetail, CurrentUser, UserLogin, UserLogout)
 from server.webapp.resources.project import (
-    Projects, ProjectsAll, Project, ProjectCopy, ProjectSpreadsheet, ProjectEcon,
-    ProjectData, ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
-    DefaultPopulations)
+    Projects, ProjectsAll, Project, ProjectCopy, ProjectDataSpreadsheet, ProjectEcon,
+    ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
+    DefaultPopulations, ProjectData)
 from server.webapp.resources.progsets import (
     Progsets, Progset, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
     Parsets, ParsetUploadDownload, ParsetRenameDelete, ParsetCalibration, ParsetAutofit,
-    ResultsExportAsCsv)
+    ResultsExport)
 from server.webapp.resources.progsets import ProgramCostcovGraph
 from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs
 from server.webapp.resources.optimizations import (
@@ -90,8 +91,9 @@ api.add_resource(Project, '/api/project/<uuid:project_id>')
 api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
 api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
-api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
+api.add_resource(Portfolio, '/api/project/portfolio')
 
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
@@ -105,7 +107,6 @@ api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_
 api.add_resource(ProgsetParameters,
      '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
-api.add_resource(Portfolio, '/api/project/portfolio')
 
 api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
 api.add_resource(DefaultPopulations, '/api/project/populations')
@@ -122,7 +123,7 @@ api.add_resource(ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uu
 api.add_resource(ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 api.add_resource(ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
 api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
-api.add_resource(ResultsExportAsCsv, '/api/results/<uuid:result_id>')
+api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
 
 app.register_blueprint(api_blueprint, url_prefix='')
 
@@ -165,13 +166,12 @@ def init_db():
 
     # clear dangling tasks from the last session
     from server.webapp.dbconn import db
-    from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
+    from server.webapp.dbmodels import WorkLogDb
     work_logs = db.session.query(WorkLogDb)
     print "> Deleting dangling work_logs", work_logs.count()
+    for work_log in work_logs:
+        work_log.cleanup()
     work_logs.delete()
-    work_projects = db.session.query(WorkingProjectDb)
-    print "> Deleting dangling work_projects", work_projects.count()
-    work_projects.delete()
     db.session.commit()
 
 def init_logger():

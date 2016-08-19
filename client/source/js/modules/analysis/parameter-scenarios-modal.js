@@ -10,12 +10,21 @@ define(['angular'], function (module) {
       $scope.parsets = parsets;
       $scope.progsets = progsets;
       $scope.editPar = {};
-      var ykeys = ykeys;
       var editKeys = ['startval', 'endval', 'startyear', 'endyear'];
 
-      $scope.scenarioExists = function () {
-        var t = $scope.scenario;
-        return _.some(scenarios, function (s) { return t.name === s.name && t.id !== s.id; });
+      function initialize() {
+        if (_.isUndefined($scope.scenario.name)) {
+          initNewScenario();
+        }
+        resetEditPar();
+      }
+
+      $scope.checkForClashingName = function(scenario) {
+        function hasClash(s) {
+          return s.name == scenario.name && s.id != scenario.id;
+        }
+
+        return _.some(scenarios, hasClash);
       };
 
       var initNewScenario = function() {
@@ -28,7 +37,7 @@ define(['angular'], function (module) {
         do {
           $scope.scenario.name = "Scenario " + i;
           i += 1;
-        } while ($scope.scenarioExists());
+        } while ($scope.checkForClashingName(scenario));
       };
 
       $scope.getParsInScenario = function () {
@@ -95,11 +104,7 @@ define(['angular'], function (module) {
       $scope.save = function () {
         $modalInstance.close($scope.scenario); };
 
-      // initialization
-      if (_.isUndefined($scope.scenario.name)) {
-        initNewScenario();
-      }
-      resetEditPar();
+      initialize();
 
     });
 });

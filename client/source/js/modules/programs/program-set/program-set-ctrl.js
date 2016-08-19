@@ -4,50 +4,61 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
     modalService, toastr, currentProject, projectApiService, $upload) {
 
-    var openProject = currentProject.data;
+    var project = currentProject.data;
     var defaultPrograms;
     var parameters;
 
-    // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
-    if (!openProject.hasData) {
-      modalService.inform(
-        function (){ },
-        'Okay',
-        'Please upload spreadsheet to proceed.',
-        'Cannot proceed'
-      );
-      $scope.missingData = true;
-      return;
+    function initialize() {
+      // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
+      if (!project.hasData) {
+        modalService.inform(
+          function() { },
+          'Okay',
+          'Please upload spreadsheet to proceed.',
+          'Cannot proceed'
+        );
+        $scope.missingData = true;
+        return;
+      }
+
+      // Get the list of saved programs from DB and set the first one as active
+      $http
+        .get('/api/project/' + project.id + '/progsets')
+        .success(function(response) {
+          if (response.progsets) {
+            $scope.programSetList = response.progsets;
+            console.log("loaded_programs = ", $scope.programSetList);
+            if (response.progsets && response.progsets.length > 0) {
+              $scope.activeProgramSet = response.progsets[0];
+            }
+          }
+        });
+
+      // Fetching default categories and programs for the open project
+      projectApiService
+        .getDefault(project.id)
+        .success(function(response) {
+          defaultPrograms = response;
+          console.log("default_programs = ", defaultPrograms);
+        });
+
+      // Get the list of default parameters for the project
+      $http
+        .get('/api/project/' + project.id + '/parameters')
+        .success(function(response) {
+          parameters = response.parameters;
+        });
     }
 
-    // Get the list of saved programs from DB and set the first one as active
-    $http.get('/api/project/' + openProject.id + '/progsets' )
-      .success(function (response) {
-        if(response.progsets) {
-          $scope.programSetList = response.progsets;
-          console.log("active_programs = ", $scope.programSetList);
-          if (response.progsets && response.progsets.length > 0) {
-            $scope.activeProgramSet = response.progsets[0];
-          }
-        }
-      });
-
     $scope.getCategories = function() {
-      return _.uniq(_.pluck($scope.activeProgramSet.programs, "category"));
+      $scope.activeProgramSet.programs.sort();
+      var categories = _.uniq(_.pluck($scope.activeProgramSet.programs, "category"));
+      var i = categories.indexOf('Other');
+      categories.splice(i, 1);
+      categories.sort();
+      categories.push('Other');
+      return categories;
     };
-
-    // Fetching default categories and programs for the open project
-    projectApiService.getDefault(openProject.id)
-      .success(function (response) {
-        defaultPrograms = response;
-        console.log("default_programs = ", defaultPrograms);
-      });
-
-    // Get the list of default parameters for the project
-    $http.get('/api/project/' + openProject.id + '/parameters' )
-      .success(function (response) {
-        parameters = response.parameters;
-      });
 
     // This method is called by <select> to change current active program
     $scope.setActiveProgramSet = function(activeProgramSet) {
@@ -88,7 +99,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         $http
           .get(
-            '/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id +'/data',
+            '/api/project/' + project.id +  '/progsets' + '/' + $scope.activeProgramSet.id +'/data',
             {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
           .success(function (response) {
             var blob = new Blob([response], { type: 'application/octet-stream' });
@@ -111,7 +122,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           .element('<input type=\'file\'>')
           .change(function (event) {
             $upload.upload({
-              url: '/api/project/' + openProject.id + '/progsets' + '/' + $scope.activeProgramSet.id + '/data',
+              url: '/api/project/' + project.id + '/progsets' + '/' + $scope.activeProgramSet.id + '/data',
               file: event.target.files[0]
             }).success(function () {
               window.location.reload();
@@ -128,7 +139,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         var remove = function () {
           if ($scope.activeProgramSet.id) {
             $http
-              .delete('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id)
+              .delete('/api/project/' + project.id +  '/progset' + '/' + $scope.activeProgramSet.id)
               .success(deleteProgramSetFromPage);
           } else {
             deleteProgramSetFromPage();
@@ -185,12 +196,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           'Cannot proceed'
         );
       } else {
+        var method, url;
+        if ($scope.activeProgramSet.id) {
+          method = 'PUT';
+          url = '/api/project/' + project.id + '/progset/' + $scope.activeProgramSet.id;
+        } else {
+          method = 'POST';
+          url = '/api/project/' + project.id + '/progsets';
+        }
         $http({
-          url: '/api/project/' + openProject.id
-                + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
-          method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
-          data: $scope.activeProgramSet
-        }).success(function (response) {
+          url: url, method: method, data: $scope.activeProgramSet})
+        .success(function (response) {
           if(response.id) {
             $scope.activeProgramSet.id = response.id;
           }
@@ -205,7 +221,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       editProgram.short = editProgram.short || editProgram.short;
       return programSetModalService
         .openProgramModal(
-          editProgram, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+          editProgram, project, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
         .result
         .then(function (newProgram) {
           $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
@@ -221,7 +237,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       return programSetModalService
         .openProgramModal(
-            program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+            program, project, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
         .result
         .then(function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
@@ -240,12 +256,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       return programSetModalService
         .openProgramModal(
-          program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+          program, project, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
         .result
         .then(function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
         });
     };
+
+    initialize();
 
   });
 });

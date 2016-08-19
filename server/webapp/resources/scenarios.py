@@ -1,57 +1,39 @@
-from flask import request
 from flask.ext.login import login_required
 from flask_restful import Resource
 from flask_restful_swagger import swagger
 
-from server.webapp.dataio import (
-    load_project_record, get_scenario_summaries,
-    save_scenario_summaries, get_parset_keys_with_y_values)
-from server.webapp.plot import make_mpld3_graph_dict
+from server.webapp.dataio import make_scenarios_graphs, save_scenario_summaries, load_scenario_summaries
 from server.webapp.resources.common import report_exception
-from server.webapp.utils import normalize_obj
+from server.webapp.utils import get_post_data_json
 
 
 class Scenarios(Resource):
-    """
-    /api/project/<uuid:project_id>/scenarios
-    - GET: get scenarios for a project
-    - PUT: update scenarios; returns scenarios so client-side can check
-    """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation()
+    @swagger.operation(summary='get scenarios for a project')
     def get(self, project_id):
-        project_record = load_project_record(project_id)
-        project = project_record.load()
+        """
+        GET /api/project/<uuid:project_id>/scenarios
+        """
+        return load_scenario_summaries(project_id)
 
-        return {
-            'scenarios': get_scenario_summaries(project),
-            'ykeysByParsetId': get_parset_keys_with_y_values(project)
-        }
-
+    @swagger.operation(summary='update scenarios; returns scenarios so client-side can check')
     def put(self, project_id):
-        data = normalize_obj(request.get_json(force=True))
-
-        project_record = load_project_record(project_id)
-        project = project_record.load()
-
-        save_scenario_summaries(project, data['scenarios'])
-
-        project_record.save_obj(project)
-
-        return {'scenarios': get_scenario_summaries(project)}
-
+        """
+        PUT /api/project/<uuid:project_id>/scenarios
+        data-josn: scenarios: scenario_summaries
+        """
+        data = get_post_data_json()
+        scenario_summaries = data['scenarios']
+        return save_scenario_summaries(project_id, scenario_summaries)
 
 class ScenarioSimulationGraphs(Resource):
-    """
-    /api/project/<project-id>/scenarios/results
-    - GET: Run scenarios and returns the graphs
-    """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation()
+    @swagger.operation(summary='Run scenarios and returns the graphs')
     def get(self, project_id):
-        project_entry = load_project_record(project_id)
-        project = project_entry.load()
-        project.runscenarios()
-        return make_mpld3_graph_dict(project.results[-1])
+        """
+        GET /api/project/<project-id>/scenarios/results
+        """
+        return make_scenarios_graphs(project_id)
+

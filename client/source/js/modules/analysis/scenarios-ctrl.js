@@ -4,58 +4,46 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse,
-      parsetResponse, scenariosResponse, toastr) {
-
-    var project = info.data;
-    var parsets = parsetResponse.data.parsets;
-    var progsets = progsetsResponse.data.progsets;
+      $scope, $http, $modal, info, progsetsResponse, parsetResponse,
+      scenariosResponse, toastr) {
 
     function initialize() {
-
-      $scope.scenarios = scenariosResponse.data.scenarios;
-      sort_scenarios();
-      console.log("loading scenarios", scenariosResponse.data);
-
-      $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
-      console.log("loading ykeys", $scope.ykeys);
-
-      $scope.isMissingModelData = !project.hasData;
-      $scope.isMissingProgramSet = progsets.length == 0;
+      $scope.project = info.data;
+      $scope.parsets = parsetResponse.data.parsets;
+      $scope.progsets = progsetsResponse.data.progsets;
+      $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+      $scope.isMissingModelData = !$scope.project.hasData;
+      $scope.isMissingProgramSet = $scope.progsets.length == 0;
+      loadScenarios(scenariosResponse.data.scenarios);
     }
 
-    function sort_scenarios() {
-      $scope.scenarios = _.sortBy($scope.scenarios, function(scenario) {
-        return scenario.name;
-      });
-      console.log('Sorting scenarios');
+    function loadScenarios(scenarios) {
+      $scope.scenarios = scenarios;
+      function returnName(s) { return s.name }
+      $scope.scenarios = _.sortBy($scope.scenarios, returnName);
+      console.log("loading scenarios", $scope.scenarios);
     }
 
-    function consoleLogJson(name, val) {
-      console.log(name + ' = ');
-      console.log(JSON.stringify(val, null, 2));
-    }
-
-    $scope.saveScenarios = function(scenarios, msg) {
-      consoleLogJson("saving scenarios", scenarios);
+    $scope.saveScenarios = function(scenarios, successMsg) {
+      console.log("saving scenarios", scenarios);
       $http.put(
-        '/api/project/' + project.id + '/scenarios',
+        '/api/project/' + $scope.project.id + '/scenarios',
         {'scenarios': scenarios })
       .success(function (response) {
-        $scope.scenarios = response.scenarios;
-        sort_scenarios();
-        consoleLogJson("returned scenarios", $scope.scenarios);
-        if (msg) {
-          toastr.success(msg)
+        loadScenarios(response.scenarios);
+        if (successMsg) {
+          toastr.success(successMsg)
         }
       });
     };
 
     $scope.runScenarios = function () {
+      $scope.graphs = {};
       $http.get(
-        '/api/project/' + project.id + '/scenarios/results')
+        '/api/project/' + $scope.project.id + '/scenarios/results')
       .success(function (data) {
         $scope.graphs = data.graphs;
+        console.log($scope.graphs);
       });
     };
 
@@ -63,14 +51,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return _.some($scope.scenarios, function(s) { return s.active });
     };
 
-    $scope.parsetName = function (scenario) {
-      var parset = _.findWhere(parsets, {id: scenario.parset_id});
-      return parset ? parset.name : '';
+    $scope.getParsetName = function (scenario) {
+      var parset = _.findWhere($scope.parsets, {id: scenario.parset_id});
+      return parset ? parset.name : 'N/A';
     };
 
-    $scope.programSetName = function (scenario) {
-      var progset = _.findWhere(progsets, {id: scenario.progset_id});
-      return progset ? progset.name : '';
+    $scope.getProgramSetName = function (scenario) {
+      var progset = _.findWhere($scope.progsets, {id: scenario.progset_id});
+      return progset ? progset.name : 'N/A';
     };
 
     function openScenarioModal(scenario) {
@@ -90,16 +78,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         resolve: {
           scenarios: function () { return $scope.scenarios; },
           scenario: function () { return angular.copy(scenario); },
-          parsets: function () { return parsets; },
-          progsets: function () { return progsets; },
-          ykeys: function () { return $scope.ykeys; }
+          parsets: function () { return $scope.parsets; },
+          progsets: function () { return $scope.progsets; },
+          ykeys: function () { return $scope.parametersByParsetId; }
         }
       });
-    };
+    }
 
-    $scope.modal = function (scenario, action, $event) {
-      // action: 'add', 'edit', 'delete'
-
+    /**
+     * Function opens a model in different modes
+     * @param {string} action: 'add', 'edit' 'delete'
+     */
+    $scope.openModal = function (scenario, action, $event) {
       if ($event) {
         $event.preventDefault();
       }
@@ -118,13 +108,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       } else if (action === 'edit') {
 
+        scenario = _.findWhere(newScenarios, {name: scenario.name});
+        var iScenario = _.indexOf(newScenarios, scenario);
+
         return openScenarioModal(scenario)
           .result
           .then(
             function (scenario) {
-              var i = newScenarios.indexOf(_.findWhere(newScenarios, { name: scenario.name }));
-              newScenarios[i] = scenario;
-              newScenarios[i].active = true;
+              newScenarios[iScenario] = scenario;
+              newScenarios[iScenario].active = true;
               $scope.saveScenarios(newScenarios, "Saved changes");
             });
 
@@ -138,7 +130,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       } else if (action === 'delete') {
 
-        var scenario = _.findWhere(newScenarios, { name: scenario.name });
+        var scenario = _.findWhere(newScenarios, { id: scenario.id });
         $scope.saveScenarios(_.without(newScenarios, scenario), "Deleted scenario");
 
       }

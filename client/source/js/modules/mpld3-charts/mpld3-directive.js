@@ -5,7 +5,7 @@ define(
 
   'use strict';
 
-  var allcharts, scrollTop;
+  var moduleAllCharts, moduleScrollTop;
 
   function consoleLogJson(name, val) {
     console.log(name + ' = ');
@@ -391,8 +391,8 @@ define(
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
 
-            if (!_.isUndefined(allcharts)) {
-              allcharts.scrollTop(scrollTop);
+            if (!_.isUndefined(moduleAllCharts)) {
+              moduleAllCharts.scrollTop(moduleScrollTop);
             }
           },
           true
@@ -415,14 +415,22 @@ define(
     });
   }
 
-  module.directive('optimaGraphs', function ($http) {
+  module.directive('optimaGraphs', function ($http, toastr) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/mpld3-charts/optima-graphs.html',
       link: function (scope, elem, attrs) {
 
-        allcharts = $(elem).find('.allcharts');
-        scrollTop = allcharts.scrollTop();
+        function initialize() {
+          moduleAllCharts = $(elem).find('.allcharts');
+          moduleScrollTop = moduleAllCharts.scrollTop();
+          $(window).bind('resize', function() {
+            scope.onResize();
+          });
+          moduleAllCharts.scroll(function() {
+            moduleScrollTop = moduleAllCharts.scrollTop();
+          });
+        }
 
         scope.exportAllData = function() {
           var resultId = scope.graphs.resultId;
@@ -439,6 +447,36 @@ define(
           .success(function (response) {
             var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
             saveAs(blob, ('export_graphs.csv'));
+          });
+        };
+
+        function getSelectors() {
+          if (scope.graphs) {
+            function getChecked(s) { return s.checked; }
+            function getKey(s) { return s.key }
+            var selectors = scope.graphs.selectors;
+            if (selectors) {
+              var which = _.filter(selectors, getChecked).map(getKey);
+              console.log('which', which);
+              if (which.length > 0) {
+                return which;
+              }
+            }
+          }
+          return null;
+        }
+
+        scope.updateGraphs = function() {
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          $http.post(
+            '/api/results/' + resultId,
+            {which: getSelectors()})
+          .success(function (response) {
+            scope.graphs = response.graphs;
+            toastr.success('Graphs updated');
           });
         };
 
@@ -472,13 +510,7 @@ define(
           scope.$apply();
         };
 
-        $(window).bind('resize', function () {
-          scope.onResize();
-        })
-
-        allcharts.scroll(function() {
-          scrollTop = allcharts.scrollTop();
-        });
+        initialize();
       }
     };
   });

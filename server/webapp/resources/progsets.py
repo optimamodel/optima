@@ -1,290 +1,136 @@
-import uuid
-
-from pprint import pprint
-
-from flask import current_app, request
+from flask import request
 from flask.ext.login import login_required
 from flask_restful import Resource
 from flask_restful_swagger import swagger
 
-from server.webapp.dataio import (
-    get_progset_summaries, save_progset_summaries, load_project, load_project_record,
-    get_target_popsizes, load_parameters_from_progset_parset,
-    get_progset_from_project, get_progset_summary, get_parset_from_project,
-    get_program_from_progset, save_program_summary)
-from server.webapp.parse import parse_outcomes_from_progset, put_outcomes_into_progset
+from server.webapp.dataio import load_parameters_from_progset_parset, \
+    load_target_popsizes, load_progset_summaries, save_progset_summaries, \
+    save_progset_summary, delete_progset, load_progset_outcomes, \
+    save_outcome_summaries, save_program, load_costcov_graph
 from server.webapp.resources.common import report_exception
-from server.webapp.utils import Json, RequestParser, normalize_obj
+from server.webapp.utils import normalize_obj, get_post_data_json
 
+import pprint
 
-progset_parser = RequestParser()
-progset_parser.add_arguments(
-    {'name': {'required': True}, 'programs': {'type': Json, 'location': 'json'}})
 
 class Progsets(Resource):
-    """
-    GET /api/project/<uuid:project_id>/progsets
-
-    Get progsets for program-set manage page
-
-    POST /api/project/<uuid:project_id>/progsets
-
-    Save newly created progset in the client
-    """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(description='Download progsets')
+    @swagger.operation(description='Return progset summaries')
     def get(self, project_id):
-        project = load_project(project_id)
+        """
+        GET /api/project/<uuid:project_id>/progsets
+        """
+        return load_progset_summaries(project_id)
 
-        return get_progset_summaries(project)
-
-
-    @swagger.operation(description='Save progset')
+    @swagger.operation(description='Update project with progset summaries')
     def post(self, project_id):
-        data = normalize_obj(request.get_json(force=True))
-        current_app.logger.debug("DATA progsets for project_id %s is :/n %s" % (project_id, pprint(data)))
-
-        project_record = load_project_record(project_id)
-        project = project_record.load()
-
-        save_progset_summaries(project, data)
-        project_record.save_obj(project)
-
-        return get_progset_summaries(project)
+        """
+        POST /api/project/<uuid:project_id>/progsets
+        data-json: progset_summaries
+        """
+        progset_summaries = get_post_data_json()
+        return save_progset_summaries(project_id, progset_summaries)
 
 
 class Progset(Resource):
-    """
-    PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
-
-    Update existing progset
-    """
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Update progset with the given id.')
     def put(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        data = normalize_obj(request.get_json(force=True))
-
-        project_record = load_project_record(project_id)
-        project = project_record.load()
-
-        save_progset_summaries(project, data, progset_id=progset_id)
-        project_record.save_obj(project)
-
-        return get_progset_summary(project.progsets[data["name"]])
+        """
+        PUT /api/project/<uuid:project_id>/progset/<uuid:progset_id>
+        data-json: progset_summary
+        """
+        progset_summary = get_post_data_json()
+        return save_progset_summary(project_id, progset_id, progset_summary)
 
     @swagger.operation(description='Delete progset with the given id.')
     def delete(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-
-        project_record = load_project_record(project_id)
-        project = project_record.load()
-
-        progset = get_progset_from_project(project, progset_id)
-        project.progsets.pop(progset.name)
-
-        project_record.save_obj(project)
+        """
+        DELETE /api/project/<uuid:project_id>/progset/<uuid:progset_id>
+        """
+        delete_progset(project_id, progset_id)
         return '', 204
 
 
 class ProgsetParameters(Resource):
 
-    """
-    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>
-
-    Fetches parameters for a progset/parset combo to be used in outcome functions.
-    """
-    @swagger.operation(description='Get parameters sets for the selected progset')
+    @swagger.operation(description='Return parameters for progset outcome page')
     def get(self, project_id, progset_id, parset_id):
-
-        project = load_project(project_id)
-        progset = get_progset_from_project(project, progset_id)
-        parset = get_parset_from_project(project, parset_id)
-
-        return load_parameters_from_progset_parset(project, progset, parset)
-
+        """
+        GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>
+        """
+        return load_parameters_from_progset_parset(project_id, progset_id, parset_id)
 
 
 class ProgsetEffects(Resource):
-    """
-    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
-
-    Fetch the effects of a given progset, given in the marshalled fields of
-    a ProgsetsDB record, used in cost-coverage-ctrl.js
-
-    PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
-
-    Saves the effects of a given progset, used in cost-coverage-ctrl.js
-    """
-
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(summary='Get List of existing Progset effects for the selected progset')
+    @swagger.operation(summary='Returns list of outcomes for a progset')
     def get(self, project_id, progset_id):
+        """
+        GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
+        """
+        return load_progset_outcomes(project_id, progset_id)
 
-        project = load_project(project_id)
-        progset = get_progset_from_project(project, progset_id)
-
-        outcomes = parse_outcomes_from_progset(progset)
-
-        # Bosco needs to fix this...
-
-        return { 'effects': [{
-            "parset": parset.uid,
-            "parameters": outcomes,
-
-        } for parset in project.parsets.values()]}
-
-    @swagger.operation(summary='Saves a list of outcomes')
+    @swagger.operation(summary='Saves the outcomes of a given progset, used in outcome page')
     def put(self, project_id, progset_id):
-        effects = normalize_obj(request.get_json(force=True))
+        """
+        PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
+        """
+        outcome_summaries = get_post_data_json()
+        return save_outcome_summaries(project_id, progset_id, outcome_summaries)
 
-        project_record = load_project_record(project_id)
-        project = project_record.load()
-        progset = get_progset_from_project(project, progset_id)
-
-        put_outcomes_into_progset(effects[0]["parameters"], progset)
-
-        project_record.save_obj(project)
-
-        outcomes = parse_outcomes_from_progset(progset)
-
-        return { 'effects': [{
-            "parset": parset.uid,
-            "parameters": outcomes,
-
-        } for parset in project.parsets.values()]}
-
-
-query_program_parser = RequestParser()
-query_program_parser.add_arguments({
-    'program': {'required': True, 'type': Json, 'location': 'json'},
-})
 
 class Program(Resource):
-    """
-    POST /api/project/<project_id>/progsets/<progset_id>/program"
-
-    Write program to web-server (for cost-coverage and outcome changes)
-    The payload is JSON in the form:
-
-    'program': {
-      'active': True,
-      'category': 'Care and treatment',
-      'ccopars': { 'saturation': [[0.9, 0.9]],
-                   't': [2016],
-                   'unitcost': [[1.136849845773715, 1.136849845773715]]},
-      'costcov': [ { 'cost': 16616289, 'coverage': 8173260, 'year': 2012},
-                   { 'cost': 234234, 'coverage': 324234, 'year': 2013}],
-      'created': 'Mon, 02 May 2016 05:27:48 -0000',
-      'criteria': { 'hivstatus': 'allstates', 'pregnant': False},
-      'id': '9b5db736-1026-11e6-8ffc-f36c0fc28d89',
-      'name': 'HIV testing and counseling',
-      'optimizable': True,
-      'populations': [ 'FSW',
-                       'Clients',
-                       'Male Children 0-14',
-                       'Female Children 0-14',
-                       'Males 15-49',
-                       'Females 15-49',
-                       'Males 50+',
-                       'Females 50+'],
-      'progset_id': '9b55945c-1026-11e6-8ffc-130aba4858d2',
-      'project_id': '9b118ef6-1026-11e6-8ffc-571b10a45a1c',
-      'short': 'HTC',
-      'targetpars': [ { 'active': True,
-                        'param': 'hivtest',
-                        'pops': [ 'FSW',
-                                  'Clients',
-                                  'Male Children 0-14',
-                                  'Female Children 0-14',
-                                  'Males 15-49',
-                                  'Females 15-49',
-                                  'Males 50+',
-                                  'Females 50+']}],
-      'updated': 'Mon, 02 May 2016 06:22:29 -0000'
-    }
-    """
-
     method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary='Saves a program summary to project')
     def post(self, project_id, progset_id):
-        args = query_program_parser.parse_args()
-        program_summary = normalize_obj(args['program'])
-
-        project_record = load_project_record(project_id)
-        project = project_record.load()
-
-        progset = get_progset_from_project(project, progset_id)
-
-        save_program_summary(progset, program_summary)
-
-        progset.updateprogset()
-
-        project_record.save_obj(project)
-
+        """
+        POST /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program
+        data-json: programs: program_summary
+        """
+        program_summary = get_post_data_json()['program']
+        save_program(project_id, progset_id, program_summary)
         return 204
 
 
 class ProgramPopSizes(Resource):
-    """
-    /api/project/{project_id}/progsets/{progset_id}/program/{program_id}/parset/{progset_id}/popsizes
-
-    Return estimated popsize for a given program and parset. Used in
-    cost-coverage function page to help estimate populations.
-    """
     method_decorators = [report_exception, login_required]
 
+    @swagger.operation(summary='Return estimated popsize for a given program and parset')
     def get(self, project_id, progset_id, program_id, parset_id):
-
-        project = load_project(project_id)
-        parset = get_parset_from_project(project, parset_id)
-        progset = get_progset_from_project(project, progset_id)
-        program = get_program_from_progset(progset, program_id)
-
-        payload = get_target_popsizes(project, parset, progset, program)
+        """
+        GET /api/project/{project_id}/progsets/{progset_id}/program/{program_id}/parset/{progset_id}/popsizes
+        """
+        payload = load_target_popsizes(project_id, parset_id, progset_id, program_id)
         return payload, 201
 
 
-
-costcov_graph_parser = RequestParser()
-costcov_graph_parser.add_arguments({
-    't': {'required': True, 'type': str, 'location': 'args'},
-    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
-    'caption': {'type': str, 'location': 'args'},
-    'xupperlim': {'type': long, 'location': 'args'},
-    'perperson': {'type': bool, 'location': 'args'},
-})
-
 class ProgramCostcovGraph(Resource):
-    """
-    Costcoverage graph for a Program and a Parset (for population sizes).
-    """
-
     method_decorators = [report_exception, login_required]
 
+    @swagger.operation(summary='Returns an mpld3 dict that can be displayed with the mpld3 plugin')
     def get(self, project_id, progset_id, program_id):
         """
-        Args:
+        GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph
+        url-args:
             t: comma-separated list of years (>= startyear in data)
             parset_id: parset ID of project (not related to program targetpars)
             caption: string to display in graph
             xupperlim: maximum dollar shown
             perperson: cost per person shown as data point
-
-        Returns an mpld3 dict that can be displayed with the mpld3 plugin
         """
-        args = costcov_graph_parser.parse_args()
-        parset_id = args['parset_id']
+        args = request.args
 
-        print '>>>> Generating plot...'
+        parset_id = args['parset_id']
 
         try:
             t = map(int, args['t'].split(','))
         except ValueError:
             t = None
-
         if t is None:
             return {}
 
@@ -293,12 +139,6 @@ class ProgramCostcovGraph(Resource):
             if args.get(x):
                 plotoptions[x] = args[x]
 
-        project = load_project(project_id)
-        progset = get_progset_from_project(project, progset_id)
-
-        program = get_program_from_progset(progset, program_id)
-        parset = get_parset_from_project(project, parset_id)
-        plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
-        print '>>>> plot', plot
-        from server.webapp.plot import convert_to_mpld3
-        return convert_to_mpld3(plot)
+        print '>>>> Generating plot...'
+        return load_costcov_graph(
+            project_id, progset_id, program_id, parset_id, t, plotoptions)

@@ -1,17 +1,16 @@
+import json
 import os
 from collections import OrderedDict
 
 import flask.json
 import numpy as np
-
-from flask import current_app
+from flask import current_app, request
 from flask.ext.restful.reqparse import RequestParser as OrigReqParser
 from validate_email import validate_email
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 import optima as op
-
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj', 'prg', 'par'}
 
@@ -71,33 +70,6 @@ class SubParser:
         if isinstance(item_to_parse, list):
             return [self.child_parser.parse_args(req=SubRequest(item)) for item in item_to_parse]
         return self.child_parser.parse_args(req=SubRequest(item_to_parse))
-
-
-class AllowedFileTypeMixin(object):
-    "Mixin used of FileStorage subclasses to check the uploaded filetype"
-
-    def __init__(self, *args, **kwargs):
-        super(AllowedFileTypeMixin, self).__init__(*args, **kwargs)
-        if not allowed_file(self.filename):
-            raise ValueError('File type of {} is not accepted!'.format(self.filename))
-
-
-class SafeFilenameStorage(FileStorage):
-
-    def __init__(self, *args, **kwargs):
-        super(SafeFilenameStorage, self).__init__(*args, **kwargs)
-        if self.filename == 'file' and hasattr(self.stream, 'filename'):
-            self.filename = self.stream.filename
-        self.source_filename = self.filename
-        self.filename = secure_filename(self.filename)
-
-
-class AllowedFiletypeStorage(AllowedFileTypeMixin, FileStorage):
-    pass
-
-
-class AllowedSafeFilenameStorage(AllowedFileTypeMixin, SafeFilenameStorage):
-    pass
 
 
 class RequestParser(OrigReqParser):
@@ -296,3 +268,24 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
         obj = normalize_obj(obj)
 
         return flask.json.JSONEncoder.default(self, obj)
+
+
+def get_post_data_json():
+    return normalize_obj(json.loads(request.data))
+
+
+def get_upload_file(dirname):
+    """
+    Returns the server filename for an uploaded file,
+    handled by the current flask request
+
+    Args:
+        dirname: directory on server to store the filen
+    """
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    full_filename = os.path.join(dirname, filename)
+    print("> Upload file '%s'" % filename)
+    file.save(full_filename)
+
+    return full_filename
