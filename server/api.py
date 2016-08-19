@@ -2,10 +2,10 @@ import json
 import os
 import sys
 import logging
+
 import redis
 
 from flask import Flask, redirect, Blueprint, g, session, make_response, abort
-
 from flask_restful import Api
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
@@ -57,60 +57,61 @@ def load_user_from_request(request):  # pylint: disable=redefined-outer-name
 def unauthorized_handler():
     abort(401)
 
+
 from .webapp.utils import OptimaJSONEncoder
-from .webapp import webhandlers
+from .webapp import handlers
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 
 api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
-api.add_resource(webhandlers.User, '/api/user')
-api.add_resource(webhandlers.UserDetail, '/api/user/<uuid:user_id>')
-api.add_resource(webhandlers.CurrentUser, '/api/user/current')
-api.add_resource(webhandlers.UserLogin, '/api/user/login')
-api.add_resource(webhandlers.UserLogout, '/api/user/logout')
+api.add_resource(handlers.User, '/api/user')
+api.add_resource(handlers.UserDetail, '/api/user/<uuid:user_id>')
+api.add_resource(handlers.CurrentUser, '/api/user/current')
+api.add_resource(handlers.UserLogin, '/api/user/login')
+api.add_resource(handlers.UserLogout, '/api/user/logout')
 
-api.add_resource(webhandlers.Projects, '/api/project')
-api.add_resource(webhandlers.ProjectsAll, '/api/project/all')
-api.add_resource(webhandlers.Project, '/api/project/<uuid:project_id>')
-api.add_resource(webhandlers.ProjectCopy, '/api/project/<uuid:project_id>/copy')
-api.add_resource(webhandlers.ProjectFromData, '/api/project/data')
-api.add_resource(webhandlers.ProjectData, '/api/project/<uuid:project_id>/data')
-api.add_resource(webhandlers.ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
-api.add_resource(webhandlers.ProjectEcon, '/api/project/<uuid:project_id>/economics')
-api.add_resource(webhandlers.Portfolio, '/api/project/portfolio')
+api.add_resource(handlers.Projects, '/api/project')
+api.add_resource(handlers.ProjectsAll, '/api/project/all')
+api.add_resource(handlers.Project, '/api/project/<uuid:project_id>')
+api.add_resource(handlers.ProjectCopy, '/api/project/<uuid:project_id>/copy')
+api.add_resource(handlers.ProjectFromData, '/api/project/data')
+api.add_resource(handlers.ProjectData, '/api/project/<uuid:project_id>/data')
+api.add_resource(handlers.ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(handlers.ProjectEcon, '/api/project/<uuid:project_id>/economics')
+api.add_resource(handlers.Portfolio, '/api/project/portfolio')
 
-api.add_resource(webhandlers.Optimizations, '/api/project/<uuid:project_id>/optimizations')
-api.add_resource(webhandlers.OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
-api.add_resource(webhandlers.OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
-api.add_resource(webhandlers.OptimizationUpload, '/api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload')
+api.add_resource(handlers.Optimizations, '/api/project/<uuid:project_id>/optimizations')
+api.add_resource(handlers.OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
+api.add_resource(handlers.OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
+api.add_resource(handlers.OptimizationUpload, '/api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload')
 
-api.add_resource(webhandlers.Scenarios, '/api/project/<uuid:project_id>/scenarios')
-api.add_resource(webhandlers.ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
+api.add_resource(handlers.Scenarios, '/api/project/<uuid:project_id>/scenarios')
+api.add_resource(handlers.ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
 
-api.add_resource(webhandlers.Progsets, '/api/project/<uuid:project_id>/progsets')
-api.add_resource(webhandlers.Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
-api.add_resource(webhandlers.ProgsetParameters,
+api.add_resource(handlers.Progsets, '/api/project/<uuid:project_id>/progsets')
+api.add_resource(handlers.Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
+api.add_resource(handlers.ProgsetParameters,
      '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
-api.add_resource(webhandlers.ProgsetOutcomes, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
-api.add_resource(webhandlers.ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
+api.add_resource(handlers.ProgsetOutcomes, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
+api.add_resource(handlers.ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
 
-api.add_resource(webhandlers.DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
-api.add_resource(webhandlers.DefaultPopulations, '/api/project/populations')
-api.add_resource(webhandlers.DefaultParameters, '/api/project/<project_id>/parameters')
+api.add_resource(handlers.DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
+api.add_resource(handlers.DefaultPopulations, '/api/project/populations')
+api.add_resource(handlers.DefaultParameters, '/api/project/<project_id>/parameters')
 
-api.add_resource(webhandlers.Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
-api.add_resource(webhandlers.ProgramPopSizes,
+api.add_resource(handlers.Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
+api.add_resource(handlers.ProgramPopSizes,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
-api.add_resource(webhandlers.ProgramCostcovGraph,
+api.add_resource(handlers.ProgramCostcovGraph,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
 
-api.add_resource(webhandlers.Parsets, '/api/project/<uuid:project_id>/parsets')
-api.add_resource(webhandlers.ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
-api.add_resource(webhandlers.ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
-api.add_resource(webhandlers.ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
-api.add_resource(webhandlers.ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
-api.add_resource(webhandlers.ResultsExport, '/api/results/<uuid:result_id>')
+api.add_resource(handlers.Parsets, '/api/project/<uuid:project_id>/parsets')
+api.add_resource(handlers.ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
+api.add_resource(handlers.ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
+api.add_resource(handlers.ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
+api.add_resource(handlers.ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
+api.add_resource(handlers.ResultsExport, '/api/results/<uuid:result_id>')
 
 app.register_blueprint(api_blueprint, url_prefix='')
 

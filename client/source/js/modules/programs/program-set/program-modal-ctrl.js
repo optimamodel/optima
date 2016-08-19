@@ -3,9 +3,8 @@
 
   module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories, openProject) {
     // Default list of criteria
-    var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
 
-    function console_log_var(name, val) {
+    function consoleLogJson(name, val) {
       console.log(name + ' = ');
       console.log(JSON.stringify(val, null, 2));
     }
@@ -43,7 +42,7 @@
       if(isTot) {
         $scope.state.progPopReadOnly = true;
         $scope.state.selectAll = true;
-        $scope.selectAllPopulations();
+        $scope.clickAllTargetPopulations();
       } else {
         if(program.populations && program.populations.length > 0) {
           _.forEach($scope.state.populations, function(population) {
@@ -101,43 +100,47 @@
       // Initialize eligibility criteria
       if(!$scope.state.program.criteria) {
         $scope.state.program.criteria = {
-          hivstatus: 'allstates',
+          hivstatus: 'allstates', // can also be list of strings
           pregnant: false
         }
       }
-      $scope.state.eligibility.pregnantFalse = !$scope.state.program.criteria.pregnant;
-      if($scope.state.program.criteria.hivstatus && $scope.state.program.criteria.hivstatus.length > 0
-        && $scope.state.program.criteria.hivstatus !== 'allstates') {
-        _.each($scope.state.program.criteria.hivstatus, function(state) {
-          $scope.state.eligibility[state] = true;
-        });
-        $scope.state.eligibility.allstates = false;
-      }
+
+      $scope.state.allHivStates = $scope.state.program.criteria.hivstatus == 'allstates';
+      $scope.hivStates = [
+        {short: 'acute', name: 'Acute infections'},
+        {short: 'gt500', name: 'CD4 > 500'},
+        {short: 'gt350', name: 'CD4 350-500'},
+        {short: 'gt200', name: 'CD4 200-350'},
+        {short: 'gt50', name: 'CD4 50-200'},
+        {short: 'aids', name: 'CD4 <50'},
+      ];
+      $scope.state.hivState = {};
+      _.each($scope.hivStates, function(state) {
+        $scope.state.hivState[state.short] = $scope.state.allHivStates;
+      });
     };
 
-    // Function to set eligibility selection
-    $scope.setEligibility = function(selectedEligibility) {
-      if(selectedEligibility === 'allstates') {
-        $scope.state.eligibility.acute = false;
-        $scope.state.eligibility.gt500 = false;
-        $scope.state.eligibility.gt350 = false;
-        $scope.state.eligibility.gt200 = false;
-        $scope.state.eligibility.gt50 = false;
-        $scope.state.eligibility.aids = false;
-      } else {
-        $scope.state.eligibility.allstates = false;
-      }
+    $scope.clickAllHivStates = function() {
+      _.forEach($scope.state.hivState, function(state, key) {
+        $scope.state.hivState[key] = $scope.state.allHivStates;
+      });
+    };
+
+    // Ensures state.selectAll responds to clicking any other population
+    $scope.clickAnyHivState = function() {
+      $scope.state.allHivStates = !_.some(
+        $scope.state.hivState, function(state) { return !state; });
     };
 
     // Function to select / unselect all populations
-    $scope.selectAllPopulations = function() {
+    $scope.clickAllTargetPopulations = function() {
       _.forEach($scope.state.populations, function(population) {
         population.active = $scope.state.selectAll;
       });
     };
 
-    // Function to select / un-select SelectAll when other populations are selected
-    $scope.setSelectAll = function() {
+    // Ensures state.selectAll responds to clicking any other population
+    $scope.clickAnyTargetPopulation = function() {
       $scope.state.selectAll = true;
       _.forEach($scope.state.populations, function(population) {
         if(!population.active) {
@@ -146,8 +149,7 @@
       });
     };
 
-    // Function to check if program name is unique
-    $scope.isUniqueName = function (name, programForm) {
+    $scope.checkClashingProgramName = function (name, programForm) {
       var exists = _(programList).some(function(program) {
         return program.name == name && program.id !== $scope.state.program.id;
       });
@@ -164,8 +166,8 @@
       $scope.state.program.targetpars.push({active: true});
     };
 
-    // When selection in parameter drop-down changes this code will add default population set to the parameterObj
-    $scope.addPopulations = function(parameter) {
+    // Ensures populations ard partnerships are added to parameterObj
+    $scope.changeParameter = function(parameter) {
       if(parameter.parameterObj.by === 'tot'){
         parameter.populations = [];
       }else{
@@ -175,25 +177,30 @@
       }
     };
 
-    // Function to add/remove all populations to a parameter
-    $scope.addRemoveAllPopToParameter = function(param) {
-      _.forEach(param.populations, function(population) {
-        population.added = param.selectAll;
+    $scope.clickAllPopulationsOfParameter = function(parameter) {
+      _.forEach(parameter.populations, function(population) {
+        population.added = parameter.selectAll;
       });
     };
 
-    $scope.setParameterSelectAll = function(parameter, parameterPops) {
-      parameter.selectAll = !_.some(parameterPops, function(pop) {
-        return !pop.added;
+    $scope.clickAnyPopulationOfParameter = function(parameter, populations) {
+      parameter.selectAll = !_.some(populations, function(population) {
+        return !population.added;
       });
     };
 
-    // Function to add/remove all partnerships to a parameter
-    $scope.addRemoveAllPshipsToParameter = function(param) {
-      _.forEach(param.parameterObj.pships, function(pship) {
-        pship.added = param.selectAll;
+    $scope.clickAllPartnershipsOfParameter = function(parameter) {
+      _.forEach(parameter.parameterObj.pships, function(pship) {
+        pship.added = parameter.selectAll;
       });
     };
+
+    $scope.clickAnyPartnershipOfParameter = function(parameter, pships) {
+      parameter.selectAll = !_.some(pships, function(pship) {
+        return !pship.added;
+      });
+    };
+
     // Function to remove a parameter
     $scope.removeParameter = function ($index) {
       program.targetpars.splice($index,1);
@@ -206,7 +213,7 @@
     };
 
     // Function to add additional data
-    $scope.addAddData = function () {
+    $scope.addHistoricalData = function () {
       if($scope.state.newAddData.year && $scope.state.newAddData.cost >= 0 && $scope.state.newAddData.coverage >= 0) {
         if(!$scope.state.program.costcov) {
           $scope.state.program.costcov = [];
@@ -230,12 +237,23 @@
           return population.short;
         });
         
-        $scope.state.program.criteria.hivstatus = _.filter(hivstatus, function(state) {
-          return $scope.state.eligibility[state];
-        }).map(function(state) {
-          return state;
-        });
-        // tot
+        $scope.state.program.criteria.hivstatus = '';
+        if ($scope.state.allHivStates) {
+          $scope.state.program.criteria.hivstatus = 'allstates';
+        } else {
+          var stateShorts = [];
+          _.each($scope.state.hivState, function(state, hivStateShort) {
+            if (state) {
+              stateShorts.push(hivStateShort);
+            }
+          });
+          if (stateShorts.length > 2) {
+            $scope.state.program.criteria.hivstatus = stateShorts;
+          } else if (stateShorts.length == 1) {
+            $scope.state.program.criteria.hivstatus = stateShorts[0];
+          }
+        }
+
         if($scope.state.program.targetpars)
 
         /**
