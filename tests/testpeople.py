@@ -10,7 +10,7 @@ import os
 
 
 refresh = 1 # Creates defaultpeople.ppl rather than copares
-eps = 1e5 # Don't expect a totally exact match
+eps = 1e-3 # Don't expect a totally exact match
 filename = '2016jul16.npy'
 
 P = op.defaults.defaultproject('best')

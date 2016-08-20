@@ -139,8 +139,8 @@ def loadpartable(inputpartable=None):
 
 #############################################################################################################################
 ### Define the allowable transitions!
-##  NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/transitions
-##  Edit there, then copy and paste from there into here; be sure to include header row
+##  NOTE, this should be consistent with the spreadsheet https://docs.google.com/spreadsheets/d/1ALJ3v8CXD7BkinGoUrfWPkxAg22l0PMTzWnMFldAYV0/edit?usp=sharing
+##  Edit there, then copy and paste from there into here; include row and column numbers
 #############################################################################################################################
 transtable = '''
 	0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37

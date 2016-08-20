@@ -106,9 +106,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     for p1 in range(npops):
             for p2 in range(npops):
                 if agetransit[p1,p2]: agetransitlist.append((p1,p2))
-#                    for state in range(nstates):
-#                        rawtransit[state][1][:,p1] *= 1.-agetransit[p1,p2] 
-#                        rawtransit[state][1][:,p2] *= agetransit[p1,p2]
                 if risktransit[p1,p2]: risktransitlist.append((p1,p2))
 
     
@@ -120,9 +117,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Calculate other things outside the loop
     transinj = simpars['transinj']          # Injecting
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = (1.0-simpars['effdx']) # Include diagnosis efficacy
-    efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # reduction in transmission probability for usVL
-    efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # reduction in transmission probability for sVL
+    dxfactor = (1.-simpars['effdx']) # Include diagnosis efficacy
+    efftxunsupp = (1.-simpars['efftxunsupp']) * dxfactor # reduction in transmission probability for usVL
+    efftxsupp  = (1.-simpars['efftxsupp'])  * dxfactor # reduction in transmission probability for sVL
 
     alltrans = zeros(nstates)
     alltrans[undx] = cd4trans
