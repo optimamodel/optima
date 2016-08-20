@@ -14,12 +14,12 @@ from server.webapp.dataio import (
     get_program_from_progset, save_program_summary)
 from server.webapp.parse import parse_outcomes_from_progset, put_outcomes_into_progset
 from server.webapp.resources.common import report_exception
-from server.webapp.utils import Json, RequestParser, normalize_obj
+from server.webapp.utils import RequestParser, normalize_obj
 
 
 progset_parser = RequestParser()
 progset_parser.add_arguments(
-    {'name': {'required': True}, 'programs': {'type': Json, 'location': 'json'}})
+    {'name': {'required': True}, 'programs': {'type': lambda _: _, 'location': 'json'}})
 
 class Progsets(Resource):
     """
@@ -160,7 +160,7 @@ class ProgsetEffects(Resource):
 
 query_program_parser = RequestParser()
 query_program_parser.add_arguments({
-    'program': {'required': True, 'type': Json, 'location': 'json'},
+    'program': {'required': True, 'type': lambda _: _, 'location': 'json'},
 })
 
 class Program(Resource):

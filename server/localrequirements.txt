@@ -24,3 +24,4 @@ Werkzeug
 celery
 redis
 twisted
+click

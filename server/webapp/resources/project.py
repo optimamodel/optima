@@ -639,7 +639,7 @@ class ProjectData(Resource):
         old_project = project_record.load()
 
         # Migrate it, so that older projects can be uploaded okay
-        project = op.migrateproject(op.loadobj(uploaded_file))
+        project = op.migrate(op.loadobj(uploaded_file))
 
         # Make sure they have the same name and uid...
         project.name = old_project.name
@@ -696,7 +696,7 @@ class ProjectFromData(Resource):
         project = op.loadobj(uploaded_file)
 
         # Migrate it, so that older projects can be uploaded okay
-        project = op.migrateproject(project)
+        project = op.migrate(project)
 
         project.name = project_name
         save_project_with_new_uids(project, current_user.id)
