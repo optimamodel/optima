@@ -690,7 +690,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raw_proptx[t+1] = currtx/currdx
             
             for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
-                if totnewtreat<eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
+                if totnewtreat>eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
                     thisnewtreat = min(totnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
                     newtreat[cd4] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
                     totnewtreat -= newtreat[cd4].sum() # Adjust the number of available treatment spots
