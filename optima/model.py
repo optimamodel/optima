@@ -618,9 +618,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for fromstate in usvl:
                 for ts, tostate in enumerate(thistransit[fromstate][0]):
                     if tostate in usvl: # Probability of remaining unsuppressed
-                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-(freqvlmon[t]*treatfail))
-                    else: # Probability of being lost
-                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(freqvlmon[t]*treatfail)
+                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-freqvlmon[t])
+                    else: # Probability of becoming suppressed
+                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*freqvlmon[t]
                                 
             # SVL to USVL
             for fromstate in svl:
@@ -629,7 +629,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-treatfail)
                     else: # Probability of becoming unsuppressed
                         thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*treatfail
-
+        
         ## Do deaths
         for state in range(nstates):
             thistransit[state][1] = (1.-background[:,t])*thistransit[state][1]
@@ -677,13 +677,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
             # Handle treatment
+            if t==0: newtreat    = zeros((ncd4, npops)) # Initialise newtreat only on first timestep
+            people[usvl,:,t+1] -= newtreat*treatvs # Shift last period's new initiators out of USVL compartment... 
+            people[svl, :,t+1] += newtreat*treatvs # ... and into SVL compartment, according to treatvs
+
             currplhiv   = people[allplhiv,:,t+1].sum() 
             currdx      = people[alldx,:,t+1].sum() # This assumes proptx refers to the proportion of diagnosed who are to be on treatment 
             currtx      = people[alltx,:,t+1].sum()
             totreat     = proptx[t+1]*currdx if not(isnan(proptx[t+1])) else numtx[t+1]
             totnewtreat = max(0, totreat - currtx)
             currentdiagnosed = people[dx,:,t+1]
-            newtreat    = zeros((ncd4, npops)) # Initialise newtreat only on first timestep
 
             raw_propdx[t+1] = currdx/currplhiv
             raw_proptx[t+1] = currtx/currdx
@@ -694,12 +697,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     newtreat[cd4,:] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
                     totnewtreat -= newtreat[cd4,:].sum() # Adjust the number of available treatment spots
 
-            raw_newtreat[:,t+1] = newtreat/dt # Save annual treatment initiation
-
+            raw_newtreat[:,t+1] = newtreat.sum(axis=0)/dt # Save annual treatment initiation
             people[care,:,t+1] -= newtreat # Shift people out of care... 
             people[usvl,:,t+1] += newtreat # ... and into USVL compartment
-            people[usvl,:,t+1] -= raw_newtreat[:,t]*dt*treatvs # Shift last period's new initiators out of USVL compartment... 
-            people[svl, :,t+1] += raw_newtreat[:,t]*dt*treatvs # ... and into SVL compartment, according to treatvs
             
 
             ## Handle births
