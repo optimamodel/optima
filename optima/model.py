@@ -686,21 +686,22 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             currtx      = people[alltx,:,t+1].sum()
             totreat     = proptx[t+1]*currdx if not(isnan(proptx[t+1])) else numtx[t+1]
             totnewtreat = max(0, totreat - currtx)
-            currentdiagnosed = people[dx,:,t+1]
+            currentcare = people[care,:,t+1]
 
             raw_propdx[t+1] = currdx/currplhiv
             raw_proptx[t+1] = currtx/currdx
             
             for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
+                newtreat[cd4,:] = zeros(npops)
                 if totnewtreat>eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
-                    thisnewtreat = min(totnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
-                    newtreat[cd4,:] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
+                    thisnewtreat = min(totnewtreat, sum(currentcare[cd4,:])) # Figure out how many spots are available
+                    newtreat[cd4,:] = thisnewtreat * (currentcare[cd4,:]) / (eps+sum(currentcare[cd4,:])) # Pull out evenly from each population
                     totnewtreat -= newtreat[cd4,:].sum() # Adjust the number of available treatment spots
 
             raw_newtreat[:,t+1] = newtreat.sum(axis=0)/dt # Save annual treatment initiation
             people[care,:,t+1] -= newtreat # Shift people out of care... 
             people[usvl,:,t+1] += newtreat # ... and into USVL compartment
-            
+                        
 
             ## Handle births
             for p1,p2,birthrates,alleligbirthrate in birthslist:
