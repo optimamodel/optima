@@ -52,7 +52,6 @@ Condom use for commercial acts	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	ran
 Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (per year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
-Biological failure rate (per year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 PLHIV aware of their status	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
 Diagnosed PLHIV in care	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
 PLHIV in care on treatment	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
@@ -80,7 +79,7 @@ Treatment recovery into CD4>500 (years)	svlrecovgt350	(0, 'maxduration')	tot	con
 Treatment recovery into CD4>350 (years)	svlrecovgt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
 Treatment recovery into CD4>200 (years)	svlrecovgt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
 Treatment recovery into CD4>50 (years)	svlrecovlt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
-Average time from initiating ART to achieving viral suppression (years)	treatvs	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Time after initiating ART to achieve viral suppression (years)	treatvs	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
 Progression from CD4>500 to CD4>350 on unsuppressive ART	usvlproggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Recovery from CD4>350 to CD4>500 on unsuppressive ART	usvlrecovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Progression from CD4>350 to CD4>200 on unsuppressive ART	usvlproggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
@@ -89,13 +88,15 @@ Progression from CD4>200 to CD4>50 on unsuppressive ART	usvlproggt200	(0, 'maxra
 Recovery from CD4>50 to CD4>200 on unsuppressive ART	usvlrecovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Progression from CD4>50 to CD4<50 on unsuppressive ART	usvlproggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Recovery from CD4<50 to CD4>50 on unsuppressive ART	usvlrecovlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment failure rate	treatfail	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for acute HIV (per year)	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>500 (per year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>350 (per year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>200 (per year)	deathgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>50 (per year)	deathgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4<50 (per year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative death rate on suppressive ART (unitless)	deathsvl	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative death rate on unsuppressive ART (unitless)	deathusvl	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Efficacy of unsuppressive ART	efftxunsupp	(0, 1)	tot	constant	const	const	1	None	0	None
 Efficacy of suppressive ART	efftxsupp	(0, 1)	tot	constant	const	const	1	None	0	None

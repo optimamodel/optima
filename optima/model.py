@@ -56,14 +56,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],0.]) 
     svlrecov   = array([0.,0.,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']])
     deathhiv   = array([simpars['deathacute'],simpars['deathgt500'],simpars['deathgt350'],simpars['deathgt200'],simpars['deathgt50'],simpars['deathlt50']])
-    deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
+    deathsvl    = simpars['deathsvl']   # Death rate whilst on suppressive ART
+    deathusvl    = simpars['deathusvl']   # Death rate whilst on unsuppressive ART
     cd4trans   = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
     deathprob  = zeros((nstates)) # Initialise death probability array
     background = simpars['death']*dt
 
     # Cascade-related parameters
     treatvs       = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))        # viral suppression - ART initiators
-    biofailure    = simpars['biofailure']*dt    # biological treatment failure rate
+    treatfail     = simpars['treatfail']*dt     # Treatment failure rate
     freqvlmon     = simpars['freqvlmon']*dt     # Viral load monitoring frequency
     linktocare    = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # mean time before being linked to care
     leavecare     = simpars['leavecare']*dt     # Proportion of people in care then lost to follow-up per year
@@ -229,8 +230,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     rawtransit[fromstate][1][ts] = 1.-exp(-dt/simpars['progacute'])
     
             # Death probabilities
-            rawtransit[fromstate][1][ts] *= (1.-deathhiv[fromhealthstate]*deathtx*dt)    
-            deathprob[fromstate] = deathhiv[fromhealthstate]*deathtx*dt
+            rawtransit[fromstate][1][ts] *= (1.-deathhiv[fromhealthstate]*deathsvl*dt)    
+            deathprob[fromstate] = deathhiv[fromhealthstate]*deathsvl*dt
             
 
     # Recovery and progression and deaths for people on unsuppressive ART
@@ -277,8 +278,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovlt50']*dt
                                     
             # Death probabilities
-            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*deathtx*dt
-            deathprob[fromstate] = deathhiv[fromhealthstate]*deathtx*dt
+            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*deathusvl*dt
+            deathprob[fromstate] = deathhiv[fromhealthstate]*deathusvl*dt
 
   
 
@@ -625,9 +626,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for fromstate in svl:
                 for ts, tostate in enumerate(thistransit[fromstate][0]):
                     if tostate in svl: # Probability of remaining suppressed
-                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-biofailure[t])
+                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-treatfail)
                     else: # Probability of becoming unsuppressed
-                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*biofailure[t]
+                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*treatfail
 
 
         ## Do deaths
