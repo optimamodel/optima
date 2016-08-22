@@ -618,9 +618,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for fromstate in usvl:
                 for ts, tostate in enumerate(thistransit[fromstate][0]):
                     if tostate in usvl: # Probability of remaining unsuppressed
-                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-freqvlmon[t])
+                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-(freqvlmon[t]*treatfail+treatvs))
                     else: # Probability of being lost
-                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*freqvlmon[t]
+                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(freqvlmon[t]*treatfail+treatvs)
                                 
             # SVL to USVL
             for fromstate in svl:
@@ -629,7 +629,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-treatfail)
                     else: # Probability of becoming unsuppressed
                         thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*treatfail
-
 
         ## Do deaths
         for state in range(nstates):
