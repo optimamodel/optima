@@ -618,9 +618,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for fromstate in usvl:
                 for ts, tostate in enumerate(thistransit[fromstate][0]):
                     if tostate in usvl: # Probability of remaining unsuppressed
-                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-(freqvlmon[t]*treatfail+treatvs))
+                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(1.-(freqvlmon[t]*treatfail))
                     else: # Probability of being lost
-                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(freqvlmon[t]*treatfail+treatvs)
+                        thistransit[fromstate][1][ts] = thistransit[fromstate][1][ts]*(freqvlmon[t]*treatfail)
                                 
             # SVL to USVL
             for fromstate in svl:
@@ -634,7 +634,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for state in range(nstates):
             thistransit[state][1] = (1.-background[:,t])*thistransit[state][1]
 
-            
         # Check that probabilities all sum to 1
         if debug and not all([(abs(thistransit[j][1].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
             wrongstatesindices = [j for j in range(nstates) if not (abs(thistransit[j][1].sum(axis=0)+deathprob[j]-ones(npops))<eps).all()]
@@ -682,9 +681,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             currdx      = people[alldx,:,t+1].sum() # This assumes proptx refers to the proportion of diagnosed who are to be on treatment 
             currtx      = people[alltx,:,t+1].sum()
             totreat     = proptx[t+1]*currdx if not(isnan(proptx[t+1])) else numtx[t+1]
-            newtreat    = [0] * ncd4
             totnewtreat = max(0, totreat - currtx)
             currentdiagnosed = people[dx,:,t+1]
+            newtreat    = zeros((ncd4, npops)) # Initialise newtreat only on first timestep
 
             raw_propdx[t+1] = currdx/currplhiv
             raw_proptx[t+1] = currtx/currdx
@@ -692,13 +691,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
                 if totnewtreat>eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
                     thisnewtreat = min(totnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
-                    newtreat[cd4] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
-                    totnewtreat -= newtreat[cd4].sum() # Adjust the number of available treatment spots
+                    newtreat[cd4,:] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
+                    totnewtreat -= newtreat[cd4,:].sum() # Adjust the number of available treatment spots
 
-                raw_newtreat[:,t+1] += newtreat[cd4]/dt # Save annual treatment initiation
+            raw_newtreat[:,t+1] = newtreat/dt # Save annual treatment initiation
 
-                people[care[cd4],:,t+1] -= newtreat[cd4]
-                people[usvl[cd4],:,t+1] += newtreat[cd4]
+            people[care,:,t+1] -= newtreat # Shift people out of care... 
+            people[usvl,:,t+1] += newtreat # ... and into USVL compartment
+            people[usvl,:,t+1] -= raw_newtreat[:,t]*dt*treatvs # Shift last period's new initiators out of USVL compartment... 
+            people[svl, :,t+1] += raw_newtreat[:,t]*dt*treatvs # ... and into SVL compartment, according to treatvs
             
 
             ## Handle births
@@ -715,7 +716,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 popmtct         = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
                 
                 raw_mtct[p2, t] += popmtct
-                
                 people[undx[0], p2, t+1] += popmtct # HIV+ babies assigned to undiagnosed compartment
                 people[susreg, p2, t+1]  += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
 
