@@ -314,7 +314,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if die: raise OptimaException(errormsg)
             else:
                 printv(errormsg, 1, verbose)
-                treatment = allinfected # WARNING TODO FIX
+                treatment = maximum(allinfected, treatment)
 
         nevertreated = allinfected - treatment
         fracundiagnosed = exp(-durationpreaids*simpars['hivtest'][:,0])
