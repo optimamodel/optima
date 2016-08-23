@@ -646,7 +646,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         if t<npts-1:
             
             # Handle circumcision
-            circppl = maximum(0, minimum(numcirc[:,t], people[susreg,:,t+1])) # Don't circumcise more people than are available
+            circppl = numcirc[:,t+1]
+            if (circppl > people[susreg,:,t+1]).any():
+                errormsg = 'More people requiring circumcision (numcirc[:,%i] = %s) than there are people to circumcise (people[susreg,:,%i] = %s)' % (t+1, numcirc[:,t+1], t+1, people[susreg,:,t+1])
+                if die: raise OptimaException(errormsg)
+                else:
+                    printv(errormsg, 1, verbose)
+                    circppl = minimum(numcirc[:,t], people[susreg,:,t+1])
             people[susreg,:,t+1]   -= circppl
             people[progcirc,:,t+1] += circppl 
 
