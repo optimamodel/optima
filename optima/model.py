@@ -106,7 +106,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     for p1 in range(npops):
             for p2 in range(npops):
                 if agetransit[p1,p2]: agetransitlist.append((p1,p2))
-                if risktransit[p1,p2]: risktransitlist.append((p1,p2))
+                if risktransit[p1,p2]: risktransitlist.append((p1,p2,(1.-exp(-dt/risktransit[p1,p2]))))
     
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -647,7 +647,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
             # Handle circumcision
             circppl = numcirc[:,t+1]
-            if (circppl > people[susreg,:,t+1]).any():
+            if debug and (circppl > people[susreg,:,t+1]).any():
                 errormsg = 'More people requiring circumcision (numcirc[:,%i] = %s) than there are people to circumcise (people[susreg,:,%i] = %s)' % (t+1, numcirc[:,t+1], t+1, people[susreg,:,t+1])
                 if die: raise OptimaException(errormsg)
                 else:
@@ -705,7 +705,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Age-related transitions
             for p1,p2 in agetransitlist:
                 peopleleaving = people[:, p1, t+1] * agetransit[p1, p2]
-                if (peopleleaving > people[:, p1, t+1]).any():
+                if debug and (peopleleaving > people[:, p1, t+1]).any():
                     errormsg = 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
                     if die: raise OptimaException(errormsg)
                     else:
@@ -716,13 +716,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
             
             ## Risk-related transitions
-            for p1,p2 in risktransitlist:
-                peoplemoving1 = people[:, p1, t+1] * (1.-exp(-dt/risktransit[p1,p2]))  # Number of other people who are moving pop1 -> pop2
-                peoplemoving2 = people[:, p2, t+1] * (1.-exp(-dt/risktransit[p1,p2])) * (sum(people[:, p1, t+1])/sum(people[:, p2, t+1])) # Number of people who moving pop2 -> pop1, correcting for population size
+            for p1,p2,thisrisktransprob in risktransitlist:
+                peoplemoving1 = people[:, p1, t+1] * thisrisktransprob  # Number of other people who are moving pop1 -> pop2
+                peoplemoving2 = people[:, p2, t+1] * thisrisktransprob * (sum(people[:, p1, t+1])/sum(people[:, p2, t+1])) # Number of people who moving pop2 -> pop1, correcting for population size
                 # Symmetric flow in totality, but the state distribution will ideally change.                
                 people[:, p1, t+1] += peoplemoving2 - peoplemoving1 # NOTE: this should not cause negative people; peoplemoving1 is guaranteed to be strictly greater than 0 and strictly less that people[:, p1, t+1]
                 people[:, p2, t+1] += peoplemoving1 - peoplemoving2 # NOTE: this should not cause negative people; peoplemoving2 is guaranteed to be strictly greater than 0 and strictly less that people[:, p2, t+1]
-            
             
             
             
