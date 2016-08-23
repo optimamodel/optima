@@ -29,7 +29,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     nstates         = settings.nstates              # Shorten number of health states
     people          = zeros((nstates, npops, npts)) # Matrix to hold everything
     allpeople       = zeros((npops, npts))          # Population sizes
-    effhivprev      = zeros((npops, 1))             # HIV effective prevalence (prevalence times infectiousness), overall
     effallprev      = zeros((nstates, npops))       # HIV effective prevalence (prevalence times infectiousness), by health state
     inhomo          = zeros(npops)                  # Inhomogeneity calculations
     eps             = settings.eps                  # Define another small number to avoid divide-by-zero errors
@@ -317,11 +316,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 printv(errormsg, 1, verbose)
                 treatment = allinfected # WARNING TODO FIX
 
-        # Diagnosed & undiagnosed
         nevertreated = allinfected - treatment
         fracundiagnosed = exp(-durationpreaids*simpars['hivtest'][:,0])
-        undiagnosed = nevertreated * fracundiagnosed     
-        diagnosed = nevertreated * (1-fracundiagnosed)
         
         # Set rates within
         progratios = cat([prog[:-1], [simpars['deathlt50']]]) # For last rate, use CD4<50 death as dominant rate
@@ -330,8 +326,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
  
         # Final calculations
-        undiagnosed = einsum('i,j->ji',undiagnosed,progratios)
-        diagnosed = einsum('i,j->ji',diagnosed,progratios)
+        undiagnosed = einsum('i,i,j->ji',nevertreated,fracundiagnosed,progratios)
+        diagnosed = einsum('i,i,j->ji',nevertreated,1.-fracundiagnosed,progratios)
         treatment = einsum('i,j->ji',treatment,recovratios)
         
         # Populated equilibrated array
@@ -428,7 +424,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
                 
 
-
     ##################################################################################################################
     ### Run the model 
     ##################################################################################################################
@@ -440,25 +435,20 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         thistransit = dcp(rawtransit)
 
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
-        for pop in range(npops): # Loop over each population group
-            allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if debug and not(allpeople[pop,t]>0): 
-                errormsg = 'No people in population %i at timestep %i (time %0.1f)' % (pop, t, tvec[t])
-                if die: raise OptimaException(errormsg)
-                else: printv(errormsg, 1, verbose)
+        allpeople[:,t] = people[:, :, t].sum(axis=0)
+        if debug and not( all(allpeople[:,t]>0)):
+            errormsg = 'No people in populations %s at timestep %i (time %0.1f)' % (findinds(allpeople[:,t]<=0), t, tvec[t])
+            if die: raise OptimaException(errormsg)
+            else: printv(errormsg, 1, verbose)
                 
-            effallprev[:,pop] = (alltrans * people[:,pop,t]) / allpeople[pop,t]
-            effhivprev[pop] = sum(alltrans * people[:,pop,t]) / allpeople[pop,t]
-                            
-            
-            if debug and not(all(effallprev[:,pop]>=0)): # WARNING, this shouldn't be required, negative people handles this!
-                errormsg = 'HIV prevalence invalid in population %s!' % (pop)
-                if die: raise OptimaException(errormsg)
-                else:
-                    printv(errormsg, 1, verbose)
-                    for s in range(nstates):
-                        if effallprev[s,pop]<0: effallprev[s,pop] = 0.0 
-        
+        effallprev[:,:] = einsum('i,ij->ij',alltrans,people[:,:,t]) / allpeople[:,t]                            
+        if debug and not((effallprev[:,:]>=0).all()): 
+            errormsg = 'HIV prevalence invalid in populations %s!' % (findinds(effallprev[:,:]<0))
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 1, verbose)
+                effallprev = minimum(effallprev,eps)
+
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
             c = inhomopar[pop]
@@ -499,7 +489,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
                 errormsg = 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effhivprev[:,pop2]']:
+                for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
         
