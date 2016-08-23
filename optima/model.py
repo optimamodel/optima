@@ -450,18 +450,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 effallprev = minimum(effallprev,eps)
 
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
-        for pop in range(npops):
-            c = inhomopar[pop]
-            thisprev = sum(people[allplhiv,pop,t]) / allpeople[pop,t] 
-            inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
-
-        
+        thisprev = people[allplhiv,:,t].sum(axis=0) / allpeople[:,t] 
+        inhomo = (inhomopar+eps) / (exp(inhomopar+eps)-1) * exp(inhomopar*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
         ###############################################################################
         ## Calculate probability of getting infected
         ###############################################################################
         
-        # Probability of getting infection. In the first stage of construction, we actually store this as the probability of NOT getting infected
+        # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
         forceinffull = ones((len(sus), npops, nstates, npops))
 
@@ -514,9 +510,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ### Calculate probabilities of shifting along cascade
         ##############################################################################################################
 
+        currplhiv = people[allplhiv,:,t].sum(axis=(0,1))
+
         ## Transitions to diagnosed 
         if not(isnan(propdx[t])): # If propdx is specified...
-            currplhiv = people[allplhiv,:,t].sum(axis=(0,1))
             currdx = people[alldx,:,t].sum(axis=(0,1))
             currundx = currplhiv - currdx
             fractiontodx = max(0, (propdx[t]*currplhiv - currdx)/(currundx + eps))
@@ -543,7 +540,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         ## Transitions to care 
         if not(isnan(propcare[t])): # If propcare is specified...
-            currplhiv = people[allplhiv,:,t].sum(axis=(0,1))
             currcare = people[allcare,:,t].sum(axis=(0,1))
             curruncare = currplhiv - currcare
             fractiontocare = max(0, (propcare[t]*currplhiv - currcare)/(curruncare + eps))
@@ -582,7 +578,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         ## USVL to SVL
         if not(isnan(propsupp[t])): # If propsupp is specified...
-            currplhiv = people[allplhiv,:,t].sum(axis=(0,1))
             currsvl = people[svl,:,t].sum(axis=(0,1))
             currusvl = currplhiv - currsvl
             fractiontosupp = max(0, (propsupp[t]*currplhiv - currsvl)/(currusvl + eps))
