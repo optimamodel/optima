@@ -241,33 +241,33 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     rawtransit[fromstate][1][ts] = exp(-dt/simpars['progacute'])
                 elif tostate in gt500:
                     rawtransit[fromstate][1][ts] = 1.-exp(-dt/simpars['progacute'])
-            if fromstate in gt500: 
+            elif fromstate in gt500: 
                 if tostate in gt500:
                     rawtransit[fromstate][1][ts] = 1.-simpars['usvlproggt500']*dt
                 elif tostate in gt350:
                     rawtransit[fromstate][1][ts] = simpars['usvlproggt500']*dt
-            if fromstate in gt350:
+            elif fromstate in gt350:
                 if tostate in gt500:
                     rawtransit[fromstate][1][ts] = simpars['usvlrecovgt350']*dt
                 elif tostate in gt350:
                     rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt350']*dt-simpars['usvlproggt350']*dt
                 elif tostate in gt200:
                     rawtransit[fromstate][1][ts] = simpars['usvlproggt350']*dt
-            if fromstate in gt200:
+            elif fromstate in gt200:
                 if tostate in gt350:
                     rawtransit[fromstate][1][ts] = simpars['usvlrecovgt200']*dt
                 elif tostate in gt200:
                     rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt200']*dt-simpars['usvlproggt200']*dt
                 elif tostate in gt50:
                     rawtransit[fromstate][1][ts] = simpars['usvlproggt200']*dt
-            if fromstate in gt50:
+            elif fromstate in gt50:
                 if tostate in gt200:
                     rawtransit[fromstate][1][ts] = simpars['usvlrecovgt50']*dt
                 elif tostate in gt50:
                     rawtransit[fromstate][1][ts] = 1.-simpars['usvlrecovgt50']*dt-simpars['usvlproggt50']*dt
                 elif tostate in lt50:
                     rawtransit[fromstate][1][ts] = simpars['usvlproggt50']*dt
-            if fromstate in lt50:
+            elif fromstate in lt50:
                 if tostate in gt50:
                     rawtransit[fromstate][1][ts] = simpars['usvlrecovlt50']*dt
                 elif tostate in lt50:
@@ -704,8 +704,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
             ## Age-related transitions
             for p1,p2 in agetransitlist:
-                peopleleaving = people[:, p1, t] * agetransit[p1,p2]
-                peopleleaving = minimum(peopleleaving, people[:, p1, t]) # Ensure positive                     
+                peopleleaving = people[:, p1, t+1] * agetransit[p1, p2]
+                if (peopleleaving > people[:, p1, t+1]).any():
+                    errormsg = 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
+                    if die: raise OptimaException(errormsg)
+                    else:
+                        printv(errormsg, 1, verbose)
+                        peopleleaving = minimum(peopleleaving, people[:, p1, t]) # Ensure positive                     
                 people[:, p1, t+1] -= peopleleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
                 
@@ -715,9 +720,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 peoplemoving1 = people[:, p1, t+1] * (1.-exp(-dt/risktransit[p1,p2]))  # Number of other people who are moving pop1 -> pop2
                 peoplemoving2 = people[:, p2, t+1] * (1.-exp(-dt/risktransit[p1,p2])) * (sum(people[:, p1, t+1])/sum(people[:, p2, t+1])) # Number of people who moving pop2 -> pop1, correcting for population size
                 # Symmetric flow in totality, but the state distribution will ideally change.                
-                #### WARNING, THIS COULD STILL RESULT IN NEGATIVE PEOPLE
-                people[:, p1, t+1] += peoplemoving2 - peoplemoving1
-                people[:, p2, t+1] += peoplemoving1 - peoplemoving2
+                people[:, p1, t+1] += peoplemoving2 - peoplemoving1 # NOTE: this should not cause negative people; peoplemoving1 is guaranteed to be strictly greater than 0 and strictly less that people[:, p1, t+1]
+                people[:, p2, t+1] += peoplemoving1 - peoplemoving2 # NOTE: this should not cause negative people; peoplemoving2 is guaranteed to be strictly greater than 0 and strictly less that people[:, p2, t+1]
             
             
             
