@@ -43,20 +43,25 @@
     }
     - {
         role: optima,
-        app: "{{ apps.0 }}"
+        app: "{{ apps.0 }}",
+        tags: ["staging"]
       }
     - {
         role: optima,
-        app: "{{ apps.1 }}"
+        app: "{{ apps.1 }}",
+        tags: ["sandbox"]
       }
     - {
         role: optima,
-        app: "{{ apps.2 }}"
+        app: "{{ apps.2 }}",
+        tags: ["cdc_demo"]
       }
     - {
         role: optima,
-        app: "{{ apps.3 }}"
+        app: "{{ apps.3 }}",
+        tags: ["newdb"]
       }
     - {
-        role: rproxy
+        role: rproxy,
+        tags: ["rproxy"]
       }
