@@ -50,5 +50,6 @@
         tags: ["legacy"]
       }
     - {
-        role: rproxy
+        role: rproxy,
+        tags: ["rproxy"]
       }

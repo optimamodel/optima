@@ -1,3 +1,3 @@
 #! /usr/bin/env bash
 
-ansible-playbook playbook.yml -t "rproxy,$1" $2
+ansible-playbook playbook.yml -t "rproxy,restart,$1" $2
