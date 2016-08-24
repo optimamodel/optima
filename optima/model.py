@@ -542,15 +542,20 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         ## Transitions to care 
         if not(isnan(propcare[t])): # If propcare is specified...
+            currdx = people[alldx,:,t].sum(axis=(0,1))
             currcare = people[allcare,:,t].sum(axis=(0,1))
-            curruncare = currplhiv - currcare
-            fractiontocare = max(0, (propcare[t]*currplhiv - currcare)/(curruncare + eps))
+            curruncare = currdx - currcare
+            fractiontocare = max(0, (propcare[t]*currdx - currcare)/(curruncare + eps))
             for fromstate in cat([dx,lost]):
                 for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in dx: # Probability of not being tested
+                    if tostate in dx or tostate in lost: 
                         thistransit[fromstate][prob][ts] *= (1.-fractiontocare)
                     else: # Probability of being tested
                         thistransit[fromstate][prob][ts] *= fractiontocare
+            for fromstate in care:
+                for ts, tostate in enumerate(thistransit[fromstate][to]):
+                    if tostate not in care:
+                        thistransit[fromstate][prob][ts] *= 0.
 
         else: # ... or if programmatically determined
             # Diagnosed to care
@@ -580,15 +585,20 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         ## USVL to SVL
         if not(isnan(propsupp[t])): # If propsupp is specified...
+            currtx = people[alltx,:,t].sum(axis=(0,1))
             currsvl = people[svl,:,t].sum(axis=(0,1))
-            currusvl = currplhiv - currsvl
-            fractiontosupp = max(0, (propsupp[t]*currplhiv - currsvl)/(currusvl + eps))
+            currusvl = currtx - currsvl
+            fractiontosupp = max(0, (propsupp[t]*currtx - currsvl)/(currusvl + eps))
             for fromstate in usvl:
                 for ts, tostate in enumerate(thistransit[fromstate][to]):
                     if tostate in usvl: # Probability of not being tested
                         thistransit[fromstate][prob][ts] *= (1.-fractiontosupp)
                     else: # Probability of being tested
                         thistransit[fromstate][prob][ts] *= fractiontosupp
+            for fromstate in svl:
+                for ts, tostate in enumerate(thistransit[fromstate][to]):
+                    if tostate not in svl:
+                        thistransit[fromstate][prob][ts] *= 0.
 
         else: # ... or if programmatically determined
             # USVL to SVL
@@ -613,9 +623,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         # Check that probabilities all sum to 1
         if debug and not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
-            wrongstatesindices = [j for j in range(nstates) if not (abs(thistransit[j][prob].sum(axis=0)+deathprob[j]-ones(npops))<eps).all()]
+            wrongstatesindices = [j for j in range(nstates) if not (abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all()]
             wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
-            wrongprobs = array([thistransit[j][prob].sum(axis=0)+deathprob[j] for j in wrongstatesindices])
+            wrongprobs = array([thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
             errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
             raise OptimaException(errormsg)
             
@@ -664,14 +674,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[svl, :,t+1] += newtreat*treatvs # ... and into SVL compartment, according to treatvs
 
             currplhiv   = people[allplhiv,:,t+1].sum() 
-            currdx      = people[alldx,:,t+1].sum() # This assumes proptx refers to the proportion of diagnosed who are to be on treatment 
+            currcare    = people[allcare,:,t+1].sum() # This assumes proptx refers to the proportion of those in care who are to be on treatment 
             currtx      = people[alltx,:,t+1].sum()
-            totreat     = proptx[t+1]*currdx if not(isnan(proptx[t+1])) else numtx[t+1]
+            totreat     = proptx[t+1]*currcare if not(isnan(proptx[t+1])) else numtx[t+1]
             totnewtreat = max(0, totreat - currtx)
             currentcare = people[care,:,t+1]
 
-            raw_propdx[t+1] = currdx/currplhiv
-            raw_proptx[t+1] = currtx/currdx
+            raw_propdx[t+1] = currcare/currplhiv
+            raw_proptx[t+1] = currtx/currcare
             
             for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
                 newtreat[cd4,:] = zeros(npops)

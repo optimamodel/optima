@@ -484,10 +484,10 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2):
+    def runscenarios(self, scenlist=None, verbose=2, debug=False):
         ''' Function to run scenarios '''
         if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
-        multires = runscenarios(project=self, verbose=verbose)
+        multires = runscenarios(project=self, verbose=verbose, debug=debug)
         self.addresult(result=multires)
         self.modified = today()
         return None

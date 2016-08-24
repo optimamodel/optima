@@ -665,9 +665,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
     
     colors = gridcolormap(len(cascadelist))
     
-    
-    bottom = 0*results.tvec # Easy way of setting to 0...
     for plt in range(nsims): # WARNING, copied from plotallocs()
+        bottom = 0*results.tvec # Easy way of setting to 0...
         
         ## Do the plotting
         subplot(nsims,1,plt+1)
