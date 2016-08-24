@@ -659,12 +659,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
     # Set up figure and do plot
     fig = figure(figsize=figsize)
     
-    if results.settings.usecascade:
-        cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
-        cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
-    else:
-        cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
-        cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
+    cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
+    cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
         
     
     colors = gridcolormap(len(cascadelist))
