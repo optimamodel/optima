@@ -35,7 +35,8 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_progset, delete_progset, upload_progset, load_parameters_from_progset_parset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
-    upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs
+    upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs, \
+    get_portfolio
 from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
@@ -239,6 +240,21 @@ class ProjectCopy(Resource):
             'copy_id': copy_project_id
         }
         return payload
+
+
+# Portfolios
+
+class ManagePortfolio(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Returns portfolio information")
+    def get(self):
+        """
+        GET /api/portfolio
+        """
+
+        return get_portfolio()
+
 
 
 class DefaultPrograms(Resource):
@@ -783,6 +799,8 @@ class OptimizationGraph(Resource):
         which = get_post_data_json().get('which')
         return load_optimization_graphs(project_id, optimization_id, which)
 
+
+# USERS
 
 user_parser = RequestParser()
 user_parser.add_arguments({

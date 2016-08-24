@@ -24,6 +24,16 @@
       <div ng-click="goIfProjectActive('project.economicdata')">Add economic data</div>
     </div>
   </div>
+  <div ng-click="showPortfolioMenu = !showPortfolioMenu" ng-mouseleave="showPortfolioMenu = false">
+    <div class="btn __blue">
+      Manage portfolios
+      <i class="fa fa-angle-up" ng-if="showPortfolioMenu"></i>
+      <i class="fa fa-angle-down" ng-if="!showPortfolioMenu"></i>
+    </div>
+    <div ng-if="showPortfolioMenu" class="menu-dropdown" style="width: 200px;">
+      <div ui-sref="portfolio.manage">Manage portfolios</div>
+    </div>
+  </div>
   <div ng-click="showCalibrateMenu = !showCalibrateMenu" ng-mouseleave="showCalibrateMenu = false">
     <div class="btn __blue">
       Calibrate model

@@ -81,6 +81,8 @@ api.add_resource(handlers.ProjectDataSpreadsheet, '/api/project/<uuid:project_id
 api.add_resource(handlers.ProjectEcon, '/api/project/<uuid:project_id>/economics')
 api.add_resource(handlers.Portfolio, '/api/project/portfolio')
 
+api.add_resource(handlers.ManagePortfolio, '/api/portfolio')
+
 api.add_resource(handlers.Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(handlers.OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
 api.add_resource(handlers.OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')

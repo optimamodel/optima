@@ -1,0 +1,116 @@
+<div class="rich">
+  <div class="section">
+
+    <h1>Manage Geospatial Portfolios</h1>
+
+    <button
+        class="btn __m"
+        ng-click="createPortfolio()">
+      Create Portfolio
+    </button>
+
+    <button
+        class="btn __m"
+        ng-click="createPortfolio()">
+      Upload Portfolio
+    </button>
+
+    <div style="
+        width: 100%;
+        border-top: 1px solid #999;
+        margin-top: 2em;">
+    </div>
+
+    <h1>Portfolio: {{state.name}}</h1>
+
+    <div
+      style="
+        display: flex;
+        padding-top: 2em;">
+
+      <div style="flex: 0 0 280px">
+
+        <h2>Optimization Conditions </h2>
+
+        Select GA optimization:
+
+        <select
+            ng-model="activeGaoptim"
+            ng-options="gaoptim as gaoptim.name for gaoptim in state.gaoptims"
+            ng-change="selectNewGaoptim()">
+        </select>
+
+        <br>
+        <br>
+
+        <div
+          style="
+            width: 230px;
+            padding-bottom: 0.1em;"
+          ng-repeat="entry in objectiveKeyLabels">
+          <label>
+            {{entry.label}}
+          </label>
+          <input
+              class="txbox __inline"
+              style="
+          float: right;
+          width:70px;"
+              ng-model="activeGaoptim.objectives[entry.key]"
+              type="number"/>
+          <br clear="all">
+        </div>
+      </div>
+
+      <div style="flex: 1">
+
+        <h2>Projects</h2>
+
+        <button
+            style="margin-bottom: 1em"
+            class="btn">
+          Calculate BOC
+        </button>
+
+        <button
+            style="margin-bottom: 1em"
+            class="btn">
+          Stop calculation
+        </button>
+
+        <button
+            class="btn"
+            ng-disabled="true">
+          Run geospatial optimization
+        </button>
+
+        <table class="table table-bordered table-hover table-striped">
+          <tr>
+            <th>Project</th>
+            <th>BOC</th>
+            <th></th>
+          </tr>
+          <tr ng-repeat="project in state.projects">
+            <td>
+              {{project.name}}
+            </td>
+            <td width="150px">
+              {{project.boc}}
+            </td>
+            <td width="20px">
+              <span class="fa fa-trash"></span>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4">
+              <button class="btn"> + project</button>
+            </td>
+          </tr>
+        </table>
+
+      </div>
+
+  </div>
+
+
+</div>
