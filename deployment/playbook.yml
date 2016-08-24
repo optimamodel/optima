@@ -4,31 +4,24 @@
     - apps: [
        {
           name: staging,
-          domain: staging-new.optimamodel.com,
+          domain: hiv.optimamodel.com,
           port: 9000,
           repo: "github.com/optimamodel/optima.git",
-          branch: graph_2x_and_fit_better_css
+          branch: develop
         },
         {
           name: sandbox,
           domain: sandbox.optimamodel.com,
           port: 9001,
           repo: "github.com/optimamodel/optima.git",
-          branch: stable_calc
+          branch: develop
         },
         {
-          name: cdc,
-          domain: cdc.optimamodel.com,
-          port: 9002,
+          name: legacy,
+          domain: ui.optimamodel.com,
+          port: 9005,
           repo: "github.com/optimamodel/optima.git",
-          branch: cdc_demo
-        },
-        {
-          name: newdb,
-          domain: newdb.optimamodel.com,
-          port: 9003,
-          repo: "github.com/optimamodel/optima.git",
-          branch: db-refactor
+          branch: backport-twisted-to-master
         }
       ]
     - user: optima
@@ -52,16 +45,10 @@
         tags: ["sandbox"]
       }
     - {
-        role: optima,
+        role: optimalegacy,
         app: "{{ apps.2 }}",
-        tags: ["cdc_demo"]
+        tags: ["legacy"]
       }
     - {
-        role: optima,
-        app: "{{ apps.3 }}",
-        tags: ["newdb"]
-      }
-    - {
-        role: rproxy,
-        tags: ["rproxy"]
+        role: rproxy
       }

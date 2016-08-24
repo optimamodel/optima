@@ -1,0 +1,11 @@
+[Unit]
+Description=Optima {{ service_name }}
+
+[Service]
+ExecStart={{ daemon }} {{daemon_opts}}
+Restart=always
+User={{ user }}
+WorkingDirectory={{ dir }}
+
+[Install]
+WantedBy=multi-user.target
