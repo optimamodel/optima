@@ -31,6 +31,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     allpeople       = zeros((npops, npts))          # Population sizes
     effallprev      = zeros((nstates, npops))       # HIV effective prevalence (prevalence times infectiousness), by health state
     inhomo          = zeros(npops)                  # Inhomogeneity calculations
+    newtreat        = zeros((ncd4, npops))          # Initialise newtreat
     eps             = settings.eps                  # Define another small number to avoid divide-by-zero errors
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
     rawtransit      = simpars['rawtransit']         # Raw transitions
@@ -658,7 +659,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
             # Handle treatment
-            if t==0: newtreat    = zeros((ncd4, npops)) # Initialise newtreat only on first timestep
             people[usvl,:,t+1] -= newtreat*treatvs # Shift last period's new initiators out of USVL compartment... 
             people[svl, :,t+1] += newtreat*treatvs # ... and into SVL compartment, according to treatvs
 
