@@ -1,3 +1,5 @@
+from server.webapp.parse import parse_portfolio_summaries
+
 __doc__ = """
 
 dataio.py
@@ -18,7 +20,7 @@ All parameters and return types are either id's, json-summaries, or mpld3 graphs
 
 
 import os
-from pprint import pformat, pprint
+from pprint import pformat
 from zipfile import ZipFile
 from uuid import uuid4
 from datetime import datetime
@@ -30,6 +32,7 @@ from werkzeug.utils import secure_filename
 
 from optima.dataio import loadobj as loaddbobj
 import optima as op
+import optima
 
 from .dbconn import db
 from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
@@ -50,8 +53,6 @@ from .parse import get_default_program_summaries, \
     set_program_summary_on_progset
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
-
-
 
 
 def authenticate_current_user():
@@ -326,65 +327,10 @@ def load_zip_of_prj_files(project_ids):
 ## PORTFOLIO
 
 
-def parse_portfolio_summaries(portfolio):
-    gaoptim_summaries = []
-    objectivesList = []
-    for gaoptim_key, gaoptim in portfolio.gaoptims.items():
-        resultpairs_summary = []
-        for resultpair_key, resultpair in gaoptim.resultpairs.items():
-            resultpair_summary = {}
-            for result_key, result in resultpair.items():
-                result_summary = {
-                    'name': result.name,
-                    'id': result.uid,
-                }
-                resultpair_summary[result_key] = result_summary
-            resultpairs_summary.append(resultpair_summary)
-
-        gaoptim_summaries.append({
-            "key": gaoptim_key,
-            "objectives": dict(gaoptim.objectives),
-            "id": gaoptim.uid,
-            "name": gaoptim.name,
-            "resultpairs": resultpairs_summary
-        })
-
-        objectivesList.append(gaoptim.objectives)
-
-    project_summaries = []
-
-    for project in portfolio.projects.values():
-        boc = project.getBOC(objectivesList[0])
-        project_summary = {
-            'name': project.name,
-            'id': project.uid,
-            'boc': 'calculated' if boc is not None else 'not ready',
-            'results': []
-        }
-        for result in project.results.values():
-            project_summary['results'].append({
-                'name': result.name,
-                'id': result.uid
-            })
-        project_summaries.append(project_summary)
-
-    result = {
-        "created": portfolio.created,
-        "name": portfolio.name,
-        "gaoptims": gaoptim_summaries,
-        "id": portfolio.uid,
-        "version": portfolio.version,
-        "gitversion": portfolio.gitversion,
-        # "outputstring": portfolio.outputstring,
-        "projects": project_summaries,
-    }
-    return result
-
-
 def get_portfolio():
-    import optima
     portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
     return parse_portfolio_summaries(portfolio)
+
 
 ## PARSET
 
@@ -498,17 +444,6 @@ def load_parset_graphs(
         "parameters": get_parameters_from_parset(parset),
         "graphs": graph_dict["graphs"]
     }
-
-
-def launch_autofit(project_id, parset_id, maxtime):
-    from server.webapp.tasks import run_autofit, start_or_report_calculation
-    work_type = 'autofit-' + str(parset_id)
-    calc_status = start_or_report_calculation(project_id, work_type)
-    if calc_status['status'] != "blocked":
-        print "> Starting autofit for %s s" % maxtime
-        run_autofit.delay(project_id, parset_id, maxtime)
-        calc_status['maxtime'] = maxtime
-    return calc_status
 
 
 # RESULT
@@ -740,16 +675,6 @@ def check_optimization(project_id, optimization_id):
     if calc_state['status'] == 'error':
         clear_work_log(project_id, work_type)
         raise Exception(calc_state['error_text'])
-    return calc_state
-
-
-def launch_optimization(project_id, optimization_id, maxtime):
-    from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
-    calc_state = start_or_report_calculation(
-        project_id, 'optim-' + str(optimization_id))
-    if calc_state['status'] != 'started':
-        return calc_state, 208
-    run_optimization.delay(project_id, optimization_id, maxtime)
     return calc_state
 
 

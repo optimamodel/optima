@@ -30,16 +30,17 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     update_project_from_prj, create_project_from_prj, copy_project, load_project_program_summaries, \
     load_project_parameters, load_zip_of_prj_files, load_data_spreadsheet_binary, load_template_data_spreadsheet, \
     update_project_from_data_spreadsheet, update_project_from_econ_spreadsheet, load_project_name, delete_econ, \
-    load_parset_summaries, create_parset, copy_parset, delete_parset, rename_parset, load_parset_graphs, launch_autofit, \
-    load_parameters, save_parameters, load_result_csv, load_result_mpld3_graphs, load_progset_summaries, create_progset, \
+    load_parset_summaries, create_parset, copy_parset, delete_parset, rename_parset, load_parset_graphs, load_parameters, save_parameters, load_result_csv, load_result_mpld3_graphs, load_progset_summaries, create_progset, \
     save_progset, delete_progset, upload_progset, load_parameters_from_progset_parset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
-    upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs, \
+    upload_optimization_summary, check_optimization, load_optimization_graphs, \
     get_portfolio
+from . import dataio
 from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
+import server.webapp.tasks
 
 
 def report_exception(api_call):
@@ -252,9 +253,19 @@ class ManagePortfolio(Resource):
         """
         GET /api/portfolio
         """
-
         return get_portfolio()
 
+
+class CalculatePortfolio(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Returns portfolio information")
+    def get(self, portfolio_id, gaoptim_id):
+        """
+        GET /api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
+        """
+        print("> Run BOC %s %s" % (portfolio_id, gaoptim_id))
+        return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id)
 
 
 class DefaultPrograms(Resource):
@@ -488,16 +499,16 @@ class ParsetAutofit(Resource):
             maxtime: int - number of seconds to run
         """
         maxtime = get_post_data_json().get('maxtime')
-        return launch_autofit(project_id, parset_id, maxtime)
+        return server.webapp.tasks.launch_autofit(project_id, parset_id, maxtime)
 
     @swagger.operation(summary='Returns the calc status for the current job')
     def get(self, project_id, parset_id):
         """
         GET: /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
         """
-        from server.webapp.tasks import check_calculation_status
         print "> Checking calc state"
-        calc_state = check_calculation_status(project_id, 'autofit-' + str(parset_id))
+        calc_state = server.webapp.tasks.check_calculation_status(
+            project_id, 'autofit-' + str(parset_id))
         pprint.pprint(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
@@ -777,7 +788,7 @@ class OptimizationCalculation(Resource):
         data-json: maxtime: time to run in int
         """
         maxtime = get_post_data_json().get('maxtime')
-        return launch_optimization(project_id, optimization_id, int(maxtime)), 201
+        return server.webapp.tasks.launch_optimization(project_id, optimization_id, int(maxtime)), 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):

@@ -13,7 +13,7 @@ There should be no references to the database or web-handlers.
 
 from collections import defaultdict
 from functools import partial
-from pprint import pprint
+from pprint import pprint, pformat
 from uuid import UUID
 
 from flask.ext.restful import fields, marshal
@@ -418,7 +418,7 @@ def print_parset(parset):
         'name': parset.name,
         'project_id': parset.project.id if parset.project else '',
     }
-    s = pprint.pformat(result, indent=1) + "\n"
+    s = pformat(result, indent=1) + "\n"
     for pars in parset.pars:
         for key, par in pars.items():
             if hasattr(par, 'y'):
@@ -427,7 +427,7 @@ def print_parset(parset):
                 par = normalize_obj(par.p)
             else:
                 par = normalize_obj(par)
-            s += pprint.pformat({key: par}) + "\n"
+            s += pformat({key: par}) + "\n"
     return s
 
 
@@ -1180,3 +1180,72 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
     project.optims = new_optims
 
 
+def get_parset_from_project_by_id(project, parset_id):
+    for key, parset in project.parsets.items():
+        if str(parset.uid) == str(parset_id):
+            return parset
+    else:
+        return None
+
+
+def print_odict(name, an_odict):
+    print ">> %s = <odict>" % name
+    obj = normalize_obj(an_odict)
+    s = pformat(obj, indent=2)
+    for line in s.splitlines():
+        print ">> " + line
+
+
+def parse_portfolio_summaries(portfolio):
+    gaoptim_summaries = []
+    objectivesList = []
+    for gaoptim_key, gaoptim in portfolio.gaoptims.items():
+        resultpairs_summary = []
+        for resultpair_key, resultpair in gaoptim.resultpairs.items():
+            resultpair_summary = {}
+            for result_key, result in resultpair.items():
+                result_summary = {
+                    'name': result.name,
+                    'id': result.uid,
+                }
+                resultpair_summary[result_key] = result_summary
+            resultpairs_summary.append(resultpair_summary)
+
+        gaoptim_summaries.append({
+            "key": gaoptim_key,
+            "objectives": dict(gaoptim.objectives),
+            "id": gaoptim.uid,
+            "name": gaoptim.name,
+            "resultpairs": resultpairs_summary
+        })
+
+        objectivesList.append(gaoptim.objectives)
+
+    project_summaries = []
+
+    for project in portfolio.projects.values():
+        boc = project.getBOC(objectivesList[0])
+        project_summary = {
+            'name': project.name,
+            'id': project.uid,
+            'boc': 'calculated' if boc is not None else 'not ready',
+            'results': []
+        }
+        for result in project.results.values():
+            project_summary['results'].append({
+                'name': result.name,
+                'id': result.uid
+            })
+        project_summaries.append(project_summary)
+
+    result = {
+        "created": portfolio.created,
+        "name": portfolio.name,
+        "gaoptims": gaoptim_summaries,
+        "id": portfolio.uid,
+        "version": portfolio.version,
+        "gitversion": portfolio.gitversion,
+        # "outputstring": portfolio.outputstring,
+        "projects": project_summaries,
+    }
+    return result

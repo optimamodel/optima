@@ -70,8 +70,20 @@ define(
             .success(function(response) {
               console.log(JSON.stringify(response, null, 2));
               $scope.state = response;
+              $scope.activeGaoptim = $scope.state.gaoptims[0];
             });
         }
+
+        $scope.runGeospatial = function() {
+          console.log('run', $scope.state);
+          $http
+            .get(
+              "/api/portfolio/" + $scope.state.id
+              + "/gaoptim/" + $scope.activeGaoptim.id)
+            .success(function(response) {
+              console.log(response);
+            });
+        };
 
         initialize();
       }

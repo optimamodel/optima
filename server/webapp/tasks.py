@@ -1,23 +1,28 @@
 import datetime
-import dateutil.tz
 import pprint
 import traceback
 
+import dateutil.tz
+from celery import Celery
+from flask.ext.login import current_user
 from flask.ext.sqlalchemy import SQLAlchemy
+
+import optima
+
+# must import api before all other server modules
+from server.api import app
+from server.webapp.dataio import load_project_record
+from server.webapp.dbconn import db
+from server.webapp.dbmodels import ProjectDb
+
+from server.webapp.parse import print_odict
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from ..api import app
-
-from .dbmodels import WorkLogDb
 from .dataio import update_or_create_result_record, \
-    load_project, load_project_record, delete_result_by_name, \
-    delete_result_by_name
-from .parse import get_optimization_from_project
+    load_project, load_project_record, delete_result_by_name
+from .dbmodels import WorkLogDb
+from .parse import get_optimization_from_project, get_parset_from_project_by_id
 from .utils import normalize_obj
-
-import optima as op
-
-from celery import Celery
 
 db = SQLAlchemy(app)
 
@@ -36,22 +41,6 @@ class ContextTask(TaskBase):
 
 
 celery_instance.Task = ContextTask
-
-
-def get_parset_from_project_by_id(project, parset_id):
-    for key, parset in project.parsets.items():
-        if str(parset.uid) == str(parset_id):
-            return parset
-    else:
-        return None
-
-
-def print_odict(name, an_odict):
-    print ">> %s = <odict>" % name
-    obj = normalize_obj(an_odict)
-    s = pprint.pformat(obj, indent=2)
-    for line in s.splitlines():
-        print ">> " + line
 
 
 def parse_work_log_record(work_log):
@@ -254,7 +243,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
         )
 
         result = project.parsets[autofit_parset_name].getresults()
-        result.uid = op.uuid()
+        result.uid = optima.uuid()
         result_name = 'parset-' + orig_parset_name
         result.name = result_name
 
@@ -300,6 +289,17 @@ def run_autofit(project_id, parset_id, maxtime=60):
     close_db_session(db_session)
 
     print("> Finish autofit")
+
+
+
+def launch_autofit(project_id, parset_id, maxtime):
+    work_type = 'autofit-' + str(parset_id)
+    calc_status = start_or_report_calculation(project_id, work_type)
+    if calc_status['status'] != "blocked":
+        print "> Starting autofit for %s s" % maxtime
+        run_autofit.delay(project_id, parset_id, maxtime)
+        calc_status['maxtime'] = maxtime
+    return calc_status
 
 
 
@@ -353,9 +353,9 @@ def run_optimization(self, project_id, optimization_id, maxtime):
             print ">> Start optimization '%s'" % optim.name
             objectives = normalize_obj(optim.objectives)
             constraints = normalize_obj(optim.constraints)
-            constraints["max"] = op.odict(constraints["max"])
-            constraints["min"] = op.odict(constraints["min"])
-            constraints["name"] = op.odict(constraints["name"])
+            constraints["max"] = optima.odict(constraints["max"])
+            constraints["min"] = optima.odict(constraints["min"])
+            constraints["name"] = optima.odict(constraints["name"])
             print(">> maxtime = %f" % maxtime)
             print_odict("objectives", objectives)
             print_odict("constraints", constraints)
@@ -367,7 +367,7 @@ def run_optimization(self, project_id, optimization_id, maxtime):
                 constraints=constraints,
                 maxtime=maxtime,
             )
-            result.uid = op.uuid()
+            result.uid = optima.uuid()
             status = 'completed'
         except Exception:
             status = 'error'
@@ -394,3 +394,113 @@ def run_optimization(self, project_id, optimization_id, maxtime):
     close_db_session(db_session)
 
     print ">> Finish optimization"
+
+
+def launch_optimization(project_id, optimization_id, maxtime):
+    calc_state = start_or_report_calculation(
+        project_id, 'optim-' + str(optimization_id))
+    if calc_state['status'] != 'started':
+        return calc_state, 208
+    run_optimization.delay(project_id, optimization_id, maxtime)
+    return calc_state
+
+
+def get_gaoptim(project, gaoptim_id):
+    for gaoptim in project.gaoptims.values():
+        if str(gaoptim.uid) == str(gaoptim_id):
+            return gaoptim
+    return None
+
+
+@celery_instance.task(bind=True)
+def run_boc(self, project_id, gaoptim_id):
+
+    status = 'started'
+    error_text = ""
+
+    kwargs = {
+        'project_id': project_id,
+        'work_type': 'gaoptim-' + str(gaoptim_id)
+    }
+    db_session = init_db_session()
+    work_log = db_session.query(WorkLogDb).filter_by(**kwargs).first()
+
+    if work_log:
+        work_log_id = work_log.id
+
+        work_log.task_id = self.request.id
+        db_session.add(work_log)
+        db_session.commit()
+
+        try:
+            project = work_log.load()
+            print("> loaded project", project)
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in initialization")
+            print(error_text)
+
+    close_db_session(db_session)
+
+    if work_log is None:
+        print(">> Error: couldn't find work log")
+        return
+
+    if status == 'started':
+        result = None
+        try:
+            gaoptim = get_gaoptim(project, gaoptim_id)
+            print ">> Start BOC:"
+            print_odict("gaoptim", gaoptim)
+            result = project.genBOC(objectives=gaoptim.objectives)
+            result.uid = optima.uuid()
+            status = 'completed'
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in calculation")
+            print(error_text)
+
+        if result:
+            db_session = init_db_session()
+            delete_result_by_name(project_id, result.name, db_session)
+            result_record = update_or_create_result_record(
+                project, result, optim.parsetname, 'optimization', db_session=db_session)
+            db_session.add(result_record)
+            db_session.commit()
+            close_db_session(db_session)
+
+    db_session = init_db_session()
+    work_log_record = db_session.query(WorkLogDb).get(work_log_id)
+    work_log_record.status = status
+    work_log_record.error = error_text
+    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    work_log_record.cleanup()
+    db_session.commit()
+    close_db_session(db_session)
+
+    print ">> Finish optimization"
+
+
+
+def launch_boc(portfolio_id, gaoptim_id):
+    portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+    gaoptims = portfolio.gaoptims
+    for project in portfolio.projects.values():
+        project_id = project.uid
+        project.gaoptims = gaoptims
+        project_record = load_project_record(project_id, raise_exception=False)
+        if not project_record:
+            project_record = ProjectDb(current_user.id)
+            project_record.id = project.uid
+            db.session.add(project_record)
+            db.session.commit()
+        project_record.save_obj(project)
+        calc_state = start_or_report_calculation(
+            project_id, 'gaoptim-' + str(gaoptim_id))
+        if calc_state['status'] != 'started':
+            return calc_state, 208
+        run_boc.delay(project_id, gaoptim_id)
+
+
