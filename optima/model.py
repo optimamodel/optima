@@ -619,7 +619,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         ## Do deaths
         for state in range(nstates):
-            thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
+            try: thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         # Check that probabilities all sum to 1
         if debug and not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):

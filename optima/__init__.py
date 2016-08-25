@@ -99,7 +99,7 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 
 ## Define the model parameters
 from . import parameters as _parameters
-from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
+from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, transtable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
 
 ## Define and run the model
 from . import model as _model

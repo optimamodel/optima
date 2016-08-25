@@ -11,7 +11,7 @@ from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeop
 autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 0
-runscenarios = 1 # Run scenarios
+runscenarios = 0 # Run scenarios
 optimize = 0
 dosave = 1
 filename = 'best.prj'
