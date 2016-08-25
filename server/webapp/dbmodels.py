@@ -167,6 +167,7 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     work_type = db.Column(db.String(128), default=None)
+    task_id = db.Column(db.String(128), default=None)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     stop_time = db.Column(db.DateTime(timezone=True), default=None)

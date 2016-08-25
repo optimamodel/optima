@@ -1,6 +1,7 @@
 import datetime
 import dateutil.tz
 import pprint
+import traceback
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -301,46 +302,52 @@ def run_autofit(project_id, parset_id, maxtime=60):
 
 
 
-@celery_instance.task()
-def run_optimization(project_id, optimization_id, maxtime):
-    import traceback
+@celery_instance.task(bind=True)
+def run_optimization(self, project_id, optimization_id, maxtime):
+
+    status = 'started'
+    error_text = ""
 
     db_session = init_db_session()
     work_log = db_session.query(WorkLogDb).filter_by(
         project_id=project_id, work_type='optim-' + str(optimization_id)).first()
+
+    if work_log:
+        work_log_id = work_log.id
+
+        work_log.task_id = self.request.id
+        db_session.add(work_log)
+        db_session.commit()
+
+        try:
+            project = work_log.load()
+            optim = get_optimization_from_project(project, optimization_id)
+            progset = project.progsets[optim.progsetname]
+            if not progset.readytooptimize():
+                status = 'error'
+                error_text = "Not ready to optimize\n"
+                costcov_errors = progset.hasallcostcovpars(detail=True)
+                if costcov_errors:
+                    error_text += "Missing: cost-coverage parameters of:\n"
+                    error_text += pprint.pformat(costcov_errors, indent=2)
+                covout_errors = progset.hasallcovoutpars(detail=True)
+                if covout_errors:
+                    error_text += "Missing: coverage-outcome parameters of:\n"
+                    error_text += pprint.pformat(covout_errors, indent=2)
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in initialization")
+            print(error_text)
+
     close_db_session(db_session)
 
     if work_log is None:
         print(">> Error: couldn't find work log")
         return
 
-    work_log_id = work_log.id
-
-    result = None
-    status = 'started'
-    error_text = ""
-    try:
-        project = work_log.load()
-        optim = get_optimization_from_project(project, optimization_id)
-        progset = project.progsets[optim.progsetname]
-        if not progset.readytooptimize():
-            status = 'error'
-            error_text = "Not ready to optimize\n"
-            costcov_errors = progset.hasallcostcovpars(detail=True)
-            if costcov_errors:
-                error_text += "Missing: cost-coverage parameters of:\n"
-                error_text += pprint.pformat(costcov_errors, indent=2)
-            covout_errors = progset.hasallcovoutpars(detail=True)
-            if covout_errors:
-                error_text += "Missing: coverage-outcome parameters of:\n"
-                error_text += pprint.pformat(covout_errors, indent=2)
-    except Exception:
-        status = 'error'
-        error_text = traceback.format_exc()
-        print(">> Error in initialization")
-        print(error_text)
-
     if status == 'started':
+        result = None
         try:
             print ">> Start optimization '%s'" % optim.name
             objectives = normalize_obj(optim.objectives)
@@ -367,14 +374,14 @@ def run_optimization(project_id, optimization_id, maxtime):
             print(">> Error in calculation")
             print(error_text)
 
-    if result:
-        db_session = init_db_session()
-        delete_result_by_name(project_id, result.name, db_session)
-        result_record = update_or_create_result_record(
-            project, result, optim.parsetname, 'optimization', db_session=db_session)
-        db_session.add(result_record)
-        db_session.commit()
-        close_db_session(db_session)
+        if result:
+            db_session = init_db_session()
+            delete_result_by_name(project_id, result.name, db_session)
+            result_record = update_or_create_result_record(
+                project, result, optim.parsetname, 'optimization', db_session=db_session)
+            db_session.add(result_record)
+            db_session.commit()
+            close_db_session(db_session)
 
     db_session = init_db_session()
     work_log_record = db_session.query(WorkLogDb).get(work_log_id)
