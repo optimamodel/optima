@@ -284,8 +284,8 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         # Add historical cost and coverage data
         for yearind in range(nyears):
             
-            thisind = 0 if len(old['data']['costcov']['realcost'][progno])==1 else yearind
-            newcost = old['data']['costcov']['realcost'][progno][thisind] if ~isnan(old['data']['costcov']['realcost'][progno][thisind]) else None
+            thisind = 0 if len(old['data']['costcov']['cost'][progno])==1 else yearind
+            newcost = old['data']['costcov']['cost'][progno][thisind] if ~isnan(old['data']['costcov']['cost'][progno][thisind]) else None
 
             thisind = 0 if len(old['data']['costcov']['cov'][progno])==1 else yearind
             thisyear = 2016 if len(old['data']['costcov']['cov'][progno])==1 else old['data']['epiyears'][yearind]
