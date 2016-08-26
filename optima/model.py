@@ -514,6 +514,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         currplhiv = people[allplhiv,:,t].sum(axis=(0,1))
 
+        ## Deaths
+        for state in range(nstates):
+            thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
+
         ## Transitions to diagnosed 
         if not(isnan(propdx[t])): # If propdx is specified...
             currdx = people[alldx,:,t].sum(axis=(0,1))
@@ -525,6 +529,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         thistransit[fromstate][prob][ts] *= (1.-fractiontodx)
                     else: # Probability of being tested
                         thistransit[fromstate][prob][ts] *= fractiontodx
+                        raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
 
         else: # ... or if programmatically determined
             for fromstate in undx:
@@ -534,11 +539,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             thistransit[fromstate][prob][ts] *= (1.-aidstest[t])
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] *= aidstest[t]
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
                     else:
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t])
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
 
         ## Transitions to care 
         if not(isnan(propcare[t])): # If propcare is specified...
@@ -617,10 +624,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     else: # Probability of becoming unsuppressed
                         thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*treatfail
         
-        ## Do deaths
-        for state in range(nstates):
-            try: thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         # Check that probabilities all sum to 1
         if debug and not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
@@ -648,9 +651,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ## Calculate main indicators
         raw_death[:,t]      = einsum('ij,i->j',  people[:,:,t], deathprob)
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])
-        raw_inci[:,t]       = einsum('ij,ij->j', people[sus,:,t], infections_to)
+        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)
-#        raw_diag[:,t]       = (people[dx,:,t]-people[dx,:,t-1]).sum(axis=0)
 
 
         ###############################################################################
