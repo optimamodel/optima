@@ -83,6 +83,7 @@ api.add_resource(handlers.Portfolio, '/api/project/portfolio')
 
 api.add_resource(handlers.ManagePortfolio, '/api/portfolio')
 api.add_resource(handlers.CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+api.add_resource(handlers.KillTask, '/api/killtask/<uuid:task_id>')
 
 api.add_resource(handlers.Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(handlers.OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')

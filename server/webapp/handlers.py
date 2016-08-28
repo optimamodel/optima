@@ -279,6 +279,19 @@ class DefaultPrograms(Resource):
         return {"programs": load_project_program_summaries(project_id)}
 
 
+class KillTask(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Returns default program summaries for program-set modal")
+    def post(self, task_id):
+        """
+        GET /api/killtask/<uuid:task_id>
+        """
+        print "task_id", task_id
+        server.webapp.tasks.delete_task(task_id)
+
+
+
 class DefaultParameters(Resource):
     method_decorators = [report_exception, login_required]
 

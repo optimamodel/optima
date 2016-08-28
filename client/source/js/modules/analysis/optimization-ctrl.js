@@ -416,6 +416,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               + '/results',
             { maxtime: $scope.state.maxtime })
           .success(function (response) {
+            $scope.task_id = response.task_id;
             if (response.status === 'started') {
               $scope.statusMessage = 'Optimization started.';
               initPollOptimizations();
@@ -435,6 +436,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function pollCallback(optimId, response) {
+      $scope.task_id = null;
       if (optimId != $scope.state.optimization.id) {
         return;
       }
@@ -443,6 +445,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         toastr.success('Optimization completed');
         $scope.getOptimizationGraphs();
       } else if (response.status === 'started') {
+        $scope.task_id = response.task_id;
         var start = new Date(response.start_time);
         var now = new Date(response.current_time);
         var diff = now.getTime() - start.getTime();
@@ -453,6 +456,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.state.isRunnable = true;
       }
     }
+
+    $scope.killJob = function() {
+      $http
+        .post("/api/killtask/" + $scope.task_id)
+        .success(function(response) {
+          console.log(response);
+        });
+    };
 
     function getSelectors() {
       if ($scope.graphs) {

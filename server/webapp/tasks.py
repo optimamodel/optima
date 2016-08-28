@@ -4,6 +4,7 @@ import traceback
 
 import dateutil.tz
 from celery import Celery
+from celery.task.control import revoke
 from flask.ext.login import current_user
 from flask.ext.sqlalchemy import SQLAlchemy
 
@@ -43,9 +44,21 @@ class ContextTask(TaskBase):
 celery_instance.Task = ContextTask
 
 
+def delete_task(task_id):
+    task_id = str(task_id)
+    print("Delete task", task_id, type(task_id))
+    celery_instance.control.revoke(str(task_id))
+    work_log = db.session.query(WorkLogDb).filter_by(task_id=task_id).first()
+    work_log.status = 'cancelled'
+    work_log.cleanup()
+    db.session.add(work_log)
+    db.session.commit()
+    return "success"
+
 def parse_work_log_record(work_log):
     return {
         'status': work_log.status,
+        'task_id': work_log.task_id,
         'error_text': work_log.error,
         'start_time': work_log.start_time,
         'stop_time': work_log.stop_time,
@@ -317,6 +330,7 @@ def run_optimization(self, project_id, optimization_id, maxtime):
         work_log_id = work_log.id
 
         work_log.task_id = self.request.id
+        print(">> Celery task_id = %s" % work_log.task_id)
         db_session.add(work_log)
         db_session.commit()
 
@@ -418,29 +432,24 @@ def run_boc(self, project_id, gaoptim_id):
     status = 'started'
     error_text = ""
 
+    db_session = init_db_session()
     kwargs = {
         'project_id': project_id,
         'work_type': 'gaoptim-' + str(gaoptim_id)
     }
-    db_session = init_db_session()
     work_log = db_session.query(WorkLogDb).filter_by(**kwargs).first()
-
     if work_log:
         work_log_id = work_log.id
-
         work_log.task_id = self.request.id
-        db_session.add(work_log)
-        db_session.commit()
-
         try:
             project = work_log.load()
-            print("> loaded project", project)
+            db_session.add(work_log)
+            db_session.commit()
         except Exception:
             status = 'error'
             error_text = traceback.format_exc()
             print(">> Error in initialization")
             print(error_text)
-
     close_db_session(db_session)
 
     if work_log is None:

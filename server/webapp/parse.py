@@ -27,6 +27,15 @@ from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotE
 from .utils import normalize_obj
 
 
+
+def print_odict(name, an_odict):
+    print ">> %s = <odict>" % name
+    obj = normalize_obj(an_odict)
+    s = pformat(obj, indent=2)
+    for line in s.splitlines():
+        print ">> " + line
+
+
 # PROJECTS
 
 def get_project_years(project):
@@ -1188,12 +1197,7 @@ def get_parset_from_project_by_id(project, parset_id):
         return None
 
 
-def print_odict(name, an_odict):
-    print ">> %s = <odict>" % name
-    obj = normalize_obj(an_odict)
-    s = pformat(obj, indent=2)
-    for line in s.splitlines():
-        print ">> " + line
+# PORTFOLIOS
 
 
 def parse_portfolio_summaries(portfolio):

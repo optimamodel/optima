@@ -5,11 +5,9 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import deferred
 
-import optima as op
-from optima import dataio
+import optima
 
 from .dbconn import db, redis
-from copy import deepcopy as dcp
 
 
 @swagger.model
@@ -73,24 +71,25 @@ class ProjectDb(db.Model):
     def load(self):
         print(">> Load project " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        project = dataio.loads(redis_entry)
+        project = optima.dataio.loads(redis_entry)
         for progset in project.progsets.values():
             if not hasattr(progset, 'inactive_programs'):
-                progset.inactive_programs = op.odict()
+                progset.inactive_programs = optima.odict()
         return project
 
-    def save_obj(self, obj):
+    def save_obj(self, obj, is_skip_result=False):
         print(">> Save project " + self.id.hex)
         # Copy the project, only save what we want...
-        new_project = op.dcp(obj)
+        new_project = optima.dcp(obj)
         new_project.spreadsheet = None
-        new_project.results = op.odict()
-        redis.set(self.id.hex, dataio.dumps(new_project))
+        if is_skip_result:
+            new_project.results = optima.odict()
+        redis.set(self.id.hex, optima.dataio.dumps(new_project))
         print("Saved " + self.id.hex)
 
     def as_file(self, loaddir, filename=None):
         filename = os.path.join(loaddir, self.id.hex + ".prj")
-        op.saveobj(filename, self.load())
+        optima.saveobj(filename, self.load())
         return self.id.hex + ".prj"
 
     def delete_dependent_objects(self, synchronize_session=False):
@@ -148,11 +147,11 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
-        return dataio.loads(redis.get("result-" + self.id.hex))
+        return optima.dataio.loads(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> Save result-" + self.id.hex)
-        redis.set("result-" + self.id.hex, dataio.dumps(obj))
+        redis.set("result-" + self.id.hex, optima.dataio.dumps(obj))
 
     def cleanup(self):
         print(">> Cleanup result-" + self.id.hex)
@@ -180,11 +179,11 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     def load(self):
         print(">> Load working-" + self.id.hex)
-        return dataio.loads(redis.get("working-" + self.id.hex))
+        return optima.dataio.loads(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> Save working-" + self.id.hex)
-        redis.set("working-" + self.id.hex, dataio.dumps(obj))
+        redis.set("working-" + self.id.hex, optima.dataio.dumps(obj))
 
     def cleanup(self):
         print(">> Cleanup working-" + self.id.hex)
