@@ -159,7 +159,8 @@ if 'rungui' in tests and doplot:
 
     print('Running geo GUI test...')
     from optima import geogui
-    geogui()
+    if __name__ == '__main__':      # Required when multiprocessing.
+        geogui()
     
     done(t)
 
