@@ -336,8 +336,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         initpeople[susreg, :]      = uninfected
         initpeople[progcirc, :]    = zeros(npops) # This is just to make it explicit that the circ compartment only keeps track of people who are programmatically circumcised while the model is running
         initpeople[undx, :]        = undiagnosed
-        initpeople[dx, :]          = diagnosed*linktocare[:,0]
-        initpeople[care, :]        = diagnosed*(1.-linktocare[:,0])
+        initpeople[dx, :]          = diagnosed*(1.-linktocare[:,0])
+        initpeople[care, :]        = diagnosed*linktocare[:,0]
         initpeople[usvl, :]        = treatment * (1.-treatvs)
         initpeople[svl, :]         = treatment * treatvs
 
