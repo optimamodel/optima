@@ -5,8 +5,8 @@ Created on Tue Aug 16 18:39:31 2016
 @author: David Kedziora
 """
 
-from optima import *
-from geospatial import *
+from optima import defaultobjectives
+from optima.geospatial import makesheet, makeproj, create, addproj, saveport, loadport, rungeo, export, plotgeo
 
 if __name__ == '__main__':
     makesheet(projectpath='blantyre-fresh.prj', spreadsheetpath='BlantyreSplitBlank.xlsx', copies=2, refyear=2017)
