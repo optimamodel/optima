@@ -143,12 +143,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     injects = simpars['injects']    # Boolean array, true for PWID
 
     # Intervention uptake (P=proportion, N=number)
-    sharing   = simpars['sharing']  # Sharing injecting equiptment (P)
-    numtx     = simpars['numtx']    # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
-    hivtest   = simpars['hivtest']  # HIV testing (P) [npop,npts]
-    aidstest  = simpars['aidstest'] # HIV testing in AIDS stage (P) [npts]
-    numcirc   = simpars['numcirc']  # Number of programmatic circumcisions performed (N)
-    numpmtct  = simpars['numpmtct'] # Number of people receiving PMTCT (N)
+    sharing   = simpars['sharing']      # Sharing injecting equiptment (P)
+    numtx     = simpars['numtx']        # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
+    hivtest   = simpars['hivtest']*dt   # HIV testing (P) [npop,npts]
+    aidstest  = simpars['aidstest']*dt  # HIV testing in AIDS stage (P) [npts]
+    numcirc   = simpars['numcirc']      # Number of programmatic circumcisions performed (N)
+    numpmtct  = simpars['numpmtct']     # Number of people receiving PMTCT (N)
     
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)
@@ -340,7 +340,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         initpeople[care, :]        = diagnosed*linktocare[:,0]
         initpeople[usvl, :]        = treatment * (1.-treatvs)
         initpeople[svl, :]         = treatment * treatvs
-
 
     if debug and not(initpeople.all()>=0): # If not every element is a real number >0, throw an error
         errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
@@ -547,6 +546,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]
                             raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
 
+
         ## Transitions to care 
         if not(isnan(propcare[t])): # If propcare is specified...
             currdx = people[alldx,:,t].sum(axis=(0,1))
@@ -647,7 +647,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for fromstate, transition in enumerate(thistransit):
                 people[transition[to],:,t+1] += people[fromstate,:,t]*transition[prob]
 
-            
+
         ## Calculate main indicators
         raw_death[:,t]      = einsum('ij,i->j',  people[:,:,t], deathprob)
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])
