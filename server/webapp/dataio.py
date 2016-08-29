@@ -341,7 +341,7 @@ def load_portfolio(db_session=None):
         record = PyObjectDb(current_user.id)
         record.type = "portfolio"
         record.name = portfolio.name
-        record.id = UUID(portfolio.uid)
+        record.id = portfolio.uid
         db_session.add(record)
         db_session.flush()
         record.save_obj(portfolio)
