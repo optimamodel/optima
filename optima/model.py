@@ -673,8 +673,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
             # Handle treatment
-            people[usvl,:,t+1] -= newtreat*treatvs # Shift last period's new initiators out of USVL compartment... 
-            people[svl, :,t+1] += newtreat*treatvs # ... and into SVL compartment, according to treatvs
+            if isnan(propsupp[t+1]):
+                people[usvl,:,t+1] -= newtreat*treatvs # Shift last period's new initiators out of USVL compartment... 
+                people[svl, :,t+1] += newtreat*treatvs # ... and into SVL compartment, according to treatvs
+
 
             currplhiv   = people[allplhiv,:,t+1].sum() 
             currcare    = people[allcare,:,t+1].sum() # This assumes proptx refers to the proportion of those in care who are to be on treatment 
