@@ -506,7 +506,7 @@ def launch_boc(portfolio_id, gaoptim_id):
         project_record = load_project_record(project_id, raise_exception=False)
         if not project_record:
             project_record = ProjectDb(current_user.id)
-            project_record.id = project.uid
+            project_record.id = project_id
             db.session.add(project_record)
             db.session.commit()
         project_record.save_obj(project)
