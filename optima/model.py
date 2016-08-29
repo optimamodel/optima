@@ -539,6 +539,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] *= aidstest[t]
                             raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                    elif fromstate in acute: 
+                        if tostate in undx: # Probability of not being tested
+                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t]*max(dt-0.25,0)/dt) # Adjust testing rates to account for the window period (0.25 years)
+                        else: # Probability of being tested
+                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]*max(dt-0.25,0)/dt
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
                     else:
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t])
