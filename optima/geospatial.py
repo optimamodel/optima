@@ -6,7 +6,7 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 Version: 2016jan29
 """
 
-from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, runcommand
+from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults
 from PyQt4 import QtGui
 from pylab import figure, close
 from time import time
@@ -23,15 +23,9 @@ guiobjectives['budget'] = 0.0 # Reset
     
 ## Global options
 budgetfactor = 1e6 # Conversion between screen and internal
-
-## Set parameters
-wid = 1200.0
-hei = 600.0
-top = 20
-spacing = 40
-left = 20.
 projext = '.prj'
 portext = '.prt'
+
 
 
 ##############################################################################################################################
@@ -254,6 +248,7 @@ def gui_makeproj():
     ''' Wrapper to create a series of project files based on a seed file and a geospatial spreadsheet '''
     makeproj(usegui=True)
     
+    
 # ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
 def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplots=False, usegui=False):
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
@@ -287,7 +282,6 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     try:
         if not os.path.exists(destination):
             os.makedirs(destination)
-#        runcommand('mkdir -p "%s"' % destination)       # P argument seems unix specific.
     except: print('Was unable to make target directory "%s"' % destination)
     
     ## 4. Read the spreadsheet
@@ -711,6 +705,13 @@ def geogui():
     guiportfolio = None
 #    guiobjectives = defaultobjectives()
 #    guiobjectives['budget'] = 0.0 # Reset
+    
+    ## Set parameters
+    wid = 1200.0
+    hei = 600.0
+    top = 20
+    spacing = 40
+    left = 20.
     
     ## Housekeeping
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
