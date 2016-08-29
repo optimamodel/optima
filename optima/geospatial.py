@@ -36,7 +36,7 @@ portext = '.prt'
 
 
 
-def _loadproj(filepath=None,usegui=True):
+def _loadproj(filepath=None, usegui=True):
     ''' Helper function to load a project, since used more than once '''
     if filepath == None and usegui:
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+projext)
@@ -58,7 +58,7 @@ def resetbudget():
     objectiveinputs['budget'].setText(str(totalbudget/budgetfactor))
     return None
 
-def warning(message,usegui=True):
+def warning(message, usegui=True):
     global geoguiwindow
     if usegui:
         QtGui.QMessageBox.warning(geoguiwindow, 'Message', message)
@@ -77,11 +77,11 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
     ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
     
     ## 1. Load a project file
-    project = _loadproj(projectpath,usegui)
+    project = _loadproj(projectpath, usegui)
     if project == None:
         raise OptimaException('No project loaded.')
     
-    bestindex = 0        
+    bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
     
     if len(project.parsets) > 0:
         try: project.parsets[-1].getresults()
@@ -231,16 +231,16 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
                     
                 wsalloc.set_column(0, maxcol, colwidth) # Make wider
             else:
-                warning('Warning: Loaded project is missing a program set.',usegui)
+                warning('Warning: Loaded project is missing a program set.', usegui)
         
         # 4. Generate and save spreadsheet
         try:
             workbook.close()    
-            warning('Multi-project template saved to "%s".' % spreadsheetpath,usegui)
+            warning('Multi-project template saved to "%s".' % spreadsheetpath, usegui)
         except:
-            warning('Error: Template not saved due to a workbook error!',usegui)
+            warning('Error: Template not saved due to a workbook error!', usegui)
     else:
-        warning('Error: Loaded project is missing a parameter set!',usegui)
+        warning('Error: Loaded project is missing a parameter set!', usegui)
 
     return None
     
@@ -257,7 +257,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     bestindex = 0   # This could be a problem down the road...
     
     ## 1. Load a project file -- WARNING, could be combined with the above!
-    project = _loadproj(projectpath,usegui)
+    project = _loadproj(projectpath, usegui)
     if project == None:
         raise OptimaException('No project loaded.')
     try: project.parsets[-1].getresults()
@@ -514,7 +514,7 @@ def loadport(filepath=None, usegui=False):
     if filepath:
         try: tmpport = loadobj(filepath, verbose=0)
         except Exception as E: 
-            warning('Could not load file "%s" because "%s"' % (filepath, E.message),usegui)
+            warning('Could not load file "%s" because "%s"' % (filepath, E.message), usegui)
             import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             return None
         if tmpport is not None: 
@@ -526,7 +526,7 @@ def loadport(filepath=None, usegui=False):
                 print('Portfolio file "%s" loaded' % filepath)
             else: print('File "%s" is not an Optima portfolio file' % filepath)
     else:
-        warning('File path not provided. Portfolio not loaded.',usegui)
+        warning('File path not provided. Portfolio not loaded.', usegui)
     if usegui:
         resetbudget() # And reset the budget
         return None
@@ -553,7 +553,7 @@ def rungeo(portfolio=None, objectives=None, BOCtime=300, usegui=False):
     BOCobjectives = dcp(guiobjectives)
     guiportfolio.genBOCs(BOCobjectives, maxtime=BOCtime)
     guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=120) # WARNING temp time
-    warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime),usegui)
+    warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime), usegui)
     if usegui: 
         return None
     else:
@@ -567,7 +567,7 @@ def plotgeo(usegui=False):
     ''' Actually plot geospatial analysis!!! '''
     global guiportfolio
     if guiportfolio is None: 
-        warning('Please load a portfolio first',usegui)
+        warning('Please load a portfolio first', usegui)
         return None
     gaoptim = guiportfolio.gaoptims[-1]
 
@@ -620,7 +620,7 @@ def export(portfolio=None, filepath=None, usegui=False):
         outstr = guiportfolio.gaoptims[-1].printresults() # Stored, but regenerate
     except:
         errormsg = 'Warning, it does not seem that geospatial analysis has been run for this portfolio!'
-        warning(errormsg,usegui)
+        warning(errormsg, usegui)
         if not usegui: raise Exception(errormsg)
         return None
     
@@ -666,9 +666,9 @@ def export(portfolio=None, filepath=None, usegui=False):
         worksheet.set_column(0, 3, colwidth) # Make wider
         workbook.close()
         
-        warning('Results saved to "%s".' % filepath,usegui)
+        warning('Results saved to "%s".' % filepath, usegui)
     else:
-        warning('Filepath not supplied: %s' % filepath,usegui)
+        warning('Filepath not supplied: %s' % filepath, usegui)
     
     return None
     
