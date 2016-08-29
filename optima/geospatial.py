@@ -278,7 +278,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
     print destination
     
-    # Create it if t doesn't exist
+    # Create it if it doesn't exist
     try:
         if not os.path.exists(destination):
             os.makedirs(destination)
@@ -450,7 +450,7 @@ def gui_create():
 
 def create(filepaths=None, doadd=False, addtoportfolio=None, usegui=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-    global guiportfolio, projectslistbox, guiobjectives, objectiveinputs
+    if usegui: global guiportfolio, projectslistbox, guiobjectives, objectiveinputs
     
     projectpaths = []
     projectslist = []
@@ -494,7 +494,6 @@ def gui_addproj():
 
 def addproj(filepaths=None, addtoportfolio=None, usegui=False):
     ''' Add a project -- same as creating a portfolio except don't overwrite '''
-    global guiportfolio, guiobjectives
     p = create(filepaths=filepaths, doadd=True, addtoportfolio=addtoportfolio, usegui=usegui)
     if usegui:
         resetbudget() # And reset the budget
@@ -507,7 +506,7 @@ def gui_loadport():
     
 def loadport(filepath=None, usegui=False):
     ''' Load an existing portfolio '''
-    global guiportfolio, projectslistbox
+    if usegui: global guiportfolio, projectslistbox
     if usegui:
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
     tmpport = None
@@ -540,7 +539,7 @@ def gui_rungeo():
 
 def rungeo(portfolio=None, objectives=None, BOCtime=300, usegui=False):
     ''' Actually run geospatial analysis!!! '''
-    global guiportfolio, guiobjectives, objectiveinputs
+    if usegui: global guiportfolio, guiobjectives, objectiveinputs
     starttime = time()
     if portfolio != None:
         guiportfolio = portfolio
@@ -604,7 +603,7 @@ def gui_export():
 
 def export(portfolio=None, filepath=None, usegui=False):
     ''' Save the current results to Excel file '''
-    global guiportfolio
+    if usegui: global guiportfolio
     
     if portfolio is not None:
         guiportfolio = portfolio
@@ -679,7 +678,7 @@ def gui_saveport():
 
 def saveport(portfolio = None, filepath = None, usegui=False):
     ''' Save the current portfolio '''
-    global guiportfolio
+    if usegui: global guiportfolio
     if portfolio != None:
         guiportfolio = portfolio
     if usegui:
