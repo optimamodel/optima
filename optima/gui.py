@@ -332,7 +332,7 @@ def browser(results, toplot=None, doplot=True):
 
 
 
-def manualfit(project=None, name=-1, ind=0, verbose=2, **kwargs):
+def manualfit(project=None, parsubset=None, name=-1, ind=0, verbose=2, **kwargs):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -359,7 +359,7 @@ def manualfit(project=None, name=-1, ind=0, verbose=2, **kwargs):
     tmppars = parset.pars[0]
     origpars = dcp(tmppars)
     
-    mflists = parset.manualfitlists()
+    mflists = parset.manualfitlists(parsubset=parsubset)
     fullkeylist    = mflists['keys']
     fullsubkeylist = mflists['subkeys']
     fulltypelist   = mflists['types']
@@ -436,10 +436,12 @@ def manualfit(project=None, name=-1, ind=0, verbose=2, **kwargs):
     
 
     ## Set up GUI
+    npars = len(fullkeylist)
     leftmargin = 10
     rowheight = 25
     colwidth = 450
-    ncols = 4
+    maxitemspercol = 25
+    ncols = floor(npars/maxitemspercol)+1
     nrows = ceil(nfull/float(ncols))
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
