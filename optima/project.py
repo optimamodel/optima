@@ -88,7 +88,7 @@ class Project(object):
         output += '     Optimizations: %i\n'    % len(self.optims)
         output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
-        output += '    Optima version: %0.1f\n' % self.version
+        output += '    Optima version: %s\n'    % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
@@ -287,6 +287,7 @@ class Project(object):
         if result.name is None: keyname = str(result.uid)
         else: keyname = result.name
         self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=overwrite) # Use UID for key but keep name
+        self.modified = today()
         return keyname # Can be useful to know what ended up being chosen
     
     def rmresult(self, name=-1):
@@ -303,17 +304,21 @@ class Project(object):
             validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(self.results))]
             errormsg = 'Could not remove result "%s": choices are:\n%s' % (name, '\n'.join(validchoices))
             raise OptimaException(errormsg)
+        self.modified = today()
+        return None
     
     
     def cleanresults(self):
         ''' Remove all results '''
         self.results = odict() # Just replace with an empty odict, as at initialization
+        self.modified = today()
         return None
     
     
     def addscenlist(self, scenlist): 
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
+        self.modified = today()
         return None
     
     
@@ -347,7 +352,7 @@ class Project(object):
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
-        if name is None and simpars is None: name = 'default' # Set default name
+        if name is None and simpars is None: name = -1 # Set default name
         if verbose is None: verbose = self.settings.verbose
         
         # Get the parameters sorted
@@ -364,7 +369,7 @@ class Project(object):
                 raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             else:
                 try:
-                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose)
                     if not (raw['people']>=0).all(): # Check for negative people
                         printv('Negative people found with runsim(); rerunning with a smaller timestep...')
                         self.settings.dt /= 4
@@ -381,8 +386,35 @@ class Project(object):
             keyname = self.addresult(result=results, overwrite=overwrite)
             if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
+        self.modified = today()
         return results
 
+
+    def refreshparset(self, name=None, orig='default'):
+        '''
+        Reset the chosen (or all) parsets to reflect the parameter values from the spreadsheet (or another parset).
+        
+        Usage:
+            P.refreshparset() # Refresh all parsets in the project to match 'default'
+            P.refreshparset(name='calibrated') # Reset parset 'calibrated' to match 'default'
+            P.refreshparset(name=['default', 'bugaboo'], orig='calibrated') # Reset parsets 'default' and 'bugaboo' to match 'calibrated'
+        '''
+        
+        if name is None: name = self.parsets.keys() # If none is given, use all
+        if type(name)!=list: name = [name] # Make sure it's a list
+        origpars = self.parsets[orig].pars[0] # "Original" parameters to copy from (based on data)
+        for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
+            keys = parset.pars[0].keys() # Assume all pars structures have the same keys
+            for i in range(len(parset.pars)): # Loop over each set of pars
+                newpars = parset.pars[i]
+                for key in keys:
+                    if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
+                    if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
+        
+        self.modified = today()
+        return None
+        
+        
 
     def reconcileparsets(self, name=None, orig=None):
         ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
@@ -541,6 +573,7 @@ class Project(object):
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
+        self.modified = today()
         return None        
     
     def getBOC(self, objectives):
@@ -564,6 +597,7 @@ class Project(object):
             print('Deleting an old BOC...')
             ind = self.getBOC(objectives = objectives).uid
             self.rmresult(str(ind))
+        self.modified = today()
         return None
     
     

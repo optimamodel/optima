@@ -28,7 +28,7 @@ from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 from werkzeug.utils import secure_filename
 
-from optima.utils import loaddbobj
+from optima.dataio import loadobj as loaddbobj
 import optima as op
 
 from .dbconn import db
@@ -362,6 +362,7 @@ def delete_parset(project_id, parset_id):
         project.parsets.pop(parset.name)
 
     update_project_with_fn(project_id, update_project_fn)
+    delete_result_by_parset_id(project_id, parset_id)
     db.session.query(ResultsDb).filter_by(
         project_id=project_id, parset_id=parset_id).delete()
 
@@ -430,8 +431,7 @@ def save_parameters(project_id, parset_id, parameters):
 
     update_project_with_fn(project_id, update_project_fn)
 
-    delete_result_by_parset_id(project_id, parset_id, "calibration")
-    delete_result_by_parset_id(project_id, parset_id, "autofit")
+    delete_result_by_parset_id(project_id, parset_id)
 
 
 def load_parset_graphs(
@@ -444,7 +444,7 @@ def load_parset_graphs(
     if parameters is not None:
         print ">> Updating parset '%s'" % parset.name
         set_parameters_on_parset(parameters, parset)
-        delete_result_by_parset_id(project_id, parset_id, "calibration")
+        delete_result_by_parset_id(project_id, parset_id)
         update_project(project)
 
     result = load_result(project.uid, parset.uid, calculation_type)
@@ -530,17 +530,29 @@ def update_or_create_result_record(
 
 
 def delete_result_by_parset_id(
-        project_id, parset_id, calculation_type, db_session=None):
+        project_id, parset_id, db_session=None):
     if db_session is None:
         db_session = db.session
     records = db_session.query(ResultsDb).filter_by(
-        project_id=project_id,
-        parset_id=parset_id,
-        calculation_type=calculation_type
-    )
+        project_id=project_id, parset_id=parset_id)
     for record in records:
         record.cleanup()
     records.delete()
+    db_session.commit()
+
+
+def delete_result_by_name(
+        project_id, result_name, db_session=None):
+    if db_session is None:
+        db_session = db.session
+
+    records = db_session.query(ResultsDb).filter_by(project_id=project_id)
+    for record in records:
+        result = record.load()
+        if result.name == result_name:
+            print ">> Deleting outdated result '%s'" % result_name
+            record.cleanup()
+            db_session.delete(record)
     db_session.commit()
 
 
@@ -705,20 +717,6 @@ def launch_optimization(project_id, optimization_id, maxtime):
         return calc_state, 208
     run_optimization.delay(project_id, optimization_id, maxtime)
     return calc_state
-
-
-def delete_result_by_name(
-        project_id, result_name, db_session=None):
-    if db_session is None:
-        db_session = db.session
-
-    records = db_session.query(ResultsDb).filter_by(project_id=project_id)
-    for record in records:
-        result = record.load()
-        if result.name == result_name:
-            print ">> Deleting outdated result '%s'" % result_name
-            db_session.delete(record)
-    db_session.commit()
 
 
 ## SPREADSHEETS
@@ -983,3 +981,4 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t, plotopt
     plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
 
     return convert_to_mpld3(plot)
+

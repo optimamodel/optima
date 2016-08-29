@@ -477,7 +477,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         })
         .error(function(response) {
           $scope.state.isRunnable = true;
-          toastr.error('response');
+          toastr.error(response);
         });
     };
 

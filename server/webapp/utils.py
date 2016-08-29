@@ -48,10 +48,6 @@ def secure_filename_input(orig_name):
     return secure_filename(orig_name)
 
 
-def Json(orig):
-    return orig
-
-
 class SubRequest:
 
     def __init__(self, orig_dict):
@@ -284,6 +280,8 @@ def get_upload_file(dirname):
     """
     file = request.files['file']
     filename = secure_filename(file.filename)
+    if not (os.path.exists(dirname)):
+        os.makedirs(dirname)
     full_filename = os.path.join(dirname, filename)
     print("> Upload file '%s'" % filename)
     file.save(full_filename)

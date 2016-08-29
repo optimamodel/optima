@@ -14,7 +14,7 @@
             name="programSet-selection"
             class="updateGraph txbox"
             ng-model="state.parset"
-            ng-change="getGraphs()"
+            ng-change="setActiveParset()"
             ng-options="parset.name for parset in parsets"
             style="width: 20%;">
     </select>
@@ -53,7 +53,12 @@
       </select>
       <br>
       <br>
-      <button class="btn __m" ng-click="startAutoCalibration()">Autofit</button>
+      <button
+          class="btn __m"
+          ng-click="startAutoCalibration()"
+          ng-disabled="checkNotRunnable()">
+        Autofit
+      </button>
       <br>
       <br>
       <span style="color: #00aeef;"> {{ statusMessage }} </span>
