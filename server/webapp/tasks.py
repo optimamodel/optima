@@ -55,6 +55,7 @@ def delete_task(task_id):
     db.session.commit()
     return "success"
 
+
 def parse_work_log_record(work_log):
     return {
         'status': work_log.status,
@@ -513,3 +514,89 @@ def launch_boc(portfolio_id, gaoptim_id):
         run_boc.delay(project_id, gaoptim_id)
 
 
+
+@celery_instance.task(bind=True)
+def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
+
+    status = 'started'
+    error_text = ""
+
+    db_session = init_db_session()
+    kwargs = {
+        'project_id': portfolio_id,
+        'work_type': 'portfolio-' + str(gaoptim_id)
+    }
+    work_log = db_session.query(WorkLogDb).filter_by(**kwargs).first()
+    if work_log:
+        work_log_id = work_log.id
+        work_log.task_id = self.request.id
+        try:
+            portfolio = work_log.load()
+            db_session.add(work_log)
+            db_session.commit()
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in initialization")
+            print(error_text)
+    close_db_session(db_session)
+
+    if work_log is None:
+        print(">> Error: couldn't find work log")
+        return
+
+    if status == 'started':
+        result = None
+        try:
+            gaoptim = get_gaoptim(portfolio, gaoptim_id)
+            objectives = gaoptim.objectives
+            print ">> Start BOC:"
+            print_odict("gaoptim", gaoptim)
+            outcomes = portfolio.fullGA(objectives=objectives)
+            status = 'completed'
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in calculation")
+            print(error_text)
+
+        if result:
+            db_session = init_db_session()
+            delete_result_by_name(project_id, result.name, db_session)
+            result_record = update_or_create_result_record(
+                project, result, optim.parsetname, 'optimization', db_session=db_session)
+            db_session.add(result_record)
+            db_session.commit()
+            close_db_session(db_session)
+
+    db_session = init_db_session()
+    work_log_record = db_session.query(WorkLogDb).get(work_log_id)
+    work_log_record.status = status
+    work_log_record.error = error_text
+    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    work_log_record.cleanup()
+    db_session.commit()
+    close_db_session(db_session)
+
+    print ">> Finish optimization"
+
+
+
+def launch_miminize_portfolio(portfolio_id, gaoptim_id):
+    # We for the project record to take a portfolio
+    # eventually we want to replace the project_record
+    # to object id, this is part of a future refactoring
+    portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+    project_record = load_project_record(portfolio_id, raise_exception=False)
+    if not project_record:
+        project_record = ProjectDb(current_user.id)
+        project_record.id = portfolio.uid
+        db.session.add(project_record)
+        db.session.commit()
+    project_record.save_obj(portfolio, is_skip_result=False)
+    calc_state = start_or_report_calculation(
+        portfolio_id, 'portfolio-' + str(gaoptim_id))
+    if calc_state['status'] != 'started':
+        return calc_state, 208
+
+    run_miminize_portfolio.delay(portfolio_id, gaoptim_id)

@@ -58,83 +58,9 @@ def unauthorized_handler():
     abort(401)
 
 
-from .webapp.utils import OptimaJSONEncoder
-from .webapp import handlers
-
-api_blueprint = Blueprint('api', __name__, static_folder='static')
-
-api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
-
-api.add_resource(handlers.User, '/api/user')
-api.add_resource(handlers.UserDetail, '/api/user/<uuid:user_id>')
-api.add_resource(handlers.CurrentUser, '/api/user/current')
-api.add_resource(handlers.UserLogin, '/api/user/login')
-api.add_resource(handlers.UserLogout, '/api/user/logout')
-
-api.add_resource(handlers.Projects, '/api/project')
-api.add_resource(handlers.ProjectsAll, '/api/project/all')
-api.add_resource(handlers.Project, '/api/project/<uuid:project_id>')
-api.add_resource(handlers.ProjectCopy, '/api/project/<uuid:project_id>/copy')
-api.add_resource(handlers.ProjectFromData, '/api/project/data')
-api.add_resource(handlers.ProjectData, '/api/project/<uuid:project_id>/data')
-api.add_resource(handlers.ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
-api.add_resource(handlers.ProjectEcon, '/api/project/<uuid:project_id>/economics')
-api.add_resource(handlers.Portfolio, '/api/project/portfolio')
-
-api.add_resource(handlers.ManagePortfolio, '/api/portfolio')
-api.add_resource(handlers.CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
-api.add_resource(handlers.KillTask, '/api/killtask/<uuid:task_id>')
-
-api.add_resource(handlers.Optimizations, '/api/project/<uuid:project_id>/optimizations')
-api.add_resource(handlers.OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
-api.add_resource(handlers.OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
-api.add_resource(handlers.OptimizationUpload, '/api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload')
-
-api.add_resource(handlers.Scenarios, '/api/project/<uuid:project_id>/scenarios')
-api.add_resource(handlers.ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
-
-api.add_resource(handlers.Progsets, '/api/project/<uuid:project_id>/progsets')
-api.add_resource(handlers.Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
-api.add_resource(handlers.ProgsetParameters,
-     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
-api.add_resource(handlers.ProgsetOutcomes, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
-api.add_resource(handlers.ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
-
-api.add_resource(handlers.DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
-api.add_resource(handlers.DefaultPopulations, '/api/project/populations')
-api.add_resource(handlers.DefaultParameters, '/api/project/<project_id>/parameters')
-
-api.add_resource(handlers.Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
-api.add_resource(handlers.ProgramPopSizes,
-    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
-api.add_resource(handlers.ProgramCostcovGraph,
-    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
-
-api.add_resource(handlers.Parsets, '/api/project/<uuid:project_id>/parsets')
-api.add_resource(handlers.ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
-api.add_resource(handlers.ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
-api.add_resource(handlers.ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
-api.add_resource(handlers.ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
-api.add_resource(handlers.ResultsExport, '/api/results/<uuid:result_id>')
+from .webapp.handlers import api_blueprint
 
 app.register_blueprint(api_blueprint, url_prefix='')
-
-
-@api.representation('application/json')
-def output_json(data, code, headers=None):
-    inner = json.dumps(data, cls=OptimaJSONEncoder)
-    resp = make_response(inner, code)
-    resp.headers.extend(headers or {})
-    return resp
-
-
-@api_blueprint.before_request
-def before_request():
-    from server.webapp.dbmodels import UserDb
-    dbconn.db.engine.dispose()
-    g.user = None
-    if 'user_id' in session:
-        g.user = UserDb.query.filter_by(id=session['user_id']).first()
 
 
 @app.route('/')
@@ -166,6 +92,7 @@ def init_db():
 
     dbconn.db.session.commit()
 
+
 def init_logger():
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setLevel(logging.DEBUG)
@@ -175,6 +102,7 @@ def init_logger():
     ))
     app.logger.addHandler(stream_handler)
     app.logger.setLevel(logging.DEBUG)
+
 
 if __name__ == '__main__':
     init_logger()

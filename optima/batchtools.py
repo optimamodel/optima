@@ -6,7 +6,7 @@ Functions for doing things in batch...yeah, should make better.
 Version: 2016mar20
 """
 
-from multiprocessing import Process, Queue
+from multiprocessing.dummy import Process, Queue
 from numpy import empty
 from glob import glob
 from optima import loadobj, saveobj, loadbalancer

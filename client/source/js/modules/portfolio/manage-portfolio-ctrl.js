@@ -85,6 +85,16 @@ define(
             });
         };
 
+        $scope.runMinOutcome = function() {
+          $http
+            .get(
+              "/api/minimize/portfolio/" + $scope.state.id
+              + "/gaoptim/" + $scope.activeGaoptim.id)
+            .success(function(response) {
+              console.log(response);
+            });
+        };
+
         initialize();
       }
     );

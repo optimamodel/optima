@@ -72,19 +72,23 @@ class ProjectDb(db.Model):
         print(">> Load project " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
         project = optima.dataio.loads(redis_entry)
-        for progset in project.progsets.values():
-            if not hasattr(progset, 'inactive_programs'):
-                progset.inactive_programs = optima.odict()
+        if isinstance(project, optima.Project):
+            for progset in project.progsets.values():
+                if not hasattr(progset, 'inactive_programs'):
+                    progset.inactive_programs = optima.odict()
         return project
 
     def save_obj(self, obj, is_skip_result=False):
         print(">> Save project " + self.id.hex)
-        # Copy the project, only save what we want...
-        new_project = optima.dcp(obj)
-        new_project.spreadsheet = None
-        if is_skip_result:
-            new_project.results = optima.odict()
-        redis.set(self.id.hex, optima.dataio.dumps(new_project))
+        if isinstance(obj, optima.Project):
+            # Copy the project, only save what we want...
+            new_project = optima.dcp(obj)
+            new_project.spreadsheet = None
+            if is_skip_result:
+                new_project.results = optima.odict()
+            redis.set(self.id.hex, optima.dataio.dumps(new_project))
+        else:
+            redis.set(self.id.hex, optima.dataio.dumps(obj))
         print("Saved " + self.id.hex)
 
     def as_file(self, loaddir, filename=None):

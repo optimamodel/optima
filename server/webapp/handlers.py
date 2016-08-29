@@ -22,6 +22,13 @@ from flask.ext.login import login_required, current_user, login_user, logout_use
 from flask.ext.restful import Resource, marshal_with
 from flask.ext.restful_swagger import swagger
 
+from flask import Flask, redirect, Blueprint, g, session, make_response, abort
+from flask_restful import Api
+from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.login import LoginManager
+from flask_restful_swagger import swagger
+
+
 from .dbconn import db
 from .dbmodels import UserDb
 
@@ -39,7 +46,9 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
 from . import dataio
 from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
 from .parse import get_default_populations
-from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
+from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email, OptimaJSONEncoder
+from . import dbconn
+
 import server.webapp.tasks
 
 
@@ -83,6 +92,12 @@ def verify_admin_request(api_call):
             return api_call(*args, **kwargs)
 
     return _verify_admin_request
+
+
+
+api_blueprint = Blueprint('api', __name__, static_folder='static')
+
+api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
 
 
@@ -242,78 +257,6 @@ class ProjectCopy(Resource):
         }
         return payload
 
-
-# Portfolios
-
-class ManagePortfolio(Resource):
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(summary="Returns portfolio information")
-    def get(self):
-        """
-        GET /api/portfolio
-        """
-        return get_portfolio()
-
-
-class CalculatePortfolio(Resource):
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(summary="Returns portfolio information")
-    def get(self, portfolio_id, gaoptim_id):
-        """
-        GET /api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
-        """
-        print("> Run BOC %s %s" % (portfolio_id, gaoptim_id))
-        return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id)
-
-
-class DefaultPrograms(Resource):
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(summary="Returns default program summaries for program-set modal")
-    def get(self, project_id):
-        """
-        GET /api/project/<uuid:project_id>/defaults
-        """
-        return {"programs": load_project_program_summaries(project_id)}
-
-
-class KillTask(Resource):
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(summary="Returns default program summaries for program-set modal")
-    def post(self, task_id):
-        """
-        GET /api/killtask/<uuid:task_id>
-        """
-        print "task_id", task_id
-        server.webapp.tasks.delete_task(task_id)
-
-
-
-class DefaultParameters(Resource):
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(summary="Returns default programs for program-set modal")
-    def get(self, project_id):
-        """
-        GET /api/project/<project_id>/parameters
-        """
-        return {'parameters': load_project_parameters(project_id)}
-
-
-class DefaultPopulations(Resource):
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(summary='Returns default populations for project management')
-    def get(self):
-        """
-        GET /api/project/populations
-        """
-        return {'populations': get_default_populations()}
-
-
 class Portfolio(Resource):
     method_decorators = [report_exception, login_required]
 
@@ -328,7 +271,6 @@ class Portfolio(Resource):
         print("> Portfolio requested for projects {}".format(project_ids))
         dirname, filename = load_zip_of_prj_files(project_ids)
         return helpers.send_from_directory(dirname, filename)
-
 
 class ProjectDataSpreadsheet(Resource):
     method_decorators = [report_exception, login_required]
@@ -365,7 +307,6 @@ class ProjectDataSpreadsheet(Resource):
             'result': 'Project %s is updated' % project_id
         }
         return reply
-
 
 class ProjectEcon(Resource):
     method_decorators = [report_exception, login_required]
@@ -410,6 +351,92 @@ class ProjectEcon(Resource):
         """
         delete_econ(project_id)
 
+# Portfolios
+
+class ManagePortfolio(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Returns portfolio information")
+    def get(self):
+        """
+        GET /api/portfolio
+        """
+        return get_portfolio()
+
+
+class CalculatePortfolio(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Returns portfolio information")
+    def get(self, portfolio_id, gaoptim_id):
+        """
+        GET /api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
+        """
+        print("> Run BOC %s %s" % (portfolio_id, gaoptim_id))
+        return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id)
+
+
+class MinimizePortfolio(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Starts portfolio minimization")
+    def get(self, portfolio_id, gaoptim_id):
+        """
+        GET /api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
+        """
+        return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, gaoptim_id)
+
+
+class KillTask(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Returns default program summaries for program-set modal")
+    def post(self, task_id):
+        """
+        GET /api/killtask/<uuid:task_id>
+        """
+        print "task_id", task_id
+        server.webapp.tasks.delete_task(task_id)
+
+
+
+# DEFAULTS
+
+class DefaultPrograms(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Returns default program summaries for program-set modal")
+    def get(self, project_id):
+        """
+        GET /api/project/<uuid:project_id>/defaults
+        """
+        return {"programs": load_project_program_summaries(project_id)}
+
+
+class DefaultParameters(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary="Returns default programs for program-set modal")
+    def get(self, project_id):
+        """
+        GET /api/project/<project_id>/parameters
+        """
+        return {'parameters': load_project_parameters(project_id)}
+
+
+class DefaultPopulations(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary='Returns default populations for project management')
+    def get(self):
+        """
+        GET /api/project/populations
+        """
+        return {'populations': get_default_populations()}
+
+
+
+# PARSETS
 
 class Parsets(Resource):
     method_decorators = [report_exception, login_required]
@@ -1025,3 +1052,75 @@ class UserLogout(Resource):
         flash(u'You have been signed out')
 
         return redirect(url_for("site"))
+
+api.add_resource(User, '/api/user')
+api.add_resource(UserDetail, '/api/user/<uuid:user_id>')
+api.add_resource(CurrentUser, '/api/user/current')
+api.add_resource(UserLogin, '/api/user/login')
+api.add_resource(UserLogout, '/api/user/logout')
+
+api.add_resource(Projects, '/api/project')
+api.add_resource(ProjectsAll, '/api/project/all')
+api.add_resource(Project, '/api/project/<uuid:project_id>')
+api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
+api.add_resource(ProjectFromData, '/api/project/data')
+api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
+api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
+api.add_resource(Portfolio, '/api/project/portfolio')
+
+api.add_resource(ManagePortfolio, '/api/portfolio')
+api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+api.add_resource(KillTask, '/api/killtask/<uuid:task_id>')
+
+api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
+api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
+api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
+api.add_resource(OptimizationUpload, '/api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload')
+
+api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
+api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
+
+api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
+api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
+api.add_resource(ProgsetParameters,
+     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
+api.add_resource(ProgsetOutcomes, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
+api.add_resource(ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
+
+api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
+api.add_resource(DefaultPopulations, '/api/project/populations')
+api.add_resource(DefaultParameters, '/api/project/<project_id>/parameters')
+
+api.add_resource(Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
+api.add_resource(ProgramPopSizes,
+    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
+api.add_resource(ProgramCostcovGraph,
+    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
+
+api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
+api.add_resource(ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
+api.add_resource(ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
+api.add_resource(ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
+api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
+api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
+
+
+@api.representation('application/json')
+def output_json(data, code, headers=None):
+    inner = json.dumps(data, cls=OptimaJSONEncoder)
+    resp = make_response(inner, code)
+    resp.headers.extend(headers or {})
+    return resp
+
+
+@api_blueprint.before_request
+def before_request():
+    from server.webapp.dbmodels import UserDb
+    dbconn.db.engine.dispose()
+    g.user = None
+    if 'user_id' in session:
+        g.user = UserDb.query.filter_by(id=session['user_id']).first()
+
+

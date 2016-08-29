@@ -1,7 +1,7 @@
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException, findinds # Import utilities
 from optima import gitinfo, tic, toc # Import functions
 from optima import __version__ # Get current version
-from multiprocessing import Process, Queue
+from multiprocessing.dummy import Process, Queue
 from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
 from numpy import arange, argsort
