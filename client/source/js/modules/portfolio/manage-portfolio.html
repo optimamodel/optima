@@ -60,6 +60,14 @@
               type="number"/>
           <br clear="all">
         </div>
+
+        <button
+            style="
+              margin-top: 1em"
+              class="btn"
+            ng-click="savePortfolio()">
+          Save Portfolio
+        </button>
       </div>
 
       <div style="flex: 1">
@@ -105,7 +113,37 @@
           </tr>
           <tr>
             <td colspan="4">
-              <button class="btn"> + project</button>
+              <button class="btn"
+                ng-click="addProject()">
+                + project
+              </button>
+
+              <div
+                  style="
+                    border: 1px solid #DDD;
+                    padding: 20px;"
+                  ng-show="isSelectProject">
+
+                <b>Select from uploaded projects:</b>
+                <br>
+                <label ng-repeat="project in projects">
+                  <input type="checkbox"
+                         ng-model="project.selected">
+                  {{project.name}}
+                  <br>
+                </label>
+                <br>
+                <br>
+                <button class="btn"
+                  ng-click="dismissAdd()">
+                  Dismiss
+                </button>
+
+                <button class="btn"
+                  ng-click="saveSelectedProject()">
+                  Save
+                </button>
+            </div>
             </td>
           </tr>
         </table>

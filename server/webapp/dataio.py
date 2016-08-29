@@ -22,7 +22,7 @@ All parameters and return types are either id's, json-summaries, or mpld3 graphs
 import os
 from pprint import pformat
 from zipfile import ZipFile
-from uuid import uuid4
+from uuid import uuid4, UUID
 from datetime import datetime
 import dateutil
 
@@ -35,7 +35,7 @@ import optima as op
 import optima
 
 from .dbconn import db
-from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
+from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
 from .exceptions import ProjectDoesNotExist
 from .parse import get_default_program_summaries, \
     get_parameters_for_edit_program, get_parameters_for_outcomes, \
@@ -327,9 +327,97 @@ def load_zip_of_prj_files(project_ids):
 ## PORTFOLIO
 
 
-def get_portfolio():
+def load_portfolio(db_session=None):
+    if db_session is None:
+        db_session = db.session
     portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+
+    # save if not in database
+    kwargs = {'id': portfolio.uid, 'type': "portfolio"}
+    record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
+    print record
+    if not record:
+        print("> Save portfolio %s" % portfolio.name)
+        record = PyObjectDb(current_user.id)
+        record.type = "portfolio"
+        record.name = portfolio.name
+        record.id = UUID(portfolio.uid)
+        db_session.add(record)
+        db_session.flush()
+        record.save_obj(portfolio)
+        db_session.commit()
+    else:
+        portfolio = record.load()
+        print("> Load portfolio %s %s" % (portfolio.name, portfolio.uid))
+    project_ids = portfolio.projects.keys()
+    print("> project_ids %s" % project_ids)
+
     return parse_portfolio_summaries(portfolio)
+
+
+def save_portfolio(portfolio, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    id = portfolio.uid
+    kwargs = {'id': id, 'type': "portfolio"}
+    query = db_session.query(PyObjectDb).filter_by(**kwargs)
+    if query:
+        record = query.first()
+    else:
+        record = PyObjectDb(current_user.id)
+        record.id = UUID(id)
+        record.type = "portfolio"
+        record.name = portfolio.name
+    record.save_obj(portfolio)
+    db_session.add(record)
+    db_session.commit()
+
+
+def set_portfolio_summary_on_portfolio(portfolio, summary):
+    gaoptim_summaries = summary['gaoptims']
+    gaoptims = portfolio.gaoptims
+    for gaoptim_summary in gaoptim_summaries:
+        gaoptim_id = str(gaoptim_summary['id'])
+        objectives = optima.odict(gaoptim_summary["objectives"])
+        if gaoptim_id in gaoptims:
+            gaoptim = gaoptims[gaoptim_id]
+            gaoptim.objectives = objectives
+        else:
+            gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+            gaoptims[gaoptim_id] = gaoptim
+    old_project_ids = portfolio.projects.keys()
+    print("> old project ids %s" % old_project_ids)
+    new_project_ids = [s["id"] for s in summary["projects"]]
+    print("> new project ids %s" % new_project_ids)
+    for old_project_id in old_project_ids:
+        if old_project_id not in new_project_ids:
+            portfolio.projects.pop(old_project_id)
+    for new_project_id in new_project_ids:
+        if new_project_id not in portfolio.projects:
+            project = load_project(new_project_id)
+            portfolio.projects[new_project_id] = project
+
+
+def load_or_create_portfolio(portfolio_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    kwargs = {'id': portfolio_id, 'type': "portfolio"}
+    record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
+    if record:
+        print("> load portfolio %s" % portfolio_id)
+        portfolio = record.load()
+    else:
+        print("> Create portfolio %s" % portfolio_id)
+        portfolio = optima.Portfolio()
+        portfolio.uid = UUID(portfolio_id)
+    return portfolio
+
+
+def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
+    portfolio = load_or_create_portfolio(portfolio_id)
+    set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
+    save_portfolio(portfolio, db_session)
+
 
 
 ## PARSET

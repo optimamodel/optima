@@ -16,16 +16,12 @@ import pprint
 import traceback
 from functools import wraps
 
-from flask import helpers, current_app, request, Response, make_response, jsonify, abort, session, flash, redirect, \
-    url_for
+from flask import helpers, current_app, request, Response, jsonify, flash, url_for
 from flask.ext.login import login_required, current_user, login_user, logout_user
 from flask.ext.restful import Resource, marshal_with
-from flask.ext.restful_swagger import swagger
 
-from flask import Flask, redirect, Blueprint, g, session, make_response, abort
+from flask import redirect, Blueprint, g, session, make_response, abort
 from flask_restful import Api
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
 
@@ -42,13 +38,11 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
     upload_optimization_summary, check_optimization, load_optimization_graphs, \
-    get_portfolio
+    load_portfolio
 from . import dataio
 from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email, OptimaJSONEncoder
-from . import dbconn
-
 import server.webapp.tasks
 
 
@@ -361,7 +355,23 @@ class ManagePortfolio(Resource):
         """
         GET /api/portfolio
         """
-        return get_portfolio()
+        return load_portfolio()
+
+api.add_resource(ManagePortfolio, '/api/portfolio')
+
+
+class SavePortfolio(Resource):
+    method_decorators = [report_exception, login_required]
+
+    def post(self, portfolio_id):
+        """
+        post /api/minimize/portfolio/<portfolio_id>
+        """
+        portfolio_summary = get_post_data_json()
+        return dataio.save_portfolio_by_summary(portfolio_id, portfolio_summary)
+
+api.add_resource(SavePortfolio, '/api/portfolio/<portfolio_id>')
+
 
 
 class CalculatePortfolio(Resource):
@@ -375,6 +385,8 @@ class CalculatePortfolio(Resource):
         print("> Run BOC %s %s" % (portfolio_id, gaoptim_id))
         return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id)
 
+api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+
 
 class MinimizePortfolio(Resource):
     method_decorators = [report_exception, login_required]
@@ -385,6 +397,8 @@ class MinimizePortfolio(Resource):
         GET /api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
         """
         return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, gaoptim_id)
+
+api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
 
 
 class KillTask(Resource):
@@ -398,6 +412,7 @@ class KillTask(Resource):
         print "task_id", task_id
         server.webapp.tasks.delete_task(task_id)
 
+api.add_resource(KillTask, '/api/killtask/<uuid:task_id>')
 
 
 # DEFAULTS
@@ -1069,11 +1084,6 @@ api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreads
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 api.add_resource(Portfolio, '/api/project/portfolio')
 
-api.add_resource(ManagePortfolio, '/api/portfolio')
-api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
-api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
-api.add_resource(KillTask, '/api/killtask/<uuid:task_id>')
-
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
 api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
@@ -1118,7 +1128,7 @@ def output_json(data, code, headers=None):
 @api_blueprint.before_request
 def before_request():
     from server.webapp.dbmodels import UserDb
-    dbconn.db.engine.dispose()
+    db.engine.dispose()
     g.user = None
     if 'user_id' in session:
         g.user = UserDb.query.filter_by(id=session['user_id']).first()

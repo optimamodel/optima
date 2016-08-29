@@ -1,15 +1,13 @@
-import json
+
 import os
 import sys
 import logging
 
 import redis
 
-from flask import Flask, redirect, Blueprint, g, session, make_response, abort
-from flask_restful import Api
+from flask import Flask, redirect, abort
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
-from flask_restful_swagger import swagger
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
@@ -25,7 +23,6 @@ dbconn.db = SQLAlchemy(app)
 dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
 
 from .webapp.dbmodels import UserDb
-
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -59,6 +56,7 @@ def unauthorized_handler():
 
 
 from .webapp.handlers import api_blueprint
+
 
 app.register_blueprint(api_blueprint, url_prefix='')
 

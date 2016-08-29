@@ -52,6 +52,34 @@ class UserDb(db.Model):
 
 
 @swagger.model
+class PyObjectDb(db.Model):
+
+    __tablename__ = 'objects'
+
+    id = db.Column(
+        UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
+    type = db.Column(db.Text, default=None)
+    name = db.Column(db.Text, default=None)
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+
+    def load(self):
+        print(">> Load pyobject " + self.id.hex)
+        redis_entry = redis.get(self.id.hex)
+        return optima.dataio.loads(redis_entry)
+
+    def save_obj(self, obj):
+        print(">> Save pyobject " + self.id.hex)
+        redis.set(self.id.hex, optima.dataio.dumps(obj))
+
+    def cleanup(self):
+        print(">> Cleanup result-" + self.id.hex)
+        redis.delete(self.id.hex)
+
+
+@swagger.model
 class ProjectDb(db.Model):
 
     __tablename__ = 'projects'

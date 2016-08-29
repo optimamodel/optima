@@ -1,3 +1,5 @@
+import optima
+
 __doc__ = """
 parse.py
 ========
@@ -1253,3 +1255,6 @@ def parse_portfolio_summaries(portfolio):
         "projects": project_summaries,
     }
     return result
+
+
+

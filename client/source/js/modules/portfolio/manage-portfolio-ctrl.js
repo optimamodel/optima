@@ -57,6 +57,7 @@ define(
         UserManager, $state, toastr) {
 
         function initialize() {
+
           $scope.objectiveKeyLabels = [
             {'key': 'start', 'label':'Start year' },
             {'key': 'end', 'label': 'End year'},
@@ -64,14 +65,17 @@ define(
             {'key': 'deathweight', 'label': 'Death weight'},
             {'key': 'inciweight', 'label': 'Incidence weight'},
           ];
+
           $http
             .get(
               '/api/portfolio')
             .success(function(response) {
-              console.log(JSON.stringify(response, null, 2));
+              console.log(response);
               $scope.state = response;
               $scope.activeGaoptim = $scope.state.gaoptims[0];
             });
+
+          $scope.isSelectProject = false;
         }
 
         $scope.runGeospatial = function() {
@@ -95,7 +99,67 @@ define(
             });
         };
 
+        $scope.savePortfolio = function() {
+          $http
+            .post(
+              "/api/portfolio/" + $scope.state.id,
+              angular.copy($scope.state))
+            .success(function(response) {
+              console.log(response);
+              toastr.success('saved objectives')
+            });
+        };
+
+        $scope.addProject = function() {
+          $scope.isSelectProject = true;
+          $http
+            .get('/api/project')
+            .success(function(response) {
+              var selectedIds = _.pluck($scope.state.projects, "id");
+              $scope.projects = [];
+              _.each(response.projects, function(project) {
+                var isSelected = _.contains(selectedIds, project.id);
+                $scope.projects.push({
+                  'name': project.name,
+                  'id': project.id,
+                  'selected': isSelected
+                })
+              });
+              console.log("$scope.projects", $scope.projects);
+            });
+          toastr.success('adding')
+        };
+
+        $scope.dismissAdd = function() {
+          $scope.isSelectProject = false;
+          toastr.success('stop adding')
+        };
+
+        $scope.saveSelectedProject = function() {
+          $scope.isSelectProject = false;
+          var selectedIds = _.pluck($scope.state.projects, "id");
+          console.log("selectedIds", selectedIds);
+          console.log("$scope.projects", $scope.projects);
+          _.each($scope.projects, function(project) {
+            if (!_.contains(selectedIds, project.id)) {
+              if (project.selected) {
+                console.log('new project', project.name);
+                $scope.state.projects.push({
+                  "id": project.id,
+                  "name": project.name,
+                  "boc": "none",
+                });
+              }
+            };
+          });
+
+          console.log($scope.state.projects)
+          $scope.savePortfolio();
+          toastr.success('stop adding')
+        };
+
         initialize();
+
       }
     );
 

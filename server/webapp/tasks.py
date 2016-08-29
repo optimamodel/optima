@@ -21,9 +21,12 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 from .dataio import update_or_create_result_record, \
     load_project, load_project_record, delete_result_by_name
+from . import dataio
 from .dbmodels import WorkLogDb
 from .parse import get_optimization_from_project, get_parset_from_project_by_id
 from .utils import normalize_obj
+
+
 
 db = SQLAlchemy(app)
 
@@ -552,7 +555,7 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
             objectives = gaoptim.objectives
             print ">> Start BOC:"
             print_odict("gaoptim", gaoptim)
-            outcomes = portfolio.fullGA(objectives=objectives)
+            portfolio.fullGA(objectives=objectives, maxtime=120)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -560,13 +563,9 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
             print(">> Error in calculation")
             print(error_text)
 
-        if result:
+        if status == 'completed':
             db_session = init_db_session()
-            delete_result_by_name(project_id, result.name, db_session)
-            result_record = update_or_create_result_record(
-                project, result, optim.parsetname, 'optimization', db_session=db_session)
-            db_session.add(result_record)
-            db_session.commit()
+            dataio.save_portfolio(portfolio, db_session=db_session)
             close_db_session(db_session)
 
     db_session = init_db_session()
