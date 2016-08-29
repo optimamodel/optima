@@ -54,8 +54,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_proptx      = zeros(npts)                   # Proportion on treatment per timestep
     
     # Biological and failure parameters -- death etc
-    prog            = exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],0.]) )
-    svlrecov        = exp(-dt/array([0.,0.,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']]))
+    prog            = exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],eps]) )
+    svlrecov        = exp(-dt/array([eps,eps,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']]))
     deathhiv        = array([simpars['deathacute'],simpars['deathgt500'],simpars['deathgt350'],simpars['deathgt200'],simpars['deathgt50'],simpars['deathlt50']])
     deathsvl        = simpars['deathsvl']           # Death rate whilst on suppressive ART
     deathusvl       = simpars['deathusvl']          # Death rate whilst on unsuppressive ART
