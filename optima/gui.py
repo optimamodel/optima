@@ -448,7 +448,6 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
     buttonheight = panelheight-rowheight*1.5
-    buttonoffset = panelwidth/ncols
     boxoffset = 300+leftmargin
     
     panel = QtGui.QWidget() # Create panel widget
