@@ -429,7 +429,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.getOptimizationGraphs();
       } else if (response.status === 'started') {
         var start = new Date(response.start_time);
-        var now = new Date();
+        var now = new Date(response.current_time);
         var diff = now.getTime() - start.getTime();
         var seconds = parseInt(diff / 1000);
         $scope.statusMessage = "Optimization running for " + seconds + " s";
