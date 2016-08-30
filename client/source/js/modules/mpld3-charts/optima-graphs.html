@@ -20,26 +20,39 @@
           type="button"
           class="btn"
           ng-click="exportAllData()">
-        Export Figure Data CSV
+        Export Data CSV
       </button>
       <br clear="all">
     </div>
 
+    <style>
+      .repeat-box:nth-child(even) {
+        clear:both;
+        background-color: red;
+      }
+    </style>
+
     <div
-        ng-repeat="chart in graphs.mpld3_graphs"
-        ng-show="chart.isChecked()"
-        style="
-          width: 48%;
-          box-sizing: border-box;
-          padding: 15px 0px 5px 0px;
-          margin: 0;
-          border-right: 1px solid #EEE;
-          border-bottom: 1px solid #EEE;
-          float: left;"
-        class="chart-container">
+      style="
+        display: flex;
+        flex-wrap: wrap">
       <div
-          mpld3-chart="chart"
-          chart-id="{{ chart.id }}">
+          ng-repeat="chart in graphs.mpld3_graphs"
+          ng-show="chart.isChecked()"
+          class="repeat-box"
+          style="width: 48%;">
+        <div
+            style="
+              padding: 15px 0px 5px 0px;
+              margin: 0;
+              border-right: 1px solid #EEE;
+              border-bottom: 1px solid #EEE;"
+            class="chart-container ">
+          <div
+              mpld3-chart="chart"
+              chart-id="{{ chart.id }}">
+          </div>
+        </div>
       </div>
     </div>
 

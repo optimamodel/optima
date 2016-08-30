@@ -44,8 +44,9 @@
           style="width: 300px;"
           type="text"
           ng-model="par.name"
-          ng-options="par.short as par.name for par in getParsInScenario()"
           ng-change="selectNewPar($index)">
+        <option "par.short as par.name for par in getParsInScenario()"
+
       </select>
     </td>
     <td>

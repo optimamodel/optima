@@ -57,10 +57,12 @@ define(['angular'], function (module) {
 
       $scope.getPopsOfPar = function (iPar) {
         var parName = $scope.scenario.pars[iPar].name;
+        console.log('par.for', $scope.scenario.pars[iPar].for);
         if (ykeys.hasOwnProperty($scope.scenario.parset_id)) {
           var ykeysOfParset = ykeys[$scope.scenario.parset_id];
           if (ykeysOfParset.hasOwnProperty(parName)) {
             var result = ykeysOfParset[parName];
+            console.log('yekys', result);
             var tot = _.findWhere(result, {'val': 'tot'});
             if (tot) {
               tot["label"] = "Total Population";
