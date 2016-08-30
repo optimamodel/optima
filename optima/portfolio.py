@@ -209,7 +209,7 @@ class Portfolio(object):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
                     if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
             
-    def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, maxtime=None, verbose=2):
+    def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, minbound=None, maxtime=None, verbose=2):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
         printv('Calculating minimum BOC outcomes...', 2, verbose)
 
@@ -274,12 +274,12 @@ class Portfolio(object):
 
             BOClist.append(p.getBOC(objectives))
             
-        optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, maxtime=maxtime)
+        optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, minbound=minbound, maxtime=maxtime)
             
         return optbudgets
         
         
-    def fullGA(self, objectives=None, budgetratio=None, maxtime=None, doplotBOCs=False, verbose=2):
+    def fullGA(self, objectives=None, budgetratio=None, minbound=None, maxtime=None, doplotBOCs=False, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         printv('Performing full geospatial analysis', 1, verbose)
         
@@ -297,7 +297,7 @@ class Portfolio(object):
         if budgetratio == None: budgetratio = self.getdefaultbudgets()
         initbudgets = scaleratio(budgetratio,objectives['budget'])
         
-        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, maxtime = maxtime)
+        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, minbound = minbound, maxtime = maxtime)
         if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         
         gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
