@@ -16,8 +16,8 @@ import os
 global geoguiwindow, globalportfolio
 if 1:  geoguiwindow, globalportfolio = [None]*2
 
-guiobjectives = defaultobjectives(verbose=0)
-guiobjectives['budget'] = 0.0 # Reset
+globalobjectives = defaultobjectives(verbose=0)
+globalobjectives['budget'] = 0.0 # Reset
 
     
     
@@ -452,7 +452,7 @@ def gui_create():
 
 def create(filepaths=None, doadd=False, portfolio=None, usegui=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-    if usegui: global globalportfolio, projectslistbox, guiobjectives, objectiveinputs
+    if usegui: global globalportfolio, projectslistbox, globalobjectives, objectiveinputs
     
     projectpaths = []
     projectslist = []
@@ -541,19 +541,19 @@ def gui_rungeo():
 
 def rungeo(portfolio=None, objectives=None, BOCtime=300, maxtime=120, usegui=False):
     ''' Actually run geospatial analysis!!! '''
-    if usegui: global globalportfolio, guiobjectives, objectiveinputs
+    if usegui: global globalportfolio, globalobjectives, objectiveinputs
     starttime = time()
     if portfolio != None:
         globalportfolio = portfolio
     if objectives != None:
-        guiobjectives = objectives
+        globalobjectives = objectives
     if usegui:
         for key in objectiveinputs.keys():
-            guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
-        guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
-    BOCobjectives = dcp(guiobjectives)
+            globalobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
+        globalobjectives['budget'] *= budgetfactor # Convert back to internal representation
+    BOCobjectives = dcp(globalobjectives)
     globalportfolio.genBOCs(BOCobjectives, maxtime=BOCtime)
-    globalportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = globalportfolio.getdefaultbudgets(), maxtime=maxtime) # WARNING temp time
+    globalportfolio.fullGA(globalobjectives, doplotBOCs=False, budgetratio = globalportfolio.getdefaultbudgets(), maxtime=maxtime) # WARNING temp time
     warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime), usegui)
     if usegui: 
         return None
@@ -702,10 +702,10 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, globalportfolio, guiobjectives, objectiveinputs, projectslistbox, projectinfobox
+    global geoguiwindow, globalportfolio, globalobjectives, objectiveinputs, projectslistbox, projectinfobox
     globalportfolio = None
-#    guiobjectives = defaultobjectives()
-#    guiobjectives['budget'] = 0.0 # Reset
+#    globalobjectives = defaultobjectives()
+#    globalobjectives['budget'] = 0.0 # Reset
     
     ## Set parameters
     wid = 1200.0
@@ -822,9 +822,9 @@ def geogui():
     objectiveinputs = odict()
     for k,key in enumerate(objectivetext.keys()):
         objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
-        objectiveinputs[key].setText(str(guiobjectives[key]))
+        objectiveinputs[key].setText(str(globalobjectives[key]))
         objectiveinputs[key].move(left+120, 230+k*30)
-    objectiveinputs['budget'].setText(str(guiobjectives['budget']/budgetfactor)) # So right units
+    objectiveinputs['budget'].setText(str(globalobjectives['budget']/budgetfactor)) # So right units
     
 
     geoguiwindow.show()
