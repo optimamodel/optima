@@ -450,7 +450,7 @@ def gui_create():
     ''' Wrapper to create a portfolio by selecting a list of projects; silently skip files that fail '''
     create(usegui=True)
 
-def create(filepaths=None, doadd=False, portfolio=None, usegui=False):
+def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
     if usegui: global globalportfolio, projectslistbox, globalobjectives, objectiveinputs
     
@@ -494,9 +494,9 @@ def gui_addproj():
     ''' Wrappeer to add a project -- same as creating a portfolio except don't overwrite '''
     addproj(usegui=True)
 
-def addproj(filepaths=None, addtoportfolio=None, usegui=False):
+def addproj(portfolio=None, filepaths=None, usegui=False):
     ''' Add a project -- same as creating a portfolio except don't overwrite '''
-    p = create(filepaths=filepaths, doadd=True, addtoportfolio=addtoportfolio, usegui=usegui)
+    p = create(filepaths=filepaths, doadd=True, portfolio=portfolio, usegui=usegui)
     if usegui:
         resetbudget() # And reset the budget
     return p
