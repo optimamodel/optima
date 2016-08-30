@@ -6,7 +6,7 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 Version: 2016jan29
 """
 
-from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults
+from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
 from PyQt4 import QtGui
 from pylab import figure, close
 from time import time
@@ -252,7 +252,7 @@ def gui_makeproj():
     
     
 # ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
-def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplots=False, usegui=False):
+def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplots=False, usegui=False, verbose=2):
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
     ''' checkplots - To check if calibrations are rescaled nicely. '''
     
@@ -359,12 +359,12 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         plhivdenom = wspopsize.cell_value(ndistricts+2, colindex)*wsprev.cell_value(ndistricts+2, colindex)
         plhivratio[popname] = [x/plhivdenom for x in plhivratio[popname]]
 
-    print('Population ratio...')
-    print popratio                     # Proportions of national population split between districts.
-    print('Prevalence multiples...')
-    print prevfactors                   # Factors by which to multiply prevalence in a district.        
-    print('PLHIV ratio...')
-    print plhivratio                    # Proportions of PLHIV split between districts.
+    printv('Population ratio...', 4, verbose)
+    printv(popratio, 4, verbose)                     # Proportions of national population split between districts.
+    printv('Prevalence multiples...', 4, verbose)
+    printv(prevfactors, 4, verbose)                   # Factors by which to multiply prevalence in a district.        
+    printv('PLHIV ratio...', 4, verbose)
+    printv(plhivratio, 4, verbose)                    # Proportions of PLHIV split between districts.
     
     ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
     projlist = []
