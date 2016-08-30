@@ -146,16 +146,16 @@ if 'runbackend' in tests:
     create(filepaths=['./geo/blantyre-district-1.prj','./geo/blantyre-district-2.prj'])
     
     print('\n\n\nCreating portfolio from projects (that already have BOCs).')
-    create(filepaths=['./geo/blantyre.prj'])
-    addproj(filepaths=['./geo/balaka.prj'])   # Use addportfolio argument if not wanting to work with globals.
-    saveport(filepath='./geo/blantyre-balaka.prt')    # Use portfolio argument if not wanting to work with globals.
+    portfolio = create(filepaths=['./geo/blantyre.prj'])
+    addproj(portfolio=portfolio, filepaths=['./geo/balaka.prj'])   # Use addportfolio argument if not wanting to work with globals.
+    saveport(portfolio=portfolio, filepath='./geo/blantyre-balaka.prt')    # Use portfolio argument if not wanting to work with globals.
 
     print('\n\n\nRunning geospatial analysis.')
     gaobjectives = defaultobjectives(verbose=0)
     gaobjectives['budget'] = 15000000.0 # Reset
     portfolio = loadport(filepath='./geo/blantyre-balaka.prt')
-    rungeo(portfolio=portfolio, objectives=gaobjectives, BOCtime=2)     # Use portfolio argument if not wanting to work with globals.
-    export(filepath='./geo/blantyre-balaka-results.xlsx')
+    portfolio = rungeo(portfolio=portfolio, objectives=gaobjectives, BOCtime=2, maxtime=10)     # Use portfolio argument if not wanting to work with globals.
+    export(portfolio=portfolio, filepath='./geo/blantyre-balaka-results.xlsx')
     plotgeo()
 
 

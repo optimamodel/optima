@@ -13,8 +13,8 @@ from time import time
 import os
 
 
-global geoguiwindow, guiportfolio
-if 1:  geoguiwindow, guiportfolio = [None]*2
+global geoguiwindow, globalportfolio
+if 1:  geoguiwindow, globalportfolio = [None]*2
 
 guiobjectives = defaultobjectives(verbose=0)
 guiobjectives['budget'] = 0.0 # Reset
@@ -53,9 +53,9 @@ def _loadproj(filepath=None, usegui=True):
 
 def resetbudget():
     ''' Replace current displayed budget with default from portfolio '''
-    global guiportfolio, objectiveinputs
+    global globalportfolio, objectiveinputs
     totalbudget = 0
-    for project in guiportfolio.projects.values():
+    for project in globalportfolio.projects.values():
         totalbudget += sum(project.progsets[0].getdefaultbudget().values())
     objectiveinputs['budget'].setText(str(totalbudget/budgetfactor))
     return None
@@ -450,20 +450,20 @@ def gui_create():
     ''' Wrapper to create a portfolio by selecting a list of projects; silently skip files that fail '''
     create(usegui=True)
 
-def create(filepaths=None, doadd=False, addtoportfolio=None, usegui=False):
+def create(filepaths=None, doadd=False, portfolio=None, usegui=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-    if usegui: global guiportfolio, projectslistbox, guiobjectives, objectiveinputs
+    if usegui: global globalportfolio, projectslistbox, guiobjectives, objectiveinputs
     
     projectpaths = []
     projectslist = []
-    if guiportfolio is None: 
-        guiportfolio = Portfolio()
+    if globalportfolio is None: 
+        globalportfolio = Portfolio()
     if not doadd:
-        guiportfolio = Portfolio()
+        globalportfolio = Portfolio()
         if usegui:
             projectslistbox.clear()
-    if doadd and addtoportfolio != None:
-        guiportfolio = addtoportfolio
+    if doadd and portfolio != None:
+        globalportfolio = portfolio
     if usegui:
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
     if filepaths:
@@ -481,13 +481,13 @@ def create(filepaths=None, doadd=False, addtoportfolio=None, usegui=False):
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
         if usegui:
             projectslistbox.addItems(projectpaths)
-        guiportfolio.addprojects(projectslist)
+        globalportfolio.addprojects(projectslist)
         if usegui:
             resetbudget() # And reset the budget
     if usegui:
         return None
     else:
-        return dcp(guiportfolio)
+        return dcp(globalportfolio)
 
 
 def gui_addproj():
@@ -508,7 +508,7 @@ def gui_loadport():
     
 def loadport(filepath=None, usegui=False):
     ''' Load an existing portfolio '''
-    if usegui: global guiportfolio, projectslistbox
+    if usegui: global globalportfolio, projectslistbox
     if usegui:
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
     tmpport = None
@@ -520,10 +520,10 @@ def loadport(filepath=None, usegui=False):
             return None
         if tmpport is not None: 
             if type(tmpport)==Portfolio:
-                guiportfolio = tmpport
+                globalportfolio = tmpport
                 if usegui:
                     projectslistbox.clear()
-                    projectslistbox.addItems([proj.name for proj in guiportfolio.projects.values()])
+                    projectslistbox.addItems([proj.name for proj in globalportfolio.projects.values()])
                 print('Portfolio file "%s" loaded' % filepath)
             else: print('File "%s" is not an Optima portfolio file' % filepath)
     else:
@@ -532,19 +532,19 @@ def loadport(filepath=None, usegui=False):
         resetbudget() # And reset the budget
         return None
     else:
-        return dcp(guiportfolio)
+        return dcp(globalportfolio)
 
 
 def gui_rungeo():
     ''' Wrapper to actually run geospatial analysis!!! '''
     rungeo(usegui=True)
 
-def rungeo(portfolio=None, objectives=None, BOCtime=300, usegui=False):
+def rungeo(portfolio=None, objectives=None, BOCtime=300, maxtime=120, usegui=False):
     ''' Actually run geospatial analysis!!! '''
-    if usegui: global guiportfolio, guiobjectives, objectiveinputs
+    if usegui: global globalportfolio, guiobjectives, objectiveinputs
     starttime = time()
     if portfolio != None:
-        guiportfolio = portfolio
+        globalportfolio = portfolio
     if objectives != None:
         guiobjectives = objectives
     if usegui:
@@ -552,13 +552,13 @@ def rungeo(portfolio=None, objectives=None, BOCtime=300, usegui=False):
             guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
     BOCobjectives = dcp(guiobjectives)
-    guiportfolio.genBOCs(BOCobjectives, maxtime=BOCtime)
-    guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=120) # WARNING temp time
+    globalportfolio.genBOCs(BOCobjectives, maxtime=BOCtime)
+    globalportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = globalportfolio.getdefaultbudgets(), maxtime=maxtime) # WARNING temp time
     warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime), usegui)
     if usegui: 
         return None
     else:
-        return dcp(guiportfolio)
+        return dcp(globalportfolio)
     
 def gui_plotgeo():
     ''' Wrapper to actually plot geospatial analysis!!! '''
@@ -566,14 +566,14 @@ def gui_plotgeo():
 
 def plotgeo(usegui=False):
     ''' Actually plot geospatial analysis!!! '''
-    global guiportfolio
-    if guiportfolio is None: 
+    global globalportfolio
+    if globalportfolio is None: 
         warning('Please load a portfolio first', usegui)
         return None
-    gaoptim = guiportfolio.gaoptims[-1]
+    gaoptim = globalportfolio.gaoptims[-1]
 
     # Handles multithreading-based resorting. WARNING: Is based on simple sorting UIDs. Expect problems if there are mismatched UIDs...
-    projlist = [x.uid for x in guiportfolio.projects.values()]
+    projlist = [x.uid for x in globalportfolio.projects.values()]
     pairlist = [x[0].project.uid for x in gaoptim.resultpairs.values()]
     projids = [x[0] for x in sorted(enumerate(projlist), key=lambda pair: pair[1])]
     pairids = [x[0] for x in sorted(enumerate(pairlist), key=lambda pair: pair[1])]
@@ -592,7 +592,7 @@ def plotgeo(usegui=False):
         extray[truecid[cid]].append(rp['init'].improvement[-1][0])
         extray[truecid[cid]].append(rp['opt'].improvement[-1][-1])
     
-    guiportfolio.plotBOCs(objectives=gaoptim.objectives, 
+    globalportfolio.plotBOCs(objectives=gaoptim.objectives, 
                           initbudgets=[x[1] for x in sorted(zip(truecid,gaoptim.getinitbudgets()))], 
                           optbudgets=[x[1] for x in sorted(zip(truecid,gaoptim.getoptbudgets()))], 
                           deriv=False, extrax=extrax, extray=extray)
@@ -605,20 +605,20 @@ def gui_export():
 
 def export(portfolio=None, filepath=None, usegui=False):
     ''' Save the current results to Excel file '''
-    if usegui: global guiportfolio
+    if usegui: global globalportfolio
     
     if portfolio is not None:
-        guiportfolio = portfolio
+        globalportfolio = portfolio
         if filepath is None:
             filepath = portfolio.name+'.prt'
-    if type(guiportfolio)!=Portfolio and usegui: warning('Warning, must load portfolio first!')
+    if type(globalportfolio)!=Portfolio and usegui: warning('Warning, must load portfolio first!')
     
     from xlsxwriter import Workbook
     if not usegui: print('Saving portfolio...')
     
     # 1. Extract data needed from portfolio
     try:
-        outstr = guiportfolio.gaoptims[-1].printresults() # Stored, but regenerate
+        outstr = globalportfolio.gaoptims[-1].printresults() # Stored, but regenerate
     except:
         errormsg = 'Warning, it does not seem that geospatial analysis has been run for this portfolio!'
         warning(errormsg, usegui)
@@ -680,12 +680,12 @@ def gui_saveport():
 
 def saveport(portfolio = None, filepath = None, usegui=False):
     ''' Save the current portfolio '''
-    if usegui: global guiportfolio
+    if usegui: global globalportfolio
     if portfolio != None:
-        guiportfolio = portfolio
+        globalportfolio = portfolio
     if usegui:
         filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+portext)
-    saveobj(filepath, guiportfolio)
+    saveobj(filepath, globalportfolio)
     return None
 
 
@@ -702,8 +702,8 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, guiportfolio, guiobjectives, objectiveinputs, projectslistbox, projectinfobox
-    guiportfolio = None
+    global geoguiwindow, globalportfolio, guiobjectives, objectiveinputs, projectslistbox, projectinfobox
+    globalportfolio = None
 #    guiobjectives = defaultobjectives()
 #    guiobjectives['budget'] = 0.0 # Reset
     
@@ -767,16 +767,16 @@ def geogui():
     ##############################################################################################################################
     
     def updateprojectinfo():
-        global guiportfolio, projectslistbox, projectinfobox
+        global globalportfolio, projectslistbox, projectinfobox
         ind = projectslistbox.currentRow()
-        project = guiportfolio.projects[ind]
+        project = globalportfolio.projects[ind]
         projectinfobox.setText(repr(project))
         return None
     
     def removeproject():
-        global projectslistbox, projectinfobox, guiportfolio
+        global projectslistbox, projectinfobox, globalportfolio
         ind = projectslistbox.currentRow()
-        guiportfolio.projects.pop(guiportfolio.projects.keys()[ind]) # Remove from portfolio
+        globalportfolio.projects.pop(globalportfolio.projects.keys()[ind]) # Remove from portfolio
         projectslistbox.takeItem(ind) # Remove from list
         return None
         
