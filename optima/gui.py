@@ -125,7 +125,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
         pygui(results, [toplot])
     
     where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
-        toplot = ['prev-tot', 'inci-per']
+        toplot = ['prev-tot', 'inci-pop']
     
     (see epiformatslist in plotting.py)
     
@@ -217,7 +217,7 @@ def browser(results, toplot=None, doplot=True):
         browser(results, [toplot])
     
     where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
-        toplot = ['prev-tot', 'inci-per']
+        toplot = ['prev-tot', 'inci-pop']
     
     With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
     

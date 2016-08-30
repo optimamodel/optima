@@ -23,7 +23,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     npops        = len(popkeys)
     simpars      = dcp(simpars)
     tvec         = simpars['tvec']
-    dt           = simpars['dt']           # Shorten dt
+    dt           = float(simpars['dt'])    # Shorten dt and make absolutely sure it's a float
     npts         = len(tvec)               # Number of time points
     ncd4         = settings.ncd4           # Shorten number of CD4 states
     nstates      = settings.nstates        # Shorten number of health states
@@ -499,8 +499,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             otherdeaths[index] = dt * people[sus[index],:,t] * background
             raw_otherdeath[:,t] += otherdeaths[index]/dt    # Save annual other deaths 
         dS = -infections_to - otherdeaths # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw_inci[:,t] = (infections_to.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
-        raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /float(dt)
+        raw_inci[:,t] = infections_to.sum(axis=0)/dt  # Store new infections AND new MTCT births
+        raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /dt # WARNING, seems to exclude MTCT
 
         ## Undiagnosed
         if not(isnan(propdx[t])):
@@ -847,6 +847,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
                 people[undx[0], p2, t+1] += popmtct # HIV+ babies assigned to undiagnosed compartment
                 people[susreg, p2, t+1] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
+            raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
 
             
             ## Age-related transitions
