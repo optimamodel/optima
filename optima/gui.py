@@ -332,7 +332,7 @@ def browser(results, toplot=None, doplot=True):
 
 
 
-def manualfit(project=None, parsubset=None, name=-1, ind=0, verbose=2, **kwargs):
+def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=2, **kwargs):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -440,8 +440,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, verbose=2, **kwargs)
     leftmargin = 10
     rowheight = 25
     colwidth = 450
-    maxitemspercol = 25
-    ncols = floor(npars/maxitemspercol)+1
+    ncols = floor(npars/maxrows)+1
     nrows = ceil(nfull/float(ncols))
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
