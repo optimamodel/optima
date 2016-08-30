@@ -45,6 +45,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Initialize arrays
     raw_inci       = zeros((npops, npts)) # Total incidence acquired by each population
     raw_inciby     = zeros((nstates, npts)) # Total incidence transmitted by each health state
+    raw_births     = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
     raw_mtct       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
     raw_diag       = zeros((npops, npts)) # Number diagnosed per timestep
     raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
@@ -802,6 +803,31 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ### Update next time point and check for errors
         ##############################################################################################################
 
+        ## Calculate births
+        for p1,p2,birthrates,alleligbirthrate in birthslist:
+            thisbirthrate = birthrates[t]
+            peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
+            popbirths      = thisbirthrate * people[:, p1, t].sum()
+            mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
+            mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
+            thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
+            
+            if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
+                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+            else: # Proportion on PMTCT is specified, ignore number
+                mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
+            popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
+            
+            raw_mtct[p2, t] += popmtct
+            raw_births[p2, t] += popbirths
+            
+        raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
+
+
+
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((nstates, npops))
@@ -825,30 +851,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Calculate births, age transitions and mother-to-child-transmission
             ###############################################################################
             
-            ## Calculate births
-            for p1,p2,birthrates,alleligbirthrate in birthslist:
-                thisbirthrate = birthrates[t]
-                peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
-                popbirths      = thisbirthrate * people[:, p1, t].sum()
-                mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
-                mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
-                thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
-                
-                if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
-                    receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                    mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                    mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
-                else: # Proportion on PMTCT is specified, ignore number
-                    mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                    mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
-                popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
-                
-                raw_mtct[p2, t] += popmtct
-                
-                people[undx[0], p2, t+1] += popmtct # HIV+ babies assigned to undiagnosed compartment
-                people[susreg, p2, t+1] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
-            raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
-
+            people[undx[0], :, t+1] += raw_mtct[:, t] # HIV+ babies assigned to undiagnosed compartment
+            people[susreg, :, t+1] += raw_births[:,t] - raw_mtct[:, t]  # HIV- babies assigned to uncircumcised compartment
             
             ## Age-related transitions
             for p1,p2 in agetransitlist:
