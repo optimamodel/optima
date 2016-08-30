@@ -337,9 +337,12 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
     
-    Current version only allows the user to modify force-of-infection, 
+    parsubset can be a list of parameters the user can fit, e.g.
+    parsubset=['initprev','force']
     
-    Version: 1.0 (2015dec29) by cliffk
+    maxrows is the number of rows (i.e. parameters) to display in each column.
+    
+    Version: 1.1 (2016aug30) by robyns
     '''
     
     # For edit boxes, we need this -- but import it here so only this function will fail
@@ -474,9 +477,9 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     resetbutton = QtGui.QPushButton('Reset', parent=panel)
     closebutton = QtGui.QPushButton('Close', parent=panel)
     
-    keepbutton.move(0+buttonoffset, buttonheight)
-    resetbutton.move(200+buttonoffset, buttonheight)
-    closebutton.move(400+buttonoffset, buttonheight)
+    keepbutton.move(1*panelwidth/4, buttonheight)
+    resetbutton.move(2*panelwidth/4, buttonheight)
+    closebutton.move(3*panelwidth/4, buttonheight)
     
     keepbutton.clicked.connect(keeppars)
     resetbutton.clicked.connect(resetpars)
