@@ -463,11 +463,11 @@ class Project(object):
         return None
 
 
-    def manualfit(self, orig=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
+    def manualfit(self, orig=None, parsubset=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(project=self, name=name, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
+        manualfit(project=self, name=name, parsubset=parsubset, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
         return None
 
@@ -484,10 +484,10 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2):
+    def runscenarios(self, scenlist=None, verbose=2, debug=False):
         ''' Function to run scenarios '''
         if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
-        multires = runscenarios(project=self, verbose=verbose)
+        multires = runscenarios(project=self, verbose=verbose, debug=debug)
         self.addresult(result=multires)
         self.modified = today()
         return None

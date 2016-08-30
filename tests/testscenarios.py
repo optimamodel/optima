@@ -7,11 +7,11 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
-'maxcoverage',
-'maxbudget',
+#'standardscen',
+#'maxcoverage',
+#'maxbudget',
 '90-90-90'
-'VMMC'
+#'VMMC'
 ]
 
 ##############################################################################
@@ -224,13 +224,23 @@ if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, defaults, pygui, plotpeople
+    from optima import Parscen, defaults, pygui, plotpeople, findinds
     
-    P = defaults.defaultproject('simple')
-    P.settings.usecascade = True
-    P.runsim()
+    P = defaults.defaultproject('generalized')
+    P.runsim(debug=True)
     
     pops = P.data['pops']['short']
+    
+    startyear = 2016.
+    endyear = 2020.
+    res_startind = findinds(P.results[-1].tvec, startyear)
+    res_endind = findinds(P.results[-1].tvec, endyear)
+    
+    start_propdx = P.results[-1].main['numdiag'].tot[0][res_startind]/P.results[-1].main['numplhiv'].tot[0][res_startind]
+    start_propincare = P.results[-1].main['numincare'].tot[0][res_startind]/P.results[-1].main['numdiag'].tot[0][res_startind]
+    start_proptx = P.results[-1].main['numtreat'].tot[0][res_startind]/P.results[-1].main['numincare'].tot[0][res_startind]
+    start_propsupp = P.results[-1].main['numsuppressed'].tot[0][res_startind]/P.results[-1].main['numtreat'].tot[0][res_startind]
+    
 
     ## Define scenarios
     scenlist = [
@@ -243,33 +253,33 @@ if '90-90-90' in tests:
               pars=[
               {'name': 'propdx',
               'for': ['tot'],
-              'startyear': 2016,
-              'endyear': 2020,
-              'startval': .5,
+              'startyear': startyear,
+              'endyear': endyear,
+              'startval': start_propdx,
               'endval': .9,
               },
               
               {'name': 'propcare',
               'for': ['tot'],
-              'startyear': 2016,
-              'endyear': 2020,
-              'startval': .5,
+              'startyear': startyear,
+              'endyear': endyear,
+              'startval': start_propincare,
               'endval': .9,
               },
               
               {'name': 'proptx',
               'for': ['tot'],
-              'startyear': 2016,
-              'endyear': 2020,
-              'startval': .5,
+              'startyear': startyear,
+              'endyear': endyear,
+              'startval': start_proptx,
               'endval': .9,
               },
               
-              {'name': 'treatvs',
+              {'name': 'propsupp',
               'for': ['tot'],
-              'startyear': 2016,
-              'endyear': 2020,
-              'startval': .5,
+              'startyear': startyear,
+              'endyear': endyear,
+              'startval': start_propsupp,
               'endval': .9,
               },
                 ]),
@@ -277,9 +287,29 @@ if '90-90-90' in tests:
 
     # Store these in the project
     P.addscenlist(scenlist)
-    
+    P.scens[0].active = True # Turn off 90-90-90 scenario
+
     # Run the scenarios
-    P.runscenarios() 
+    P.runscenarios(debug=True) 
+
+    if showstats:
+        blank()
+        for scind, scen in enumerate([scen for scen in P.scens.values() if scen.active]):
+            end_plhiv = P.results[-1].main['numplhiv'].tot[scind][res_endind]
+            end_propdx = P.results[-1].main['numdiag'].tot[scind][res_endind]/P.results[-1].main['numplhiv'].tot[scind][res_endind]
+            end_propincare = P.results[-1].main['numincare'].tot[scind][res_endind]/P.results[-1].main['numdiag'].tot[scind][res_endind]
+            end_proptx = P.results[-1].main['numtreat'].tot[scind][res_endind]/P.results[-1].main['numincare'].tot[scind][res_endind]
+            end_propsupp = P.results[-1].main['numsuppressed'].tot[scind][res_endind]/P.results[-1].main['numtreat'].tot[scind][res_endind]
+            output = '===================================\n'
+            output += scen.name
+            output += '\nOutcomes in Year %i\n' % (endyear)
+            output += 'PLHIV: %s\n' % (end_plhiv)
+            output += 'Prop aware: %s\n' % (end_propdx)
+            output += 'Prop in care: %s\n' % (end_propincare)
+            output += 'Prop treated: %s\n' % (end_proptx)
+            output += 'Prop suppressed: %s\n' % (end_propsupp)
+            print output
+   
      
     if doplot:
         ppl = P.results[-1].raw['90-90-90'][0]['people']

@@ -1060,21 +1060,32 @@ class Parameterset(object):
         return None
 
 
-    def manualfitlists(self, ind=0):
+    def manualfitlists(self, parsubset=None, ind=0):
         ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
             raise OptimaException("No parameters available!")
         elif len(self.pars) <= ind:
             raise OptimaException("Parameter with index {} not found!".format(ind))
     
-        tmppars = self.pars[ind]
+        # Check parname subset is valid
+        if parsubset is None:
+            tmppars = self.pars[ind]
+        else:
+            if type(parsubset)==str: parsubset=[parsubset]
+            if parsubset and type(parsubset) not in (list, str):
+                raise OptimaException("Expecting parsubset to be a list or a string!")
+            for item in parsubset:
+                if item not in [par.short for par in self.pars[ind].values() if hasattr(par,'fittable') and par.fittable!='no']:
+                    raise OptimaException("Parameter %s is not a fittable parameter.")
+            tmppars = {par.short:par for par in self.pars[ind].values() if hasattr(par,'fittable') and par.fittable!='no' and par.short in parsubset}
+            
         mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
         keylist = mflists['keys']
         subkeylist = mflists['subkeys']
         typelist = mflists['types']
         valuelist = mflists['values']
         labellist = mflists['labels']
-    
+
         for key in tmppars.keys():
             par = tmppars[key]
             if hasattr(par,

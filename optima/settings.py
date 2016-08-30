@@ -77,9 +77,6 @@ class Settings(object):
             errormsg = 'Incorrect number of health states provided (actually %i, want %i)' % (len(self.statelabels), self.nstates)
             raise OptimaException(errormsg)
         
-        # Non-cascade settings/states
-        self.usecascade = False # Whether or not to actually use the cascade
-        self.tx  = self.svl # Infected, on treatment -- not used with the cascade
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
