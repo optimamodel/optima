@@ -17,7 +17,7 @@ from pprint import pprint
 from uuid import UUID
 
 from flask.ext.restful import fields, marshal
-from numpy import nan
+from numpy import nan, array
 
 import optima as op
 from optima import loadpartable, partable, Par
@@ -179,40 +179,6 @@ def get_project_summary_from_project(project):
     return project_summary
 
 
-parameter_fields = {
-    'fittable': fields.String,
-    'name': fields.String,
-    'auto': fields.String,
-    'partype': fields.String,
-    'proginteract': fields.String,
-    'short': fields.String,
-    'coverage': fields.Boolean,
-    'by': fields.String,
-    'pships': fields.Raw,
-}
-
-
-def get_project_parameters(project):
-    parset_list = project.parsets.values()
-    default_pars = [par['short'] for par in loadpartable(partable)]
-    parameters = []
-    added_par_keys = set()
-    for parset in parset_list:
-        for par in parset.pars:
-            for par_key in default_pars:
-                if par_key not in added_par_keys \
-                        and par_key in par \
-                        and isinstance(par[par_key], Par) \
-                        and par[par_key].visible == 1 \
-                        and par[par_key].y.keys():
-                    parameter = par[par_key].__dict__
-                    parameter['pships'] = []
-                    if par[par_key].by == 'pship':
-                        parameter['pships'] = par[par_key].y.keys()
-                    parameters.append(parameter)
-                    added_par_keys.add(par_key)
-    return marshal(parameters, parameter_fields)
-
 
 # PARSETS
 
@@ -241,7 +207,7 @@ def get_parset_summaries(project):
 
     return parset_summaries
 
-'''
+"""
 Parameters data structure:
 [
   {
@@ -259,7 +225,7 @@ Parameters data structure:
     "label": "Treatment recovery rate into CD4>350 (%/year)"
   },
 ]
-'''
+"""
 
 def get_parameters_from_parset(parset, ind=0):
     parameters = []
@@ -322,6 +288,127 @@ def set_parameters_on_parset(parameters, parset, i_set=0):
             pars[key].y = value
         else:
             print('>> Parameter type "%s" not implemented!' % par_type)
+
+
+def make_pop_label(pop):
+    return ' - '.join(pop) if isinstance(pop, tuple) else pop
+
+
+def get_par_limits(project, par):
+    """
+    Returns:
+        a list of [lower, upper]
+    """
+
+    def convert(limit):
+        if isinstance(limit, str):
+            return project.settings.convertlimits(limits=limit)
+        else:
+            return limit
+
+    return map(convert, par.limits)
+
+
+
+def get_parameters_for_scenarios(project):
+    """
+    Returns parameters that can be modified in a scenario:
+        <parsetID>:
+            <parameterShort>:
+                - val: string -or- list of two string
+                - label: string
+    """
+    result = {}
+    for id, parset in project.parsets.items():
+        y_keys_of_parset = {}
+        for par in parset.pars[0].values():
+            if not hasattr(par, 'y') or not par.visible:
+                continue
+            y_keys_of_parset[par.short] = [
+                {
+                    'val': pop,
+                    'label': make_pop_label(pop),
+                    'limits': get_par_limits(project, par)
+                }
+                for pop in par.y.keys()
+            ]
+        result[str(parset.uid)] = y_keys_of_parset
+    return result
+
+
+def get_parameters_for_edit_program(project):
+    parameters = []
+    added_par_keys = set()
+    default_par_keys = [par['short'] for par in loadpartable(partable)]
+    for parset in project.parsets.values():
+        for pars in parset.pars:
+            for par_key in default_par_keys:
+                if par_key in added_par_keys or par_key not in pars:
+                    continue
+                par = pars[par_key]
+                if not isinstance(pars[par_key], Par):
+                    continue
+                if not par.visible == 1 or not par.y.keys():
+                    continue
+                parameters.append({
+                    'name': par.name,
+                    'param': par.short,
+                    'by': par.by,
+                    'pships': par.y.keys() if par.by == 'pship' else []
+                })
+                added_par_keys.add(par_key)
+    return parameters
+
+
+def get_parameters_for_outcomes(project, progset_id, parset_id):
+    """
+    For program outcome page
+
+    Args:
+        settings:
+        progset:
+        parset:
+
+    Returns:
+
+    """
+
+    progset = get_progset_from_project(project, progset_id)
+    parset = get_parset_from_project(project, parset_id)
+
+    print ">> Fetching target parameters from progset '%s'", progset.name
+
+    progset.gettargetpops()
+    progset.gettargetpars()
+    progset.gettargetpartypes()
+
+    target_par_shorts = set([p['param'] for p in progset.targetpars])
+    pars = parset.pars[0]
+    parameters = [
+        {
+            'short': par_short,
+            'name': pars[par_short].name,
+            'coverage': pars[par_short].coverage,
+            'limits': get_par_limits(project, pars[par_short]),
+            'interact': pars[par_short].proginteract,
+            'populations': [
+                {
+                    'pop': popKey,
+                    'programs': [
+                        {
+                            'name': program.name,
+                            'short': program.short,
+                        }
+                        for program in programs
+                        ]
+                }
+                for popKey, programs in progset.progs_by_targetpar(par_short).items()
+                ],
+        }
+        for par_short in target_par_shorts
+        ]
+
+    return parameters
 
 
 def print_parset(parset):
@@ -769,43 +856,6 @@ def set_progset_summary_on_project(project, progset_summary, progset_id=None):
     print("> Created/updated program %s" % progset_name)
 
 
-def get_parameters_from_progset_parset(settings, progset, parset):
-    def convert(limit):
-        return settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
-
-    def get_limits(par):
-        result = map(convert, par.limits)
-        return result
-
-    target_par_shorts = set([p['param'] for p in progset.targetpars])
-    pars = parset.pars[0]
-    parameters = [
-        {
-            'short': par_short,
-            'name': pars[par_short].name,
-            'coverage': pars[par_short].coverage,
-            'limits': get_limits(pars[par_short]),
-            'interact': pars[par_short].proginteract,
-            'populations': [
-                {
-                    'pop': popKey,
-                    'programs': [
-                        {
-                            'name': program.name,
-                            'short': program.short,
-                        }
-                        for program in programs
-                        ]
-                }
-                for popKey, programs in progset.progs_by_targetpar(par_short).items()
-                ],
-        }
-        for par_short in target_par_shorts
-        ]
-
-    return parameters
-
-
 # SCENARIOS
 
 '''
@@ -861,7 +911,7 @@ def convert_scenario_pars(pars):
             'endval': par['endval'],
             'endyear': par['endyear'],
             'startval': par['startval'],
-            'for': force_tuple_list(par['for'])
+            'for': par['for'][0] if len(par['for']) == 1 else par['for']
         })
     return result
 
@@ -875,35 +925,27 @@ def revert_scenario_pars(pars):
             'endval': par['endval'],
             'endyear': par['endyear'],
             'startval': par['startval'],
-            'for': par['for'][0] if len(par['for']) == 1 else par['for']
+            'for': force_tuple_list(par['for'])
         })
     return result
 
 
-def get_parameters_for_scenarios(project):
-    """
-    Returns parameters that can be modified in a scenario:
-        <parsetID>:
-            <parameterShort>:
-                - val: number
-                - label: string
-    """
-    parsets = {key: value for key, value in project.parsets.items()}
-    y_keys = {
-        str(parset.uid): {
-            par.short: [
-                {
-                    'val': k,
-                    'label': ' - '.join(k) if isinstance(k, tuple) else k
-                }
-                for k in par.y.keys()
-            ]
-            for par in parset.pars[0].values()
-            if hasattr(par, 'y') and par.visible
-        }
-        for id, parset in parsets.iteritems()
-    }
-    return y_keys
+def convert_program_list(program_list):
+    items = program_list.items()
+    return [{"program": x, "values": y} for x, y in items]
+
+
+def revert_program_list(program_list):
+    result = {}
+    for entry in program_list:
+        key = entry["program"]
+        vals = entry["values"]
+        if all(v is None for v in vals):
+            continue
+        vals = [v if v is not None else 0 for v in vals]
+        result[key] = array(vals)
+    return result
+
 
 
 def get_scenario_summary(project, scenario):
@@ -915,13 +957,13 @@ def get_scenario_summary(project, scenario):
     # budget, coverage, parameter, any others?
     if isinstance(scenario, op.Parscen):
         scenario_type = "parameter"
-        extra_data["pars"] = revert_scenario_pars(scenario.pars)
+        extra_data["pars"] = convert_scenario_pars(scenario.pars)
     elif isinstance(scenario, op.Coveragescen):
         scenario_type = "coverage"
-        extra_data["coverage"] = scenario.coverage
+        extra_data["coverage"] = convert_program_list(scenario.coverage)
     elif isinstance(scenario, op.Budgetscen):
         scenario_type = "budget"
-        extra_data["budget"] = [{"program": x, "values": y} for x, y in scenario.budget.iteritems()]
+        extra_data["budget"] = convert_program_list(scenario.budget)
 
     if hasattr(scenario, "progsetname"):
         progset_id = project.progsets[scenario.progsetname].uid
@@ -950,6 +992,8 @@ def get_scenario_summary(project, scenario):
 
 def get_scenario_summaries(project):
     scenario_summaries = map(partial(get_scenario_summary, project), project.scens.values())
+    print("get scenario")
+    pprint(scenario_summaries, indent=2)
     return normalize_obj(scenario_summaries)
 
 
@@ -958,45 +1002,57 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 
     project.scens = op.odict()
 
-    for s in scenario_summaries:
+    for summary in scenario_summaries:
 
-        if s["parset_id"]:
-            parset_name = get_parset_from_project(project, s["parset_id"]).name
+        if summary["parset_id"]:
+            parset = get_parset_from_project(project, summary["parset_id"])
+            parset_name = parset.name
         else:
-            parset_name = False
+            parset_name = None
 
-        kwargs = {
-            "name": s["name"],
-            "active": s["active"],
-            "parsetname": parset_name,
-            "t": s.get("years"),
+        if summary["scenario_type"] == "parameter":
 
-        }
+            kwargs = {
+                "name": summary["name"],
+                "parsetname": parset_name,
+                'pars': revert_scenario_pars(summary.get('pars', []))
+            }
+            scen = op.Parscen(**kwargs)
 
-        if "progset_id" in s and s["progset_id"]:
-            progset_name = get_progset_from_project(project, s["progset_id"]).name
+        else:
 
-        if s["scenario_type"] == "parameter":
-            scen = op.Parscen(
-                pars=convert_scenario_pars(s["pars"]),
-                **kwargs)
+            if "progset_id" in summary and summary["progset_id"]:
+                progset = get_progset_from_project(project, summary["progset_id"])
+                progset_name = progset.name
+            else:
+                progset_name = None
 
-        elif s["scenario_type"] == "coverage":
-            scen = op.Coveragescen(
-                coverage=s["coverage"],
-                progsetname=progset_name,
-                **kwargs)
-        elif s["scenario_type"] == "budget":
-            budget = op.odict({x["program"]:x["values"] for x in s["budget"]})
+            kwargs = {
+                "name": summary["name"],
+                "parsetname": parset_name,
+                "progsetname": progset_name,
+                "t": summary.get("years")
+            }
 
-            scen = op.Budgetscen(
-                budget=budget,
-                progsetname=progset_name,
-                **kwargs)
+            if summary["scenario_type"] == "coverage":
 
-        if s.get("id"):
-            scen.uid = UUID(s["id"])
+                kwargs.update(
+                    {'coverage': revert_program_list(summary.get('coverage', []))})
+                scen = op.Coveragescen(**kwargs)
 
+            elif summary["scenario_type"] == "budget":
+
+                kwargs.update(
+                    {'budget': revert_program_list(summary.get('budget', []))})
+                scen = op.Budgetscen(**kwargs)
+
+        if summary.get("id"):
+            scen.uid = UUID(summary["id"])
+
+        print("save summary")
+        pprint(summary, indent=2)
+        print("save scen kwargs")
+        pprint(kwargs, indent=2)
         project.scens[scen.name] = scen
 
 

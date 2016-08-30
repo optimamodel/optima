@@ -503,7 +503,10 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     
     # Preliminaries: process inputs and extract needed data
     
-    budgets = multires.budget # WARNING, will break with multiple years
+    budgets = dcp(multires.budget) # WARNING, will break with multiple years
+    for key in budgets.keys(): # Budgets is an odict
+        for i,val in enumerate(budgets[key].values()):
+            if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0
     
     alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
     proglabels = budgets[0].keys() 
@@ -514,18 +517,14 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     fig = figure(figsize=figsize)
     ax = subplot(1,1,1)
     
-#    fig.subplots_adjust(left=0.03) # Less space on left
-#    fig.subplots_adjust(right=0.98) # Less space on right
-#    fig.subplots_adjust(top=0.95) # Less space on bottom
     fig.subplots_adjust(bottom=0.50) # Less space on bottom
     
     for i in range(nprogs-1,-1,-1):
         xdata = arange(nallocs)+1
         ydata = array([budget[i] for budget in budgets.values()])
         bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-#        bar(xdata, ydata, bottom=bottomdata, color=progcolors[i], linewidth=0)
-        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)        
-    
+        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
+
     ax.set_xlabel('Spending')
     labels = proglabels
     labels.reverse()
@@ -563,22 +562,15 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     
     "which" should be either 'budget' or 'coverage'
     
-    Version: 2016jan27
+    Version: 2016aug18
     '''
     
     # Preliminaries: process inputs and extract needed data
-    which = 'coverage'
-    print('Warning -- deprecated syntax') # WARNING need to fix properly when there's more time!!!!!!!!!!!!!!!!!!
-    try: 
-        toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
-    except: 
-        errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
-        if die: raise OptimaException(errormsg)
-        else: printv(errormsg, 1, verbose)
+    toplot = [item for item in multires.coverage.values() if item] # e.g. [budget for budget in multires.budget]
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
     proglabels = toplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
+    alloclabels = [key for k,key in enumerate(multires.coverage.keys()) if multires.coverage.values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
@@ -603,7 +595,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
                         try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
                         except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
                 else:                     progdata[i] = x
-            if which=='coverage': progdata *= 100 
+            progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
@@ -617,7 +609,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        ylabel = 'Spending' if which=='budget' else 'Coverage (% of targeted)'
+        ylabel = 'Coverage (% of targeted)'
         ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])

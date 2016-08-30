@@ -28,6 +28,10 @@
   max-width: 900px;
 }
 
+.modal-content {
+  overflow: auto;
+}
+
 .delete {
   cursor: pointer;
   font-size: 12px;
