@@ -164,6 +164,8 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
+    project.created = datetime.now(dateutil.tz.tzutc())
+    project.modified = datetime.now(dateutil.tz.tzutc())
     project.uid = project_entry.id
     set_populations_on_project(project, project_summary["populations"])
     project.data["years"] = (
