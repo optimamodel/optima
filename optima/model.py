@@ -128,6 +128,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         propcare = simpars['propcare']
         propsupp = simpars['propsupp']
     proptx = simpars['proptx']
+    proppmtct = simpars['proppmtct'] # WARNING, not a consistent naming convention
 
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -832,11 +833,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
                 mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
                 thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
-            
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
                 
-                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+                if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
+                    receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                    mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                    mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+                else: # Proportion on PMTCT is specified, ignore number
+                    mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                    mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
                 popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
                 
                 raw_mtct[p2, t] += popmtct
