@@ -46,6 +46,8 @@ def _loadproj(filepath=None, usegui=True):
         except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.message))
         if type(project)==Project: return project
         else: print('File "%s" is not an Optima project file' % filepath)
+    else:
+        print('No filepath provided')
     return None
 
 

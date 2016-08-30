@@ -10,9 +10,9 @@ from optima.geospatial import makesheet, makeproj, create, addproj, saveport, lo
 
 if __name__ == '__main__':
     # Creating portfolio from subdivision spreadsheet.
-    makesheet(projectpath='./geo/blantyre.prj', spreadsheetpath='./geo/BlantyreSplitBlank.xlsx', copies=2, refyear=2017)
-    makeproj(projectpath='./geo/blantyre.prj', spreadsheetpath='./geo/BlantyreSplitFilled.xlsx', destination='./geo')
-    create(filepaths=['./geo/Blantyre - District 1.prj','./geo/Blantyre - District 2.prj'])
+    makesheet(projectpath='./geo/blantyre.prj', spreadsheetpath='./geo/blantyre-split-blank.xlsx', copies=2, refyear=2017)
+    makeproj(projectpath='./geo/blantyre.prj', spreadsheetpath='./geo/blantyre-split-filled.xlsx', destination='./geo')
+    create(filepaths=['./geo/blantyre-district-1.prj','./geo/blantyre-district-2.prj'])
     
     # Creating portfolio from projects (that already have BOCs).
     create(filepaths=['./geo/blantyre.prj'])
