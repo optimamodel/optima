@@ -533,17 +533,17 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         else: # ... or if programmatically determined
             for fromstate in undx:
                 for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if fromstate in lt50 or fromstate in gt50:
-                        if tostate in undx: # Probability of not being tested
-                            thistransit[fromstate][prob][ts] *= (1.-aidstest[t])  # CK: need to take maximum with hivtest[t]
-                        else: # Probability of being tested
-                            thistransit[fromstate][prob][ts] *= aidstest[t]
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
-                    elif fromstate in acute: 
+                    if fromstate in acute: 
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t]*max(dt-0.25,0)/dt) # Adjust testing rates to account for the window period (0.25 years)
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]*max(dt-0.25,0)/dt
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                    if fromstate in lt50 or fromstate in gt50:
+                        if tostate in undx: # Probability of not being tested
+                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-maximum(aidstest[t],hivtest[:,t]))
+                        else: # Probability of being tested
+                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*maximum(aidstest[t],hivtest[:,t])
                             raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
                     else:
                         if tostate in undx: # Probability of not being tested
