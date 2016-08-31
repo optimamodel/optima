@@ -1,10 +1,6 @@
 import optima as op
 from numpy import nan
 
-# Create a current version of the project to use as a template
-currentproject = op.defaultproject('best', dorun=False)
-
-
 
 def versiontostr(project, **kwargs):
     """
@@ -51,6 +47,9 @@ def addproppmtct(project, **kwargs):
     """
     Migration between Optima 2.0.3 and 2.0.4.
     """
+    # Create a current version of the project to use as a template
+    currentproject = op.defaultproject('best', dorun=False, verbose=0)
+
     for ps in project.parsets.values():
         for i in range(len(ps.pars)):
             ps.pars[i]['proppmtct'] = op.dcp(currentproject.pars()['proppmtct'])
