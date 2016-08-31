@@ -535,7 +535,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 for ts, tostate in enumerate(thistransit[fromstate][to]):
                     if fromstate in lt50 or fromstate in gt50:
                         if tostate in undx: # Probability of not being tested
-                            thistransit[fromstate][prob][ts] *= (1.-aidstest[t])
+                            thistransit[fromstate][prob][ts] *= (1.-aidstest[t])  # CK: need to take maximum with hivtest[t]
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] *= aidstest[t]
                             raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
