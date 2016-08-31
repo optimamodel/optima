@@ -59,6 +59,7 @@ Biological failure rate (per year)	biofailure	(0, 'maxrate')	tot	timepar	meta	ca
 PLHIV aware of their status	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
 Diagnosed PLHIV in care	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
 PLHIV in care on treatment	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
+Pregnant women and mothers on PMTCT	proppmtct	(0, 1)	tot	timepar	no	no	0	0	1	None
 People on ART with viral suppression	propsupp	(0, 1)	tot	timepar	no	no	0	0	1	None
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None
@@ -479,7 +480,7 @@ def makepars(data, label=None, verbose=2):
         pars['inhomo'].y[key] = 0.0
     
     # Overwrite parameters that shouldn't be being loaded from the data
-    for parname in ['propdx', 'proptx', 'propcare', 'propsupp']:
+    for parname in ['propdx', 'proptx', 'proppmtct', 'propcare', 'propsupp']:
         pars[parname].t['tot'] = [0.]
         pars[parname].y['tot'] = [nan]
         
