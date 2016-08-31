@@ -4,8 +4,8 @@ osascript 2>/dev/null <<EOF
     end
     tell application "Terminal"
         activate
-        do script with command "pkill postgres" in window 0
-        do script with command "postgres -D /usr/local/var/postgres" in window 0
+        # do script with command "pkill postgres" in window 0
+        # do script with command "postgres -D /usr/local/var/postgres" in window 0
     end
 EOF
 sleep 2

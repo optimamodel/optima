@@ -87,39 +87,12 @@ def close_db_session(db_session):
     db_session.bind.dispose() # pylint: disable=E1101
 
 
-def start_or_report_calculation(project_id, work_type):
+def setup_work_log(pyobject_id, work_type, pyobject):
     """
-    Checks and sets up a WorkLog and WorkingProject for async calculation.
-    A WorkingProject takes a given project, a chosen parset and a type of
-    calculation to proceed. If a job is requested for a given project with
-    the same parset and work_type, then a can-join = True is issued.
-
-    Only one job per project_id is allowed to run. There should only be
-    one existing WorkingProjectDb in existence for a project id. Obviously.
-    This WorkingProjectDb should be deleted when the job is finished. The
-    results are saved in a ResultsDb and a ParsetsDb (for autofit).
-
-    There should only be one WorkLogDb active with a self.status == 'started'.
-    Other WorkLogDb must have self.status == 'completed', 'cancelled', 'error'.
-
-
-    Args:
-        project_id: uuid of project that will be extracted and pickled for async calc
-        work_type: "autofit" or "optimization"
-
-    Returns:
-        A status update on the state of the async queue for the given project.
-    Returns:
-        {
-            'status': 'started', 'ready', 'completed', 'cancelled', 'error', 'blocked'
-            'error_text': str
-            'start_time': datetime
-            'stop_time': datetime
-            'work_type': 'autofit' or 'optim-*'
-        }
+    Sets up a work_log for project_id calculation, returns a work_log_record dictionary
     """
 
-    print "> Put on celery, a job of '%s'" % work_type
+    print("> Put on celery, a job of '%s'" % work_type)
 
     db_session = init_db_session()
 
@@ -127,7 +100,7 @@ def start_or_report_calculation(project_id, work_type):
     # then this calculation is blocked from starting
     is_ready_to_start = True
     work_log_records = db_session.query(WorkLogDb).filter_by(
-        project_id=project_id, work_type=work_type)
+        project_id=pyobject_id, work_type=work_type)
     if work_log_records:
         for work_log_record in work_log_records:
             if work_log_record.status == 'started':
@@ -147,19 +120,23 @@ def start_or_report_calculation(project_id, work_type):
         # create a work_log status is 'started by default'
         print ">> Create work log"
         work_log_record = WorkLogDb(
-            project_id=project_id, work_type=work_type)
+            project_id=pyobject_id, work_type=work_type)
         work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
         db_session.add(work_log_record)
         db_session.flush()
 
-        project = load_project(project_id, db_session=db_session)
-        work_log_record.save_obj(project)
+        work_log_record.save_obj(pyobject)
         calc_state = parse_work_log_record(work_log_record)
 
     db_session.commit()
     close_db_session(db_session)
 
     return calc_state
+
+
+def start_or_report_calculation(project_id, work_type):
+    project = load_project(project_id)
+    return setup_work_log(project_id, work_type, project)
 
 
 def shut_down_calculation(project_id, work_type):
@@ -555,7 +532,7 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
             objectives = gaoptim.objectives
             print ">> Start BOC:"
             print_odict("gaoptim", gaoptim)
-            portfolio.fullGA(objectives=objectives, maxtime=120)
+            portfolio.fullGA(objectives=objectives, maxtime=30)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -581,21 +558,11 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
 
 
 
-def launch_miminize_portfolio(portfolio_id, gaoptim_id):
-    # We for the project record to take a portfolio
-    # eventually we want to replace the project_record
-    # to object id, this is part of a future refactoring
-    portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
-    project_record = load_project_record(portfolio_id, raise_exception=False)
-    if not project_record:
-        project_record = ProjectDb(current_user.id)
-        project_record.id = portfolio.uid
-        db.session.add(project_record)
-        db.session.commit()
-    project_record.save_obj(portfolio, is_skip_result=False)
-    calc_state = start_or_report_calculation(
-        portfolio_id, 'portfolio-' + str(gaoptim_id))
-    if calc_state['status'] != 'started':
-        return calc_state, 208
+def load_portfolio(portfolio_id):
+    return optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
 
+
+def launch_miminize_portfolio(portfolio_id, gaoptim_id):
+    portfolio = load_portfolio(portfolio_id)
+    setup_work_log(portfolio_id, 'portfolio-' + str(gaoptim_id), portfolio)
     run_miminize_portfolio.delay(portfolio_id, gaoptim_id)
