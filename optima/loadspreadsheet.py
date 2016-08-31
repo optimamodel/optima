@@ -91,15 +91,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     
     # Time data -- array sizes are time x population
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
-<<<<<<< HEAD
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
-    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx', 'propsupp']
-    sheets['Cascade']             = ['linktocare', 'leavecare', 'freqvlmon']
-=======
-    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast', 'treatvs']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx', 'proppmtct', 'propsupp']
-    sheets['Cascade']             = ['linktocare', 'stoprate', 'leavecare', 'biofailure', 'freqvlmon', 'restarttreat']
->>>>>>> develop
+    sheets['Cascade']             = ['linktocare', 'leavecare', 'freqvlmon']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
