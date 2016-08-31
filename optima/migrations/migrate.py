@@ -33,14 +33,25 @@ def addforcepopsize(project, **kwargs):
 
 def delimmediatecare(project, **kwargs):
     """
-    Migration between Optima 2.0.2 and 2.0.3.
+    Migration between Optima 2.0.2 and 2.0.3 -- WARNING, will this work for scenarios etc.?
     """
-    if hasattr(project, 'parsets'):
-        for ps in project.parsets.values():
-            if ps.pars[0].get('immediatecare'): del ps.pars[0]['immediatecare']
-    if hasattr(project, 'data'):
-        if project.data.get('immediatecare'): del project.data['immediatecare']
+    for ps in project.parsets.values():
+        for i in range(len(ps.pars):
+            ps.pars[i].pop('immediatecare', None)
+    project.data.pop('immediatecare', None)
     project.version = "2.0.3"
+    return None
+
+
+def addproppmtct(project, **kwargs):
+    """
+    Migration between Optima 2.0.3 and 2.0.4.
+    """
+    for ps in project.parsets.values():
+        for i in range(len(ps.pars):
+            ps.pars[i].pop('immediatecare', None)
+    project.data.pop('immediatecare', None)
+    project.version = "2.0.4"
     return None
 
 
