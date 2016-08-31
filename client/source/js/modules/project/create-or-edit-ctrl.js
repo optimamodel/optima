@@ -122,7 +122,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ($event) {
         $event.preventDefault();
       }
-      var population = {};
+      var population = {
+        short: '',
+        name: '',
+        age_to: '',
+        age_from: '',
+        female: false,
+        male: false,
+        injects: false,
+        sexworker: false,
+      };
 
       return openPopulationModal(population).result.then(
         function (newPopulation) {
