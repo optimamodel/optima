@@ -123,21 +123,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
                   $scope.defaultOptimizationsByProgsetId = response.defaultOptimizationsByProgsetId;
 
-                  // fill in missing program constraints from default
-                  _.each($scope.state.optimizations, function(optimization) {
-                    var progset_id = optimization.progset_id;
-                    var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
-                    var keys = _.keys(defaultOptimization.constraints.name);
-                    _.each(keys, function(key) {
-                      console.log('check ', optimization.name, key, _.has(optimization.constraints, key));
-                      if (!_.has(optimization.constraints.name, key)) {
-                        optimization.constraints.max[key] = defaultOptimization.constraints.max[key];
-                        optimization.constraints.min[key] = defaultOptimization.constraints.min[key];
-                        optimization.constraints.name[key] = defaultOptimization.constraints.name[key];
-                      };
-                    });
-                  });
-
                   if ($scope.state.optimizations.length > 0) {
                     $scope.setActiveOptimization($scope.state.optimizations[0]);
                   } else {

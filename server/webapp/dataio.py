@@ -165,6 +165,8 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
+    project.created = datetime.now(dateutil.tz.tzutc())
+    project.modified = datetime.now(dateutil.tz.tzutc())
     project.uid = project_entry.id
     set_populations_on_project(project, project_summary["populations"])
     project.data["years"] = (
@@ -284,10 +286,28 @@ def copy_project(project_id, new_project_name):
     return copy_project_id
 
 
+def ensure_all_constraints_of_optimizations(project):
+    is_change = False
+    for optim in project.optims.values():
+        progset_name = optim.progsetname
+        progset = project.progsets[progset_name]
+        constraints = optim.constraints
+        default_constraints = op.defaultconstraints(project=project, progset=progset)
+        prog_shorts = default_constraints['name'].keys()
+        for prog_short in prog_shorts:
+            if prog_short not in constraints['name']:
+                is_change = True
+                for key in ['name', 'min', 'max']:
+                    constraints[key][prog_short] = default_constraints[key][prog_short]
+    if is_change:
+        update_project(project)
+
+
 def create_project_from_prj(prj_filename, project_name, user_id):
     project = loaddbobj(prj_filename)
     project.name = project_name
     save_project_as_new(project, user_id)
+    ensure_all_constraints_of_optimizations(project)
     return project.uid
 
 
@@ -712,6 +732,7 @@ def load_scenario_summaries(project_id):
 def load_optimization_summaries(project_id):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    ensure_all_constraints_of_optimizations(project)
     return {
         'optimizations': get_optimization_summaries(project),
         'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project)

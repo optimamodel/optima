@@ -44,7 +44,7 @@
           style="width: 300px;"
           type="text"
           ng-model="par.name"
-          ng-options="par.short as par.name for par in getParsInScenario()"
+          ng-options="par.short as par.name for par in parsInScenario"
           ng-change="selectNewPar($index)">
       </select>
     </td>
@@ -53,8 +53,8 @@
           class="txbox __inline"
           style="width: 100px;"
           type="text"
-          ng-model="par.for"
-          ng-options="pop.val as pop.label for pop in getPopsOfPar($index)">
+          ng-model="par.forLabel"
+          ng-options="pop.label as pop.label for pop in popsOfPar[$index]">
       </select>
     </td>
     <td>

@@ -68,7 +68,7 @@ def parse_work_log_record(work_log):
         'stop_time': work_log.stop_time,
         'project_id': work_log.project_id,
         'work_type': work_log.work_type,
-        'current_time': datetime.datetime.now(dateutil.tz.tzutc()),
+        'current_time': datetime.datetime.now(dateutil.tz.tzutc())
     }
 
 

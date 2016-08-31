@@ -18,11 +18,13 @@ matplotlib.use(app.config["MATPLOTLIB_BACKEND"])
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-from .webapp import dbconn
+from server.webapp import dbconn
 dbconn.db = SQLAlchemy(app)
 dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
 
-from .webapp.dbmodels import UserDb
+from server.webapp.dbmodels import UserDb
+
+>>>>>>> merge-sandbox
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -57,7 +59,6 @@ def unauthorized_handler():
 
 from .webapp.handlers import api_blueprint
 
-
 app.register_blueprint(api_blueprint, url_prefix='')
 
 
@@ -80,7 +81,7 @@ def init_db():
     dbconn.db.create_all()
 
     # clear dangling tasks from the last session
-    from .webapp.dbmodels import WorkLogDb
+    from server.webapp.dbmodels import WorkLogDb
 
     work_logs = dbconn.db.session.query(WorkLogDb)
     print "> Deleting dangling work_logs", work_logs.count()

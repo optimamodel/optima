@@ -296,11 +296,9 @@ class ProjectDataSpreadsheet(Resource):
         """
         spreadsheet_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
         update_project_from_data_spreadsheet(project_id, spreadsheet_fname)
-        reply = {
-            'file': os.path.basename(spreadsheet_fname),
-            'result': 'Project %s is updated' % project_id
-        }
-        return reply
+        project_name = load_project_name(project_id)
+        basename = os.path.basename(spreadsheet_fname)
+        return '"%s" was successfully uploaded to project "%s"' % (basename, project_name)
 
 class ProjectEcon(Resource):
     method_decorators = [report_exception, login_required]

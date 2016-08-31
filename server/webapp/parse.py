@@ -907,9 +907,10 @@ def force_tuple_list(item):
         if len(item) == 1:
             # this is for the weird case of ['tot']
             return str(item[0])
-        return [tuple(map(str, tokens)) for tokens in item]
-    else:
-        return item
+        elif len(item) == 2:
+            # looks like a partnership
+            return tuple(map(str, item))
+    return item
 
 
 def convert_scenario_pars(pars):

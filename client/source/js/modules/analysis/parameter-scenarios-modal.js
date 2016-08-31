@@ -11,16 +11,27 @@ define(['angular'], function (module) {
         $scope.scenario = scenario;
         $scope.parsets = parsets;
         $scope.progsets = progsets;
+
         if (_.isUndefined($scope.scenario.name)) {
           initNewScenario();
         }
+        var filteredParsets = $scope.parsets;
+        var parset_id = $scope.scenario.parset_id;
+        if (parset_id) {
+          filteredParsets = _.filter($scope.parsets, { id: parset_id });
+        }
+        $scope.parsInScenario = [];
+        if (parsets.length > 0) {
+          $scope.parsInScenario = _.filter(filteredParsets[0].pars[0], { visible: 1 });
+        }
+
+        $scope.buildPopsOfPar();
       }
 
       $scope.checkForClashingName = function(scenario) {
         function hasClash(s) {
           return s.name == scenario.name && s.id != scenario.id;
         }
-
         return _.some(scenarios, hasClash);
       };
 
@@ -35,61 +46,57 @@ define(['angular'], function (module) {
           $scope.scenario.name = "Scenario " + i;
           i += 1;
         } while ($scope.checkForClashingName(scenario));
+
       };
 
-      $scope.getParsInScenario = function () {
-        var parsets = $scope.parsets;
-        var parset_id = $scope.scenario.parset_id;
-        if (parset_id) {
-          parsets = _.filter($scope.parsets, { id: parset_id });
-        }
-        if (parsets.length > 0) {
-          return _.filter(parsets[0].pars[0], { visible: 1 });
-        }
-        return [];
-      };
-
-      $scope.getLongParName = function (short) {
-        var pars = $scope.getParsInScenario();
-        var par = _.findWhere(pars, { short: short });
-        return par ? par.name : '';
-      };
-
-      $scope.getPopsOfPar = function (iPar) {
-        var parName = $scope.scenario.pars[iPar].name;
-        if (ykeys.hasOwnProperty($scope.scenario.parset_id)) {
-          var ykeysOfParset = ykeys[$scope.scenario.parset_id];
-          if (ykeysOfParset.hasOwnProperty(parName)) {
-            var result = ykeysOfParset[parName];
-            var tot = _.findWhere(result, {'val': 'tot'});
-            if (tot) {
-              tot["label"] = "Total Population";
+      $scope.buildPopsOfPar = function () {
+        $scope.popsOfPar = [];
+        _.each($scope.scenario.pars, function(par) {
+          var parName = par.name;
+          var popsInPar = [];
+          if (ykeys.hasOwnProperty($scope.scenario.parset_id)) {
+            var ykeysOfParset = ykeys[$scope.scenario.parset_id];
+            if (ykeysOfParset.hasOwnProperty(parName)) {
+              popsInPar = ykeysOfParset[parName];
+              var tot = _.findWhere(popsInPar, {'val': 'tot'});
+              if (tot) {
+                tot["label"] = "Total Population";
+              }
+              var pop = _.find(popsInPar, function(pop) {
+                return "" + pop.val == "" + par.for;
+              });
+              if (pop) {
+                par.forLabel = pop.label;
+              }
             }
-            return result;
           }
-        }
-        return [];
+          $scope.popsOfPar.push(popsInPar);
+        });
+        console.log('$scope.popsOfPar', $scope.popsOfPar);
       };
 
       $scope.selectNewPar = function (iPar) {
+        $scope.buildPopsOfPar();
         var par = $scope.scenario.pars[iPar];
-        var pops = $scope.getPopsOfPar(iPar);
-        if (_.indexOf(_.pluck(pops, 'val', par.for) < 0)) {
-          par.for = pops[0].val;
+        var pops = $scope.popsOfPar[iPar];
+        var labels = _.pluck(pops, "label");
+        if (!_.contains(labels, par.forLabel)) {
+          par.forLabel = labels[0];
         }
       };
 
       $scope.addPar = function () {
-        var newPar = { 'name': $scope.getParsInScenario()[0].short };
+        var newPar = { 'name': $scope.parsInScenario[0].short };
         $scope.scenario.pars.push(newPar);
         var iLast = $scope.scenario.pars.length - 1;
         $scope.selectNewPar(iLast);
-        var pops = $scope.getPopsOfPar(iLast);
-        newPar.startval = pops[0].limits[0];
-        newPar.endval = pops[0].limits[1];
+        $scope.buildPopsOfPar();
+        newPar.for = $scope.popsOfPar[iLast][0].val;
+        newPar.startval = $scope.popsOfPar[iLast][0].limits[0];
+        newPar.endval = $scope.popsOfPar[iLast][0].limits[1];
         newPar.startyear = new Date().getFullYear();
         newPar.endyear = years[years.length-1];
-        console.log('new', newPar.name, '->', _.pluck(pops, 'val'))
+        console.log('new', newPar.name, '->', _.pluck($scope.popsOfPar, 'val'))
       };
 
       $scope.removePar = function (i) { $scope.scenario.pars.splice(i, 1); };
@@ -103,6 +110,13 @@ define(['angular'], function (module) {
       $scope.cancel = function () { $modalInstance.dismiss("cancel"); };
 
       $scope.save = function () {
+        _.each($scope.scenario.pars, function(par, iPar) {
+          var pops = $scope.popsOfPar[iPar];
+          var pop = _.findWhere(pops, {label: par.forLabel});
+          delete par.forLabel;
+          par.for = pop.val;
+        });
+        console.log('save scenario', JSON.stringify($scope.scenario, null, 2));
         $modalInstance.close($scope.scenario); };
 
       initialize();
