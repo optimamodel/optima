@@ -17,11 +17,11 @@
   action: pip name=txacme virtualenv=/home/rproxy/venv
 
 - name: Make config dir
-  remote_user: rproxy
+  become_user: rproxy
   action: file path=/home/rproxy/config state=directory
 
 - name: Set up rproxy config
-  remote_user: rproxy
+  become_user: rproxy
   action: template src=rproxy.ini dest=/home/rproxy/config/rproxy.ini
 
 - name: Set up systemd service

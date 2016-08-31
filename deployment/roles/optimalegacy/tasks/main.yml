@@ -3,7 +3,7 @@
   become_user: "{{ user }}"
 
 - name: Clone down {{ service_name }} repo
-  action: git repo="https://{{ lookup('file', 'private/httpskey') }}@{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }} accept_hostkey=yes force=yes
+  action: git repo="{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }} accept_hostkey=yes force=yes
   become_user: "{{ user }}"
 
 - name: Copy over config

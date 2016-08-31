@@ -6,22 +6,22 @@
           name: staging,
           domain: hiv.optimamodel.com,
           port: 9000,
-          repo: "github.com/optimamodel/optima.git",
+          repo: "ssh://git@github.com/optimamodel/optima.git",
           branch: develop
         },
         {
           name: sandbox,
           domain: sandbox.optimamodel.com,
           port: 9001,
-          repo: "github.com/optimamodel/optima.git",
+          repo: "ssh://git@github.com/optimamodel/optima.git",
           branch: develop
         },
         {
           name: legacy,
           domain: ui.optimamodel.com,
           port: 9005,
-          repo: "github.com/optimamodel/optima.git",
-          branch: backport-twisted-to-master
+          repo: "ssh://git@github.com/optimamodel/optima.git",
+          branch: fix-display-variable-on-master
         }
       ]
     - user: optima
