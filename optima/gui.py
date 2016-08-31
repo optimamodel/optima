@@ -125,7 +125,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
         pygui(results, [toplot])
     
     where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
-        toplot = ['prev-tot', 'inci-per']
+        toplot = ['prev-tot', 'inci-pop']
     
     (see epiformatslist in plotting.py)
     
@@ -217,7 +217,7 @@ def browser(results, toplot=None, doplot=True):
         browser(results, [toplot])
     
     where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
-        toplot = ['prev-tot', 'inci-per']
+        toplot = ['prev-tot', 'inci-pop']
     
     With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
@@ -448,7 +448,6 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
     buttonheight = panelheight-rowheight*1.5
-    buttonoffset = panelwidth/ncols
     boxoffset = 300+leftmargin
     
     panel = QtGui.QWidget() # Create panel widget
