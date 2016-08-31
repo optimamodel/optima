@@ -1,4 +1,8 @@
 import optima as op
+from numpy import nan
+
+# Create a current version of the project to use as a template
+currentproject = op.defaultproject('best', dorun=False)
 
 
 
@@ -36,7 +40,7 @@ def delimmediatecare(project, **kwargs):
     Migration between Optima 2.0.2 and 2.0.3 -- WARNING, will this work for scenarios etc.?
     """
     for ps in project.parsets.values():
-        for i in range(len(ps.pars):
+        for i in range(len(ps.pars)):
             ps.pars[i].pop('immediatecare', None)
     project.data.pop('immediatecare', None)
     project.version = "2.0.3"
@@ -48,9 +52,9 @@ def addproppmtct(project, **kwargs):
     Migration between Optima 2.0.3 and 2.0.4.
     """
     for ps in project.parsets.values():
-        for i in range(len(ps.pars):
-            ps.pars[i].pop('immediatecare', None)
-    project.data.pop('immediatecare', None)
+        for i in range(len(ps.pars)):
+            ps.pars[i]['proppmtct'] = op.dcp(currentproject.pars()['proppmtct'])
+    project.data['proppmtct'] = [[nan]*len(project.data['years'])]
     project.version = "2.0.4"
     return None
 
@@ -60,6 +64,7 @@ migrations = {
 '2.0.0': addscenuid,
 '2.0.1': addforcepopsize,
 '2.0.2': delimmediatecare,
+'2.0.3': addproppmtct,
 }
 
 
