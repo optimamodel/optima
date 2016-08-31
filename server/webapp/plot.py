@@ -4,8 +4,10 @@ import mpld3
 
 from matplotlib.transforms import Bbox
 from numpy import array
+
 import optima as op
-from server.webapp.utils import normalize_obj
+
+from .utils import normalize_obj
 
 
 def extract_graph_selector(graph_key):

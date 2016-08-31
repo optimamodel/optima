@@ -6,8 +6,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import deferred
 
 import optima as op
-from server.webapp.dbconn import db, redis
 from optima import dataio
+
+from .dbconn import db, redis
+from copy import deepcopy as dcp
 
 
 @swagger.model
@@ -69,19 +71,22 @@ class ProjectDb(db.Model):
         self.user_id = user_id
 
     def load(self):
+        print(">> Load project " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        return dataio.loads(redis_entry)
+        project = dataio.loads(redis_entry)
+        for progset in project.progsets.values():
+            if not hasattr(progset, 'inactive_programs'):
+                progset.inactive_programs = op.odict()
+        return project
 
     def save_obj(self, obj):
-
+        print(">> Save project " + self.id.hex)
         # Copy the project, only save what we want...
         new_project = op.dcp(obj)
         new_project.spreadsheet = None
         new_project.results = op.odict()
-
         redis.set(self.id.hex, dataio.dumps(new_project))
         print("Saved " + self.id.hex)
-
 
     def as_file(self, loaddir, filename=None):
         filename = os.path.join(loaddir, self.id.hex + ".prj")
@@ -90,9 +95,13 @@ class ProjectDb(db.Model):
 
     def delete_dependent_objects(self, synchronize_session=False):
         str_project_id = str(self.id)
-        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        # delete all relevant entries explicitly
+        work_logs = db.session.query(WorkLogDb).filter_by(project_id=str_project_id)
+        for work_log in work_logs:
+            work_log.cleanup()
+        work_logs.delete(synchronize_session)
+        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
-        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.flush()
 
@@ -128,7 +137,6 @@ class ResultsDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     parset_id = db.Column(UUID(True))
-    # When deleting a parset we only delete results of type CALIBRATION
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='SET NULL'))
     calculation_type = db.Column(db.Text)
 
@@ -143,33 +151,12 @@ class ResultsDb(db.Model):
         return dataio.loads(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
+        print(">> Save result-" + self.id.hex)
         redis.set("result-" + self.id.hex, dataio.dumps(obj))
-        print("Saved result-" + self.id.hex)
 
-
-class WorkingProjectDb(db.Model):  # pylint: disable=R0903
-
-    __tablename__ = 'working_projects'
-
-    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
-    is_working = db.Column(db.Boolean, unique=False, default=False)
-    work_type = db.Column(db.String(32), default=None)
-    parset_id = db.Column(UUID(True)) # not sure if we should make it foreign key here
-    work_log_id = db.Column(UUID(True), default=None)
-
-    def __init__(self, project_id, parset_id, is_working=False, work_type=None, work_log_id=None):  # pylint: disable=R0913
-        self.id = project_id
-        self.parset_id = parset_id
-        self.is_working = is_working
-        self.work_type = work_type
-        self.work_log_id = work_log_id
-
-    def load(self):
-        return dataio.loads(redis.get("working-" + self.id.hex))
-
-    def save_obj(self, obj):
-        redis.set("working-" + self.id.hex, dataio.dumps(obj))
-        print("Saved working-" + self.id.hex)
+    def cleanup(self):
+        print(">> Cleanup result-" + self.id.hex)
+        redis.delete("result-" + self.id.hex)
 
 
 class WorkLogDb(db.Model):  # pylint: disable=R0903
@@ -179,19 +166,28 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
     work_status = db.Enum('started', 'completed', 'cancelled', 'error', 'blocked', name='work_status')
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
-    work_type = db.Column(db.String(32), default=None)
+    work_type = db.Column(db.String(128), default=None)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
-    parset_id = db.Column(UUID(True))
-    result_id = db.Column(UUID(True), default=None)
     start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     stop_time = db.Column(db.DateTime(timezone=True), default=None)
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
 
-    def __init__(self, project_id, parset_id, work_type=None):
+    def __init__(self, project_id, work_type=None):
         self.project_id = project_id
-        self.parset_id = parset_id
         self.work_type = work_type
+
+    def load(self):
+        print(">> Load working-" + self.id.hex)
+        return dataio.loads(redis.get("working-" + self.id.hex))
+
+    def save_obj(self, obj):
+        print(">> Save working-" + self.id.hex)
+        redis.set("working-" + self.id.hex, dataio.dumps(obj))
+
+    def cleanup(self):
+        print(">> Cleanup working-" + self.id.hex)
+        redis.delete("working-" + self.id.hex)
 
 
 class ProjectEconDb(db.Model):  # pylint: disable=R0903

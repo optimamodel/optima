@@ -15,7 +15,7 @@ from server.webapp.dataio import (
     get_populations_from_project, set_populations_on_project, set_project_summary_on_project,
     get_project_summary_from_project_record,
     load_project_record, load_project, update_or_create_result_record,
-    get_project_parameters, load_project_program_summaries, save_project_with_new_uids)
+    get_parameters_for_edit_program, load_project_program_summaries, save_project_with_new_uids)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb
 from server.webapp.exceptions import ProjectDoesNotExist
@@ -865,7 +865,7 @@ class DefaultParameters(Resource):
     def get(self, project_id):
         project = load_project(project_id)
 
-        return {'parameters': get_project_parameters(project)}
+        return {'parameters': get_parameters_for_edit_program(project)}
 
 
 class DefaultPopulations(Resource):
