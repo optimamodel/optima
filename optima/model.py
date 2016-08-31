@@ -539,7 +539,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]*max(dt-0.25,0)/dt
                             raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
-                    if fromstate in lt50 or fromstate in gt50:
+                    elif fromstate in lt50 or fromstate in gt50:
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-maximum(aidstest[t],hivtest[:,t]))
                         else: # Probability of being tested
