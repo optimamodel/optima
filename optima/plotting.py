@@ -523,8 +523,8 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         xdata = arange(nallocs)+1
         ydata = array([budget[i] for budget in budgets.values()])
         bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)        
-    
+        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
+
     ax.set_xlabel('Spending')
     labels = proglabels
     labels.reverse()

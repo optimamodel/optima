@@ -2,10 +2,10 @@ import json
 import os
 import sys
 import logging
+
 import redis
 
 from flask import Flask, redirect, Blueprint, g, session, make_response, abort
-
 from flask_restful import Api
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
@@ -20,9 +20,9 @@ matplotlib.use(app.config["MATPLOTLIB_BACKEND"])
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-import server.webapp.dbconn
-server.webapp.dbconn.db = SQLAlchemy(app)
-server.webapp.dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
+from server.webapp import dbconn
+dbconn.db = SQLAlchemy(app)
+dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
 
 from server.webapp.dbmodels import UserDb
 
@@ -57,72 +57,61 @@ def load_user_from_request(request):  # pylint: disable=redefined-outer-name
 def unauthorized_handler():
     abort(401)
 
+
 from server.webapp.utils import OptimaJSONEncoder
-from server.webapp.resources.user import (
-    User, UserDetail, CurrentUser, UserLogin, UserLogout)
-from server.webapp.resources.project import (
-    Projects, ProjectsAll, Project, ProjectCopy, ProjectSpreadsheet, ProjectEcon,
-    ProjectData, ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
-    DefaultPopulations)
-from server.webapp.resources.progsets import (
-    Progsets, Progset, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
-from server.webapp.resources.parsets import (
-    Parsets, ParsetUploadDownload, ParsetRenameDelete, ParsetCalibration, ParsetAutofit,
-    ResultsExportAsCsv)
-from server.webapp.resources.progsets import ProgramCostcovGraph
-from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs
-from server.webapp.resources.optimizations import (
-    Optimizations, OptimizationCalculation, OptimizationGraph)
+from server.webapp import handlers
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 
 api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
-api.add_resource(User, '/api/user')
-api.add_resource(UserDetail, '/api/user/<uuid:user_id>')
-api.add_resource(CurrentUser, '/api/user/current')
-api.add_resource(UserLogin, '/api/user/login')
-api.add_resource(UserLogout, '/api/user/logout')
+api.add_resource(handlers.User, '/api/user')
+api.add_resource(handlers.UserDetail, '/api/user/<uuid:user_id>')
+api.add_resource(handlers.CurrentUser, '/api/user/current')
+api.add_resource(handlers.UserLogin, '/api/user/login')
+api.add_resource(handlers.UserLogout, '/api/user/logout')
 
-api.add_resource(Projects, '/api/project')
-api.add_resource(ProjectsAll, '/api/project/all')
-api.add_resource(Project, '/api/project/<uuid:project_id>')
-api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
-api.add_resource(ProjectFromData, '/api/project/data')
-api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
-api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
-api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
+api.add_resource(handlers.Projects, '/api/project')
+api.add_resource(handlers.ProjectsAll, '/api/project/all')
+api.add_resource(handlers.Project, '/api/project/<uuid:project_id>')
+api.add_resource(handlers.ProjectCopy, '/api/project/<uuid:project_id>/copy')
+api.add_resource(handlers.ProjectFromData, '/api/project/data')
+api.add_resource(handlers.ProjectData, '/api/project/<uuid:project_id>/data')
+api.add_resource(handlers.ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(handlers.ProjectEcon, '/api/project/<uuid:project_id>/economics')
+api.add_resource(handlers.Portfolio, '/api/project/portfolio')
 
-api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
-api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
-api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
+api.add_resource(handlers.Optimizations, '/api/project/<uuid:project_id>/optimizations')
+api.add_resource(handlers.OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
+api.add_resource(handlers.OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
+api.add_resource(handlers.OptimizationUpload, '/api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload')
 
-api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
-api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
+api.add_resource(handlers.Scenarios, '/api/project/<uuid:project_id>/scenarios')
+api.add_resource(handlers.ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
 
-api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
-api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
-api.add_resource(ProgsetParameters,
+api.add_resource(handlers.Progsets, '/api/project/<uuid:project_id>/progsets')
+api.add_resource(handlers.Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
+api.add_resource(handlers.ProgsetParameters,
      '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
-api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
-api.add_resource(Portfolio, '/api/project/portfolio')
+api.add_resource(handlers.ProgsetOutcomes, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
+api.add_resource(handlers.ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
 
-api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
-api.add_resource(DefaultPopulations, '/api/project/populations')
-api.add_resource(DefaultParameters, '/api/project/<project_id>/parameters')
+api.add_resource(handlers.DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
+api.add_resource(handlers.DefaultPopulations, '/api/project/populations')
+api.add_resource(handlers.DefaultParameters, '/api/project/<project_id>/parameters')
 
-api.add_resource(Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
-api.add_resource(ProgramPopSizes,
+api.add_resource(handlers.Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
+api.add_resource(handlers.ProgramPopSizes,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
-api.add_resource(ProgramCostcovGraph,
+api.add_resource(handlers.ProgramCostcovGraph,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
 
-api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
-api.add_resource(ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
-api.add_resource(ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
-api.add_resource(ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
-api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
-api.add_resource(ResultsExportAsCsv, '/api/results/<uuid:result_id>')
+api.add_resource(handlers.Parsets, '/api/project/<uuid:project_id>/parsets')
+api.add_resource(handlers.ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
+api.add_resource(handlers.ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
+api.add_resource(handlers.ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
+api.add_resource(handlers.ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
+api.add_resource(handlers.ResultsExport, '/api/results/<uuid:result_id>')
 
 app.register_blueprint(api_blueprint, url_prefix='')
 
@@ -137,9 +126,8 @@ def output_json(data, code, headers=None):
 
 @api_blueprint.before_request
 def before_request():
-    from server.webapp.dbconn import db
     from server.webapp.dbmodels import UserDb
-    db.engine.dispose()
+    dbconn.db.engine.dispose()
     g.user = None
     if 'user_id' in session:
         g.user = UserDb.query.filter_by(id=session['user_id']).first()
@@ -160,19 +148,19 @@ def root():
 def init_db():
     print("Loading DB...")
 
-    server.webapp.dbconn.db.engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
-    server.webapp.dbconn.db.create_all()
+    dbconn.db.engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
+    dbconn.db.create_all()
 
     # clear dangling tasks from the last session
-    from server.webapp.dbconn import db
-    from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
-    work_logs = db.session.query(WorkLogDb)
+    from server.webapp.dbmodels import WorkLogDb
+
+    work_logs = dbconn.db.session.query(WorkLogDb)
     print "> Deleting dangling work_logs", work_logs.count()
+    for work_log in work_logs:
+        work_log.cleanup()
     work_logs.delete()
-    work_projects = db.session.query(WorkingProjectDb)
-    print "> Deleting dangling work_projects", work_projects.count()
-    work_projects.delete()
-    db.session.commit()
+
+    dbconn.db.session.commit()
 
 def init_logger():
     stream_handler = logging.StreamHandler(sys.stdout)
