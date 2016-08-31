@@ -24,7 +24,6 @@ dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
 
 from server.webapp.dbmodels import UserDb
 
->>>>>>> merge-sandbox
 login_manager = LoginManager()
 login_manager.init_app(app)
 
