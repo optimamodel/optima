@@ -47,12 +47,11 @@ def addproppmtct(project, **kwargs):
     """
     Migration between Optima 2.0.3 and 2.0.4.
     """
-    # Create a current version of the project to use as a template
-    currentproject = op.defaultproject('best', dorun=False, verbose=0)
-
     for ps in project.parsets.values():
         for i in range(len(ps.pars)):
-            ps.pars[i]['proppmtct'] = op.dcp(currentproject.pars()['proppmtct'])
+            ps.pars[i]['proppmtct'] = op.dcp(project.pars()['proptx'])
+            ps.pars[i]['proppmtct'].name = 'Pregnant women and mothers on PMTCT'
+            ps.pars[i]['proppmtct'].short = 'proppmtct'
     project.data['proppmtct'] = [[nan]*len(project.data['years'])]
     project.version = "2.0.4"
     return None
