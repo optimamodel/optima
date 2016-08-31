@@ -519,7 +519,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         ## Transitions to diagnosed 
         if not(isnan(propdx[t])): # If propdx is specified...
-            currdx = people[alldx,:,t].sum(axis=(0,1))
+            currdx = people[alldx,:,t].sum()
             currundx = currplhiv - currdx
             fractiontodx = max(0, (propdx[t]*currplhiv - currdx)/(currundx + eps))
             for fromstate in undx:
