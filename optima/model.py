@@ -19,12 +19,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Initialize basic quantities
     if simpars is None: raise OptimaException('model() requires simpars as an input')
     if settings is None: raise OptimaException('model() requires settings as an input')
-<<<<<<< HEAD
+
     popkeys         = simpars['popkeys']
     npops           = len(popkeys)
     simpars         = dcp(simpars)
     tvec            = simpars['tvec']
-    dt              = simpars['dt']                 # Shorten dt
+    dt              = float(simpars['dt'])          # Shorten dt and make absolutely sure it's a float
     npts            = len(tvec)                     # Number of time points
     ncd4            = settings.ncd4                 # Shorten number of CD4 states
     nstates         = settings.nstates              # Shorten number of health states
@@ -37,25 +37,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
     rawtransit      = simpars['rawtransit']         # Raw transitions
     to, prob        = 0,1                           # Indices for entries of rawtransit elements that reference the states that once moves TO and the PROBABILITY of moving
-=======
-    popkeys      = simpars['popkeys']
-    npops        = len(popkeys)
-    simpars      = dcp(simpars)
-    tvec         = simpars['tvec']
-    dt           = float(simpars['dt'])    # Shorten dt and make absolutely sure it's a float
-    npts         = len(tvec)               # Number of time points
-    ncd4         = settings.ncd4           # Shorten number of CD4 states
-    nstates      = settings.nstates        # Shorten number of health states
-    people       = zeros((nstates, npops, npts)) # Matrix to hold everything
-    allpeople    = zeros((npops, npts))    # Population sizes
-    effhivprev   = zeros((npops, 1))       # HIV effective prevalence (prevalence times infectiousness), overall
-    effallprev   = zeros((nstates, npops)) # HIV effective prevalence (prevalence times infectiousness), by health state
-    inhomo       = zeros(npops)    # Inhomogeneity calculations
-    usecascade   = settings.usecascade     # Whether or not the full treatment cascade should be used
-    safetymargin = settings.safetymargin   # Maximum fraction of people to move on a single timestep
-    eps          = settings.eps            # Define another small number to avoid divide-by-zero errors
-    forcepopsize = settings.forcepopsize   # Whether or not to force the population size to match the parameters
->>>>>>> develop
 		
     if verbose is None: verbose = settings.verbose # Verbosity of output
     
@@ -63,9 +44,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     printv('Running model...', 1, verbose)
     
     # Initialize arrays
-<<<<<<< HEAD
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_inciby      = zeros((nstates, npts))        # Total incidence transmitted by each health state
+    raw_births      = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
     raw_newtreat    = zeros((npops, npts))          # Number initiating ART1 per timestep
@@ -73,18 +54,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
     raw_propdx      = zeros(npts)                   # Proportion diagnosed per timestep
     raw_proptx      = zeros(npts)                   # Proportion on treatment per timestep
-=======
-    raw_inci       = zeros((npops, npts)) # Total incidence acquired by each population
-    raw_inciby     = zeros((nstates, npts)) # Total incidence transmitted by each health state
-    raw_births     = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
-    raw_mtct       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
-    raw_diag       = zeros((npops, npts)) # Number diagnosed per timestep
-    raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
-    raw_death      = zeros((npops, npts)) # Number of deaths per timestep
-    raw_otherdeath = zeros((npops, npts)) # Number of other deaths per timestep
-    raw_propdx     = zeros(npts)          # Proportion diagnosed per timestep
-    raw_proptx     = zeros(npts)          # Proportion on treatment per timestep
->>>>>>> develop
     
     # Biological and failure parameters -- death etc
     prog            = exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],eps]) )
@@ -162,20 +131,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     alltrans[lost] = cd4trans*dxfactor
     
     # Proportion aware and treated (for 90/90/90)
-<<<<<<< HEAD
     propdx      = simpars['propdx']
     propcare    = simpars['propcare']
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
-=======
-    propdx = simpars['propdx']
-
-    if usecascade: 
-        propcare = simpars['propcare']
-        propsupp = simpars['propsupp']
-    proptx = simpars['proptx']
-    proppmtct = simpars['proppmtct'] # WARNING, not a consistent naming convention
->>>>>>> develop
+    proppmtct   = simpars['proppmtct']
 
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -549,7 +509,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         thistransit[progcirc][prob][susreg] = 1. - infections_to[1]
         thistransit[progcirc][prob][thistransit[susreg][to].index(undx[0])] = infections_to[1]
 
-<<<<<<< HEAD
 
         ##############################################################################################################
         ### Calculate probabilities of shifting along cascade
@@ -673,53 +632,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-treatfail)
                     else: # Probability of becoming unsuppressed
                         thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*treatfail
-=======
-        background   = simpars['death'][:, t] # make OST effect this death rates
-        
-        ## Susceptibles
-        otherdeaths = zeros((len(sus), npops)) 
-        for index in sus:
-            otherdeaths[index] = dt * people[sus[index],:,t] * background
-            raw_otherdeath[:,t] += otherdeaths[index]/dt    # Save annual other deaths 
-        dS = -infections_to - otherdeaths # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw_inci[:,t] = infections_to.sum(axis=0)/dt  # Store new infections AND new MTCT births
-        raw_inciby[:,t] = infmatrix.sum(axis=(0,1,3)) /dt # WARNING, seems to exclude MTCT
-
-        ## Undiagnosed
-        if not(isnan(propdx[t])):
-            currplhiv = people[allplhiv,:,t].sum(axis=0)
-            currdx = people[alldx,:,t].sum(axis=0)
-            currundx = currplhiv[:] - currdx[:]
-            fractiontodx = maximum(0, (propdx[t]*currplhiv[:] - currdx[:])/(currundx[:] + eps)) # Don't allow to go negative -- note, this equation is right, I just checked it!
-
-        for cd4 in range(ncd4):
-            if cd4>0: 
-                progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
-            else: 
-                progin = 0 # Cannot progress into acute stage
-            if cd4<ncd4-1: 
-                progout = dt*prog[cd4]*people[undx[cd4],:,t]
-                testingrate[cd4] = hivtest[:,t] # Population specific testing rates
-                if cd4>=aidsind:
-                    testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            else: 
-                progout = 0  # Cannot progress out of AIDS stage
-                testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            if not(isnan(propdx[t])):
-                newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
-            else:
-                newdiagnoses[cd4] =  testingrate[cd4] * dt * people[undx[cd4],:,t]
-            hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
-            otherdeaths = dt * people[undx[cd4],:,t] * background
-            inflows = progin  # Add in new infections after loop
-            outflows = progout + newdiagnoses[cd4] + hivdeaths + otherdeaths
-            dU.append(inflows - outflows)
-            raw_diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
-            raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
-            raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
-
-        dU[0] = dU[0] + infections_to.sum(axis=0) # Now add newly infected people
->>>>>>> develop
         
 
         # Check that probabilities all sum to 1
@@ -752,11 +664,38 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)
 
 
+        ## Calculate births
+        for p1,p2,birthrates,alleligbirthrate in birthslist:
+            thisbirthrate = birthrates[t]
+            peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
+            popbirths      = thisbirthrate * people[:, p1, t].sum()
+            mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
+            mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
+            thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
+            
+            if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
+                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+            else: # Proportion on PMTCT is specified, ignore number
+                mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
+            popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
+            
+            raw_mtct[p2, t] += popmtct
+            raw_births[p2, t] += popbirths
+            
+        raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
+
         ###############################################################################
         ## Shift numbers of people (circs, treatment)
         ###############################################################################
         if t<npts-1:
             
+            # Add births
+            people[undx[0], :, t+1] += raw_mtct[:, t] # HIV+ babies assigned to undiagnosed compartment
+            people[susreg, :, t+1]  += raw_births[:,t] - raw_mtct[:, t]  # HIV- babies assigned to uncircumcised compartment
+
             # Handle circumcision
             circppl = numcirc[:,t+1]
             if debug and (circppl > people[susreg,:,t+1]).any():
@@ -796,83 +735,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[care,:,t+1] -= newtreat # Shift people out of care... 
             people[usvl,:,t+1] += newtreat # ... and into USVL compartment
 
-
-<<<<<<< HEAD
-            ## Handle births
-            for p1,p2,birthrates,alleligbirthrate in birthslist:
-                thisbirthrate   = birthrates[t+1]
-                peopledx        = people[alldx, p1, t+1].sum() # Assign to a variable since used twice
-                popbirths       = thisbirthrate * people[:, p1, t+1].sum()
-                mtctundx        = thisbirthrate * people[undx, p1, t+1].sum() * effmtct[t+1] # Births to undiagnosed mothers
-                mtcttx          = thisbirthrate * people[alltx, p1, t+1].sum()  * pmtcteff[t+1] # Births to mothers on treatment
-                thiseligbirths  = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
-                receivepmtct    = min(numpmtct[t+1]*float(thiseligbirths)/(alleligbirthrate[t+1]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                mtctdx          = (thiseligbirths - receivepmtct) * effmtct[t+1] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct       = receivepmtct * pmtcteff[t+1] # MTCT from those receiving PMTCT
-                popmtct         = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
-                
-                raw_mtct[p2, t] += popmtct
-                people[undx[0], p2, t+1] += popmtct # HIV+ babies assigned to undiagnosed compartment
-                people[susreg, p2, t+1]  += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
-
-=======
-        ##############################################################################################################
-        ### Update next time point and check for errors
-        ##############################################################################################################
-
-        ## Calculate births
-        for p1,p2,birthrates,alleligbirthrate in birthslist:
-            thisbirthrate = birthrates[t]
-            peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
-            popbirths      = thisbirthrate * people[:, p1, t].sum()
-            mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
-            mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
-            thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
             
-            if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
-            else: # Proportion on PMTCT is specified, ignore number
-                mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
-            popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
-            
-            raw_mtct[p2, t] += popmtct
-            raw_births[p2, t] += popbirths
-            
-        raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
-
-
-
-        # Ignore the last time point, we don't want to update further
-        if t<npts-1:
-            change = zeros((nstates, npops))
-            change[sus,:] = dS 
-            for cd4 in range(ncd4): # this could be made much more efficient
-                change[undx[cd4],:] = dU[cd4]
-                change[dx[cd4],:]   = dD[cd4]
-                if usecascade:
-                    change[care[cd4],:] = dC[cd4]
-                    change[usvl[cd4],:] = dUSVL[cd4]
-                    change[svl[cd4],:]  = dSVL[cd4]
-                    change[lost[cd4],:] = dL[cd4] 
-                    change[off[cd4],:]  = dO[cd4]
-                else:
-                    change[tx[cd4],:]  = dT[cd4]
-            people[:,:,t+1] = people[:,:,t] + change # Update people array
-            
-            
-            
-            ###############################################################################
-            ## Calculate births, age transitions and mother-to-child-transmission
-            ###############################################################################
-            
-            people[undx[0], :, t+1] += raw_mtct[:, t] # HIV+ babies assigned to undiagnosed compartment
-            people[susreg, :, t+1] += raw_births[:,t] - raw_mtct[:, t]  # HIV- babies assigned to uncircumcised compartment
->>>>>>> develop
-            
-            ## Age-related transitions
+            ## Handle age-related transitions
             for p1,p2 in agetransitlist:
                 peopleleaving = people[:, p1, t+1] * agetransit[p1, p2]
                 if debug and (peopleleaving > people[:, p1, t+1]).any():
@@ -885,7 +749,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
                 
             
-            ## Risk-related transitions
+            ## Handle risk-related transitions
             for p1,p2,thisrisktransprob in risktransitlist:
                 peoplemoving1 = people[:, p1, t+1] * thisrisktransprob  # Number of other people who are moving pop1 -> pop2
                 peoplemoving2 = people[:, p2, t+1] * thisrisktransprob * (sum(people[:, p1, t+1])/sum(people[:, p2, t+1])) # Number of people who moving pop2 -> pop1, correcting for population size
@@ -947,6 +811,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['inci']       = raw_inci
     raw['inciby']     = raw_inciby
     raw['mtct']       = raw_mtct
+    raw['births']     = raw_births
     raw['diag']       = raw_diag
     raw['newtreat']   = raw_newtreat
     raw['death']      = raw_death
