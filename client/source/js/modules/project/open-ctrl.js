@@ -2,35 +2,40 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectOpenController',
-    function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager, projectApiService, $state) {
+    function ($scope, $http, activeProject, projects, modalService,
+              fileUpload, UserManager, projectApiService, $state, toastr) {
 
-      $scope.sortType = 'name'; // set the default sort type
-      $scope.sortReverse = false;  // set the default sort order
-      $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
+      function initialize() {
+        $scope.sortType = 'name'; // set the default sort type
+        $scope.sortReverse = false;  // set the default sort order
+        $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
+        loadProjects(projects.data.projects);
+      }
 
-      $scope.filterByName = function (project) {
+      function loadProjects(projects) {
+        $scope.projects = _.map(projects, function(project) {
+          project.creationTime = Date.parse(project.creationTime);
+          project.updatedTime = Date.parse(project.updatedTime);
+          project.dataUploadTime = Date.parse(project.dataUploadTime);
+          return project;
+        });
+        console.log('projects', $scope.projects);
+      }
+
+      $scope.filterByName = function(project) {
         if ($scope.searchTerm) {
           return project.name.toLowerCase().indexOf($scope.searchTerm.toLowerCase()) !== -1;
         }
         return true;
       };
 
-      $scope.updateSorting = function (sortType) {
+      $scope.updateSorting = function(sortType) {
         if ($scope.sortType === sortType) {
           $scope.sortReverse = !$scope.sortReverse;
         } else {
           $scope.sortType = sortType;
         }
       };
-
-      $scope.projects = _.map(projects.data.projects, function(project){
-        project.creationTime = Date.parse(project.creationTime);
-        project.updatedTime = Date.parse(project.updatedTime);
-        project.dataUploadTime = Date.parse(project.dataUploadTime);
-        return project;
-      });
-
-      console.log('projects', $scope.projects);
 
       $scope.selectAll = function() {
         _.forEach($scope.projects, function(project) {
@@ -67,28 +72,31 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
-      /**
-       * Opens an existing project using name and id.
-       */
       $scope.open = function (name, id) {
         activeProject.setActiveProjectFor(name, id, UserManager.data);
         $state.go('home');
       };
 
+      function getUniqueName(name, otherNames) {
+        var i = 0;
+        var uniqueName = name;
+        while (_.indexOf(otherNames, uniqueName) >= 0) {
+          i += 1;
+          uniqueName = name + ' (' + i + ')';
+        }
+        return uniqueName;
+      }
 
-      /**
-       * Copy an existing project using name and id.
-       */
       $scope.copy = function(name, id) {
-        modalService.showPrompt(
-          "Copy project?",
-          "New project name",
-          function(newName) {
-            projectApiService.copyProject(id, newName).success(function (response) {
-              window.location.reload();
+        var otherNames = _.pluck($scope.projects, 'name');
+        var newName = getUniqueName(name, otherNames);
+        projectApiService.copyProject(id, newName).success(function (response) {
+          projectApiService.getProjectList()
+            .success(function(response) {
+              toastr.success('Copied project ' + newName);
+              loadProjects(response.projects);
             });
-          }
-        );
+        });
       };
 
       /**
@@ -174,6 +182,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           'Remove project'
         );
       };
+
+      initialize();
   });
 
 });

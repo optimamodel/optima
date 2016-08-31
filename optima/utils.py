@@ -855,6 +855,41 @@ class odict(OrderedDict):
         return None
     
     
+    def pop(self, key):
+        ''' Allows pop to support strings, integers, slices, lists, or arrays '''
+        if type(key)==str:
+            return OrderedDict.pop(self, key)
+        elif isinstance(key, Number): # Convert automatically from float...dangerous?
+            thiskey = self.keys()[int(key)]
+            return OrderedDict.pop(self, thiskey)
+        elif type(key)==slice: # Handle a slice -- complicated
+            try:
+                startind = self.__slicekey(key.start, 'start')
+                stopind = self.__slicekey(key.stop, 'stop')
+                if stopind<startind:
+                    print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
+                    raise Exception
+                slicevals = [self.pop(i) for i in range(startind,stopind)] # WARNING, not tested
+                try: return array(slicevals) # Try to convert to an array
+                except: return slicevals
+            except:
+                print('Invalid odict slice... returning empty list...')
+                return []
+        elif self.__is_odict_iterable(key): # Iterate over items
+            listvals = [self.pop(item) for item in key]
+            try: return array(listvals)
+            except: return listvals
+        else: # Handle string but also everything else
+            try:
+                return OrderedDict.pop(self,key)
+            except: # WARNING, should be KeyError, but this can't print newlines!!!
+                if len(self.keys()): 
+                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
+                        '\n'.join([str(k) for k in self.keys()]))
+                else: errormsg = 'Key "%s" not found since odict is empty'% key
+                raise Exception(errormsg)
+    
+    
     def __repr__(self, maxlen=None, spaces=True, divider=True):
         ''' Print a meaningful representation of the odict '''
          # Maximum length of string to display

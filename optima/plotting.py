@@ -12,15 +12,18 @@ Version: 2016jul06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
-from numpy import array, ndim, maximum, arange, zeros, mean, shape
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, sum as npsum
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
-epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
-epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
+epiformatslist = [ # WARNING, definition requires each of these to start with the same letter!
+                  ['t', 'tot', 'total'], 
+                  ['p', 'pop', 'per population', 'pops', 'per', 'population'], 
+                  ['s', 'sta', 'stacked']
+                 ]
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-per', 'popsize-sta'] # Default epidemiological plots
+defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
 defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
 
 # Define global font sizes
@@ -95,8 +98,8 @@ def getplotselections(results):
     
     epikeys = results.main.keys() # e.g. 'prev'
     epinames = [thing.name for thing in results.main.values()]
-    episubkeys = epiformatslist[:,1] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
-    episubnames = epiformatslist[:,2] # e.g. 'per population'
+    episubkeys = [sublist[1] for sublist in epiformatslist] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
+    episubnames = [sublist[2] for sublist in epiformatslist] # e.g. 'per population'
     
     for key in epikeys: # e.g. 'prev'
         for subkey in episubkeys: # e.g. 'tot'
@@ -200,7 +203,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
-        ['prev-tot', 'inci-per']
+        ['prev-tot', 'inci-pop']
 
         This function returns an odict of figures, which can then be saved as MPLD3, etc.
         
@@ -243,7 +246,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
             plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
-            if plotformat not in epiformatslist.flatten():
+            if plotformat not in npsum(epiformatslist): # Sum flattens a list of lists. Stupid.
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
@@ -314,7 +317,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             if isperpop: pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
             else: pkeys = [plotkey] # If it's anything else, just go with the original, but turn into a list so can iterate
             
-            for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-per-FSW'
+            for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
                 epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
@@ -331,7 +334,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 if not ismultisim and istotal:
                     plot(results.tvec, factor*best[0], lw=lw, c=colors[0]) # Index is 0 since only one possibility
                 
-                # e.g. single simulation, prev-per: single line, separate plot per population
+                # e.g. single simulation, prev-pop: single line, separate plot per population
                 if not ismultisim and isperpop: 
                     plot(results.tvec, factor*best[i], lw=lw, c=colors[0]) # Index is each individual population in a separate window
                 
@@ -523,8 +526,8 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         xdata = arange(nallocs)+1
         ydata = array([budget[i] for budget in budgets.values()])
         bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)        
-    
+        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
+
     ax.set_xlabel('Spending')
     labels = proglabels
     labels.reverse()

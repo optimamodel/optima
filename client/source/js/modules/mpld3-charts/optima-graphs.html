@@ -1,5 +1,3 @@
-
-
 <div style="
        display: flex;
        flex-direction: row;
@@ -12,7 +10,9 @@
          overflow: auto;
          padding: 0;">
 
-    <div ng-if="graphs">
+    <div ng-if="graphs"
+         style="width:100%;
+         border-bottom: 1px solid #EEE">
       <export-all-charts
           name="Export Graphs">
       </export-all-charts>
@@ -20,43 +20,69 @@
           type="button"
           class="btn"
           ng-click="exportAllData()">
-        Export Figure Data CSV
+        Export Data CSV
       </button>
+      <br clear="all">
     </div>
 
+    <style>
+      .repeat-box:nth-child(even) {
+        clear:both;
+      }
+    </style>
+
     <div
-        ng-repeat="chart in graphs.mpld3_graphs"
-        ng-show="chart.isChecked()"
-        style="
-          width: 48%;
-          box-sizing: border-box;
-          padding: 15px 0px 5px 0px;
-          margin: 0;
-          border-right: 1px solid #EEE;
-          border-bottom: 1px solid #EEE;
-          float: left;"
-        class="chart-container">
+      style="
+        display: flex;
+        flex-wrap: wrap">
       <div
-          mpld3-chart="chart"
-          chart-id="{{ chart.id }}">
+          ng-repeat="chart in graphs.mpld3_graphs"
+          ng-show="chart.isChecked()"
+          class="repeat-box"
+          style="width: 48%;">
+        <div
+            style="
+              padding: 15px 0px 5px 0px;
+              margin: 0;
+              border-right: 1px solid #EEE;
+              border-bottom: 1px solid #EEE;"
+            class="chart-container ">
+          <div
+              mpld3-chart="chart"
+              chart-id="{{ chart.id }}">
+          </div>
+        </div>
       </div>
     </div>
 
   </div>
 
-  <div style="
+  <div ng-if="graphs.selectors.length > 0"
+       style="
          flex: 0 0 230px;
          border-left: 1px solid #DDD;
          padding: 0px 20px 5px 20px;
          overflow: auto;">
-    <div ng-if="graphs.selectors.length > 0">
-      <div
-          ng-repeat="selector in graphs.selectors"
-          class="option">
-        <input type="checkbox" ng-model="selector.checked"/>
-        <span style="margin-left:10px">{{selector.name}}</span>
-      </div>
+    <div>
+      <button
+          style="margin-bottom: 10px;"
+          class="btn"
+          ng-click="updateGraphs()">
+        Update Graphs
+      </button>
     </div>
+    <div style="
+              text-indent: -15px;
+              padding-left: 15px;"
+        ng-repeat="selector in graphs.selectors"
+        class="option">
+      <input
+          type="checkbox"
+          ng-model="selector.checked">
+        {{selector.name}}
+      </input>
+    </div>
+
   </div>
 
 
