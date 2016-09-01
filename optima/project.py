@@ -143,7 +143,7 @@ class Project(object):
             scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
             self.addscen(scen)
         if overwrite or name not in self.optims:
-            optim = Optim(project=self, name=name, objectives=defaultobjectives(project=self, progset=0), constraints=defaultconstraints(project=self, progset=0), parsetname=self.parsets.keys()[0], progsetname=self.progsets.keys()[0])
+            optim = Optim(project=self, name=name, objectives=defaultobjectives(project=self, progset=0, verbose=0), constraints=defaultconstraints(project=self, progset=0, verbose=0), parsetname=self.parsets.keys()[0], progsetname=self.progsets.keys()[0])
             self.addoptim(optim)
         return None
 
@@ -223,6 +223,7 @@ class Project(object):
 
     def remove(self, what=None, name=None):
         ''' Remove an entry from a structure list by name '''
+        if name is None: name = -1 # If no name is supplied, remove the last item
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
@@ -266,10 +267,10 @@ class Project(object):
     def addscen(self,     name=None, scen=None,     overwrite=True): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
     def addoptim(self,    name=None, optim=None,    overwrite=True): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
 
-    def rmparset(self,   name): self.remove(what='parset',   name=name)
-    def rmprogset(self,  name): self.remove(what='progset',  name=name)
-    def rmscen(self,     name): self.remove(what='scen',     name=name)
-    def rmoptim(self,    name): self.remove(what='optim',    name=name)
+    def rmparset(self,   name=None): self.remove(what='parset',   name=name)
+    def rmprogset(self,  name=None): self.remove(what='progset',  name=name)
+    def rmscen(self,     name=None): self.remove(what='scen',     name=name)
+    def rmoptim(self,    name=None): self.remove(what='optim',    name=name)
 
 
     def copyparset(self,   orig='default', new='new', overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
@@ -461,11 +462,11 @@ class Project(object):
         return None
 
 
-    def manualfit(self, orig=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
+    def manualfit(self, orig=None, parsubset=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(project=self, name=name, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
+        manualfit(project=self, name=name, parsubset=parsubset, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
         return None
 

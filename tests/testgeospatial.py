@@ -16,12 +16,12 @@ Version: 2016feb05
 
 ## Define tests to run here!!!
 tests = [
-#'dcworkshop',
 #'forcerefresh',
 #'makeprojects',
 #'makeportfolio',
 #'generateBOCs',
-'rungui',
+#'rungui',
+'runbackend'
 ]
 
 ##############################################################################
@@ -53,37 +53,6 @@ filename2 = 'test2.prj'
 T = tic()
 
 
-if 'dcworkshop' in tests:
-    
-    t = tic()
-    print('DC Workshop Special Test - Wooo...!')
-    from optima import *    
-    
-    P1 = loadobj('.\Mozambique_Center.prj')
-    P2 = loadobj('.\Mozambique_North.prj')
-    P3 = loadobj('.\Mozambique_South.prj')
-    
-#    hereyougokedz1 = [(u'Females 15-49', u'Clients'), (u'Males 15-49', u'FSW'),  
-#                 (u'Females 15-49', u'Males 15-49'), (u'Females 50+', u'Males 50+'),
-#                 (u'Females 0-14', u'Males 0-14'), (u'Males 50+', u'Females 15-49'), (u'Females 50+', u'Males 15-49')]
-#                 
-#    hereyougokedz2 = [(u'Males 15-49', u'PWID'), (u'Females 50+', u'PWID'), (u'Females 15-49', u'PWID')]
-#
-#    for lolkedz in hereyougokedz1: 
-#        P1.progsets[0].covout['condcas'][lolkedz].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
-#        
-#    for lolkedz in hereyougokedz2: 
-#        P2.progsets[0].covout['condcas'][lolkedz].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'PWID programs':(0.45,0.55)})
-#        P3.progsets[0].covout['condcas'][lolkedz].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'PWID programs':(0.45,0.55)})
-#    
-#    P3.progsets[0].programs[1].costcovfn.addccopar({'saturation': (0.8, 1.0), 't': 2015, 'unitcost': (30, 50)})
-    
-    
-
-    F = Portfolio(projects=[P1,P2,P3])
-    F.genBOCs()
-    
-    done(t)
    
 
 
@@ -163,6 +132,31 @@ if 'rungui' in tests and doplot:
         geogui()
     
     done(t)
+
+
+
+
+if 'runbackend' in tests:
+    from optima import defaultobjectives
+    from optima.geospatial import makesheet, makeproj, create, addproj, saveport, loadport, rungeo, export, plotgeo
+
+    print('\n\n\nCreating portfolio from subdivision spreadsheet.')
+    makesheet(projectpath='./geo/blantyre.prj', spreadsheetpath='./geo/blantyre-split-blank.xlsx', copies=2, refyear=2017)
+    makeproj(projectpath='./geo/blantyre.prj', spreadsheetpath='./geo/blantyre-split-filled.xlsx', destination='./geo')
+    create(filepaths=['./geo/blantyre-district-1.prj','./geo/blantyre-district-2.prj'])
+    
+    print('\n\n\nCreating portfolio from projects (that already have BOCs).')
+    portfolio = create(filepaths=['./geo/blantyre.prj'])
+    addproj(portfolio=portfolio, filepaths=['./geo/balaka.prj'])   # Use addportfolio argument if not wanting to work with globals.
+    saveport(portfolio=portfolio, filepath='./geo/blantyre-balaka.prt')    # Use portfolio argument if not wanting to work with globals.
+
+    print('\n\n\nRunning geospatial analysis.')
+    gaobjectives = defaultobjectives(verbose=0)
+    gaobjectives['budget'] = 15000000.0 # Reset
+    portfolio = loadport(filepath='./geo/blantyre-balaka.prt')
+    portfolio = rungeo(portfolio=portfolio, objectives=gaobjectives, BOCtime=2, maxtime=10)     # Use portfolio argument if not wanting to work with globals.
+    export(portfolio=portfolio, filepath='./geo/blantyre-balaka-results.xlsx')
+    plotgeo()
 
 
 

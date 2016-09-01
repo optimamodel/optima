@@ -209,7 +209,7 @@ class Portfolio(object):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
                     if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
             
-    def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, maxtime=None, verbose=2):
+    def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, minbound=None, maxtime=None, verbose=2):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
         printv('Calculating minimum BOC outcomes...', 2, verbose)
 
@@ -274,12 +274,12 @@ class Portfolio(object):
 
             BOClist.append(p.getBOC(objectives))
             
-        optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, maxtime=maxtime)
+        optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, minbound=minbound, maxtime=maxtime)
             
         return optbudgets
         
         
-    def fullGA(self, objectives=None, budgetratio=None, maxtime=None, doplotBOCs=False, verbose=2):
+    def fullGA(self, objectives=None, budgetratio=None, minbound=None, maxtime=None, doplotBOCs=False, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         printv('Performing full geospatial analysis', 1, verbose)
         
@@ -297,7 +297,7 @@ class Portfolio(object):
         if budgetratio == None: budgetratio = self.getdefaultbudgets()
         initbudgets = scaleratio(budgetratio,objectives['budget'])
         
-        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, maxtime = maxtime)
+        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, minbound = minbound, maxtime = maxtime)
         if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         
         gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
@@ -439,33 +439,7 @@ class GAOptim(object):
         return output
 
 
-#    def batchfunc(
-#            self, p, pind, outputqueue, projects, initbudgets, optbudgets,
-#            parsetnames, progsetnames, maxtime, parprogind, verbose):
-#        loadbalancer(index=pind)
-#        printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
-#
-#        tmp = odict()
-#
-#        # Crash if any project doesn't have progsets
-#        if not p.progsets or not p.parsets:
-#            errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
-#            raise OptimaException(errormsg)
-#
-#        initobjectives = dcp(self.objectives)
-#        initobjectives['budget'] = initbudgets[pind] + budgeteps
-#        printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-#        tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
-#
-#        optobjectives = dcp(self.objectives)
-#        optobjectives['budget'] = optbudgets[pind] + budgeteps
-#        printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-#        tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
-#    
-#        outputqueue.put(tmp)
-#        return None
 
-    
     def complete(self, projects, initbudgets, optbudgets, parsetnames=None, progsetnames=None, maxtime=None, parprogind=0, verbose=2):
         ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
         printv('Finalizing geospatial analysis...', 1, verbose)

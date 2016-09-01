@@ -109,7 +109,45 @@ def batchBOC(
         progsetname=None, inds=0, objectives=None, constraints=None, 
         maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
         method='asd'):
-    ''' Perform batch BOC calculation '''
+    """
+    Perform batch BOC calculation.
+
+    Loops through all projects in the specified (default: current) directory,
+    loads each project and sends to boc_task, along with any universal
+    optimization settings to generate a budget-objective-curve for each
+    project.
+
+    Arguments:
+        folder - the directory containing all projects for which a BOC will be
+                calculated
+        budgetlist - a vector of multiples of the current budget for which an
+                optimization will be performed to comprise the BOC (default:
+                [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0])
+        name - name of the stored BOC result
+        parsetname - name of the parameter set stored within the project to use
+                for the optimizations that comprise the BOC
+        progsetname - name of the program set stored within the project to use
+                for the optimizations that comprise the BOC
+        inds - indexing variable for selecting parameters in a parset to use in
+                the optimizations
+        objectives - typically an odict containing desired outcome and
+                weighting to use in the optimizations; if None, uses default
+                objectives (jointly minimize incidence and deaths with 1:5
+                weighting); if 'latest', extracts objectives from the latest
+                stored optimization in the project
+        constraints - typically an odict containting desired limits on program
+                funding changes relative to current spending; if None, uses
+                default constraints; if 'latest', extracts constraints from the
+                latest stored opitimization in the project
+        maxiters - maximum number of iterations for each optimization run that
+                comprises the BOC
+        maxtime - maximum time in seconds for each optimization run that
+                comprises the BOC
+        verbose - number indicating level of text output (higher is more text)
+        stoppingfunc - appears to not be functional
+        method - optimization algorithm to use for optimization runs that
+                comprise the BOC
+    """
     
     filelist = glob(path.join(folder, '*.prj'))
     nfiles = len(filelist)
@@ -120,10 +158,14 @@ def batchBOC(
     for i in range(nfiles):
         project = loadobj(filelist[i])
         project.tmpfilename = filelist[i]
+        prjobjectives = project.optims[-1].objectives \
+            if objectives == 'latest' else objectives
+        prjconstraints = project.optims[-1].constraints \
+            if constraints == 'latest' else constraints
         prc = Process(
             target=boc_task,
             args=(project, i, outputqueue, budgetlist, name, parsetname, 
-                  progsetname, inds, objectives, constraints, maxiters, 
+                  progsetname, inds, prjobjectives, prjconstraints, maxiters, 
                   maxtime, verbose, stoppingfunc, method))
         prc.start()
         processes.append(prc)

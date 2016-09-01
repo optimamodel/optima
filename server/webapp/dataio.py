@@ -304,6 +304,9 @@ def ensure_all_constraints_of_optimizations(project):
 
 def create_project_from_prj(prj_filename, project_name, user_id):
     project = loaddbobj(prj_filename)
+    print('>> Migrating project from version %s' % project.version)
+    project = op.migrate(project)
+    print('>> ...to version %s' % project.version)
     project.name = project_name
     save_project_as_new(project, user_id)
     ensure_all_constraints_of_optimizations(project)
@@ -321,6 +324,9 @@ def download_project(project_id):
 
 def update_project_from_prj(project_id, prj_filename):
     project = loaddbobj(prj_filename)
+    print('>> Migrating project from version %s' % project.version)
+    project = op.migrate(project)
+    print('>> ...to version %s' % project.version)
     project_record = load_project_record(project_id)
     project_record.save_obj(project)
     db.session.add(project_record)
