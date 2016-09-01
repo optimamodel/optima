@@ -8,6 +8,10 @@ import sys
 import logging
 from logging.handlers import SysLogHandler
 
+# Fix "Invalid display variable"
+import matplotlib
+matplotlib.use('agg')
+
 app = Flask(__name__)
 
 app.config.from_object('config')
