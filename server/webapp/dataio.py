@@ -20,7 +20,6 @@ All parameters and return types are either id's, json-summaries, or mpld3 graphs
 
 
 import os
-from pprint import pformat
 from zipfile import ZipFile
 from uuid import uuid4, UUID
 from datetime import datetime
@@ -773,18 +772,6 @@ def load_optimization_graphs(project_id, optimization_id, which):
     else:
         print(">> Loading graphs for result '%s'" % result.name)
         return make_mpld3_graph_dict(result, which)
-
-
-def check_optimization(project_id, optimization_id):
-    from server.webapp.tasks import check_calculation_status, clear_work_log
-    work_type = 'optim-' + str(optimization_id)
-    calc_state = check_calculation_status(project_id, work_type)
-    print("> Checking calc state")
-    print(pformat(calc_state, indent=2))
-    if calc_state['status'] == 'error':
-        clear_work_log(project_id, work_type)
-        raise Exception(calc_state['error_text'])
-    return calc_state
 
 
 ## SPREADSHEETS

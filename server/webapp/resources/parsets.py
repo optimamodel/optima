@@ -319,12 +319,12 @@ class ParsetAutofit(Resource):
             maxtime: int - number of seconds to run
 
         """
-        from server.webapp.tasks import run_autofit, start_or_report_calculation
+        from server.webapp.tasks import run_autofit, start_or_report_project_calculation
         project = load_project(project_id)
         parset = load_parset(project, parset_id)
 
         maxtime = json.loads(request.data).get('maxtime')
-        calc_status = start_or_report_calculation(project_id, parset_id, 'autofit')
+        calc_status = start_or_report_project_calculation(project_id, parset_id, 'autofit')
         if calc_status['status'] != "blocked":
             print "> Starting autofit for %s s" % maxtime
             run_autofit.delay(project_id, parset.name, maxtime)

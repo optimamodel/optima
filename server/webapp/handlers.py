@@ -37,7 +37,7 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_progset, delete_progset, upload_progset, load_parameters_from_progset_parset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
-    upload_optimization_summary, check_optimization, load_optimization_graphs, \
+    upload_optimization_summary, load_optimization_graphs, \
     load_portfolio
 from . import dataio
 from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
@@ -411,6 +411,20 @@ class KillTask(Resource):
         server.webapp.tasks.delete_task(task_id)
 
 api.add_resource(KillTask, '/api/killtask/<uuid:task_id>')
+
+
+class TaskChecker(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary='Poll optimization calculation for a project')
+    def get(self, project_id, work_type):
+        """
+        GET /api/pyopbject_id/<pyopbject_id>/type/<work_type>
+        """
+        return server.webapp.tasks.check_optimization(project_id, work_type)
+
+api.add_resource(TaskChecker, '/api/pyopbject_id/<pyopbject_id>/type/<work_type>')
+
 
 
 # DEFAULTS
@@ -848,7 +862,7 @@ class OptimizationCalculation(Resource):
         """
         GET /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results
         """
-        return check_optimization(project_id, optimization_id)
+        return server.webapp.tasks.check_optimization(project_id, optimization_id)
 
 
 class OptimizationGraph(Resource):

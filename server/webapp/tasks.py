@@ -1,6 +1,7 @@
 import datetime
 import pprint
 import traceback
+from pprint import pformat
 
 import dateutil.tz
 from celery import Celery
@@ -134,7 +135,7 @@ def setup_work_log(pyobject_id, work_type, pyobject):
     return calc_state
 
 
-def start_or_report_calculation(project_id, work_type):
+def start_or_report_project_calculation(project_id, work_type):
     project = load_project(project_id)
     return setup_work_log(project_id, work_type, project)
 
@@ -158,38 +159,24 @@ def shut_down_calculation(project_id, work_type):
     close_db_session(db_session)
 
 
-def check_calculation_status(project_id, work_type):
+def check_calculation_status(pyobject_id, work_type):
     """
-    Checks the current calculation state of a project.
-
-    Args:
-        project_id: uuid of project
-
-    Returns:
-        {
-            'status': 'started', 'completed', 'cancelled', 'error', 'blocked'
-            'error_text': str
-            'start_time': datetime
-            'stop_time': datetime
-            'work_type': 'autofit' or 'optim-*'
-        }
+    Returns current calculation state of a work_log.
     """
-
+    result = {
+        'status': 'unknown',
+        'error_text': None,
+        'start_time': None,
+        'stop_time': None,
+        'work_type': ''
+    }
     db_session = init_db_session()
     work_log_record = db_session.query(WorkLogDb)\
-        .filter_by(project_id=project_id, work_type=work_type)\
+        .filter_by(project_id=pyobject_id, work_type=work_type)\
         .first()
     if work_log_record:
         print ">> Found existing job of '%s' with same project" % work_type
         result = parse_work_log_record(work_log_record)
-    else:
-        result = {
-            'status': 'unknown',
-            'error_text': None,
-            'start_time': None,
-            'stop_time': None,
-            'work_type': ''
-        }
     close_db_session(db_session)
     return result
 
@@ -288,7 +275,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
 
 def launch_autofit(project_id, parset_id, maxtime):
     work_type = 'autofit-' + str(parset_id)
-    calc_status = start_or_report_calculation(project_id, work_type)
+    calc_status = start_or_report_project_calculation(project_id, work_type)
     if calc_status['status'] != "blocked":
         print "> Starting autofit for %s s" % maxtime
         run_autofit.delay(project_id, parset_id, maxtime)
@@ -392,11 +379,22 @@ def run_optimization(self, project_id, optimization_id, maxtime):
 
 
 def launch_optimization(project_id, optimization_id, maxtime):
-    calc_state = start_or_report_calculation(
+    calc_state = start_or_report_project_calculation(
         project_id, 'optim-' + str(optimization_id))
     if calc_state['status'] != 'started':
         return calc_state, 208
     run_optimization.delay(project_id, optimization_id, maxtime)
+    return calc_state
+
+
+def check_optimization(project_id, optimization_id):
+    work_type = 'optim-' + str(optimization_id)
+    calc_state = check_calculation_status(project_id, work_type)
+    print("> Checking calc state")
+    print(pformat(calc_state, indent=2))
+    if calc_state['status'] == 'error':
+        clear_work_log(project_id, work_type)
+        raise Exception(calc_state['error_text'])
     return calc_state
 
 
@@ -405,6 +403,10 @@ def get_gaoptim(project, gaoptim_id):
         if str(gaoptim.uid) == str(gaoptim_id):
             return gaoptim
     return None
+
+
+def load_portfolio(portfolio_id):
+    return optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
 
 
 @celery_instance.task(bind=True)
@@ -475,7 +477,7 @@ def run_boc(self, project_id, gaoptim_id):
 
 
 def launch_boc(portfolio_id, gaoptim_id):
-    portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+    portfolio = load_portfolio(portfolio_id)
     gaoptims = portfolio.gaoptims
     for project in portfolio.projects.values():
         project_id = project.uid
@@ -487,7 +489,7 @@ def launch_boc(portfolio_id, gaoptim_id):
             db.session.add(project_record)
             db.session.commit()
         project_record.save_obj(project)
-        calc_state = start_or_report_calculation(
+        calc_state = start_or_report_project_calculation(
             project_id, 'gaoptim-' + str(gaoptim_id))
         if calc_state['status'] != 'started':
             return calc_state, 208
@@ -558,11 +560,18 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
 
 
 
-def load_portfolio(portfolio_id):
-    return optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
-
-
 def launch_miminize_portfolio(portfolio_id, gaoptim_id):
     portfolio = load_portfolio(portfolio_id)
-    setup_work_log(portfolio_id, 'portfolio-' + str(gaoptim_id), portfolio)
+    setup_work_log(
+        portfolio_id, 'portfolio-' + str(gaoptim_id), portfolio)
     run_miminize_portfolio.delay(portfolio_id, gaoptim_id)
+
+
+def check_task(pyobject_id, work_type):
+    calc_state = check_calculation_status(pyobject_id, work_type)
+    print("> Checking calc state")
+    print(pformat(calc_state, indent=2))
+    if calc_state['status'] == 'error':
+        clear_work_log(pyobject_id, work_type)
+        raise Exception(calc_state['error_text'])
+    return calc_state
