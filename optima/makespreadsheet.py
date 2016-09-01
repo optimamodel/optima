@@ -577,6 +577,7 @@ class OptimaSpreadsheet:
         'PLHIV aware of their status (%)', 
         'Diagnosed PLHIV in care (%)',
         'PLHIV in care on treatment (%)',
+        'Pregnant women on PMTCT (%)',
         'People on ART with viral suppression (%)']:
             current_row = self.emit_years_block(name, current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
 
