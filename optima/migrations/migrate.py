@@ -1,5 +1,5 @@
 import optima as op
-
+from numpy import nan
 
 
 def versiontostr(project, **kwargs):
@@ -33,14 +33,27 @@ def addforcepopsize(project, **kwargs):
 
 def delimmediatecare(project, **kwargs):
     """
-    Migration between Optima 2.0.2 and 2.0.3.
+    Migration between Optima 2.0.2 and 2.0.3 -- WARNING, will this work for scenarios etc.?
     """
-    if hasattr(project, 'parsets'):
-        for ps in project.parsets.values():
-            if ps.pars[0].get('immediatecare'): del ps.pars[0]['immediatecare']
-    if hasattr(project, 'data'):
-        if project.data.get('immediatecare'): del project.data['immediatecare']
+    for ps in project.parsets.values():
+        for i in range(len(ps.pars)):
+            ps.pars[i].pop('immediatecare', None)
+    project.data.pop('immediatecare', None)
     project.version = "2.0.3"
+    return None
+
+
+def addproppmtct(project, **kwargs):
+    """
+    Migration between Optima 2.0.3 and 2.0.4.
+    """
+    for ps in project.parsets.values():
+        for i in range(len(ps.pars)):
+            ps.pars[i]['proppmtct'] = op.dcp(project.pars()['proptx'])
+            ps.pars[i]['proppmtct'].name = 'Pregnant women and mothers on PMTCT'
+            ps.pars[i]['proppmtct'].short = 'proppmtct'
+    project.data['proppmtct'] = [[nan]*len(project.data['years'])]
+    project.version = "2.0.4"
     return None
 
 
@@ -70,11 +83,11 @@ def redotransitions(project, **kwargs):
 
     # Update variables in data
     if hasattr(project, 'data'):
-        if project.data.get('immediatecare'):   del project.data['immediatecare']
-        if project.data.get('biofailure'):      del project.data['biofailure']
-        if project.data.get('restarttreat'):    del project.data['restarttreat']
-        if project.data.get('stoprate'):        del project.data['stoprate']
-        if project.data.get('treatvs'):         del project.data['treatvs']
+        project.data.pop('immediatecare', None)
+        project.data.pop('biofailure', None)
+        project.data.pop('restarttreat', None)
+        project.data.pop('stoprate', None)
+        project.data.pop('treatvs', None)
 
         # Add new constants
         project.data['const']['deathsvl']       = [0.23,    0.15,   0.3]
@@ -95,14 +108,14 @@ def redotransitions(project, **kwargs):
         project.data['const']['usvlrecovlt50']  = [0.111,   0.047,  0.563]
 
         # Remove old constants
-        if project.data['const'].get('deathtreat'):     del project.data['const']['deathtreat']
-        if project.data['const'].get('progusvl'):       del project.data['const']['progusvl']
-        if project.data['const'].get('recovgt500'):     del project.data['const']['recovgt500']
-        if project.data['const'].get('recovgt350'):     del project.data['const']['recovgt350']
-        if project.data['const'].get('recovgt200'):     del project.data['const']['recovgt200']
-        if project.data['const'].get('recovgt50'):      del project.data['const']['recovgt50']
-        if project.data['const'].get('recovusvl'):      del project.data['const']['recovusvl']
-        if project.data['const'].get('stoppropcare'):   del project.data['const']['stoppropcare']
+        project.data['const'].pop('deathtreat', None)
+        project.data['const'].pop('progusvl', None)
+        project.data['const'].pop('recovgt500', None)
+        project.data['const'].pop('recovgt350', None)
+        project.data['const'].pop('recovgt200', None)
+        project.data['const'].pop('recovgt50', None)
+        project.data['const'].pop('recovusvl', None)
+        project.data['const'].pop('stoppropcare', None)
 
     # Update parameters
     if hasattr(project, 'parsets'):
@@ -110,18 +123,18 @@ def redotransitions(project, **kwargs):
             for pd in ps.pars:
                 
                 # Remove old parameters
-                if pd.get('biofailure'):        del pd['biofailure']
-                if pd.get('deathtreat'):        del pd['deathtreat']
-                if pd.get('immediatecare'):     del pd['immediatecare']
-                if pd.get('progusvl'):          del pd['progusvl']
-                if pd.get('recovgt500'):        del pd['recovgt500']
-                if pd.get('recovgt350'):        del pd['recovgt350']
-                if pd.get('recovgt200'):        del pd['recovgt200']
-                if pd.get('recovgt50'):         del pd['recovgt50']
-                if pd.get('recovusvl'):         del pd['recovusvl']
-                if pd.get('restarttreat'):      del pd['restarttreat']
-                if pd.get('stoppropcare'):      del pd['stoppropcare']
-                if pd.get('stoprate'):          del pd['stoprate']
+                pd.pop('biofailure', None)
+                pd.pop('deathtreat', None)
+                pd.pop('immediatecare', None)
+                pd.pop('progusvl', None)
+                pd.pop('recovgt500', None)
+                pd.pop('recovgt350', None)
+                pd.pop('recovgt200', None)
+                pd.pop('recovgt50', None)
+                pd.pop('recovusvl', None)
+                pd.pop('restarttreat', None)
+                pd.pop('stoppropcare', None)
+                pd.pop('stoprate', None)
 
                 # Add new parameters
                 pd['deathsvl']          = Constant(0.23,    limits=(0,'maxmeta'),       by='tot', auto='const', fittable='const', name='Relative death rate on suppressive ART (unitless)',                 short='deathsvl')
@@ -147,10 +160,8 @@ def redotransitions(project, **kwargs):
             # Rerun calibrations to update results appropriately
             project.runsim(ps.name)
 
-
-    project.version = "2.0.4"
+    project.version = "2.0.5"
     return None
-
 
 
 
@@ -159,7 +170,8 @@ migrations = {
 '2.0.0': addscenuid,
 '2.0.1': addforcepopsize,
 '2.0.2': delimmediatecare,
-'2.0.3': redotransitions,
+'2.0.3': addproppmtct,
+'2.0.4': redotransitions,
 }
 
 
