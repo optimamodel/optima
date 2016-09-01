@@ -855,13 +855,13 @@ class odict(OrderedDict):
         return None
     
     
-    def pop(self, key):
+    def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
         if type(key)==str:
-            return OrderedDict.pop(self, key)
+            return OrderedDict.pop(self, key, *args, **kwargs)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            return OrderedDict.pop(self, thiskey)
+            return OrderedDict.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
                 startind = self.__slicekey(key.start, 'start')
@@ -869,19 +869,19 @@ class odict(OrderedDict):
                 if stopind<startind:
                     print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
                     raise Exception
-                slicevals = [self.pop(i) for i in range(startind,stopind)] # WARNING, not tested
+                slicevals = [self.pop(i, *args, **kwargs) for i in range(startind,stopind)] # WARNING, not tested
                 try: return array(slicevals) # Try to convert to an array
                 except: return slicevals
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
         elif self.__is_odict_iterable(key): # Iterate over items
-            listvals = [self.pop(item) for item in key]
+            listvals = [self.pop(item, *args, **kwargs) for item in key]
             try: return array(listvals)
             except: return listvals
         else: # Handle string but also everything else
             try:
-                return OrderedDict.pop(self,key)
+                return OrderedDict.pop(self, key, *args, **kwargs)
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
                     errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
