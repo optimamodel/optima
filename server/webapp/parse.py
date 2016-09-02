@@ -1252,9 +1252,13 @@ def parse_portfolio_summaries(portfolio):
         "id": portfolio.uid,
         "version": portfolio.version,
         "gitversion": portfolio.gitversion,
-        # "outputstring": portfolio.outputstring,
+        "outputstring": '',
         "projects": project_summaries,
     }
+
+    if hasattr(portfolio, "outputstring"):
+        result["outputstring"] = portfolio.outputstring.replace('\t', ',')
+
     return result
 
 
