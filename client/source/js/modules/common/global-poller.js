@@ -35,6 +35,7 @@ define(['angular' ], function (angular) {
             $http
               .get(poll.url)
               .success(function(response) {
+                console.log(response);
                 if (response.status === 'started') {
                   poll.timer = $timeout(pollWithTimeout, 1000);
                 } else {
@@ -62,9 +63,15 @@ define(['angular' ], function (angular) {
         });
       }
 
+      function killJob(projectId, workType) {
+        $http
+          .delete('/api/task/' + projectId + '/type/' + workType);
+      }
+
       return {
         startPoll: startPoll,
-        stopPolls: stopPolls
+        stopPolls: stopPolls,
+        killJob: killJob
       };
 
     }]);

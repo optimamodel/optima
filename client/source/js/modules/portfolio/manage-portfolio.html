@@ -88,12 +88,6 @@
           Stop calculation
         </button>
 
-        <button
-            class="btn"
-            ng-click="runMinOutcome()">
-          Run geospatial optimization
-        </button>
-
         <table class="table table-bordered table-hover table-striped">
           <tr>
             <th>Project</th>
@@ -147,6 +141,21 @@
             </td>
           </tr>
         </table>
+
+        <button
+            class="btn"
+            ng-click="runMinOutcome()">
+          Run geospatial optimization
+        </button>
+
+        <button
+            class="btn"
+            ng-click="killMinOutcome()">
+          Kill geospatial optimization
+        </button>
+
+        <span>{{ statusMessage}}</span>
+
 
       </div>
 

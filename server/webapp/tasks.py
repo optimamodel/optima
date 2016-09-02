@@ -48,18 +48,6 @@ class ContextTask(TaskBase):
 celery_instance.Task = ContextTask
 
 
-def delete_task(task_id):
-    task_id = str(task_id)
-    print("Delete task", task_id, type(task_id))
-    celery_instance.control.revoke(str(task_id))
-    work_log = db.session.query(WorkLogDb).filter_by(task_id=task_id).first()
-    work_log.status = 'cancelled'
-    work_log.cleanup()
-    db.session.add(work_log)
-    db.session.commit()
-    return "success"
-
-
 def parse_work_log_record(work_log):
     return {
         'status': work_log.status,
@@ -93,7 +81,7 @@ def setup_work_log(pyobject_id, work_type, pyobject):
     Sets up a work_log for project_id calculation, returns a work_log_record dictionary
     """
 
-    print("> Put on celery, a job of '%s'" % work_type)
+    print("> Put on celery, a job of '%s %s'" % (pyobject_id, work_type))
 
     db_session = init_db_session()
 
@@ -135,6 +123,30 @@ def setup_work_log(pyobject_id, work_type, pyobject):
     return calc_state
 
 
+def delete_task(pyobject_id, work_type):
+    print("> Delete ", pyobject_id, work_type)
+    work_log_record = db.session.query(WorkLogDb).filter_by(
+        project_id=pyobject_id, work_type=work_type).first()
+    if not work_log_record:
+        return "Job not found"
+
+    task_id = work_log_record.task_id
+    if not task_id:
+        return "No celery task found for job"
+
+    task_id = str(task_id)
+    print("Delete task", task_id, type(task_id))
+    celery_instance.control.revoke(str(task_id))
+    work_log = db.session.query(WorkLogDb).filter_by(task_id=task_id).first()
+    work_log.status = 'cancelled'
+    work_log.cleanup()
+    db.session.add(work_log)
+    db.session.commit()
+
+    return "Deleted job"
+
+
+
 def start_or_report_project_calculation(project_id, work_type):
     project = load_project(project_id)
     return setup_work_log(project_id, work_type, project)
@@ -171,6 +183,7 @@ def check_calculation_status(pyobject_id, work_type):
         'work_type': ''
     }
     db_session = init_db_session()
+    print("Check calculation status", pyobject_id, work_type)
     work_log_record = db_session.query(WorkLogDb)\
         .filter_by(project_id=pyobject_id, work_type=work_type)\
         .first()
@@ -562,8 +575,12 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
 
 def launch_miminize_portfolio(portfolio_id, gaoptim_id):
     portfolio = load_portfolio(portfolio_id)
-    setup_work_log(
+    for project in portfolio.projects.values():
+        optima.migrate(project)
+    calc_state = setup_work_log(
         portfolio_id, 'portfolio-' + str(gaoptim_id), portfolio)
+    if calc_state['status'] != 'started':
+        return calc_state, 208
     run_miminize_portfolio.delay(portfolio_id, gaoptim_id)
 
 

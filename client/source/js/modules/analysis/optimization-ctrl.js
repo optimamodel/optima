@@ -95,9 +95,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.setActiveOptimization = function(optimization) {
-      if ($scope.state.optimization) {
-        globalPoller.end($scope.state.optimization.id);
-      }
+      globalPoller.stopPolls();
 
       $scope.state.isRunnable = false;
       $scope.state.optimization = optimization;
@@ -367,6 +365,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       );
     }
+
+    $scope.killJob = function() {
+      var projectId = $scope.state.project.id;
+      var optimizationId = $scope.state.optimization.id;
+      var workType = "optim-" + optimizationId;
+      globalPoller.killJob(projectId, workType);
+    };
 
     function getSelectors() {
       if ($scope.graphs) {

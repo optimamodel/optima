@@ -290,6 +290,7 @@ def ensure_all_constraints_of_optimizations(project):
     for optim in project.optims.values():
         progset_name = optim.progsetname
         progset = project.progsets[progset_name]
+        print("optim.constraints", optim.constraints)
         if optim.constraints is None:
             optim.constraints = op.defaultconstraints(project=project, progset=progset)
             is_change = True

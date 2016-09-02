@@ -399,31 +399,26 @@ class MinimizePortfolio(Resource):
 api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
 
 
-class KillTask(Resource):
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(summary="Returns default program summaries for program-set modal")
-    def post(self, task_id):
-        """
-        GET /api/killtask/<uuid:task_id>
-        """
-        print "task_id", task_id
-        server.webapp.tasks.delete_task(task_id)
-
-api.add_resource(KillTask, '/api/killtask/<uuid:task_id>')
-
 
 class TaskChecker(Resource):
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(summary='Poll optimization calculation for a project')
-    def get(self, project_id, work_type):
+    @swagger.operation(summary='Poll task')
+    def get(self, pyobject_id, work_type):
         """
-        GET /api/pyopbject_id/<pyopbject_id>/type/<work_type>
+        GET /api/task/<uuid:pyobject_id>/type/<work_type>
         """
-        return server.webapp.tasks.check_optimization(project_id, work_type)
+        return server.webapp.tasks.check_task(pyobject_id, work_type)
 
-api.add_resource(TaskChecker, '/api/pyopbject_id/<pyopbject_id>/type/<work_type>')
+    @swagger.operation(summary="Deletes a task")
+    def delete(self, pyobject_id, work_type):
+        """
+        DELETE /api/task/<uuid:pyobject_id>/type/<work_type>
+        """
+        return server.webapp.tasks.delete_task(pyobject_id, work_type)
+
+
+api.add_resource(TaskChecker, '/api/task/<uuid:pyobject_id>/type/<work_type>')
 
 
 
