@@ -418,6 +418,25 @@ class TaskChecker(Resource):
         return server.webapp.tasks.delete_task(pyobject_id, work_type)
 
 
+class BOCTaskChecker(Resource):
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(summary='Poll task')
+    def post(self):
+        """
+        POST /api/bocs
+        """
+        project_ids = get_post_data_json()
+        return server.webapp.tasks.check_bocs(project_ids)
+
+    @swagger.operation(summary="Deletes a task")
+    def delete(self, pyobject_id, work_type):
+        """
+        DELETE /api/task/<uuid:pyobject_id>/type/<work_type>
+        """
+        return server.webapp.tasks.delete_task(pyobject_id, work_type)
+
+
 api.add_resource(TaskChecker, '/api/task/<uuid:pyobject_id>/type/<work_type>')
 
 

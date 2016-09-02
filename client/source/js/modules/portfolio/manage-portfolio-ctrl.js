@@ -19,12 +19,17 @@ define(
             {'key': 'inciweight', 'label': 'Incidence weight'},
           ];
 
+          reloadPortfolio();
+          $scope.isSelectProject = false;
+        }
+
+        function reloadPortfolio() {
           globalPoller.stopPolls();
 
           $http
             .get('/api/portfolio')
             .success(function(response) {
-              console.log(response);
+              console.log('load portfolio', response)
               $scope.state = response;
               $scope.activeGaoptim = $scope.state.gaoptims[0];
               $http
@@ -36,7 +41,6 @@ define(
                 })
             });
 
-          $scope.isSelectProject = false;
         }
 
         function getCheckFullGAUrl() {
@@ -56,8 +60,6 @@ define(
         };
 
         $scope.runMinOutcome = function() {
-          console.log($scope.state);
-          console.log($scope.activeGaoptim);
           var url = "/api/task/" + $scope.state.id
               + "/type/portfolio-" + $scope.activeGaoptim.id;
           $http
@@ -80,12 +82,53 @@ define(
             });
         };
 
+        $scope.killBocs = function() {
+          _.each($scope.state.projects, function(project) {
+            var url = "/api/task/" + project.id
+                + "/type/gaoptim-" + $scope.activeGaoptim.id;
+            console.log('kill job' + url);
+            $http
+              .delete(url)
+              .success(function(response) {
+                toastr.success(response);
+              });
+
+          });
+        };
+
+        function initBocPoll(projectId) {
+          globalPoller.startPoll(
+            projectId,
+            getCheckFullGAUrl(),
+            function(response) {
+              if (response.status === 'completed') {
+                $scope.statusMessage = "";
+                reloadPortfolio();
+                toastr.success('GA Optimization completed');
+              } else if (response.status === 'started') {
+                $scope.task_id = response.task_id;
+                var start = new Date(response.start_time);
+                var now = new Date(response.current_time);
+                var diff = now.getTime() - start.getTime();
+                var seconds = parseInt(diff / 1000);
+                $scope.statusMessage = "Optimization running for " + seconds + " s";
+              } else {
+                $scope.statusMessage = 'Optimization failed';
+                $scope.state.isRunnable = true;
+              }
+            }
+          );
+        }
+
+
         function initGaPoll() {
           globalPoller.startPoll(
             $scope.activeGaoptim.id,
             getCheckFullGAUrl(),
             function(response) {
               if (response.status === 'completed') {
+                $scope.statusMessage = "";
+                reloadPortfolio();
                 toastr.success('GA Optimization completed');
               } else if (response.status === 'started') {
                 $scope.task_id = response.task_id;
@@ -171,7 +214,6 @@ define(
         };
 
         $scope.hasNoResults = function() {
-          console.log('what');
           if (_.isUndefined($scope.state)) {
             return true;
           }

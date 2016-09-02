@@ -194,6 +194,17 @@ def check_calculation_status(pyobject_id, work_type):
     return result
 
 
+
+def check_task(pyobject_id, work_type):
+    calc_state = check_calculation_status(pyobject_id, work_type)
+    print("> Checking calc state")
+    print(pformat(calc_state, indent=2))
+    if calc_state['status'] == 'error':
+        clear_work_log(pyobject_id, work_type)
+        raise Exception(calc_state['error_text'])
+    return calc_state
+
+
 def clear_work_log(project_id, work_type):
     print(">> Deleting work logs of '%s'" % work_type)
     db_session = init_db_session()
@@ -437,6 +448,7 @@ def run_boc(self, project_id, gaoptim_id):
     if work_log:
         work_log_id = work_log.id
         work_log.task_id = self.request.id
+        print(">> Celery task_id = %s" % work_log.task_id)
         try:
             project = work_log.load()
             db_session.add(work_log)
@@ -494,18 +506,10 @@ def launch_boc(portfolio_id, gaoptim_id):
     gaoptims = portfolio.gaoptims
     for project in portfolio.projects.values():
         project_id = project.uid
+        optima.migrate(project)
         project.gaoptims = gaoptims
-        project_record = load_project_record(project_id, raise_exception=False)
-        if not project_record:
-            project_record = ProjectDb(current_user.id)
-            project_record.id = project_id
-            db.session.add(project_record)
-            db.session.commit()
-        project_record.save_obj(project)
-        calc_state = start_or_report_project_calculation(
-            project_id, 'gaoptim-' + str(gaoptim_id))
-        if calc_state['status'] != 'started':
-            return calc_state, 208
+        calc_state = setup_work_log(
+            project_id, 'gaoptim-' + str(gaoptim_id), project)
         run_boc.delay(project_id, gaoptim_id)
 
 
@@ -525,6 +529,7 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
     if work_log:
         work_log_id = work_log.id
         work_log.task_id = self.request.id
+        print(">> Celery task_id = %s" % work_log.task_id)
         try:
             portfolio = work_log.load()
             db_session.add(work_log)
@@ -541,7 +546,6 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
         return
 
     if status == 'started':
-        result = None
         try:
             gaoptim = get_gaoptim(portfolio, gaoptim_id)
             objectives = gaoptim.objectives
@@ -584,11 +588,3 @@ def launch_miminize_portfolio(portfolio_id, gaoptim_id):
     run_miminize_portfolio.delay(portfolio_id, gaoptim_id)
 
 
-def check_task(pyobject_id, work_type):
-    calc_state = check_calculation_status(pyobject_id, work_type)
-    print("> Checking calc state")
-    print(pformat(calc_state, indent=2))
-    if calc_state['status'] == 'error':
-        clear_work_log(pyobject_id, work_type)
-        raise Exception(calc_state['error_text'])
-    return calc_state
