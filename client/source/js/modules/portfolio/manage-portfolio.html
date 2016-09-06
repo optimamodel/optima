@@ -78,15 +78,8 @@
             style="
               margin-bottom: 1em"
               class="btn"
-            ng-click="runGeospatial()">
+            ng-click="calculateAllBocCurves()">
           Calculate BOC
-        </button>
-
-        <button
-            style="margin-bottom: 1em"
-            ng-click="killBocs()"
-            class="btn">
-          Cancel
         </button>
 
         <table class="table table-bordered table-hover table-striped">
@@ -100,10 +93,15 @@
               {{project.name}}
             </td>
             <td width="150px">
-              {{project.boc}}
+              <span style="color: #00aeef;">
+                  {{bocStatusMessage[project.id]}}
+              </span>
             </td>
             <td width="20px">
-              <span class="fa fa-trash"></span>
+              <span
+                  ng-click="deleteProject(project.id)""
+                  class="fa fa-trash">
+              </span>
             </td>
           </tr>
           <tr>
@@ -117,7 +115,7 @@
                   style="
                     border: 1px solid #DDD;
                     padding: 20px;"
-                  ng-show="isSelectProject">
+                  ng-show="isSelectNewProject">
 
                 <b>Select from uploaded projects:</b>
                 <br>
@@ -130,7 +128,7 @@
                 <br>
                 <br>
                 <button class="btn"
-                  ng-click="dismissAdd()">
+                  ng-click="dismissAddProject()">
                   Dismiss
                 </button>
 
@@ -145,16 +143,19 @@
 
         <button
             class="btn"
-            ng-click="runMinOutcome()">
+            ng-click="runFullGa()">
           Run geospatial optimization
         </button>
 
-        <button
-            class="btn"
-            ng-click="killMinOutcome()">
-          Cancel
-        </button>
-
+        <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+          <option value="10">10 seconds</option>
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+        &nbsp;
         <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
           {{ statusMessage }}
         </span>

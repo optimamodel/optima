@@ -38,7 +38,7 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
     upload_optimization_summary, load_optimization_graphs, \
-    load_portfolio
+    load_portfolio_summaries
 from . import dataio
 from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
 from .parse import get_default_populations
@@ -353,7 +353,7 @@ class ManagePortfolio(Resource):
         """
         GET /api/portfolio
         """
-        return load_portfolio()
+        return load_portfolio_summaries()
 
 api.add_resource(ManagePortfolio, '/api/portfolio')
 
@@ -370,6 +370,17 @@ class SavePortfolio(Resource):
 
 api.add_resource(SavePortfolio, '/api/portfolio/<portfolio_id>')
 
+
+class DeletePortfolioProject(Resource):
+    method_decorators = [report_exception, login_required]
+
+    def delete(self, portfolio_id, project_id):
+        """
+        delete /api/portfolio/<portfolio_id>/project/<project_id>
+        """
+        return dataio.delete_portfolio_project(portfolio_id, project_id)
+
+api.add_resource(DeletePortfolioProject, '/api/portfolio/<portfolio_id>/project/<project_id>')
 
 
 class CalculatePortfolio(Resource):

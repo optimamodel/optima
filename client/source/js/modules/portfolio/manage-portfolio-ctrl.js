@@ -19,51 +19,76 @@ define(
             {'key': 'inciweight', 'label': 'Incidence weight'},
           ];
 
+          $scope.isSelectNewProject = false;
+
           reloadPortfolio();
-          $scope.isSelectProject = false;
         }
 
         function reloadPortfolio() {
+          $scope.bocStatusMessage = {};
           globalPoller.stopPolls();
-
           $http
             .get('/api/portfolio')
             .success(function(response) {
-              console.log('load portfolio', response)
+              console.log('load portfolio', response);
               $scope.state = response;
               $scope.activeGaoptim = $scope.state.gaoptims[0];
               $http
-                .get(getCheckFullGAUrl())
+                .get(getCheckFullGaUrl())
                 .success(function(response) {
                   if (response.status === 'started') {
-                    initGaPoll();
+                    initFullGaPoll();
                   }
-                })
+                });
+              _.each($scope.state.projects, function(project) {
+                $scope.bocStatusMessage[project.id] = project.boc;
+                $http
+                  .get(getCheckProjectBocUrl(project.id))
+                  .success(function(response) {
+                    if (response.status === 'started') {
+                      initProjectBocPoll(project.id);
+                    }
+                  });
+              });
             });
-
         }
 
-        function getCheckFullGAUrl() {
+        function getCheckFullGaUrl() {
           return "/api/task/" + $scope.state.id
               + "/type/portfolio-" + $scope.activeGaoptim.id;
         }
 
-        $scope.runGeospatial = function() {
-          console.log('run', $scope.state);
+        function getCheckProjectBocUrl(projectId) {
+          return "/api/task/" + projectId
+                + "/type/gaoptim-" + $scope.activeGaoptim.id;
+        }
+
+        $scope.calculateAllBocCurves = function() {
+          console.log('run BOC curves', $scope.state);
           $http
             .get(
               "/api/portfolio/" + $scope.state.id
               + "/gaoptim/" + $scope.activeGaoptim.id)
-            .success(function(response) {
-              console.log(response);
+            .success(function() {
+              _.each($scope.state.projects, function(project) {
+                initProjectBocPoll(project.id);
+              });
             });
         };
 
-        $scope.runMinOutcome = function() {
-          var url = "/api/task/" + $scope.state.id
-              + "/type/portfolio-" + $scope.activeGaoptim.id;
+        $scope.deleteProject = function(projectId) {
           $http
-            .get(url)
+            .delete(
+              '/api/portfolio/' + $scope.state.id
+                + '/project/' + projectId)
+            .success(function() {
+
+            });
+        };
+
+        $scope.runFullGa = function() {
+          $http
+            .get(getCheckFullGaUrl())
             .success(function(response) {
               console.log('start job response', response);
               if (response.status != 'started') {
@@ -71,67 +96,46 @@ define(
                   .get(
                     "/api/minimize/portfolio/" + $scope.state.id
                     + "/gaoptim/" + $scope.activeGaoptim.id)
-                  .success(function(response) {
-                    console.log(response);
-                    console.log('Start fullGA poll');
-                    initGaPoll();
+                  .success(function() {
+                    initFullGaPoll();
                   });
-
-              } else {
               }
             });
         };
 
-        $scope.killBocs = function() {
-          _.each($scope.state.projects, function(project) {
-            var url = "/api/task/" + project.id
-                + "/type/gaoptim-" + $scope.activeGaoptim.id;
-            console.log('kill job' + url);
-            $http
-              .delete(url)
-              .success(function(response) {
-                toastr.success(response);
-              });
-
-          });
-        };
-
-        function initBocPoll(projectId) {
+        function initProjectBocPoll(projectId) {
           globalPoller.startPoll(
             projectId,
-            getCheckFullGAUrl(),
+            getCheckProjectBocUrl(projectId),
             function(response) {
               if (response.status === 'completed') {
-                $scope.statusMessage = "";
+                $scope.bocStatusMessage[projectId] = "calculated";
                 reloadPortfolio();
-                toastr.success('GA Optimization completed');
+                toastr.success('BOC calculation finished');
               } else if (response.status === 'started') {
-                $scope.task_id = response.task_id;
                 var start = new Date(response.start_time);
                 var now = new Date(response.current_time);
                 var diff = now.getTime() - start.getTime();
                 var seconds = parseInt(diff / 1000);
-                $scope.statusMessage = "Optimization running for " + seconds + " s";
+                $scope.bocStatusMessage[projectId] = "running for " + seconds + " s";
               } else {
-                $scope.statusMessage = 'Optimization failed';
+                $scope.bocStatusMessage[projectId] = 'failed';
                 $scope.state.isRunnable = true;
               }
             }
           );
         }
 
-
-        function initGaPoll() {
+        function initFullGaPoll() {
           globalPoller.startPoll(
             $scope.activeGaoptim.id,
-            getCheckFullGAUrl(),
+            getCheckFullGaUrl(),
             function(response) {
               if (response.status === 'completed') {
                 $scope.statusMessage = "";
                 reloadPortfolio();
                 toastr.success('GA Optimization completed');
               } else if (response.status === 'started') {
-                $scope.task_id = response.task_id;
                 var start = new Date(response.start_time);
                 var now = new Date(response.current_time);
                 var diff = now.getTime() - start.getTime();
@@ -144,17 +148,6 @@ define(
             }
           );
         }
-
-        $scope.killMinOutcome = function() {
-          var url = "/api/task/" + $scope.state.id
-              + "/type/portfolio-" + $scope.activeGaoptim.id;
-          console.log('kill job' + url);
-          $http
-            .delete(url)
-            .success(function(response) {
-              toastr.success(response);
-            });
-        };
 
         $scope.savePortfolio = function() {
           $http
@@ -168,7 +161,7 @@ define(
         };
 
         $scope.addProject = function() {
-          $scope.isSelectProject = true;
+          $scope.isSelectNewProject = true;
           $http
             .get('/api/project')
             .success(function(response) {
@@ -186,12 +179,12 @@ define(
             });
         };
 
-        $scope.dismissAdd = function() {
-          $scope.isSelectProject = false;
+        $scope.dismissAddProject = function() {
+          $scope.isSelectNewProject = false;
         };
 
         $scope.saveSelectedProject = function() {
-          $scope.isSelectProject = false;
+          $scope.isSelectNewProject = false;
           var selectedIds = _.pluck($scope.state.projects, "id");
           console.log("selectedIds", selectedIds);
           console.log("$scope.projects", $scope.projects);
@@ -202,10 +195,10 @@ define(
                 $scope.state.projects.push({
                   "id": project.id,
                   "name": project.name,
-                  "boc": "none",
+                  "boc": "none"
                 });
               }
-            };
+            }
           });
 
           console.log($scope.state.projects)
@@ -226,7 +219,7 @@ define(
               [$scope.state.outputstring], {type: 'application/octet-stream'});
             saveAs(blob, ('result.csv'));
           }
-        }
+        };
 
         initialize();
 

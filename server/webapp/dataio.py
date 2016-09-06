@@ -1,4 +1,4 @@
-from server.webapp.parse import parse_portfolio_summaries
+from server.webapp.parse import parse_portfolio_summary
 
 __doc__ = """
 
@@ -348,7 +348,18 @@ def load_zip_of_prj_files(project_ids):
 ## PORTFOLIO
 
 
-def load_portfolio(db_session=None):
+def load_portfolio(portfolio_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    kwargs = {'id': portfolio_id, 'type': "portfolio"}
+    record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
+    if record:
+        print("> load portfolio %s" % portfolio_id)
+        return record.load()
+    return optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+
+
+def load_portfolio_summaries(db_session=None):
     if db_session is None:
         db_session = db.session
     portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
@@ -356,9 +367,8 @@ def load_portfolio(db_session=None):
     # save if not in database
     kwargs = {'id': portfolio.uid, 'type': "portfolio"}
     record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
-    print record
     if not record:
-        print("> Save portfolio %s" % portfolio.name)
+        print("> Crreated default portfolio %s" % portfolio.name)
         record = PyObjectDb(current_user.id)
         record.type = "portfolio"
         record.name = portfolio.name
@@ -370,10 +380,8 @@ def load_portfolio(db_session=None):
     else:
         portfolio = record.load()
         print("> Load portfolio %s %s" % (portfolio.name, portfolio.uid))
-    project_ids = portfolio.projects.keys()
-    print("> project_ids %s" % project_ids)
 
-    return parse_portfolio_summaries(portfolio)
+    return parse_portfolio_summary(portfolio)
 
 
 def save_portfolio(portfolio, db_session=None):
@@ -389,6 +397,7 @@ def save_portfolio(portfolio, db_session=None):
         record.id = UUID(id)
         record.type = "portfolio"
         record.name = portfolio.name
+    print ">> Saved portfolio %s" % (portfolio_id)
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
@@ -439,6 +448,12 @@ def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
     save_portfolio(portfolio, db_session)
 
+
+def delete_portfolio_project(portfolio_id, project_id):
+    portfolio = load_portfolio(portfolio_id)
+    portfolio.projects.pop(str(project_id))
+    print ">> Deleted project %s from portfolio %s" % (project_id, portfolio_id)
+    save_portfolio(portfolio)
 
 
 ## PARSET

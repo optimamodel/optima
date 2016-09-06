@@ -39,18 +39,27 @@ define(['angular' ], function (angular) {
                 if (response.status === 'started') {
                   poll.timer = $timeout(pollWithTimeout, 1000);
                 } else {
-                  stopPolls();
+                  stopPoll(id);
                 }
                 poll.callback(response);
               })
               .error(function(response) {
-                stopPolls();
+                stopPoll(id);
                 poll.callback(response);
               });
           }
 
           pollWithTimeout();
         }
+      }
+
+      function stopPoll(id) {
+        var poll = getPoll(id);
+        if (poll.isRunning) {
+          console.log('Stop polling for', poll.id);
+          poll.isRunning = false;
+          $timeout.cancel(poll.timer);
+        };
       }
 
       function stopPolls() {

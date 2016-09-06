@@ -23,6 +23,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from .dataio import update_or_create_result_record, \
     load_project, load_project_record, delete_result_by_name
 from . import dataio
+from . import dataio
 from .dbmodels import WorkLogDb
 from .parse import get_optimization_from_project, get_parset_from_project_by_id
 from .utils import normalize_obj
@@ -429,12 +430,8 @@ def get_gaoptim(project, gaoptim_id):
     return None
 
 
-def load_portfolio(portfolio_id):
-    return optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
-
-
 @celery_instance.task(bind=True)
-def run_boc(self, project_id, gaoptim_id):
+def run_boc(self, portfolio_id, project_id, gaoptim_id):
 
     status = 'started'
     error_text = ""
@@ -470,8 +467,7 @@ def run_boc(self, project_id, gaoptim_id):
             gaoptim = get_gaoptim(project, gaoptim_id)
             print ">> Start BOC:"
             print_odict("gaoptim", gaoptim)
-            result = project.genBOC(objectives=gaoptim.objectives)
-            result.uid = optima.uuid()
+            project.genBOC(objectives=gaoptim.objectives, maxtime=2)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -479,13 +475,12 @@ def run_boc(self, project_id, gaoptim_id):
             print(">> Error in calculation")
             print(error_text)
 
-        if result:
+        if status == 'completed':
             db_session = init_db_session()
-            delete_result_by_name(project_id, result.name, db_session)
-            result_record = update_or_create_result_record(
-                project, result, optim.parsetname, 'optimization', db_session=db_session)
-            db_session.add(result_record)
-            db_session.commit()
+            portfolio = dataio.load_portfolio(portfolio_id, db_session)
+            project_id = str(project.uid)
+            portfolio.projects[project_id] = project
+            dataio.save_portfolio(portfolio, db_session)
             close_db_session(db_session)
 
     db_session = init_db_session()
@@ -502,7 +497,7 @@ def run_boc(self, project_id, gaoptim_id):
 
 
 def launch_boc(portfolio_id, gaoptim_id):
-    portfolio = load_portfolio(portfolio_id)
+    portfolio = dataio.load_portfolio(portfolio_id)
     gaoptims = portfolio.gaoptims
     for project in portfolio.projects.values():
         project_id = project.uid
@@ -510,7 +505,7 @@ def launch_boc(portfolio_id, gaoptim_id):
         project.gaoptims = gaoptims
         calc_state = setup_work_log(
             project_id, 'gaoptim-' + str(gaoptim_id), project)
-        run_boc.delay(project_id, gaoptim_id)
+        run_boc.delay(portfolio_id, project_id, gaoptim_id)
 
 
 
@@ -551,7 +546,7 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
             objectives = gaoptim.objectives
             print ">> Start BOC:"
             print_odict("gaoptim", gaoptim)
-            portfolio.fullGA(objectives=objectives, maxtime=30)
+            portfolio.fullGA(objectives=objectives, maxtime=10)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -578,7 +573,7 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
 
 
 def launch_miminize_portfolio(portfolio_id, gaoptim_id):
-    portfolio = load_portfolio(portfolio_id)
+    portfolio = dataio.load_portfolio(portfolio_id)
     for project in portfolio.projects.values():
         optima.migrate(project)
     calc_state = setup_work_log(

@@ -1203,7 +1203,7 @@ def get_parset_from_project_by_id(project, parset_id):
 # PORTFOLIOS
 
 
-def parse_portfolio_summaries(portfolio):
+def parse_portfolio_summary(portfolio):
     gaoptim_summaries = []
     objectivesList = []
     for gaoptim_key, gaoptim in portfolio.gaoptims.items():
