@@ -1,3 +1,10 @@
+"""
+Scripts for running certain procedural tasks on Athena (restarting services,
+viewing logs).
+"""
+
+from __future__ import absolute_import, division
+
 from fabric.api import hosts, run, sudo, env, cd
 
 # The hosts that you want to run these scripts on
@@ -5,7 +12,7 @@ from fabric.api import hosts, run, sudo, env, cd
 env.hosts = ['athena.optimamodel.com']
 
 
-def service_restart(service):
+def optima_restart(service):
     """
     Restart an Optima service. This will automatically restart its celery
     instance, if it has one.
@@ -18,7 +25,7 @@ def service_restart(service):
     sudo('service %s restart' % (service,))
 
 
-def service_regenerate_frontend(service):
+def optima_regenerate_frontend(service):
     """
     Regenerate the front-end files of an Optima service.
     """
@@ -40,7 +47,7 @@ def service_logs(service, follow=True):
         sudo('journalctl -u %s -n 100' % (service,))
 
 
-def restart_rproxy():
+def rproxy_restart():
     """
     Restart the rproxy service.
     """

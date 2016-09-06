@@ -1,3 +1,4 @@
 #! /usr/bin/env bash
 
-fab service_restart:$1 $2
+# I restart a service on Athena using fabric, see fabfile.py:optima_restart
+fab optima_restart:$1 $2

@@ -1,3 +1,3 @@
 #! /usr/bin/env bash
 
-fab restart_rproxy $1
+fab rproxy_restart $1
