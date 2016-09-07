@@ -14,7 +14,7 @@
           domain: sandbox.optimamodel.com,
           port: 9001,
           repo: "ssh://git@github.com/optimamodel/optima.git",
-          branch: develop
+          branch: fix-pop-plotting-bug
         },
         {
           name: legacy,
