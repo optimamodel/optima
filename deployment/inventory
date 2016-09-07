@@ -1,1 +1,1 @@
-default ansible_ssh_host=203.0.141.220 ansible_ssh_port=22 ansible_ssh_user=hawkowl
+default ansible_ssh_host=203.0.141.220 ansible_ssh_port=22
