@@ -16,7 +16,7 @@ def extract_graph_selector(graph_key):
     if "'t'" in s:
         suffix = "-tot"
     elif "'p'" in s:
-        suffix = "-per"
+        suffix = "-pop"
     elif "'s'" in s:
         suffix = "-sta"
     else:
