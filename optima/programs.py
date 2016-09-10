@@ -186,6 +186,52 @@ class Programset(object):
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
 
+    def changepopname(self, oldname=None, newname=None):
+        
+        '''Change the short name of a population in a progset'''
+
+        if oldname == None: 
+            errormsg = 'Please specify the old name of the population that you want to change. Available popnames are' % (self.targetpops)
+            raise OptimaException(errormsg)
+        if newname == None: 
+            errormsg = 'Please specify the new name that you want the population to be called.'
+            raise OptimaException(errormsg)
+        
+        # Helper function for renaming things in tuples
+        def changepship(pshiptuple, oldname=oldname, newname=newname):
+            pshiplist = list(pshiptuple)
+            for pn,pop in enumerate(pshiplist):
+                if pop==oldname:
+                    pshiplist[pn] = newname
+            return tuple(pshiplist)
+    
+        # Change name in programs
+        for program in self.programs.values():
+
+            # Change name in targetpars
+            for targetpar in program.targetpars:
+                if isinstance(targetpar['pop'],basestring) and targetpar['pop'] == oldname:
+                    targetpar['pop'] = newname
+                if isinstance(targetpar['pop'],tuple):
+                    if oldname in targetpar['pop']:
+                        targetpar['pop'] = changepship(targetpar['pop'], oldname=oldname, newname=newname)
+
+            # Change name in targetpops
+            for tn, targetpop in enumerate(program.targetpops):
+                if targetpop == oldname:
+                    program.targetpops[tn] = newname
+                    
+        # Change name in covout objects
+        for covoutpar in self.covout.keys():
+            self.covout[covoutpar] = odict((newname if isinstance(k,basestring) and k == oldname else k, v) for k, v in self.covout[covoutpar].iteritems())
+            self.covout[covoutpar] = odict((changepship(k, oldname=oldname, newname=newname) if isinstance(k,tuple) and oldname in k else k, v) for k, v in self.covout[covoutpar].iteritems())
+        
+        # Update WARNING IS THIS REQUIRED?
+        self.updateprogset()
+        
+        return None
+
+
     def progs_by_targetpop(self, filter_pop=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
