@@ -3,5 +3,6 @@
 # Assumes redis database is already running (check with "ps -ef | grep redis")
 # Version: 2016sep01
 
-cd ..
+cd `dirname $0` # Make sure we're in the bin folder
+cd .. # Main Optima folder
 python bin/run_server.py 8080
