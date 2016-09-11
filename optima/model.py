@@ -821,8 +821,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
-            raw_mtct[p2, t] += popmtct
-            raw_births[p2, t] += popbirths
+            raw_mtct[p2, t] += popmtct/dt
+            raw_births[p2, t] += popbirths/dt
             
         raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
 
@@ -851,8 +851,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Calculate births, age transitions and mother-to-child-transmission
             ###############################################################################
             
-            people[undx[0], :, t+1] += raw_mtct[:, t] # HIV+ babies assigned to undiagnosed compartment
-            people[susreg, :, t+1] += raw_births[:,t] - raw_mtct[:, t]  # HIV- babies assigned to uncircumcised compartment
+            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment
+            people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
             
             ## Age-related transitions
             for p1,p2 in agetransitlist:
@@ -933,6 +933,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['inci']       = raw_inci
     raw['inciby']     = raw_inciby
     raw['mtct']       = raw_mtct
+    raw['births']     = raw_births
     raw['diag']       = raw_diag
     raw['newtreat']   = raw_newtreat
     raw['death']      = raw_death
