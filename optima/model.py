@@ -692,10 +692,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ###############################################################################
         if t<npts-1:
             
-<<<<<<< HEAD
             # Add births
-            people[undx[0], :, t+1] += raw_mtct[:, t] # HIV+ babies assigned to undiagnosed compartment
-            people[susreg, :, t+1]  += raw_births[:,t] - raw_mtct[:, t]  # HIV- babies assigned to uncircumcised compartment
+            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment
+            people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
             # Handle circumcision
             circppl = numcirc[:,t+1]
@@ -736,10 +735,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[care,:,t+1] -= newtreat # Shift people out of care... 
             people[usvl,:,t+1] += newtreat # ... and into USVL compartment
 
-=======
-            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment
-            people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
->>>>>>> develop
             
             ## Handle age-related transitions
             for p1,p2 in agetransitlist:
