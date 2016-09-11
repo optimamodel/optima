@@ -187,7 +187,6 @@ class Programset(object):
         return [True if par in coveragepars else False for par in self.targetpartypes]
 
     def changepopname(self, oldname=None, newname=None):
-        
         '''
         Change the short name of a population in a progset.
         
