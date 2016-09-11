@@ -198,33 +198,34 @@ class Programset(object):
             raise OptimaException(errormsg)
         
         # Helper function for renaming things in tuples
-        def changepship(pshiptuple, oldname=oldname, newname=newname):
-            pshiplist = list(pshiptuple)
-            for pn,pop in enumerate(pshiplist):
-                if pop==oldname:
-                    pshiplist[pn] = newname
-            return tuple(pshiplist)
+        def changepopobj(popnameobj, oldname=oldname, newname=newname):
+            if isinstance(popnameobj,basestring):
+                if popnameobj == oldname: 
+                    popnameobj = newname
+                return popnameobj
+            elif isinstance(popnameobj,(tuple,list)):
+                pshiplist = list(popnameobj)
+                for pn,pop in enumerate(pshiplist):
+                    if pop==oldname:
+                        pshiplist[pn] = newname
+                return tuple(pshiplist)
+            else:
+                raise OptimaException('changepopobj() only works on strings, tuples, and lists, not %s' % type(popnameobj)) 
     
         # Change name in programs
         for program in self.programs.values():
 
             # Change name in targetpars
             for targetpar in program.targetpars:
-                if isinstance(targetpar['pop'],basestring) and targetpar['pop'] == oldname:
-                    targetpar['pop'] = newname
-                if isinstance(targetpar['pop'],tuple):
-                    if oldname in targetpar['pop']:
-                        targetpar['pop'] = changepship(targetpar['pop'], oldname=oldname, newname=newname)
+                targetpar['pop'] = changepopobj(targetpar['pop'], oldname=oldname, newname=newname)
 
             # Change name in targetpops
             for tn, targetpop in enumerate(program.targetpops):
-                if targetpop == oldname:
-                    program.targetpops[tn] = newname
+                changepopobj(targetpop, oldname=oldname, newname=newname)
                     
         # Change name in covout objects
         for covoutpar in self.covout.keys():
-            self.covout[covoutpar] = odict((newname if isinstance(k,basestring) and k == oldname else k, v) for k, v in self.covout[covoutpar].iteritems())
-            self.covout[covoutpar] = odict((changepship(k, oldname=oldname, newname=newname) if isinstance(k,tuple) and oldname in k else k, v) for k, v in self.covout[covoutpar].iteritems())
+            self.covout[covoutpar] = odict((changepopobj(k, oldname=oldname, newname=newname) if oldname in k else k, v) for k, v in self.covout[covoutpar].iteritems())
         
         # Update WARNING IS THIS REQUIRED?
         self.updateprogset()
