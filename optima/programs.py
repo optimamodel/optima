@@ -188,7 +188,15 @@ class Programset(object):
 
     def changepopname(self, oldname=None, newname=None):
         
-        '''Change the short name of a population in a progset'''
+        '''
+        Change the short name of a population in a progset.
+        
+        Example:
+            import optima as op
+            P = op.defaultproject('concentrated')
+            P.progset().changepopname(oldname='PWID',newname='IDU')
+            print(P.progset())
+        '''
 
         if oldname == None: 
             errormsg = 'Please specify the old name of the population that you want to change. Available popnames are' % (self.targetpops)
