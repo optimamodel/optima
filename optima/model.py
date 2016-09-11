@@ -333,10 +333,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmfr']
             else:
                 errormsg = 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
-                if die: raise OptimaException(errormsg)
-                else:
-                    printv(errormsg, 1, verbose)
-                    this['trans'] = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female                     
+                printv(errormsg, 1, verbose)
+                this['trans'] = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female                     
                     
             sexactslist.append(this)
             
