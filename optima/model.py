@@ -687,6 +687,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
         raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
 
+
         ###############################################################################
         ## Shift numbers of people (circs, treatment)
         ###############################################################################
@@ -696,6 +697,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
+#            if t==44:import traceback; traceback.print_exc(); import pdb; pdb.set_trace() #raise OptimaException(errormsg)
             # Handle circumcision
             circppl = numcirc[:,t+1]
             if debug and (circppl > people[susreg,:,t+1]).any():
@@ -707,11 +709,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[susreg,:,t+1]   -= circppl
             people[progcirc,:,t+1] += circppl 
 
-
             # Handle treatment
+#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             if isnan(propsupp[t+1]):
-                people[usvl,:,t+1] -= newtreat*treatvs # Shift last period's new initiators out of USVL compartment... 
-                people[svl, :,t+1] += newtreat*treatvs # ... and into SVL compartment, according to treatvs
+                newlysuppressed = newtreat.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
+                people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
+                people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
 
 
             currplhiv   = people[allplhiv,:,t+1].sum() 
@@ -747,7 +750,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         peopleleaving = minimum(peopleleaving, people[:, p1, t]) # Ensure positive                     
                 people[:, p1, t+1] -= peopleleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
-                
+
             
             ## Handle risk-related transitions
             for p1,p2,thisrisktransprob in risktransitlist:
