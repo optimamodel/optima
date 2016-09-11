@@ -506,7 +506,10 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     
     # Preliminaries: process inputs and extract needed data
     
-    budgets = dcp(multires.budget) # WARNING, will break with multiple years
+    budgets = dcp(multires.budget) # Copy budget
+    for b,budget in enumerate(budgets.values()): # Loop over all budgets
+        for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
+            budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
     for key in budgets.keys(): # Budgets is an odict
         for i,val in enumerate(budgets[key].values()):
             if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0

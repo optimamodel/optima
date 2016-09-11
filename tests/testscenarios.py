@@ -7,11 +7,11 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
-#'maxcoverage',
+'standardscen',
+'maxcoverage',
 'maxbudget',
-#'90-90-90'
-#'VMMC'
+'90-90-90'
+'VMMC'
 ]
 
 ##############################################################################
@@ -343,7 +343,7 @@ if 'maxbudget' in tests:
     maxbudget = dcp(defaultbudget)
     for key in maxbudget: maxbudget[key] += 1e14
     zerobudget = dcp(defaultbudget)
-    for key in zerobudget: zerobudget[key] *= 0.
+    for key in zerobudget: zerobudget[key] = array([0.]) # Alternate way of setting to zero   
     scenlist = [
         Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
         Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
@@ -356,8 +356,9 @@ if 'maxbudget' in tests:
      
     if doplot:
         from optima import pygui, plotpars
-#        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+
 
 
 
