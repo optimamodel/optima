@@ -7,11 +7,11 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
-'maxcoverage',
+#'standardscen',
+#'maxcoverage',
 'maxbudget',
-'90-90-90'
-'VMMC'
+#'90-90-90'
+#'VMMC'
 ]
 
 ##############################################################################
@@ -345,6 +345,7 @@ if 'maxbudget' in tests:
     scenlist = [
         Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
         Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
+        Budgetscen(name='Unlimited spending 2', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
@@ -353,7 +354,7 @@ if 'maxbudget' in tests:
      
     if doplot:
         from optima import pygui, plotpars
-        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+#        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
 
 
