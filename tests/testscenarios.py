@@ -342,9 +342,12 @@ if 'maxbudget' in tests:
     defaultbudget = P.progsets['default'].getdefaultbudget()
     maxbudget = dcp(defaultbudget)
     for key in maxbudget: maxbudget[key] += 1e14
+    zerobudget = dcp(defaultbudget)
+    for key in zerobudget: zerobudget[key] = array([0.]) # Alternate way of setting to zero   
     scenlist = [
         Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
         Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
+        Budgetscen(name='Zero spending', parsetname='default', progsetname='default', t=[2016], budget=zerobudget),
         ]
     
     # Run the scenarios
@@ -353,8 +356,9 @@ if 'maxbudget' in tests:
      
     if doplot:
         from optima import pygui, plotpars
-        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+
 
 
 
