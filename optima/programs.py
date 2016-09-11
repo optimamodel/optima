@@ -221,7 +221,7 @@ class Programset(object):
 
             # Change name in targetpops
             for tn, targetpop in enumerate(program.targetpops):
-                changepopobj(targetpop, oldname=oldname, newname=newname)
+                program.targetpops[tn] = changepopobj(targetpop, oldname=oldname, newname=newname)
                     
         # Change name in covout objects
         for covoutpar in self.covout.keys():
