@@ -9,3 +9,6 @@
   shell: bash /root/anaconda.sh -b -p /software/anaconda
   args:
     creates: /software/anaconda/bin/python
+
+- name: Install Anaconda deps
+  shell: /software/anaconda/bin/conda install -y psycopg2 numpy matplotlib sqlalchemy twisted mpld3

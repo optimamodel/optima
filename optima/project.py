@@ -494,7 +494,7 @@ class Project(object):
         return None
     
 
-    def runbudget(self, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
+    def runbudget(self, name='runbudget', budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
         if budget is None: raise OptimaException("Please enter a budget dictionary to run")
         if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
@@ -505,8 +505,8 @@ class Project(object):
             except: raise OptimaException("No program set entered, and there are none stored in the project") 
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
-        results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
-        results.name = 'runbudget'
+        results = runmodel(pars=progpars, project=self, parset=self.parsets[parsetname], progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
+        results.name = name
         self.addresult(results)
         self.modified = today()
         return None

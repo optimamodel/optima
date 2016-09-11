@@ -682,8 +682,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
-            raw_mtct[p2, t] += popmtct
-            raw_births[p2, t] += popbirths
+            raw_mtct[p2, t] += popmtct/dt
+            raw_births[p2, t] += popbirths/dt
             
         raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
 
@@ -692,6 +692,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ###############################################################################
         if t<npts-1:
             
+<<<<<<< HEAD
             # Add births
             people[undx[0], :, t+1] += raw_mtct[:, t] # HIV+ babies assigned to undiagnosed compartment
             people[susreg, :, t+1]  += raw_births[:,t] - raw_mtct[:, t]  # HIV- babies assigned to uncircumcised compartment
@@ -735,6 +736,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[care,:,t+1] -= newtreat # Shift people out of care... 
             people[usvl,:,t+1] += newtreat # ... and into USVL compartment
 
+=======
+            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment
+            people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
+>>>>>>> develop
             
             ## Handle age-related transitions
             for p1,p2 in agetransitlist:
