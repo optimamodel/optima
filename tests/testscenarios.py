@@ -342,10 +342,12 @@ if 'maxbudget' in tests:
     defaultbudget = P.progsets['default'].getdefaultbudget()
     maxbudget = dcp(defaultbudget)
     for key in maxbudget: maxbudget[key] += 1e14
+    zerobudget = dcp(defaultbudget)
+    for key in zerobudget: zerobudget[key] *= 0.
     scenlist = [
         Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
         Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
-        Budgetscen(name='Unlimited spending 2', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
+        Budgetscen(name='Zero spending', parsetname='default', progsetname='default', t=[2016], budget=zerobudget),
         ]
     
     # Run the scenarios
