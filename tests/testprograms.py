@@ -91,11 +91,6 @@ if 'makeprograms' in tests:
                   targetpops=pops,
                   criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
 
-    Adherence = Program(short='Adherence',
-                  targetpars=[{'param': 'stoprate', 'pop': pop} for pop in ['F 15+', 'M 15+', 'FSW', 'Clients', 'MSM']],
-                  targetpops=['F 15+', 'M 15+', 'FSW', 'Clients', 'MSM'],
-                  criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
-
     PMTCT = Program(short='PMTCT',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
                   targetpops=['tot'],
@@ -142,8 +137,6 @@ if 'makeprograms' in tests:
                          'cost':1e7})
     VMMC.addcostcovdatum({'t':2015,
                          'cost':1e7})     
-    Adherence.addcostcovdatum({'t':2015,
-                         'cost':2e6})
                          
     # 4. Overwrite historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,
@@ -180,11 +173,7 @@ if 'makeprograms' in tests:
     VMMC.costcovfn.addccopar({'saturation': (.5,.6),
                              't': 2016.0,
                              'unitcost': (15,25)})
-                             
-    Adherence.costcovfn.addccopar({'saturation': (.2,.3),
-                                   't': 2016.0,
-                                   'unitcost': (300,500)})
-                             
+                                                          
     # 7. Overwrite parameters for defining cost-coverage function.
     HTC.costcovfn.addccopar({'t': 2016.0,
                              'unitcost': (20,30)},
@@ -238,7 +227,7 @@ if 'makeprograms' in tests:
 
     # Initialise with or without programs
     R = Programset()
-    R = Programset(programs=[HTC,SBCC,MGT,ART,PMTCT,VMMC,Adherence])
+    R = Programset(programs=[HTC,SBCC,MGT,ART,PMTCT,VMMC])
 
     # Testing methods of programset class
     # 1. Adding a program
@@ -271,7 +260,6 @@ if 'makeprograms' in tests:
                   'ART':array([1e7,1.2e7,1.5e7]),
                   'PMTCT':array([1e7,1.2e7,1.5e7]),
                   'VMMC':array([1e7,1.2e7,1.5e7]),
-                  'Adherence':array([1e6,1.2e6,1.5e6]),
                   'MGT':array([2e5,3e5,3e5])})
             
     coverage=odict({'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
@@ -279,7 +267,6 @@ if 'makeprograms' in tests:
               'ART':array([1e5,1.2e5,1.5e5]),
               'PMTCT':array([1e3,1.2e3,1.5e3]),
               'VMMC':array([1e5,1.2e5,1.5e5]),
-              'Adherence':array([1e6,1.2e6,1.5e6]),
               'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])})
               
     budget = budget.sort([p.short for p in R.programs.values()])
