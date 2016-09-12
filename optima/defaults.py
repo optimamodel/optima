@@ -306,7 +306,7 @@ def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
 
 
 
-def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
+def defaultproject(which='best', addprogset=True, verbose=2, **kwargs):
     ''' 
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
