@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 1.5 (2016jul06)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
@@ -49,13 +49,9 @@ Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	
 Condom use for regular acts	condreg	(0, 1)	pship	timepar	meta	other	0	0	1	random
 Condom use for casual acts	condcas	(0, 1)	pship	timepar	meta	other	0	0	1	random
 Condom use for commercial acts	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	random
-Viral suppression when initiating ART	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
-Rate of ART re-initiation (per year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
-Rate of people on ART who stop (per year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (per year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
-Biological failure rate (per year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 PLHIV aware of their status	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
 Diagnosed PLHIV in care	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
 PLHIV in care on treatment	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
@@ -75,24 +71,33 @@ Relative transmissibility for CD4>200 (unitless)	cd4transgt200	(0, 'maxmeta')	to
 Relative transmissibility for CD4>50 (unitless)	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Relative transmissibility for CD4<50 (unitless)	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Relative transmissibility with STIs (unitless)	effsti	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
-Progression rate for acute HIV (per year)	progacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Progression rate for CD4>500 (per year)	proggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Progression rate for CD4>350 (per year)	proggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Progression rate for CD4>200 (per year)	proggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Progression rate for CD4>50 (per year)	proggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-People on unsuppressive ART who progress	progusvl	(0, 1)	tot	constant	const	const	1	None	0	None
-Treatment recovery rate into CD4>500 (per year)	recovgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Treatment recovery rate into CD4>350 (per year)	recovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Treatment recovery rate into CD4>200 (per year)	recovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Treatment recovery rate into CD4>50 (per year)	recovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-People on unsuppressive ART who recover	recovusvl	(0, 1)	tot	constant	const	const	1	None	0	None
+Progression time from acute HIV (years)	progacute	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>500 (years)	proggt500	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>350 (years)	proggt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>200 (years)	proggt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>50 (years)	proggt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery into CD4>500 (years)	svlrecovgt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery into CD4>350 (years)	svlrecovgt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery into CD4>200 (years)	svlrecovgt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Treatment recovery into CD4>50 (years)	svlrecovlt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Time after initiating ART to achieve viral suppression (years)	treatvs	(0, 'maxduration')	tot	constant	const	const	0	None	0	None
+Progression from CD4>500 to CD4>350 on unsuppressive ART	usvlproggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Recovery from CD4>350 to CD4>500 on unsuppressive ART	usvlrecovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression from CD4>350 to CD4>200 on unsuppressive ART	usvlproggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Recovery from CD4>200 to CD4>350 on unsuppressive ART	usvlrecovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression from CD4>200 to CD4>50 on unsuppressive ART	usvlproggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Recovery from CD4>50 to CD4>200 on unsuppressive ART	usvlrecovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression from CD4>50 to CD4<50 on unsuppressive ART	usvlproggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Recovery from CD4<50 to CD4>50 on unsuppressive ART	usvlrecovlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment failure rate	treatfail	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for acute HIV (per year)	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>500 (per year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>350 (per year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>200 (per year)	deathgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>50 (per year)	deathgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4<50 (per year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
-Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative death rate on suppressive ART (unitless)	deathsvl	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative death rate on unsuppressive ART (unitless)	deathusvl	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
 Efficacy of unsuppressive ART	efftxunsupp	(0, 1)	tot	constant	const	const	1	None	0	None
 Efficacy of suppressive ART	efftxsupp	(0, 1)	tot	constant	const	const	1	None	0	None
@@ -109,7 +114,6 @@ Disutility of CD4>200	disutilgt200	(0, 1)	tot	constant	const	const	0	None	0	None
 Disutility of CD4>50	disutilgt50	(0, 1)	tot	constant	const	const	0	None	0	None
 Disutility of CD4<50	disutillt50	(0, 1)	tot	constant	const	const	0	None	0	None
 Disutility on treatment	disutiltx	(0, 1)	tot	constant	const	const	0	None	0	None
-People lost to follow up who are still in care	stoppropcare	(0, 1)	tot	constant	const	const	1	None	0	None
 '''
 
 
@@ -135,6 +139,75 @@ def loadpartable(inputpartable=None):
     return rawpars
 
 
+#############################################################################################################################
+### Define the allowable transitions!
+##  NOTE, this should be consistent with the spreadsheet https://docs.google.com/spreadsheets/d/1ALJ3v8CXD7BkinGoUrfWPkxAg22l0PMTzWnMFldAYV0/edit?usp=sharing
+##  Edit there, then copy and paste from there into here; include row and column numbers
+#############################################################################################################################
+transtable = '''
+	0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37
+0	1		1																																			
+1		1	1																																			
+2			1	1					1	1																												
+3				1	1					1	1																											
+4					1	1					1	1																										
+5						1	1					1	1																									
+6							1	1					1	1																								
+7								1						1																								
+8									1	1					1	1																						
+9										1	1					1	1																					
+10											1	1					1	1																				
+11												1	1					1	1																			
+12													1	1					1	1																		
+13														1						1																		
+14															1	1																	1	1				
+15																1	1																	1	1			
+16																	1	1																	1	1		
+17																		1	1																	1	1	
+18																			1	1																	1	1
+19																				1																		1
+20																					1	1					1	1										
+21																						1	1					1	1									
+22																						1	1	1				1	1	1								
+23																							1	1	1				1	1	1							
+24																								1	1	1				1	1	1						
+25																									1	1					1	1						
+26																					1	1					1	1										
+27																						1						1										
+28																						1	1					1	1									
+29																							1	1					1	1								
+30																								1	1					1	1							
+31																									1	1					1	1						
+32															1	1																	1	1				
+33																1	1																	1	1			
+34																	1	1																	1	1		
+35																		1	1																	1	1	
+36																			1	1																	1	1
+37																				1																		1
+'''
+
+def loadtranstable(npops=None,inputtranstable=None):
+    ''' 
+    Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
+    '''
+    if inputtranstable is None: inputtranstable = transtable # Use default defined one if not supplied as an input
+    if npops is None: npops = 1 # Use just one population if not told otherwise
+    rawtransit = []
+    alllines = inputtranstable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
+    for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
+    attrs = alllines.pop(0) # First line is tostates
+    for l in range(len(alllines)): # Loop over all healthstates 
+        rawtransit.append([[],[]]) # Create a list to store states that you can move to
+        for i,attr in enumerate(attrs): # Loop over attributes
+            try:
+                if alllines[l][i] and attrs[i]:
+                    rawtransit[l][0].append(int(attrs[i]))
+                    rawtransit[l][1].append(ones(npops))
+            except:
+                errormsg = 'Error processing transition line "%s"' % alllines[l]
+                raise OptimaException(errormsg)
+        rawtransit[l][1] = array(rawtransit[l][1])
+    return rawtransit
 
 
 
@@ -382,8 +455,10 @@ def makepars(data, label=None, verbose=2):
     mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]] # WARNING, these two lines should be consistent -- they both work, so the question is which is more elegant -- if pars['male'] is a dict then could do: [popkeys[key] for key in popkeys if pars['male'][key]]
     pars['popkeys'] = dcp(popkeys)
     
-    # Read in parameters automatically -- WARNING, not currently implemented
+    # Read in parameters automatically
     rawpars = loadpartable() # Read the parameters structure
+    pars['rawtransit'] = loadtranstable(npops=len(popkeys)) # Read the transitions
+    
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
         
@@ -444,22 +519,17 @@ def makepars(data, label=None, verbose=2):
             c += 1
     pars['birthtransit'] = birthtransit 
 
-    # Aging transitions - these are time-constant transition rates
+    # Aging transitions - these are time-constant
     agetransit = zeros((npopkeys,npopkeys))
     duration = array([age[1]-age[0]+1.0 for age in data['pops']['age']])
     for rowno,row in enumerate(data['agetransit']):
         if sum(row):
-            for colno,col in enumerate(row):
-                agetransit[rowno,colno] = col/sum(row)/duration[rowno]
+            for colno,colval in enumerate(row):
+                agetransit[rowno,colno] = colval/sum(row)/duration[rowno]
     pars['agetransit'] = agetransit
 
-    # Risk transitions - these are time-constant transition rates
-    risktransit = zeros((npopkeys,npopkeys))
-    for rowno,row in enumerate(data['risktransit']):
-        for colno, col in enumerate(row):
-            if col:
-                risktransit[rowno,colno] = 1.0/col
-    pars['risktransit'] = risktransit 
+    # Risk transitions - these are time-constant
+    pars['risktransit'] = array(data['risktransit'])
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
@@ -526,14 +596,14 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jun by cliffk
+    Version: 2016jun
     '''
     
     # Handle inputs and initialization
-    simpars = odict() # Used to be called M
+    simpars = odict() 
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
+    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys','rawtransit']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if start is None: start=2000 # WARNING, should be a better way of declaring defaults...
     if end is None: end=2030
@@ -562,6 +632,7 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
                 raise OptimaException(errormsg)
+
 
     return simpars
 

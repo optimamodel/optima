@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
@@ -358,7 +358,9 @@ class Project(object):
         
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
-            simparslist = self.parsets[name].interp(start=start, end=end, dt=dt, verbose=verbose) # "self.parset[name]" is e.g. P.parset['default']
+            simparslist = []
+            for pardict in self.parsets[name].pars:
+                simparslist.append(makesimpars(pardict, settings=self.settings, name=name))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
@@ -483,10 +485,10 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2):
+    def runscenarios(self, scenlist=None, verbose=2, debug=False):
         ''' Function to run scenarios '''
         if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
-        multires = runscenarios(project=self, verbose=verbose)
+        multires = runscenarios(project=self, verbose=verbose, debug=debug)
         self.addresult(result=multires)
         self.modified = today()
         return None
