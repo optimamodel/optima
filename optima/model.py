@@ -495,7 +495,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
         infections_by = forceinffull.sum(axis=(1,3)) # Infections transmitted through sex and injecting - by health state who transmits
 
-        if abs(infections_to.sum() - infections_by.sum()) > 1:
+        if debug and abs(infections_to.sum() - infections_by.sum()) > 1:
             errormsg = 'Probability of someone getting infected (%f) is not equal to probability of someone causing an infection (%f) at time %i' % (infections_by.sum(), infections_to.sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
