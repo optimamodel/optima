@@ -115,7 +115,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     noinflows = findinds(ageinflows+birthinflows==0)    # Find populations with no inflows
 
     # Begin calculation of transmission probabilities -- continued in time loop
-    cd4trans /= settings.cd4transnorm                            # Normalize CD4 transmission
+    cd4trans *= settings.transnorm                            # Normalize CD4 transmission
     dxfactor = (1.-simpars['effdx'])                    # Include diagnosis efficacy
     efftxunsupp = (1.-simpars['efftxunsupp'])*dxfactor  # Reduction in transmission probability for usVL
     efftxsupp = (1.-simpars['efftxsupp'])*dxfactor      # Reduction in transmission probability for sVL

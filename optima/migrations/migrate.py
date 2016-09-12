@@ -75,7 +75,7 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nstates   = len(project.settings.allstates) 
     project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
     project.settings.nhealth = len(project.settings.healthstates)
-    project.settings.cd4transnorm = 2.3
+    project.settings.transnorm = 0.43
 
     if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
