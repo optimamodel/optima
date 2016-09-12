@@ -57,110 +57,108 @@ def addproppmtct(project, **kwargs):
     return None
 
 
-def redotransitions(project, **kwargs):
+def redotransitions(project, dorun=False, **kwargs):
     """
-    Migration between Optima 2.0.3 and 2.0.4
+    Migration between Optima 2.0.4 and 2.1
     """
     from numpy import concatenate as cat
     from optima import Constant, loadtranstable
 
     # Update settings
-    if hasattr(project, 'settings'):
-        project.settings.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
-        project.settings.notonart = cat([project.settings.undx,project.settings.dx,project.settings.care,project.settings.lost])
-        project.settings.alldx = cat([project.settings.dx,project.settings.care,project.settings.usvl,project.settings.svl,project.settings.lost])
-        project.settings.allcare = cat([project.settings.care,project.settings.usvl,project.settings.svl])
+    project.settings.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
+    project.settings.notonart = cat([project.settings.undx,project.settings.dx,project.settings.care,project.settings.lost])
+    project.settings.alldx = cat([project.settings.dx,project.settings.care,project.settings.usvl,project.settings.svl,project.settings.lost])
+    project.settings.allcare = cat([project.settings.care,project.settings.usvl,project.settings.svl])
 
-        project.settings.allplhiv  = cat([project.settings.undx, project.settings.alldx])
-        project.settings.allstates = cat([project.settings.sus, project.settings.allplhiv]) 
-        project.settings.nstates   = len(project.settings.allstates) 
-        project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
-        project.settings.nhealth = len(project.settings.healthstates)
+    project.settings.allplhiv  = cat([project.settings.undx, project.settings.alldx])
+    project.settings.allstates = cat([project.settings.sus, project.settings.allplhiv]) 
+    project.settings.nstates   = len(project.settings.allstates) 
+    project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
+    project.settings.nhealth = len(project.settings.healthstates)
+    project.settings.cd4transnorm = 2.3
 
-        if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
-        if hasattr(project.settings, 'tx'):         del project.settings.tx
-        if hasattr(project.settings, 'off'):        del project.settings.off
+    if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
+    if hasattr(project.settings, 'tx'):         del project.settings.tx
+    if hasattr(project.settings, 'off'):        del project.settings.off
 
     # Update variables in data
-    if hasattr(project, 'data'):
-        project.data.pop('immediatecare', None)
-        project.data.pop('biofailure', None)
-        project.data.pop('restarttreat', None)
-        project.data.pop('stoprate', None)
-        project.data.pop('treatvs', None)
+    project.data.pop('immediatecare', None)
+    project.data.pop('biofailure', None)
+    project.data.pop('restarttreat', None)
+    project.data.pop('stoprate', None)
+    project.data.pop('treatvs', None)
 
-        # Add new constants
-        project.data['const']['deathsvl']       = [0.23,    0.15,   0.3]
-        project.data['const']['deathusvl']      = [0.4878,  0.2835, 0.8417]
-        project.data['const']['svlrecovgt350']  = [2.2,     1.07,   7.28]
-        project.data['const']['svlrecovgt200']  = [1.42,    0.9,    3.42]
-        project.data['const']['svlrecovgt50']   = [2.14,    1.39,   3.58]
-        project.data['const']['svlrecovlt50']   = [0.66,    0.51,   0.94]
-        project.data['const']['treatfail']      = [0.16,    0.05,   0.26]
-        project.data['const']['treatvs']        = [0.2,     0.1,    0.3]
-        project.data['const']['usvlproggt500']  = [0.026,   0.005,  0.275]
-        project.data['const']['usvlproggt350']  = [0.1,     0.022,  0.87]
-        project.data['const']['usvlproggt200']  = [0.162,   0.05,   0.869]
-        project.data['const']['usvlproggt50']   = [0.09,    0.019,  0.723]
-        project.data['const']['usvlrecovgt350'] = [0.15,    0.038,  0.885]        
-        project.data['const']['usvlrecovgt200'] = [0.053,   0.008,  0.827]
-        project.data['const']['usvlrecovgt50']  = [0.117,   0.032,  0.686]
-        project.data['const']['usvlrecovlt50']  = [0.111,   0.047,  0.563]
+    # Add new constants
+    project.data['const']['deathsvl']       = [0.23,    0.15,   0.3]
+    project.data['const']['deathusvl']      = [0.4878,  0.2835, 0.8417]
+    project.data['const']['svlrecovgt350']  = [2.2,     1.07,   7.28]
+    project.data['const']['svlrecovgt200']  = [1.42,    0.9,    3.42]
+    project.data['const']['svlrecovgt50']   = [2.14,    1.39,   3.58]
+    project.data['const']['svlrecovlt50']   = [0.66,    0.51,   0.94]
+    project.data['const']['treatfail']      = [0.16,    0.05,   0.26]
+    project.data['const']['treatvs']        = [0.2,     0.1,    0.3]
+    project.data['const']['usvlproggt500']  = [0.026,   0.005,  0.275]
+    project.data['const']['usvlproggt350']  = [0.1,     0.022,  0.87]
+    project.data['const']['usvlproggt200']  = [0.162,   0.05,   0.869]
+    project.data['const']['usvlproggt50']   = [0.09,    0.019,  0.723]
+    project.data['const']['usvlrecovgt350'] = [0.15,    0.038,  0.885]        
+    project.data['const']['usvlrecovgt200'] = [0.053,   0.008,  0.827]
+    project.data['const']['usvlrecovgt50']  = [0.117,   0.032,  0.686]
+    project.data['const']['usvlrecovlt50']  = [0.111,   0.047,  0.563]
 
-        # Remove old constants
-        project.data['const'].pop('deathtreat', None)
-        project.data['const'].pop('progusvl', None)
-        project.data['const'].pop('recovgt500', None)
-        project.data['const'].pop('recovgt350', None)
-        project.data['const'].pop('recovgt200', None)
-        project.data['const'].pop('recovgt50', None)
-        project.data['const'].pop('recovusvl', None)
-        project.data['const'].pop('stoppropcare', None)
+    # Remove old constants
+    project.data['const'].pop('deathtreat', None)
+    project.data['const'].pop('progusvl', None)
+    project.data['const'].pop('recovgt500', None)
+    project.data['const'].pop('recovgt350', None)
+    project.data['const'].pop('recovgt200', None)
+    project.data['const'].pop('recovgt50', None)
+    project.data['const'].pop('recovusvl', None)
+    project.data['const'].pop('stoppropcare', None)
 
     # Update parameters
-    if hasattr(project, 'parsets'):
-        for ps in project.parsets.values():
-            for pd in ps.pars:
-                
-                # Remove old parameters
-                pd.pop('biofailure', None)
-                pd.pop('deathtreat', None)
-                pd.pop('immediatecare', None)
-                pd.pop('progusvl', None)
-                pd.pop('recovgt500', None)
-                pd.pop('recovgt350', None)
-                pd.pop('recovgt200', None)
-                pd.pop('recovgt50', None)
-                pd.pop('recovusvl', None)
-                pd.pop('restarttreat', None)
-                pd.pop('stoppropcare', None)
-                pd.pop('stoprate', None)
+    for ps in project.parsets.values():
+        for pd in ps.pars:
+            
+            # Remove old parameters
+            pd.pop('biofailure', None)
+            pd.pop('deathtreat', None)
+            pd.pop('immediatecare', None)
+            pd.pop('progusvl', None)
+            pd.pop('recovgt500', None)
+            pd.pop('recovgt350', None)
+            pd.pop('recovgt200', None)
+            pd.pop('recovgt50', None)
+            pd.pop('recovusvl', None)
+            pd.pop('restarttreat', None)
+            pd.pop('stoppropcare', None)
+            pd.pop('stoprate', None)
 
-                # Add new parameters
-                pd['deathsvl']          = Constant(0.23,    limits=(0,'maxmeta'),       by='tot', auto='const', fittable='const', name='Relative death rate on suppressive ART (unitless)',                 short='deathsvl')
-                pd['deathusvl']         = Constant(0.4878,  limits=(0,'maxmeta'),       by='tot', auto='const', fittable='const', name='Relative death rate on unsuppressive ART (unitless)',               short='deathusvl')
-                pd['svlrecovgt350']     = Constant(2.2,     limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Treatment recovery into CD4>500 (years)',                           short='svlrecovgt350')
-                pd['svlrecovgt200']     = Constant(1.42,    limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Treatment recovery into CD4>350 (years)',                           short='svlrecovgt200')
-                pd['svlrecovgt50']      = Constant(2.14,    limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Treatment recovery into CD4>200 (years)',                           short='svlrecovgt50')
-                pd['svlrecovlt50']      = Constant(0.66,    limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Treatment recovery into CD4>50 (years)',                            short='svlrecovlt50')
-                pd['treatfail']         = Constant(0.16,    limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Treatment failure rate',                                            short='treatfail')
-                pd['treatvs']           = Constant(0.2,     limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Time after initiating ART to achieve viral suppression (years)',    short='treatvs')
-                pd['usvlproggt500']     = Constant(0.026,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Progression from CD4>500 to CD4>350 on unsuppressive ART',          short='usvlproggt500')
-                pd['usvlproggt350']     = Constant(0.1,     limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Progression from CD4>350 to CD4>200 on unsuppressive ART',          short='usvlproggt350')
-                pd['usvlproggt200']     = Constant(0.162,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Progression from CD4>200 to CD4>50 on unsuppressive ART',           short='usvlproggt200')
-                pd['usvlproggt50']      = Constant(0.09,    limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Progression from CD4>50 to CD4<50 on unsuppressive ART',            short='usvlproggt50')
-                pd['usvlrecovgt350']    = Constant(0.15,    limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4>350 to CD4>500 on unsuppressive ART',             short='usvlrecovgt350')
-                pd['usvlrecovgt200']    = Constant(0.053,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4>200 to CD4>350 on unsuppressive ART',             short='usvlrecovgt200')
-                pd['usvlrecovgt50']     = Constant(0.117,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4>50 to CD4>200 on unsuppressive ART',              short='usvlrecovgt50')
-                pd['usvlrecovlt50']     = Constant(0.111,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4<50 to CD4>50 on unsuppressive ART',               short='usvlrecovlt50')
+            # Add new parameters
+            pd['deathsvl']          = Constant(0.23,    limits=(0,'maxmeta'),       by='tot', auto='const', fittable='const', name='Relative death rate on suppressive ART (unitless)',                 short='deathsvl')
+            pd['deathusvl']         = Constant(0.4878,  limits=(0,'maxmeta'),       by='tot', auto='const', fittable='const', name='Relative death rate on unsuppressive ART (unitless)',               short='deathusvl')
+            pd['svlrecovgt350']     = Constant(2.2,     limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Treatment recovery into CD4>500 (years)',                           short='svlrecovgt350')
+            pd['svlrecovgt200']     = Constant(1.42,    limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Treatment recovery into CD4>350 (years)',                           short='svlrecovgt200')
+            pd['svlrecovgt50']      = Constant(2.14,    limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Treatment recovery into CD4>200 (years)',                           short='svlrecovgt50')
+            pd['svlrecovlt50']      = Constant(0.66,    limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Treatment recovery into CD4>50 (years)',                            short='svlrecovlt50')
+            pd['treatfail']         = Constant(0.16,    limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Treatment failure rate',                                            short='treatfail')
+            pd['treatvs']           = Constant(0.2,     limits=(0,'maxduration'),   by='tot', auto='const', fittable='const', name='Time after initiating ART to achieve viral suppression (years)',    short='treatvs')
+            pd['usvlproggt500']     = Constant(0.026,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Progression from CD4>500 to CD4>350 on unsuppressive ART',          short='usvlproggt500')
+            pd['usvlproggt350']     = Constant(0.1,     limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Progression from CD4>350 to CD4>200 on unsuppressive ART',          short='usvlproggt350')
+            pd['usvlproggt200']     = Constant(0.162,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Progression from CD4>200 to CD4>50 on unsuppressive ART',           short='usvlproggt200')
+            pd['usvlproggt50']      = Constant(0.09,    limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Progression from CD4>50 to CD4<50 on unsuppressive ART',            short='usvlproggt50')
+            pd['usvlrecovgt350']    = Constant(0.15,    limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4>350 to CD4>500 on unsuppressive ART',             short='usvlrecovgt350')
+            pd['usvlrecovgt200']    = Constant(0.053,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4>200 to CD4>350 on unsuppressive ART',             short='usvlrecovgt200')
+            pd['usvlrecovgt50']     = Constant(0.117,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4>50 to CD4>200 on unsuppressive ART',              short='usvlrecovgt50')
+            pd['usvlrecovlt50']     = Constant(0.111,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4<50 to CD4>50 on unsuppressive ART',               short='usvlrecovlt50')
 
-                # Add transitions matrix
-                pd['rawtransit'] = loadtranstable(npops = project.data['npops'])
+            # Add transitions matrix
+            pd['rawtransit'] = loadtranstable(npops = project.data['npops'])
 
-            # Rerun calibrations to update results appropriately
-            project.runsim(ps.name)
+        # Rerun calibrations to update results appropriately
+        if dorun: project.runsim(ps.name)
 
-    project.version = "2.0.5"
+    project.version = "2.1"
     return None
 
 

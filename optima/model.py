@@ -6,16 +6,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.5 (2016jul01)
+    Version: 1.6 (2016sep12)
     """
     
     ##################################################################################################################
     ### Setup 
     ##################################################################################################################
 
-    # Hard-coded parameters that hopefully don't matter too much
-    cd4transnorm = 2.1 # See analyses/misc/calculatecd4transnorm.py for calculation
-    
     # Initialize basic quantities
     if simpars is None: raise OptimaException('model() requires simpars as an input')
     if settings is None: raise OptimaException('model() requires settings as an input')
@@ -118,7 +115,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     noinflows = findinds(ageinflows+birthinflows==0)    # Find populations with no inflows
 
     # Begin calculation of transmission probabilities -- continued in time loop
-    cd4trans /= cd4transnorm                            # Normalize CD4 transmission
+    cd4trans /= settings.cd4transnorm                            # Normalize CD4 transmission
     dxfactor = (1.-simpars['effdx'])                    # Include diagnosis efficacy
     efftxunsupp = (1.-simpars['efftxunsupp'])*dxfactor  # Reduction in transmission probability for usVL
     efftxsupp = (1.-simpars['efftxsupp'])*dxfactor      # Reduction in transmission probability for sVL
