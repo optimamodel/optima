@@ -289,7 +289,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # NB, to debug, use: for h in range(len(settings.statelabels)): print(settings.statelabels[h], sum(initpeople[h,:]))
     
     # Set parameters
-    durationpreaids = 8.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
+    averagedurationinfected = 8.0/2.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1  # Inverse of average duration of treatment in years...I think
 
     # Check wither the initial distribution was specified
@@ -319,7 +319,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 treatment = maximum(allinfected, treatment)
 
         nevertreated = allinfected - treatment
-        fracundiagnosed = exp(-durationpreaids*simpars['hivtest'][:,0])
+        fracundiagnosed = exp(-averagedurationinfected*simpars['hivtest'][:,0])
         
         # Set rates within
         progratios = cat([prog[:-1], [simpars['deathlt50']]]) # For last rate, use CD4<50 death as dominant rate
