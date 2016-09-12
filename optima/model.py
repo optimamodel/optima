@@ -824,7 +824,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raw_mtct[p2, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
             
-        raw_inci[:,t] += raw_mtct[:,t]/dt # Update incidence based on PMTCT calculation
+        raw_inci[:,t] += raw_mtct[:,t] # Update incidence based on PMTCT calculation
 
 
 
