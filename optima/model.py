@@ -692,7 +692,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
-#            if t==44:import traceback; traceback.print_exc(); import pdb; pdb.set_trace() #raise OptimaException(errormsg)
             # Handle circumcision
             circppl = numcirc[:,t+1]
             if debug and (circppl > people[susreg,:,t+1]).any():
@@ -705,7 +704,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[progcirc,:,t+1] += circppl 
 
             # Handle treatment
-#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             if isnan(propsupp[t+1]):
                 newlysuppressed = newtreat.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
                 people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
@@ -780,11 +778,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if forcepopsize:
                 relerr = 0.1 # Set relative error tolerance
                 for p in range(npops):
-                    actualpeople = people[:,p,t+1].sum()
-                    wantedpeople = popsize[p,t+1]
+                    susnotonart = cat([sus,notonart])
+                    actualpeople = people[susnotonart,p,t+1].sum()
+                    wantedpeople = popsize[p,t+1] - people[alltx,p,t+1].sum()
                     if actualpeople==0: raise Exception("ERROR: no people.")
                     ratio = wantedpeople/actualpeople
-                    people[:,p,t+1] *= ratio # Scale to match
+                    people[susnotonart,p,t+1] *= ratio # Scale to match
                     if abs(ratio-1)>relerr:
                         errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
