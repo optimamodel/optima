@@ -6,7 +6,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.6 (2016sep12)
+    Version: 1.7 (2016sep14)
     """
     
     ##################################################################################################################
