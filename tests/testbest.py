@@ -6,6 +6,7 @@ Version: 2016feb08
 """
 
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj # analysis:ignore
+from numpy import array, nan
 
 ## Options
 autocalib = 0 # Whether or not to run autofitting
@@ -19,13 +20,17 @@ ind = -1 # Default index
 
 P = defaults.defaultproject('best',dorun=False)
 
-fixproportions = {'propdx': None,
-                  'propcare': None,
-                  'proptx': 2016.,
-                  'propsupp': 2016.,
-                  'proppmtct': 2016.}
+P.pars()['proptx'].y[0] = array([nan, nan, .4])
+P.pars()['proptx'].t[0] = array([nan, nan, 2016.])
 
-P.runsim(debug=True,fixproportions=fixproportions)
+#fixproportions = {'propdx': None,
+#                  'propcare': None,
+#                  'proptx': 2016.,
+#                  'propsupp': 2016.,
+#                  'proppmtct': 2016.}
+                  
+
+#P.runsim(debug=True)
 
 #P = defaults.defaultproject('generalized')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
