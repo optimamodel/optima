@@ -17,7 +17,7 @@ dosave = 1
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best',dorun=False)
+P = defaults.defaultproject('concentrated',dorun=False)
 P.runsim(debug=True)
 #P = defaults.defaultproject('generalized')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
