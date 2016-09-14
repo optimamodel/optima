@@ -20,8 +20,8 @@ ind = -1 # Default index
 
 P = defaults.defaultproject('best',dorun=False)
 
+P.pars()['proptx'].t[0] = array([0, 2015., 2016.])
 P.pars()['proptx'].y[0] = array([nan, nan, .4])
-P.pars()['proptx'].t[0] = array([nan, nan, 2016.])
 
 #fixproportions = {'propdx': None,
 #                  'propcare': None,
@@ -30,7 +30,7 @@ P.pars()['proptx'].t[0] = array([nan, nan, 2016.])
 #                  'proppmtct': 2016.}
                   
 
-#P.runsim(debug=True)
+P.runsim(debug=True)
 
 #P = defaults.defaultproject('generalized')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')

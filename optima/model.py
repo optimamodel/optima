@@ -61,6 +61,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     cd4trans        = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
     deathprob       = zeros((nstates))              # Initialise death probability array
     background      = simpars['death']*dt
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     # Cascade-related parameters
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
