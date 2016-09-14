@@ -1,8 +1,8 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, nan, einsum, floor, ones, power as npow, concatenate as cat
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
+def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None, fixproportions=None):
     """
     Runs Optima's epidemiological model.
     
@@ -128,11 +128,32 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     alltrans[lost] = cd4trans*dxfactor
     
     # Proportion aware and treated (for 90/90/90)
-    propdx      = simpars['propdx']
-    propcare    = simpars['propcare']
-    proptx      = simpars['proptx']
-    propsupp    = simpars['propsupp']
-    proppmtct   = simpars['proppmtct']
+    if fixproportions is not None:
+        if any([proptofix not in settings.fixableproportions for proptofix in fixproportions.keys()]):
+            errormsg = 'Can only fix parameters %s, not %s. Check inputs and settings.' %(settings.fixableproportions, fixproportions.keys())
+            if die: raise OptimaException(errormsg)
+            else: 
+                printv(errormsg, 1, verbose)
+                fixproportions = None
+
+    if fixproportions is not None:
+        for proptofix,yeartofix in fixproportions.iteritems():
+            fixproportions[proptofix] = findinds(tvec,yeartofix)
+            if yeartofix is not None:
+                eval(proptofix + ' = array([nan]*npts)')
+                propcare    = simpars['propcare']
+                proptx      = simpars['proptx']
+                propsupp    = simpars['propsupp']
+                proppmtct   = simpars['proppmtct']
+                
+    else:
+        propdx      = simpars['propdx']
+        propcare    = simpars['propcare']
+        proptx      = simpars['proptx']
+        propsupp    = simpars['propsupp']
+        proppmtct   = simpars['proppmtct']
+            
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     # Population sizes
     popsize = dcp(simpars['popsize'])

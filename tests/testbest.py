@@ -18,7 +18,15 @@ filename = 'best.prj'
 ind = -1 # Default index
 
 P = defaults.defaultproject('best',dorun=False)
-P.runsim(debug=True)
+
+fixproportions = {'propdx': None,
+                  'propcare': None,
+                  'proptx': 2016.,
+                  'propsupp': 2016.,
+                  'proppmtct': 2016.}
+
+P.runsim(debug=True,fixproportions=fixproportions)
+
 #P = defaults.defaultproject('generalized')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_define_costoutcomefunctions.prj')

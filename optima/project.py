@@ -345,7 +345,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, fixproportions=None, overwrite=True, verbose=None):
         ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
         
         WARNING, do we need this? What's it for? Why not use runmodel()?
@@ -369,17 +369,17 @@ class Project(object):
         rawlist = []
         for ind in range(len(simparslist)):
             if debug: # Should this be die?
-                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                raw = model(simparslist[ind], self.settings, die=die, debug=debug, fixproportions=fixproportions, verbose=verbose) # ACTUALLY RUN THE MODEL
             else:
                 try:
-                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose)
+                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, fixproportions=fixproportions, verbose=verbose)
                     if not (raw['people']>=0).all(): # Check for negative people
                         printv('Negative people found with runsim(); rerunning with a smaller timestep...')
                         self.settings.dt /= 4
-                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, fixproportions=fixproportions, verbose=verbose) # ACTUALLY RUN THE MODEL
                 except:
                     printv('Running model failed; running again with debugging...', 1, verbose)
-                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    raw = model(simparslist[ind], self.settings, die=die, debug=True, fixproportions=fixproportions, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
