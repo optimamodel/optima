@@ -52,11 +52,11 @@ Condom use for commercial acts	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	ran
 Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (per year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
-PLHIV aware of their status	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
-Diagnosed PLHIV in care	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
-PLHIV in care on treatment	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
-Pregnant women and mothers on PMTCT	proppmtct	(0, 1)	tot	timepar	no	no	0	0	1	None
-People on ART with viral suppression	propsupp	(0, 1)	tot	timepar	no	no	0	0	1	None
+PLHIV aware of their status	propdx	(0, 1)	tot	proppar	no	no	0	0	1	None
+Diagnosed PLHIV in care	propcare	(0, 1)	tot	proppar	no	no	1	0	1	None
+PLHIV in care on treatment	proptx	(0, 1)	tot	proppar	no	no	0	0	1	None
+Pregnant women and mothers on PMTCT	proppmtct	(0, 1)	tot	proppar	no	no	0	0	1	None
+People on ART with viral suppression	propsupp	(0, 1)	tot	proppar	no	no	0	0	1	None
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None
@@ -323,8 +323,6 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
 
 
 
-
-
 def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     # Check that at minimum, name and short were specified, since can't proceed otherwise
@@ -484,6 +482,9 @@ def makepars(data, label=None, verbose=2):
         elif partype=='popsize': # Population size only
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
         
+        elif partype=='proppar': # It's a proportion-type parameter, and doesn't exist in the spreadsheet
+            pars[parname] = Timepar(m=1, y=odict({'tot':[nan]}), t=odict({'tot':[0.0]}), **rawpar) # Create structure
+        
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
             pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
         
@@ -547,13 +548,7 @@ def makepars(data, label=None, verbose=2):
     # Metaparameters
     for key in popkeys: # Define values
         pars['force'].y[key] = 1.0
-        pars['inhomo'].y[key] = 0.0
-    
-    # Overwrite parameters that shouldn't be being loaded from the data
-    for parname in ['propdx', 'proptx', 'proppmtct', 'propcare', 'propsupp']:
-        pars[parname].t['tot'] = [0.]
-        pars[parname].y['tot'] = [nan]
-        
+        pars['inhomo'].y[key] = 0.0        
     
     
     # Balance partnerships parameters    
