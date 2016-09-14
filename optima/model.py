@@ -6,7 +6,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.6 (2016sep12)
+    Version: 1.7 (2016sep14)
     """
     
     ##################################################################################################################
@@ -40,7 +40,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Would be at the top of the script, but need to figure out verbose first
     printv('Running model...', 1, verbose)
     
-    # Initialize arrays
+    # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_inciby      = zeros((nstates, npts))        # Total incidence transmitted by each health state
     raw_births      = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
@@ -53,8 +53,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_proptx      = zeros(npts)                   # Proportion on treatment per timestep
     
     # Biological and failure parameters -- death etc
-    prog            = exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],eps]) )
-    svlrecov        = exp(-dt/array([eps,eps,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']]))
+    prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],inf]) ))
+    svlrecov        = maximum(eps,1-exp(-dt/array([inf,inf,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']])))
     deathhiv        = array([simpars['deathacute'],simpars['deathgt500'],simpars['deathgt350'],simpars['deathgt200'],simpars['deathgt50'],simpars['deathlt50']])
     deathsvl        = simpars['deathsvl']           # Death rate whilst on suppressive ART
     deathusvl       = simpars['deathusvl']          # Death rate whilst on unsuppressive ART
@@ -205,9 +205,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for ts, tostate in enumerate(rawtransit[fromstate][to]): # Iterate over the states you could be going to  
             if fromstate not in lt50: # Cannot progress from this state
                 if any([(tostate in j) and (fromstate in j) for j in allcd4]):
-                    rawtransit[fromstate][prob][ts] *= prog[fromhealthstate]
-                else:
                     rawtransit[fromstate][prob][ts] *= 1.-prog[fromhealthstate]
+                else:
+                    rawtransit[fromstate][prob][ts] *= prog[fromhealthstate]
     
             # Death probabilities
             rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt 
@@ -219,15 +219,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for ts, tostate in enumerate(rawtransit[fromstate][to]): # Iterate over the states you could be going to  
             if (fromstate not in acute) and (fromstate not in gt500): # You don't recover from these states
                 if any([(tostate in j) and (fromstate in j) for j in allcd4]):
-                    rawtransit[fromstate][prob][ts] = svlrecov[fromhealthstate]
-                else:
                     rawtransit[fromstate][prob][ts] = 1.-svlrecov[fromhealthstate]
+                else:
+                    rawtransit[fromstate][prob][ts] = svlrecov[fromhealthstate]
         
             if fromstate in acute: # You can progress from acute
                 if tostate in acute:
-                    rawtransit[fromstate][prob][ts] = prog[0]
-                elif tostate in gt500:
                     rawtransit[fromstate][prob][ts] = 1.-prog[0]
+                elif tostate in gt500:
+                    rawtransit[fromstate][prob][ts] = prog[0]
     
             # Death probabilities
             rawtransit[fromstate][prob][ts] *= (1.-deathhiv[fromhealthstate]*deathsvl*dt)    
@@ -242,9 +242,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for ts, tostate in enumerate(rawtransit[fromstate][to]):
             if fromstate in acute: # You can progress from acute
                 if tostate in acute:
-                    rawtransit[fromstate][prob][ts] = prog[0]
-                elif tostate in gt500:
                     rawtransit[fromstate][prob][ts] = 1.-prog[0]
+                elif tostate in gt500:
+                    rawtransit[fromstate][prob][ts] = prog[0]
             elif fromstate in gt500: 
                 if tostate in gt500:
                     rawtransit[fromstate][prob][ts] = 1.-simpars['usvlproggt500']*dt
@@ -325,9 +325,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         # Set rates within
         progratios = cat([prog[:-1], [simpars['deathlt50']]]) # For last rate, use CD4<50 death as dominant rate
-        progratios = (1/progratios)  / sum(1/progratios) # Normalize
-        recovratios = cat([[inf], svlrecov[2:], [efftreatmentrate]])
-        recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
+        progratios = (1./progratios)  / sum(1./progratios) # Normalize
+        recovratios = cat([svlrecov[1:], [efftreatmentrate]])
+        recovratios = (1./recovratios)  / sum(1./recovratios) # Normalize
  
         # Final calculations
         undiagnosed = einsum('i,i,j->ji',nevertreated,fracundiagnosed,progratios)
@@ -528,7 +528,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         thistransit[fromstate][prob][ts] *= (1.-fractiontodx)
                     else: # Probability of being tested
                         thistransit[fromstate][prob][ts] *= fractiontodx
-                        raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                        raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
 
         else: # ... or if programmatically determined
             for fromstate in undx:
@@ -538,19 +538,19 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t]*max(dt-0.25,0)/dt) # Adjust testing rates to account for the window period (0.25 years)
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]*max(dt-0.25,0)/dt
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
                     elif fromstate in lt50 or fromstate in gt50:
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-maximum(aidstest[t],hivtest[:,t]))
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*maximum(aidstest[t],hivtest[:,t])
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
                     else:
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t])
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
 
 
         ## Transitions to care 
@@ -655,10 +655,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
         ## Calculate main indicators
-        raw_death[:,t]      = einsum('ij,i->j',  people[:,:,t], deathprob)
-        raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])
-        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]
-        raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)
+        raw_death[:,t]      = einsum('ij,i->j',  people[:,:,t], deathprob)/dt
+        raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
+        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
+        raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
 
 
         ## Calculate births
@@ -691,10 +691,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         if t<npts-1:
             
             # Add births
-            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment
+            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment -- WARNING, shouldn't use a raw variable in a calculation, that's for output
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
-#            if t==44:import traceback; traceback.print_exc(); import pdb; pdb.set_trace() #raise OptimaException(errormsg)
             # Handle circumcision
             circppl = numcirc[:,t+1]
             if debug and (circppl > people[susreg,:,t+1]).any():
@@ -707,7 +706,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[progcirc,:,t+1] += circppl 
 
             # Handle treatment
-#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             if isnan(propsupp[t+1]):
                 newlysuppressed = newtreat.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
                 people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
@@ -782,11 +780,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if forcepopsize:
                 relerr = 0.1 # Set relative error tolerance
                 for p in range(npops):
-                    actualpeople = people[:,p,t+1].sum()
-                    wantedpeople = popsize[p,t+1]
+                    susnotonart = cat([sus,notonart])
+                    actualpeople = people[susnotonart,p,t+1].sum()
+                    wantedpeople = popsize[p,t+1] - people[alltx,p,t+1].sum()
                     if actualpeople==0: raise Exception("ERROR: no people.")
                     ratio = wantedpeople/actualpeople
-                    people[:,p,t+1] *= ratio # Scale to match
+                    people[susnotonart,p,t+1] *= ratio # Scale to match
                     if abs(ratio-1)>relerr:
                         errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
