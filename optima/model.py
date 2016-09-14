@@ -203,9 +203,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for ts, tostate in enumerate(rawtransit[fromstate][to]): # Iterate over the states you could be going to  
             if fromstate not in lt50: # Cannot progress from this state
                 if any([(tostate in j) and (fromstate in j) for j in allcd4]):
-                    rawtransit[fromstate][prob][ts] *= prog[fromhealthstate]
-                else:
                     rawtransit[fromstate][prob][ts] *= 1.-prog[fromhealthstate]
+                else:
+                    rawtransit[fromstate][prob][ts] *= prog[fromhealthstate]
     
             # Death probabilities
             rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt 
@@ -217,15 +217,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for ts, tostate in enumerate(rawtransit[fromstate][to]): # Iterate over the states you could be going to  
             if (fromstate not in acute) and (fromstate not in gt500): # You don't recover from these states
                 if any([(tostate in j) and (fromstate in j) for j in allcd4]):
-                    rawtransit[fromstate][prob][ts] = svlrecov[fromhealthstate]
-                else:
                     rawtransit[fromstate][prob][ts] = 1.-svlrecov[fromhealthstate]
+                else:
+                    rawtransit[fromstate][prob][ts] = svlrecov[fromhealthstate]
         
             if fromstate in acute: # You can progress from acute
                 if tostate in acute:
-                    rawtransit[fromstate][prob][ts] = prog[0]
-                elif tostate in gt500:
                     rawtransit[fromstate][prob][ts] = 1.-prog[0]
+                elif tostate in gt500:
+                    rawtransit[fromstate][prob][ts] = prog[0]
     
             # Death probabilities
             rawtransit[fromstate][prob][ts] *= (1.-deathhiv[fromhealthstate]*deathsvl*dt)    
@@ -240,9 +240,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for ts, tostate in enumerate(rawtransit[fromstate][to]):
             if fromstate in acute: # You can progress from acute
                 if tostate in acute:
-                    rawtransit[fromstate][prob][ts] = prog[0]
-                elif tostate in gt500:
                     rawtransit[fromstate][prob][ts] = 1.-prog[0]
+                elif tostate in gt500:
+                    rawtransit[fromstate][prob][ts] = prog[0]
             elif fromstate in gt500: 
                 if tostate in gt500:
                     rawtransit[fromstate][prob][ts] = 1.-simpars['usvlproggt500']*dt
@@ -323,9 +323,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         # Set rates within
         progratios = cat([prog[:-1], [simpars['deathlt50']]]) # For last rate, use CD4<50 death as dominant rate
-        progratios = (1/progratios)  / sum(1/progratios) # Normalize
-        recovratios = cat([[inf], svlrecov[2:], [efftreatmentrate]])
-        recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
+        progratios = (1./progratios)  / sum(1./progratios) # Normalize
+        recovratios = cat([svlrecov[1:], [efftreatmentrate]])
+        recovratios = (1./recovratios)  / sum(1./recovratios) # Normalize
  
         # Final calculations
         undiagnosed = einsum('i,i,j->ji',nevertreated,fracundiagnosed,progratios)
