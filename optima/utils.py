@@ -389,8 +389,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     # Smooth
     kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
     kernel /= kernel.sum()
-    try: newy = interp(newx, origx, origy) # Use interpolation
-    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    newy = interp(newx, origx, origy) # Use interpolation
     validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
     if len(validinds): # No point doing these steps if no non-nan values
         validy = newy[validinds]
