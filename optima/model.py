@@ -40,7 +40,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Would be at the top of the script, but need to figure out verbose first
     printv('Running model...', 1, verbose)
     
-    # Initialize arrays
+    # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_inciby      = zeros((nstates, npts))        # Total incidence transmitted by each health state
     raw_births      = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
@@ -526,7 +526,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         thistransit[fromstate][prob][ts] *= (1.-fractiontodx)
                     else: # Probability of being tested
                         thistransit[fromstate][prob][ts] *= fractiontodx
-                        raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                        raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
 
         else: # ... or if programmatically determined
             for fromstate in undx:
@@ -536,19 +536,19 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t]*max(dt-0.25,0)/dt) # Adjust testing rates to account for the window period (0.25 years)
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]*max(dt-0.25,0)/dt
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
                     elif fromstate in lt50 or fromstate in gt50:
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-maximum(aidstest[t],hivtest[:,t]))
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*maximum(aidstest[t],hivtest[:,t])
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
                     else:
                         if tostate in undx: # Probability of not being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t])
                         else: # Probability of being tested
                             thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]
+                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
 
 
         ## Transitions to care 
@@ -653,10 +653,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
         ## Calculate main indicators
-        raw_death[:,t]      = einsum('ij,i->j',  people[:,:,t], deathprob)
-        raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])
-        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]
-        raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)
+        raw_death[:,t]      = einsum('ij,i->j',  people[:,:,t], deathprob)/dt
+        raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
+        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
+        raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
 
 
         ## Calculate births
@@ -689,7 +689,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         if t<npts-1:
             
             # Add births
-            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment
+            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment -- WARNING, shouldn't use a raw variable in a calculation, that's for output
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
             # Handle circumcision
