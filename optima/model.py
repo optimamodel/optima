@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat
+from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
@@ -710,28 +710,41 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                 people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
 
-
-            currplhiv   = people[allplhiv,:,t+1].sum() 
-            currcare    = people[allcare,:,t+1].sum() # This assumes proptx refers to the proportion of those in care who are to be on treatment 
+            currallcare = people[allcare,:,t+1].sum() # This assumes proptx refers to the proportion of those in care who are to be on treatment 
             currtx      = people[alltx,:,t+1].sum()
-            totreat     = proptx[t+1]*currcare if not(isnan(proptx[t+1])) else numtx[t+1]
-            totnewtreat = max(0, totreat - currtx)
             currentcare = people[care,:,t+1]
-
-            raw_propdx[t+1] = currcare/currplhiv
-            raw_proptx[t+1] = currtx/currcare
+            newtreat    = zeros((ncd4, npops))        # Re-initialise newtreat
             
-            for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
-                newtreat[cd4,:] = zeros(npops)
-                if totnewtreat>eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
-                    thisnewtreat = min(totnewtreat, sum(currentcare[cd4,:])) # Figure out how many spots are available
-                    newtreat[cd4,:] = thisnewtreat * (currentcare[cd4,:]) / (eps+sum(currentcare[cd4,:])) # Pull out evenly from each population
-                    totnewtreat -= newtreat[cd4,:].sum() # Adjust the number of available treatment spots
+            if isnan(proptx[t+1]): totreat = numtx[t+1]
+            else: 
+                if not isinf(proptx[t+1]):
+                    totreat = proptx[t+1]*currallcare
+                else:
+                    totreat = raw_proptx[t]*currallcare
+
+            if totreat>currtx: # People are moving onto treatment
+                treatdiff = totreat - currtx # Wanted number on treatment less actual number on treatment
+                for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
+                    if treatdiff>eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
+                        thisnewtreat = min(treatdiff, sum(currentcare[cd4,:])) # Figure out how many spots are available
+                        newtreat[cd4,:] = thisnewtreat * (currentcare[cd4,:]) / (eps+sum(currentcare[cd4,:])) # Pull out evenly from each population
+                        treatdiff -= newtreat[cd4,:].sum() # Adjust the number of available treatment spots
+
+            else: # People are moving off treatment
+                treatdiff = currtx - totreat # Actual number on treatment less wanted number on treatment
+                for cd4 in range(ncd4): # Higher CD4 counts come off treatment first
+                    if treatdiff>eps:
+                        newtreat[cd4,:] = -treatdiff * (people[alltx[cd4],:,t+1]) / (eps+currtx) # Pull out evenly from each population
+                        treatdiff += newtreat[cd4,:].sum() # Adjust the number of available treatment spots
+
+            
+            raw_propdx[t+1] = currallcare/people[allplhiv,:,t+1].sum() 
+            raw_proptx[t+1] = currtx/currallcare
 
             raw_newtreat[:,t+1] = newtreat.sum(axis=0)/dt # Save annual treatment initiation
             people[care,:,t+1] -= newtreat # Shift people out of care... 
             people[usvl,:,t+1] += newtreat # ... and into USVL compartment
-
+            
             
             ## Handle age-related transitions
             for p1,p2 in agetransitlist:

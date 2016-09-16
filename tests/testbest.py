@@ -6,7 +6,7 @@ Version: 2016feb08
 """
 
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj # analysis:ignore
-from numpy import array, nan
+from numpy import array, nan, inf
 
 ## Options
 autocalib = 0 # Whether or not to run autofitting
@@ -18,10 +18,10 @@ dosave = 1
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best',dorun=False)
+P = defaults.defaultproject('generalized',dorun=False)
 
-P.pars()['proptx'].t[0] = array([0, 2015., 2016.])
-P.pars()['proptx'].y[0] = array([nan, nan, 4.])
+P.pars()['proptx'].t[0] = array([0, 2014., 2014.1])
+P.pars()['proptx'].y[0] = array([nan, nan, inf])
 
 #fixproportions = {'propdx': None,
 #                  'propcare': None,
@@ -31,6 +31,19 @@ P.pars()['proptx'].y[0] = array([nan, nan, 4.])
                   
 
 P.runsim(debug=True)
+
+#
+#years = array([2010.,2016.,2017.])
+#vals = array([[],3,nan])
+#newx = P.settings.maketvec()
+#
+#from optima import findinds
+#newvals = array([])
+#for itemno, yr in enumerate(years):
+#    t = findinds(yr,newx)
+#    newvals.append(vals[itemno])
+#    
+
 
 #P = defaults.defaultproject('generalized')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
