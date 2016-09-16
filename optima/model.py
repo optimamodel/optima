@@ -517,39 +517,23 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
 
         ## Transitions to diagnosed 
-        if not(isnan(propdx[t])): # If propdx is specified...
-            currdx = people[alldx,:,t].sum()
-            currundx = currplhiv - currdx
-            fractiontodx = max(0, (propdx[t]*currplhiv - currdx)/(currundx + eps))
-            for fromstate in undx:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in undx: # Probability of not being tested
-                        thistransit[fromstate][prob][ts] *= (1.-fractiontodx)
-                    else: # Probability of being tested
-                        thistransit[fromstate][prob][ts] *= fractiontodx
-                        raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
+        if isnan(propdx[t]):
+            fractiontodx = array([hivtest[:,t]*max(dt-0.25,0)/dt, hivtest[:,t], hivtest[:,t], hivtest[:,t], maximum(aidstest[t],hivtest[:,t]), maximum(aidstest[t],hivtest[:,t])])
+        else: 
+            if not isinf(propdx[t]):
+                currdx = people[alldx,:,t].sum()
+                currundx = currplhiv - currdx
+                fractiontodx = max(0, (propdx[t]*currplhiv - currdx)/(currundx + eps))
+            else:
+                fractiontodx = raw_propdx[t]
 
-        else: # ... or if programmatically determined
-            for fromstate in undx:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if fromstate in acute: 
-                        if tostate in undx: # Probability of not being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t]*max(dt-0.25,0)/dt) # Adjust testing rates to account for the window period (0.25 years)
-                        else: # Probability of being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]*max(dt-0.25,0)/dt
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
-                    elif fromstate in lt50 or fromstate in gt50:
-                        if tostate in undx: # Probability of not being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-maximum(aidstest[t],hivtest[:,t]))
-                        else: # Probability of being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*maximum(aidstest[t],hivtest[:,t])
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
-                    else:
-                        if tostate in undx: # Probability of not being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t])
-                        else: # Probability of being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
+        for cd4, fromstate in enumerate(undx):
+            for ts, tostate in enumerate(thistransit[fromstate][to]):
+                if tostate in undx: # Probability of not being tested
+                    thistransit[fromstate][prob][ts] *= (1.-fractiontodx[cd4])
+                else: # Probability of being tested
+                    thistransit[fromstate][prob][ts] *= fractiontodx[cd4]
+                    raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
 
 
         ## Transitions to care 
