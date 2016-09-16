@@ -216,6 +216,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
+        if hasattr(structlist[name],'project'): structlist[name].project = self # Refresh link to parent project
         printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
         self.modified = today()
         return None
