@@ -523,9 +523,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if not isinf(propdx[t]):
                 currdx = people[alldx,:,t].sum()
                 currundx = currplhiv - currdx
-                fractiontodx = max(0, (propdx[t]*currplhiv - currdx)/(currundx + eps))
+                fractiontodx = array([max(0, (propdx[t]*currplhiv - currdx)/(currundx + eps))]*ncd4)
             else:
-                fractiontodx = raw_propdx[t]
+                fractiontodx = array([(raw_propdx[t]*currplhiv - currdx)/(currundx + eps)]*ncd4)
 
         for cd4, fromstate in enumerate(undx):
             for ts, tostate in enumerate(thistransit[fromstate][to]):
