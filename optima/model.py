@@ -9,6 +9,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     Version: 1.7 (2016sep14)
     """
     
+#    debug = True
+    
     ##################################################################################################################
     ### Setup 
     ##################################################################################################################
@@ -693,13 +695,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
             # Handle circumcision
-            circppl = numcirc[:,t+1]
-            if debug and (circppl > people[susreg,:,t+1]).any():
-                errormsg = 'More people requiring circumcision (numcirc[:,%i] = %s) than there are people to circumcise (people[susreg,:,%i] = %s)' % (t+1, numcirc[:,t+1], t+1, people[susreg,:,t+1])
-                if die: raise OptimaException(errormsg)
-                else:
-                    printv(errormsg, 1, verbose)
-                    circppl = minimum(numcirc[:,t], people[susreg,:,t+1])
+            circppl = minimum(numcirc[:,t+1], people[susreg,:,t+1])
             people[susreg,:,t+1]   -= circppl
             people[progcirc,:,t+1] += circppl 
 
