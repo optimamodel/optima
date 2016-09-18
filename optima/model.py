@@ -630,7 +630,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
 
         # Check that probabilities all sum to 1
-        if debug and not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
+        if not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
             wrongstatesindices = [j for j in range(nstates) if not (abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all()]
             wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
             wrongprobs = array([thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
@@ -638,7 +638,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raise OptimaException(errormsg)
             
         # Check that no probabilities are less than 0
-        if debug and any([(thistransit[k][prob]<0).any() for k in range(nstates)]):
+        if any([(thistransit[k][prob]<0).any() for k in range(nstates)]):
             wrongstatesindices = [k for k in range(nstates) if (thistransit[k][prob]<0.).any()]
             wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
             wrongprobs = array([thistransit[j][1] for j in wrongstatesindices])
@@ -841,11 +841,6 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
 
     try:
         raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
-        # Append final people array to sim output
-        if not (raw['people']>=0).all(): 
-            printv('Negative people found with runmodel(); rerunning with a smaller timestep...')
-            settings.dt /= 4
-            raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
     except: 
         printv('Running model failed; running again with debugging...', 1, verbose)
         raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests

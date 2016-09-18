@@ -516,8 +516,12 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     
     if people is None:
         if ind is None: ind=-1
-        if simind is None: people = project.results[ind].raw[0]['people'] # Try to get default people to plot
-        else: people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  indcex
+        try:
+            people = project.results[ind].raw[0]['people'] # Try to get default people to plot
+        except:
+            if simind is None: simind = 1
+            people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  index
+        
     
     plotstyles = odict([
     ('susreg',   ('|','|')), 
