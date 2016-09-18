@@ -630,7 +630,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
 
         # Check that probabilities all sum to 1
-        if not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
+        if debug and not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
             wrongstatesindices = [j for j in range(nstates) if not (abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all()]
             wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
             wrongprobs = array([thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
@@ -638,7 +638,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raise OptimaException(errormsg)
             
         # Check that no probabilities are less than 0
-        if any([(thistransit[k][prob]<0).any() for k in range(nstates)]):
+        if debug and any([(thistransit[k][prob]<0).any() for k in range(nstates)]):
             wrongstatesindices = [k for k in range(nstates) if (thistransit[k][prob]<0.).any()]
             wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
             wrongprobs = array([thistransit[j][1] for j in wrongstatesindices])
