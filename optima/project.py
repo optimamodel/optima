@@ -216,6 +216,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
+        if hasattr(structlist[name],'project'): structlist[name].project = self # Refresh link to parent project
         printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
         self.modified = today()
         return None
@@ -373,10 +374,6 @@ class Project(object):
             else:
                 try:
                     raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose)
-                    if not (raw['people']>=0).all(): # Check for negative people
-                        printv('Negative people found with runsim(); rerunning with a smaller timestep...')
-                        self.settings.dt /= 4
-                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
                 except:
                     printv('Running model failed; running again with debugging...', 1, verbose)
                     raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL

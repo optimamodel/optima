@@ -765,14 +765,10 @@ from numpy import array
 from numbers import Number
 
 class odict(OrderedDict):
-    """
-    ODICT
-    
-    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing,
-    slicing, and appending.
-    
-    Version: 2016feb09 by cliffk
-    """
+    '''
+    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing, slicing, and appending.
+    Version: 2016sep14 (cliffk)
+    '''
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
@@ -788,8 +784,19 @@ class odict(OrderedDict):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, Number): # Convert automatically from float...dangerous?
-            return self.values()[int(key)]
+        if isinstance(key, (str,tuple)):
+            try:
+                output = OrderedDict.__getitem__(self,key)
+                return output
+            except: # WARNING, should be KeyError, but this can't print newlines!!!
+                if len(self.keys()): 
+                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
+                        '\n'.join([str(k) for k in self.keys()]))
+                else: errormsg = 'Key "%s" not found since odict is empty'% key
+                raise Exception(errormsg)
+        elif isinstance(key, Number): # Convert automatically from float...dangerous?
+            thiskey = self.keys()[int(key)]
+            return OrderedDict.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
                 startind = self.__slicekey(key.start, 'start')
@@ -807,21 +814,13 @@ class odict(OrderedDict):
             listvals = [self.__getitem__(item) for item in key]
             try: return array(listvals)
             except: return listvals
-        else: # Handle string but also everything else
-            try:
-                output = OrderedDict.__getitem__(self,key)
-                return output
-            except: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): 
-                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
-                        '\n'.join([str(k) for k in self.keys()]))
-                else: errormsg = 'Key "%s" not found since odict is empty'% key
-                raise Exception(errormsg)
-
+        else: # Handle everything else
+            return OrderedDict.__getitem__(self,key)
+        
         
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
-        if type(key)==str:
+        if isinstance(key, (str,tuple)):
             OrderedDict.__setitem__(self, key, value)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
