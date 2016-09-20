@@ -148,7 +148,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     if type(progset)==Programset: pass
     elif type(project)==Programset: progset = project
     elif project is not None:
-        if progset is None: progset = 0
+        if progset is None: progset = -1
         progset = project.progsets[progset]
         printv('defaultconstraints() did not get a progset input, so using default', 2, verbose)
 
