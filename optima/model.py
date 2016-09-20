@@ -619,7 +619,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
             thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
             
-            if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
+            if isnan(proppmtct[t]) or isinf(proppmtct[t]): # Proportion on PMTCT is not specified: use number
                 receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
                 mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
                 mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
@@ -642,6 +642,18 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Births 
             people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment -- WARNING, shouldn't use a raw variable in a calculation, that's for output
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
+
+            if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
+                for errstate in range(nstates): # Loop over all heath states
+                    for errpop in range(npops): # Loop over all populations
+                        if not(people[errstate,errpop,t+1]>=0):
+                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
+                            if die:
+                                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    #                                raise OptimaException(errormsg)
+                            else: 
+                                printv(errormsg, 1, verbose=verbose)
+                                people[errstate,errpop,t+1] = 0.0 # Reset
 
 
             ## Circumcision 
@@ -721,6 +733,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             propcare_list   = {'name': 'propcare', 'prop':propcare, 'rawprop':raw_propcare, 'lowerstate':dx, 'tostate':care, 'higherstates': carestates, 'num':allcare, 'denom':alldx, 'raw_new':raw_newcare}
             proptx_list     = {'name': 'proptx', 'prop':proptx, 'rawprop':raw_proptx, 'lowerstate':care, 'tostate':usvl, 'higherstates': txstates, 'num':alltx, 'denom':allcare, 'raw_new':raw_newtreat}
             propsupp_list   = {'name': 'propsupp', 'prop':propsupp, 'rawprop':raw_propsupp, 'lowerstate':usvl, 'tostate':svl, 'higherstates': svl, 'num':svl, 'denom':alltx, 'raw_new':raw_newsupp}
+#            if t==79: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
             for propdict in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
@@ -732,6 +745,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             newlysuppressed = change.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
+                            
                         if isnan(propdict['prop'][t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
             
                     # Figure out how many people we currently have
@@ -739,6 +753,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     available       = people[propdict['denom'],:,t+1].sum()
                     ppltomoveup     = people[propdict['lowerstate'],:,t+1]
                     change          = zeros((ncd4,npops)) 
+                    if isnan(actual): import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
                     # Figure out how many people we want
                     if isinf(propdict['prop'][t+1]): # If the prop value is infinity, we use last timestep's value
@@ -777,7 +792,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
                             errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
-                            if die: raise OptimaException(errormsg)
+                            if die:
+                                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#                                raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
                                 people[errstate,errpop,t+1] = 0.0 # Reset

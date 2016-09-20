@@ -9,7 +9,7 @@ from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeop
 
 ## Options
 autocalib = 0 # Whether or not to run autofitting
-manualcalib = 1
+manualcalib = 0
 reconcile = 0
 runscenarios = 0 # Run scenarios
 optimize = 0
@@ -17,7 +17,7 @@ dosave = 1
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best',dorun=False)
+P = defaults.defaultproject('generalized',dorun=False)
 P.runsim(debug=True)
 
 
