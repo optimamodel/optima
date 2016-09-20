@@ -1163,6 +1163,7 @@ class CCOF(object):
                 raise OptimaException(errormsg)
         return None
 
+
     def getccopar(self, t, verbose=2, sample='best'):
         '''
         Get a cost-coverage-outcome parameter set for any year in range 1900-2100
@@ -1182,44 +1183,40 @@ class CCOF(object):
 
         # Set up necessary variables
         ccopar = odict()
+        ccopars_sample = odict()
         t = promotetoarray(t)
         nyrs = len(t)
-        ccopars_no_t = dcp(odict({k:v for k,v in self.ccopars.iteritems() if v}))
-        del ccopars_no_t['t']
         
         # Get the appropriate sample type
-        if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
-            for parname, parvalue in ccopars_no_t.iteritems():
+        for parname, parvalue in self.ccopars.iteritems():
+            if parname is not 't' and parvalue:
+                ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = mean(array(parvalue[j][:]))
-        elif sample in ['lower','l','low']:
-            for parname, parvalue in ccopars_no_t.iteritems():
-                for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = parvalue[j][0]
-        elif sample in ['upper','u','up','high','h']:
-            for parname, parvalue in ccopars_no_t.iteritems():
-                for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = parvalue[j][1]
-        elif sample in ['random','rand','r']:
-            for parname, parvalue in ccopars_no_t.iteritems():
-                for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = uniform(parvalue[j][0],parvalue[j][1])
-        else:
-            raise OptimaException('Unrecognised bounds.')
-            
-        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
+                    if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
+                        ccopars_sample[parname][j] = mean(array(parvalue[j][:]))
+                    elif sample in ['lower','l','low']:
+                        ccopars_sample[parname][j] = parvalue[j][0]
+                    elif sample in ['upper','u','up','high','h']:
+                        ccopars_sample[parname][j] = parvalue[j][1]
+                    elif sample in ['random','rand','r']:
+                        ccopars_sample[parname][j] = uniform(parvalue[j][0],parvalue[j][1])
+                    else:
+                        raise OptimaException('Unrecognised bounds.')
+        
+        # CK: I feel there might be a more direct way of doing all of this...
+        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
-        j = 1
+        j = 1 
 
         # Calculate interpolated parameters
-        for param in ccopars_no_t.keys():
+        for param in ccopars_sample.keys(): # At minimum could this be enumerate() rather than doing j+=1 in a for loop?
             knownparam = array([ccopartuple[j] for ccopartuple in ccopartuples])
             allparams = smoothinterp(t, knownt, knownparam, smoothness=1)
             ccopar[param] = zeros(nyrs)
             for yr in range(nyrs):
                 ccopar[param][yr] = allparams[yr]
             if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
-            j += 1
+            j += 1 
 
         ccopar['t'] = t
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
