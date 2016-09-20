@@ -230,13 +230,10 @@ if 'constantcoverage' in tests:
     P = defaults.defaultproject('best')
     P.runsim(debug=True)
 
-    startyear = 2016.
+    startyear = 2014.
 
     ## Define scenarios
     scenlist = [
-        Parscen(name='Constant funding',
-                parsetname='default',
-                pars=[]),
 
          Parscen(name='Constant coverage ',
               parsetname='default',
