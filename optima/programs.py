@@ -173,7 +173,7 @@ class Programset(object):
         result = True
         details = []
         for prog in self.optimizableprograms().values():
-            if not prog.costcovfn.ccopars.get('unitcost'):
+            if not any(prog.costcovfn.ccopars.get('unitcost')):
                 details.append(prog.name)
                 result = False
         if detail: return list(set(details))
@@ -1124,7 +1124,7 @@ class CCOF(object):
         ''' Add or replace parameters for cost-coverage functions'''
 
         # Fill in the missing information for cost-coverage curves
-        if ccopar.get('unitcost'):
+        if any(ccopar.get('unitcost')):
             if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
 
         if not self.ccopars:
