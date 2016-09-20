@@ -9,7 +9,7 @@ import optima as op
 import os
 
 
-refresh = 0 # Creates defaultpeople.ppl rather than copares
+refresh = 1 # Creates defaultpeople.ppl rather than copares
 eps = 1e-3 # Don't expect a totally exact match
 filename = '2016jul16.npy'
 
@@ -40,3 +40,6 @@ else:
                                     raise Exception(errormsg)
     else:
         print('People are the same, yay! (max diff in people: %s)' % abs(newraw['people']-oldraw['people']).max())
+        
+        
+

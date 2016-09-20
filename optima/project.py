@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
@@ -216,6 +216,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
+        if hasattr(structlist[name],'project'): structlist[name].project = self # Refresh link to parent project
         printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
         self.modified = today()
         return None
@@ -358,7 +359,9 @@ class Project(object):
         
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
-            simparslist = self.parsets[name].interp(start=start, end=end, dt=dt, verbose=verbose) # "self.parset[name]" is e.g. P.parset['default']
+            simparslist = []
+            for pardict in self.parsets[name].pars:
+                simparslist.append(makesimpars(pardict, settings=self.settings, name=name))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
@@ -371,10 +374,6 @@ class Project(object):
             else:
                 try:
                     raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose)
-                    if not (raw['people']>=0).all(): # Check for negative people
-                        printv('Negative people found with runsim(); rerunning with a smaller timestep...')
-                        self.settings.dt /= 4
-                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
                 except:
                     printv('Running model failed; running again with debugging...', 1, verbose)
                     raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
@@ -483,16 +482,16 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2):
+    def runscenarios(self, scenlist=None, verbose=2, debug=False):
         ''' Function to run scenarios '''
         if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
-        multires = runscenarios(project=self, verbose=verbose)
+        multires = runscenarios(project=self, verbose=verbose, debug=debug)
         self.addresult(result=multires)
         self.modified = today()
         return None
     
 
-    def runbudget(self, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
+    def runbudget(self, name='runbudget', budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
         if budget is None: raise OptimaException("Please enter a budget dictionary to run")
         if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
@@ -503,8 +502,8 @@ class Project(object):
             except: raise OptimaException("No program set entered, and there are none stored in the project") 
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
-        results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
-        results.name = 'runbudget'
+        results = runmodel(pars=progpars, project=self, parset=self.parsets[parsetname], progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
+        results.name = name
         self.addresult(results)
         self.modified = today()
         return None

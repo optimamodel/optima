@@ -29,9 +29,8 @@ def optima_regenerate_frontend(service):
     """
     Regenerate the front-end files of an Optima service.
     """
-    with env(user="optima"):
-        with cd("/home/optima/installations/%s/client" % (service,)):
-            run('clean_dev_build.sh')
+    with cd("/home/optima/installations/%s/client" % (service,)):
+        sudo('su optima -c "bash clean_dev_build.sh"')
 
 
 def service_logs(service, follow=True):

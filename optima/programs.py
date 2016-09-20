@@ -186,6 +186,60 @@ class Programset(object):
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
 
+    def changepopname(self, oldname=None, newname=None):
+        '''
+        Change the short name of a population in a progset.
+        
+        Example:
+            import optima as op
+            P = op.defaultproject('concentrated')
+            P.progset().changepopname(oldname='PWID',newname='IDU')
+            print(P.progset())
+        '''
+
+        if oldname == None: 
+            errormsg = 'Please specify the old name of the population that you want to change. Available popnames are' % (self.targetpops)
+            raise OptimaException(errormsg)
+        if newname == None: 
+            errormsg = 'Please specify the new name that you want the population to be called.'
+            raise OptimaException(errormsg)
+        
+        # Helper function for renaming things in tuples
+        def changepopobj(popnameobj, oldname=oldname, newname=newname):
+            if isinstance(popnameobj,basestring):
+                if popnameobj == oldname: 
+                    popnameobj = newname
+                return popnameobj
+            elif isinstance(popnameobj,(tuple,list)):
+                pshiplist = list(popnameobj)
+                for pn,pop in enumerate(pshiplist):
+                    if pop==oldname:
+                        pshiplist[pn] = newname
+                return tuple(pshiplist)
+            else:
+                raise OptimaException('changepopobj() only works on strings, tuples, and lists, not %s' % type(popnameobj)) 
+    
+        # Change name in programs
+        for program in self.programs.values():
+
+            # Change name in targetpars
+            for targetpar in program.targetpars:
+                targetpar['pop'] = changepopobj(targetpar['pop'], oldname=oldname, newname=newname)
+
+            # Change name in targetpops
+            for tn, targetpop in enumerate(program.targetpops):
+                program.targetpops[tn] = changepopobj(targetpop, oldname=oldname, newname=newname)
+                    
+        # Change name in covout objects
+        for covoutpar in self.covout.keys():
+            self.covout[covoutpar] = odict((changepopobj(k, oldname=oldname, newname=newname) if oldname in k else k, v) for k, v in self.covout[covoutpar].iteritems())
+        
+        # Update WARNING IS THIS REQUIRED?
+        self.updateprogset()
+        
+        return None
+
+
     def progs_by_targetpop(self, filter_pop=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
