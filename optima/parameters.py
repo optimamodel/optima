@@ -485,7 +485,7 @@ def makepars(data, label=None, verbose=2):
         elif partype=='proppar': # It's a proportion-type parameter, and doesn't exist in the spreadsheet
             fromyear = Settings().now
             dt = Settings().dt
-            pars[parname] = Timepar(m=1, y=odict({'tot':[nan, inf]}), t=odict({'tot':[fromyear-dt, fromyear]}), **rawpar) # Create structure
+            pars[parname] = Timepar(m=1, y=odict({'tot':array([nan, inf])}), t=odict({'tot':array([fromyear-dt, fromyear])}), **rawpar) # Create structure
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
             pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 

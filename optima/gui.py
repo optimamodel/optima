@@ -409,6 +409,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
             elif fulltypelist[b]=='year': # Parameters that are fitted to a certain value at a certain year
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
+                tmppars[key].t[subkey][0] = eval(str(box.text()))-project.settings.dt
                 tmppars[key].t[subkey][1] = eval(str(box.text()))
                 printv('%s.t[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             else:
