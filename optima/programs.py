@@ -173,7 +173,7 @@ class Programset(object):
         result = True
         details = []
         for prog in self.optimizableprograms().values():
-            if not any(prog.costcovfn.ccopars.get('unitcost')):
+            if prog.costcovfn.ccopars.get('unitcost') is None:
                 details.append(prog.name)
                 result = False
         if detail: return list(set(details))
@@ -1124,7 +1124,7 @@ class CCOF(object):
         ''' Add or replace parameters for cost-coverage functions'''
 
         # Fill in the missing information for cost-coverage curves
-        if any(ccopar.get('unitcost')):
+        if ccopar.get('unitcost') is not None:
             if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
 
         if not self.ccopars:
@@ -1192,12 +1192,14 @@ class CCOF(object):
             if parname is not 't' and parvalue:
                 ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
+                    thisval = parvalue[j]
+                    if isnumber(thisval): thisval = (thisval, thisval)
                     if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
-                        ccopars_sample[parname][j] = mean(array(parvalue[j][:]))
+                        ccopars_sample[parname][j] = mean(array(thisval[:]))
                     elif sample in ['lower','l','low']:
-                        ccopars_sample[parname][j] = parvalue[j][0]
+                        ccopars_sample[parname][j] = thisval[0]
                     elif sample in ['upper','u','up','high','h']:
-                        ccopars_sample[parname][j] = parvalue[j][1]
+                        ccopars_sample[parname][j] = thisval[1]
                     elif sample in ['random','rand','r']:
                         ccopars_sample[parname][j] = uniform(parvalue[j][0],parvalue[j][1])
                     else:
