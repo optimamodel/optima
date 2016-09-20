@@ -50,7 +50,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_death       = zeros((npops, npts))          # Number of deaths per timestep
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
     raw_propdx      = zeros(npts)                   # Proportion diagnosed per timestep
+    raw_propcare    = zeros(npts)                   # Proportion in care per timestep
     raw_proptx      = zeros(npts)                   # Proportion on treatment per timestep
+    raw_propsupp    = zeros(npts)                   # Proportion virally suppressed per timestep
     
     # Biological and failure parameters -- death etc
     prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],inf]) ))
@@ -91,6 +93,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     gt50            = settings.gt50                 # >50
     lt50            = settings.lt50                 # <50
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
+    dxstates        = [dx,care,usvl,svl,lost]
+    carestates      = [care,usvl,svl]
+    txstates        = [usvl,svl]
     
     if debug and len(sus)!=2:
         errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
@@ -599,6 +604,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
         raw_propdx[t]       = people[alldx,:,t].sum()/people[allplhiv,:,t].sum()
+        raw_propcare[t]     = people[allcare,:,t].sum()/people[alldx,:,t].sum()
+        raw_propsupp[t]     = people[svl,:,t].sum()/people[alltx,:,t].sum()
         
 
         ## Calculate births
@@ -651,95 +658,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[progcirc,:,t+1] += circppl 
 
 
-            ###########################################################################
-            ## Propdx
-            ###########################################################################
-
-            currdx      = people[alldx,:,t+1].sum()
-            currplhiv   = people[allplhiv,:,t+1].sum()
-
-            if not isnan(propdx[t+1]):
-
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                # Figure out how many people we currently have diagnosed, and how many plhiv there are in total
-                currundx    = people[undx,:,t+1]
-                dU          = zeros((ncd4, npops))        # Change in the number undiagnosed
-
-                # Figure out how many people we want to diagnose
-                if not isinf(propdx[t+1]): # If propdx is finite, we use it
-                    todx = propdx[t+1]*currplhiv
-                else: # If propdx is infinity, we use last timestep's value of propdx
-                    todx = raw_propdx[t]*currplhiv
-
-                # Reconcile the differences between the number currently diagnosed and the number that we want
-                if todx>currdx: # We need to diagnose people
-                    dxdiff = todx - currdx # Wanted number diagnosed less actual number diagnosed
-                    for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts get diagnosed first
-                        if dxdiff>eps: # Diagnose people until you have enough
-                            thisdx = min(dxdiff, sum(currundx[cd4,:])) # Figure out how many spots are available
-                            dU[cd4,:] = thisdx * (currundx[cd4,:]) / (eps+sum(currundx[cd4,:])) # Pull out evenly from each population
-                            dxdiff -= dU[cd4,:].sum() # Adjust the number of available treatment spots
-    
-                else: # We need to undiagnose people
-                    dxdiff = currdx - todx # Actual number on treatment less wanted number on treatment
-                    for cd4 in range(ncd4): # Higher CD4 counts come off treatment first
-                        if dxdiff>eps:
-                            dU[cd4,:] = -dxdiff * (people[allplhiv[cd4],:,t+1]) / (eps+currdx) # Pull out evenly from each population
-                            dxdiff += dU[cd4,:].sum() # Adjust the number of available treatment spots
-            
-                # Save and shift
-                raw_diag[:,t+1]    += dU.sum(axis=0)/dt # Save new diagnoses
-                people[undx,:,t+1] -= dU # Shift people out of undiagnosed... 
-                people[dx,:,t+1]   += dU # ... and into diagnosed compartment
-                raw_propdx[t+1]     = people[alldx,:,t+1].sum()/people[allplhiv,:,t].sum()
-
-            ###########################################################################
-            ## Treatment initiation
-            ###########################################################################
-
-            # Move the people who started treatment last timestep from usvl to svl
-            if isnan(propsupp[t+1]):
-                newlysuppressed = newtreat.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
-                people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
-                people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
-            newtreat    = zeros((ncd4, npops))        # Re-initialise newtreat
-
-            # Figure out how many people we are currently treating, and how many are available to treat
-            currtx      = people[alltx,:,t+1].sum()
-            currcare    = people[care,:,t+1]
-            currallcare = people[allcare,:,t+1].sum() # This assumes proptx refers to the proportion of those in care who are to be on treatment 
-            
-            # Figure out how many people we want to treat
-            if isnan(proptx[t+1]): totreat = numtx[t+1] # If proptx is nan, we use numtx
-            else: 
-                if not isinf(proptx[t+1]): # If proptx is a number, we use it
-                    totreat = proptx[t+1]*currallcare
-                else: # If proptx is infinity, we use last timestep's value of proptx
-                    totreat = raw_proptx[t]*currallcare
-
-            # Reconcile the differences between the number currently on treatment and the number that we want
-            if totreat>currtx: # People are moving onto treatment
-                treatdiff = totreat - currtx # Wanted number on treatment less actual number on treatment
-                for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
-                    if treatdiff>eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
-                        thisnewtreat = min(treatdiff, sum(currcare[cd4,:])) # Figure out how many spots are available
-                        newtreat[cd4,:] = thisnewtreat * (currcare[cd4,:]) / (eps+sum(currcare[cd4,:])) # Pull out evenly from each population
-                        treatdiff -= newtreat[cd4,:].sum() # Adjust the number of available treatment spots
-
-            else: # People are moving off treatment
-                treatdiff = currtx - totreat # Actual number on treatment less wanted number on treatment
-                for cd4 in range(ncd4): # Higher CD4 counts come off treatment first
-                    if treatdiff>eps:
-                        newtreat[cd4,:] = -treatdiff * (people[alltx[cd4],:,t+1]) / (eps+currtx) # Pull out evenly from each population
-                        treatdiff += newtreat[cd4,:].sum() # Adjust the number of available treatment spots
-
-            # Save and shift
-            raw_proptx[t+1]     = currtx/currallcare
-            raw_newtreat[:,t+1] = newtreat.sum(axis=0)/dt # Save annual treatment initiation
-            people[care,:,t+1] -= newtreat # Shift people out of care... 
-            people[usvl,:,t+1] += newtreat # ... and into USVL compartment
-            
-            
             ###########################################################################
             ## Age-related transitions
             ###########################################################################
@@ -801,6 +719,192 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 1, verbose=verbose)
             
+
+            ###########################################################################
+            ## Proportions
+            ###########################################################################
+
+            propdx_list     = {'prop':propdx, 'rawprop':raw_propdx, 'lowerstate':undx, 'tostate':dx, 'higherstates': dxstates, 'num':alldx, 'denom':allplhiv}
+            propcare_list   = {'prop':propcare, 'rawprop':raw_propcare, 'lowerstate':dx, 'tostate':care, 'higherstates': carestates, 'num':allcare, 'denom':alldx}
+            propsupp_list   = {'prop':propsupp, 'rawprop':raw_propsupp, 'lowerstate':usvl, 'tostate':svl, 'higherstates': txstates, 'num':svl, 'denom':alltx}
+
+            for propdict in [propdx_list,propcare_list,propsupp_list]:
+                
+                if not isnan(propdict['prop'][t+1]):
+
+                    # Figure out how many people we currently have
+                    actual          = people[propdict['num'],:,t+1].sum()
+                    available       = people[propdict['denom'],:,t+1].sum()
+                    ppltomoveup     = people[propdict['lowerstate'],:,t+1]
+                    change          = zeros((ncd4,npops)) 
+
+                    # Figure out how many people we want
+                    if not isinf(propdict['prop'][t+1]): # If the prop value is finite, we use it
+                        wanted = propdict['prop'][t+1]*available
+                    else: # If the prop value is infinity, we use last timestep's value
+                        wanted = propdict['rawprop'][t]*available
+
+                    # Reconcile the differences between the number we have and the number we want
+                    diff = wanted - actual # Wanted number less actual number 
+                    if diff>0.: # We need to move people UP the cascade 
+                        for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
+                            if diff>eps: # Move people until you have the right proportions
+                                tomove = min(diff, sum(ppltomoveup[cd4,:])) # Figure out how many spots are available
+                                change[cd4,:] = tomove * (ppltomoveup[cd4,:]) / (eps+sum(ppltomoveup[cd4,:])) # Pull out evenly from each population
+                                diff -= change[cd4,:].sum() # Adjust the number of available diagnosis spots
+                        raw_diag[:,t+1]    += change.sum(axis=0)/dt # Save new diagnoses -- WARNING, if you are using propdx this could be negative
+                        people[propdict['lowerstate'],:,t+1] -= change # Shift people out of undiagnosed... 
+                        people[propdict['tostate'],:,t+1]   += change # ... and into diagnosed compartment
+    
+                    else: # We need to move people DOWN the cascade
+                        for state in propdict['higherstates']: # Start with the first higher state
+                            if abs(diff)>eps: 
+                                tomove = max(diff, -people[state,:,t+1].sum()) # Figure out how many spots are available
+                                change = tomove*people[state,:,t+1]/(eps+people[state,:,t+1].sum()) # Figure out the distribution of people to move
+                                diff -= change.sum() # Adjust the number of available diagnosis spots
+                                people[propdict['lowerstate'],:,t+1] -= change # Shift people into the lower state... 
+                                people[state,:,t+1] += change # ... and out of the higher state
+            
+                    # Save and shift
+                    propdict['rawprop'][t+1] = people[propdict['num'],:,t+1].sum()/people[propdict['denom'],:,t].sum()
+
+                    # Check no negative people
+                    if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
+                        for errstate in range(nstates): # Loop over all heath states
+                            for errpop in range(npops): # Loop over all populations
+                                if not(people[errstate,errpop,t+1]>=0):
+                                    errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
+                                    if die: 
+                                        raise OptimaException(errormsg)
+                                    else: 
+                                        printv(errormsg, 1, verbose=verbose)
+                                        people[errstate,errpop,t+1] = 0.0 # Reset
+
+
+            ###########################################################################
+            ## Treatment initiation
+            ###########################################################################
+
+            # Move the people who started treatment last timestep from usvl to svl
+            if isnan(propsupp[t+1]):
+                newlysuppressed = newtreat.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
+                people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
+                people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
+
+            # Figure out how many people we are currently treating, and how many are available to treat
+            curralltx   = people[alltx,:,t+1].sum()
+            currallcare = people[allcare,:,t+1].sum() # This assumes proptx refers to the proportion of those in care who are to be on treatment 
+            currcare    = people[care,:,t+1]
+            newtreat    = zeros((ncd4, npops))        # Re-initialise newtreat
+            
+            # Figure out how many people we want to treat
+            if isnan(proptx[t+1]): totreat = numtx[t+1] # If proptx is nan, we use numtx
+            else: 
+                if not isinf(proptx[t+1]): # If proptx is a number, we use it
+                    totreat = proptx[t+1]*currallcare
+                else: # If proptx is infinity, we use last timestep's value of proptx
+                    totreat = raw_proptx[t]*currallcare
+
+            # Reconcile the differences between the number currently on treatment and the number that we want
+            treatdiff = totreat - curralltx # Wanted number on treatment less actual number on treatment
+            if treatdiff>0.: # People are moving onto treatment
+                for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
+                    if treatdiff>eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
+                        thisnewtreat = min(treatdiff, sum(currcare[cd4,:])) # Figure out how many spots are available
+                        newtreat[cd4,:] = thisnewtreat * (currcare[cd4,:]) / (eps+sum(currcare[cd4,:])) # Pull out evenly from each population
+                        treatdiff -= newtreat[cd4,:].sum() # Adjust the number of available treatment spots
+
+            else: # People are moving off treatment
+                newtreat = treatdiff*people[usvl,:,t+1]/people[usvl,:,t+1].sum()
+
+            # Save and shift
+            raw_newtreat[:,t+1] = newtreat.sum(axis=0)/dt # Save annual treatment initiation
+            people[care,:,t+1] -= newtreat # Shift people out of care... 
+            people[usvl,:,t+1] += newtreat # ... and into USVL compartment
+            raw_proptx[t+1]     = curralltx/currallcare
+
+
+
+
+#            ###########################################################################
+#            ## Propcare
+#            ###########################################################################
+#
+#            if not isnan(propcare[t+1]):
+#
+#                # Figure out how many people we currently have diagnosed who are eligibile to be moved onto care, and how many in care
+#                currallcare = people[allcare,:,t+1].sum()
+#                curralldx   = people[alldx,:,t+1].sum()
+#                currdx      = people[dx,:,t+1]
+#                dC          = zeros((ncd4,npops))        # Change in the number in care
+#
+#                # Figure out how many people we want to place in care
+#                if not isinf(propcare[t+1]): # If propcare is finite, we use it
+#                    tocare = propcare[t+1]*curralldx
+#                else: # If propcare is infinity, we use last timestep's value of propcare
+#                    tocare = raw_propcare[t]*curralldx
+#
+#                # Reconcile the differences between the number currently in care and the number that we want
+#                carediff = tocare - currallcare # Wanted number in care less actual number in care
+#                if carediff>0.: # We need to put people in care
+#                    for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts get put in care first
+#                        if carediff>eps: # Put people in care until you have enough
+#                            thiscare = min(carediff, sum(currdx[cd4,:])) # Figure out how many spots are available
+#                            dC[cd4,:] = thiscare * (currdx[cd4,:]) / (eps+sum(currdx[cd4,:])) # Pull out evenly from each population
+#                            carediff -= dC[cd4,:].sum() # Adjust the number of available care spots
+#    
+#                else: # We need to move people off care
+#                    dC = carediff*people[care,:,t+1]/people[care,:,t+1].sum()
+#            
+#                # Save and shift
+#                people[dx,:,t+1]    -= dC # Shift people out of diagnosed... 
+#                people[care,:,t+1]  += dC # ... and into care compartment
+#                raw_propcare[t+1]    = people[allcare,:,t+1].sum()/people[alldx,:,t].sum()
+#
+
+#            ###########################################################################
+#            ## Propsupp
+#            ###########################################################################
+#
+#            if not isnan(propsupp[t+1]):
+#
+#                # Figure out how many people we currently have diagnosed who are eligibile to be moved onto care, and how many in care
+#                currsupp    = people[svl,:,t+1].sum()
+#                curralltx   = people[alltx,:,t+1].sum()
+#                currusvl    = people[usvl,:,t+1]
+#                dS          = zeros((ncd4,npops))        # Change in the number in care
+#
+#                # Figure out how many people we want to place in care
+#                if not isinf(propsupp[t+1]): # If propcare is finite, we use it
+#                    tosupp = propsupp[t+1]*curralltx
+#                else: # If propcare is infinity, we use last timestep's value of propcare
+#                    tosupp = raw_propsupp[t]*curralltx
+#
+#                # Reconcile the differences between the number currently in care and the number that we want
+#                suppdiff = tosupp - currsupp # Wanted number in care less actual number in care
+#                if suppdiff>0.: # We need to put people in care
+#                    for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts get put in care first
+#                        if suppdiff>eps: # Put people in care until you have enough
+#                            thissupp = min(suppdiff, sum(currusvl[cd4,:])) # Figure out how many spots are available
+#                            dS[cd4,:] = thissupp * (currusvl[cd4,:]) / (eps+sum(currusvl[cd4,:])) # Pull out evenly from each population
+#                            suppdiff -= dS[cd4,:].sum() # Adjust the number of available care spots
+#    
+#                else: # We need to move people off care
+#                    dS = suppdiff*people[svl,:,t+1]/people[svl,:,t+1].sum()
+#            
+#                # Save and shift
+#                people[usvl,:,t+1]    -= dS # Shift people out of diagnosed... 
+#                people[svl,:,t+1]  += dS # ... and into care compartment
+#                raw_propsupp[t+1]    = people[svl,:,t+1].sum()/people[alltx,:,t].sum()
+#
+#            
+#
+#
+#
+
+
+
+
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
@@ -826,7 +930,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['death']      = raw_death
     raw['otherdeath'] = raw_otherdeath
     raw['propdx']     = raw_propdx # WARNING, not used in results
+    raw['propcare']   = raw_propcare # WARNING, not used in results
     raw['proptx']     = raw_proptx
+    raw['propsupp']   = raw_propsupp
+    
     
     return raw # Return raw results
 
