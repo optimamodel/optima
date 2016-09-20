@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
+from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, findinds
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title, arange, maximum, plot
 from matplotlib.widgets import CheckButtons, Button
@@ -730,7 +730,7 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
 
 
 
-def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True):
+def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False):
     ''' Instead of stupid pie charts, make some nice bar charts '''
     
     if budgets is None:
@@ -739,9 +739,17 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
     
     labels = budgets.keys()
     progs = budgets[0].keys()
-    nprogs = len(progs)
+    
+    indices = None
+    if not plotfixed:
+        try: indices = findinds(project.progset().optimizable()) # Not possible if project not defined
+        except: pass
+    if indices is None: indices = arange(len(progs))
+    nprogs = len(indices)
+    
     if colors is None:
         colors = gridcolormap(nprogs)
+            
     
     fig = figure(figsize=(10,10))
     fig.subplots_adjust(left=0.10) # Less space on left
@@ -758,7 +766,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
     for plt in range(nplt):
         ax.append(subplot(len(budgets),1,plt+1))
         ax[-1].hold(True)
-        for p in range(nprogs):
+        for p in indices:
             ax[-1].bar([xbardata[p]], [budgets[plt][p]/factor], color=colors[p], linewidth=0)
             if plt==1 and compare:
                 ax[-1].bar([xbardata[p]], [budgets[0][p]/factor], color='None', linewidth=1)
@@ -774,3 +782,5 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
         ax[-1].set_title(labels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    for a in ax:
+        a.set_ylim([0,ymax])
