@@ -21,7 +21,7 @@ ind = -1 # Default index
 P = defaults.defaultproject('generalized',dorun=False)
 
 P.pars()['propdx'].t[0] = array([0, 2014., 2014.1])
-P.pars()['propdx'].y[0] = array([nan, nan, .3])
+P.pars()['propdx'].y[0] = array([nan, nan, .5])
 
 #fixproportions = {'propdx': None,
 #                  'propcare': None,
