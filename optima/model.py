@@ -643,19 +643,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment -- WARNING, shouldn't use a raw variable in a calculation, that's for output
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
-            if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
-                for errstate in range(nstates): # Loop over all heath states
-                    for errpop in range(npops): # Loop over all populations
-                        if not(people[errstate,errpop,t+1]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
-                            if die:
-                                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    #                                raise OptimaException(errormsg)
-                            else: 
-                                printv(errormsg, 1, verbose=verbose)
-                                people[errstate,errpop,t+1] = 0.0 # Reset
-
-
             ## Circumcision 
             circppl = numcirc[:,t+1]
             if debug and (circppl > people[susreg,:,t+1]).any():
@@ -733,7 +720,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             propcare_list   = {'name': 'propcare', 'prop':propcare, 'rawprop':raw_propcare, 'lowerstate':dx, 'tostate':care, 'higherstates': carestates, 'num':allcare, 'denom':alldx, 'raw_new':raw_newcare}
             proptx_list     = {'name': 'proptx', 'prop':proptx, 'rawprop':raw_proptx, 'lowerstate':care, 'tostate':usvl, 'higherstates': txstates, 'num':alltx, 'denom':allcare, 'raw_new':raw_newtreat}
             propsupp_list   = {'name': 'propsupp', 'prop':propsupp, 'rawprop':raw_propsupp, 'lowerstate':usvl, 'tostate':svl, 'higherstates': svl, 'num':svl, 'denom':alltx, 'raw_new':raw_newsupp}
-#            if t==79: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
             for propdict in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
@@ -793,8 +779,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         if not(people[errstate,errpop,t+1]>=0):
                             errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
                             if die:
-                                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-#                                raise OptimaException(errormsg)
+                                raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
                                 people[errstate,errpop,t+1] = 0.0 # Reset

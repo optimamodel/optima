@@ -70,3 +70,4 @@
 0.717 2016-Aug-26_12:32:08 b77d07c investigate-negative-people
 0.680 2016-Sep-13_02:10:26 48a8707 investigate-negative-people
 1.31 2016-Sep-20_22:50:32 521fcbb feature/fix-props
+0.846 2016-Sep-20_22:51:40 930e609 feature/fix-props

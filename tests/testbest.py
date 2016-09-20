@@ -17,7 +17,7 @@ dosave = 1
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('generalized',dorun=False)
+P = defaults.defaultproject('best',dorun=False)
 P.runsim(debug=True)
 
 
