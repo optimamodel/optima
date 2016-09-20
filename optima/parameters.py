@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 1.5 (2016jul06)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones, inf
 
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
@@ -52,11 +52,11 @@ Condom use for commercial acts	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	ran
 Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (per year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
-PLHIV aware of their status	propdx	(0, 'proppar')	tot	proppar	no	no	0	0	1	None
-Diagnosed PLHIV in care	propcare	(0, 'proppar')	tot	proppar	no	no	1	0	1	None
-PLHIV in care on treatment	proptx	(0, 'proppar')	tot	proppar	no	no	0	0	1	None
-Pregnant women and mothers on PMTCT	proppmtct	(0, 'proppar')	tot	proppar	no	no	0	0	1	None
-People on ART with viral suppression	propsupp	(0, 'proppar')	tot	proppar	no	no	0	0	1	None
+PLHIV aware of their status	propdx	(0, 'proppar')	tot	proppar	year	other	0	0	1	None
+Diagnosed PLHIV in care	propcare	(0, 'proppar')	tot	proppar	year	other	1	0	1	None
+PLHIV in care on treatment	proptx	(0, 'proppar')	tot	proppar	year	other	0	0	1	None
+People on ART with viral suppression	propsupp	(0, 'proppar')	tot	proppar	year	other	1	0	1	None
+Pregnant women and mothers on PMTCT	proppmtct	(0, 'proppar')	tot	proppar	year	other	0	0	1	None
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None
@@ -483,7 +483,9 @@ def makepars(data, label=None, verbose=2):
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
         
         elif partype=='proppar': # It's a proportion-type parameter, and doesn't exist in the spreadsheet
-            pars[parname] = Timepar(m=1, y=odict({'tot':[nan]}), t=odict({'tot':[0.0]}), **rawpar) # Create structure
+            fromyear = Settings().now
+            dt = Settings().dt
+            pars[parname] = Timepar(m=1, y=odict({'tot':[nan, inf]}), t=odict({'tot':[fromyear-dt, fromyear]}), **rawpar) # Create structure
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
             pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
@@ -1098,6 +1100,13 @@ class Parameterset(object):
                     typelist.append(par.fittable)
                     valuelist.append(par.y)
                     labellist.append(par.name)
+                elif par.fittable == 'year':
+                    for subkey in par.t.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.t[subkey][1])
+                        labellist.append(par.name)
                 elif par.fittable in ['pop', 'pship']:
                     for subkey in par.y.keys():
                         keylist.append(key)
@@ -1148,10 +1157,14 @@ class Parameterset(object):
                 vtype = type(tmppars[key].p[subkey][0])
                 tmppars[key].p[subkey][0] = vtype(value)
                 printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose)
-            elif ptype == 'const':  # Metaparameters
+            elif ptype == 'const':  # Constants
                 vtype = type(tmppars[key].y)
                 tmppars[key].y = vtype(value)
                 printv('%s.y = %s' % (key, value), 4, verbose)
+            elif ptype == 'year':  # Constants
+                vtype = type(tmppars[key].t[subkey][1])
+                tmppars[key].t[subkey][1] = vtype(value)
+                printv('%s.t[%s] = %s' % (key, subkey, value), 4, verbose)
             else:
                 print('Parameter type "%s" not implemented!' % ptype)
     

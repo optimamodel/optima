@@ -6,11 +6,10 @@ Version: 2016feb08
 """
 
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj # analysis:ignore
-from numpy import array, nan, inf
 
 ## Options
 autocalib = 0 # Whether or not to run autofitting
-manualcalib = 0
+manualcalib = 1
 reconcile = 0
 runscenarios = 0 # Run scenarios
 optimize = 0
@@ -49,7 +48,7 @@ if runscenarios:
         ]
     
     # Run the scenarios
-    P.addscenlist(scenlist)
+    P.addscenlist(scenlist) 
     P.runscenarios() 
 #    plotpeople(P, P.results[ind].raw[ind][0]['people'])
     apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])

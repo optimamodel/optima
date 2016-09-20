@@ -352,7 +352,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     ion() # We really need this here!
-    nsigfigs = 3
+    nsigfigs = 4
     
     boxes = []
     texts = []
@@ -402,10 +402,15 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
                 printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
-            elif fulltypelist[b]=='const': # Metaparameters
+            elif fulltypelist[b]=='const': # Constants
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
                 printv('%s.y = %s' % (key, box.text()), 3, verbose)
+            elif fulltypelist[b]=='year': # Parameters that are fitted to a certain value at a certain year
+                key = fullkeylist[b]
+                subkey = fullsubkeylist[b]
+                tmppars[key].t[subkey][1] = eval(str(box.text()))
+                printv('%s.t[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             else:
                 printv('Parameter type "%s" not implemented!' % fulltypelist[b], 2, verbose)
         

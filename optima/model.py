@@ -141,7 +141,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
             
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     # Population sizes
     popsize = dcp(simpars['popsize'])
     
@@ -735,7 +734,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                         if isnan(propdict['prop'][t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
             
-#                        if ~isnan(propsupp[t+1]): import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     # Figure out how many people we currently have
                     actual          = people[propdict['num'],:,t+1].sum()
                     available       = people[propdict['denom'],:,t+1].sum()
