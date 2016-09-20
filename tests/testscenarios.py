@@ -9,7 +9,8 @@ Version: 2016feb07
 tests = [
 #'standardscen',
 #'maxcoverage',
-'maxbudget',
+'constantcoverage',
+#'maxbudget',
 #'90-90-90'
 #'VMMC'
 ]
@@ -216,6 +217,80 @@ if 'standardscen' in tests:
 
 
     done(t)
+
+
+## Hold proportions of people constant -- scenario test
+if 'constantcoverage' in tests:
+    t = tic()
+
+    print('Running constant coverage test...')
+    from optima import Parscen, defaults, pygui, plotpeople, findinds
+    from numpy import inf
+
+    P = defaults.defaultproject('best')
+    P.runsim(debug=True)
+
+    startyear = 2016.
+
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Constant funding',
+                parsetname='default',
+                pars=[]),
+
+         Parscen(name='Constant coverage ',
+              parsetname='default',
+              pars=[
+              {'name': 'propdx',
+              'for': ['tot'],
+              'startyear': startyear,
+              'startval': inf,
+              },
+              
+              {'name': 'propcare',
+              'for': ['tot'],
+              'startyear': startyear,
+              'startval': inf,
+              },
+              
+              {'name': 'proptx',
+              'for': ['tot'],
+              'startyear': startyear,
+              'startval': inf,
+              },
+              
+              {'name': 'propsupp',
+              'for': ['tot'],
+              'startyear': startyear,
+              'startval': inf,
+              },
+                ]),
+        ]
+
+    # Store these in the project
+    P.addscenlist(scenlist)
+
+    # Run the scenarios
+    P.runscenarios(debug=True)
+     
+    if doplot:
+#        ppl = P.results[-1].raw['90-90-90'][0]['people']
+#        plotpeople(P, ppl)
+        pygui(P.results[-1], toplot='cascade')
+
+    done(t)
+
+
+
+#P.pars()['propdx'].t[0] = array([0, 2014., 2014.1])
+#P.pars()['propdx'].y[0] = array([nan, nan, inf])
+#P.pars()['propcare'].t[0] = array([0, 2014., 2014.1])
+#P.pars()['propcare'].y[0] = array([nan, nan, inf])
+#P.pars()['proptx'].t[0] = array([0, 2014., 2014.1])
+#P.pars()['proptx'].y[0] = array([nan, nan, inf])
+#P.pars()['propsupp'].t[0] = array([0, 2014., 2014.1])
+#P.pars()['propsupp'].y[0] = array([nan, nan, inf])
+#                  
 
 
 
