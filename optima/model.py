@@ -145,10 +145,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     propcare_list   = ('propcare',propcare, raw_propcare, dx, care, carestates, allcare, alldx, raw_newcare)
     proptx_list     = ('proptx',proptx, raw_proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
     propsupp_list   = ('propsupp',propsupp, raw_propsupp, usvl, svl, svl, svl, alltx, raw_newsupp)
-#    propdx_list     = {'name': 'propdx', 'prop':propdx, 'rawprop':raw_propdx, 'lowerstate':undx, 'tostate':dx, 'higherstates': dxstates, 'num':alldx, 'denom':allplhiv, 'raw_new':raw_diag}
-#    propcare_list   = {'name': 'propcare', 'prop':propcare, 'rawprop':raw_propcare, 'lowerstate':dx, 'tostate':care, 'higherstates': carestates, 'num':allcare, 'denom':alldx, 'raw_new':raw_newcare}
-#    proptx_list     = {'name': 'proptx', 'prop':proptx, 'rawprop':raw_proptx, 'lowerstate':care, 'tostate':usvl, 'higherstates': txstates, 'num':alltx, 'denom':allcare, 'raw_new':raw_newtreat}
-#    propsupp_list   = {'name': 'propsupp', 'prop':propsupp, 'rawprop':raw_propsupp, 'lowerstate':usvl, 'tostate':svl, 'higherstates': svl, 'num':svl, 'denom':alltx, 'raw_new':raw_newsupp}
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -725,9 +721,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Proportions
             ###########################################################################
 
-#{'name': 'propdx', 'prop':propdx, 'rawprop':raw_propdx, 'lowerstate':undx, 'tostate':dx, 'higherstates': dxstates, 'num':alldx, 'denom':allplhiv, 'raw_new':raw_diag}
             for name,prop,rawprop,lowerstate,tostate,higherstates,num,denom,raw_new in [propdx_list,propcare_list,proptx_list,propsupp_list]:
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 if name is 'proptx' or ~isnan(prop[t+1]):
 
@@ -783,8 +777,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
                             errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
-                            if die:
-                                raise OptimaException(errormsg)
+                            if die: raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
                                 people[errstate,errpop,t+1] = 0.0 # Reset

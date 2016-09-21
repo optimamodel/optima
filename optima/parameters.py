@@ -1161,7 +1161,7 @@ class Parameterset(object):
                 vtype = type(tmppars[key].y)
                 tmppars[key].y = vtype(value)
                 printv('%s.y = %s' % (key, value), 4, verbose)
-            elif ptype == 'year':  # Constants
+            elif ptype == 'year':  # Parameters that are fitted in a certain year
                 vtype = type(tmppars[key].t[subkey][1])
                 tmppars[key].t[subkey][1] = vtype(value)
                 printv('%s.t[%s] = %s' % (key, subkey, value), 4, verbose)
