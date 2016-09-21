@@ -45,10 +45,18 @@ class Programset(object):
         
         return output
 
-    def getsettings(self):
+    def getsettings(self, project=None, parset=None, results=None):
         ''' Try to get the freshest settings available '''
-#        print('Warning, using default settings with program set "%s"' % self.name)
-        settings = Settings() # WARNING KLUDGY should fix by having project an attribute of Programset
+
+        try: settings = project.settings
+        except:
+            try: settings = self.project.settings
+            except:
+                try: settings = parset.project.settings
+                except:
+                    try: settings = results.project.settings
+                    except: settings = Settings()
+        
         return settings
         
     def gettargetpops(self):
@@ -546,21 +554,16 @@ class Programset(object):
         
         years = t # WARNING, not renaming in the function definition for now so as to not break things
         
-        settings = self.getsettings() # WARNING TEMP shouldn't need this!!!
         
         # Validate inputs
         if years is None: raise OptimaException('To get pars, one must supply years')
         if isnumber(years): years = [years]
-        settings = None
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         
-        # Get settings from somewhere
-        try: settings = parset.project.settings
-        except:
-            printv('Warning, could not extract settings, using defaults', 1, verbose)
-            settings = Settings()
+        # Get settings
+        settings = self.getsettings()
 
         # Get outcome dictionary
         outcomes = self.getoutcomes(coverage=coverage, t=years, parset=parset, results=results, sample=sample)
@@ -682,6 +685,7 @@ class Programset(object):
             except: raise OptimaException('Could not find a usable parset')
         
         # Initialise internal variables 
+        settings = self.getsettings()
         origpardict = dcp(self.cco2odict(t=year))
         pardict = dcp(origpardict)
         pararray = dcp(pardict[:]) # Turn into array format
@@ -695,7 +699,7 @@ class Programset(object):
             parupper = zeros(npars)
             for k,tmp in enumerate(pardict.keys()):
                 parname = tmp[0] # First entry is parameter name
-                limits = convertlimits(parset.pars[0][parname].limits, dt=self.project.settings.dt)
+                limits = convertlimits(parset.pars[0][parname].limits, dt=settings.dt)
                 parlower[k] = limits[0]
                 parupper[k] = limits[1]
         if any(parupper<parlower): 
@@ -895,13 +899,8 @@ class Program(object):
         # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
         else: 
 
-            # Do everything possible to get settings
-            try: settings = parset.project.settings
-            except: 
-                try: settings = results.project.settings
-                except:
-                    print('Warning, could not find settings for program "%s", using default' % self.name)
-                    settings = Settings()
+            # Get settings
+            settings = self.getsettings()
             
             npops = len(parset.pars[ind]['popkeys'])
     
