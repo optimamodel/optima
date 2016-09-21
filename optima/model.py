@@ -29,7 +29,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     allpeople       = zeros((npops, npts))          # Population sizes
     effallprev      = zeros((nstates, npops))       # HIV effective prevalence (prevalence times infectiousness), by health state
     inhomo          = zeros(npops)                  # Inhomogeneity calculations
-    change          = zeros((ncd4, npops))          # Initialise newtreat
+    new_movers      = zeros((ncd4, npops))          # Initialise a place to store the number of people that shift into a new compartment (e.g. number of treatment initiators)
     eps             = settings.eps                  # Define another small number to avoid divide-by-zero errors
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
     rawtransit      = simpars['rawtransit']         # Raw transitions
@@ -722,7 +722,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
                         if isnan(propsupp[t+1]):
-                            newlysuppressed = change.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
+                            newlysuppressed = new_movers.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                             
@@ -732,7 +732,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     actual          = people[num,:,t+1].sum()
                     available       = people[denom,:,t+1].sum()
                     ppltomoveup     = people[lowerstate,:,t+1]
-                    change          = zeros((ncd4,npops)) 
+                    new_movers      = zeros((ncd4,npops)) 
 
                     # Figure out how many people we want
                     if isinf(prop[t+1]): # If the prop value is infinity, we use last timestep's value
@@ -746,20 +746,20 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
                             if diff>eps: # Move people until you have the right proportions
                                 tomove = min(diff, sum(ppltomoveup[cd4,:])) # Figure out how many spots are available
-                                change[cd4,:] = tomove * (ppltomoveup[cd4,:]) / (eps+sum(ppltomoveup[cd4,:])) # Pull out evenly from each population
-                                diff -= change[cd4,:].sum() # Adjust the number of available diagnosis spots
-                        people[lowerstate,:,t+1] -= change # Shift people out of undiagnosed... 
-                        people[tostate,:,t+1] += change # ... and into diagnosed compartment
-                        raw_new[:,t+1] += change.sum(axis=0)/dt # Save new diagnoses -- WARNING, if you are using propdx this could be negative
+                                new_movers[cd4,:] = tomove * (ppltomoveup[cd4,:]) / (eps+sum(ppltomoveup[cd4,:])) # Pull out evenly from each population
+                                diff -= new_movers[cd4,:].sum() # Adjust the number of available diagnosis spots
+                        people[lowerstate,:,t+1] -= new_movers # Shift people out of undiagnosed... 
+                        people[tostate,:,t+1] += new_movers # ... and into diagnosed compartment
+                        raw_new[:,t+1] += new_movers.sum(axis=0)/dt # Save new diagnoses -- WARNING, if you are using propdx this could be negative
     
                     else: # We need to move people DOWN the cascade
                         for state in higherstates: # Start with the first higher state
                             if abs(diff)>eps: 
                                 tomove = max(diff, -people[state,:,t+1].sum()) # Figure out how many spots are available
-                                change = tomove*people[state,:,t+1]/(eps+people[state,:,t+1].sum()) # Figure out the distribution of people to move
-                                diff -= change.sum() # Adjust the number of available diagnosis spots
-                                people[lowerstate,:,t+1] -= change # Shift people into the lower state... 
-                                people[state,:,t+1] += change # ... and out of the higher state
+                                new_movers = tomove*people[state,:,t+1]/(eps+people[state,:,t+1].sum()) # Figure out the distribution of people to move
+                                diff -= new_movers.sum() # Adjust the number of available diagnosis spots
+                                people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
+                                people[state,:,t+1] += new_movers # ... and out of the higher state
             
                     # Save and shift
                     rawprop[t+1] = people[num,:,t+1].sum()/people[denom,:,t].sum()
