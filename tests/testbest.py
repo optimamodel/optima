@@ -9,7 +9,7 @@ from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeop
 
 ## Options
 autocalib = 0 # Whether or not to run autofitting
-manualcalib = 1
+manualcalib = 0
 reconcile = 0
 runscenarios = 0 # Run scenarios
 optimize = 0

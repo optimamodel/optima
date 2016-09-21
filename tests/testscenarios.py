@@ -272,6 +272,18 @@ if '90-90-90' in tests:
               'endval': .9,
               },
                 ]),
+                
+         Parscen(name='Increase numtx',
+              parsetname='default',
+              pars=[
+              {'name': 'numtx',
+              'for': ['tot'],
+              'startyear': startyear,
+              'endyear': 2030.,
+              'startval': 48100.,
+              'endval': 68000.,
+              }]),
+                
         ]
 
     # Store these in the project
