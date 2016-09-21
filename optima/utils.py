@@ -375,7 +375,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     if strictnans:
         origy = origy[~isnan(origy)] 
         origx = origx[~isnan(origy)]
-        
+
     # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
     if smoothness is None: smoothness = ceil(len(newx)/len(origx))
     smoothness = int(smoothness) # Make sure it's an appropriate number
