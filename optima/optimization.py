@@ -598,7 +598,8 @@ def minmoney(project=None, optim=None, name=None, inds=None, tvec=None, verbose=
         # Re-optimize based on this fairly close allocation
         ##########################################################################################################################
         args['which'] = 'outcomes'
-        budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=2*randseed+1) # Make the random seed different
+        newrandseed = None if randseed is None else 2*randseed+1 # Make the random seed different
+        budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=newrandseed) 
         budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec3, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
     
         # Check that targets are still met
