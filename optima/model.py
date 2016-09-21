@@ -136,16 +136,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
-    calc_propdx      = zeros(npts)                   # Proportion diagnosed per timestep
-    calc_propcare    = zeros(npts)                   # Proportion in care per timestep
-    calc_proptx      = zeros(npts)                   # Proportion on treatment per timestep
-    calc_propsupp    = zeros(npts)                   # Proportion virally suppressed per timestep
     
     # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (inclusing state in question), numerator, denominator, data structure for storing new moveres)
-    propdx_list     = ('propdx',propdx, calc_propdx, undx, dx, dxstates, alldx, allplhiv, raw_diag)
-    propcare_list   = ('propcare',propcare, calc_propcare, dx, care, carestates, allcare, alldx, raw_newcare)
-    proptx_list     = ('proptx',proptx, calc_proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
-    propsupp_list   = ('propsupp',propsupp, calc_propsupp, usvl, svl, svl, svl, alltx, raw_newsupp)
+    propdx_list     = ('propdx',propdx, undx, dx, dxstates, alldx, allplhiv, raw_diag)
+    propcare_list   = ('propcare',propcare, dx, care, carestates, allcare, alldx, raw_newcare)
+    proptx_list     = ('proptx',proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
+    propsupp_list   = ('propsupp',propsupp, usvl, svl, svl, svl, alltx, raw_newsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -362,7 +358,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             initpeople[initpeople<0] = 0.0
             
     people[:,:,0] = initpeople
-    
     
     ##################################################################################################################
     ### Compute the effective numbers of acts outside the time loop
@@ -610,10 +605,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
         raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
-        calc_propdx[t]       = people[alldx,:,t].sum()/people[allplhiv,:,t].sum()
-        calc_propcare[t]     = people[allcare,:,t].sum()/people[alldx,:,t].sum()
-        calc_proptx[t]       = people[alltx,:,t].sum()/people[allcare,:,t].sum()
-        calc_propsupp[t]     = people[svl,:,t].sum()/people[alltx,:,t].sum()
         
 
         ## Calculate births
@@ -716,7 +707,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Proportions
             ###########################################################################
 
-            for name,prop,rawprop,lowerstate,tostate,higherstates,num,denom,raw_new in [propdx_list,propcare_list,proptx_list,propsupp_list]:
+            for name,prop,lowerstate,tostate,higherstates,num,denom,raw_new in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
                 if name is 'proptx' or ~isnan(prop[t+1]):
 
@@ -728,6 +719,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                             
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
+
+#                    if ~isnan(prop[t+1]): import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             
                     # Figure out how many people we currently have
                     actual          = people[num,:,t+1].sum()
@@ -737,7 +730,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
                     # Figure out how many people we want
                     if isinf(prop[t+1]): # If the prop value is infinity, we use last timestep's value
-                        wanted = rawprop[t]*available
+                        calcprop = people[num,:,t].sum()/people[denom,:,t].sum()
+                        wanted = calcprop*available
                     if not isnan(prop[t+1]) and not isinf(prop[t+1]): # If the prop value is finite, we use it
                         wanted = prop[t+1]*available
 
@@ -763,7 +757,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
             
                     # Save and shift
-                    rawprop[t+1] = people[num,:,t+1].sum()/people[denom,:,t].sum()
+                    calcprop = people[num,:,t+1].sum()/people[denom,:,t].sum()
 
 
             # Check no negative people
