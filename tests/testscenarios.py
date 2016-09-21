@@ -214,6 +214,7 @@ if '90-90-90' in tests:
 
     print('Running standard scenarios test...')
     from optima import Parscen, defaults, pygui, findinds, plotpeople
+    from numpy import nan
     
     P = defaults.defaultproject('best')
     P.runsim(debug=True)
@@ -282,6 +283,17 @@ if '90-90-90' in tests:
               'endyear': 2030.,
               'startval': 48100.,
               'endval': 68000.,
+              }]),
+                
+         Parscen(name='Constant numtx',
+              parsetname='default',
+              pars=[
+              {'name': 'proptx',
+              'for': ['tot'],
+              'startyear': startyear,
+              'startval': nan,
+#              'endyear': 2030.,
+#              'endval': 48100.,
               }]),
                 
         ]

@@ -747,17 +747,17 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             if diff>eps: # Move people until you have the right proportions
                                 tomove = min(diff, sum(ppltomoveup[cd4,:])) # Figure out how many spots are available
                                 new_movers[cd4,:] = tomove * (ppltomoveup[cd4,:]) / (eps+sum(ppltomoveup[cd4,:])) # Pull out evenly from each population
-                                diff -= new_movers[cd4,:].sum() # Adjust the number of available diagnosis spots
-                        people[lowerstate,:,t+1] -= new_movers # Shift people out of undiagnosed... 
-                        people[tostate,:,t+1] += new_movers # ... and into diagnosed compartment
-                        raw_new[:,t+1] += new_movers.sum(axis=0)/dt # Save new diagnoses -- WARNING, if you are using propdx this could be negative
+                                diff -= new_movers[cd4,:].sum() # Adjust the number of available spots
+                        people[lowerstate,:,t+1] -= new_movers # Shift people out of the lower state... 
+                        people[tostate,:,t+1] += new_movers # ... and into the higher state
+                        raw_new[:,t+1] += new_movers.sum(axis=0)/dt # Save new movers
     
                     else: # We need to move people DOWN the cascade
                         for state in higherstates: # Start with the first higher state
                             if abs(diff)>eps: 
                                 tomove = max(diff, -people[state,:,t+1].sum()) # Figure out how many spots are available
                                 new_movers = tomove*people[state,:,t+1]/(eps+people[state,:,t+1].sum()) # Figure out the distribution of people to move
-                                diff -= new_movers.sum() # Adjust the number of available diagnosis spots
+                                diff -= new_movers.sum() # Adjust the number of available spots
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
             
