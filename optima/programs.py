@@ -1211,17 +1211,15 @@ class CCOF(object):
         # CK: I feel there might be a more direct way of doing all of this...
         ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
-        j = 1 
 
         # Calculate interpolated parameters
-        for param in ccopars_sample.keys(): # At minimum could this be enumerate() rather than doing j+=1 in a for loop?
-            knownparam = array([ccopartuple[j] for ccopartuple in ccopartuples])
+        for j,param in enumerate(ccopars_sample.keys()): 
+            knownparam = array([ccopartuple[j+1] for ccopartuple in ccopartuples])
             allparams = smoothinterp(t, knownt, knownparam, smoothness=1)
             ccopar[param] = zeros(nyrs)
             for yr in range(nyrs):
                 ccopar[param][yr] = allparams[yr]
             if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
-            j += 1 
 
         ccopar['t'] = t
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
