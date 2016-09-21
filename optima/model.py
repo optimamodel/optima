@@ -140,10 +140,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
-    propdx_list     = {'name': 'propdx', 'prop':propdx, 'rawprop':raw_propdx, 'lowerstate':undx, 'tostate':dx, 'higherstates': dxstates, 'num':alldx, 'denom':allplhiv, 'raw_new':raw_diag}
-    propcare_list   = {'name': 'propcare', 'prop':propcare, 'rawprop':raw_propcare, 'lowerstate':dx, 'tostate':care, 'higherstates': carestates, 'num':allcare, 'denom':alldx, 'raw_new':raw_newcare}
-    proptx_list     = {'name': 'proptx', 'prop':proptx, 'rawprop':raw_proptx, 'lowerstate':care, 'tostate':usvl, 'higherstates': txstates, 'num':alltx, 'denom':allcare, 'raw_new':raw_newtreat}
-    propsupp_list   = {'name': 'propsupp', 'prop':propsupp, 'rawprop':raw_propsupp, 'lowerstate':usvl, 'tostate':svl, 'higherstates': svl, 'num':svl, 'denom':alltx, 'raw_new':raw_newsupp}
+    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (inclusing state in question), numerator, denominator, data structure for storing new moveres)
+    propdx_list     = ('propdx',propdx, raw_propdx, undx, dx, dxstates, alldx, allplhiv, raw_diag)
+    propcare_list   = ('propcare',propcare, raw_propcare, dx, care, carestates, allcare, alldx, raw_newcare)
+    proptx_list     = ('proptx',proptx, raw_proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
+    propsupp_list   = ('propsupp',propsupp, raw_propsupp, usvl, svl, svl, svl, alltx, raw_newsupp)
+#    propdx_list     = {'name': 'propdx', 'prop':propdx, 'rawprop':raw_propdx, 'lowerstate':undx, 'tostate':dx, 'higherstates': dxstates, 'num':alldx, 'denom':allplhiv, 'raw_new':raw_diag}
+#    propcare_list   = {'name': 'propcare', 'prop':propcare, 'rawprop':raw_propcare, 'lowerstate':dx, 'tostate':care, 'higherstates': carestates, 'num':allcare, 'denom':alldx, 'raw_new':raw_newcare}
+#    proptx_list     = {'name': 'proptx', 'prop':proptx, 'rawprop':raw_proptx, 'lowerstate':care, 'tostate':usvl, 'higherstates': txstates, 'num':alltx, 'denom':allcare, 'raw_new':raw_newtreat}
+#    propsupp_list   = {'name': 'propsupp', 'prop':propsupp, 'rawprop':raw_propsupp, 'lowerstate':usvl, 'tostate':svl, 'higherstates': svl, 'num':svl, 'denom':alltx, 'raw_new':raw_newsupp}
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -720,32 +725,32 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Proportions
             ###########################################################################
 
-
-            for propdict in [propdx_list,propcare_list,proptx_list,propsupp_list]:
+#{'name': 'propdx', 'prop':propdx, 'rawprop':raw_propdx, 'lowerstate':undx, 'tostate':dx, 'higherstates': dxstates, 'num':alldx, 'denom':allplhiv, 'raw_new':raw_diag}
+            for name,prop,rawprop,lowerstate,tostate,higherstates,num,denom,raw_new in [propdx_list,propcare_list,proptx_list,propsupp_list]:
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
-                if propdict is proptx_list or ~isnan(propdict['prop'][t+1]):
+                if name is 'proptx' or ~isnan(prop[t+1]):
 
                     # Move the people who started treatment last timestep from usvl to svl
-                    if propdict is proptx_list:
+                    if name is 'proptx':
                         if isnan(propsupp[t+1]):
                             newlysuppressed = change.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                             
-                        if isnan(propdict['prop'][t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
+                        if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
             
                     # Figure out how many people we currently have
-                    actual          = people[propdict['num'],:,t+1].sum()
-                    available       = people[propdict['denom'],:,t+1].sum()
-                    ppltomoveup     = people[propdict['lowerstate'],:,t+1]
+                    actual          = people[num,:,t+1].sum()
+                    available       = people[denom,:,t+1].sum()
+                    ppltomoveup     = people[lowerstate,:,t+1]
                     change          = zeros((ncd4,npops)) 
-                    if isnan(actual): import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
                     # Figure out how many people we want
-                    if isinf(propdict['prop'][t+1]): # If the prop value is infinity, we use last timestep's value
-                        wanted = propdict['rawprop'][t]*available
-                    if not isnan(propdict['prop'][t+1]) and not isinf(propdict['prop'][t+1]): # If the prop value is finite, we use it
-                        wanted = propdict['prop'][t+1]*available
+                    if isinf(prop[t+1]): # If the prop value is infinity, we use last timestep's value
+                        wanted = rawprop[t]*available
+                    if not isnan(prop[t+1]) and not isinf(prop[t+1]): # If the prop value is finite, we use it
+                        wanted = prop[t+1]*available
 
                     # Reconcile the differences between the number we have and the number we want
                     diff = wanted - actual # Wanted number less actual number 
@@ -755,21 +760,21 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 tomove = min(diff, sum(ppltomoveup[cd4,:])) # Figure out how many spots are available
                                 change[cd4,:] = tomove * (ppltomoveup[cd4,:]) / (eps+sum(ppltomoveup[cd4,:])) # Pull out evenly from each population
                                 diff -= change[cd4,:].sum() # Adjust the number of available diagnosis spots
-                        people[propdict['lowerstate'],:,t+1] -= change # Shift people out of undiagnosed... 
-                        people[propdict['tostate'],:,t+1] += change # ... and into diagnosed compartment
-                        propdict['raw_new'][:,t+1] += change.sum(axis=0)/dt # Save new diagnoses -- WARNING, if you are using propdx this could be negative
+                        people[lowerstate,:,t+1] -= change # Shift people out of undiagnosed... 
+                        people[tostate,:,t+1] += change # ... and into diagnosed compartment
+                        raw_new[:,t+1] += change.sum(axis=0)/dt # Save new diagnoses -- WARNING, if you are using propdx this could be negative
     
                     else: # We need to move people DOWN the cascade
-                        for state in propdict['higherstates']: # Start with the first higher state
+                        for state in higherstates: # Start with the first higher state
                             if abs(diff)>eps: 
                                 tomove = max(diff, -people[state,:,t+1].sum()) # Figure out how many spots are available
                                 change = tomove*people[state,:,t+1]/(eps+people[state,:,t+1].sum()) # Figure out the distribution of people to move
                                 diff -= change.sum() # Adjust the number of available diagnosis spots
-                                people[propdict['lowerstate'],:,t+1] -= change # Shift people into the lower state... 
+                                people[lowerstate,:,t+1] -= change # Shift people into the lower state... 
                                 people[state,:,t+1] += change # ... and out of the higher state
             
                     # Save and shift
-                    propdict['rawprop'][t+1] = people[propdict['num'],:,t+1].sum()/people[propdict['denom'],:,t].sum()
+                    rawprop[t+1] = people[num,:,t+1].sum()/people[denom,:,t].sum()
 
 
             # Check no negative people
