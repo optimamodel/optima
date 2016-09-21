@@ -140,6 +140,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
+    propdx_list     = {'name': 'propdx', 'prop':propdx, 'rawprop':raw_propdx, 'lowerstate':undx, 'tostate':dx, 'higherstates': dxstates, 'num':alldx, 'denom':allplhiv, 'raw_new':raw_diag}
+    propcare_list   = {'name': 'propcare', 'prop':propcare, 'rawprop':raw_propcare, 'lowerstate':dx, 'tostate':care, 'higherstates': carestates, 'num':allcare, 'denom':alldx, 'raw_new':raw_newcare}
+    proptx_list     = {'name': 'proptx', 'prop':proptx, 'rawprop':raw_proptx, 'lowerstate':care, 'tostate':usvl, 'higherstates': txstates, 'num':alltx, 'denom':allcare, 'raw_new':raw_newtreat}
+    propsupp_list   = {'name': 'propsupp', 'prop':propsupp, 'rawprop':raw_propsupp, 'lowerstate':usvl, 'tostate':svl, 'higherstates': svl, 'num':svl, 'denom':alltx, 'raw_new':raw_newsupp}
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -716,10 +720,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Proportions
             ###########################################################################
 
-            propdx_list     = {'name': 'propdx', 'prop':propdx, 'rawprop':raw_propdx, 'lowerstate':undx, 'tostate':dx, 'higherstates': dxstates, 'num':alldx, 'denom':allplhiv, 'raw_new':raw_diag}
-            propcare_list   = {'name': 'propcare', 'prop':propcare, 'rawprop':raw_propcare, 'lowerstate':dx, 'tostate':care, 'higherstates': carestates, 'num':allcare, 'denom':alldx, 'raw_new':raw_newcare}
-            proptx_list     = {'name': 'proptx', 'prop':proptx, 'rawprop':raw_proptx, 'lowerstate':care, 'tostate':usvl, 'higherstates': txstates, 'num':alltx, 'denom':allcare, 'raw_new':raw_newtreat}
-            propsupp_list   = {'name': 'propsupp', 'prop':propsupp, 'rawprop':raw_propsupp, 'lowerstate':usvl, 'tostate':svl, 'higherstates': svl, 'num':svl, 'denom':alltx, 'raw_new':raw_newsupp}
 
             for propdict in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
