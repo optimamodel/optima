@@ -51,10 +51,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_newsupp     = zeros((npops, npts))          # Number newly suppressed per timestep
     raw_death       = zeros((npops, npts))          # Number of deaths per timestep
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
-    raw_propdx      = zeros(npts)                   # Proportion diagnosed per timestep
-    raw_propcare    = zeros(npts)                   # Proportion in care per timestep
-    raw_proptx      = zeros(npts)                   # Proportion on treatment per timestep
-    raw_propsupp    = zeros(npts)                   # Proportion virally suppressed per timestep
     
     # Biological and failure parameters -- death etc
     prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],inf]) ))
@@ -140,11 +136,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
+    calc_propdx      = zeros(npts)                   # Proportion diagnosed per timestep
+    calc_propcare    = zeros(npts)                   # Proportion in care per timestep
+    calc_proptx      = zeros(npts)                   # Proportion on treatment per timestep
+    calc_propsupp    = zeros(npts)                   # Proportion virally suppressed per timestep
+    
     # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (inclusing state in question), numerator, denominator, data structure for storing new moveres)
-    propdx_list     = ('propdx',propdx, raw_propdx, undx, dx, dxstates, alldx, allplhiv, raw_diag)
-    propcare_list   = ('propcare',propcare, raw_propcare, dx, care, carestates, allcare, alldx, raw_newcare)
-    proptx_list     = ('proptx',proptx, raw_proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
-    propsupp_list   = ('propsupp',propsupp, raw_propsupp, usvl, svl, svl, svl, alltx, raw_newsupp)
+    propdx_list     = ('propdx',propdx, calc_propdx, undx, dx, dxstates, alldx, allplhiv, raw_diag)
+    propcare_list   = ('propcare',propcare, calc_propcare, dx, care, carestates, allcare, alldx, raw_newcare)
+    proptx_list     = ('proptx',proptx, calc_proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
+    propsupp_list   = ('propsupp',propsupp, calc_propsupp, usvl, svl, svl, svl, alltx, raw_newsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -609,10 +610,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
         raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
-        raw_propdx[t]       = people[alldx,:,t].sum()/people[allplhiv,:,t].sum()
-        raw_propcare[t]     = people[allcare,:,t].sum()/people[alldx,:,t].sum()
-        raw_proptx[t]       = people[alltx,:,t].sum()/people[allcare,:,t].sum()
-        raw_propsupp[t]     = people[svl,:,t].sum()/people[alltx,:,t].sum()
+        calc_propdx[t]       = people[alldx,:,t].sum()/people[allplhiv,:,t].sum()
+        calc_propcare[t]     = people[allcare,:,t].sum()/people[alldx,:,t].sum()
+        calc_proptx[t]       = people[alltx,:,t].sum()/people[allcare,:,t].sum()
+        calc_propsupp[t]     = people[svl,:,t].sum()/people[alltx,:,t].sum()
         
 
         ## Calculate births
@@ -789,10 +790,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['newtreat']   = raw_newtreat
     raw['death']      = raw_death
     raw['otherdeath'] = raw_otherdeath
-    raw['propdx']     = raw_propdx # WARNING, not used in results
-    raw['propcare']   = raw_propcare # WARNING, not used in results
-    raw['proptx']     = raw_proptx
-    raw['propsupp']   = raw_propsupp
     
     
     return raw # Return raw results
