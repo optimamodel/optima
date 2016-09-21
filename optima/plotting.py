@@ -638,7 +638,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
 
 
 ##################################################################
-## Plot improvements
+## Plot cascade
 ##################################################################
 def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
                 ticksize=globalticksize, legendsize=globallegendsize, **kwargs):

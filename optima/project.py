@@ -116,7 +116,7 @@ class Project(object):
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True, **kwargs)
-        if self.name is 'default': self.name = os.path.basename(filename).rstrip('.xlsx') # If no project filename is given, reset it to match the uploaded spreadsheet
+        if self.name is 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
         return None
 
 
@@ -509,10 +509,10 @@ class Project(object):
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best'):
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample)
+        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)

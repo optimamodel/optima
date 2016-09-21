@@ -145,12 +145,8 @@ try: from . import gui
 except: _failed.append('gui')
 
 ## Load simple function for displaying results
-try: from .gui import plotresults
-except: _failed.append('plotresults')
-
-## Handle the Python plotting
-try: from .gui import pygui 
-except: _failed.append('pygui')
+try: from .gui import plotresults, pygui, plotpeople, plotallocations
+except: _failed.append('plotresults, pygui, plotpeople, plotallocations')
 
 ## Handle the browser-based plotting
 try: from .gui import browser 
@@ -159,10 +155,6 @@ except: _failed.append('browser')
 # Do manual fitting
 try: from .gui import manualfit 
 except: _failed.append('manualfit')
-
-# Plot all people
-try: from .gui import plotpeople 
-except: _failed.append('plotpeople')
 
 # Plot all parameters
 try: from .gui import plotpars 

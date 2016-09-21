@@ -364,6 +364,7 @@ if 'maxbudget' in tests:
 
     print('Running maximum budget scenario test...')
     from optima import Budgetscen, defaults, dcp
+    from numpy import array
     
     ## Set up default project
     P = defaults.defaultproject('generalized')
