@@ -731,7 +731,7 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
 
 
 def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False):
-    ''' Instead of stupid pie charts, make some nice bar charts '''
+    ''' Plot allocations in bar charts '''
     
     if budgets is None:
         try: budgets = project.results[-1].budget
