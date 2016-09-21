@@ -1143,8 +1143,11 @@ class CCOF(object):
                     for ccopartype in ccopar.keys():
                         if self.ccopars[ccopartype]:
                             oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
-                            self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    printv('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars), 4, verbose)
+                            printv('\nModified CCO parameter "%s" from "%s" to "%s"' % (ccopartype, oldccopar[ccopartype], ccopar[ccopartype]), 4, verbose)
+                        else:
+                            printv('Added CCO parameter "%s" with value "%s"' % (ccopartype, ccopar[ccopartype]), 4, verbose)
+                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
+                    
                 else:
                     errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']
                     raise OptimaException(errormsg)
