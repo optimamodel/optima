@@ -14,9 +14,9 @@ from numbers import Number
 
 class Result(object):
     ''' Class to hold overall and by-population results '''
-    def __init__(self, name=None, isnumber=True, pops=None, tot=None, datapops=None, datatot=None):
+    def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None):
         self.name = name # Name of this parameter
-        self.isnumber = isnumber # Whether or not the result is a number (instead of a percentage)
+        self.ispercentage = ispercentage # Whether or not the result is a percentage
         self.pops = pops # The model result by population, if available
         self.tot = tot # The model result total, if available
         self.datapops = datapops # The input data by population, if available
@@ -79,18 +79,18 @@ class Resultset(object):
         self.main['numinci']            = Result('Number of new infections')
         self.main['numdeath']           = Result('Number of HIV-related deaths')
         self.main['numdiag']            = Result('Number of diagnosed PLHIV')
-        self.main['propdiag']           = Result('Proportion of diagnosed PLHIV')
+        self.main['propdiag']           = Result('Proportion of diagnosed PLHIV', ispercentage=True)
         self.main['numtreat']           = Result('Number of PLHIV on treatment')
-        self.main['proptreat']          = Result('Proportion of PLHIV in care on treatment')
-        self.main['prev']               = Result('HIV prevalence (%)', isnumber=False)
-        self.main['force']              = Result('Incidence (per 100 p.y.)', isnumber=False)
+        self.main['proptreat']          = Result('Proportion of PLHIV in care on treatment', ispercentage=True)
+        self.main['prev']               = Result('HIV prevalence (%)', ispercentage=True)
+        self.main['force']              = Result('Incidence (per 100 p.y.)', ispercentage=True)
         self.main['numnewdiag']         = Result('Number of new diagnoses')
         self.main['nummtct']            = Result('Number of HIV+ births')
         self.main['popsize']            = Result('Population size')
         self.main['numincare']          = Result('Number of PLHIV in care')
-        self.main['propincare']         = Result('Proportion of diagnosed PLHIV in care')
+        self.main['propincare']         = Result('Proportion of diagnosed PLHIV in care', ispercentage=True)
         self.main['numsuppressed']      = Result('Number of virally suppressed PLHIV')
-        self.main['propsuppressed']     = Result('Proportion of PLHIV on treatment virally suppressed')
+        self.main['propsuppressed']     = Result('Proportion of PLHIV on treatment virally suppressed', ispercentage=True)
 
         if domake: self.make()
     
@@ -125,10 +125,10 @@ class Resultset(object):
         for key in keys:
             res1 = main1[key]
             res2 = main2[key]
-            R1.main[key] = Result(name=res1.name, isnumber=res1.isnumber)
+            R1.main[key] = Result(name=res1.name, ispercentage=res1.ispercentage)
             
             # It's a number, can just sum the arrays
-            if res1.isnumber:
+            if res1.ispercentage:
                 for attr in ['pops', 'tot']:
                     this = getattr(res1, attr) + getattr(res2, attr)
                     setattr(R1.main[key], attr, this)
@@ -286,8 +286,8 @@ class Resultset(object):
                 else:                       data = self.main[key].tot[ind][:]
                 output += key+sep+popkey+sep
                 for t in range(npts):
-                    if self.main[key].isnumber: output += ('%i'+sep) % data[t]
-                    else:                       output += ('%s'+sep) % sigfig(data[t])
+                    if self.main[key].ispercentage: output += ('%s'+sep) % sigfig(data[t])
+                    else:                           output += ('%i'+sep) % data[t]
        
         if len(self.budget)>ind: # WARNING, does not support multiple years
             output += '\n\n\n'
