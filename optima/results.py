@@ -87,6 +87,7 @@ class Resultset(object):
         self.main['numnewdiag']         = Result('Number of new diagnoses')
         self.main['nummtct']            = Result('Number of HIV+ births')
         self.main['numhivbirths']       = Result('Number of births to HIV+ women')
+        self.main['numpmtct']           = Result('Number of HIV+ women receiving PMTCT')
         self.main['popsize']            = Result('Population size')
         self.main['numincare']          = Result('Number of PLHIV in care')
         self.main['propincare']         = Result('Proportion of diagnosed PLHIV in care', ispercentage=True)
@@ -187,6 +188,7 @@ class Resultset(object):
         alldiag   = dcp(array([self.raw[i]['diag'] for i in range(len(self.raw))]))
         allmtct   = dcp(array([self.raw[i]['mtct'] for i in range(len(self.raw))]))
         allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(len(self.raw))]))
+        allreceivepmtct = dcp(array([self.raw[i]['receivepmtct'] for i in range(len(self.raw))]))
         allplhiv = self.settings.allplhiv
         alldx = self.settings.alldx
         allcare = self.settings.allcare
@@ -212,6 +214,9 @@ class Resultset(object):
 
         self.main['numhivbirths'].pops = quantile(allhivbirths[:,:,indices], quantiles=quantiles)
         self.main['numhivbirths'].tot = quantile(allhivbirths[:,:,indices].sum(axis=1), quantiles=quantiles)
+
+        self.main['numpmtct'].pops = quantile(allreceivepmtct[:,:,indices], quantiles=quantiles)
+        self.main['numpmtct'].tot = quantile(allreceivepmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
 
         self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
         self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations

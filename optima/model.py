@@ -46,6 +46,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
+    raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
     raw_newcare     = zeros((npops, npts))          # Number newly in care per timestep
     raw_newtreat    = zeros((npops, npts))          # Number initiating ART per timestep
@@ -617,15 +618,22 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
             thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
 
-            if isnan(proppmtct[t]) or isinf(proppmtct[t]): # Proportion on PMTCT is not specified: use number
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+            if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
+                thisreceivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                mtctdx = (thiseligbirths - thisreceivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = thisreceivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
             else: # Proportion on PMTCT is specified, ignore number
-                mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
+                if isinf(proppmtct[t]): # If the prop value is infinity, we use last timestep's value
+                    if t==0: calcprop=0.
+                    else:
+                        calcpmtctprop = raw_receivepmtct[:,t-1].sum()/raw_hivbirths[:,t-1].sum()
+                else: calcpmtctprop = proppmtct[t]                
+                mtctdx = (thiseligbirths * (1-calcpmtctprop)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = (thiseligbirths * calcpmtctprop) * pmtcteff[t] # MTCT from those receiving PMTCT
+                thisreceivepmtct = thiseligbirths * calcpmtctprop
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
+            raw_receivepmtct[p1, t] += thisreceivepmtct/dt 
             raw_mtct[p2, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thiseligbirths/dt
@@ -781,6 +789,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['mtct']       = raw_mtct
     raw['births']     = raw_births
     raw['hivbirths']  = raw_hivbirths
+    raw['receivepmtct'] = raw_receivepmtct
     raw['diag']       = raw_diag
     raw['newtreat']   = raw_newtreat
     raw['death']      = raw_death
