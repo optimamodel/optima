@@ -1,4 +1,6 @@
 
+<a class="modal-close fa fa-times" ng-click="cancel()"></a>
+
 <div class="modal-header">
   CREATE/EDIT A {{scenario.scenario_type}} PROGRAM SCENARIO
 </div>
@@ -39,45 +41,89 @@
   </p>
 </div>
 
-<div style="width:100%; overflow-x:scroll;">
-  <table class="table table-bordered" style="width:auto;">
-    <tr>
-      <th>Year</th>
-      <th ng-repeat="iProgram in getProgramsIndexRange()">
-        {{scenario[scenario_type][iProgram].program}}
-      </th>
-      <th style="width: 150px;">Manage</th>
-    </tr>
 
-    <tr ng-repeat="iYear in getYearIndexRange()">
-      <td>{{scenario.years[iYear]}}</td>
-      <td ng-repeat="iProgram in getProgramsIndexRange()">
-        {{scenario[scenario_type][iProgram].values[iYear]}}
-      </td>
-      <td>
-        <span class="delete" ng-click="removeYear(iYear)">X</span>
-      </td>
-    </tr>
-
-    <tr>
-      <td ng-repeat="i in getDataEntryRange()">
-        <input type="number" class="c-input-table__input txbox"
-               ng-model="dataEntry[i]" required/>
-      </td>
-      <td>
-        <button type="button"
-                class="btn" ng-disabled="isDataInvalid()"
-                ng-click="addDataEntryYear()">
-          Add year
-        </button>
-      </td>
-    </tr>
+<div style="
+      border-top: 1px solid #999;
+      border-bottom: 1px solid #999;
+      padding: 10px 0;
+      margin-top: 2em;
+      margin-bottom: 1em;
+      width: 100%">
+  <table
+      style="
+        width: 100%">
+    <th width="80px">Year</th>
+    <th width="500px">Program</th>
+    <th>{{getScenarioType()}}</th>
   </table>
 </div>
 
-<a class="modal-close" ng-click="cancel()">x</a>
+<table
+    style="
+      border-bottom: 1px solid #999;
+      margin-bottom: 1em;
+      cellspacing: 10px;
+      width: 100%"
+    ng-repeat="year in years">
 
-<div class="c-parsce-modal__buttons u-layout-horizontal">
+  <td width="80px" valign="top">
+      <select
+          class="txbox __inline"
+          style="width: 60px;"
+          type="number"
+          ng-model="year.value"
+          ng-options="year for year in getSelectableYears(year.value)">
+      </select>
+  </td>
+  <td width="580px" valign="top">
+    <div
+      style="padding-bottom: 0.5em"
+      ng-repeat="program in year.programs"">
+      <select
+          class="txbox __inline"
+          style="width: 500px;"
+          type="text"
+          ng-model="program.short"
+          ng-options="p.short as p.name for p in getActivePrograms()">
+      </select>
+      <input
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="program.value"
+          type="number"/>
+    </div>
+    <button
+        ng-click="addProgram(year)"
+        class="btn"
+        style="margin-bottom: 0.5em;">
+      + program
+    </button>
+  </td>
+  <td valign="top">
+    <div
+      class="fa fa-times"
+      style="float: right"
+      ng-click="removeYear($index)">
+    </div>
+  </td>
+</table>
+
+<div
+  style="
+    width: 100%;
+    text-align: left;
+    padding-top: 0.3em;
+    padding-bottom: 2em;">
+  <button
+      ng-click="addYear()" class="btn">
+    + year
+  </button>
+</div>
+
+<div
+  style="
+    width: 100%;
+    text-align: center;">
   <button ng-click="cancel()" class="btn">Cancel</button>
   <button type="submit" ng-click="save()"
           class="btn __s o-form__button o-form__button--save">

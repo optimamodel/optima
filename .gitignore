@@ -25,3 +25,7 @@ build/
 dist/
 *~
 .tox/
+tests/geo/*.xlsx
+*.pid
+dump.rdb
+config.py

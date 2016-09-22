@@ -155,6 +155,9 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
+    # If no programs in the progset, return None
+    if not(len(progset.programs)): return None
+    
     constraints = odict() # Dictionary of all constraints -- WARNING, change back to odict!
     constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
@@ -399,11 +402,17 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
         raise OptimaException(errormsg)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     printv('Running %s optimization...' % which, 1, verbose)
-
+    
     # Shorten things stored in the optimization -- WARNING, not sure if this is consistent with other functions
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     lenparlist = len(parset.pars)
+    
+    # optim structure validation
+    if not(hasattr(optim, 'objectives')) or optim.objectives is None:
+        optim.objectives = defaultobjectives(project=project, progset=progset, which=which, verbose=verbose)
+    if not(hasattr(optim, 'constraints')) or optim.constraints is None:
+        optim.constraints = defaultconstraints(project=project, progset=progset, which=which, verbose=verbose)
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?

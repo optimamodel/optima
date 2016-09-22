@@ -301,6 +301,7 @@ if 'maxcoverage' in tests:
 
     print('Running maximum coverage scenario test...')
     from optima import Coveragescen, Parscen, defaults, dcp
+    from numpy import array
     
     ## Set up default project
     P = defaults.defaultproject('generalized')
@@ -308,7 +309,7 @@ if 'maxcoverage' in tests:
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
     maxcoverage = dcp(defaultbudget) # It's just an odict, though I know this looks awful
-    for key in maxcoverage: maxcoverage[key] = array([maxcoverage[key]+1e14])
+    for key in maxcoverage: maxcoverage[key] = array([maxcoverage[key]+1e9])
     scenlist = [
         Parscen(name='Current conditions', parsetname='default', pars=[]),
         Coveragescen(name='Full coverage', parsetname='default', progsetname='default', t=[2016], coverage=maxcoverage),
@@ -341,9 +342,12 @@ if 'maxbudget' in tests:
     defaultbudget = P.progsets['default'].getdefaultbudget()
     maxbudget = dcp(defaultbudget)
     for key in maxbudget: maxbudget[key] += 1e14
+    zerobudget = dcp(defaultbudget)
+    for key in zerobudget: zerobudget[key] = array([0.]) # Alternate way of setting to zero   
     scenlist = [
         Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
         Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
+        Budgetscen(name='Zero spending', parsetname='default', progsetname='default', t=[2016], budget=zerobudget),
         ]
     
     # Run the scenarios
@@ -352,8 +356,9 @@ if 'maxbudget' in tests:
      
     if doplot:
         from optima import pygui, plotpars
-        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+
 
 
 

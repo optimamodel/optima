@@ -15,7 +15,11 @@ define(
 
   function val2str(val, limit, suffix) {
     var reducedVal = val / limit;
-    var nDecimal = reducedVal >= 1 ? 0 : 1;
+    var leftOver = reducedVal % 1.0;
+    var nDecimal = 0;
+    if (leftOver > 0.05) {
+      nDecimal = 1;
+    }
     return "" + reducedVal.toFixed(nDecimal) + suffix;
   }
 

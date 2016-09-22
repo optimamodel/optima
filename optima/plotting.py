@@ -12,15 +12,18 @@ Version: 2016jul06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
-from numpy import array, ndim, maximum, arange, zeros, mean, shape
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, sum as npsum
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
-epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
-epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
+epiformatslist = [ # WARNING, definition requires each of these to start with the same letter!
+                  ['t', 'tot', 'total'], 
+                  ['p', 'pop', 'per population', 'pops', 'per', 'population'], 
+                  ['s', 'sta', 'stacked']
+                 ]
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-per', 'popsize-sta'] # Default epidemiological plots
+defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
 defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
 
 # Define global font sizes
@@ -95,8 +98,8 @@ def getplotselections(results):
     
     epikeys = results.main.keys() # e.g. 'prev'
     epinames = [thing.name for thing in results.main.values()]
-    episubkeys = epiformatslist[:,1] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
-    episubnames = epiformatslist[:,2] # e.g. 'per population'
+    episubkeys = [sublist[1] for sublist in epiformatslist] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
+    episubnames = [sublist[2] for sublist in epiformatslist] # e.g. 'per population'
     
     for key in epikeys: # e.g. 'prev'
         for subkey in episubkeys: # e.g. 'tot'
@@ -200,7 +203,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
-        ['prev-tot', 'inci-per']
+        ['prev-tot', 'inci-pop']
 
         This function returns an odict of figures, which can then be saved as MPLD3, etc.
         
@@ -243,7 +246,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
             plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
-            if plotformat not in epiformatslist.flatten():
+            if plotformat not in npsum(epiformatslist): # Sum flattens a list of lists. Stupid.
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
@@ -314,7 +317,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             if isperpop: pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
             else: pkeys = [plotkey] # If it's anything else, just go with the original, but turn into a list so can iterate
             
-            for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-per-FSW'
+            for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
                 epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
@@ -331,7 +334,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 if not ismultisim and istotal:
                     plot(results.tvec, factor*best[0], lw=lw, c=colors[0]) # Index is 0 since only one possibility
                 
-                # e.g. single simulation, prev-per: single line, separate plot per population
+                # e.g. single simulation, prev-pop: single line, separate plot per population
                 if not ismultisim and isperpop: 
                     plot(results.tvec, factor*best[i], lw=lw, c=colors[0]) # Index is each individual population in a separate window
                 
@@ -503,7 +506,13 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     
     # Preliminaries: process inputs and extract needed data
     
-    budgets = multires.budget # WARNING, will break with multiple years
+    budgets = dcp(multires.budget) # Copy budget
+    for b,budget in enumerate(budgets.values()): # Loop over all budgets
+        for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
+            budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
+    for key in budgets.keys(): # Budgets is an odict
+        for i,val in enumerate(budgets[key].values()):
+            if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0
     
     alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
     proglabels = budgets[0].keys() 
@@ -514,18 +523,14 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     fig = figure(figsize=figsize)
     ax = subplot(1,1,1)
     
-#    fig.subplots_adjust(left=0.03) # Less space on left
-#    fig.subplots_adjust(right=0.98) # Less space on right
-#    fig.subplots_adjust(top=0.95) # Less space on bottom
     fig.subplots_adjust(bottom=0.50) # Less space on bottom
     
     for i in range(nprogs-1,-1,-1):
         xdata = arange(nallocs)+1
         ydata = array([budget[i] for budget in budgets.values()])
         bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-#        bar(xdata, ydata, bottom=bottomdata, color=progcolors[i], linewidth=0)
-        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)        
-    
+        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
+
     ax.set_xlabel('Spending')
     labels = proglabels
     labels.reverse()
@@ -563,22 +568,15 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     
     "which" should be either 'budget' or 'coverage'
     
-    Version: 2016jan27
+    Version: 2016aug18
     '''
     
     # Preliminaries: process inputs and extract needed data
-    which = 'coverage'
-    print('Warning -- deprecated syntax') # WARNING need to fix properly when there's more time!!!!!!!!!!!!!!!!!!
-    try: 
-        toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
-    except: 
-        errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
-        if die: raise OptimaException(errormsg)
-        else: printv(errormsg, 1, verbose)
+    toplot = [item for item in multires.coverage.values() if item] # e.g. [budget for budget in multires.budget]
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
     proglabels = toplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
+    alloclabels = [key for k,key in enumerate(multires.coverage.keys()) if multires.coverage.values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
@@ -603,7 +601,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
                         try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
                         except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
                 else:                     progdata[i] = x
-            if which=='coverage': progdata *= 100 
+            progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
@@ -617,7 +615,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        ylabel = 'Spending' if which=='budget' else 'Coverage (% of targeted)'
+        ylabel = 'Coverage (% of targeted)'
         ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
@@ -678,8 +676,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
     colors = gridcolormap(len(cascadelist))
     
     
-    bottom = 0*results.tvec # Easy way of setting to 0...
     for plt in range(nsims): # WARNING, copied from plotallocs()
+        bottom = 0*results.tvec # Easy way of setting to 0...
         
         ## Do the plotting
         subplot(nsims,1,plt+1)
