@@ -197,7 +197,12 @@
 
             <tr>
               <td>{{vm.makePopKeyLabel(outcome.pop)}}</td>
-              <td>{{yearEntry.year}}</td>
+              <td>
+                <input
+                  style="width:4em"
+                  type="number"
+                  ng-model="yearEntry.year">
+              </td>
               <td>
                 "{{vm.state.parameter.name}}"
                 in the absence of any programs targeting this parameter
