@@ -43,8 +43,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_inciby      = zeros((nstates, npts))        # Total incidence transmitted by each health state
-    raw_births      = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
+    raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
+    raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
     raw_newcare     = zeros((npops, npts))          # Number newly in care per timestep
     raw_newtreat    = zeros((npops, npts))          # Number initiating ART per timestep
@@ -615,7 +616,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
             mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
             thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
-            
+
             if isnan(proppmtct[t]) or isinf(proppmtct[t]): # Proportion on PMTCT is not specified: use number
                 receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
                 mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
@@ -627,6 +628,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
             raw_mtct[p2, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
+            raw_hivbirths[p1, t] += thiseligbirths/dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update incidence based on PMTCT calculation
 
@@ -778,6 +780,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['inciby']     = raw_inciby
     raw['mtct']       = raw_mtct
     raw['births']     = raw_births
+    raw['hivbirths']  = raw_hivbirths
     raw['diag']       = raw_diag
     raw['newtreat']   = raw_newtreat
     raw['death']      = raw_death
