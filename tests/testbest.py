@@ -13,11 +13,11 @@ manualcalib = 0
 reconcile = 0
 runscenarios = 0 # Run scenarios
 optimize = 0
-dosave = 1
+dosave = 0
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('generalized',dorun=False)
+P = defaults.defaultproject('best',dorun=False)
 P.runsim(debug=True)
 
 
