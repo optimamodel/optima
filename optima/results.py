@@ -211,15 +211,19 @@ class Resultset(object):
         self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: 
             self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
+            self.main['numnewdiag'].estimate = True # It's not real data, just an estimate
         
         self.main['numdeath'].pops = quantile(alldeaths[:,:,indices], quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: 
             self.main['numdeath'].datatot = processdata(data['optdeath'])
+            self.main['numdeath'].estimate = True # It's not real data, just an estimate
         
         self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+        if data is not None: 
+            self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+            self.main['numplhiv'].estimate = True # It's not real data, just an estimate
         
         self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
