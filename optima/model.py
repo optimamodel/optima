@@ -778,6 +778,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
                                 people[errstate,errpop,t+1] = 0.0 # Reset
+                                
+        raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
                 
     
     raw               = odict()    # Sim output structure
