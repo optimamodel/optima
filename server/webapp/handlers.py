@@ -36,6 +36,7 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
     upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs, get_users
+from . import dataio
 from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
@@ -782,29 +783,6 @@ class OptimizationGraph(Resource):
         return load_optimization_graphs(project_id, optimization_id, which)
 
 
-user_parser = RequestParser()
-user_parser.add_arguments({
-    'email':       {'type': nullable_email, 'help': 'A valid e-mail address'},
-    'displayName': {'dest': 'name'},
-    'username':    {'required': True},
-    'password':    {'type': hashed_password, 'required': True},
-})
-
-user_update_parser = RequestParser()
-user_update_parser.add_arguments({
-    'email':       {'type': nullable_email, 'help': 'A valid e-mail address'},
-    'displayName': {'dest': 'name'},
-    'username':    {'required': True},
-    'password':    {'type': hashed_password},
-})
-
-user_login_parser = RequestParser()
-user_login_parser.add_arguments({
-    'username': {'required': True},
-    'password': {'type': hashed_password, 'required': True},
-})
-
-
 class UserDoesNotExist(RecordDoesNotExist):
     _model = 'user'
 
@@ -820,6 +798,16 @@ def create_user(args):
 
     return user
 
+
+def parse_user_args(args):
+    return {
+        'email': nullable_email(args.get('email', None)),
+        'name': args.get('displayName', ''),
+        'username': args.get('username', ''),
+        'password': hashed_password(args.get('password')),
+    }
+
+
 class User(Resource):
 
     method_decorators = [report_exception]
@@ -834,31 +822,19 @@ class User(Resource):
         return {'users': get_users()}
 
     @swagger.operation(summary='Create a user')
-    @marshal_with(UserDb.resource_fields)
     def post(self):
         """
         POST /api/user
         Returns: a dictionary of users
         """
-        print args
-        args = {
-            'name': None,
-            'email': None
-        }
-        # nullable_email
-        # hashed passwords
-        args.update(get_post_data_json())
-        print args
+        args = parse_user_args(get_post_data_json())
         user = create_user(args)
-        return user, 201
+        return dataio.marshal_user(user), 201
 
 
 class UserDetail(Resource):
 
-    @swagger.operation(
-        summary='Delete a user',
-        notes='Requires admin privileges'
-    )
+    @swagger.operation(summary='Delete a user')
     @report_exception
     @verify_admin_request
     def delete(self, user_id):
@@ -886,14 +862,8 @@ class UserDetail(Resource):
 
         return '', 204
 
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='Update a user',
-        notes='Requires admin privileges',
-        parameters=user_update_parser.swagger_parameters(),
-    )
+    @swagger.operation(summary='Update a user')
     @report_exception
-    @marshal_with(UserDb.resource_fields)
     def put(self, user_id):
         current_app.logger.debug('/api/user/{}'.format(user_id))
 
@@ -909,7 +879,7 @@ class UserDetail(Resource):
             if u is None:
                 abort(403)
 
-        args = user_update_parser.parse_args()
+        args = parse_user_args(get_post_data_json())
         for key, value in args.iteritems():
             if value is not None:
                 setattr(user, key, value)
@@ -918,34 +888,21 @@ class UserDetail(Resource):
 
         current_app.logger.info("modified user: {}".format(user_id))
 
-        return user
-
-
-# Authentication
+        return dataio.marshal_user(user)
 
 
 class CurrentUser(Resource):
-    method_decorators = [login_required]
+    method_decorators = [login_required, report_exception]
 
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='Return the current user'
-    )
-    @report_exception
-    @marshal_with(UserDb.resource_fields)
+    @swagger.operation(summary='Return the current user')
     def get(self):
-        return current_user
+        return dataio.marshal_user(current_user)
 
 
 class UserLogin(Resource):
 
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='Try to log a user in',
-        parameters=user_login_parser.swagger_parameters()
-    )
+    @swagger.operation(summary='Try to log a user in',)
     @report_exception
-    @marshal_with(UserDb.resource_fields)
     def post(self):
         current_app.logger.debug("/user/login {}".format(request.get_json(force=True)))
 
@@ -954,7 +911,7 @@ class UserLogin(Resource):
         if userisanonymous:
             current_app.logger.debug("current user anonymous, proceed with logging in")
 
-            args = user_login_parser.parse_args()
+            args = parse_user_args(get_post_data_json())
             try:
                 # Get user for this username
                 user = UserDb.query.filter_by(username=args['username']).first()
@@ -962,7 +919,7 @@ class UserLogin(Resource):
                 # Make sure user is valid and password matches
                 if user is not None and user.password == args['password']:
                     login_user(user)
-                    return user
+                    return dataio.marshal_user(user)
 
             except Exception:
                 var = traceback.format_exc()
@@ -971,22 +928,17 @@ class UserLogin(Resource):
             raise InvalidCredentials
 
         else:
-            return current_user
+            return dataio.marshal_user(current_user)
 
 
 class UserLogout(Resource):
-    method_decorators = [login_required]
 
-    @swagger.operation(
-        summary='Log the current user out'
-    )
+    @swagger.operation(summary='Log the current user out')
     @report_exception
     def get(self):
-        current_app.logger.debug("logging out user {}".format(
-            current_user.name
-        ))
+        msg = "logging out user {}".format(current_user.name)
+        current_app.logger.debug(msg)
         logout_user()
         session.clear()
         flash(u'You have been signed out')
-
         return redirect(url_for("site"))

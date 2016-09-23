@@ -54,7 +54,6 @@ from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
 
 
 
-
 def authenticate_current_user():
     current_app.logger.debug("authenticating user {} (admin:{})".format(
         current_user.id if not current_user.is_anonymous() else None,
@@ -66,8 +65,13 @@ def authenticate_current_user():
         else:
             return None
 
+def marshal_user(query):
+    return marshal(query, UserDb.resource_fields)
+
+
 def get_users():
-    return marshal(UserDb.query.all(), UserDb.resource_fields)
+    return marshal_user(UserDb.query.all())
+
 
 ## PROJECT
 
@@ -97,8 +101,10 @@ def load_project(project_id, raise_exception=True, db_session=None, authenticate
     if not db_session:
         db_session = db.session
     project_record = load_project_record(
-        project_id, raise_exception=raise_exception,
-        db_session=db_session, authenticate=authenticate)
+        project_id,
+        raise_exception=raise_exception,
+        db_session=db_session,
+        authenticate=authenticate)
     if project_record is None:
         if raise_exception:
             raise ProjectDoesNotExist(id=project_id)
