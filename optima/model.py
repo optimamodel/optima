@@ -753,7 +753,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 diff -= new_movers[cd4,:].sum() # Adjust the number of available spots
                         people[lowerstate,:,t+1] -= new_movers # Shift people out of the lower state... 
                         people[tostate,:,t+1] += new_movers # ... and into the higher state
-                        raw_new[:,t+1] += new_movers.sum(axis=0)/dt # Save new movers
+                        raw_new[:,t] += new_movers.sum(axis=0)/dt # Save new movers
     
                     else: # We need to move people DOWN the cascade
                         for state in higherstates: # Start with the first higher state
