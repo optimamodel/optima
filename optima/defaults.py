@@ -6,6 +6,8 @@ Version: 2016jan28
 import os
 import optima as op
 from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
+try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
+except: pass
 
 
 def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
@@ -589,3 +591,11 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
     project.addscenlist(scenlist)
     project.runscenarios()
     return scenlist # Return it as well
+
+
+def demo():
+    ''' Do a simple demo of Optima -- similar to simple.py '''
+    P = defaultproject()
+    P.runsim()
+    pygui(P)
+    return P
