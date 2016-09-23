@@ -16,15 +16,15 @@ import pprint
 import traceback
 from functools import wraps
 
-from flask import helpers, current_app, request, Response, make_response, jsonify, abort, session, flash, redirect, \
+from flask import helpers, current_app, request, Response, make_response, jsonify, abort, flash, redirect, \
     url_for
-from flask.ext.login import login_required, current_user, login_user, logout_user
-from flask.ext.restful import Resource, marshal_with, marshal
+from flask.ext.login import login_required, current_user
+from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
+from server.webapp.dataio import create_user, parse_user_args, update_user, do_login_user, delete_user, \
+    do_logout_current_user
 
-from .dbconn import db
-from .dbmodels import UserDb
-
+from . import dataio
 from .dataio import load_project_summaries, create_project_with_spreadsheet_download, delete_projects, \
     load_project_summary, update_project_followed_by_template_data_spreadsheet, download_project, \
     update_project_from_prj, create_project_from_prj, copy_project, load_project_program_summaries, \
@@ -36,10 +36,9 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
     upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs, get_users
-from . import dataio
-from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
+from .dbmodels import UserDb
 from .parse import get_default_populations
-from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
+from .utils import get_post_data_json, get_upload_file
 
 
 def report_exception(api_call):
@@ -783,31 +782,6 @@ class OptimizationGraph(Resource):
         return load_optimization_graphs(project_id, optimization_id, which)
 
 
-class UserDoesNotExist(RecordDoesNotExist):
-    _model = 'user'
-
-
-def create_user(args):
-    n_user = UserDb.query.filter_by(username=args['username']).count()
-    if n_user > 0:
-        raise UserAlreadyExists(args['username'])
-
-    user = UserDb(**args)
-    db.session.add(user)
-    db.session.commit()
-
-    return user
-
-
-def parse_user_args(args):
-    return {
-        'email': nullable_email(args.get('email', None)),
-        'name': args.get('displayName', ''),
-        'username': args.get('username', ''),
-        'password': hashed_password(args.get('password')),
-    }
-
-
 class User(Resource):
 
     method_decorators = [report_exception]
@@ -817,7 +791,6 @@ class User(Resource):
     def get(self):
         """
         GET /api/user
-        Returns: a dictionary of users
         """
         return {'users': get_users()}
 
@@ -825,70 +798,31 @@ class User(Resource):
     def post(self):
         """
         POST /api/user
-        Returns: a dictionary of users
         """
         args = parse_user_args(get_post_data_json())
-        user = create_user(args)
-        return dataio.marshal_user(user), 201
+        return create_user(args), 201
 
 
 class UserDetail(Resource):
 
+    method_decorators = [report_exception]
+
     @swagger.operation(summary='Delete a user')
-    @report_exception
     @verify_admin_request
     def delete(self, user_id):
-        current_app.logger.debug('/api/user/delete/{}'.format(user_id))
-        user = UserDb.query.get(user_id)
-
-        if user is None:
-            raise UserDoesNotExist(user_id)
-
-        user_email = user.email
-        user_name = user.username
-        from server.webapp.dbmodels import ProjectDb
-        from sqlalchemy.orm import load_only
-
-        # delete all corresponding projects and working projects as well
-        # project and related records delete should be on a method on the project model
-        projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
-        for project in projects:
-            project.recursive_delete()
-
-        db.session.delete(user)
-        db.session.commit()
-
-        current_app.logger.info("deleted user:{} {} {}".format(user_id, user_name, user_email))
-
+        """
+        DELETE /api/user/<uuid:user_id>
+        """
+        delete_user(user_id)
         return '', 204
 
     @swagger.operation(summary='Update a user')
-    @report_exception
     def put(self, user_id):
-        current_app.logger.debug('/api/user/{}'.format(user_id))
-
-        user = UserDb.query.get(user_id)
-        if user is None:
-            raise UserDoesNotExist(user_id)
-
-        try: userisanonymous = current_user.is_anonymous() # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    	except: userisanonymous = current_user.is_anonymous
-        if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
-            secret = request.args.get('secret', '')
-            u = UserDb.query.filter_by(password=secret, is_admin=True).first()
-            if u is None:
-                abort(403)
-
+        """
+        PUT /api/user/<uuid:user_id>
+        """
         args = parse_user_args(get_post_data_json())
-        for key, value in args.iteritems():
-            if value is not None:
-                setattr(user, key, value)
-
-        db.session.commit()
-
-        current_app.logger.info("modified user: {}".format(user_id))
-
-        return dataio.marshal_user(user)
+        return update_user(user_id, args)
 
 
 class CurrentUser(Resource):
@@ -904,31 +838,8 @@ class UserLogin(Resource):
     @swagger.operation(summary='Try to log a user in',)
     @report_exception
     def post(self):
-        current_app.logger.debug("/user/login {}".format(request.get_json(force=True)))
-
-        try: userisanonymous = current_user.is_anonymous() # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    	except: userisanonymous = current_user.is_anonymous
-        if userisanonymous:
-            current_app.logger.debug("current user anonymous, proceed with logging in")
-
-            args = parse_user_args(get_post_data_json())
-            try:
-                # Get user for this username
-                user = UserDb.query.filter_by(username=args['username']).first()
-
-                # Make sure user is valid and password matches
-                if user is not None and user.password == args['password']:
-                    login_user(user)
-                    return dataio.marshal_user(user)
-
-            except Exception:
-                var = traceback.format_exc()
-                print("Exception when logging user {}: \n{}".format(args['username'], var))
-
-            raise InvalidCredentials
-
-        else:
-            return dataio.marshal_user(current_user)
+        args = parse_user_args(get_post_data_json())
+        return do_login_user(args)
 
 
 class UserLogout(Resource):
@@ -936,9 +847,6 @@ class UserLogout(Resource):
     @swagger.operation(summary='Log the current user out')
     @report_exception
     def get(self):
-        msg = "logging out user {}".format(current_user.name)
-        current_app.logger.debug(msg)
-        logout_user()
-        session.clear()
+        do_logout_current_user()
         flash(u'You have been signed out')
         return redirect(url_for("site"))
