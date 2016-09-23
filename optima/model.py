@@ -92,6 +92,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     gt200           = settings.gt200                # >200
     gt50            = settings.gt50                 # >50
     lt50            = settings.lt50                 # <50
+    aidsind         = settings.aidsind              # AIDS
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
     dxstates        = [dx,care,usvl,svl,lost]
     carestates      = [care,usvl,svl]
@@ -524,7 +525,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
 
         # Undiagnosed to diagnosed
-        dxprob = array([hivtest[:,t]*max(dt-0.25,0)/dt, hivtest[:,t], hivtest[:,t], hivtest[:,t], maximum(aidstest[t],hivtest[:,t]), maximum(aidstest[t],hivtest[:,t])]) if isnan(propdx[t]) else zeros(ncd4)
+        if isnan(propdx[t]):
+            dxprob = hivtest[:,t]
+            dxprob[aidsind:] = maximum(aidstest[t],hivtest[aidsind:,t])
+        else: dxprob = zeros(ncd4)
+        
         for cd4, fromstate in enumerate(undx):
             for ts, tostate in enumerate(thistransit[fromstate][to]):
                 if tostate in undx: # Probability of not being tested
