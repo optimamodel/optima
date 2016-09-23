@@ -1,10 +1,10 @@
  define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
+
   'use strict';
 
   module.controller('ProgramModalController', function (
     $scope, $modalInstance, program, populations, programList, modalService,
     parameters, categories, openProject) {
-    // Default list of criteria
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
@@ -15,7 +15,6 @@
       return (!_.isUndefined(l.length) && l.length > 0);
     }
 
-    // Initializes controller state and sets some default values in the program
     function initialize() {
 
       $scope.state = {
@@ -103,6 +102,10 @@
       });
     }
 
+    function deepCopy(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
+    };
+
     /**
      * Section below will initialize parameters for program, it will:
      * 1. add temporary attr to each parameter, it will have parameter details from api /parameters
@@ -144,6 +147,8 @@
 
       if (attr.by == "pship") {
 
+        targetpar.attr.pships = deepCopy(targetpar.attr.pships);
+
         _.forEach(targetpar.attr.pships, function(pship) {
           _.forEach(targetpar.pops, function(pop) {
             if(angular.equals(pship, pop)) {
@@ -152,9 +157,11 @@
           });
         });
 
-        targetpar.selectAll = targetpar.attr.pships
-                                && targetpar.pops
-                                && targetpar.attr.pships.length === targetpar.pops.length;
+        targetpar.selectAll =
+          targetpar.attr.pships
+            && targetpar.pops
+            && (targetpar.attr.pships.length === targetpar.pops.length);
+
       } if (targetpar.attr.by === 'tot') {
 
         targetpar.pops = ['tot'];
@@ -165,7 +172,7 @@
         targetpar.attr.selectAll =
           targetpar.attr.populations
           && $scope.state.populations
-          && targetpar.attr.populations.length === targetpar.pops.length;
+          && (targetpar.attr.populations.length === targetpar.pops.length);
 
         targetpar.attr.populations = [];
 

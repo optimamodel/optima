@@ -638,9 +638,11 @@ def get_outcome_summaries_from_progset(progset):
 
 
 def set_outcome_summaries_on_progset(outcomes, progset):
+
     for covout_by_poptuple in progset.covout.values():
         for covout in covout_by_poptuple.values():
             covout.ccopars = op.odict()
+
     for outcome in outcomes:
         for year in outcome['years']:
             par_short = outcome['name']
