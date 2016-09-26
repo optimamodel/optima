@@ -1053,6 +1053,7 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
         if summary.get("id"):
             scen.uid = UUID(summary["id"])
 
+        scen.active = summary["active"]
         print("save summary")
         pprint(summary, indent=2)
         print("save scen kwargs")

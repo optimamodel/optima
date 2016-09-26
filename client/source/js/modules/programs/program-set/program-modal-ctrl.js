@@ -11,6 +11,10 @@
       console.log(JSON.stringify(val, null, 2));
     }
 
+    function deepCopy(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
+    }
+
     function isNonemptyList(l) {
       return (!_.isUndefined(l.length) && l.length > 0);
     }
@@ -20,7 +24,7 @@
       $scope.state = {
         selectAll: false,
         isNew: !program.name,
-        populations: angular.copy(populations), // all possible populations in the program
+        populations: deepCopy(populations), // all possible populations in the program
         parameters: parameters, // all possible parameters
         categories: categories,
         program: program,
@@ -30,7 +34,7 @@
         progPopReadOnly: false
       };
 
-      consoleLogJson('default loaded parameters', parameters);
+      console.log('default loaded parameters', parameters);
       /**
        All populations for the project will be listed for
        the program for user to select from.
@@ -50,6 +54,8 @@
         $scope.state.program.targetpars,
         function(par) { return par.pops.indexOf('tot') >= 0; }
       );
+
+      console.log('$scope.state.program.targetpars', $scope.state.program.targetpars);
 
       if (isAnyTargetparForTotal) {
         $scope.state.progPopReadOnly = true;
@@ -102,10 +108,6 @@
       });
     }
 
-    function deepCopy(jsonObject) {
-      return JSON.parse(JSON.stringify(jsonObject));
-    };
-
     /**
      * Section below will initialize parameters for program, it will:
      * 1. add temporary attr to each parameter, it will have parameter details from api /parameters
@@ -141,9 +143,9 @@
       if (_.isUndefined(attr)) {
         return;
       }
-      targetpar.attr = _.clone(attr);
+      targetpar.attr = deepCopy(attr);
 
-      consoleLogJson('raw targetpar', targetpar);
+      console.log('raw targetpar', targetpar);
 
       if (attr.by == "pship") {
 
@@ -193,7 +195,7 @@
         console.log('Error in setting targetpar');
       }
 
-      consoleLogJson('attr targetpar', targetpar);
+      console.log('attr targetpar', targetpar);
 
     }
 
