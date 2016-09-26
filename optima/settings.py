@@ -23,7 +23,7 @@ class Settings(object):
         self.start = 2000.0 # Default start year
         self.end = 2030.0 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
-        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
+        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
         self.ncd4 = len(self.hivstates)
         self.nhealth = len(self.healthstates)
         
@@ -36,7 +36,7 @@ class Settings(object):
         self.usvl     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
         self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
-        self.off      = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
+        self.notonart = cat([self.undx,self.dx,self.care,self.lost])
 
         self.nsus     = len(self.susreg) + len(self.progcirc)
         self.ninf     = self.nhealth - self.nsus
@@ -54,8 +54,8 @@ class Settings(object):
 
         # Combined states
         self.sus       = cat([self.susreg, self.progcirc]) # All uninfected
-        self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
-        self.allcare   = cat([         self.care, self.usvl, self.svl,            self.off]) # All people in care
+        self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost]) # All people diagnosed
+        self.allcare   = cat([         self.care, self.usvl, self.svl]) # All people in care
         self.alltx     = cat([                    self.usvl, self.svl]) # All people on treatment
         self.allplhiv  = cat([self.undx, self.alldx]) # All PLHIV
         self.allstates = cat([self.sus, self.allplhiv]) # All states
@@ -77,9 +77,6 @@ class Settings(object):
             errormsg = 'Incorrect number of health states provided (actually %i, want %i)' % (len(self.statelabels), self.nstates)
             raise OptimaException(errormsg)
         
-        # Non-cascade settings/states
-        self.usecascade = False # Whether or not to actually use the cascade
-        self.tx  = self.svl # Infected, on treatment -- not used with the cascade
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
@@ -87,6 +84,7 @@ class Settings(object):
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         self.forcepopsize = True # Whether or not to force the population size to match the parameters
+        self.transnorm = 0.43 # See analyses/misc/calculatecd4transnorm.py for calculation
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     
