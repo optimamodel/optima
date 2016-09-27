@@ -8,15 +8,14 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from ..api import app
 
 from .dbmodels import WorkLogDb
-from .dataio import update_or_create_result_record, \
-    load_project, load_project_record, delete_result_by_name, \
+from .dataio import update_or_create_result_record, load_project, load_project_record, \
     delete_result_by_name
 from .parse import get_optimization_from_project
 from .utils import normalize_obj
 
 import optima as op
-
 from celery import Celery
+
 
 db = SQLAlchemy(app)
 
@@ -239,7 +238,6 @@ def run_autofit(project_id, parset_id, maxtime=60):
 
     work_log_id = work_log.id
 
-    result = None
     try:
         project = work_log.load()
         orig_parset = get_parset_from_project_by_id(project, parset_id)
@@ -267,6 +265,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
         error_text = ""
         status = 'completed'
     except Exception:
+        result = None
         error_text = traceback.format_exc()
         status = 'error'
         print(">> Error in autofit")
