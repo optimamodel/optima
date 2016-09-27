@@ -10,6 +10,7 @@ from ..api import app
 from .dbmodels import WorkLogDb
 from .dataio import update_or_create_result_record, load_project, load_project_record, \
     delete_result_by_name
+from . import dataio
 from .parse import get_optimization_from_project
 from .utils import normalize_obj
 
@@ -242,6 +243,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
         project = work_log.load()
         orig_parset = get_parset_from_project_by_id(project, parset_id)
         orig_parset_name = orig_parset.name
+        parset_id = orig_parset.uid
         autofit_parset_name = "autofit-"+str(orig_parset_name)
 
         project.autofit(
@@ -258,7 +260,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
         autofit_parset = project.parsets[autofit_parset_name]
         autofit_parset.name = orig_parset.name
         autofit_parset.uid = orig_parset.uid
-        project.parsets.pop(orig_parset_name)
+        del project.parsets[orig_parset_name]
         project.parsets[orig_parset_name] = autofit_parset
         del project.parsets[autofit_parset_name]
 
@@ -273,13 +275,11 @@ def run_autofit(project_id, parset_id, maxtime=60):
 
     if result:
         print(">> Save autofitted parset '%s' to '%s' " % (autofit_parset_name, orig_parset_name))
-        print(">> Check parset '%s': %s " % (orig_parset_name, orig_parset_name in project.parsets))
-        print(">> Check parset '%s': %s " % (autofit_parset_name, autofit_parset_name in project.parsets))
         db_session = init_db_session()
         project_record = load_project_record(project_id, db_session=db_session)
         project_record.save_obj(project)
         db_session.add(project_record)
-        delete_result_by_name(project_id, result_name, db_session=db_session)
+        dataio.delete_result_by_parset_id(project_id, parset_id, db_session=db_session)
         result_record = update_or_create_result_record(
             project, result, orig_parset_name, 'calibration', db_session=db_session)
         print(">> Save result '%s'" % result.name)
