@@ -85,9 +85,8 @@ class Resultset(object):
         self.main['numnewdiag'] = Result('Number of new diagnoses')
         self.main['nummtct']    = Result('Number of HIV+ births')
         self.main['popsize']    = Result('Population size')
-        if self.settings.usecascade:
-            self.main['numincare']   = Result('Number of PLHIV in care')
-            self.main['numsuppressed']   = Result('Number of virally suppressed PLHIV')
+        self.main['numincare']   = Result('Number of PLHIV in care')
+        self.main['numsuppressed']   = Result('Number of virally suppressed PLHIV')
 
         if domake: self.make()
     
@@ -185,9 +184,8 @@ class Resultset(object):
         allplhiv = self.settings.allplhiv
         alldx = self.settings.alldx
         alltx = self.settings.alltx
-        if self.settings.usecascade:
-            allcare = self.settings.allcare
-            svl = self.settings.svl
+        allcare = self.settings.allcare
+        svl = self.settings.svl
         data = self.data
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
@@ -229,12 +227,10 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        
-        if self.settings.usecascade:
-            self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
-            self.main['numsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.main['numsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
 
         
 

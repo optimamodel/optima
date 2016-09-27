@@ -45,10 +45,18 @@ class Programset(object):
         
         return output
 
-    def getsettings(self):
+    def getsettings(self, project=None, parset=None, results=None):
         ''' Try to get the freshest settings available '''
-#        print('Warning, using default settings with program set "%s"' % self.name)
-        settings = Settings() # WARNING KLUDGY should fix by having project an attribute of Programset
+
+        try: settings = project.settings
+        except:
+            try: settings = self.project.settings
+            except:
+                try: settings = parset.project.settings
+                except:
+                    try: settings = results.project.settings
+                    except: settings = Settings()
+        
         return settings
         
     def gettargetpops(self):
@@ -173,7 +181,7 @@ class Programset(object):
         result = True
         details = []
         for prog in self.optimizableprograms().values():
-            if not prog.costcovfn.ccopars.get('unitcost'):
+            if prog.costcovfn.ccopars.get('unitcost') is None:
                 details.append(prog.name)
                 result = False
         if detail: return list(set(details))
@@ -546,21 +554,16 @@ class Programset(object):
         
         years = t # WARNING, not renaming in the function definition for now so as to not break things
         
-        settings = self.getsettings() # WARNING TEMP shouldn't need this!!!
         
         # Validate inputs
         if years is None: raise OptimaException('To get pars, one must supply years')
         if isnumber(years): years = [years]
-        settings = None
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         
-        # Get settings from somewhere
-        try: settings = parset.project.settings
-        except:
-            printv('Warning, could not extract settings, using defaults', 1, verbose)
-            settings = Settings()
+        # Get settings
+        settings = self.getsettings()
 
         # Get outcome dictionary
         outcomes = self.getoutcomes(coverage=coverage, t=years, parset=parset, results=results, sample=sample)
@@ -682,6 +685,7 @@ class Programset(object):
             except: raise OptimaException('Could not find a usable parset')
         
         # Initialise internal variables 
+        settings = self.getsettings()
         origpardict = dcp(self.cco2odict(t=year))
         pardict = dcp(origpardict)
         pararray = dcp(pardict[:]) # Turn into array format
@@ -695,7 +699,7 @@ class Programset(object):
             parupper = zeros(npars)
             for k,tmp in enumerate(pardict.keys()):
                 parname = tmp[0] # First entry is parameter name
-                limits = convertlimits(parset.pars[0][parname].limits, dt=self.project.settings.dt)
+                limits = convertlimits(parset.pars[0][parname].limits, dt=settings.dt)
                 parlower[k] = limits[0]
                 parupper[k] = limits[1]
         if any(parupper<parlower): 
@@ -895,13 +899,8 @@ class Program(object):
         # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
         else: 
 
-            # Do everything possible to get settings
-            try: settings = parset.project.settings
-            except: 
-                try: settings = results.project.settings
-                except:
-                    print('Warning, could not find settings for program "%s", using default' % self.name)
-                    settings = Settings()
+            # Get settings
+            settings = self.getsettings()
             
             npops = len(parset.pars[ind]['popkeys'])
     
@@ -1124,7 +1123,7 @@ class CCOF(object):
         ''' Add or replace parameters for cost-coverage functions'''
 
         # Fill in the missing information for cost-coverage curves
-        if ccopar.get('unitcost'):
+        if ccopar.get('unitcost') is not None:
             if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
 
         if not self.ccopars:
@@ -1143,8 +1142,11 @@ class CCOF(object):
                     for ccopartype in ccopar.keys():
                         if self.ccopars[ccopartype]:
                             oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
-                            self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    printv('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars), 4, verbose)
+                            printv('\nModified CCO parameter "%s" from "%s" to "%s"' % (ccopartype, oldccopar[ccopartype], ccopar[ccopartype]), 4, verbose)
+                        else:
+                            printv('Added CCO parameter "%s" with value "%s"' % (ccopartype, ccopar[ccopartype]), 4, verbose)
+                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
+                    
                 else:
                     errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']
                     raise OptimaException(errormsg)
@@ -1162,6 +1164,7 @@ class CCOF(object):
                 errormsg = 'You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars)
                 raise OptimaException(errormsg)
         return None
+
 
     def getccopar(self, t, verbose=2, sample='best'):
         '''
@@ -1182,44 +1185,40 @@ class CCOF(object):
 
         # Set up necessary variables
         ccopar = odict()
+        ccopars_sample = odict()
         t = promotetoarray(t)
         nyrs = len(t)
-        ccopars_no_t = dcp(odict({k:v for k,v in self.ccopars.iteritems() if v}))
-        del ccopars_no_t['t']
         
         # Get the appropriate sample type
-        if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
-            for parname, parvalue in ccopars_no_t.iteritems():
+        for parname, parvalue in self.ccopars.iteritems():
+            if parname is not 't' and parvalue:
+                ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = mean(array(parvalue[j][:]))
-        elif sample in ['lower','l','low']:
-            for parname, parvalue in ccopars_no_t.iteritems():
-                for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = parvalue[j][0]
-        elif sample in ['upper','u','up','high','h']:
-            for parname, parvalue in ccopars_no_t.iteritems():
-                for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = parvalue[j][1]
-        elif sample in ['random','rand','r']:
-            for parname, parvalue in ccopars_no_t.iteritems():
-                for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = uniform(parvalue[j][0],parvalue[j][1])
-        else:
-            raise OptimaException('Unrecognised bounds.')
-            
-        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
+                    thisval = parvalue[j]
+                    if isnumber(thisval): thisval = (thisval, thisval)
+                    if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
+                        ccopars_sample[parname][j] = mean(array(thisval[:]))
+                    elif sample in ['lower','l','low']:
+                        ccopars_sample[parname][j] = thisval[0]
+                    elif sample in ['upper','u','up','high','h']:
+                        ccopars_sample[parname][j] = thisval[1]
+                    elif sample in ['random','rand','r']:
+                        ccopars_sample[parname][j] = uniform(parvalue[j][0],parvalue[j][1])
+                    else:
+                        raise OptimaException('Unrecognised bounds.')
+        
+        # CK: I feel there might be a more direct way of doing all of this...
+        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
-        j = 1
 
         # Calculate interpolated parameters
-        for param in ccopars_no_t.keys():
-            knownparam = array([ccopartuple[j] for ccopartuple in ccopartuples])
+        for j,param in enumerate(ccopars_sample.keys()): 
+            knownparam = array([ccopartuple[j+1] for ccopartuple in ccopartuples])
             allparams = smoothinterp(t, knownt, knownparam, smoothness=1)
             ccopar[param] = zeros(nyrs)
             for yr in range(nyrs):
                 ccopar[param][yr] = allparams[yr]
             if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
-            j += 1
 
         ccopar['t'] = t
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)

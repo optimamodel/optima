@@ -557,7 +557,6 @@ class OptimaSpreadsheet:
         current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)',                           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)        
-        current_row = self.emit_years_block('Viral suppression when initiating ART (%)',                        current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
 
 
     def generate_opt(self):
@@ -586,11 +585,8 @@ class OptimaSpreadsheet:
     def generate_casc(self):
         current_row = 0
         current_row = self.emit_ref_years_block('Average time taken to be linked to care (years)',                               current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',      current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Biological failure rate (%/year)',                                                  current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Viral load monitoring (number/year)',                                               current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_years_block('Rate of ART re-initiation (%/year)',                                                current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
 
             
 
@@ -657,24 +653,39 @@ class OptimaSpreadsheet:
             [3.3,1,1,1,1.76,3.9], 
             [9.1,1,1,1,6.92,12.08], 
             OptimaFormats.NUMBER),
-        ('Disease progression rate (% per year)',
+        ('Disease progression (average years to move)',
             ['Acute to CD4(>500)',
             'CD4(500) to CD4(350-500)',
             'CD4(350-500) to CD4(200-350)',
             'CD4(200-350) to CD4(50-200)',
             'CD4(50-200) to CD4(<50)'], 
-            [4.14, 1.05, 0.33, 0.27, 0.67], 
-            [2.00, 0.86, 0.32, 0.25, 0.44], 
-            [9.76, 1.61, 0.35, 0.29, 0.88],
-            OptimaFormats.PERCENTAGE),
-        ('Treatment recovery rate (% per year)',
+            [0.24, 0.95, 3.00, 3.74, 1.50], 
+            [0.10, 0.62, 2.83, 3.48, 1.13], 
+            [0.50, 1.16, 3.16, 4.00, 2.25],
+            OptimaFormats.NUMBER),
+        ('Treatment recovery due to suppressive ART (average years to move)',
             ['CD4(350-500) to CD4(>500)',
             'CD4(200-350) to CD4(350-500)',
             'CD4(50-200) to CD4(200-350)',
-            'CD4(<50) to CD4(50-200)'],
-            [0.45, 0.70, 0.47, 1.52], 
-            [0.14, 0.29, 0.33, 1.06], 
-            [0.93, 1.11, 0.72, 1.96], 
+            'CD4(<50) to CD4(50-200)',
+            'Time after initiating ART to achieve viral suppression (years)'],
+            [2.20, 1.42, 2.14, 0.66, 0.20], 
+            [1.07, 0.90, 1.39, 0.51, 0.10], 
+            [7.28, 3.42, 3.58, 0.94, 0.30], 
+            OptimaFormats.NUMBER),     
+        ('CD4 change due to non-suppressive ART (%/year)',
+            ['CD4(500) to CD4(350-500)',
+             'CD4(350-500) to CD4(>500)',
+             'CD4(350-500) to CD4(200-350)',
+             'CD4(200-350) to CD4(350-500)',
+             'CD4(200-350) to CD4(50-200)',
+             'CD4(50-200) to CD4(200-350)',
+             'CD4(50-200) to CD4(<50)',
+             'CD4(<50) to CD4(50-200)',
+             'Treatment failure rate'],
+            [0.026, 0.150, 0.100, 0.053, 0.162, 0.117, 0.090, 0.111, 0.16],
+            [0.005, 0.038, 0.022, 0.008, 0.050, 0.032, 0.019, 0.047, 0.05],
+            [0.275, 0.885, 0.870, 0.827, 0.869, 0.686, 0.723, 0.563, 0.26],
             OptimaFormats.PERCENTAGE),
         ('Death rate (% mortality per year)',
             ['Acute infection',
@@ -683,11 +694,12 @@ class OptimaSpreadsheet:
             'CD4(200-350)',
             'CD4(50-200)',
             'CD4(<50)',
-            'On treatment',
+            'Relative death rate on suppressive ART',
+            'Relative death rate on non-suppressive ART',
             'Tuberculosis cofactor'],
-            [0.0036, 0.0036, 0.0058, 0.0088, 0.059, 0.3230, 0.2300, 2.17], 
-            [0.0029, 0.0029, 0.0048, 0.0750, 0.0540, 0.2960, 0.1500, 1.27],
-            [0.0044, 0.0044, 0.0071, 0.0101, 0.079, 0.4320, 0.3000, 3.71], 
+            [0.0036, 0.0036, 0.0058, 0.0088, 0.059, 0.3230, 0.2300, 0.4878, 2.17], 
+            [0.0029, 0.0029, 0.0048, 0.0075, 0.0540, 0.2960, 0.1500, 0.2835, 1.27],
+            [0.0044, 0.0044, 0.0071, 0.0101, 0.079, 0.4320, 0.3000, 0.8417, 3.71], 
             OptimaFormats.DECIMAL_PERCENTAGE),
         ('Changes in transmissibility (%)',
             ['Condom use',
@@ -702,14 +714,6 @@ class OptimaSpreadsheet:
             [0.95, 0.58, 0.0, 2.65, 0.54, 0.9, 0.73, 0.5, 0.92],
             [0.8, 0.47, 0.0, 1.35, 0.33, 0.82, 0.65, 0.3, 0.8],
             [0.98, 0.67, 0.68, 5.19, 0.68, 0.93, 0.8, 0.8, 0.95],
-            OptimaFormats.PERCENTAGE),
-        ('Cascade parameters',
-            ['People on unsuppressive ART who progress (%)',
-            'People on unsuppressive ART who recover (%)',
-            'People lost to follow up who are still in care (%)'],
-            [0.4, 0.4, 0.4],
-            [0.3, 0.3, 0.3],
-            [0.5, 0.5, 0.5],
             OptimaFormats.PERCENTAGE),
         ('Disutility weights',
             ['Untreated HIV, acute',
