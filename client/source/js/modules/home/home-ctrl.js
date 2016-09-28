@@ -16,12 +16,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       function setActiveProject() {
-        console.log('setActiveProject');
         $scope.project = null;
         _.each($scope.projects, function(project) {
-          console.log('check', project.id);
           if ($scope.activeProjectId === project.id) {
-            console.log('new id');
             $scope.project = project;
           }
         });

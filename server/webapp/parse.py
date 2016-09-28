@@ -174,7 +174,7 @@ def get_project_summary_from_project(project):
         'creationTime': project.created,
         'updatedTime': project.modified,
         'dataUploadTime': project.spreadsheetdate,
-        'hasData': project.data != {},
+        'hasData': "meta" in project.data,
         'hasEcon': "econ" in project.data
     }
     return project_summary
