@@ -163,7 +163,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               .success(function (data, status, headers, config) {
                 var name = data['name'];
                 var projectId = data['id'];
-                console.log('upload', JSON.stringify(data));
+                toastr.success('Project uploaded');
                 activeProject.setActiveProjectFor(
                   name, projectId, UserManager.data);
                 $state.reload();
@@ -186,9 +186,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               .success(function (data, status, headers, config) {
                 var name = data['name'];
                 var projectId = data['id'];
-                console.log('upload', JSON.stringify(data));
                 activeProject.setActiveProjectFor(
                   name, projectId, UserManager.data);
+                toastr.success('Project created from spreadsheet');
                 $state.reload();
               });
           })
@@ -196,12 +196,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.uploadSpreadsheet = function (name, id) {
-        var url =  '/api/project/' + id + '/spreadsheet';
         angular
           .element('<input type="file">')
           .change(function (event) {
-            fileUpload.uploadDataSpreadsheet(
-              $scope, event.target.files[0], url);
+            $upload
+              .upload({
+                url: '/api/project/' + id + '/spreadsheet',
+                file: event.target.files[0]
+              })
+              .success(function (response) {
+                toastr.success('Spreadsheet uploaded for project');
+                $state.reload();
+              });
+
           })
           .click();
       };

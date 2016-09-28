@@ -1,4 +1,5 @@
 import traceback
+from functools import wraps
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
@@ -31,7 +32,7 @@ from uuid import uuid4
 from datetime import datetime
 import dateutil
 
-from flask import helpers, current_app, abort, request, session
+from flask import helpers, current_app, abort, request, session, make_response, jsonify
 from flask.ext.login import current_user, login_user, logout_user
 
 from werkzeug.utils import secure_filename
@@ -62,6 +63,173 @@ from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
 
 
 
+# USERS
+
+def authenticate_current_user():
+    current_app.logger.debug("authenticating user {} (admin:{})".format(
+        current_user.id if not current_user.is_anonymous() else None,
+        current_user.is_admin if not current_user.is_anonymous else False
+    ))
+    if current_user.is_anonymous():
+        if raise_exception:
+            abort(401)
+        else:
+            return None
+
+
+def marshal_user(query):
+    return marshal(query, UserDb.resource_fields)
+
+
+def get_users():
+    return marshal_user(UserDb.query.all())
+
+
+def parse_user_args(args):
+    return {
+        'email': nullable_email(args.get('email', None)),
+        'name': args.get('displayName', ''),
+        'username': args.get('username', ''),
+        'password': hashed_password(args.get('password')),
+    }
+
+
+def create_user(args):
+    n_user = UserDb.query.filter_by(username=args['username']).count()
+    if n_user > 0:
+        raise UserAlreadyExists(args['username'])
+
+    user = UserDb(**args)
+    db.session.add(user)
+    db.session.commit()
+
+    return marshal_user(user)
+
+
+def update_user(user_id, args):
+    user = UserDb.query.get(user_id)
+    if user is None:
+        raise UserDoesNotExist(user_id)
+
+    try:
+        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
+    except:
+        userisanonymous = current_user.is_anonymous
+
+    if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
+        secret = request.args.get('secret', '')
+        u = UserDb.query.filter_by(password=secret, is_admin=True).first()
+        if u is None:
+            abort(403)
+
+    for key, value in args.iteritems():
+        if value is not None:
+            setattr(user, key, value)
+
+    db.session.commit()
+
+    return marshal_user(user)
+
+
+def do_login_user(args):
+    try:
+        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
+    except:
+        userisanonymous = current_user.is_anonymous
+
+
+    if userisanonymous:
+        current_app.logger.debug("current user anonymous, proceed with logging in")
+
+        print("login args", args)
+        try:
+            # Get user for this username
+            user = UserDb.query.filter_by(username=args['username']).first()
+
+            print("user", user)
+            # Make sure user is valid and password matches
+            if user is not None and user.password == args['password']:
+                login_user(user)
+                return marshal_user(user)
+
+        except Exception:
+            var = traceback.format_exc()
+            print("Exception when logging user {}: \n{}".format(args['username'], var))
+
+        raise InvalidCredentials
+
+    else:
+        return marshal_user(current_user)
+
+
+def delete_user(user_id):
+    user = UserDb.query.get(user_id)
+
+    if user is None:
+        raise UserDoesNotExist(user_id)
+
+    user_email = user.email
+    user_name = user.username
+    from server.webapp.dbmodels import ProjectDb
+    from sqlalchemy.orm import load_only
+
+    # delete all corresponding projects and working projects as well
+    # project and related records delete should be on a method on the project model
+    projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
+    for project in projects:
+        project.recursive_delete()
+
+    db.session.delete(user)
+    db.session.commit()
+
+    print("deleted user:{} {} {}".format(user_id, user_name, user_email))
+
+
+def do_logout_current_user():
+    logout_user()
+    session.clear()
+
+
+def report_exception_decorator(api_call):
+    @wraps(api_call)
+    def _report_exception(*args, **kwargs):
+        from werkzeug.exceptions import HTTPException
+        try:
+            return api_call(*args, **kwargs)
+        except Exception as e:
+            exception = traceback.format_exc()
+            # limiting the exception information to 10000 characters maximum
+            # (to prevent monstrous sqlalchemy outputs)
+            current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
+            if isinstance(e, HTTPException):
+                raise
+            code = 500
+            reply = {'exception': exception}
+            return make_response(jsonify(reply), code)
+
+    return _report_exception
+
+
+def verify_admin_request_decorator(api_call):
+    """
+    verification by secret (hashed pw) or by being a user with admin rights
+    """
+
+    @wraps(api_call)
+    def _verify_admin_request(*args, **kwargs):
+        u = None
+        if (not current_user.is_anonymous()) and current_user.is_authenticated() and current_user.is_admin:
+            u = current_user
+        else:
+            secret = request.args.get('secret', '')
+            u = UserDb.query.filter_by(password=secret, is_admin=True).first()
+        if u is None:
+            abort(403)
+        else:
+            current_app.logger.debug("admin_user: %s %s %s" % (u.name, u.password, u.email))
+            return api_call(*args, **kwargs)
+
+    return _verify_admin_request
 
 ## PROJECT
 
@@ -983,128 +1151,3 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t, plotopt
 
     return convert_to_mpld3(plot)
 
-# USERS
-
-def authenticate_current_user():
-    current_app.logger.debug("authenticating user {} (admin:{})".format(
-        current_user.id if not current_user.is_anonymous() else None,
-        current_user.is_admin if not current_user.is_anonymous else False
-    ))
-    if current_user.is_anonymous():
-        if raise_exception:
-            abort(401)
-        else:
-            return None
-
-
-def marshal_user(query):
-    return marshal(query, UserDb.resource_fields)
-
-
-def get_users():
-    return marshal_user(UserDb.query.all())
-
-
-def parse_user_args(args):
-    return {
-        'email': nullable_email(args.get('email', None)),
-        'name': args.get('displayName', ''),
-        'username': args.get('username', ''),
-        'password': hashed_password(args.get('password')),
-    }
-
-
-def create_user(args):
-    n_user = UserDb.query.filter_by(username=args['username']).count()
-    if n_user > 0:
-        raise UserAlreadyExists(args['username'])
-
-    user = UserDb(**args)
-    db.session.add(user)
-    db.session.commit()
-
-    return marshal_user(user)
-
-
-def update_user(user_id, args):
-    user = UserDb.query.get(user_id)
-    if user is None:
-        raise UserDoesNotExist(user_id)
-
-    try:
-        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    except:
-        userisanonymous = current_user.is_anonymous
-
-    if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
-        secret = request.args.get('secret', '')
-        u = UserDb.query.filter_by(password=secret, is_admin=True).first()
-        if u is None:
-            abort(403)
-
-    for key, value in args.iteritems():
-        if value is not None:
-            setattr(user, key, value)
-
-    db.session.commit()
-
-    return marshal_user(user)
-
-
-def do_login_user(args):
-    try:
-        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    except:
-        userisanonymous = current_user.is_anonymous
-
-
-    if userisanonymous:
-        current_app.logger.debug("current user anonymous, proceed with logging in")
-
-        print("login args", args)
-        try:
-            # Get user for this username
-            user = UserDb.query.filter_by(username=args['username']).first()
-
-            print("user", user)
-            # Make sure user is valid and password matches
-            if user is not None and user.password == args['password']:
-                login_user(user)
-                return marshal_user(user)
-
-        except Exception:
-            var = traceback.format_exc()
-            print("Exception when logging user {}: \n{}".format(args['username'], var))
-
-        raise InvalidCredentials
-
-    else:
-        return marshal_user(current_user)
-
-
-def delete_user(user_id):
-    user = UserDb.query.get(user_id)
-
-    if user is None:
-        raise UserDoesNotExist(user_id)
-
-    user_email = user.email
-    user_name = user.username
-    from server.webapp.dbmodels import ProjectDb
-    from sqlalchemy.orm import load_only
-
-    # delete all corresponding projects and working projects as well
-    # project and related records delete should be on a method on the project model
-    projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
-    for project in projects:
-        project.recursive_delete()
-
-    db.session.delete(user)
-    db.session.commit()
-
-    print("deleted user:{} {} {}".format(user_id, user_name, user_email))
-
-
-def do_logout_current_user():
-    logout_user()
-    session.clear()

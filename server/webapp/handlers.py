@@ -13,16 +13,14 @@ structure or the database.
 import json
 import os
 import pprint
-import traceback
-from functools import wraps
 
-from flask import helpers, current_app, request, Response, make_response, jsonify, abort, flash, redirect, \
+from flask import helpers, current_app, request, Response, make_response, flash, redirect, \
     url_for
 from flask.ext.login import login_required, current_user
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
 from server.webapp.dataio import create_user, parse_user_args, update_user, do_login_user, delete_user, \
-    do_logout_current_user
+    do_logout_current_user, report_exception_decorator, verify_admin_request_decorator
 
 from . import dataio
 from .dataio import load_project_summaries, create_project_with_spreadsheet_download, delete_projects, \
@@ -37,56 +35,12 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
     upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs, get_users, \
     create_project_from_spreadsheet
-from .dbmodels import UserDb
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file
 
 
-def report_exception(api_call):
-    @wraps(api_call)
-    def _report_exception(*args, **kwargs):
-        from werkzeug.exceptions import HTTPException
-        try:
-            return api_call(*args, **kwargs)
-        except Exception as e:
-            exception = traceback.format_exc()
-            # limiting the exception information to 10000 characters maximum
-            # (to prevent monstrous sqlalchemy outputs)
-            current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
-            if isinstance(e, HTTPException):
-                raise
-            code = 500
-            reply = {'exception': exception}
-            return make_response(jsonify(reply), code)
-
-    return _report_exception
-
-
-def verify_admin_request(api_call):
-    """
-    verification by secret (hashed pw) or by being a user with admin rights
-    """
-
-    @wraps(api_call)
-    def _verify_admin_request(*args, **kwargs):
-        u = None
-        if (not current_user.is_anonymous()) and current_user.is_authenticated() and current_user.is_admin:
-            u = current_user
-        else:
-            secret = request.args.get('secret', '')
-            u = UserDb.query.filter_by(password=secret, is_admin=True).first()
-        if u is None:
-            abort(403)
-        else:
-            current_app.logger.debug("admin_user: %s %s %s" % (u.name, u.password, u.email))
-            return api_call(*args, **kwargs)
-
-    return _verify_admin_request
-
-
-
 class ProjectsAll(Resource):
-    method_decorators = [report_exception, verify_admin_request]
+    method_decorators = [report_exception_decorator, verify_admin_request_decorator]
 
     @swagger.operation(summary="Returns list of project sumamaries (for admins)")
     def get(self):
@@ -97,7 +51,7 @@ class ProjectsAll(Resource):
 
 
 class Projects(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns list project summaries for current user")
     def get(self):
@@ -135,7 +89,7 @@ class Projects(Resource):
 
 
 class Project(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Returns a project summary')
     def get(self, project_id):
@@ -172,7 +126,7 @@ class Project(Resource):
 
 
 class ProjectData(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Download .prj file for project')
     def get(self, project_id):
@@ -198,7 +152,7 @@ class ProjectData(Resource):
 
 
 class ProjectFromData(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Upload project with .prj/.xls')
     def post(self):
@@ -227,7 +181,7 @@ class ProjectFromData(Resource):
 
 
 class ProjectCopy(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Copies project to a different name")
     def post(self, project_id):
@@ -250,7 +204,7 @@ class ProjectCopy(Resource):
 
 
 class DefaultPrograms(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns default program summaries for program-set modal")
     def get(self, project_id):
@@ -261,7 +215,7 @@ class DefaultPrograms(Resource):
 
 
 class DefaultParameters(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns default programs for program-set modal")
     def get(self, project_id):
@@ -272,7 +226,7 @@ class DefaultParameters(Resource):
 
 
 class DefaultPopulations(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Returns default populations for project management')
     def get(self):
@@ -283,7 +237,7 @@ class DefaultPopulations(Resource):
 
 
 class Portfolio(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Download projects as .zip')
     def post(self):
@@ -299,7 +253,7 @@ class Portfolio(Resource):
 
 
 class ProjectDataSpreadsheet(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Downloads template/uploaded data spreadsheet')
     def get(self, project_id):
@@ -334,7 +288,7 @@ class ProjectDataSpreadsheet(Resource):
 
 
 class ProjectEcon(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Downloads template/uploaded econ spreadsheet')
     def get(self, project_id):
@@ -378,7 +332,7 @@ class ProjectEcon(Resource):
 
 
 class Parsets(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Returns a list of parset summaries')
     def get(self, project_id):
@@ -411,7 +365,7 @@ class Parsets(Resource):
 
 
 class ParsetRenameDelete(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Delete parset with parset_id.')
     def delete(self, project_id, parset_id):
@@ -434,7 +388,7 @@ class ParsetRenameDelete(Resource):
 
 
 class ParsetCalibration(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Returns parameter summaries and graphs for a project/parset')
     def get(self, project_id, parset_id):
@@ -468,7 +422,7 @@ class ParsetCalibration(Resource):
 
 
 class ParsetAutofit(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Starts autofit task and returns calc_status')
     def post(self, project_id, parset_id):
@@ -495,7 +449,7 @@ class ParsetAutofit(Resource):
 
 
 class ParsetUploadDownload(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Return a JSON file of the parameters")
     def get(self, project_id, parset_id):
@@ -522,7 +476,7 @@ class ParsetUploadDownload(Resource):
 
 
 class ResultsExport(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns result as downloadable .csv file")
     def get(self, result_id):
@@ -546,7 +500,7 @@ class ResultsExport(Resource):
 
 
 class Progsets(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Return progset summaries')
     def get(self, project_id):
@@ -566,7 +520,7 @@ class Progsets(Resource):
 
 
 class Progset(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Update progset with the given id.')
     def put(self, project_id, progset_id):
@@ -587,7 +541,7 @@ class Progset(Resource):
 
 
 class ProgsetUploadDownload(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Update from JSON file of the parameters")
     def post(self, project_id, progset_id):
@@ -612,7 +566,7 @@ class ProgsetParameters(Resource):
 
 
 class ProgsetOutcomes(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Returns list of outcomes for a progset')
     def get(self, project_id, progset_id):
@@ -631,7 +585,7 @@ class ProgsetOutcomes(Resource):
 
 
 class Program(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Saves a program summary to project')
     def post(self, project_id, progset_id):
@@ -645,7 +599,7 @@ class Program(Resource):
 
 
 class ProgramPopSizes(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Return estimated popsize for a given program and parset')
     def get(self, project_id, progset_id, program_id, parset_id):
@@ -657,7 +611,7 @@ class ProgramPopSizes(Resource):
 
 
 class ProgramCostcovGraph(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Returns an mpld3 dict that can be displayed with the mpld3 plugin')
     def get(self, project_id, progset_id, program_id):
@@ -692,7 +646,7 @@ class ProgramCostcovGraph(Resource):
 
 
 class Scenarios(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='get scenarios for a project')
     def get(self, project_id):
@@ -713,7 +667,7 @@ class Scenarios(Resource):
 
 
 class ScenarioSimulationGraphs(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Run scenarios and returns the graphs')
     def get(self, project_id):
@@ -724,7 +678,7 @@ class ScenarioSimulationGraphs(Resource):
 
 
 class Optimizations(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns list of optimization summaries")
     def get(self, project_id):
@@ -744,7 +698,7 @@ class Optimizations(Resource):
 
 
 class OptimizationUpload(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Uploads json of optimization summary")
     def post(self, project_id, optimization_id):
@@ -758,7 +712,7 @@ class OptimizationUpload(Resource):
 
 
 class OptimizationCalculation(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Launch optimization calculation')
     def post(self, project_id, optimization_id):
@@ -778,7 +732,7 @@ class OptimizationCalculation(Resource):
 
 
 class OptimizationGraph(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Provides optimization graph for the given project')
     def post(self, project_id, optimization_id):
@@ -792,10 +746,10 @@ class OptimizationGraph(Resource):
 
 class User(Resource):
 
-    method_decorators = [report_exception]
+    method_decorators = [report_exception_decorator]
 
     @swagger.operation(summary='List users')
-    @verify_admin_request
+    @verify_admin_request_decorator
     def get(self):
         """
         GET /api/user
@@ -813,10 +767,10 @@ class User(Resource):
 
 class UserDetail(Resource):
 
-    method_decorators = [report_exception]
+    method_decorators = [report_exception_decorator]
 
     @swagger.operation(summary='Delete a user')
-    @verify_admin_request
+    @verify_admin_request_decorator
     def delete(self, user_id):
         """
         DELETE /api/user/<uuid:user_id>
@@ -834,7 +788,7 @@ class UserDetail(Resource):
 
 
 class CurrentUser(Resource):
-    method_decorators = [login_required, report_exception]
+    method_decorators = [login_required, report_exception_decorator]
 
     @swagger.operation(summary='Return the current user')
     def get(self):
@@ -844,7 +798,7 @@ class CurrentUser(Resource):
 class UserLogin(Resource):
 
     @swagger.operation(summary='Try to log a user in',)
-    @report_exception
+    @report_exception_decorator
     def post(self):
         args = parse_user_args(get_post_data_json())
         return do_login_user(args)
@@ -853,7 +807,7 @@ class UserLogin(Resource):
 class UserLogout(Resource):
 
     @swagger.operation(summary='Log the current user out')
-    @report_exception
+    @report_exception_decorator
     def get(self):
         do_logout_current_user()
         flash(u'You have been signed out')
