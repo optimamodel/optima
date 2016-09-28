@@ -168,6 +168,7 @@ def get_project_summary_from_project(project):
         'name': project.name,
         'dataStart': data_start,
         'dataEnd': data_end,
+        'version': project.version,
         'populations': get_populations_from_project(project),
         'nProgram': n_program,
         'creationTime': project.created,

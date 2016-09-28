@@ -42,6 +42,9 @@
           <span ng-show="sortType == 'name' && sortReverse" class="fa fa-caret-up"></span>
           <span ng-show="sortType != 'name'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
+        <th>
+          Version
+        </th>
         <th ng-click="updateSorting('creationTime')" class="sortable">
           Created on
           <span ng-show="sortType == 'creationTime' && !sortReverse" class="fa fa-caret-down"></span>
@@ -53,6 +56,12 @@
           <span ng-show="sortType == 'updatedTime' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'updatedTime' && sortReverse" class="fa fa-caret-up"></span>
           <span ng-show="sortType != 'updatedTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th ng-click="updateSorting('dataUploadTime')" class="sortable">
+          Data uploaded on
+          <span ng-show="sortType == 'dataUploadTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'dataUploadTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'dataUploadTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
         <th colspan="7">Actions</th>
       </tr>
@@ -66,10 +75,16 @@
           {{ ::project.name }}
         </td>
         <td>
+          {{ ::project.version }}
+        </td>
+        <td>
           {{ ::project.creationTime| date:'yyyy-MM-dd HH:mm:ss'}}
         </td>
         <td>
           {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}
+        </td>
+        <td>
+          {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
         </td>
         <td>
           <button class="btn __green" ng-click="open(project.name, project.id)">Open</button>
@@ -84,7 +99,10 @@
           <button class="btn" ng-click="getData(project.name, project.id)">Download</button>
         </td>
         <td>
-          <button class="btn" ng-click="workbook(project.name, project.id)">Download data entry spreadsheet</button>
+          <button class="btn" ng-click="workbook(project.name, project.id)">Download template data spreadsheet</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload data spreadsheet</button>
         </td>
         <td>
           <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete</button>
