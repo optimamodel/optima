@@ -9,8 +9,8 @@ define(['angular'], function (angular) {
   return angular.module('app.common.file-upload', []).factory(
     'fileUpload',
     [
-      '$http', '$upload', 'modalService', 'activeProject', 'projectApiService',
-      function ($http, $upload, modalService, activeProject, projectApiService) {
+      '$http', '$upload', 'modalService', 'activeProject', 'projectApiService', '$state',
+      function ($http, $upload, modalService, activeProject, projectApiService, $state) {
         return {
 
           uploadDataSpreadsheet: function(scope, file, url, reload) {
@@ -26,7 +26,7 @@ define(['angular'], function (angular) {
               .upload({url: url, file: file})
               .success(function (response) {
                 modalService.inform(
-                   function() { if (reload) { window.location.reload(); } },
+                   function() { if (reload) { $state.reload(); } },
                   'Okay',
                   response,
                   'Upload completed'
