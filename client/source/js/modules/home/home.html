@@ -3,6 +3,10 @@
 
   <h1>Welcome to Optima</h1>
 
+  <div style="padding-top:1em" ng-hide="projects.length">
+    To begin, please create or upload a project:
+  </div>
+
   <br>
 
   <a class="btn" ui-sref="project.create">Create project</a> &nbsp;
@@ -17,9 +21,9 @@
 
     <h2>Projects -
 
-    <span ng-if="project"> active: {{ project.name }} </span>
+    <span ng-if="project"> current active project is "{{ project.name }}" </span>
 
-    <span ng-if="!project"> none active: please open one </span>
+    <span ng-if="!project"> no project has been selected as active </span>
 
     </h2>
 
@@ -114,10 +118,6 @@
       <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download Selected</button>
     </div>
 
-  </div>
-
-  <div ng-hide="projects.length">
-    <h3>No projects found</h3>
   </div>
 
 </div>
