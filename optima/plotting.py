@@ -22,7 +22,8 @@ epiformatslist = [ # WARNING, definition requires each of these to start with th
                   ['p', 'pop', 'per population', 'pops', 'per', 'population'], 
                   ['s', 'sta', 'stacked']
                  ]
-datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
+realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
+estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
 defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
 defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
 
@@ -265,7 +266,9 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             datatype, plotformat = plotkey 
             
             isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
+            isestimate = results.main[datatype].estimate # Distinguish between real data and model-based estimates
             factor = 1.0 if isnumber else 100.0 # Swap between number and percent
+            datacolor = estimatecolor if isestimate else realdatacolor # Light grey for
             istotal   = (plotformat=='t') # Only using first letter, see above...
             isperpop  = (plotformat=='p')
             isstacked = (plotformat=='s')
@@ -376,7 +379,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 if not ismultisim and databest is not None:
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
+                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=int(isestimate))
 
 
 
