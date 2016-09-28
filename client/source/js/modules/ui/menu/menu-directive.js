@@ -45,7 +45,7 @@ define(['./module'], function (module) {
                   $state.go(stateName);
                 } else {
                   modalService.inform(
-                    function (){ },
+                    function () {},
                     'Okay',
                     'Create or open a project first.',
                     'Cannot proceed'

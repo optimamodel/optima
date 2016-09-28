@@ -1,9 +1,11 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+
   'use strict';
 
-  module.controller('ProjectOpenController',
+  module.controller(
+    'ProjectOpenController',
     function ($scope, $http, activeProject, projects, modalService,
-              fileUpload, UserManager, projectApiService, $state, toastr) {
+        fileUpload, UserManager, projectApiService, $state, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
@@ -128,6 +130,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // read that this is the universal method which should work everywhere in
         // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
         window.open(projectApiService.getSpreadsheetUrl(id), '_blank', '');
+      };
+
+      $scope.uploadSpreadsheet = function (name, id) {
+        var url =  '/api/project/' + id + '/spreadsheet';
+        angular
+          .element('<input type="file">')
+          .change(function (event) {
+            fileUpload.uploadDataSpreadsheet(
+              $scope, event.target.files[0], url);
+          })
+          .click();
       };
 
       /**
