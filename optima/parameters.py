@@ -552,16 +552,9 @@ def makepars(data, label=None, verbose=2):
     # Set the year from which to hold proportions constant
     lasttreatmentyear = pars['numtx'].t[:][0][-1]
     lastpmtctyear = pars['numpmtct'].t[:][0][-1]
-    pars['propdx'].t[0] = append(pars['propdx'].t[0], lasttreatmentyear)
-    pars['propcare'].t[0] = append(pars['propcare'].t[0], lasttreatmentyear)
     pars['proptx'].t[0] = append(pars['proptx'].t[0], lasttreatmentyear)
-    pars['propsupp'].t[0] = append(pars['propsupp'].t[0], lasttreatmentyear)
     pars['proppmtct'].t[0] = append(pars['proppmtct'].t[0], lastpmtctyear)
-
-    pars['propdx'].y[0] = append(pars['propdx'].y[0], inf)
-    pars['propcare'].y[0] = append(pars['propcare'].y[0], inf)
     pars['proptx'].y[0] = append(pars['proptx'].y[0], inf)
-    pars['propsupp'].y[0] = append(pars['propsupp'].y[0], inf)
     pars['proppmtct'].y[0] = append(pars['proppmtct'].y[0], inf)
     
     # Balance partnerships parameters    
