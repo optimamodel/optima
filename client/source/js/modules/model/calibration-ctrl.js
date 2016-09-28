@@ -82,8 +82,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         parset: undefined
       };
 
-      console.log('project', project);
-
       // Check if project has spreadsheet uploaded
       $scope.isMissingData = !project.hasData;
       if ($scope.isMissingData) {
