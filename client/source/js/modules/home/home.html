@@ -1,6 +1,4 @@
-<!--<div class="grid" style="margin-left:0px">-->
-  <!--<h1>Manage project &#8594; Open/Manage projects</h1>-->
-<!--</div>-->
+
 <div class="rich">
 
   <h1>Welcome to Optima</h1>
@@ -8,8 +6,8 @@
   <br>
 
   <a class="btn" ui-sref="project.create">Create project</a> &nbsp;
-  <a class="btn" ui-sref="project.upload">Upload project</a> &nbsp;
-  <a class="btn" ui-sref="login">Upload from spreadsheet</a>
+  <a class="btn" ng-click="uploadProject()">Upload project</a> &nbsp;
+  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from data spreadsheet</a> &nbsp;
 
   <br>
   <br>
@@ -124,66 +122,3 @@
 
 </div>
 
-
-<!--<div class="padding-left-s">-->
-  <!--<h1>Welcome to Optima!</h1>-->
-
-  <!--<div class="well" ng-if="!project">-->
-    <!--<br><br>-->
-    <!--To begin, please create or open a project:-->
-    <!--<br><br>-->
-    <!--<a class="btn" ui-sref="project.create">Create new project</a>-->
-    <!--<a class="btn" ui-sref="project.open">Open/manage projects</a>-->
-  <!--</div>-->
-
-  <!--<div class="well" ng-if="project">-->
-    <!--<h3>Active project</h3>-->
-
-    <!--<table class="table table-bordered table-hover table-striped">-->
-      <!--<thead>-->
-      <!--<tr>-->
-        <!--<th>Name</th>-->
-        <!--<th>Populations</th>-->
-        <!--<th>Programs</th>-->
-        <!--<th>Data start year</th>-->
-        <!--<th>Data end year</th>-->
-        <!--<th>Created on</th>-->
-        <!--<th>Modified on</th>-->
-        <!--<th>Data uploaded on</th>-->
-      <!--</tr>-->
-      <!--</thead>-->
-      <!--<tbody>-->
-        <!--<tr>-->
-          <!--<td>-->
-            <!--{{ ::project.name }}-->
-          <!--</td>-->
-          <!--<td>-->
-            <!--{{ ::project.populations.length }}-->
-          <!--</td>-->
-          <!--<td>-->
-            <!--{{ ::project.nProgram }}-->
-          <!--</td>-->
-          <!--<td>-->
-            <!--{{ ::project.dataStart }}-->
-          <!--</td>-->
-          <!--<td>-->
-            <!--{{ ::project.dataEnd }}-->
-          <!--</td>-->
-          <!--<td>-->
-            <!--{{ ::project.creationTime | date:'yyyy-MM-dd HH:mm:ss'}}-->
-          <!--</td>-->
-          <!--<td>-->
-            <!--{{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}-->
-          <!--</td>-->
-          <!--<td>-->
-            <!--{{ project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}-->
-          <!--</td>-->
-        <!--</tr>-->
-      <!--</tbody>-->
-    <!--</table>-->
-    <!--<br><br>-->
-    <!--You can also <a class="link __black" ui-sref="project.create">create new</a>-->
-    <!--or <a class="link __black" ui-sref="project.open">open existing</a> project.-->
-  <!--</div>-->
-
-<!--</div>-->

@@ -5,7 +5,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller(
     'ProjectOpenController',
     function ($scope, $http, activeProject, projects, modalService,
-        fileUpload, UserManager, projectApiService, $state, toastr) {
+        fileUpload, UserManager, projectApiService, $state, $upload, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
@@ -132,6 +132,69 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         window.open(projectApiService.getSpreadsheetUrl(id), '_blank', '');
       };
 
+      function isExistingProjectName(projectName) {
+        var projectNames = _.pluck($scope.projects, 'name');
+        return _(projectNames).contains(projectName);
+      }
+
+      function getUniqueName(fname) {
+        var fileName = fname.replace(/\.prj$/, "").replace(/\.xlsx$/, "");
+        // if project name taken, try variants
+        var i = 0;
+        var result = fileName;
+        while (isExistingProjectName(result)) {
+          i += 1;
+          result = fileName + " (" + i + ")";
+        }
+        return result;
+      }
+
+      $scope.uploadProject = function() {
+        angular
+          .element('<input type="file">')
+          .change(function (event) {
+            var file = event.target.files[0];
+            $upload
+              .upload({
+                url: '/api/project/data',
+                fields: {name: getUniqueName(file.name)},
+                file: file
+              })
+              .success(function (data, status, headers, config) {
+                var name = data['name'];
+                var projectId = data['id'];
+                console.log('upload', JSON.stringify(data));
+                activeProject.setActiveProjectFor(
+                  name, projectId, UserManager.data);
+                $state.reload();
+              });
+          })
+          .click();
+      };
+
+      $scope.uploadProjectFromSpreadsheet = function() {
+        angular
+          .element('<input type="file">')
+          .change(function (event) {
+            var file = event.target.files[0];
+            $upload
+              .upload({
+                url: '/api/project/data',
+                fields: {name: getUniqueName(file.name), xls: true},
+                file: file
+              })
+              .success(function (data, status, headers, config) {
+                var name = data['name'];
+                var projectId = data['id'];
+                console.log('upload', JSON.stringify(data));
+                activeProject.setActiveProjectFor(
+                  name, projectId, UserManager.data);
+                $state.reload();
+              });
+          })
+          .click();
+      };
+
       $scope.uploadSpreadsheet = function (name, id) {
         var url =  '/api/project/' + id + '/spreadsheet';
         angular
@@ -215,24 +278,3 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
 });
 
-// define(['./module', 'underscore'], function (module) {
-//   'use strict';
-//
-//   module.controller('HomeController', function ($scope, project) {
-//
-//     // initialize data for the template
-//     var initialize= function() {
-//
-//       console.log(project);
-//       if (project && project.data) {
-//         $scope.project = project.data;
-//         $scope.project.creationTime = Date.parse($scope.project.creationTime);
-//         $scope.project.updatedTime = Date.parse($scope.project.updatedTime);
-//         $scope.project.dataUploadTime = Date.parse($scope.project.dataUploadTime);
-//       }
-//     };
-//
-//     initialize();
-//
-//   });
-// });

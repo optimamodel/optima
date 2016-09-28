@@ -307,6 +307,15 @@ def create_project_from_prj(prj_filename, project_name, user_id):
     return project.uid
 
 
+def create_project_from_spreadsheet(prj_filename, project_name, user_id):
+    project = op.Project(spreadsheet=prj_filename)
+    project = op.migrate(project)
+    project.name = project_name
+    save_project_as_new(project, user_id)
+    ensure_all_constraints_of_optimizations(project)
+    return project.uid
+
+
 def download_project(project_id):
     project_record = load_project_record(project_id, raise_exception=True)
     dirname = upload_dir_user(TEMPLATEDIR)

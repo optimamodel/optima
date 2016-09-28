@@ -35,7 +35,8 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_progset, delete_progset, upload_progset, load_parameters_from_progset_parset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
-    upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs, get_users
+    upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs, get_users, \
+    create_project_from_spreadsheet
 from .dbmodels import UserDb
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file
@@ -199,19 +200,26 @@ class ProjectData(Resource):
 class ProjectFromData(Resource):
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(summary='Upload project with .prj')
+    @swagger.operation(summary='Upload project with .prj/.xls')
     def post(self):
         """
         POST /api/project/data
-        form: name: name of project
+        form:
+            name: name of project
+            xls: true
         file: upload
         """
         project_name = request.form.get('name')
-        uploaded_prj_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        project_id = create_project_from_prj(
-            uploaded_prj_fname, project_name, current_user.id)
+        is_xls = request.form.get('xls', False)
+        uploaded_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        if is_xls:
+            project_id = create_project_from_spreadsheet(
+                uploaded_fname, project_name, current_user.id)
+        else:
+            project_id = create_project_from_prj(
+                uploaded_fname, project_name, current_user.id)
         response = {
-            'file': os.path.basename(uploaded_prj_fname),
+            'file': os.path.basename(uploaded_fname),
             'name': project_name,
             'id': project_id
         }
