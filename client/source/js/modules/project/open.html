@@ -6,6 +6,48 @@
 
 
     <h1>Open/manage projects</h1>
+
+    <a class="link __blue" ui-sref="project.create">Create a new project</a> or <a class="link __blue" ui-sref="project.upload">upload a project</a>, or
+    <a class="link __blue" ui-sref="login">upload from spreadsheet</a>
+
+    <br><br><br>
+
+    <div ng-if="project">
+      <b><i>Active project</i></b>
+      <table class="table table-bordered table-hover table-striped">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Created on</th>
+          <th>Modified on</th>
+          <th>Data uploaded on</th>
+        </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              {{ ::project.name }}
+            </td>
+            <td>
+              {{ ::project.creationTime | date:'yyyy-MM-dd HH:mm:ss'}}
+            </td>
+            <td>
+              {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}
+            </td>
+            <td>
+              {{ project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div ng-if="!project">
+      <h1>No active project: please select one</h1>
+    </div>
+
+    <h1>Open/manage projects</h1>
+
     <input type="text"
            class="txbox"
            style="margin-bottom: 20px"
@@ -22,18 +64,6 @@
           <span ng-show="sortType == 'name' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'name' && sortReverse" class="fa fa-caret-up"></span>
           <span ng-show="sortType != 'name'" class="fa fa-caret-up" style="visibility: hidden"></span>
-        </th>
-        <th ng-click="updateSorting('populations.length')" class="sortable">
-          Populations
-          <span ng-show="sortType == 'populations.length' && !sortReverse" class="fa fa-caret-down"></span>
-          <span ng-show="sortType == 'populations.length' && sortReverse" class="fa fa-caret-up"></span>
-          <span ng-show="sortType != 'populations.length'" class="fa fa-caret-up" style="visibility: hidden"></span>
-        </th>
-        <th ng-click="updateSorting('programs.length')" class="sortable">
-          Programs
-          <span ng-show="sortType == 'programs.length' && !sortReverse" class="fa fa-caret-down"></span>
-          <span ng-show="sortType == 'programs.length' && sortReverse" class="fa fa-caret-up"></span>
-          <span ng-show="sortType != 'programs.length'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
         <th ng-click="updateSorting('creationTime')" class="sortable">
           Created on
@@ -59,12 +89,6 @@
           {{ ::project.name }}
         </td>
         <td>
-          {{ ::project.populations.length }}
-        </td>
-        <td>
-          {{ ::project.nProgram }}
-        </td>
-        <td>
           {{ ::project.creationTime| date:'yyyy-MM-dd HH:mm:ss'}}
         </td>
         <td>
@@ -81,9 +105,6 @@
         </td>
         <td>
           <button class="btn" ng-click="getData(project.name, project.id)">Download project</button>
-        </td>
-        <td>
-          <button class="btn" ng-click="preSetData(project.name, project.id)">Upload project</button>
         </td>
         <td>
           <button class="btn" ng-click="workbook(project.name, project.id)">Download data entry spreadsheet</button>

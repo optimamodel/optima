@@ -3,9 +3,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ProjectOpenController',
     function ($scope, $http, activeProject, projects, modalService,
-              fileUpload, UserManager, projectApiService, $state, toastr) {
+              fileUpload, UserManager, projectApiService, $state, toastr, project) {
 
       function initialize() {
+
+        console.log(project);
+        if (project && project.data) {
+          $scope.project = project.data;
+          $scope.project.creationTime = Date.parse($scope.project.creationTime);
+          $scope.project.updatedTime = Date.parse($scope.project.updatedTime);
+          $scope.project.dataUploadTime = Date.parse($scope.project.dataUploadTime);
+        }
+
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
         $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
@@ -73,6 +82,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.open = function (name, id) {
+        $scope.activeProjectId = id;
         activeProject.setActiveProjectFor(name, id, UserManager.data);
         $state.go('home');
       };

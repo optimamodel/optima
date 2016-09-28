@@ -1,62 +1,171 @@
-<div class="padding-left-s">
-  <h1>Welcome to Optima!</h1>
+<!--<div class="grid" style="margin-left:0px">-->
+  <!--<h1>Manage project &#8594; Open/Manage projects</h1>-->
+<!--</div>-->
+<div class="rich">
 
-  <div class="well" ng-if="!project">
-    <br><br>
-    To begin, please create or open a project:
-    <br><br>
-    <a class="btn" ui-sref="project.create">Create new project</a>
-    <a class="btn" ui-sref="project.open">Open/manage projects</a>
-  </div>
+  <h1>Welcome to Optima</h1>
 
-  <div class="well" ng-if="project">
-    <h3>Active project</h3>
+  <br>
 
-    <table class="table table-bordered table-hover table-striped">
+  <a class="btn" ui-sref="project.create">Create project</a> &nbsp;
+  <a class="btn" ui-sref="project.upload">Upload project</a> &nbsp;
+  <a class="btn" ui-sref="login">Upload from spreadsheet</a>
+
+  <br>
+  <br>
+  <br>
+
+  <div class="section" ng-show="projects.length">
+
+    <h2>Projects -
+
+    <span ng-if="project"> active: {{ project.name }} </span>
+
+    <span ng-if="!project"> none active: please open one </span>
+
+    </h2>
+
+    <input type="text"
+           class="txbox"
+           style="margin-bottom: 20px"
+           placeholder="&#x1f50e; Filter Projects" ng-model="searchTerm">
+
+    <table class="table table-bordered table-hover table-striped" style="width: auto">
       <thead>
       <tr>
-        <th>Name</th>
-        <th>Populations</th>
-        <th>Programs</th>
-        <th>Data start year</th>
-        <th>Data end year</th>
-        <th>Created on</th>
-        <th>Modified on</th>
-        <th>Data uploaded on</th>
+        <th>
+          <input type="checkbox" ng-click="selectAll()" ng-model="allSelected"/>
+        </th>
+        <th ng-click="updateSorting('name')" class="sortable">
+          Name
+          <span ng-show="sortType == 'name' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'name' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'name'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th ng-click="updateSorting('creationTime')" class="sortable">
+          Created on
+          <span ng-show="sortType == 'creationTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'creationTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'creationTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th ng-click="updateSorting('updatedTime')" class="sortable">
+          Updated on
+          <span ng-show="sortType == 'updatedTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'updatedTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'updatedTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th colspan="7">Actions</th>
       </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>
-            {{ ::project.name }}
-          </td>
-          <td>
-            {{ ::project.populations.length }}
-          </td>
-          <td>
-            {{ ::project.nProgram }}
-          </td>
-          <td>
-            {{ ::project.dataStart }}
-          </td>
-          <td>
-            {{ ::project.dataEnd }}
-          </td>
-          <td>
-            {{ ::project.creationTime | date:'yyyy-MM-dd HH:mm:ss'}}
-          </td>
-          <td>
-            {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}
-          </td>
-          <td>
-            {{ project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
-          </td>
-        </tr>
+      <tr ng-repeat="project in projects | orderBy:sortType:sortReverse | filter:filterByName" ng-class="{highlighted: activeProjectId === project.id}">
+        <td>
+          <input type="checkbox" ng-model="project.selected"/>
+        </td>
+        <td>
+          {{ ::project.name }}
+        </td>
+        <td>
+          {{ ::project.creationTime| date:'yyyy-MM-dd HH:mm:ss'}}
+        </td>
+        <td>
+          {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}
+        </td>
+        <td>
+          <button class="btn __green" ng-click="open(project.name, project.id)">Open</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="edit(project.name, project.id)">Edit</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="getData(project.name, project.id)">Download</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="workbook(project.name, project.id)">Download data entry spreadsheet</button>
+        </td>
+        <td>
+          <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete</button>
+        </td>
+      </tr>
       </tbody>
     </table>
-    <br><br>
-    You can also <a class="link __black" ui-sref="project.create">create new</a>
-    or <a class="link __black" ui-sref="project.open">open existing</a> project.
+
+    <div style="display: flex; margin-left: -2%;" ng-show="projects.length">
+      <button ng-click="deleteSelected()" type="button" class="btn" style="margin-left:2%">Delete Selected</button>
+      <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download Selected</button>
+    </div>
+
+  </div>
+
+  <div ng-hide="projects.length">
+    <h3>No projects found</h3>
   </div>
 
 </div>
+
+
+<!--<div class="padding-left-s">-->
+  <!--<h1>Welcome to Optima!</h1>-->
+
+  <!--<div class="well" ng-if="!project">-->
+    <!--<br><br>-->
+    <!--To begin, please create or open a project:-->
+    <!--<br><br>-->
+    <!--<a class="btn" ui-sref="project.create">Create new project</a>-->
+    <!--<a class="btn" ui-sref="project.open">Open/manage projects</a>-->
+  <!--</div>-->
+
+  <!--<div class="well" ng-if="project">-->
+    <!--<h3>Active project</h3>-->
+
+    <!--<table class="table table-bordered table-hover table-striped">-->
+      <!--<thead>-->
+      <!--<tr>-->
+        <!--<th>Name</th>-->
+        <!--<th>Populations</th>-->
+        <!--<th>Programs</th>-->
+        <!--<th>Data start year</th>-->
+        <!--<th>Data end year</th>-->
+        <!--<th>Created on</th>-->
+        <!--<th>Modified on</th>-->
+        <!--<th>Data uploaded on</th>-->
+      <!--</tr>-->
+      <!--</thead>-->
+      <!--<tbody>-->
+        <!--<tr>-->
+          <!--<td>-->
+            <!--{{ ::project.name }}-->
+          <!--</td>-->
+          <!--<td>-->
+            <!--{{ ::project.populations.length }}-->
+          <!--</td>-->
+          <!--<td>-->
+            <!--{{ ::project.nProgram }}-->
+          <!--</td>-->
+          <!--<td>-->
+            <!--{{ ::project.dataStart }}-->
+          <!--</td>-->
+          <!--<td>-->
+            <!--{{ ::project.dataEnd }}-->
+          <!--</td>-->
+          <!--<td>-->
+            <!--{{ ::project.creationTime | date:'yyyy-MM-dd HH:mm:ss'}}-->
+          <!--</td>-->
+          <!--<td>-->
+            <!--{{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}-->
+          <!--</td>-->
+          <!--<td>-->
+            <!--{{ project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}-->
+          <!--</td>-->
+        <!--</tr>-->
+      <!--</tbody>-->
+    <!--</table>-->
+    <!--<br><br>-->
+    <!--You can also <a class="link __black" ui-sref="project.create">create new</a>-->
+    <!--or <a class="link __black" ui-sref="project.open">open existing</a> project.-->
+  <!--</div>-->
+
+<!--</div>-->

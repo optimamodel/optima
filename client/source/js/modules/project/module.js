@@ -57,16 +57,19 @@ define([
             }
           }
         })
-        .state('project.open', {
-          url: '/open',
-          templateUrl: 'js/modules/project/open.html',
-          controller: 'ProjectOpenController',
-          resolve: {
-            projects: function (projectApiService) {
-              return projectApiService.getProjectList();
-            }
-          }
-        })
+        // .state('project.open', {
+        //   url: '/open',
+        //   templateUrl: 'js/modules/project/open.html',
+        //   controller: 'ProjectOpenController',
+        //   resolve: {
+        //     projects: function (projectApiService) {
+        //       return projectApiService.getProjectList();
+        //     },
+        //     project: function (projectApiService) {
+        //       return projectApiService.getActiveProject();
+        //     }
+        //   }
+        // })
         .state('project.upload', {
           url: '/upload',
           templateUrl: 'js/modules/project/upload.html',
