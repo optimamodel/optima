@@ -533,8 +533,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         for cd4, fromstate in enumerate(undx):
             for ts, tostate in enumerate(thistransit[fromstate][to]):
                 if tostate in undx: # Probability of not being tested
-                    try: thistransit[fromstate][prob][ts] *= (1.-dxprob[cd4])
-                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    thistransit[fromstate][prob][ts] *= (1.-dxprob[cd4])
                 else: # Probability of being tested
                     thistransit[fromstate][prob][ts] *= dxprob[cd4]
                     raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
