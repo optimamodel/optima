@@ -11,17 +11,8 @@
     </div>
   </div>
   <div ng-click="showProjectMenu = !showProjectMenu" ng-mouseleave="showProjectMenu = false">
-    <div class="btn __blue">
+    <div ui-sref="home" class="btn __blue">
       Manage project
-      <i class="fa fa-angle-up" ng-if="showProjectMenu"></i>
-      <i class="fa fa-angle-down" ng-if="!showProjectMenu"></i>
-    </div>
-    <div ng-if="showProjectMenu" class="menu-dropdown" style="width: 200px;">
-      <div ui-sref="project.create">Create new project</div>
-      <div ui-sref="project.open">Open/manage projects</div>
-      <div ng-click="uploadSpreadsheet()">Upload Optima spreadsheet</div>
-      <div ui-sref="project.upload">Upload new project</div>
-      <div ng-click="goIfProjectActive('project.economicdata')">Add economic data</div>
     </div>
   </div>
   <div ng-click="showPortfolioMenu = !showPortfolioMenu" ng-mouseleave="showPortfolioMenu = false">
@@ -64,7 +55,7 @@
     </div>
     <div ng-if="showAnalysisMenu" class="menu-dropdown" style="width: 150px;">
       <div ng-click="goIfProjectActive('analysis.scenarios')">Scenario analyses</div>
-      <div ui-sref="analysis.optimization">Optimization analyses</div>
+      <div ng-click="goIfProjectActive('analysis.optimization')">Optimization analyses</div>
     </div>
   </div>
   <div ng-click="showAccountHelpMenu = !showAccountHelpMenu" ng-mouseleave="showAccountHelpMenu = false">

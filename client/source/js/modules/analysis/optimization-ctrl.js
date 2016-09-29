@@ -9,16 +9,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.isPolling = {};
 
-      if (!activeProject.data.hasData) {
-        modalService.inform(
-          function () {
-          },
-          'Okay',
-          'Please upload spreadsheet to proceed.',
-          'Cannot proceed'
-        );
-        $scope.missingData = true;
-        return;
+      $scope.isMissingData = !activeProject.data.hasParset;
+      $scope.isOptimizable = activeProject.data.isOptimizable;
+      $scope.isMissingProgramSet = activeProject.data.nProgram == 0;
+
+      console.log("$scope", $scope);
+      if ($scope.isMissingData || $scope.isMissingProgramSet || !$scope.isOptimizable) {
+        return
       }
 
       $scope.state = {

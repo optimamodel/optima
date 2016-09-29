@@ -1,9 +1,13 @@
+- stat: path=/home/{{ user }}/deploy.key
+  register: deploy_key
+
 - name: Copy over deploy key
   action: copy src=private/deploy.key dest=/home/{{ user }}/deploy.key
   become_user: "{{ user }}"
+  when: deploy_key.stat.exists == False
 
 - name: Clone down {{ service_name }} repo
-  action: git repo="https://{{ lookup('file', 'private/httpskey') }}@{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }} accept_hostkey=yes force=yes
+  action: git repo="{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }} accept_hostkey=yes force=yes
   become_user: "{{ user }}"
 
 - name: Copy over config

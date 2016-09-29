@@ -17,7 +17,8 @@ dosave = 1
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best')
+P = defaults.defaultproject('best',dorun=False)
+P.runsim(debug=True)
 #P = defaults.defaultproject('generalized')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_define_costoutcomefunctions.prj')
@@ -64,3 +65,5 @@ if optimize:
 
 if dosave:
     saveobj(filename,P)
+    
+    

@@ -51,7 +51,10 @@ def run():
     except IndexError:
         port = "8080"
 
+    # Start the threadpool now, shut it down when we're closing
     threadpool.start()
+    reactor.addSystemEventTrigger('before', 'shutdown', threadpool.stop)
+
     endpoint = serverFromString(reactor, "tcp:port=" + port)
     endpoint.listen(site)
 

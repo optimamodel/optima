@@ -3,5 +3,6 @@
 # Assumes start_server.sh is already running.
 # Version: 2016sep01
 
-cd ..
+cd `dirname $0` # Make sure we're in the bin folder
+cd .. # Main Optima folder
 python -m celery -A server.webapp.tasks.celery_instance worker -l info

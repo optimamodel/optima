@@ -169,22 +169,27 @@ def get_project_summary_from_project(project):
         data_end = project.settings.end
 
     n_program = 0
-    for progsets in project.progsets.values():
-        this_n_program = len(progsets.programs.values())
+    is_ready_to_optimize = False
+    for progset in project.progsets.values():
+        this_n_program = len(progset.programs.values())
         if this_n_program > n_program:
             n_program = this_n_program
+        if n_program > 0 and progset.readytooptimize():
+            is_ready_to_optimize = True
 
     project_summary = {
         'id': project.uid,
         'name': project.name,
         'dataStart': data_start,
         'dataEnd': data_end,
+        'version': project.version,
         'populations': get_populations_from_project(project),
         'nProgram': n_program,
         'creationTime': project.created,
         'updatedTime': project.modified,
         'dataUploadTime': project.spreadsheetdate,
-        'hasData': project.data != {},
+        'hasParset': len(project.parsets) > 0,
+        'isOptimizable': is_ready_to_optimize,
         'hasEcon': "econ" in project.data
     }
     return project_summary
@@ -649,18 +654,22 @@ def get_outcome_summaries_from_progset(progset):
 
 
 def set_outcome_summaries_on_progset(outcomes, progset):
+
+    for covout_by_poptuple in progset.covout.values():
+        for covout in covout_by_poptuple.values():
+            covout.ccopars = op.odict()
+
     for outcome in outcomes:
         for year in outcome['years']:
             par_short = outcome['name']
             if par_short not in progset.covout:
                 continue
-            covout = progset.covout[par_short]
+            covout_by_poptuple = progset.covout[par_short]
 
             ccopar = {
                 'intercept': (year['intercept_lower'], year['intercept_upper']),
                 't': int(year['year']),
             }
-
             for program in year["programs"]:
                 if program['intercept_lower'] is not None \
                         and program['intercept_upper'] is not None:
@@ -671,10 +680,10 @@ def set_outcome_summaries_on_progset(outcomes, progset):
 
             islist = isinstance(outcome['pop'], list)
             poptuple = tuple(outcome['pop']) if islist else outcome['pop']
-            if poptuple in covout:
-                covout[poptuple].addccopar(ccopar, overwrite=True)
+            if poptuple in covout_by_poptuple:
+                covout_by_poptuple[poptuple].addccopar(ccopar, overwrite=True)
 
-            covout[poptuple].interaction = outcome['interact']
+            covout_by_poptuple[poptuple].interaction = outcome['interact']
 
 
 # PROGETS
@@ -1060,6 +1069,7 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
         if summary.get("id"):
             scen.uid = UUID(summary["id"])
 
+        scen.active = summary["active"]
         print("save summary")
         pprint(summary, indent=2)
         print("save scen kwargs")

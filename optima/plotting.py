@@ -506,7 +506,12 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     
     # Preliminaries: process inputs and extract needed data
     
-    budgets = dcp(multires.budget) # WARNING, will break with multiple years
+    budgets = dcp(multires.budget) # Copy budget
+    for b,budget in enumerate(budgets.values()): # Loop over all budgets
+        for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
+            if budgets[b][p] is None:
+                continue
+            budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
     for key in budgets.keys(): # Budgets is an odict
         for i,val in enumerate(budgets[key].values()):
             if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0
@@ -635,7 +640,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
 
 
 ##################################################################
-## Plot improvements
+## Plot cascade
 ##################################################################
 def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
                 ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
@@ -662,19 +667,14 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
     # Set up figure and do plot
     fig = figure(figsize=figsize)
     
-    if results.settings.usecascade:
-        cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
-        cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
-    else:
-        cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
-        cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
+    cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
+    cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
         
     
     colors = gridcolormap(len(cascadelist))
     
-    
-    bottom = 0*results.tvec # Easy way of setting to 0...
     for plt in range(nsims): # WARNING, copied from plotallocs()
+        bottom = 0*results.tvec # Easy way of setting to 0...
         
         ## Do the plotting
         subplot(nsims,1,plt+1)
