@@ -785,20 +785,20 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
                 
     
-    raw               = odict()    # Sim output structure
-    raw['tvec']       = tvec
-    raw['popkeys']    = popkeys
-    raw['people']     = people
-    raw['inci']       = raw_inci
-    raw['inciby']     = raw_inciby
-    raw['mtct']       = raw_mtct
-    raw['births']     = raw_births
-    raw['hivbirths']  = raw_hivbirths
+    raw                 = odict()    # Sim output structure
+    raw['tvec']         = tvec
+    raw['popkeys']      = popkeys
+    raw['people']       = people
+    raw['inci']         = raw_inci
+    raw['inciby']       = raw_inciby
+    raw['mtct']         = raw_mtct
+    raw['births']       = raw_births
+    raw['hivbirths']    = raw_hivbirths
     raw['receivepmtct'] = raw_receivepmtct
-    raw['diag']       = raw_diag
-    raw['newtreat']   = raw_newtreat
-    raw['death']      = raw_death
-    raw['otherdeath'] = raw_otherdeath
+    raw['diag']         = raw_diag
+    raw['newtreat']     = raw_newtreat
+    raw['death']        = raw_death
+    raw['otherdeath']   = raw_otherdeath
     
     
     return raw # Return raw results

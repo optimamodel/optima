@@ -75,13 +75,20 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['numplhiv']           = Result('Number of PLHIV')
         self.main['numinci']            = Result('Number of new infections')
         self.main['numdeath']           = Result('Number of HIV-related deaths')
+        
+        self.main['numplhiv']           = Result('Number of PLHIV')
         self.main['numdiag']            = Result('Number of diagnosed PLHIV')
-        self.main['propdiag']           = Result('Proportion of diagnosed PLHIV', ispercentage=True)
+        self.main['numincare']          = Result('Number of PLHIV in care')
         self.main['numtreat']           = Result('Number of PLHIV on treatment')
-        self.main['proptreat']          = Result('Proportion of PLHIV in care on treatment', ispercentage=True)
+        self.main['numsuppressed']      = Result('Number of virally suppressed PLHIV')
+        
+        self.main['propdiag']           = Result('PLHIV who are diagnosed (%)', ispercentage=True)
+        self.main['propincare']         = Result('Diagnosed PLHIV who are in care (%)', ispercentage=True)
+        self.main['proptreat']          = Result('PLHIV in care who are on treatment (%)', ispercentage=True)
+        self.main['propsuppressed']     = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True)
+        
         self.main['prev']               = Result('HIV prevalence (%)', ispercentage=True)
         self.main['force']              = Result('Incidence (per 100 p.y.)', ispercentage=True)
         self.main['numnewdiag']         = Result('Number of new diagnoses')
@@ -89,11 +96,7 @@ class Resultset(object):
         self.main['numhivbirths']       = Result('Number of births to HIV+ women')
         self.main['numpmtct']           = Result('Number of HIV+ women receiving PMTCT')
         self.main['popsize']            = Result('Population size')
-        self.main['numincare']          = Result('Number of PLHIV in care')
-        self.main['propincare']         = Result('Proportion of diagnosed PLHIV in care', ispercentage=True)
-        self.main['numsuppressed']      = Result('Number of virally suppressed PLHIV')
-        self.main['propsuppressed']     = Result('Proportion of PLHIV on treatment virally suppressed', ispercentage=True)
-
+        
         if domake: self.make()
     
     
