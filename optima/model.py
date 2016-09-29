@@ -739,7 +739,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     actual          = people[num,:,t+1].sum()
                     available       = people[denom,:,t+1].sum()
                     ppltomoveup     = people[lowerstate,:,t+1]
-                    new_movers      = zeros((ncd4,npops)) 
 
                     # Figure out how many people we want
                     if isinf(prop[t+1]): # If the prop value is infinity, we use last timestep's value
@@ -751,6 +750,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     # Reconcile the differences between the number we have and the number we want
                     diff = wanted - actual # Wanted number less actual number 
                     if diff>0.: # We need to move people UP the cascade 
+                        new_movers      = zeros((ncd4,npops)) 
                         for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
                             if diff>eps: # Move people until you have the right proportions
                                 tomove = min(diff, sum(ppltomoveup[cd4,:])) # Figure out how many spots are available
