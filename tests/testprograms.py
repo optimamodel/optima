@@ -53,8 +53,6 @@ rtol = 1e-2
 
 
 
-
-
 ## Programs creation test
 if 'makeprograms' in tests:
     t = tic()
@@ -73,10 +71,7 @@ if 'makeprograms' in tests:
                               {'param': 'hivtest', 'pop': 'FSW'},
                               {'param': 'hivtest', 'pop': 'MSM'},
                               {'param': 'hivtest', 'pop': 'Clients'}],
-                  targetpops=['F 15+','FSW', 'Clients', 'MSM'],
-                  costcovdata = {'t':[2013],
-                                 'cost':[1e6],
-                                 'coverage':[3e5]})
+                  targetpops=['F 15+','FSW', 'Clients', 'MSM'])
 
     SBCC = Program(short='SBCC',
                    name='Social and behaviour change communication',
@@ -105,8 +100,7 @@ if 'makeprograms' in tests:
                               {'param': 'numcirc', 'pop': 'PWID'}],
                   targetpops=['M 15+', 'MSM', 'Clients', 'PWID'],
                   category='Prevention',
-                  name='Voluntary medical male circumcision',
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})              
+                  name='Voluntary medical male circumcision')              
                   
     # Testing methods of program class
     # 1. Adding a target parameter to a program
@@ -119,7 +113,11 @@ if 'makeprograms' in tests:
     HTC.rmtargetpar({'param': 'hivtest', 'pop': 'F 15+'})
     HTC.addtargetpar({'param': 'hivtest', 'pop': 'F 15+'})
 
-    # 3. Add historical cost-coverage data point                         
+    # 4. Create a program set
+    R = Programset(programs=[HTC,SBCC,MGT,ART,PMTCT,VMMC])
+    
+    R.makespreadsheet()
+
     SBCC.addcostcovdatum({'t':2011,
                          'cost':2e7,
                          'coverage':8e5})
