@@ -2,11 +2,7 @@
 
   <h1>Manage scenarios</h1>
 
-  <div ng-if="isMissingModelData">
-    <spreadsheet-upload-hint/>
-  </div>
-
-  <div ng-show="isMissingData">
+  <div class="error-hint" ng-show="isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
 
@@ -75,13 +71,13 @@
               <button
                   class="btn"
                   ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
-                  ng-disabled="isMissingProgramSet">
+                  ng-disabled="isMissingProgramSet || !isOptimizable">
                 + budget scenario
               </button>
               <button
                   class="btn"
                   ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
-                  ng-disabled="isMissingProgramSet">
+                  ng-disabled="isMissingProgramSet || !isOptimizable">
                 + coverage scenario
               </button>
               <button
@@ -91,6 +87,9 @@
               </button>
               <div class="error-hint" ng-show="isMissingProgramSet">
                 Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
+              </div>
+              <div class="error-hint" ng-show="!isMissingProgramSet && !isOptimizable">
+                Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
               </div>
             </td>
           </tr>
