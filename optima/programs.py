@@ -18,7 +18,7 @@ coveragepars=['numtx','numpmtct','numost','numcirc']
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='random', project=None):
+    def __init__(self, name='default', programs=None, default_interaction='additive', project=None):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()
@@ -508,6 +508,11 @@ class Programset(object):
                     # RANDOM CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'random':
                         # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
+                        
+                        xx = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
+                        print(xx)
+                        if xx==[0.0]:
+                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
                         for prog1 in thiscov.keys():
                             product = ones(thiscov[prog1].shape)
