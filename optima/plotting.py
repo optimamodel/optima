@@ -266,6 +266,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
             datatype, plotformat = plotkey 
             
             ispercentage = results.main[datatype].ispercentage # Indicate whether result is a percentage
+            isestimate = results.main[datatype].estimate # Indicate whether result is a percentage
             factor = 100.0 if ispercentage else 1.0 # Swap between number and percent
             datacolor = estimatecolor if isestimate else realdatacolor # Light grey for
             istotal   = (plotformat=='t') # Only using first letter, see above...

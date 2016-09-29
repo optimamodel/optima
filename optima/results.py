@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016jul06 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds
 from numpy import array, nan, zeros, arange, shape
 from numbers import Number
 
@@ -99,8 +99,8 @@ class Resultset(object):
         self.main['popsize']            = Result('Population size')
 
         self.other = odict() # For storing other results -- not available in the interface
-        self.other['adultprev']    = Result('Adult HIV prevalence (%)', isnumber=False)
-        self.other['childprev']    = Result('Child HIV prevalence (%)', isnumber=False)
+        self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
+        self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
         
         if domake: self.make()
     
