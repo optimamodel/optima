@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2016jul06
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp, findinds
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, sum as npsum
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
@@ -643,7 +643,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
 ##################################################################
 ## Plot cascade
 ##################################################################
-def plotcascade(results=None, aspercentage=False, doclose=True, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
                 ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
     ''' 
     Plot the treatment cascade.
@@ -653,7 +653,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, figsize=(14,10),
     Version: 2016sep28    
     '''
     
-    # Figure out what kind of result it is -- WARNING, copied from 
+    # Figure out what kind of result it is
     if type(results)==Resultset: 
         ismultisim = False
         nsims = 1
@@ -666,13 +666,16 @@ def plotcascade(results=None, aspercentage=False, doclose=True, figsize=(14,10),
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = figure(figsize=figsize)
+    fig = figure(figsize=figsize, facecolor=(1,1,1))
     
     cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
     cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
         
-    
-    colors = gridcolormap(len(cascadelist))
+    # Handle colors
+    if colors is None: colors = gridcolormap(len(cascadelist))
+    elif colors=='alpine': colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
+    elif type(colors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=colors)[1:-1] # Remove first and last element
+    else: raise OptimaException('Can''t figure out color %s' % colors)
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0*results.tvec # Easy way of setting to 0...
@@ -692,12 +695,11 @@ def plotcascade(results=None, aspercentage=False, doclose=True, figsize=(14,10),
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax = gca()
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
         ax.title.set_fontsize(titlesize)
         ax.xaxis.label.set_fontsize(labelsize)
+        ax.yaxis.label.set_fontsize(labelsize)
         for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
 
         # Configure plot specifics
