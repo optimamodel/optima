@@ -571,8 +571,14 @@ class OptimaSpreadsheet:
         'Number of HIV-related deaths', 
         'Number of people initiating ART each year']:
             current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
-        
-      
+
+        for name in [
+        'PLHIV aware of their status (%)', 
+        'Diagnosed PLHIV in care (%)',
+        'PLHIV in care on treatment (%)',
+        'Pregnant women on PMTCT (%)',
+        'People on ART with viral suppression (%)']:
+            current_row = self.emit_years_block(name, current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True) 
     
     def generate_casc(self):
         current_row = 0

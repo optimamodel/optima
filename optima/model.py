@@ -526,8 +526,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         # Undiagnosed to diagnosed
         if isnan(propdx[t]):
-            dxprob = hivtest[:,t]
-            dxprob[aidsind:] = maximum(aidstest[t],hivtest[aidsind:,t])
+            dxprob = [hivtest[:,t]]*ncd4
+            dxprob[aidsind:] = maximum(aidstest[t],hivtest[:,t])
         else: dxprob = zeros(ncd4)
         
         for cd4, fromstate in enumerate(undx):
