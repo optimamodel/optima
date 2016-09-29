@@ -526,14 +526,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         # Undiagnosed to diagnosed
         if isnan(propdx[t]):
-            dxprob = hivtest[:,t]
-            dxprob[aidsind:] = maximum(aidstest[t],hivtest[aidsind:,t])
+            dxprob = [hivtest[:,t]]*ncd4
+            dxprob[aidsind:] = maximum(aidstest[t],hivtest[:,t])
         else: dxprob = zeros(ncd4)
         
         for cd4, fromstate in enumerate(undx):
             for ts, tostate in enumerate(thistransit[fromstate][to]):
                 if tostate in undx: # Probability of not being tested
-                    thistransit[fromstate][prob][ts] *= (1.-dxprob[cd4])
+                    try: thistransit[fromstate][prob][ts] *= (1.-dxprob[cd4])
+                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 else: # Probability of being tested
                     thistransit[fromstate][prob][ts] *= dxprob[cd4]
                     raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
