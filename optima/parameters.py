@@ -34,7 +34,6 @@ AIDS testing rate (per year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	0	1
 STI prevalence	stiprev	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
 Tuberculosis prevalence	tbprev	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
 Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1	1	random	1
-Additional people on treatment	addnumtx	(0, 'maxpopsize')	tot	timepar	no	no	0	1	1	additive	0
 Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random	1
 Proportion of women who breastfeed	breast	(0, 1)	tot	timepar	meta	other	0	0	1	random	1
 Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	0	1	random	1
@@ -549,15 +548,6 @@ def makepars(data, label=None, verbose=2):
         pars['force'].y[key] = 1.0
         pars['inhomo'].y[key] = 0.0        
     
-#    # Set the year from which to hold proportions constant -- WARNING, causes problems with later modifications to numtx, so removing for now
-#    lasttreatmentyear = pars['numtx'].t[:][0][-1]
-#    lastpmtctyear = pars['numpmtct'].t[:][0][-1]
-#    pars['proptx'].t[0] = append(pars['proptx'].t[0], lasttreatmentyear)
-#    pars['proppmtct'].t[0] = append(pars['proppmtct'].t[0], lastpmtctyear)
-#    pars['proptx'].y[0] = append(pars['proptx'].y[0], inf)
-#    pars['proppmtct'].y[0] = append(pars['proppmtct'].y[0], inf)
-    
-    # Balance partnerships parameters    
     tmpacts = odict()
     tmpcond = odict()
     tmpactspts = odict()

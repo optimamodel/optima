@@ -82,7 +82,7 @@ if 'parametercheck' in tests:
     'condomcas', 'condomcom', 'condomreg', 
     'const', 'hivprev', 'meta', 'npops', 
     'numactscas', 'numactscom', 'numactsinj', 'numactsreg', 
-    'optdeath', 'optnewtreat', 'optnumdiag', 'optnuminfect', 'optnumtest', 'optplhiv', 'optprev', 
+    'optdeath', 'optnewtreat', 'optnumdiag', 'optnuminfect', 'optnumtest', 'optplhiv', 'optprev','optpropdx','optpropcare','optproptx','optpropsupp','optproppmtct',
     'partcas', 'partcom', 'partinj', 'partreg', 
     'pops', 'pships', 'years'])
     
@@ -90,8 +90,8 @@ if 'parametercheck' in tests:
     'actscas', 'actscom', 'actsinj', 'actsreg', 
     'condcas', 'condcom', 'condreg', 
     'female', 'force', 'inhomo', 'initprev', 
-    'injects', 'label', 'male', 'popkeys', 'sexworker', 'rawtransit',
-    'propdx','propcare','proptx','propsupp','proppmtct'])
+    'propdx','propcare','proptx','propsupp','proppmtct',
+    'injects', 'label', 'male', 'popkeys', 'sexworker', 'rawtransit'])
     
     dataminuspars = set(datakeys) - set(parkeys)
     parsminusdata = set(parkeys) - set(datakeys)
