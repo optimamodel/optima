@@ -86,7 +86,7 @@ from .settings import Settings, convertlimits, gettvecdt
 ## Create a blank spreadsheet
 try:
     from . import makespreadsheet as _makespreadsheet
-    from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
+    from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
 except: _failed.append('makespreadsheet')
 
 ## Load a completed a spreadsheet

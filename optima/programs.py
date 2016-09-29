@@ -293,15 +293,6 @@ class Programset(object):
         if filter_partype: return progs_by_targetpar[filter_partype]
         else: return progs_by_targetpar
 
-
-    def makespreadsheet(self, verbose=2):
-        '''Makes a spreadsheet where people can enter cost and coverage data'''
-        
-
-
-
-
-
     def getdefaultbudget(self, t=None, verbose=2):
         ''' Extract the budget if cost data has been provided'''
         
