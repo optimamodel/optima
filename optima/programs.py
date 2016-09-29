@@ -9,7 +9,6 @@ Version: 2016feb06
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
-import abc
 
 # WARNING, this should not be hard-coded!!! Available from
 # [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
@@ -510,33 +509,31 @@ class Programset(object):
                     elif self.covout[thispartype][thispop].interaction == 'random':
                         # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
     
-                        if all(self.covout[thispartype][thispop].ccopars.values()):
-                    
-                            for prog1 in thiscov.keys():
-                                product = ones(thiscov[prog1].shape)
-                                for prog2 in thiscov.keys():
-                                    if prog1 != prog2:
-                                        product *= (1-thiscov[prog2])
-                
-                                outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product 
-        
-                            # Recursion over overlap levels
-                            def overlap_calc(indexes,target_depth):
-                                if len(indexes) < target_depth:
-                                    accum = 0
-                                    for j in range(indexes[-1]+1,len(thiscov)):
-                                        accum += overlap_calc(indexes+[j],target_depth)
-                                    return thiscov.values()[indexes[-1]]*accum
-                                else:
-                                    return thiscov.values()[indexes[-1]]* max([delta.values()[x] for x in [0]],0)
-        
-                            # Iterate over overlap levels
-                            for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
-                                for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
-                                    outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
+                        for prog1 in thiscov.keys():
+                            product = ones(thiscov[prog1].shape)
+                            for prog2 in thiscov.keys():
+                                if prog1 != prog2:
+                                    product *= (1-thiscov[prog2])
+            
+                            outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product 
+    
+                        # Recursion over overlap levels
+                        def overlap_calc(indexes,target_depth):
+                            if len(indexes) < target_depth:
+                                accum = 0
+                                for j in range(indexes[-1]+1,len(thiscov)):
+                                    accum += overlap_calc(indexes+[j],target_depth)
+                                return thiscov.values()[indexes[-1]]*accum
+                            else:
+                                return thiscov.values()[indexes[-1]]* max([delta.values()[x] for x in [0]],0)
+    
+                        # Iterate over overlap levels
+                        for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
+                            for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
+                                outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
 
-                            # All programs together
-                            outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
+                        # All programs together
+                        outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
                     
                     else: raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
         
@@ -1107,8 +1104,6 @@ class Program(object):
 ########################################################
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
-    __metaclass__ = abc.ABCMeta # WARNING, this is the only place where this is used...is it necessary...?
-
     def __init__(self,ccopars=None,interaction=None):
         self.ccopars = ccopars if ccopars else odict()
         self.interaction = interaction
@@ -1134,7 +1129,7 @@ class CCOF(object):
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
-                    if ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
+                    if ccopartype in ccopar.keys():
                         self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
@@ -1193,7 +1188,7 @@ class CCOF(object):
         
         # Get the appropriate sample type
         for parname, parvalue in self.ccopars.iteritems():
-            if parname is not 't' and parvalue:
+            if parname is not 't' and len(parvalue):
                 ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
                     thisval = parvalue[j]
@@ -1240,14 +1235,6 @@ class CCOF(object):
         ccopar = self.getccopar(t=t,sample=sample)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
-
-    @abc.abstractmethod # This method must be defined by the derived class
-    def function(self, x, ccopar, popsize):
-        pass
-
-    @abc.abstractmethod # This method must be defined by the derived class
-    def inversefunction(self, x, ccopar, popsize):
-        pass
 
 
 ########################################################
@@ -1337,10 +1324,4 @@ class Costcov(CCOF):
 ########################################################
 class Covout(CCOF):
     '''Coverage-outcome objects'''
-
-    def function(self,x,ccopar,popsize):
-        pass
-
-    def inversefunction(self, x, ccopar, popsize):
-        pass
 
