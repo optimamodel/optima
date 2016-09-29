@@ -156,7 +156,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         thispar.y[pop] = append(thispar.y[pop], scenpar['startval']) 
                         
                         # Add end year values if supplied
-                        if scenpar['endyear']: 
+                        if scenpar.get('endyear'): 
                             thispar.t[pop] = append(thispar.t[pop], scenpar['endyear'])
                             thispar.y[pop] = append(thispar.y[pop], scenpar['endval'])
                         
