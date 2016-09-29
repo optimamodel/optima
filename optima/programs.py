@@ -331,10 +331,11 @@ class Programset(object):
         self.defaultbudget = lastbudget
         return selectbudget if t is not None else lastbudget
 
-    def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, ind=0, sample='best'):
+    def getdefaultcoverage(self, t=2016, parset=None, results=None, verbose=2, ind=0, sample='best', **kwargs):
         ''' Extract the coverage levels corresponding to the default budget'''
         defaultbudget = self.getdefaultbudget()
-        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, sample=sample, ind=ind)
+        if parset is None: parset = self.project.parset() # Get default parset
+        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, sample=sample, ind=ind, **kwargs)
         for progno in range(len(defaultcoverage)):
             defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
         return defaultcoverage
@@ -898,9 +899,10 @@ class Program(object):
 
         # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
         else: 
+            raise Exception('Does not work')
 
             # Get settings
-            settings = self.getsettings()
+            settings = self.project.settings
             
             npops = len(parset.pars[ind]['popkeys'])
     
