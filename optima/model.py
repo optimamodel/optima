@@ -724,7 +724,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
             for name,prop,lowerstate,tostate,higherstates,num,denom,raw_new in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
-                if name is 'proptx' or ~isnan(prop[t+1]):
+                if name is 'proptx' or ~isnan(prop[t+1]): #In this section, we shift numbers of people (as opposed to shifting proportions). If any of the prop parameters are non-nan, that means that some number of people will need to shift. However, treatment is special because it is always set by shifting numbers. That's why we have this condition here.
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
