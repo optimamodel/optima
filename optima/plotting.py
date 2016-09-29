@@ -200,7 +200,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 
-def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
@@ -322,7 +322,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, ver
             
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
-                epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
+                epiplots[pk] = figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
@@ -376,7 +376,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, ver
                     except: print('Plotting uncertainty failed and/or not yet implemented')
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
-                if not ismultisim and databest is not None:
+                if not ismultisim and databest is not None and plotdata:
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
                     scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=int(isestimate))
@@ -396,6 +396,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, ver
                 ax.get_yaxis().tick_left()
                 ax.title.set_fontsize(titlesize)
                 ax.xaxis.label.set_fontsize(labelsize)
+                ax.yaxis.label.set_fontsize(labelsize)
                 for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
     
                 # Configure plot specifics
@@ -449,7 +450,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
     
     # Set up figure and do plot
     sigfigs = 2 # Number of significant figures
-    fig = figure(figsize=figsize)
+    fig = figure(facecolor=(1,1,1), figsize=figsize)
     colors = gridcolormap(ncurves)
     
     # Plot model estimates with uncertainty
@@ -523,7 +524,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     nallocs = len(alloclabels)
     progcolors = gridcolormap(nprogs)
     
-    fig = figure(figsize=figsize)
+    fig = figure(facecolor=(1,1,1), figsize=figsize)
     ax = subplot(1,1,1)
     
     fig.subplots_adjust(bottom=0.50) # Less space on bottom
@@ -583,7 +584,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
-    fig = figure(figsize=figsize)
+    fig = figure(facecolor=(1,1,1), figsize=figsize)
     fig.subplots_adjust(bottom=0.30) # Less space on bottom
     fig.subplots_adjust(hspace=0.50) # More space between
     colors = gridcolormap(nprogs)
@@ -666,7 +667,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = figure(figsize=figsize, facecolor=(1,1,1))
+    fig = figure(facecolor=(1,1,1), figsize=figsize)
     
     cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
     cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
@@ -747,7 +748,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         colors = gridcolormap(nprogs)
             
     
-    fig = figure(figsize=(10,10))
+    fig = figure(facecolor=(1,1,1), figsize=(10,10))
     fig.subplots_adjust(left=0.10) # Less space on left
     fig.subplots_adjust(right=0.98) # Less space on right
     fig.subplots_adjust(top=0.95) # Less space on bottom

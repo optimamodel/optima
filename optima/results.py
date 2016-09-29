@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016jul06 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds
 from numpy import array, nan, zeros, arange, shape
 from numbers import Number
 
@@ -76,18 +76,22 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['numplhiv']   = Result('Number of PLHIV')
-        self.main['numinci']    = Result('Number of new infections')
-        self.main['numdeath']   = Result('Number of HIV-related deaths')
-        self.main['numdiag']    = Result('Number of diagnosed PLHIV')
-        self.main['numtreat']   = Result('Number of PLHIV on treatment')
-        self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
-        self.main['force']      = Result('Incidence (per 100 p.y.)', isnumber=False)
-        self.main['numnewdiag'] = Result('Number of new diagnoses')
-        self.main['nummtct']    = Result('Number of HIV+ births')
-        self.main['popsize']    = Result('Population size')
-        self.main['numincare']   = Result('Number of PLHIV in care')
-        self.main['numsuppressed']   = Result('Number of virally suppressed PLHIV')
+        self.main['numplhiv']      = Result('Number of PLHIV')
+        self.main['numinci']       = Result('Number of new infections')
+        self.main['numdeath']      = Result('Number of HIV-related deaths')
+        self.main['numdiag']       = Result('Number of diagnosed PLHIV')
+        self.main['numtreat']      = Result('Number of PLHIV on treatment')
+        self.main['prev']          = Result('HIV prevalence (%)', isnumber=False)
+        self.main['force']         = Result('Incidence (per 100 p.y.)', isnumber=False)
+        self.main['numnewdiag']    = Result('Number of new diagnoses')
+        self.main['nummtct']       = Result('Number of HIV+ births')
+        self.main['popsize']       = Result('Population size')
+        self.main['numincare']     = Result('Number of PLHIV in care')
+        self.main['numsuppressed'] = Result('Number of virally suppressed PLHIV')
+        
+        self.other = odict() # For storing other results -- not available in the interface
+        self.other['adultprev']    = Result('Adult HIV prevalence (%)', isnumber=False)
+        self.other['childprev']    = Result('Child HIV prevalence (%)', isnumber=False)
 
         if domake: self.make()
     
@@ -240,6 +244,13 @@ class Resultset(object):
         self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         self.main['numsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+
+
+        upperagelims = array(self.data['pops']['age'])[:,1]
+        adultpops = findinds(upperagelims>=15)
+        childpops = findinds(upperagelims<15)
+        self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         
 
