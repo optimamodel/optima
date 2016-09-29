@@ -769,8 +769,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
             
-                    # Save and shift
-                    calcprop = people[num,:,t+1].sum()/people[denom,:,t].sum()
 
 
             # Check no negative people
