@@ -167,7 +167,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
     
     ## Set up control panel
     figwidth = 7
-    figheight = 1+len(checkboxes)*0.27 # Scale dynamically based on how many options are available
+    figheight = 1+len(checkboxes)*0.20 # Scale dynamically based on how many options are available
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
@@ -186,7 +186,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
         label = check.labels[b]
         labeltext = label.get_text()
         labelpos = label.get_position()
-        label.set_position((labelpos[0]*0.5,labelpos[1])) # Not sure why by default the check boxes are so far away
+        label.set_position((labelpos[0]*0.3,labelpos[1])) # Not sure why by default the check boxes are so far away
         if labeltext.endswith(perstr):    label.set_text('Per population') # Clear label
         elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
         else:                             label.set_weight('bold')
