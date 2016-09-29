@@ -13,7 +13,7 @@ How verbose works:
 Version: 2016feb06
 """
 
-from numpy import arange, array, concatenate as cat, linspace, shape
+from numpy import arange, array, concatenate as cat, linspace, shape, inf
 from optima import OptimaException, defaultrepr, printv, dcp, isnumber
 
 
@@ -21,6 +21,7 @@ class Settings(object):
     def __init__(self, verbose=2):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
+        self.now = 2016.0 # Default current year
         self.end = 2030.0 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
@@ -176,13 +177,14 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     maxduration = 1000.
     maxmeta = 1000.0
     maxacts = 5000.0
+    proppar = inf
     
     # It's a single number: just return it
     if isnumber(limits): return limits
     
     # Just return the limits themselves as a dict if no input argument
     if limits is None: 
-        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts}
+        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts, 'proppar':proppar}
     
     # If it's a string, convert to list, but remember this
     isstring = (type(limits)==str)
@@ -199,6 +201,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
         elif m=='maxduration': limits[i] = maxduration
         elif m=='maxmeta': limits[i] = maxmeta
         elif m=='maxacts': limits[i] = maxacts
+        elif m=='proppar': limits[i] = proppar
         else: limits[i] = limits[i] # This leaves limits[i] untouched if it's a number or something
     
     # Wrap up

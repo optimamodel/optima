@@ -167,7 +167,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
     
     ## Set up control panel
     figwidth = 7
-    figheight = 1+len(checkboxes)*0.27 # Scale dynamically based on how many options are available
+    figheight = 1+len(checkboxes)*0.20 # Scale dynamically based on how many options are available
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
@@ -186,7 +186,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
         label = check.labels[b]
         labeltext = label.get_text()
         labelpos = label.get_position()
-        label.set_position((labelpos[0]*0.5,labelpos[1])) # Not sure why by default the check boxes are so far away
+        label.set_position((labelpos[0]*0.3,labelpos[1])) # Not sure why by default the check boxes are so far away
         if labeltext.endswith(perstr):    label.set_text('Per population') # Clear label
         elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
         else:                             label.set_weight('bold')
@@ -352,7 +352,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     ion() # We really need this here!
-    nsigfigs = 3
+    nsigfigs = 4
     
     boxes = []
     texts = []
@@ -402,7 +402,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
                 printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
-            elif fulltypelist[b]=='const': # Metaparameters
+            elif fulltypelist[b]=='const': # Constants
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
                 printv('%s.y = %s' % (key, box.text()), 3, verbose)

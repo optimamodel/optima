@@ -90,7 +90,8 @@ if 'parametercheck' in tests:
     'actscas', 'actscom', 'actsinj', 'actsreg', 
     'condcas', 'condcom', 'condreg', 
     'female', 'force', 'inhomo', 'initprev', 
-    'injects', 'label', 'male', 'popkeys', 'sexworker', 'rawtransit'])
+    'injects', 'label', 'male', 'popkeys', 'sexworker', 'rawtransit',
+    'propdx','propcare','proptx','propsupp','proppmtct'])
     
     dataminuspars = set(datakeys) - set(parkeys)
     parsminusdata = set(parkeys) - set(datakeys)

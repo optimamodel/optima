@@ -9,8 +9,8 @@ Version: 2016feb07
 tests = [
 #'standardscen',
 #'maxcoverage',
-'maxbudget',
-#'90-90-90'
+#'maxbudget',
+'90-90-90'
 #'VMMC'
 ]
 
@@ -58,10 +58,6 @@ if 'standardscen' in tests:
     
     ## Define scenarios
     scenlist = [
-        Parscen(name='Current conditions',
-                parsetname='default',
-                pars=[]),
-
         Parscen(name='Get lots of people on treatment',
              parsetname='default',
              pars=[{'endval': 100000.,
@@ -114,7 +110,7 @@ if 'standardscen' in tests:
                 'name': 'hivtest',
                 'for': ['FSW', 'Clients', 'MSM', 'M 15+', 'F 15+'],
                 'startval': .5,
-                'startyear': 2016}]),
+                'startyear': 2000}]),
 
          Parscen(name='Increased STI prevalence in FSW',
               parsetname='default',
@@ -182,14 +178,7 @@ if 'standardscen' in tests:
     
     # Store these in the project
     P.addscenlist(scenlist)
-#    P.scens['A million people covered by the condom program'].active = True # Turn off a scenario
-#    P.scens[2].active = False # Turn off another scenario
-    
-#    # Turn off budget scenarios
-#    for i,scen in P.scens.items():
-#        if isinstance(scen, (Budgetscen, Coveragescen)):
-#            P.scens[i].active = False
-    
+
     # Run the scenarios
     P.runscenarios() 
      
@@ -224,14 +213,15 @@ if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, defaults, pygui, plotpeople, findinds
+    from optima import Parscen, defaults, pygui, findinds, plotpeople
+    from numpy import nan
     
-    P = defaults.defaultproject('generalized')
+    P = defaults.defaultproject('best')
     P.runsim(debug=True)
     
     pops = P.data['pops']['short']
     
-    startyear = 2016.
+    startyear = 2014.
     endyear = 2020.
     res_startind = findinds(P.results[-1].tvec, startyear)
     res_endind = findinds(P.results[-1].tvec, endyear)
@@ -283,6 +273,29 @@ if '90-90-90' in tests:
               'endval': .9,
               },
                 ]),
+                
+         Parscen(name='Increase numtx',
+              parsetname='default',
+              pars=[
+              {'name': 'numtx',
+              'for': ['tot'],
+              'startyear': startyear,
+              'endyear': 2030.,
+              'startval': 48100.,
+              'endval': 68000.,
+              }]),
+                
+         Parscen(name='Constant numtx',
+              parsetname='default',
+              pars=[
+              {'name': 'proptx',
+              'for': ['tot'],
+              'startyear': startyear,
+              'startval': nan,
+#              'endyear': 2030.,
+#              'endval': 48100.,
+              }]),
+                
         ]
 
     # Store these in the project
@@ -312,8 +325,8 @@ if '90-90-90' in tests:
    
      
     if doplot:
-        ppl = P.results[-1].raw['90-90-90'][0]['people']
-        plotpeople(P, ppl)
+#        ppl = P.results[-1].raw['90-90-90'][0]['people']
+#        plotpeople(P, ppl)
         pygui(P.results[-1], toplot='cascade')
 
     done(t)
