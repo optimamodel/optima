@@ -42,7 +42,7 @@ import optima as op
 import optima
 
 from .dbconn import db
-from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, UserDb
+from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, UserDb, PyObjectDb
 from .exceptions import ProjectDoesNotExist
 from .parse import get_default_program_summaries, \
     get_parameters_for_edit_program, get_parameters_for_outcomes, \
@@ -57,7 +57,7 @@ from .parse import get_default_program_summaries, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
-    set_program_summary_on_progset
+    set_program_summary_on_progset, parse_portfolio_summary
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
 
