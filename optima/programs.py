@@ -7,7 +7,7 @@ Version: 2016feb06
 """
 
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits
-from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
+from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, sqrt
 from random import uniform
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -18,7 +18,7 @@ coveragepars=['numtx','numpmtct','numost','numcirc']
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='additive', project=None):
+    def __init__(self, name='default', programs=None, default_interaction='geometric', project=None):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()
@@ -490,6 +490,17 @@ class Programset(object):
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
                             else: outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
+
+                    # GEOMETRIC CALCULATION
+                    if self.covout[thispartype][thispop].interaction == 'geometric':
+                        # Outcome += sqrt(c1*delta_out1**2 + c2*delta_out2**2)
+                        additions = []
+                        for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
+                            if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                                print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
+                                outcomes[thispartype][thispop] = None
+                            else: additions.append(thiscov[thisprog.short]*delta[thisprog.short])
+                        outcomes[thispartype][thispop] += sqrt(sum(array(additions)**2))
                             
                     # NESTED CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'nested':
