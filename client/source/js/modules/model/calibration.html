@@ -6,10 +6,10 @@
   </div>
 
   <div ng-show="isMissingData">
-    No data uploaded, you need to <a ui-sref="home">upload data</a>.
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
 
-  <div ng-hide="isMissingData">
+  <div ng-if="!isMissingData">
     <div class="3">
       <label for="programSet-selection">Select a parameter set:</label>
     </div>

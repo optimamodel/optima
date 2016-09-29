@@ -1,10 +1,16 @@
 <div class="rich" xmlns="http://www.w3.org/1999/html">
 
+  <h1>Manage scenarios</h1>
+
   <div ng-if="isMissingModelData">
     <spreadsheet-upload-hint/>
   </div>
 
-  <div ng-if="!isMissingModelData">
+  <div ng-show="isMissingData">
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
+  </div>
+
+  <div ng-if="!isMissingData">
 
     <div
         style="
@@ -15,8 +21,6 @@
           height: calc(100vh - 160px)">
 
       <div style="flex: 0 0 auto; width: 100%">
-
-        <h1>Manage scenarios</h1>
 
         <table
             class="section table table-bordered"
@@ -68,10 +72,6 @@
                   Run scenarios
                 </button>
               </div>
-              <p class="error-hint" style="" ng-show="isMissingProgramSet">
-                Please create a program set to add budget and coverage scenario.
-                <a ui-sref="programs.manageProgramSet">Define/manage program set</a>
-              </p>
               <button
                   class="btn"
                   ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
@@ -89,6 +89,9 @@
                   ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
                 + parameter scenario
               </button>
+              <div class="error-hint" ng-show="isMissingProgramSet">
+                Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
+              </div>
             </td>
           </tr>
 

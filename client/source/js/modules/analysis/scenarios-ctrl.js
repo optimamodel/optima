@@ -13,8 +13,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.progsets = progsetsResponse.data.progsets;
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
       $scope.years = scenariosResponse.data.years;
-      $scope.isMissingModelData = !$scope.project.hasData;
-      $scope.isMissingProgramSet = $scope.progsets.length == 0;
+      $scope.isMissingData = !$scope.project.hasParset;
+      $scope.isMissingProgramSet = $scope.project.nProgram == 0;
       loadScenarios(scenariosResponse.data.scenarios);
     }
 

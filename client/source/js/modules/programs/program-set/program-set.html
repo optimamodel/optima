@@ -1,9 +1,15 @@
 
 <div class="rich" >
+
   <div class="grid" style="margin: 0px 0px;">
     <h1>Manage programs</h1>
   </div>
-  <div ng-if="!missingData">
+
+  <div ng-show="isMissingData">
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
+  </div>
+
+  <div ng-if="!isMissingData">
     <div class="3">
       <label>Select a saved program set:</label>
     </div>

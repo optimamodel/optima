@@ -158,10 +158,13 @@ def get_project_summary_from_project(project):
         data_end = project.settings.end
 
     n_program = 0
-    for progsets in project.progsets.values():
-        this_n_program = len(progsets.programs.values())
+    is_ready_to_optimize = False
+    for progset in project.progsets.values():
+        this_n_program = len(progset.programs.values())
         if this_n_program > n_program:
             n_program = this_n_program
+        if n_program > 0 and progset.readytooptimize():
+            is_ready_to_optimize = True
 
     project_summary = {
         'id': project.uid,
@@ -174,7 +177,8 @@ def get_project_summary_from_project(project):
         'creationTime': project.created,
         'updatedTime': project.modified,
         'dataUploadTime': project.spreadsheetdate,
-        'hasData': project.data != {},
+        'hasParset': len(project.parsets) > 0,
+        'isOptimizable': is_ready_to_optimize,
         'hasEcon': "econ" in project.data
     }
     return project_summary

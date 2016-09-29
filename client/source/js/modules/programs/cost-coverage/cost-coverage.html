@@ -4,284 +4,298 @@
     <h1>Define cost and outcome functions </h1>
   </div>
 
-  <div style="width: 100%">
-
-    Select program set
-    <select
-      class="txbox"
-      style="
-        width: 15em;
-        display: inline;
-        margin-left: 0.5em;
-        margin-right: 2em; "
-      ng-options="progset as progset.name for progset in vm.progsets"
-      ng-change="vm.changeProgsetAndParset()"
-      ng-model="vm.state.progset">
-    </select>
-
-    Select parameter set
-    <select
-      class="txbox"
-      style="
-        width: 15em;
-        display: inline;
-        margin-left: 0.5em; "
-      ng-options="parset as parset.name for parset in vm.parsets"
-      ng-change="vm.changeProgsetAndParset()"
-      ng-model="vm.state.parset">
-    </select>
-
+  <div ng-show="vm.isMissingData">
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
 
-  <div ng-if="vm.state.progset && vm.state.parset">
+  <div ng-show="vm.hasNoProgram">
+    No programs selected, you need to <a ui-sref="programs.manageProgramSet">select some programs</a> for this project.
+  </div>
 
-    <style>
-      .selectTab {
-        border-top: 1px solid #999;
-        border-left: 1px solid #999;
-        border-right: 1px solid #999;
-        border-radius: 5px 5px 0 0;
-      }
-      .notSelectTab {
-        border-bottom: 1px solid #999;
-        padding-bottom: 2px;
-        color: #999;
-      }
-    </style>
+  <div ng-if="!vm.isMissingData && !vm.hasNoProgram">
 
-    <div
+    <div style="width: 100%">
+
+      Select program set
+      <select
+        class="txbox"
         style="
-          margin-top: 50px;
-          display: flex;
-          width: 100%;
-          ">
-      <div style="flex: 0 0 10px;" class="notSelectTab"></div>
-      <div 
-          style="
-            flex: 0 0 20em;
-            text-align: center;
-            cursor: pointer;
-            padding: 15px 10px 5px 10px;"
-          ng-repeat="tab in vm.tabs"
-          ng-class="(vm.activeTab != tab.slug) ? 'notSelectTab' : 'selectTab'"
-          ng-click="vm.selectTab(tab.slug)">
-        <h2>{{tab.name}}</h2>
-      </div>
-      <div style="flex: 1 1;" class="notSelectTab"></div>
+          width: 15em;
+          display: inline;
+          margin-left: 0.5em;
+          margin-right: 2em; "
+        ng-options="progset as progset.name for progset in vm.progsets"
+        ng-change="vm.changeProgsetAndParset()"
+        ng-model="vm.state.progset">
+      </select>
+
+      Select parameter set
+      <select
+        class="txbox"
+        style="
+          width: 15em;
+          display: inline;
+          margin-left: 0.5em; "
+        ng-options="parset as parset.name for parset in vm.parsets"
+        ng-change="vm.changeProgsetAndParset()"
+        ng-model="vm.state.parset">
+      </select>
+
     </div>
 
+    <div ng-if="vm.state.progset && vm.state.parset">
 
-    <div style="width: 100%;">
+      <style>
+        .selectTab {
+          border-top: 1px solid #999;
+          border-left: 1px solid #999;
+          border-right: 1px solid #999;
+          border-radius: 5px 5px 0 0;
+        }
+        .notSelectTab {
+          border-bottom: 1px solid #999;
+          padding-bottom: 2px;
+          color: #999;
+        }
+      </style>
 
-      <!-- Cost functions tab window -->
-      <div style="width: 100%;"
-           class="c-tab"
-           ng-if="vm.activeTab === 'cost'">
-
-        <div style="
-              width: 100%;
-              margin: 10px 0px 40px;">
-          <label>Select program</label>
-          <select
-              style="
-                margin-left: 0.5em;
-                display: inline;
-                width: 30em;"
-              class="txbox"
-              ng-options="p.name for p in vm.programs"
-              ng-change="vm.changeProgram()"
-              ng-model="vm.state.program">
-          </select>
-        </div>
-
-        <div ng-if="vm.state.program"
-             style="
-                display: flex;
-                width: 100%;
-                margin-top: 10px">
-
-          <div class="chart-container" style="flex: 1 1;">
-
-            <div mpld3-chart="vm.state.chartData"
-                 style="width: 100%"
-                 chart-id="{{ vm.state.chartData.id }}"
-                 ng-if="vm.state.chartData">
-            </div>
-
-            <div class="c-caption" ng-if="vm.statedisplayCaption">
-              {{vm.statedisplayCaption}}
-            </div>
-
-          </div>
-
-          <div style="flex: 0 0 580px;"
-               class="flex-column margin_left">
-
-            <div class="flex-column">
-              <h3>Parameters for defining cost function</h3>
-              <entry-table table="vm.state.ccoparsTable"></entry-table>
-            </div>
-
-            <br>
-            <br>
-
-            <div class="flex-column">
-              <h3>Historical cost and coverage data</h3>
-              <entry-table table="vm.state.costcovTable"></entry-table>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Outcome functions tab window -->
-      <div style="width: 100%;"
-           ng-if="vm.activeTab === 'outcome'">
-
-        <div style="margin: 30px 0 20px 0;">
-          <label>
-            Select parameter
-          </label>
-          <select
-            class="txbox c-select__input"
+      <div
+          style="
+            margin-top: 50px;
+            display: flex;
+            width: 100%;
+            ">
+        <div style="flex: 0 0 10px;" class="notSelectTab"></div>
+        <div
             style="
-              display: inline;
-              width: 30em;
-              margin-left: 0.5em; "
-            ng-options="parameter.name for parameter in vm.parameters"
-            ng-change="vm.changeTargetParameter()"
-            ng-model="vm.state.parameter">
-          </select>
+              flex: 0 0 20em;
+              text-align: center;
+              cursor: pointer;
+              padding: 15px 10px 5px 10px;"
+            ng-repeat="tab in vm.tabs"
+            ng-class="(vm.activeTab != tab.slug) ? 'notSelectTab' : 'selectTab'"
+            ng-click="vm.selectTab(tab.slug)">
+          <h2>{{tab.name}}</h2>
         </div>
-
-        <button class="btn __m" ng-click="vm.saveProgsetOutcomes()">
-          Save outcome functions
-        </button>
-        <br>
-        <br>
-
-        <div ng-repeat="outcome in vm.state.targetedOutcomes">
-
-          <style>
-            .mytable th, .mytable td {
-              padding: 10px;
-              vertical-align: top;
-            }
-          </style>
-
-          <table
-              class="mytable"
-              ng-repeat="yearEntry in outcome.years"
-              cellpadding="10px"
-              style="
-                  width: 100%;
-                  border-top: 1px solid #999;
-                  border-bottom: 1px solid #999;
-                  border-spacing: 10px;">
-            <tr style="border-bottom: 1px solid #DDD">
-              <th>
-                Population /
-                <br>
-                Partnerships
-              </th>
-              <th>Year</th>
-              <th>Description of program impact</th>
-              <th>
-                Parameter Value
-                <br>
-                ({{vm.state.parameter.limits[0]}}
-                -
-                {{vm.state.parameter.limits[1]}})
-              </th>
-            </tr>
-
-            <tr>
-              <td>{{vm.makePopKeyLabel(outcome.pop)}}</td>
-              <td>
-                <input
-                  style="width:4em"
-                  type="number"
-                  ng-model="yearEntry.year">
-              </td>
-              <td>
-                "{{vm.state.parameter.name}}"
-                in the absence of any programs targeting this parameter
-                <br>
-                <br>
-                <i>Program Effects</i>
-              </td>
-              <td style="width:12em">
-                <input
-                  style="width:4em"
-                  type="number"
-                  ng-model="yearEntry.intercept_lower">
-                -
-                <input
-                  style="width:4em"
-                  type="number"
-                  ng-model="yearEntry.intercept_upper">
-              </td>
-            </tr>
-
-            <tr ng-repeat="program in yearEntry.programs">
-              <td></td>
-              <td></td>
-              <td>
-                <ul>
-                  <li>
-                "{{vm.state.parameter.name}}"
-                under maximal attainable coverage of
-                "{{vm.getProgramName(program.name)}}"
-                in isolation
-                  </li>
-                </ul>
-              </td>
-              <td style="width:12em">
-                <input
-                  style="width:4em"
-                  type="number"
-                  ng-model="program.intercept_lower">
-                -
-                <input
-                  style="width:4em"
-                  type="number"
-                  ng-model="program.intercept_upper">
-              </td>
-            </tr>
-
-            <tr>
-              <td></td>
-              <td></td>
-              <td>
-                <i>Program interactions</i>:
-                &nbsp; &nbsp;
-                <input
-                    type="radio"
-                    ng-model="outcome.interact"
-                    value="random">
-                <label> random </label> &nbsp; &nbsp;
-                <input
-                    type="radio"
-                    ng-model="outcome.interact"
-                    ng-value="nested">
-                <label> nested </label> &nbsp; &nbsp;
-                <input
-                    type="radio"
-                    ng-model="outcome.interact"
-                    value="additive">
-                <label> additive </label>
-                <br>
-                <br>
-              </td>
-              <td></td>
-            </tr>
-
-          </table>
-
-        </div>
-
+        <div style="flex: 1 1;" class="notSelectTab"></div>
       </div>
+
+
+      <div style="width: 100%;">
+
+        <!-- Cost functions tab window -->
+        <div style="width: 100%;"
+             class="c-tab"
+             ng-if="vm.activeTab === 'cost'">
+
+          <div style="
+                width: 100%;
+                margin: 10px 0px 40px;">
+            <label>Select program</label>
+            <select
+                style="
+                  margin-left: 0.5em;
+                  display: inline;
+                  width: 30em;"
+                class="txbox"
+                ng-options="p.name for p in vm.programs"
+                ng-change="vm.changeProgram()"
+                ng-model="vm.state.program">
+            </select>
+          </div>
+
+          <div ng-if="vm.state.program"
+               style="
+                  display: flex;
+                  width: 100%;
+                  margin-top: 10px">
+
+            <div class="chart-container" style="flex: 1 1;">
+
+              <div mpld3-chart="vm.state.chartData"
+                   style="width: 100%"
+                   chart-id="{{ vm.state.chartData.id }}"
+                   ng-if="vm.state.chartData">
+              </div>
+
+              <div class="c-caption" ng-if="vm.statedisplayCaption">
+                {{vm.statedisplayCaption}}
+              </div>
+
+            </div>
+
+            <div style="flex: 0 0 580px;"
+                 class="flex-column margin_left">
+
+              <div class="flex-column">
+                <h3>Parameters for defining cost function</h3>
+                <entry-table table="vm.state.ccoparsTable"></entry-table>
+              </div>
+
+              <br>
+              <br>
+
+              <div class="flex-column">
+                <h3>Historical cost and coverage data</h3>
+                <entry-table table="vm.state.costcovTable"></entry-table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Outcome functions tab window -->
+        <div style="width: 100%;"
+             ng-if="vm.activeTab === 'outcome'">
+
+          <div style="margin: 30px 0 20px 0;">
+            <label>
+              Select parameter
+            </label>
+            <select
+              class="txbox c-select__input"
+              style="
+                display: inline;
+                width: 30em;
+                margin-left: 0.5em; "
+              ng-options="parameter.name for parameter in vm.parameters"
+              ng-change="vm.changeTargetParameter()"
+              ng-model="vm.state.parameter">
+            </select>
+          </div>
+
+          <button class="btn __m" ng-click="vm.saveProgsetOutcomes()">
+            Save outcome functions
+          </button>
+          <br>
+          <br>
+
+          <div ng-repeat="outcome in vm.state.targetedOutcomes">
+
+            <style>
+              .mytable th, .mytable td {
+                padding: 10px;
+                vertical-align: top;
+              }
+            </style>
+
+            <table
+                class="mytable"
+                ng-repeat="yearEntry in outcome.years"
+                cellpadding="10px"
+                style="
+                    width: 100%;
+                    border-top: 1px solid #999;
+                    border-bottom: 1px solid #999;
+                    border-spacing: 10px;">
+              <tr style="border-bottom: 1px solid #DDD">
+                <th>
+                  Population /
+                  <br>
+                  Partnerships
+                </th>
+                <th>Year</th>
+                <th>Description of program impact</th>
+                <th>
+                  Parameter Value
+                  <br>
+                  ({{vm.state.parameter.limits[0]}}
+                  -
+                  {{vm.state.parameter.limits[1]}})
+                </th>
+              </tr>
+
+              <tr>
+                <td>{{vm.makePopKeyLabel(outcome.pop)}}</td>
+                <td>
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="yearEntry.year">
+                </td>
+                <td>
+                  "{{vm.state.parameter.name}}"
+                  in the absence of any programs targeting this parameter
+                  <br>
+                  <br>
+                  <i>Program Effects</i>
+                </td>
+                <td style="width:12em">
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="yearEntry.intercept_lower">
+                  -
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="yearEntry.intercept_upper">
+                </td>
+              </tr>
+
+              <tr ng-repeat="program in yearEntry.programs">
+                <td></td>
+                <td></td>
+                <td>
+                  <ul>
+                    <li>
+                  "{{vm.state.parameter.name}}"
+                  under maximal attainable coverage of
+                  "{{vm.getProgramName(program.name)}}"
+                  in isolation
+                    </li>
+                  </ul>
+                </td>
+                <td style="width:12em">
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="program.intercept_lower">
+                  -
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="program.intercept_upper">
+                </td>
+              </tr>
+
+              <tr>
+                <td></td>
+                <td></td>
+                <td>
+                  <i>Program interactions</i>:
+                  &nbsp; &nbsp;
+                  <input
+                      type="radio"
+                      ng-model="outcome.interact"
+                      value="random">
+                  <label> random </label> &nbsp; &nbsp;
+                  <input
+                      type="radio"
+                      ng-model="outcome.interact"
+                      ng-value="nested">
+                  <label> nested </label> &nbsp; &nbsp;
+                  <input
+                      type="radio"
+                      ng-model="outcome.interact"
+                      value="additive">
+                  <label> additive </label>
+                  <br>
+                  <br>
+                </td>
+                <td></td>
+              </tr>
+
+            </table>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
   </div>
+
 </div>
 
 

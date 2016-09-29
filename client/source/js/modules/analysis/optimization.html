@@ -1,10 +1,20 @@
-<div class="rich" style="padding: 10px;">
+<div class="rich" style="margin: 0 -25px; padding: 10px;">
 
-  <div class="grid" style="margin: 0 -25px;">
-    <h1>Analyses &#8594; Optimization</h1>
+  <h1>Optimization</h1>
+
+  <div ng-show="isMissingData">
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
 
-  <div class="rich" style="margin: 0 -25px;" ng-if="!missingData">
+  <div ng-show="!isMissingData && isMissingProgramSet">
+    Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
+  </div>
+
+  <div ng-show="!isMissingData && !isMissingProgramSet && !isOptimizable">
+    Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
+  </div>
+
+  <div ng-if="!isMissingData && isOptimizable && !isMissingProgramSet" class="rich"">
 
     <div class="3">
       <label for="optimization-selection">Select an optimization:</label>
