@@ -92,6 +92,10 @@ class Resultset(object):
         self.other = odict() # For storing other results -- not available in the interface
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', isnumber=False)
         self.other['childprev']    = Result('Child HIV prevalence (%)', isnumber=False)
+        self.other['propdx']       = Result('PLHIV diagnosed (%)', isnumber=False)
+        self.other['propcare']     = Result('Diagnosed PLHIV in care (%)', isnumber=False)
+        self.other['proptx']       = Result('PLHIV in care on treatment (%)', isnumber=False)
+        self.other['propsvl']      = Result('Treated PLHIV virally suppressed (%)', isnumber=False)
 
         if domake: self.make()
     

@@ -50,7 +50,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_death       = zeros((npops, npts))          # Number of deaths per timestep
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
     raw_propdx      = zeros(npts)                   # Proportion diagnosed per timestep
+    raw_propcare    = zeros(npts)                   # Proportion in care per timestep
     raw_proptx      = zeros(npts)                   # Proportion on treatment per timestep
+    raw_propsvl     = zeros(npts)                   # Proportion with suppressed viral load
     
     # Biological and failure parameters -- death etc
     prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],inf]) ))
@@ -705,14 +707,18 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
             currplhiv   = people[allplhiv,:,t+1].sum() 
+            currdx      = people[alldx,:,t+1].sum()
             currcare    = people[allcare,:,t+1].sum() # This assumes proptx refers to the proportion of those in care who are to be on treatment 
             currtx      = people[alltx,:,t+1].sum()
+            currsvl     = people[svl,:,t+1].sum()
             totreat     = proptx[t+1]*currcare if not(isnan(proptx[t+1])) else numtx[t+1]
             totnewtreat = max(0, totreat - currtx)
             currentcare = people[care,:,t+1]
 
-            raw_propdx[t+1] = currcare/currplhiv
-            raw_proptx[t+1] = currtx/currcare
+            raw_propdx[t+1]   = currdx/currplhiv
+            raw_propcare[t+1] = currcare/currdx
+            raw_proptx[t+1]   = currtx/currcare
+            raw_propsvl[t+1]  = currsvl/currtx
             
             for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
                 newtreat[cd4,:] = zeros(npops)
@@ -807,8 +813,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['newtreat']   = raw_newtreat
     raw['death']      = raw_death
     raw['otherdeath'] = raw_otherdeath
-    raw['propdx']     = raw_propdx # WARNING, not used in results
+    raw['propdx']     = raw_propdx
+    raw['propcare']   = raw_proptx
     raw['proptx']     = raw_proptx
+    raw['propsvl']    = raw_proptx
     
     return raw # Return raw results
 
