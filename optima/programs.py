@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
@@ -295,7 +295,29 @@ class Programset(object):
 
     def loadspreadsheet(self, filename):
         '''Load a spreadsheet with cost and coverage data and parametres for the cost functions''' 
-        data = None
+
+        ## Load data
+        data = loadprogramspreadsheet(filename)
+        npops = len(data['pops'])
+
+        ## Extract program names and check they match the ones in the progset
+        prognames = [key for key in data.keys() if key not in ['meta','years','pops']]
+        if set(prognames) != set(self.programs.keys()):
+            errormsg = 'The short names of the programs in the spreadsheet (%s) must match the short names of the programs in the progset (%s).' % (prognames, self.programs.keys())
+            raise OptimaException(errormsg)
+        
+        ## Load data 
+        for prog in prognames:
+            self.programs[prog].targetpops = [data['pops'][tp] for tp in range(npops) if data[prog]['targetpops'][tp]] # Set target populations
+            self.programs[prog].costcovdata['cost'] = data[prog]['cost'] # Load cost data
+            self.programs[prog].costcovdata['coverage'] = data[prog]['coverage'] # Load coverage data
+            
+            if self.programs[prog].optimizable():
+                self.programs[prog].costcovfn.ccopars['unitcost'] = sanitize(data[prog]['unitcost']) # Load unit cost assumptions
+                self.programs[prog].costcovfn.ccopars['saturation'] = sanitize(data[prog]['saturation']) # Load saturation assumptions
+                self.programs[prog].costcovfn.ccopars['t'] = data['years']
+
+        return None
 
 
 

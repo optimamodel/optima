@@ -61,6 +61,19 @@ def blank2nan(thesedata):
     return list(map(lambda val: nan if val=='' else val, thesedata))
     
 
+def getyears(sheetdata):
+    ''' Get years from a worksheet'''
+    years = [] # Initialize epidemiology data years
+    for col in range(sheetdata.ncols):
+        thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
+        if thiscell=='' and len(years)>0: #  We've gotten to the end
+            lastdatacol = col # Store this column number
+            break # Quit
+        elif thiscell != '': # Nope, more years, keep going
+            years.append(float(thiscell)) # Add this year
+    
+    return lastdatacol, years
+    
 
 ###########################################################################################################
 ## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
@@ -132,14 +145,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     
     ## Calculate columns for which data are entered, and store the year ranges
     sheetdata = workbook.sheet_by_name('Population size') # Load this workbook
-    data['years'] = [] # Initialize epidemiology data years
-    for col in range(sheetdata.ncols):
-        thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
-        if thiscell=='' and len(data['years'])>0: #  We've gotten to the end
-            lastdatacol = col # Store this column number
-            break # Quit
-        elif thiscell != '': # Nope, more years, keep going
-            data['years'].append(float(thiscell)) # Add this year
+    lastdatacol, data['years'] = getyears(sheetdata)
     assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
     
     ## Initialize populations
@@ -309,24 +315,11 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
     
     printv('Loading data from %s...' % filename, 1, verbose)
     sheets = odict()
+    sheets['Populations & programs'] = ['programs'] # Data on program names and targeting
+    sheets['Program data'] = odict()
     
-    # Data on program names and targeting
-    sheets['Populations & programs'] = ['programs']
-    
-    # Historical data on cost and coverage
-    sheets['Historical data'] =  ['cost','coverage']
-    
-    # Parameters for making cost coverage functions
-    sheets['Cost-coverage parameters']  = ['unitcost', 'saturation']
-    
-    
-    ###########################################################################
-    ## Load data sheets
-    ###########################################################################
-    
-
     ## Basic setup
-    data = odict() # Create sheetsure for holding data
+    data = odict() # Create structure for holding data
     data['meta'] = odict()
     data['meta']['date'] = today()
     data['meta']['sheets'] = sheets # Store parameter names
@@ -335,6 +328,50 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
     except: 
         errormsg = 'Failed to load program spreadsheet: file "%s" not found or other problem' % filename
         raise OptimaException(errormsg)
+
     
+    ## Calculate columns for which data are entered, and store the year ranges
+    sheetdata = workbook.sheet_by_name('Program data') # Load this workbook
+    lastdatacol, data['years'] = getyears(sheetdata)
+    assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
+    
+    ## Load program information
+    sheetdata = workbook.sheet_by_name('Populations & programs') # Load 
+    for row in range(sheetdata.nrows): 
+        if sheetdata.cell_value(row,0)=='':
+            thesedata = sheetdata.row_values(row, start_colx=2) # Data starts in 3rd column, finishes in 11th column
+            if sheetdata.cell_value(row,1)=='':
+                data['pops'] = thesedata[2:]
+            else:
+                progname = str(thesedata[0])
+                data[progname] = odict()
+                data[progname]['name'] = str(thesedata[1])
+                data[progname]['targetpops'] = thesedata[2:]
+    
+    namemap = {'Total spend': 'cost', 'Unit cost':'unitcost', 'Coverage (optional)': 'coverage', 'Saturation (optional)': 'saturation'} 
+    sheetdata = workbook.sheet_by_name('Program data') # Load 
+    parcount = -1    
+    
+    for row in range(sheetdata.nrows): 
+        sheetname = sheetdata.cell_value(row,0) # Sheet name
+        progname = sheetdata.cell_value(row, 1) # Get the name of the program
+
+        if sheetname == 'Program data': 
+            printv('Loading "%s"...' % sheetname, 3, verbose)
+            parcount += 1 # Increment the parameter count
+
+        elif progname != '': # The first column is blank: it's time for the data
+            thisvar = namemap[sheetdata.cell_value(row, 2)]  # Get the name of the indicator
+            printv('Program: %s, indicator %s' % (progname, thisvar), 4, verbose)
+
+            thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 3rd column, and ends lastdatacol-1
+            assumptiondata = sheetdata.cell_value(row, assumptioncol)
+            if assumptiondata != '': # There's an assumption entered
+                thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+            try: data[progname][thisvar]= thesedata # Store data
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                
+            checkblank = False if thisvar in ['unitcost', 'coverage', 'saturation'] else True # Don't check optional indicators, check everything else
+            try: validatedata(thesedata, sheetname, thisvar, row, checkblank=checkblank)
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                
 
     return data

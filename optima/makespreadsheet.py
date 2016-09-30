@@ -210,8 +210,10 @@ class OptimaFormats:
     """ the formats used in the spreadsheet """
     darkgray = '#413839'
     originalblue = '#18C1FF'
+    optionalorange = '#FFA500'
     hotpink = '#FFC0CB'
     BG_COLOR = originalblue
+    OPT_COLOR = optionalorange
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
@@ -219,7 +221,7 @@ class OptimaFormats:
     SCIENTIFIC = 'scientific'
     NUMBER = 'number'
     GENERAL = 'general'
-    ACCOUNTING = 'accounting'
+    OPTIONAL = 'optional'
 
     def __init__(self, book):
         self.formats = {}
@@ -243,6 +245,8 @@ class OptimaFormats:
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['general'] = self.book.add_format({'locked':0, 'num_format':0x00, \
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['optional'] = self.book.add_format({'locked':0, 'num_format':0x00, \
+        'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['info_header'] = self.book.add_format({'align':'center','valign':'vcenter', \
             'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
         self.formats['grey'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
@@ -783,9 +787,10 @@ class OptimaProgramSpreadsheet:
 
 
     def generate_costcovdata(self):
-        row_levels = ['Coverage', 'Cost', 'Unit cost', 'Saturation']
+        row_levels = ['Total spend', 'Unit cost', 'Coverage (optional)', 'Saturation (optional)']
+        self.current_sheet.set_column('C:C',20)
         current_row = 0
-        current_row = self.emit_years_block(name='Cost & coverage', current_row=current_row, row_names=self.ref_prog_range.param_refs(), row_formats = [OptimaFormats.SCIENTIFIC,OptimaFormats.SCIENTIFIC,OptimaFormats.SCIENTIFIC,OptimaFormats.SCIENTIFIC], assumption = True, row_levels = row_levels)
+        current_row = self.emit_years_block(name='Cost & coverage', current_row=current_row, row_names=self.ref_prog_range.param_refs(), row_formats = [OptimaFormats.SCIENTIFIC,OptimaFormats.GENERAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL], assumption = True, row_levels = row_levels)
 
 
     def create(self, path):

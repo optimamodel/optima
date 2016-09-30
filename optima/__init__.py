@@ -91,7 +91,7 @@ except: _failed.append('makespreadsheet')
 
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
-from .loadspreadsheet import loadspreadsheet
+from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 
 ## Generate results -- odd location, I know!
 from . import results as _results
