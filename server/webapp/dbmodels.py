@@ -4,6 +4,7 @@ from flask_restful_swagger import swagger
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import deferred
+from sqlalchemy.dialects.postgresql import JSON
 
 import optima
 
@@ -61,6 +62,7 @@ class PyObjectDb(db.Model):
     user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
     type = db.Column(db.Text, default=None)
     name = db.Column(db.Text, default=None)
+    attr = db.Column(JSON)
 
     def __init__(self, user_id):
         self.user_id = user_id
