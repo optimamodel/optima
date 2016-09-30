@@ -177,14 +177,13 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     maxduration = 1000.
     maxmeta = 1000.0
     maxacts = 5000.0
-    proppar = inf
     
     # It's a single number: just return it
     if isnumber(limits): return limits
     
     # Just return the limits themselves as a dict if no input argument
     if limits is None: 
-        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts, 'proppar':proppar}
+        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts}
     
     # If it's a string, convert to list, but remember this
     isstring = (type(limits)==str)
@@ -201,7 +200,6 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
         elif m=='maxduration': limits[i] = maxduration
         elif m=='maxmeta': limits[i] = maxmeta
         elif m=='maxacts': limits[i] = maxacts
-        elif m=='proppar': limits[i] = proppar
         else: limits[i] = limits[i] # This leaves limits[i] untouched if it's a number or something
     
     # Wrap up

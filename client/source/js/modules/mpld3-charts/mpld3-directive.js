@@ -24,13 +24,26 @@ define(
   }
 
 
-  function reformatValStr(text) {
+  function reformatXTickStr(text) {
     var val = parseFloat(text);
     if (val >= 1E9) {
       text = val2str(val, 1E9, 'b')
     } else if (val >= 1E6) {
       text = val2str(val, 1E6, 'm')
     } else if (val >= 3E3) {
+      text = val2str(val, 1E3, 'k')
+    }
+    return text;
+  }
+
+
+  function reformatYTickStr(text) {
+    var val = parseFloat(text);
+    if (val >= 1E9) {
+      text = val2str(val, 1E9, 'b')
+    } else if (val >= 1E6) {
+      text = val2str(val, 1E6, 'm')
+    } else if (val >= 1E3) {
       text = val2str(val, 1E3, 'k')
     }
     return text;
@@ -84,16 +97,16 @@ define(
     $labels.each(function () {
       var $label = $(this);
       var text = $label.text().replace(/,/g, '');
-      var newText = reformatValStr(text);
+      var newText = reformatYTickStr(text);
       $label.text(newText);
     });
 
-    var $yaxis = $element.find('.mpld3-xaxis');
-    var $labels = $yaxis.find('g.tick > text');
+    var $xaxis = $element.find('.mpld3-xaxis');
+    var $labels = $xaxis.find('g.tick > text');
     $labels.each(function () {
       var $label = $(this);
       var text = $label.text().replace(/,/g, '');
-      var newText = reformatValStr(text);
+      var newText = reformatXTickStr(text);
       $label.text(newText);
     });
   }
