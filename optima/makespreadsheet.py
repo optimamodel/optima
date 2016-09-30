@@ -63,8 +63,10 @@ def abbreviate(param):
             short_param += w
     return short_param.upper()
 
+
 def years_range(data_start, data_end):
     return [x for x in range(data_start, data_end+1)]
+
 
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
@@ -720,8 +722,7 @@ class OptimaProgramSpreadsheet:
         self.sheet_names = OrderedDict([
             ('instr', 'Instructions'),
             ('targeting','Populations & programs'),
-            ('costcovdata', 'Historical data'),
-            ('costcovpars', 'Cost-coverage parameters')
+            ('costcovdata', 'Program data'),
             ])
         self.name = name
         self.pops = pops
@@ -753,7 +754,7 @@ class OptimaProgramSpreadsheet:
         self.prog_range = TitledRange(sheet=self.current_sheet, first_row=current_row, content=targeting_content)
         current_row = self.prog_range.emit(self.formats, rc_title_align = 'left')
 
-        self.ref_prog_range = self.prog_range.param_refs()
+        self.ref_prog_range = self.prog_range
 
 
     def generate_instr(self):
@@ -781,30 +782,10 @@ class OptimaProgramSpreadsheet:
         return current_row
 
 
-    def emit_costcovpars_block(self, name, current_row, row_names, column_names, row_format = OptimaFormats.GENERAL,
-        row_formats = None):
-        content = make_costcovpars_range(name=name, row_names=row_names, column_names=column_names)
-        content.set_row_format(row_format)
-        if row_formats is not None:
-            content.set_row_formats(row_formats)
-        the_range = TitledRange(sheet=self.current_sheet, first_row=current_row, content=content)
-        current_row = the_range.emit(self.formats)
-        return current_row
-
-
     def generate_costcovdata(self):
-        row_levels = ['Coverage', 'Cost']
+        row_levels = ['Coverage', 'Cost', 'Unit cost', 'Saturation']
         current_row = 0
-        current_row = self.emit_years_block(name='Cost & coverage', current_row=current_row, row_names=self.ref_prog_range, row_formats = [OptimaFormats.SCIENTIFIC,OptimaFormats.SCIENTIFIC], assumption = True, row_levels = row_levels)
-
-
-    def generate_costcovpars(self):
-        column_names = ['best', 'low', 'high', 'best', 'low', 'high']
-        self.current_sheet.merge_range('C2:E2', 'Unit cost ($/person covered in most recent year)', self.formats.formats['merge_format'])
-        self.current_sheet.merge_range('F2:H2', 'Maximal attainable coverage in most recent year (%); optional', self.formats.formats['merge_format'])
-        self.current_sheet.set_row(1, 30)  # Set the height of Row 1 to 20.
-        current_row = 1
-        current_row = self.emit_costcovpars_block(name='', current_row=current_row, row_names=self.ref_prog_range, column_names=column_names, row_formats = [OptimaFormats.NUMBER,OptimaFormats.PERCENTAGE])
+        current_row = self.emit_years_block(name='Cost & coverage', current_row=current_row, row_names=self.ref_prog_range.param_refs(), row_formats = [OptimaFormats.SCIENTIFIC,OptimaFormats.SCIENTIFIC,OptimaFormats.SCIENTIFIC,OptimaFormats.SCIENTIFIC], assumption = True, row_levels = row_levels)
 
 
     def create(self, path):

@@ -295,4 +295,46 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     return data
 
 
-#loadspreadsheet('test.xlsx') # Uncomment for debugging
+
+
+###########################################################################################################
+## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
+###########################################################################################################
+        
+def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
+    """
+    Loads the spreadsheet (i.e. reads its contents into the data).
+    Version: 1.0 (2016sep30)
+    """
+    
+    printv('Loading data from %s...' % filename, 1, verbose)
+    sheets = odict()
+    
+    # Data on program names and targeting
+    sheets['Populations & programs'] = ['programs']
+    
+    # Historical data on cost and coverage
+    sheets['Historical data'] =  ['cost','coverage']
+    
+    # Parameters for making cost coverage functions
+    sheets['Cost-coverage parameters']  = ['unitcost', 'saturation']
+    
+    
+    ###########################################################################
+    ## Load data sheets
+    ###########################################################################
+    
+
+    ## Basic setup
+    data = odict() # Create sheetsure for holding data
+    data['meta'] = odict()
+    data['meta']['date'] = today()
+    data['meta']['sheets'] = sheets # Store parameter names
+    try: 
+        workbook = open_workbook(filename) # Open workbook
+    except: 
+        errormsg = 'Failed to load program spreadsheet: file "%s" not found or other problem' % filename
+        raise OptimaException(errormsg)
+    
+
+    return data

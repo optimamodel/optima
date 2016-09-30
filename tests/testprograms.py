@@ -15,7 +15,7 @@ Version: 2016feb06
 ## Define tests to run here!!!
 tests = [
 'makeprogramspreadsheet',
-'loadprogramspreadsheet',
+#'loadprogramspreadsheet',
 #'makeprograms',
 #'compareoutcomes',
 #'reconcilepars',
