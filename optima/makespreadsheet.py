@@ -217,6 +217,7 @@ class OptimaFormats:
     SCIENTIFIC = 'scientific'
     NUMBER = 'number'
     GENERAL = 'general'
+    ACCOUNTING = 'accounting'
 
     def __init__(self, book):
         self.formats = {}
@@ -794,7 +795,7 @@ class OptimaProgramSpreadsheet:
     def generate_costcovdata(self):
         row_levels = ['Coverage', 'Cost']
         current_row = 0
-        current_row = self.emit_years_block(name='Cost & coverage', current_row=current_row, row_names=self.ref_prog_range, row_formats = [OptimaFormats.DECIMAL_PERCENTAGE,OptimaFormats.SCIENTIFIC], assumption = True, row_levels = row_levels)
+        current_row = self.emit_years_block(name='Cost & coverage', current_row=current_row, row_names=self.ref_prog_range, row_formats = [OptimaFormats.SCIENTIFIC,OptimaFormats.SCIENTIFIC], assumption = True, row_levels = row_levels)
 
 
     def generate_costcovpars(self):

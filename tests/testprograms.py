@@ -15,6 +15,7 @@ Version: 2016feb06
 ## Define tests to run here!!!
 tests = [
 'makeprogramspreadsheet',
+#'loadprogramspreadsheet',
 #'makeprograms',
 #'compareoutcomes',
 #'reconcilepars',
@@ -64,7 +65,20 @@ if 'makeprogramspreadsheet' in tests:
     progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
     makeprogramspreadsheet(filename, pops=P.data['pops']['short'], progs=progs)
     
+    done()
 
+
+if 'loadprogramspreadsheet' in tests:
+    t = tic()
+    
+    print('Loading programs spreadsheet ...')
+
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False)
+    R = P.progsets[0]
+    filename = 'testprogramdata.xlsx'
+    R.loadspreadsheet(filename)
+    
+    done()
 
 ## Programs creation test
 if 'makeprograms' in tests:
