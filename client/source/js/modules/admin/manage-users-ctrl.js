@@ -1,9 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
   module.controller('AdminManageUsersController', function ($scope, $http, users, UserManager, modalService) {
-    $scope.users = _(users.data.users).filter(function (u) {
-      return u.id != UserManager.data.id;
-    });
+    $scope.users = users.data.users;
 
     $scope.deleteUser = function (user) {
       modalService.confirm(function(){
