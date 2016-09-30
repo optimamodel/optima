@@ -1,3 +1,71 @@
+###########################################################################
+## Preliminaries
+###########################################################################
+
+from optima import OptimaException, odict, printv, today, isnumber
+from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
+from xlrd import open_workbook # For opening Excel workbooks
+
+    
+def forcebool(entry, location=''):
+    """ Convert an entry to be Boolean """
+    if entry in [1, 'TRUE', 'true', 'True', 't', 'T']:
+        return 1
+    elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']:
+        return 0
+    else:
+        errormsg = 'Boolean data "%s" not understood in spreadsheet location "%s"' % (entry, location)
+        raise OptimaException(errormsg)
+    
+    
+    
+
+def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklower=True, checkblank=True):
+    ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
+    
+    # Check that only numeric data have been entered
+    for column,datum in enumerate(thesedata):
+        if not isnumber(datum):
+            errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
+            errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
+            errormsg += 'Be sure all entries are numeric'
+            raise OptimaException(errormsg)
+    
+    # Now check integrity of data itself
+    validdata = array(thesedata)[~isnan(thesedata)]
+    if len(validdata):
+        invalid = array([False]*len(validdata)) # By default, set everything to valid
+        if checkupper and checklower: invalid = logical_or(array(validdata)>1, array(validdata)<0) # If upper & lower check specified
+        if checkupper and not checklower: invalid = array(validdata)>1
+        if not checkupper and checklower: invalid = array(validdata)<0
+        if any(invalid):
+            column = nonzero(invalid)[0]
+            errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
+            errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
+            if checkupper and checklower: errormsg += 'Be sure that all values are >=0 and <=1'
+            elif checkupper and not checklower: errormsg += 'Be sure that all values are <=1'
+            elif not checkupper and checklower: errormsg += 'Be sure that all values are >=0'
+            raise OptimaException(errormsg)
+    
+    # No data entered
+    elif checkblank:
+        errormsg = 'No data or assumption entered for sheet "%s", parameter "%s", row=%i' % (sheetname, thispar, row) 
+        raise OptimaException(errormsg)
+    
+    return None
+
+
+
+def blank2nan(thesedata):
+    ''' Convert a blank entry to a nan '''
+    return list(map(lambda val: nan if val=='' else val, thesedata))
+    
+
+
+###########################################################################################################
+## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
+###########################################################################################################
+        
 def loadspreadsheet(filename='simple.xlsx', verbose=2):
     """
     Loads the spreadsheet (i.e. reads its contents into the data).
@@ -9,75 +77,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Version: 1.4 (2016feb07)
     """
     
-    ###########################################################################
-    ## Preliminaries
-    ###########################################################################
-    
-    from optima import OptimaException, odict, printv, today, isnumber
-    from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
-    from xlrd import open_workbook # For opening Excel workbooks
     printv('Loading data from %s...' % filename, 1, verbose)
-    
-    
-    def forcebool(entry, location=''):
-        """ Convert an entry to be Boolean """
-        if entry in [1, 'TRUE', 'true', 'True', 't', 'T']:
-            return 1
-        elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']:
-            return 0
-        else:
-            errormsg = 'Boolean data "%s" not understood in spreadsheet location "%s"' % (entry, location)
-            raise OptimaException(errormsg)
-        
-        
-        
-    
-    def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklower=True, checkblank=True):
-        ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
-        
-        # Check that only numeric data have been entered
-        for column,datum in enumerate(thesedata):
-            if not isnumber(datum):
-                errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
-                errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
-                errormsg += 'Be sure all entries are numeric'
-                raise OptimaException(errormsg)
-        
-        # Now check integrity of data itself
-        validdata = array(thesedata)[~isnan(thesedata)]
-        if len(validdata):
-            invalid = array([False]*len(validdata)) # By default, set everything to valid
-            if checkupper and checklower: invalid = logical_or(array(validdata)>1, array(validdata)<0) # If upper & lower check specified
-            if checkupper and not checklower: invalid = array(validdata)>1
-            if not checkupper and checklower: invalid = array(validdata)<0
-            if any(invalid):
-                column = nonzero(invalid)[0]
-                errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
-                errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
-                if checkupper and checklower: errormsg += 'Be sure that all values are >=0 and <=1'
-                elif checkupper and not checklower: errormsg += 'Be sure that all values are <=1'
-                elif not checkupper and checklower: errormsg += 'Be sure that all values are >=0'
-                raise OptimaException(errormsg)
-        
-        # No data entered
-        elif checkblank:
-            errormsg = 'No data or assumption entered for sheet "%s", parameter "%s", row=%i' % (sheetname, thispar, row) 
-            raise OptimaException(errormsg)
-        
-        return None
-
-
-
-    def blank2nan(thesedata):
-        ''' Convert a blank entry to a nan '''
-        return list(map(lambda val: nan if val=='' else val, thesedata))
-        
-    
-    
-    ###########################################################################################################
-    ## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
-    ###########################################################################################################
-        
     sheets = odict()
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
