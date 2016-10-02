@@ -16,10 +16,10 @@ Version: 2016feb06
 tests = [
 'makeprogramspreadsheet',
 'loadprogramspreadsheet',
-'demonstrateprogrammethods',
-'plotprogram',
-'compareoutcomes',
-'reconcilepars',
+#'demonstrateprogrammethods',
+#'plotprogram',
+#'compareoutcomes',
+#'reconcilepars',
 ]
 
 
@@ -78,7 +78,7 @@ if 'loadprogramspreadsheet' in tests:
     R = P.progsets[0]
     filename = 'testprogramdata.xlsx'
     R.loadspreadsheet(filename)    
-    
+#    R.programs['Condoms'].costcovfn.getccopar(2014,sample='random')
     done()
 
 

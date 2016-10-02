@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 1.5 (2016jul06)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones, inf, append
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
@@ -766,12 +766,23 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 #################################################################################################################################
 
 
-class Par(object):
+class Basepar(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), verbose=None):
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = defaultrepr(self)
+        return output
+
+
+class Par(Basepar):
+    ''' The base class for epidemiological model parameters '''
+    def __init__(self, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): 
+        Basepar.__init__(self, **defaultargs)
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
@@ -785,8 +796,6 @@ class Par(object):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
-
-
 
 
 class Timepar(Par):

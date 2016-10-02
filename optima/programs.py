@@ -9,7 +9,6 @@ Version: 2016feb06
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
-import abc
 
 # WARNING, this should not be hard-coded!!! Available from
 # [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
@@ -311,11 +310,14 @@ class Programset(object):
             self.programs[prog].targetpops = [data['pops'][tp] for tp in range(npops) if data[prog]['targetpops'][tp]] # Set target populations
             self.programs[prog].costcovdata['cost'] = data[prog]['cost'] # Load cost data
             self.programs[prog].costcovdata['coverage'] = data[prog]['coverage'] # Load coverage data
+            self.programs[prog].costcovdata['t'] = data['years']
             
             if self.programs[prog].optimizable():
                 self.programs[prog].costcovfn.ccopars['unitcost'] = sanitize(data[prog]['unitcost']) # Load unit cost assumptions
                 self.programs[prog].costcovfn.ccopars['saturation'] = sanitize(data[prog]['saturation']) # Load saturation assumptions
-                self.programs[prog].costcovfn.ccopars['t'] = data['years']
+                yearinds = [findinds(x,data[prog]['unitcost']) for x in self.programs[prog].costcovfn.ccopars['unitcost']]
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                self.programs[prog].costcovfn.ccopars['t'] = data['years'][yearinds[0][0]]
 
         return None
 
@@ -1127,16 +1129,17 @@ class Program(object):
 
         return cost_coverage_figure
 
+
+
 ########################################################
 # COST COVERAGE OUTCOME FUNCTIONS
 ########################################################
 class CCOF(object):
-    '''Cost-coverage, coverage-outcome and cost-outcome objects'''
-    __metaclass__ = abc.ABCMeta # WARNING, this is the only place where this is used...is it necessary...?
-
+    '''Cost-coverage and coverage-outcome objects'''
     def __init__(self,ccopars=None,interaction=None):
         self.ccopars = ccopars if ccopars else odict()
         self.interaction = interaction
+
 
     def __repr__(self):
         ''' Print out useful info'''
@@ -1145,6 +1148,7 @@ class CCOF(object):
         output += '            Interaction: %s\n'    % self.interaction
         output += '\n'
         return output
+
 
     def addccopar(self, ccopar, overwrite=False, verbose=2):
         ''' Add or replace parameters for cost-coverage functions'''
@@ -1200,10 +1204,10 @@ class CCOF(object):
         Args:
             t: years to interpolate sets of ccopar
             verbose: level of verbosity
-            bounds: None - take middle of intervals,
-                    'upper' - take top of intervals,
-                    'lower' - take bottom if intervals
-            randseed: takes a 
+            bounds: 'best' - take middle of intervals
+                    'upper' - take top of intervals
+                    'lower' - take bottom of intervals
+                    'random' - sample randomly from interval
         '''
 
         # Error checks
@@ -1217,6 +1221,7 @@ class CCOF(object):
         nyrs = len(t)
         
         # Get the appropriate sample type
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for parname, parvalue in self.ccopars.iteritems():
             if parname is not 't' and parvalue:
                 ccopars_sample[parname] = zeros(len(parvalue))
@@ -1266,11 +1271,9 @@ class CCOF(object):
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
 
-    @abc.abstractmethod # This method must be defined by the derived class
     def function(self, x, ccopar, popsize):
         pass
 
-    @abc.abstractmethod # This method must be defined by the derived class
     def inversefunction(self, x, ccopar, popsize):
         pass
 
