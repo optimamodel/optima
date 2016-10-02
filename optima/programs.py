@@ -766,7 +766,7 @@ class Programset(object):
         
         # Wrap up
         pardict[:] = replicatevec(parvecnew)
-        self.odict2cco(pardict) # Copy best values
+        self.odict2cco(pardict,t=year) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None
 
