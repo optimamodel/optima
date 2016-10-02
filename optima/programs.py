@@ -1260,20 +1260,6 @@ class CCOF(object):
         return None
 
 
-    def rmccopar(self, t, verbose=2):
-        '''Remove cost-coverage-outcome data point. The point to be removed can be specified by year (int or float).'''
-        if isnumber(t):
-            if int(t) in self.ccopars['t']:
-                ind = self.ccopars['t'].index(int(t))
-                for ccopartype in self.ccopars.keys():
-                    self.ccopars[ccopartype].pop(ind)
-                printv('\nRemoved CCO parameters in year "%s". \nCCO parameters are: %s' % (t, self.ccopars), 4, verbose)
-            else:
-                errormsg = 'You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars)
-                raise OptimaException(errormsg)
-        return None
-
-
     def getccopar(self, t, verbose=2, sample='best'):
         '''Get a cost-coverage-outcome parameter set'''
 
