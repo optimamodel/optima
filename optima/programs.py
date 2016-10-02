@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, getvalidyears
-from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose, mean
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, getvalidyears
+from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose
 from random import uniform
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -843,11 +843,11 @@ class Program(object):
         except:
             print("Error while initializing targetpartypes in program %s for targetpars %s" % (short, self.targetpars))
             self.targetpartypes = []
-        self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         self.category = category
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
         self.targetcomposition = targetcomposition
+        self.initialize_costcov(ccopars)
 
 
     def __repr__(self):
@@ -889,6 +889,21 @@ class Program(object):
         return None
 
 
+    def initialize_costcov(self,ccopars=None):
+        '''Initialize cost coverage function'''
+        self.costcovfn = Costcov()
+        self.costcovfn.ccopars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
+        self.costcovfn.ccopars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
+        pars = self.costcovfn.ccopars.keys()
+        for par in pars:
+            self.costcovfn.ccopars[par].y['best'] = array([])
+            self.costcovfn.ccopars[par].y['low'] = array([])
+            self.costcovfn.ccopars[par].y['high'] = array([])
+            self.costcovfn.ccopars[par].t['best'] = array([])
+            self.costcovfn.ccopars[par].t['low'] = array([])
+            self.costcovfn.ccopars[par].t['high'] = array([])
+        return None
+    
     def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
         '''Add cost-coverage data point'''
         if costcovdatum['t'] not in self.costcovdata['t']:
@@ -1196,10 +1211,12 @@ class CCOF(object):
                             raise OptimaException(errormsg)
                         else:
                             yearind = findinds(self.ccopars[parname].t[estimate],year)
-                            self.ccopars[parname].y[estimate][yearind] = value
+                            try: self.ccopars[parname].y[estimate][yearind] = value
+                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            
                             if estimate == 'best': # If we add a best estimate, we also add a low and high
-                                self.ccopars[parname].y['low'] = value
-                                self.ccopars[parname].y['high'] = value
+                                self.ccopars[parname].y['low'][yearind] = value
+                                self.ccopars[parname].y['high'][yearind] = value
                             printv('\nSet CCO parameter "%s" in year "%s" to "%f"' % (parname, year, value), 4, verbose)
                         
                     else: 
@@ -1229,7 +1246,15 @@ class CCOF(object):
         ccopar.pop('t', None)
         
         for parname,parvals in ccopar.iteritems():
-            self.addsingleccopar(parname=parname,values=parvals,years=years)
+            if type(parvals)==tuple: # Tuple corresponds to (low,high) parameter estimates
+                bestparval = (parvals[0]+parvals[1])/2
+                self.addsingleccopar(parname=parname,values=bestparval,years=years,estimate='best',overwrite=overwrite)
+                lowparval = parvals[0]
+                self.addsingleccopar(parname=parname,values=lowparval,years=years,estimate='low',overwrite=True)
+                highparval = parvals[1]
+                self.addsingleccopar(parname=parname,values=highparval,years=years,estimate='high',overwrite=True)
+            else:
+                self.addsingleccopar(parname=parname,values=parvals,years=years)
             
         return None
 
@@ -1261,19 +1286,24 @@ class CCOF(object):
 
         # Get ccopar
         for parname, parvalue in self.ccopars.iteritems():
-            interpval = parvalue.interp(t)
+            try:
+                interpval = parvalue.interp(t)
+                # Deal with bounds
+                if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
+                    try: ccopar[parname] = promotetoarray(interpval[0])
+                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                elif sample in ['lower','l','low']:
+                    ccopar[parname] = promotetoarray(interpval[1])
+                elif sample in ['upper','u','up','high','h']:
+                    ccopar[parname] = promotetoarray(interpval[2])
+                elif sample in ['random','rand','r']:
+                    ccopar[parname] = promotetoarray(uniform(interpval[1],interpval[2]))
+                else:
+                    raise OptimaException('Unrecognised bounds.')
 
-            # Deal with bounds
-            if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
-                ccopar[parname] = promotetoarray(interpval[0])
-            elif sample in ['lower','l','low']:
-                ccopar[parname] = promotetoarray(interpval[1])
-            elif sample in ['upper','u','up','high','h']:
-                ccopar[parname] = promotetoarray(interpval[2])
-            elif sample in ['random','rand','r']:
-                ccopar[parname] = promotetoarray(uniform(interpval[1],interpval[2]))
-            else:
-                raise OptimaException('Unrecognised bounds.')
+            except:
+                printv('Can''t evaluate parameter %s in year %s, setting to nan.' % (parname,t), verbose, 1)
+                ccopar[parname] = array([nan])
 
         ccopar['t'] = t
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)

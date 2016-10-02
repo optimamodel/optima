@@ -18,7 +18,7 @@ tests = [
 'loadprogramspreadsheet',
 #'demonstrateprogrammethods',
 #'plotprogram',
-#'compareoutcomes',
+'compareoutcomes',
 #'reconcilepars',
 ]
 
@@ -75,7 +75,7 @@ if 'loadprogramspreadsheet' in tests:
     print('Loading programs spreadsheet ...')
     from optima import defaults
 
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
     R = P.progsets[0]
     filename = 'testprogramdata.xlsx'
     R.loadspreadsheet(filename)    

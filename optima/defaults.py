@@ -350,13 +350,14 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         # Fix up costs if non-standard costs have been requested but 
         if addcostcovpars and not usestandardcostcovpars:
-            R.programs['ART'].costcovfn.addccopar({'saturation': (0.9,0.9),
+            try: R.programs['ART'].costcovfn.addccopar({'saturation': (0.9,0.9),
                              't': 2016.0,
-                             'unitcost': (1000,2000)})
+                             'unitcost': (1000,2000)},overwrite=True)
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                              
             R.programs['PMTCT'].costcovfn.addccopar({'saturation': (0.9,0.9),
                              't': 2016.0,
-                             'unitcost': (5000,8000)})
+                             'unitcost': (5000,8000)},overwrite=True)
 
         # Add different modalities of testing
         HTC_workplace = Program(short='HTC workplace',
