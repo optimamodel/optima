@@ -170,7 +170,7 @@ class Programset(object):
         details = []
         for thispartype in self.covout.keys():
             for thispop in self.covout[thispartype].keys():
-                if self.covout[thispartype][thispop].ccopars['intercept'] is not None:
+                if not self.covout[thispartype][thispop].ccopars['intercept']:
                     result = False
                     details.append((thispartype,thispop))
                 if thispartype not in coveragepars:
