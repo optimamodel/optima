@@ -52,11 +52,11 @@ Condom use for commercial acts	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	ran
 Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random	1
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random	1
 People in care lost to follow-up (per year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random	1
-PLHIV aware of their status	propdx	(0, 'proppar')	tot	timepar	no	other	0	0	1	None	0
-Diagnosed PLHIV in care	propcare	(0, 'proppar')	tot	timepar	no	other	1	0	1	None	0
-PLHIV in care on treatment	proptx	(0, 'proppar')	tot	timepar	no	other	0	0	1	None	0
-People on ART with viral suppression	propsupp	(0, 'proppar')	tot	timepar	no	other	1	0	1	None	0
-Pregnant women and mothers on PMTCT	proppmtct	(0, 'proppar')	tot	timepar	no	other	0	0	1	None	0
+PLHIV aware of their status	propdx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
+Diagnosed PLHIV in care	propcare	(0, 1)	tot	timepar	no	other	1	0	1	None	0
+PLHIV in care on treatment	proptx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
+People on ART with viral suppression	propsupp	(0, 1)	tot	timepar	no	other	1	0	1	None	0
+Pregnant women and mothers on PMTCT	proppmtct	(0, 1)	tot	timepar	no	other	0	0	1	None	0
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None	1
