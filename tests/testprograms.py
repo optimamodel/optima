@@ -75,11 +75,13 @@ if 'loadprogramspreadsheet' in tests:
     print('Loading programs spreadsheet ...')
     from optima import defaults
 
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False)
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
     R = P.progsets[0]
     filename = 'testprogramdata.xlsx'
     R.loadspreadsheet(filename)    
     R.programs['Condoms'].costcovfn.getccopar(2014,sample='random')
+    R.programs['Condoms'].costcovfn.addsingleccopar(parname='unitcost',values=7.,years=2013.)
+    R.programs['Condoms'].costcovfn.addccopar(ccopar={'saturation':[.6,.5],'unitcost':[1.,7.],'t':[2006.,2010.]})
     done()
 
 

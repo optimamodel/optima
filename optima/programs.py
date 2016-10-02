@@ -7,7 +7,7 @@ Version: 2016feb06
 """
 
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, getvalidyears
-from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
+from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose, mean
 from random import uniform
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -1160,38 +1160,85 @@ class CCOF(object):
         return output
 
 
-    def addccopar(self, ccopar, overwrite=False, verbose=2):
-        ''' Add or replace parameters for cost-coverage functions'''
-
-        # Fill in the missing information for cost-coverage curves
-        if ccopar.get('unitcost') is not None:
-            if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
-
-        if not self.ccopars:
-            for ccopartype in ccopar.keys():
-                self.ccopars[ccopartype] = [ccopar[ccopartype]]
+    def addsingleccopar(self, parname, values, years, overwrite=False, verbose=2):
+        ''' Add a single parameter.
+        parname is a string; value is a number; year is a year'''
+        
+        # Make sure parameter exists 
+        if parname not in self.ccopars.keys():
+            errormsg = 'Can''t add a parameter %s to the CCO structure: allowable parameters are %s.' % (parname, self.ccopars.keys())
+            raise OptimaException(errormsg)
+            
         else:
-            if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
-                for ccopartype in self.ccopars.keys():
-                    if ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
-                        self.ccopars[ccopartype].append(ccopar[ccopartype])
-                printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
+            values = promotetoarray(values)
+            years = promotetoarray(years)
+            if not len(values)==len(years):
+                errormsg = 'To add a ccopar, must have a value corresponding to ever year: %i values and %i years is not allowed.' % (len(values), len(years))
+                raise OptimaException(errormsg)
             else:
-                if overwrite:
-                    ind = self.ccopars['t'].index(int(ccopar['t']))
-                    oldccopar = odict()
-                    for ccopartype in ccopar.keys():
-                        if self.ccopars[ccopartype]:
-                            oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
-                            printv('\nModified CCO parameter "%s" from "%s" to "%s"' % (ccopartype, oldccopar[ccopartype], ccopar[ccopartype]), 4, verbose)
+                ntoadd = len(values)
+                for n in range(ntoadd):
+                    year,value = years[n],values[n]
+                    # Check if we already have a value for this parameter
+                    if year in self.ccopars[parname].t[0]:
+                        if not overwrite:
+                            errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % year
+                            raise OptimaException(errormsg)
                         else:
-                            printv('Added CCO parameter "%s" with value "%s"' % (ccopartype, ccopar[ccopartype]), 4, verbose)
-                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    
-                else:
-                    errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']
-                    raise OptimaException(errormsg)
+                            yearind = findinds(self.ccopars[parname].t[0],year)
+                            self.ccopars[parname].y[0][yearind] = value
+                            printv('\nSet CCO parameter "%s" in year "%s" to "%f"' % (parname, year, value), 4, verbose)
+                        
+                    else: 
+                        self.ccopars[parname].t[0] = append(self.ccopars[parname].t[0],year)
+                        self.ccopars[parname].y[0] = append(self.ccopars[parname].y[0],value)
+                        sortedinds = argsort(self.ccopars[parname].t[0])
+                        self.ccopars[parname].t[0] = self.ccopars[parname].t[0][sortedinds]
+                        self.ccopars[parname].y[0] = self.ccopars[parname].y[0][sortedinds]
+
         return None
+
+
+    def addccopar(self, ccopar, overwrite=False, verbose=2):
+        ''' Add a set of parameters for a single year'''
+        
+        # Separate the ccopar into the parameter bits and the year bits
+        years = ccopar['t']
+        ccopar.pop('t', None)
+        
+        for parname,parvals in ccopar.iteritems():
+            self.addsingleccopar(parname=parname,values=parvals,years=years)
+            
+        return None
+
+#        # Fill in the missing information for cost-coverage curves
+#        if ccopar.get('unitcost') is not None:
+#            if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
+#
+#        if not self.ccopars:
+#            for ccopartype in ccopar.keys():
+#                self.ccopars[ccopartype] = [ccopar[ccopartype]]
+#        else:
+#            if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
+#                for ccopartype in self.ccopars.keys():
+#                    if ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
+#                        self.ccopars[ccopartype].append(ccopar[ccopartype])
+#                printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
+#            else:
+#                if overwrite:
+#                    ind = self.ccopars['t'].index(int(ccopar['t']))
+#                    oldccopar = odict()
+#                    for ccopartype in ccopar.keys():
+#                        if self.ccopars[ccopartype]:
+#                            oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
+#                            printv('\nModified CCO parameter "%s" from "%s" to "%s"' % (ccopartype, oldccopar[ccopartype], ccopar[ccopartype]), 4, verbose)
+#                        else:
+#                            printv('Added CCO parameter "%s" with value "%s"' % (ccopartype, ccopar[ccopartype]), 4, verbose)
+#                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
+#                    
+#                else:
+#                    errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']
+#                    raise OptimaException(errormsg)
 
     def rmccopar(self, t, verbose=2):
         '''Remove cost-coverage-outcome data point. The point to be removed can be specified by year (int or float).'''
@@ -1208,17 +1255,7 @@ class CCOF(object):
 
 
     def getccopar(self, t, verbose=2, sample='best'):
-        '''
-        Get a cost-coverage-outcome parameter set for any year in range 1900-2100
-
-        Args:
-            t: years to interpolate sets of ccopar
-            verbose: level of verbosity
-            bounds: 'best' - take middle of intervals
-                    'upper' - take top of intervals
-                    'lower' - take bottom of intervals
-                    'random' - sample randomly from interval
-        '''
+        '''Get a cost-coverage-outcome parameter set'''
 
         # Error checks
         if not self.ccopars:
@@ -1231,7 +1268,11 @@ class CCOF(object):
         # Get ccopar
         for parname, parvalue in self.ccopars.iteritems():
             ccopar[parname] = parvalue.interp(t)
+        ccopar['t'] = t
+        printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
+        return ccopar
             
+
         # Set up necessary variables
 #        ccopar = odict()
 #        ccopars_sample = odict()
@@ -1270,10 +1311,7 @@ class CCOF(object):
 #                ccopar[param][yr] = allparams[yr]
 #            if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
 #
-#        ccopar['t'] = t
-        printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
-        return ccopar
-
+ 
     def evaluate(self, x, popsize, t, toplot, inverse=False, sample='best', verbose=2):
         x = promotetoarray(x)
         t = promotetoarray(t)
