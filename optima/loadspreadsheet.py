@@ -383,7 +383,4 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
             checkblank = False if thisvar in ['unitcost', 'coverage', 'saturation'] else True # Don't check optional indicators, check everything else
             validatedata(thesedata, sheetname, thisvar, row, checkblank=checkblank)
             
-
-#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                
-
     return data

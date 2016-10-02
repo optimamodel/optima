@@ -336,7 +336,6 @@ class Programset(object):
                             rangedata = ~isnan(data[prog][par.short][estimate])
                             rangevalues = sanitize(data[prog][par.short][estimate])
                             rangeyears = getvalidyears(data['years'], rangedata)
-#                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                             self.programs[prog].costcovfn.addsingleccopar(parname=par.short,values=rangevalues,years=rangeyears,estimate=estimate,overwrite=True)
                     
         return None
@@ -1211,8 +1210,7 @@ class CCOF(object):
                             raise OptimaException(errormsg)
                         else:
                             yearind = findinds(self.ccopars[parname].t[estimate],year)
-                            try: self.ccopars[parname].y[estimate][yearind] = value
-                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            self.ccopars[parname].y[estimate][yearind] = value
                             
                             if estimate == 'best': # If we add a best estimate, we also add a low and high
                                 self.ccopars[parname].y['low'][yearind] = value
@@ -1290,8 +1288,7 @@ class CCOF(object):
                 interpval = parvalue.interp(t)
                 # Deal with bounds
                 if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
-                    try: ccopar[parname] = promotetoarray(interpval[0])
-                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    ccopar[parname] = promotetoarray(interpval[0])
                 elif sample in ['lower','l','low']:
                     ccopar[parname] = promotetoarray(interpval[1])
                 elif sample in ['upper','u','up','high','h']:
