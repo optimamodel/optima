@@ -347,8 +347,15 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
                 data[progname] = odict()
                 data[progname]['name'] = str(thesedata[1])
                 data[progname]['targetpops'] = thesedata[2:]
+                data[progname]['cost'] = []
+                data[progname]['coverage'] = []
+                data[progname]['unitcost'] = odict()
+                data[progname]['saturation'] = odict()
     
-    namemap = {'Total spend': 'cost', 'Unit cost':'unitcost', 'Coverage (optional)': 'coverage', 'Saturation (optional)': 'saturation'} 
+    namemap = {'Total spend': 'cost',
+               'Unit cost':'unitcost',
+               'Coverage': 'coverage',
+               'Saturation': 'saturation'} 
     sheetdata = workbook.sheet_by_name('Program data') # Load 
     parcount = -1    
     
@@ -361,17 +368,22 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
             parcount += 1 # Increment the parameter count
 
         elif progname != '': # The first column is blank: it's time for the data
-            thisvar = namemap[sheetdata.cell_value(row, 2)]  # Get the name of the indicator
-            printv('Program: %s, indicator %s' % (progname, thisvar), 4, verbose)
-
             thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 3rd column, and ends lastdatacol-1
             assumptiondata = sheetdata.cell_value(row, assumptioncol)
             if assumptiondata != '': # There's an assumption entered
                 thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
-            try: data[progname][thisvar]= thesedata # Store data
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                
+            if sheetdata.cell_value(row, 2) in namemap.keys(): # It's a regular variable without ranges
+                thisvar = namemap[sheetdata.cell_value(row, 2)]  # Get the name of the indicator
+                printv('Program: %s, indicator %s' % (progname, thisvar), 4, verbose)
+                data[progname][thisvar] = thesedata # Store data
+            else:
+                thisvar = namemap[sheetdata.cell_value(row, 2).split(' - ')[0]]  # Get the name of the indicator
+                thisestimate = sheetdata.cell_value(row, 2).split(' - ')[1]
+                data[progname][thisvar][thisestimate] = thesedata # Store data
             checkblank = False if thisvar in ['unitcost', 'coverage', 'saturation'] else True # Don't check optional indicators, check everything else
-            try: validatedata(thesedata, sheetname, thisvar, row, checkblank=checkblank)
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                
+            validatedata(thesedata, sheetname, thisvar, row, checkblank=checkblank)
+            
+
+#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                
 
     return data

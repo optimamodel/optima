@@ -60,7 +60,7 @@ if 'makeprogramspreadsheet' in tests:
     print('Making programs spreadsheet ...')
     from optima import defaults, makeprogramspreadsheet
 
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False)
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
     R = P.progsets[0]
     filename = 'tmpprogramspreadsheet.xlsx'
     progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
@@ -75,13 +75,14 @@ if 'loadprogramspreadsheet' in tests:
     print('Loading programs spreadsheet ...')
     from optima import defaults
 
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
     R = P.progsets[0]
     filename = 'testprogramdata.xlsx'
     R.loadspreadsheet(filename)    
-    R.programs['Condoms'].costcovfn.getccopar(2014,sample='random')
+    R.programs['Condoms'].costcovfn.getccopar([2014,2015],sample='best')
     R.programs['Condoms'].costcovfn.addsingleccopar(parname='unitcost',values=7.,years=2013.)
     R.programs['Condoms'].costcovfn.addccopar(ccopar={'saturation':[.6,.5],'unitcost':[1.,7.],'t':[2006.,2010.]})
+    R.covout['condcas'][0].addsingleccopar(parname='intercept',values=.7,years=2013.)
     done()
 
 
