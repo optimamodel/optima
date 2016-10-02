@@ -694,8 +694,10 @@ class Programset(object):
             for targetparpop in self.covout[targetpartype].keys():
                 pardict[(targetpartype,targetparpop,'intercept')] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')['intercept'][0],self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')['intercept'][0]]
                 for thisprog in self.progs_by_targetpar(targetpartype)[targetparpop]:
-                    try: pardict[(targetpartype,targetparpop,thisprog.short)] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')[thisprog.short][0], self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')[thisprog.short][0]]
-                    except: pass # Must be something like ART, which does not have adjustable parameters -- WARNING, could test explicitly!
+                    lowerval = self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')[thisprog.short][0]
+                    upperval = self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')[thisprog.short][0]
+                    if ~isnan(lowerval): # It will be nan for things that don't have adjustable parameters -- WARNING, could test explicitly!
+                        pardict[(targetpartype,targetparpop,thisprog.short)] = [lowerval, upperval]
         return pardict
 
 
@@ -705,8 +707,9 @@ class Programset(object):
         if modifiablepars is None: raise OptimaException('Please supply modifiablepars')
         for key,val in modifiablepars.items():
             targetpartype,targetparpop,thisprogkey = key # Split out tuple
-            self.covout[targetpartype][targetparpop].ccopars[thisprogkey] = [tuple(val)]
-            if t: self.covout[targetpartype][targetparpop].ccopars['t'] = [t] # WARNING, reassigned multiple times, but shouldn't matter...
+            self.covout[targetpartype][targetparpop].addsingleccopar(parname=thisprogkey,values=(val[0]+val[1])/2,years=t,estimate='best',overwrite=True)
+            self.covout[targetpartype][targetparpop].addsingleccopar(parname=thisprogkey,values=val[0],years=t,estimate='low',overwrite=True)
+            self.covout[targetpartype][targetparpop].addsingleccopar(parname=thisprogkey,values=val[1],years=t,estimate='high',overwrite=True)
         return None
     
     
@@ -758,7 +761,6 @@ class Programset(object):
         # Prepare inputs to optimization method
         args = odict([('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('verbose',verbose)])
         origmismatch = costfuncobjectivecalc(parmeans, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
-            
         parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, MaxIter=maxiters, verbose=verbose, **kwargs)
         currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
         

@@ -14,12 +14,12 @@ Version: 2016feb06
 
 ## Define tests to run here!!!
 tests = [
-#'makeprogramspreadsheet',
+'makeprogramspreadsheet',
 'loadprogramspreadsheet',
-#'demonstrateprogrammethods',
-#'plotprogram',
+'demonstrateprogrammethods',
+'plotprogram',
 'compareoutcomes',
-#'reconcilepars',
+'reconcilepars',
 ]
 
 
@@ -79,10 +79,6 @@ if 'loadprogramspreadsheet' in tests:
     R = P.progsets[0]
     filename = 'testprogramdata.xlsx'
     R.loadspreadsheet(filename)    
-    R.programs['Condoms'].costcovfn.getccopar([2014,2015],sample='best')
-    R.programs['Condoms'].costcovfn.addsingleccopar(parname='unitcost',values=7.,years=2013.)
-    R.programs['Condoms'].costcovfn.addccopar(ccopar={'saturation':[.6,.5],'unitcost':[1.,7.],'t':[2006.,2010.]})
-    R.covout['condcas'][0].addsingleccopar(parname='intercept',values=.7,years=2013.)
     done()
 
 
@@ -189,6 +185,7 @@ if 'reconcilepars' in tests:
     import optima as op
     P = op.defaults.defaultproject('best')
     ps = P.parsets[0]
+
     before = op.dcp(P.progsets[0])
     P.progsets[0].reconcile(parset=ps, year=2016, uselimits=True)
     after = P.progsets[0]
