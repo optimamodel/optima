@@ -17,7 +17,15 @@ dosave = 0
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best',dorun=False)
+#P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
+#R = P.progsets[0]
+#filename = 'testprogramdata.xlsx'
+#R.loadspreadsheet(filename)    
+
+from optima import migrate
+testproj = '/Users/robynstuart/Google Drive/Optima/Global model/Cost optimization 2.0/Projects Stage 7d optims post migration (temp)/Cote dIvoire_0160816 (1).prj' 
+oldP = loadobj(testproj)
+P = migrate(oldP)
 P.runsim(debug=True)
 
 
