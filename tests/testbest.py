@@ -28,7 +28,6 @@ oldP = loadobj(testproj)
 P = migrate(oldP)
 P.runsim(debug=True)
 
-
 ## Calibration
 if autocalib: 
     P.autofit(name='default', maxiters=60)
