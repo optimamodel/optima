@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, getvalidyears
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 
@@ -292,7 +292,7 @@ class Programset(object):
         if filter_partype: return progs_by_targetpar[filter_partype]
         else: return progs_by_targetpar
 
-    def loadspreadsheet(self, filename):
+    def loadspreadsheet(self, filename, verbose=3):
         '''Load a spreadsheet with cost and coverage data and parametres for the cost functions''' 
 
         ## Load data
@@ -311,13 +311,23 @@ class Programset(object):
             self.programs[prog].costcovdata['cost'] = data[prog]['cost'] # Load cost data
             self.programs[prog].costcovdata['coverage'] = data[prog]['coverage'] # Load coverage data
             self.programs[prog].costcovdata['t'] = data['years']
+
             
             if self.programs[prog].optimizable():
-                self.programs[prog].costcovfn.ccopars['unitcost'] = sanitize(data[prog]['unitcost']) # Load unit cost assumptions
-                self.programs[prog].costcovfn.ccopars['saturation'] = sanitize(data[prog]['saturation']) # Load saturation assumptions
-                yearinds = [findinds(x,data[prog]['unitcost']) for x in self.programs[prog].costcovfn.ccopars['unitcost']]
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                self.programs[prog].costcovfn.ccopars['t'] = data['years'][yearinds[0][0]]
+                # Creating CCOpars
+                self.programs[prog].costcovfn.ccopars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
+                self.programs[prog].costcovfn.ccopars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
+                for par in self.programs[prog].costcovfn.ccopars.values():
+                    validdata = ~isnan(data[prog][par.short])
+                    try: par.t['tot'] = getvalidyears(data['years'], validdata)
+                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    if sum(validdata): 
+                        try: par.y['tot'] = sanitize(data[prog][par.short])
+                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    else:
+                        printv('No data for cost parameter "%s"' % (par), 3, verbose)
+                        par.y['tot'] = array([1.]) # Blank, assume 1 -- IS THIS OK?
+                    
 
         return None
 
@@ -1216,43 +1226,51 @@ class CCOF(object):
 
         # Set up necessary variables
         ccopar = odict()
-        ccopars_sample = odict()
         t = promotetoarray(t)
-        nyrs = len(t)
-        
-        # Get the appropriate sample type
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
+        # Get ccopar
         for parname, parvalue in self.ccopars.iteritems():
-            if parname is not 't' and parvalue:
-                ccopars_sample[parname] = zeros(len(parvalue))
-                for j in range(len(parvalue)):
-                    thisval = parvalue[j]
-                    if isnumber(thisval): thisval = (thisval, thisval)
-                    if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
-                        ccopars_sample[parname][j] = mean(array(thisval[:]))
-                    elif sample in ['lower','l','low']:
-                        ccopars_sample[parname][j] = thisval[0]
-                    elif sample in ['upper','u','up','high','h']:
-                        ccopars_sample[parname][j] = thisval[1]
-                    elif sample in ['random','rand','r']:
-                        ccopars_sample[parname][j] = uniform(parvalue[j][0],parvalue[j][1])
-                    else:
-                        raise OptimaException('Unrecognised bounds.')
-        
-        # CK: I feel there might be a more direct way of doing all of this...
-        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
-        knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
-
-        # Calculate interpolated parameters
-        for j,param in enumerate(ccopars_sample.keys()): 
-            knownparam = array([ccopartuple[j+1] for ccopartuple in ccopartuples])
-            allparams = smoothinterp(t, knownt, knownparam, smoothness=1)
-            ccopar[param] = zeros(nyrs)
-            for yr in range(nyrs):
-                ccopar[param][yr] = allparams[yr]
-            if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
-
-        ccopar['t'] = t
+            ccopar[parname] = parvalue.interp(t)
+            
+        # Set up necessary variables
+#        ccopar = odict()
+#        ccopars_sample = odict()
+#        t = promotetoarray(t)
+#        nyrs = len(t)
+#        
+#        # Get the appropriate sample type
+#        for parname, parvalue in self.ccopars.iteritems():
+#            if parname is not 't' and parvalue:
+#                try: ccopars_sample[parname] = zeros(len(parvalue))
+#                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#                for j in range(len(parvalue)):
+#                    thisval = parvalue[j]
+#                    if isnumber(thisval): thisval = (thisval, thisval)
+#                    if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
+#                        ccopars_sample[parname][j] = mean(array(thisval[:]))
+#                    elif sample in ['lower','l','low']:
+#                        ccopars_sample[parname][j] = thisval[0]
+#                    elif sample in ['upper','u','up','high','h']:
+#                        ccopars_sample[parname][j] = thisval[1]
+#                    elif sample in ['random','rand','r']:
+#                        ccopars_sample[parname][j] = uniform(parvalue[j][0],parvalue[j][1])
+#                    else:
+#                        raise OptimaException('Unrecognised bounds.')
+#        
+#        # CK: I feel there might be a more direct way of doing all of this...
+#        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
+#        knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
+#
+#        # Calculate interpolated parameters
+#        for j,param in enumerate(ccopars_sample.keys()): 
+#            knownparam = array([ccopartuple[j+1] for ccopartuple in ccopartuples])
+#            allparams = smoothinterp(t, knownt, knownparam, smoothness=1)
+#            ccopar[param] = zeros(nyrs)
+#            for yr in range(nyrs):
+#                ccopar[param][yr] = allparams[yr]
+#            if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
+#
+#        ccopar['t'] = t
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 

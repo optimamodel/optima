@@ -14,7 +14,7 @@ Version: 2016feb06
 
 ## Define tests to run here!!!
 tests = [
-'makeprogramspreadsheet',
+#'makeprogramspreadsheet',
 'loadprogramspreadsheet',
 #'demonstrateprogrammethods',
 #'plotprogram',
@@ -73,12 +73,13 @@ if 'loadprogramspreadsheet' in tests:
     t = tic()
     
     print('Loading programs spreadsheet ...')
+    from optima import defaults
 
     P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False)
     R = P.progsets[0]
     filename = 'testprogramdata.xlsx'
     R.loadspreadsheet(filename)    
-#    R.programs['Condoms'].costcovfn.getccopar(2014,sample='random')
+    R.programs['Condoms'].costcovfn.getccopar(2014,sample='random')
     done()
 
 

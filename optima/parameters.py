@@ -922,6 +922,43 @@ class Constant(Par):
         return output
 
 
+class CCOpar(Basepar):
+    ''' The definition of a single time-varying parameter, which may or may not vary by population '''
+    
+    def __init__(self, t=None, y=None, m=1, **defaultargs):
+        Basepar.__init__(self, **defaultargs)
+        if t is None: t = odict()
+        if y is None: y = odict()
+        self.t = t # Time data, e.g. [2002, 2008]
+        self.y = y # Value data, e.g. [0.3, 0.7]
+    
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.y.keys()
+    
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
+        """ Take parameters and turn them into model parameters """
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
+        
+        # Set things up and do the interpolation
+        keys = self.keys()
+        npars = len(keys)
+        if asarray: output = zeros((npars,len(tvec)))
+        else: output = odict()
+        for par,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            yinterp = smoothinterp(tvec, self.t[par], self.y[par], smoothness=smoothness) # Use interpolation
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[par,:] = yinterp
+            else: output[key] = yinterp
+        if npars==1 and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
+        else: return output
 
 
 
