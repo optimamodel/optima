@@ -1,6 +1,7 @@
 import traceback
 from functools import wraps
 
+from pprint import pprint
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
 from server.webapp.exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
@@ -523,6 +524,36 @@ def load_zip_of_prj_files(project_ids):
 ## PORTFOLIO
 
 
+
+def create_portfolio(name, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    print("> Create portfolio %s" % name)
+    portfolio = op.Portfolio()
+    portfolio.name = name
+    objectives = optima.portfolio.defaultobjectives(verbose=0)
+    gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+    portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
+    record = PyObjectDb(
+        user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
+    # something about dates
+    record.save_obj(portfolio)
+    db_session.add(record)
+    db_session.commit()
+    return parse_portfolio_summary(portfolio)
+
+
+def delete_portfolio(portfolio_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    print("> Delete portfolio %s" % portfolio_id)
+    record = db_session.query(PyObjectDb).get(portfolio_id)
+    record.cleanup()
+    db_session.delete(record)
+    db_session.commit()
+    return load_portfolio_summaries()
+
+
 def load_portfolio(portfolio_id, db_session=None):
     if db_session is None:
         db_session = db.session
@@ -535,41 +566,50 @@ def load_portfolio(portfolio_id, db_session=None):
 
 
 def load_portfolio_summaries(db_session=None):
+    import optima.portfolio
     if db_session is None:
         db_session = db.session
-    portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
 
-    # save if not in database
-    kwargs = {'id': portfolio.uid, 'type': "portfolio"}
-    record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
-    if not record:
-        print("> Crreated default portfolio %s" % portfolio.name)
-        record = PyObjectDb(current_user.id)
-        record.type = "portfolio"
-        record.name = portfolio.name
-        record.id = portfolio.uid
-        db_session.add(record)
-        db_session.flush()
+    query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
+    if query is None:
+        portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+        record = PyObjectDb(
+            user_id=current_user.id, type="portfolio", name=portfolio.name, id=portfolio.uid)
         record.save_obj(portfolio)
+        db_session.add(record)
         db_session.commit()
+        print("> Crreated default portfolio %s" % portfolio.name)
+        portfolios = [portfolio]
     else:
-        portfolio = record.load()
-        print("> Load portfolio %s %s" % (portfolio.name, portfolio.uid))
+        portfolios = []
+        for record in query:
+            print(">> Portfolio id %s" % record.id)
+            portfolio = record.load()
+            if len(portfolio.gaoptims) == 0:
+                objectives = optima.portfolio.defaultobjectives(verbose=0)
+                gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+                portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
+                record.save_obj(portfolio)
+            portfolios.append(portfolio)
 
-    return parse_portfolio_summary(portfolio)
+    summaries = map(parse_portfolio_summary, portfolios)
+    print("> Loading portfolio summaries")
+    pprint(summaries, indent=2)
+
+    return summaries
 
 
 def save_portfolio(portfolio, db_session=None):
     if db_session is None:
         db_session = db.session
-    id = portfolio.uid
-    kwargs = {'id': id, 'type': "portfolio"}
+    portfolio_id = portfolio.uid
+    kwargs = {'id': portfolio_id, 'type': "portfolio"}
     query = db_session.query(PyObjectDb).filter_by(**kwargs)
     if query:
         record = query.first()
     else:
-        record = PyObjectDb(current_user.id)
-        record.id = UUID(id)
+        record = PyObjectDb(user_id=current_user.id)
+        record.id = UUID(portfolio_id)
         record.type = "portfolio"
         record.name = portfolio.name
     print ">> Saved portfolio %s" % (portfolio_id)

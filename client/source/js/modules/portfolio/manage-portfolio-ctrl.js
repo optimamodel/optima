@@ -7,7 +7,7 @@ define(
       'PortfolioController',
       function (
         $scope, $http, activeProject, modalService, fileUpload,
-        UserManager, $state, toastr, globalPoller) {
+        UserManager, $state, toastr, globalPoller, $modal) {
 
         function initialize() {
 
@@ -24,33 +24,126 @@ define(
           reloadPortfolio();
         }
 
-        function reloadPortfolio() {
+        function setPortfolios(portfolios) {
+          var currentPortfolioId = null;
+          if (!_.isUndefined($scope.state.id)) {
+            currentPortfolioId = $scope.state.id;
+          }
+          $scope.portfolios = portfolios;
+          $scope.state = _.findWhere($scope.portfolios, {id: currentPortfolioId});
+          if (!$scope.state) {
+            $scope.state = $scope.portfolios[0];
+          }
+          _.each($scope.state.projects, function(project) {
+            $scope.bocStatusMessage[project.id] = project.boc;
+            $http
+              .get(getCheckProjectBocUrl(project.id))
+              .success(function(response) {
+                if (response.status === 'started') {
+                  initProjectBocPoll(project.id);
+                }
+              });
+          });
+          $scope.setActiveGaoptim();
+        }
+
+        $scope.setActiveGaoptim = function() {
+          console.log('setActiveGaoptim');
+          var currentGaoptimId = null;
+          if (!_.isUndefined($scope.activeGaoptim)) {
+            currentGaoptimId = $scope.activeGaoptim.id;
+          }
+          $scope.activeGaoptim = _.findWhere($scope.state.gaoptims, {id: currentGaoptimId});
+          if (!$scope.activeGaoptim) {
+            $scope.activeGaoptim = $scope.state.gaoptims[0];
+          }
+          $http
+            .get(getCheckFullGaUrl())
+            .success(function(response) {
+              if (response.status === 'started') {
+                initFullGaPoll();
+              }
+            });
+        };
+
+        function openEditNameModal(
+           acceptName, title, message, name, errorMessage, checkName) {
+
+          var modalInstance = $modal.open({
+            templateUrl: 'js/modules/portfolio/portfolio-modal.html',
+            controller: [
+              '$scope', '$document',
+              function($scope, $document) {
+
+                $scope.name = name;
+                $scope.title = title;
+                $scope.message = message;
+                $scope.errorMessage = errorMessage;
+
+                $scope.checkBadForm = function(form) {
+                  var isGoodName = checkName($scope.name);
+                  form.$setValidity("name", isGoodName);
+                  return !isGoodName;
+                };
+
+                $scope.submit = function() {
+                  acceptName($scope.name);
+                  modalInstance.close();
+                };
+
+                function onKey(event) {
+                  if (event.keyCode == 27) {
+                    return modalInstance.dismiss('ESC');
+                  }
+                }
+
+                $document.on('keydown', onKey);
+                $scope.$on(
+                  '$destroy',
+                  function() { $document.off('keydown', onKey); });
+
+              }
+            ]
+          });
+
+          return modalInstance;
+        }
+
+        $scope.createPortfolio = function() {
+          openEditNameModal(
+            function(name) {
+              $http
+                .post(
+                  '/api/portfolio', {name: name})
+                .success(function(response) {
+                  console.log('created portfolio', response);
+                  $scope.portfolios.push(response);
+                  $scope.state = response;
+                  setPortfolios($scope.portfolios);
+                  toastr.success('Created portfolio');
+                });
+            },
+            'Create portfolio',
+            "Enter portfolio name",
+            "",
+            "Name already exists",
+            function(name) {
+              return !_.contains(_.pluck($scope.portfolios, 'name'), name);
+            });
+        };
+
+        $scope.deletePortfolio = function() {
+          $http
+            .delete('/api/portfolio/' + $scope.state.id)
+            .success(setPortfolios);
+        };
+
+       function reloadPortfolio() {
           $scope.bocStatusMessage = {};
           globalPoller.stopPolls();
           $http
             .get('/api/portfolio')
-            .success(function(response) {
-              console.log('load portfolio', response);
-              $scope.state = response;
-              $scope.activeGaoptim = $scope.state.gaoptims[0];
-              $http
-                .get(getCheckFullGaUrl())
-                .success(function(response) {
-                  if (response.status === 'started') {
-                    initFullGaPoll();
-                  }
-                });
-              _.each($scope.state.projects, function(project) {
-                $scope.bocStatusMessage[project.id] = project.boc;
-                $http
-                  .get(getCheckProjectBocUrl(project.id))
-                  .success(function(response) {
-                    if (response.status === 'started') {
-                      initProjectBocPoll(project.id);
-                    }
-                  });
-              });
-            });
+            .success(setPortfolios);
         }
 
         function getCheckFullGaUrl() {

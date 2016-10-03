@@ -347,6 +347,14 @@ class ManagePortfolio(Resource):
         """
         return load_portfolio_summaries()
 
+    @swagger.operation(summary="Create portfolio")
+    def post(self):
+        """
+        POST /api/portfolio
+        """
+        name = get_post_data_json()["name"]
+        return dataio.create_portfolio(name)
+
 api.add_resource(ManagePortfolio, '/api/portfolio')
 
 
@@ -355,12 +363,18 @@ class SavePortfolio(Resource):
 
     def post(self, portfolio_id):
         """
-        post /api/minimize/portfolio/<portfolio_id>
+        post /api/portfolio/<portfolio_id>
         """
         portfolio_summary = get_post_data_json()
         return dataio.save_portfolio_by_summary(portfolio_id, portfolio_summary)
 
-api.add_resource(SavePortfolio, '/api/portfolio/<portfolio_id>')
+    def delete(self, portfolio_id):
+        """
+        DELETE /api/portfolio/<portfolio_id>
+        """
+        return dataio.delete_portfolio(portfolio_id)
+
+api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
 
 
 class DeletePortfolioProject(Resource):

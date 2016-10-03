@@ -64,9 +64,6 @@ class PyObjectDb(db.Model):
     name = db.Column(db.Text, default=None)
     attr = db.Column(JSON)
 
-    def __init__(self, user_id):
-        self.user_id = user_id
-
     def load(self):
         print(">> Load pyobject " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
@@ -77,7 +74,7 @@ class PyObjectDb(db.Model):
         redis.set(self.id.hex, optima.dataio.dumps(obj))
 
     def cleanup(self):
-        print(">> Cleanup result-" + self.id.hex)
+        print(">> Cleanup " + self.id.hex)
         redis.delete(self.id.hex)
 
 

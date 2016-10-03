@@ -6,22 +6,27 @@
     <button
         class="btn __m"
         ng-click="createPortfolio()">
-      Create Portfolio
+      Create
     </button>
+
+    &nbsp;
+
+    Select portfolio:
+
+    <select
+        ng-model="state"
+        ng-options="portfolio as portfolio.name for portfolio in portfolios"
+        ng-change="setActiveGaoptim()"
+        style="width: 200px;">
+    </select>
+
+    &nbsp;
 
     <button
         class="btn __m"
-        ng-click="createPortfolio()">
-      Upload Portfolio
+        ng-click="deletePortfolio()">
+      Delete
     </button>
-
-    <div style="
-        width: 100%;
-        border-top: 1px solid #999;
-        margin-top: 2em;">
-    </div>
-
-    <h1>Portfolio: {{state.name}}</h1>
 
     <div
       style="
@@ -36,8 +41,7 @@
 
         <select
             ng-model="activeGaoptim"
-            ng-options="gaoptim as gaoptim.name for gaoptim in state.gaoptims"
-            ng-change="selectNewGaoptim()">
+            ng-options="gaoptim as gaoptim.name for gaoptim in state.gaoptims">
         </select>
 
         <br>
