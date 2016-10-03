@@ -162,6 +162,21 @@ def redotransitions(project, dorun=False, **kwargs):
     return None
 
 
+def makepropsopt(project, **kwargs):
+    """
+    Migration between Optima 2.1 and 2.1.1.
+    """
+    project.data['optpropdx'] = project.data.pop('propdx')
+    project.data['optpropcare'] = project.data.pop('propcare')
+    project.data['optproptx'] = project.data.pop('proptx')
+    project.data['optpropsupp'] = project.data.pop('propsupp')
+    project.data['optproppmtct'] = project.data.pop('proppmtct')
+    project.version = "2.1.1"
+    return None
+
+
+
+
 
 migrations = {
 '2.0': versiontostr,
@@ -170,6 +185,7 @@ migrations = {
 '2.0.2': delimmediatecare,
 '2.0.3': addproppmtct,
 '2.0.4': redotransitions,
+'2.1': makepropsopt,
 }
 
 
