@@ -661,7 +661,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
 ## Plot cascade
 ##################################################################
 def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, **kwargs):
+                ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, plotdata=True, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -708,7 +708,10 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
                 if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[0]
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
-            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10) # Colors are in reverse order
+            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
+        if plotdata and not aspercentage: # Don't try to plot if it's a percentage
+            thisdata = results.main['numtreat'].datatot[0]
+            scatter(results.datayears, thisdata, c=(0,0,0), label='Treatment data')
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax = gca()
@@ -721,7 +724,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
 
         # Configure plot specifics
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
-                          'frameon':False}
+                          'frameon':False, 'scatterpoints':1}
         if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
         else:          ax.set_title('Cascade')
         ax.set_xlabel('Year')
@@ -731,7 +734,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         if aspercentage: ax.set_ylim((0,100))
         else:            ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
-        ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
+        ax.legend(**legendsettings) # Multiple entries, all populations
         
     if useSIticks: SIticks(fig)
     else:          commaticks(fig)
