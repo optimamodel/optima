@@ -118,6 +118,10 @@ class Project(object):
         if dorun: self.runsim(name, addresult=True, **kwargs)
         if self.name is 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
         return None
+    
+    def reorderpops(self, poporder=None):
+        if self.data is None: raise OptimaException('Need to load spreadsheet before can reorder populations')
+        
 
 
     def makeparset(self, name='default', overwrite=True):
