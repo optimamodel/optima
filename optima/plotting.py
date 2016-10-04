@@ -51,6 +51,15 @@ def SIticks(figure, axis='y'):
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
 
+def commaticks(figure, axis='y'):
+    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
+    for ax in figure.axes:
+        if axis=='x':   thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise OptimaException('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+
 
 def getplotselections(results):
     ''' 
@@ -201,7 +210,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
+            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -417,7 +426,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                     if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     legend(labels, **legendsettings) # Multiple simulations
-                SIticks(epiplots[pk])
+                if useSIticks: SIticks(epiplots[pk])
+                else:          commaticks(epiplots[pk])
                 if doclose: close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
@@ -647,7 +657,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
 ## Plot cascade
 ##################################################################
 def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
+                ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -719,7 +729,8 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
-    SIticks(fig)
+    if useSIticks: SIticks(fig)
+    else:          commaticks(fig)
     if doclose: close(fig)
     
     return fig
