@@ -54,13 +54,14 @@ class Settings(object):
         self.aidsind = self.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
 
         # Combined states
-        self.sus       = cat([self.susreg, self.progcirc]) # All uninfected
-        self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost]) # All people diagnosed
-        self.allcare   = cat([         self.care, self.usvl, self.svl]) # All people in care
-        self.alltx     = cat([                    self.usvl, self.svl]) # All people on treatment
-        self.allplhiv  = cat([self.undx, self.alldx]) # All PLHIV
-        self.allstates = cat([self.sus, self.allplhiv]) # All states
-        self.nstates   = len(self.allstates) # Total number of states
+        self.sus            = cat([self.susreg, self.progcirc]) # All uninfected
+        self.alldx          = cat([self.dx, self.care, self.usvl, self.svl, self.lost]) # All people diagnosed
+        self.allcare        = cat([         self.care, self.usvl, self.svl]) # All people CURRENTLY in care
+        self.allevercare    = cat([         self.care, self.usvl, self.svl, self.lost]) # All people EVER in care
+        self.alltx          = cat([                    self.usvl, self.svl]) # All people on treatment
+        self.allplhiv       = cat([self.undx, self.alldx]) # All PLHIV
+        self.allstates      = cat([self.sus, self.allplhiv]) # All states
+        self.nstates        = len(self.allstates) # Total number of states
         
         # Set labels for each health state
         thesestates = dcp(self.healthstates)
