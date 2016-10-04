@@ -210,7 +210,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, colors=None, **kwargs):
+            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, colors=None, reorder=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -357,9 +357,11 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                             plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
                     else: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
-                        for l in range(nlinesperplot): # Loop backwards so correct ordering -- first one at the top, not bottom
-                            k = nlinesperplot-1-l # And in reverse order
-                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0)
+                        origorder = arange(nlinesperplot)
+                        plotorder = nlinesperplot-1-origorder
+                        if reorder: plotorder = [reorder[k] for k in plotorder]
+                        for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
+                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             plot((0, 0), (0, 0), color=colors[l], linewidth=10)
@@ -423,7 +425,9 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                 if not ismultisim:
                     if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
                     if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
-                    if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
+                    if isstacked: 
+                        handles, labels = ax.get_legend_handles_labels()
+                        ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
                 else:
                     legend(labels, **legendsettings) # Multiple simulations
                 if useSIticks: SIticks(epiplots[pk])
