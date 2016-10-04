@@ -20,21 +20,45 @@ define(
           ];
 
           $scope.isSelectNewProject = false;
+          $scope.state = {
+            portfolio: undefined,
+            gaoptim: undefined
+          };
 
           reloadPortfolio();
         }
 
-        function setPortfolios(portfolios) {
+        function loadPortfolios(portfolios) {
           var currentPortfolioId = null;
-          if (!_.isUndefined($scope.state.id)) {
-            currentPortfolioId = $scope.state.id;
+          if (!_.isUndefined($scope.state.portfolio)) {
+            currentPortfolioId = $scope.state.portfolio.id;
           }
           $scope.portfolios = portfolios;
-          $scope.state = _.findWhere($scope.portfolios, {id: currentPortfolioId});
-          if (!$scope.state) {
-            $scope.state = $scope.portfolios[0];
+          $scope.state.portfolio = _.findWhere($scope.portfolios, {id: currentPortfolioId});
+          if (!$scope.state.portfolio) {
+            $scope.state.portfolio = $scope.portfolios[0];
           }
-          _.each($scope.state.projects, function(project) {
+          $scope.setActiveGaoptim();
+        }
+
+        $scope.setActiveGaoptim = function() {
+          console.log('setActiveGaoptim');
+          var currentGaoptimId = null;
+          if (!_.isUndefined($scope.state.gaoptim)) {
+            currentGaoptimId = $scope.state.gaoptim.id;
+          }
+          $scope.state.gaoptim = _.findWhere($scope.state.portfolio.gaoptims, {id: currentGaoptimId});
+          if (!$scope.state.gaoptim) {
+            $scope.state.gaoptim = $scope.state.portfolio.gaoptims[0];
+          }
+          $http
+            .get(getCheckFullGaUrl())
+            .success(function(response) {
+              if (response.status === 'started') {
+                initFullGaPoll();
+              }
+            });
+          _.each($scope.state.portfolio.projects, function(project) {
             $scope.bocStatusMessage[project.id] = project.boc;
             $http
               .get(getCheckProjectBocUrl(project.id))
@@ -44,30 +68,10 @@ define(
                 }
               });
           });
-          $scope.setActiveGaoptim();
-        }
-
-        $scope.setActiveGaoptim = function() {
-          console.log('setActiveGaoptim');
-          var currentGaoptimId = null;
-          if (!_.isUndefined($scope.activeGaoptim)) {
-            currentGaoptimId = $scope.activeGaoptim.id;
-          }
-          $scope.activeGaoptim = _.findWhere($scope.state.gaoptims, {id: currentGaoptimId});
-          if (!$scope.activeGaoptim) {
-            $scope.activeGaoptim = $scope.state.gaoptims[0];
-          }
-          $http
-            .get(getCheckFullGaUrl())
-            .success(function(response) {
-              if (response.status === 'started') {
-                initFullGaPoll();
-              }
-            });
         };
 
         function openEditNameModal(
-           acceptName, title, message, name, errorMessage, checkName) {
+           acceptName, title, message, name, errorMessage, invalidNames) {
 
           var modalInstance = $modal.open({
             templateUrl: 'js/modules/portfolio/portfolio-modal.html',
@@ -81,7 +85,7 @@ define(
                 $scope.errorMessage = errorMessage;
 
                 $scope.checkBadForm = function(form) {
-                  var isGoodName = checkName($scope.name);
+                  var isGoodName = !_.contains(invalidNames, $scope.name);
                   form.$setValidity("name", isGoodName);
                   return !isGoodName;
                 };
@@ -118,8 +122,8 @@ define(
                 .success(function(response) {
                   console.log('created portfolio', response);
                   $scope.portfolios.push(response);
-                  $scope.state = response;
-                  setPortfolios($scope.portfolios);
+                  $scope.state.portfolio = response;
+                  loadPortfolios($scope.portfolios);
                   toastr.success('Created portfolio');
                 });
             },
@@ -127,15 +131,13 @@ define(
             "Enter portfolio name",
             "",
             "Name already exists",
-            function(name) {
-              return !_.contains(_.pluck($scope.portfolios, 'name'), name);
-            });
+            _.pluck($scope.portfolios, 'name'));
         };
 
         $scope.deletePortfolio = function() {
           $http
-            .delete('/api/portfolio/' + $scope.state.id)
-            .success(setPortfolios);
+            .delete('/api/portfolio/' + $scope.state.portfolio.id)
+            .success(loadPortfolios);
         };
 
        function reloadPortfolio() {
@@ -143,27 +145,28 @@ define(
           globalPoller.stopPolls();
           $http
             .get('/api/portfolio')
-            .success(setPortfolios);
+            .success(loadPortfolios);
         }
 
         function getCheckFullGaUrl() {
-          return "/api/task/" + $scope.state.id
-              + "/type/portfolio-" + $scope.activeGaoptim.id;
+          return "/api/task/" + $scope.state.portfolio.id
+              + "/type/portfolio-" + $scope.state.gaoptim.id;
         }
 
         function getCheckProjectBocUrl(projectId) {
           return "/api/task/" + projectId
-                + "/type/gaoptim-" + $scope.activeGaoptim.id;
+                + "/type/gaoptim-" + $scope.state.gaoptim.id;
         }
 
         $scope.calculateAllBocCurves = function() {
-          console.log('run BOC curves', $scope.state);
+          console.log('run BOC curves', $scope.state.portfolio);
           $http
-            .get(
-              "/api/portfolio/" + $scope.state.id
-              + "/gaoptim/" + $scope.activeGaoptim.id)
+            .post(
+              "/api/portfolio/" + $scope.state.portfolio.id
+              + "/gaoptim/" + $scope.state.gaoptim.id,
+              {maxtime: $scope.state.bocMaxtime})
             .success(function() {
-              _.each($scope.state.projects, function(project) {
+              _.each($scope.state.portfolio.projects, function(project) {
                 initProjectBocPoll(project.id);
               });
             });
@@ -172,7 +175,7 @@ define(
         $scope.deleteProject = function(projectId) {
           $http
             .delete(
-              '/api/portfolio/' + $scope.state.id
+              '/api/portfolio/' + $scope.state.portfolio.id
                 + '/project/' + projectId)
             .success(function() {
 
@@ -186,9 +189,10 @@ define(
               console.log('start job response', response);
               if (response.status != 'started') {
                 $http
-                  .get(
-                    "/api/minimize/portfolio/" + $scope.state.id
-                    + "/gaoptim/" + $scope.activeGaoptim.id)
+                  .post(
+                    "/api/minimize/portfolio/" + $scope.state.portfolio.id
+                    + "/gaoptim/" + $scope.state.gaoptim.id,
+                    {maxtime: $scope.state.maxtime})
                   .success(function() {
                     initFullGaPoll();
                   });
@@ -213,7 +217,7 @@ define(
                 $scope.bocStatusMessage[projectId] = "running for " + seconds + " s";
               } else {
                 $scope.bocStatusMessage[projectId] = 'failed';
-                $scope.state.isRunnable = true;
+                $scope.state.portfolio.isRunnable = true;
               }
             }
           );
@@ -221,7 +225,7 @@ define(
 
         function initFullGaPoll() {
           globalPoller.startPoll(
-            $scope.activeGaoptim.id,
+            $scope.state.gaoptim.id,
             getCheckFullGaUrl(),
             function(response) {
               if (response.status === 'completed') {
@@ -236,7 +240,7 @@ define(
                 $scope.statusMessage = "Optimization running for " + seconds + " s";
               } else {
                 $scope.statusMessage = 'Optimization failed';
-                $scope.state.isRunnable = true;
+                $scope.state.portfolio.isRunnable = true;
               }
             }
           );
@@ -245,8 +249,8 @@ define(
         $scope.savePortfolio = function() {
           $http
             .post(
-              "/api/portfolio/" + $scope.state.id,
-              angular.copy($scope.state))
+              "/api/portfolio/" + $scope.state.portfolio.id,
+              angular.copy($scope.state.portfolio))
             .success(function(response) {
               console.log(response);
               toastr.success('saved objectives')
@@ -258,15 +262,17 @@ define(
           $http
             .get('/api/project')
             .success(function(response) {
-              var selectedIds = _.pluck($scope.state.projects, "id");
+              var selectedIds = _.pluck($scope.state.portfolio.projects, "id");
               $scope.projects = [];
               _.each(response.projects, function(project) {
                 var isSelected = _.contains(selectedIds, project.id);
-                $scope.projects.push({
-                  'name': project.name,
-                  'id': project.id,
-                  'selected': isSelected
-                })
+                if (project.isOptimizable) {
+                  $scope.projects.push({
+                    'name': project.name,
+                    'id': project.id,
+                    'selected': isSelected
+                  })
+                }
               });
               console.log("$scope.projects", $scope.projects);
             });
@@ -278,14 +284,14 @@ define(
 
         $scope.saveSelectedProject = function() {
           $scope.isSelectNewProject = false;
-          var selectedIds = _.pluck($scope.state.projects, "id");
+          var selectedIds = _.pluck($scope.state.portfolio.projects, "id");
           console.log("selectedIds", selectedIds);
           console.log("$scope.projects", $scope.projects);
           _.each($scope.projects, function(project) {
             if (!_.contains(selectedIds, project.id)) {
               if (project.selected) {
                 console.log('new project', project.name);
-                $scope.state.projects.push({
+                $scope.state.portfolio.projects.push({
                   "id": project.id,
                   "name": project.name,
                   "boc": "none"
@@ -294,22 +300,22 @@ define(
             }
           });
 
-          console.log($scope.state.projects)
+          console.log($scope.state.portfolio.projects)
           $scope.savePortfolio();
           toastr.success('stop adding')
         };
 
         $scope.hasNoResults = function() {
-          if (_.isUndefined($scope.state)) {
+          if (_.isUndefined($scope.state.portfolio)) {
             return true;
           }
-          return !($scope.state.outputstring);
+          return !($scope.state.portfolio.outputstring);
         };
 
         $scope.exportResults = function() {
-          if ($scope.state.outputstring) {
+          if ($scope.state.portfolio.outputstring) {
             var blob = new Blob(
-              [$scope.state.outputstring], {type: 'application/octet-stream'});
+              [$scope.state.portfolio.outputstring], {type: 'application/octet-stream'});
             saveAs(blob, ('result.csv'));
           }
         };

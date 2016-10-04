@@ -393,12 +393,13 @@ class CalculatePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns portfolio information")
-    def get(self, portfolio_id, gaoptim_id):
+    def post(self, portfolio_id, gaoptim_id):
         """
-        GET /api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
+        post /api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
         """
+        maxtime = int(get_post_data_json().get('maxtime'))
         print("> Run BOC %s %s" % (portfolio_id, gaoptim_id))
-        return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id)
+        return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id, maxtime)
 
 api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
 
@@ -407,11 +408,12 @@ class MinimizePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Starts portfolio minimization")
-    def get(self, portfolio_id, gaoptim_id):
+    def post(self, portfolio_id, gaoptim_id):
         """
-        GET /api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
+        post /api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
         """
-        return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, gaoptim_id)
+        maxtime = int(get_post_data_json().get('maxtime'))
+        return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, gaoptim_id, maxtime)
 
 api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
 

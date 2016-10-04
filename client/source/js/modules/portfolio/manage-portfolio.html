@@ -14,7 +14,7 @@
     Select portfolio:
 
     <select
-        ng-model="state"
+        ng-model="state.portfolio"
         ng-options="portfolio as portfolio.name for portfolio in portfolios"
         ng-change="setActiveGaoptim()"
         style="width: 200px;">
@@ -35,16 +35,8 @@
 
       <div style="flex: 0 0 280px">
 
-        <h2>Optimization Conditions </h2>
+        <h2>Optimization conditions </h2>
 
-        Select GA optimization:
-
-        <select
-            ng-model="activeGaoptim"
-            ng-options="gaoptim as gaoptim.name for gaoptim in state.gaoptims">
-        </select>
-
-        <br>
         <br>
 
         <div
@@ -60,7 +52,7 @@
               style="
           float: right;
           width:70px;"
-              ng-model="activeGaoptim.objectives[entry.key]"
+              ng-model="state.gaoptim.objectives[entry.key]"
               type="number"/>
           <br clear="all">
         </div>
@@ -70,7 +62,7 @@
               margin-top: 1em"
               class="btn"
             ng-click="savePortfolio()">
-          Save Portfolio
+          Save optimization condition
         </button>
       </div>
 
@@ -86,13 +78,26 @@
           Calculate BOC
         </button>
 
+        &nbsp;
+        Time aprox. per optimization (7 optimizations for project)
+
+        <select ng-init="state.bocMaxtime='2'" ng-model="state.bocMaxtime">
+          <option value="2">2 seconds</option>
+          <option value="10">10 seconds</option>
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+
         <table class="table table-bordered table-hover table-striped">
           <tr>
             <th>Project</th>
             <th>BOC</th>
             <th></th>
           </tr>
-          <tr ng-repeat="project in state.projects">
+          <tr ng-repeat="project in state.portfolio.projects">
             <td>
               {{project.name}}
             </td>
@@ -121,7 +126,7 @@
                     padding: 20px;"
                   ng-show="isSelectNewProject">
 
-                <b>Select from uploaded projects:</b>
+                <i>Select from optimizable projects:</i>
                 <br>
                 <label ng-repeat="project in projects">
                   <input type="checkbox"
@@ -151,7 +156,14 @@
           Run geospatial optimization
         </button>
 
-        <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+        &nbsp;
+
+        Time per optimization:
+
+        &nbsp;
+
+        <select ng-init="state.maxtime='2'" ng-model="state.maxtime">
+          <option value="2">2 seconds</option>
           <option value="10">10 seconds</option>
           <option value="30">30 seconds</option>
           <option value="60">1 minute</option>

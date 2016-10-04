@@ -429,7 +429,7 @@ def get_gaoptim(project, gaoptim_id):
 
 
 @celery_instance.task(bind=True)
-def run_boc(self, portfolio_id, project_id, gaoptim_id):
+def run_boc(self, portfolio_id, project_id, gaoptim_id, maxtime=2):
 
     status = 'started'
     error_text = ""
@@ -465,7 +465,7 @@ def run_boc(self, portfolio_id, project_id, gaoptim_id):
             gaoptim = get_gaoptim(project, gaoptim_id)
             print ">> Start BOC:"
             print_odict("gaoptim", gaoptim)
-            project.genBOC(objectives=gaoptim.objectives, maxtime=2)
+            project.genBOC(objectives=gaoptim.objectives, maxtime=maxtime)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -494,7 +494,7 @@ def run_boc(self, portfolio_id, project_id, gaoptim_id):
 
 
 
-def launch_boc(portfolio_id, gaoptim_id):
+def launch_boc(portfolio_id, gaoptim_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
     gaoptims = portfolio.gaoptims
     for project in portfolio.projects.values():
@@ -503,12 +503,12 @@ def launch_boc(portfolio_id, gaoptim_id):
         project.gaoptims = gaoptims
         calc_state = setup_work_log(
             project_id, 'gaoptim-' + str(gaoptim_id), project)
-        run_boc.delay(portfolio_id, project_id, gaoptim_id)
+        run_boc.delay(portfolio_id, project_id, gaoptim_id, maxtime)
 
 
 
 @celery_instance.task(bind=True)
-def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
+def run_miminize_portfolio(self, portfolio_id, gaoptim_id, maxtime):
 
     status = 'started'
     error_text = ""
@@ -544,7 +544,7 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
             objectives = gaoptim.objectives
             print ">> Start BOC:"
             print_odict("gaoptim", gaoptim)
-            portfolio.fullGA(objectives=objectives, maxtime=10)
+            portfolio.fullGA(objectives=objectives, maxtime=maxtime)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -570,7 +570,7 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id):
 
 
 
-def launch_miminize_portfolio(portfolio_id, gaoptim_id):
+def launch_miminize_portfolio(portfolio_id, gaoptim_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
     for project in portfolio.projects.values():
         optima.migrate(project)
@@ -578,6 +578,6 @@ def launch_miminize_portfolio(portfolio_id, gaoptim_id):
         portfolio_id, 'portfolio-' + str(gaoptim_id), portfolio)
     if calc_state['status'] != 'started':
         return calc_state, 208
-    run_miminize_portfolio.delay(portfolio_id, gaoptim_id)
+    run_miminize_portfolio.delay(portfolio_id, gaoptim_id, maxtime)
 
 
