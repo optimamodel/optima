@@ -10,10 +10,10 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016feb06
+Version: 2016oct05
 """
 
-from numpy import arange, array, concatenate as cat, linspace, shape, inf
+from numpy import arange, array, concatenate as cat, linspace, shape
 from optima import OptimaException, defaultrepr, printv, dcp, isnumber
 
 
