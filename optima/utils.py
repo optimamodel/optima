@@ -306,10 +306,8 @@ def sanitize(data=None, returninds=False):
             sanitized = 0.0
             print('                WARNING, no data entered for this parameter, assuming 0')
 
-        if returninds:
-            return sanitized, nonzero(~isnan(data))[0] # 0 since returns tuple otherwise
-        else:
-            return sanitized
+        if returninds: return sanitized, nonzero(~isnan(data))[0] # 0 since returns tuple otherwise
+        else:          return sanitized
 
 
 
