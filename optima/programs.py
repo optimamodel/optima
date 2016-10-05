@@ -1180,143 +1180,115 @@ class CCOF(object):
 
     def __repr__(self):
         ''' Print out useful info'''
-        output = '\n'
-        output += 'Programmatic parameters: %s\n'    % self.ccopars
-        output += '            Interaction: %s\n'    % self.interaction
-        output += '\n'
-        return output
+        return defaultrepr(self)
 
 
-    def addsingleccopar(self, parname, values, years, estimate='best', overwrite=False, verbose=2):
-        ''' Add a single parameter.
-        parname is a string; value is a number; year is a year'''
+def addsingleccopar(ccopars, parname, values, years, estimate='best', overwrite=False, verbose=2):
+    ''' Add a single parameter.
+    parname is a string; value is a number; year is a year'''
+    
+    # Make sure parameter exists 
+    if parname not in ccopars.keys():
+        errormsg = 'Can''t add a parameter %s to the CCO structure: allowable parameters are %s.' % (parname, ccopars.keys())
+        raise OptimaException(errormsg)
         
-        # Make sure parameter exists 
-        if parname not in self.ccopars.keys():
-            errormsg = 'Can''t add a parameter %s to the CCO structure: allowable parameters are %s.' % (parname, self.ccopars.keys())
+    else:
+        values = promotetoarray(values)
+        years = promotetoarray(years)
+        if not len(values)==len(years):
+            errormsg = 'To add a ccopar, must have a value corresponding to ever year: %i values and %i years is not allowed.' % (len(values), len(years))
             raise OptimaException(errormsg)
-            
         else:
-            values = promotetoarray(values)
-            years = promotetoarray(years)
-            if not len(values)==len(years):
-                errormsg = 'To add a ccopar, must have a value corresponding to ever year: %i values and %i years is not allowed.' % (len(values), len(years))
-                raise OptimaException(errormsg)
-            else:
-                ntoadd = len(values)
-                for n in range(ntoadd):
-                    year,value = years[n],values[n]
-                    # Check if we already have a value for this parameter
-                    if self.ccopars[parname].t and year in self.ccopars[parname].t[estimate]:
-                        if not overwrite:
-                            errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % year
-                            raise OptimaException(errormsg)
-                        else:
-                            yearind = findinds(self.ccopars[parname].t[estimate],year)
-                            self.ccopars[parname].y[estimate][yearind] = value
-                            
-                            if estimate == 'best': # If we add a best estimate, we also add a low and high
-                                self.ccopars[parname].y['low'][yearind] = value
-                                self.ccopars[parname].y['high'][yearind] = value
-                            printv('\nSet CCO parameter "%s" in year "%s" to "%f"' % (parname, year, value), 4, verbose)
+            ntoadd = len(values)
+            for n in range(ntoadd):
+                year,value = years[n],values[n]
+                # Check if we already have a value for this parameter
+                if ccopars[parname].t and year in ccopars[parname].t[estimate]:
+                    if not overwrite:
+                        errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % year
+                        raise OptimaException(errormsg)
+                    else:
+                        yearind = findinds(ccopars[parname].t[estimate],year)
+                        ccopars[parname].y[estimate][yearind] = value
                         
-                    else: 
-                        self.ccopars[parname].t[estimate] = append(self.ccopars[parname].t[estimate],year)
-                        self.ccopars[parname].y[estimate] = append(self.ccopars[parname].y[estimate],value)
-                        sortedinds = argsort(self.ccopars[parname].t[estimate])
-                        self.ccopars[parname].t[estimate] = self.ccopars[parname].t[estimate][sortedinds]
-                        self.ccopars[parname].y[estimate] = self.ccopars[parname].y[estimate][sortedinds]
                         if estimate == 'best': # If we add a best estimate, we also add a low and high
-                            self.ccopars[parname].t['low'] = append(self.ccopars[parname].t['low'],year)
-                            self.ccopars[parname].y['low'] = append(self.ccopars[parname].y['low'],value)
-                            self.ccopars[parname].t['high'] = append(self.ccopars[parname].t['high'],year)
-                            self.ccopars[parname].y['high'] = append(self.ccopars[parname].y['high'],value)
-                            self.ccopars[parname].t['low'] = self.ccopars[parname].t['low'][sortedinds]
-                            self.ccopars[parname].y['low'] = self.ccopars[parname].y['low'][sortedinds]
-                            self.ccopars[parname].t['high'] = self.ccopars[parname].t['high'][sortedinds]
-                            self.ccopars[parname].y['high'] = self.ccopars[parname].y['high'][sortedinds]
+                            ccopars[parname].y['low'][yearind] = value
+                            ccopars[parname].y['high'][yearind] = value
+                        printv('\nSet CCO parameter "%s" in year "%s" to "%f"' % (parname, year, value), 4, verbose)
+                    
+                else: 
+                    ccopars[parname].t[estimate] = append(ccopars[parname].t[estimate],year)
+                    ccopars[parname].y[estimate] = append(ccopars[parname].y[estimate],value)
+                    sortedinds = argsort(ccopars[parname].t[estimate])
+                    ccopars[parname].t[estimate] = ccopars[parname].t[estimate][sortedinds]
+                    ccopars[parname].y[estimate] = ccopars[parname].y[estimate][sortedinds]
+                    if estimate == 'best': # If we add a best estimate, we also add a low and high
+                        for key in ['low','high']:
+                            ccopars[parname].t[key] = append(ccopars[parname].t[key],year)
+                            ccopars[parname].y[key] = append(ccopars[parname].y[key],value)
+                            ccopars[parname].t[key] = ccopars[parname].t[key][sortedinds]
+                            ccopars[parname].y[key] = ccopars[parname].y[key][sortedinds]
 
-        return None
+    return None
 
 
-    def addccopar(self, ccopar, overwrite=False, verbose=2):
-        ''' Add a set of parameters for a single year'''
+def addccopar(ccopars, ccopar, overwrite=False, verbose=2):
+    ''' Add a set of parameters for a single year'''
+    
+    # Separate the ccopar into the parameter bits and the year bits
+    years = ccopar['t']
+    ccopar.pop('t', None)
+    
+    for parname,parvals in ccopar.iteritems():
+        if type(parvals)==tuple: # Tuple corresponds to (low,high) parameter estimates
+            bestparval = (parvals[0]+parvals[1])/2
+            addsingleccopar(ccopars, parname=parname,values=bestparval,years=years,estimate='best',overwrite=overwrite)
+            lowparval = parvals[0]
+            addsingleccopar(ccopars, parname=parname,values=lowparval,years=years,estimate='low',overwrite=True)
+            highparval = parvals[1]
+            addsingleccopar(ccopars, parname=parname,values=highparval,years=years,estimate='high',overwrite=True)
+        else:
+            addsingleccopar(ccopars, parname=parname,values=parvals,years=years)
         
-        # Separate the ccopar into the parameter bits and the year bits
-        years = ccopar['t']
-        ccopar.pop('t', None)
-        
-        for parname,parvals in ccopar.iteritems():
-            if type(parvals)==tuple: # Tuple corresponds to (low,high) parameter estimates
-                bestparval = (parvals[0]+parvals[1])/2
-                self.addsingleccopar(parname=parname,values=bestparval,years=years,estimate='best',overwrite=overwrite)
-                lowparval = parvals[0]
-                self.addsingleccopar(parname=parname,values=lowparval,years=years,estimate='low',overwrite=True)
-                highparval = parvals[1]
-                self.addsingleccopar(parname=parname,values=highparval,years=years,estimate='high',overwrite=True)
+    return None
+
+
+def getccopar(ccopars, t, verbose=2, sample='best'):
+    '''Get a cost-coverage-outcome parameter set'''
+
+    # Error checks
+    if not ccopars:
+        raise OptimaException('Need parameters for at least one year before function can be evaluated.')
+
+    # Set up necessary variables
+    ccopar = odict()
+    t = promotetoarray(t)
+
+    # Get ccopar
+    for parname, parvalue in ccopars.iteritems():
+        try:
+            interpval = parvalue.interp(t)
+            # Deal with bounds
+            if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
+                ccopar[parname] = promotetoarray(interpval[0])
+            elif sample in ['lower','l','low']:
+                ccopar[parname] = promotetoarray(interpval[1])
+            elif sample in ['upper','u','up','high','h']:
+                ccopar[parname] = promotetoarray(interpval[2])
+            elif sample in ['random','rand','r']:
+                ccopar[parname] = promotetoarray(uniform(interpval[1],interpval[2]))
             else:
-                self.addsingleccopar(parname=parname,values=parvals,years=years)
+                raise OptimaException('Unrecognised bounds.')
+
+        except:
+            printv('Can''t evaluate parameter %s in year %s, setting to nan.' % (parname,t), verbose, 1)
+            ccopar[parname] = array([nan])
+
+    ccopar['t'] = t
+    printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
+
+    return ccopar
             
-        return None
-
-
-    def getccopar(self, t, verbose=2, sample='best'):
-        '''Get a cost-coverage-outcome parameter set'''
-
-        # Error checks
-        if not self.ccopars:
-            raise OptimaException('Need parameters for at least one year before function can be evaluated.')
-
-        # Set up necessary variables
-        ccopar = odict()
-        t = promotetoarray(t)
-
-        # Get ccopar
-        for parname, parvalue in self.ccopars.iteritems():
-            try:
-                interpval = parvalue.interp(t)
-                # Deal with bounds
-                if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
-                    ccopar[parname] = promotetoarray(interpval[0])
-                elif sample in ['lower','l','low']:
-                    ccopar[parname] = promotetoarray(interpval[1])
-                elif sample in ['upper','u','up','high','h']:
-                    ccopar[parname] = promotetoarray(interpval[2])
-                elif sample in ['random','rand','r']:
-                    ccopar[parname] = promotetoarray(uniform(interpval[1],interpval[2]))
-                else:
-                    raise OptimaException('Unrecognised bounds.')
-
-            except:
-                printv('Can''t evaluate parameter %s in year %s, setting to nan.' % (parname,t), verbose, 1)
-                ccopar[parname] = array([nan])
-
-        ccopar['t'] = t
-        printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
-
-        return ccopar
-            
- 
-    def evaluate(self, x, popsize, t, toplot, inverse=False, sample='best', verbose=2):
-        x = promotetoarray(x)
-        t = promotetoarray(t)
-        if (not toplot) and (not len(x)==len(t)):
-            try: 
-                x = x[0:1]
-                t = t[0:1]
-            except:
-                x = array([0]) # WARNING, this should maybe not be here, or should be handled with kwargs
-                t = array([2015])
-            printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
-        ccopar = self.getccopar(t=t,sample=sample)
-        if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
-        else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
-
-    def function(self, x, ccopar, popsize):
-        pass
-
-    def inversefunction(self, x, ccopar, popsize):
-        pass
 
 
 ########################################################
@@ -1367,6 +1339,22 @@ class Costcov(CCOF):
                     the given intervals
 
     '''
+
+    def evaluate(self, x, popsize, t, toplot, inverse=False, sample='best', verbose=2):
+        x = promotetoarray(x)
+        t = promotetoarray(t)
+        if (not toplot) and (not len(x)==len(t)):
+            try: 
+                x = x[0:1]
+                t = t[0:1]
+            except:
+                x = array([0]) # WARNING, this should maybe not be here, or should be handled with kwargs
+                t = array([2015])
+            printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
+        ccopar = self.getccopar(t=t,sample=sample)
+        if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
+        else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
+
 
     def function(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
