@@ -322,7 +322,7 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
-            validdata = ~isnan(data[short][row])
+            validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
             par.t[key] = getvaliddata(data['years'], validdata, defaultind=defaultind) 
             if sum(validdata): 
                 par.y[key] = sanitize(data[short][row])
