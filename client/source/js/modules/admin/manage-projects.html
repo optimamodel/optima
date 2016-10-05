@@ -34,16 +34,16 @@
           {{ project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
         </td>
         <td>
-          <button class="btn __green" ng-click="open(project.name, project.id)">Open</button>
+          <button class="btn" ng-click="open(project.name, project.id)">Open</button>
         </td>
         <td>
-          <button class="btn __blue" ng-click="edit(project.name, project.id)">Edit</button>
+          <button class="btn" ng-click="edit(project.name, project.id)">Edit</button>
         </td>
         <td>
-          <button class="btn __blue" ng-click="getData(project.name, project.id)">Download</button>
+          <button class="btn" ng-click="getData(project.name, project.id)">Download</button>
         </td>
         <td>
-          <button class="btn __blue" ng-click="workbook(project.name, project.id)">Download template data spreadsheet
+          <button class="btn" ng-click="workbook(project.name, project.id)">Download template data spreadsheet
           </button>
         </td>
         <td>
