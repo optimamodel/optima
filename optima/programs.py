@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, getvaliddata
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose
 from random import uniform
 
@@ -342,19 +342,18 @@ class Programset(object):
                 self.programs[prog].costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
                 self.programs[prog].costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
                 for par in self.programs[prog].costcovpars.values():
-                    bestdata = ~isnan(data[prog][par.short]['best'])
+                    bestdata, bestinds = sanitize(data[prog][par.short]['best']) # We use the best estimates to population the low and high, and then later we overwrite if there are actual estimates provided
                     for estimate in ['best','low','high']:
-                        if sum(bestdata): 
-                            par.t[estimate] = getvaliddata(data['years'], bestdata)
-                            par.y[estimate] = sanitize(data[prog][par.short]['best']) # We use the best estimates to population the low and hig, ad then later we overwrite if there are actual estimates provided
+                        if len(bestinds): 
+                            par.t[estimate] = data['years'][bestinds]
+                            par.y[estimate] = bestdata
                         else:
                             printv('No data for cost parameter "%s"' % (par.short), 3, verbose)
                             par.y[estimate] = array([nan])
                             par.t[estimate] = array([0.])
                         if estimate != 'best': # Here we overwrite the range data, if provided
-                            rangedata = ~isnan(data[prog][par.short][estimate])
-                            rangevalues = sanitize(data[prog][par.short][estimate])
-                            rangeyears = getvaliddata(data['years'], rangedata)
+                            rangevalues, rangeinds = sanitize(data[prog][par.short][estimate], returninds=True)
+                            rangeyears = data['years'][rangeinds]
                             addsingleccopar(self.programs[prog].costcovpars, parname=par.short, values=rangevalues, years=rangeyears, estimate=estimate, overwrite=True)
                     
         return None

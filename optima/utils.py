@@ -289,19 +289,27 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 
-def sanitize(arraywithnans):
-        """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
-        from numpy import array, isnan
+def sanitize(data=None, returninds=False):
+        """
+        Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
+        
+        Example:
+            sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
+        """
+        from numpy import array, isnan, nonzero
         try:
-            arraywithnans = array(arraywithnans,dtype=float) # Make sure it's an array of float type
-            sanitized = arraywithnans[~isnan(arraywithnans)]
+            data = array(data,dtype=float) # Make sure it's an array of float type
+            sanitized = data[~isnan(data)]
         except:
-            raise Exception('Sanitization failed on array:\n %s' % arraywithnans)
+            raise Exception('Sanitization failed on array:\n %s' % data)
         if len(sanitized)==0:
             sanitized = 0.0
             print('                WARNING, no data entered for this parameter, assuming 0')
 
-        return sanitized
+        if returninds:
+            return sanitized, nonzero(~isnan(data))[0] # 0 since returns tuple otherwise
+        else:
+            return sanitized
 
 
 
