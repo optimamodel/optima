@@ -371,10 +371,11 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     if not(origx.shape==origy.shape): 
         errormsg = 'To interpolate, original x and y vectors must be same length (x=%i, y=%i)' % (len(origx), len(origy))
         raise Exception(errormsg)
+    
     if strictnans:
         origy = origy[~isnan(origy)] 
         origx = origx[~isnan(origy)]
-    
+
     # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
     if smoothness is None: smoothness = ceil(len(newx)/len(origx))
     smoothness = int(smoothness) # Make sure it's an appropriate number
