@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan
+from numpy import nan, concatenate as cat
 
 
 def versiontostr(project, **kwargs):
@@ -162,14 +162,38 @@ def redotransitions(project, dorun=False, **kwargs):
     return None
 
 
+def makepropsopt(project, **kwargs):
+    """
+    Migration between Optima 2.1 and 2.1.1.
+    """
+    project.data['optpropdx'] = project.data.pop('propdx')
+    project.data['optpropcare'] = project.data.pop('propcare')
+    project.data['optproptx'] = project.data.pop('proptx')
+    project.data['optpropsupp'] = project.data.pop('propsupp')
+    project.data['optproppmtct'] = project.data.pop('proppmtct')
+    project.version = "2.1.1"
+    return None
+
+
+def addalleverincare(project, **kwargs):
+    """
+    Migration between Optima 2.1.1 and 2.1.2.
+    """
+    ps = project.settings
+    ps.allevercare    = cat([ps.care, ps.usvl, ps.svl, ps.lost]) # All people EVER in care
+    project.version = "2.1.2"
+    return None
+
 
 migrations = {
-'2.0': versiontostr,
+'2.0':   versiontostr,
 '2.0.0': addscenuid,
 '2.0.1': addforcepopsize,
 '2.0.2': delimmediatecare,
 '2.0.3': addproppmtct,
 '2.0.4': redotransitions,
+'2.1':   makepropsopt,
+'2.1.1': addalleverincare,
 }
 
 

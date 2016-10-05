@@ -264,8 +264,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             # Unpack tuple
             datatype, plotformat = plotkey 
             
-            isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
-            factor = 1.0 if isnumber else 100.0 # Swap between number and percent
+            ispercentage = results.main[datatype].ispercentage # Indicate whether result is a percentage
+            factor = 100.0 if ispercentage else 1.0 # Swap between number and percent
             istotal   = (plotformat=='t') # Only using first letter, see above...
             isperpop  = (plotformat=='p')
             isstacked = (plotformat=='s')
@@ -340,7 +340,10 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 
                 # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
                 if not ismultisim and isstacked:
-                    if isnumber: # Stacked plot
+                    if ispercentage: # Multi-line plot
+                        for l in range(nlinesperplot):
+                            plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
+                    else: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
                         for l in range(nlinesperplot): # Loop backwards so correct ordering -- first one at the top, not bottom
                             k = nlinesperplot-1-l # And in reverse order
@@ -348,9 +351,6 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             plot((0, 0), (0, 0), color=colors[l], linewidth=10)
-                    else: # Multi-line plot
-                        for l in range(nlinesperplot):
-                            plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
                 
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
@@ -667,8 +667,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
     # Set up figure and do plot
     fig = figure(figsize=figsize)
     
-    cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
-    cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
+    cascadelist = ['numplhiv', 'numdiag', 'numevercare', 'numincare', 'numtreat', 'numsuppressed'] 
+    cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
     
     colors = gridcolormap(len(cascadelist))
