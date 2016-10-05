@@ -11,6 +11,7 @@
       <thead>
       <tr>
         <th>Name</th>
+        <th>Version</th>
         <th>Created on</th>
         <th>Updated on</th>
         <th>Data uploaded on</th>
@@ -23,6 +24,9 @@
           ng-class="{highlighted: activeProjectId === project.id}">
         <td>
           {{ ::project.name }}
+        </td>
+        <td>
+          {{ ::project.version }}
         </td>
         <td>
           {{ ::project.creationTime| date:'yyyy-MM-dd HH:mm:ss'}}
