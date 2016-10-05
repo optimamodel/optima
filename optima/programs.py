@@ -6,23 +6,22 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, getvalidyears
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, getvaliddata
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose
 from random import uniform
 
 # WARNING, this should not be hard-coded!!! Available from
 # [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
 # ...though would be nice to have an easier way!
-coveragepars=['numtx','numpmtct','numost','numcirc'] 
-
+_coveragepars = ['numtx','numpmtct','numost','numcirc'] 
+_defaultinteraction = 'additive'
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='random', project=None):
+    def __init__(self, name='default', programs=None, project=None):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()
-        self.default_interaction = default_interaction
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
         else: self.updateprogset()
@@ -58,6 +57,7 @@ class Programset(object):
         
         return settings
         
+    
     def gettargetpops(self):
         '''Update populations targeted by some program in the response'''
         self.targetpops = []
@@ -66,6 +66,7 @@ class Programset(object):
                 for thispop in prog.targetpops: self.targetpops.append(thispop)
             self.targetpops = list(set(self.targetpops))
 
+    
     def gettargetpars(self):
         '''Update model parameters targeted by some program in the response'''
         self.targetpars = []
@@ -73,6 +74,7 @@ class Programset(object):
             for thisprog in self.programs.values():
                 for thispop in thisprog.targetpars: self.targetpars.append(thispop)
 
+    
     def gettargetpartypes(self):
         '''Update model parameter types targeted by some program in the response'''
         self.targetpartypes = []
@@ -81,6 +83,7 @@ class Programset(object):
                 for thispartype in thisprog.targetpartypes: self.targetpartypes.append(thispartype)
             self.targetpartypes = list(set(self.targetpartypes))
 
+    
     def initialize_covout(self):
         '''Sets up the required coverage-outcome curves.
            Parameters for actually defining these should be added using 
@@ -91,28 +94,29 @@ class Programset(object):
             if not self.covout.get(targetpartype): self.covout[targetpartype] = odict() # Initialize if it's not there already
             for thispop in self.progs_by_targetpar(targetpartype).keys(): # Loop over populations
                 if self.covout[targetpartype].get(thispop): # Take the pre-existing one if it's there... 
-                    ccopars = self.covout[targetpartype][thispop].ccopars 
+                    covoutpars = self.covout[targetpartype][thispop].covoutpars 
                 else: # ... or if not, set it up
-                    ccopars = odict()
-                    ccopars['intercept'] = CCOpar(name='Parameter value under zero program coverage',short='intercept')
-                    ccopars['intercept'].t['best'],ccopars['intercept'].t['low'],ccopars['intercept'].t['high'] = [],[],[]
-                    ccopars['intercept'].y['best'],ccopars['intercept'].y['low'],ccopars['intercept'].y['high'] = [],[],[]
+                    covoutpars = odict()
+                    covoutpars['intercept'] = CCOpar(name='Parameter value under zero program coverage',short='intercept')
+                    for key in ['best','low','high']:
+                        covoutpars['intercept'].t[key] = []
+                        covoutpars['intercept'].y[key] = []
 
                 targetingprogs = [thisprog.short for thisprog in self.progs_by_targetpar(targetpartype)[thispop]]
                 for tp in targetingprogs:
-                    if not ccopars.get(tp):
-                        ccopars[tp] = CCOpar(name='Parameter value under maximal attainable coverage of '+tp,short=tp)
-                        ccopars[tp].t['best'],ccopars[tp].t['low'],ccopars[tp].t['high'] = [],[],[]
-                        ccopars[tp].y['best'],ccopars[tp].y['low'],ccopars[tp].y['high'] = [],[],[]
-                
+                    if not covoutpars.get(tp):
+                        covoutpars[tp] = CCOpar(name='Parameter value under maximal attainable coverage of '+tp,short=tp)
+                        for key in ['best','low','high']:
+                            covoutpars[tp].t[key] = []
+                            covoutpars[tp].y[key] = []
                                     
                 # Delete any stored programs that are no longer needed (if removing a program)
-                progccopars = dcp(ccopars)
-                del progccopars['intercept']
-                for prog in progccopars.keys(): 
-                    if prog not in targetingprogs: del ccopars[prog]
+                progcovoutpars = dcp(covoutpars)
+                del progcovoutpars['intercept']
+                for prog in progcovoutpars.keys(): 
+                    if prog not in targetingprogs: del covoutpars[prog]
 
-                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=self.default_interaction)
+                self.covout[targetpartype][thispop] = Covout(covoutpars=covoutpars,interaction=self.default_interaction)
 
         # Delete any stored effects that aren't needed (if removing a program)
         for tpt in self.covout.keys():
@@ -121,6 +125,7 @@ class Programset(object):
                 for tp in self.covout[tpt].keys():
                     if type(tp) in [tuple,str,unicode] and tp not in self.progs_by_targetpar(tpt).keys(): del self.covout[tpt][tp]
 
+    
     def updateprogset(self, verbose=2):
         ''' Update (run this is you change something... )'''
         self.gettargetpars()
@@ -129,6 +134,7 @@ class Programset(object):
         self.initialize_covout()
         printv('\nUpdated programset "%s"' % (self.name), 4, verbose)
 
+    
     def addprograms(self, newprograms, verbose=2):
         ''' Add new programs'''
         if type(newprograms)==Program: newprograms = [newprograms]
@@ -141,6 +147,7 @@ class Programset(object):
                     raise OptimaException('Program "%s" is already present in programset "%s".' % (newprogram.short, self.name))
         self.updateprogset()
 
+    
     def rmprogram(self,program,verbose=2):
         ''' Remove a program. Expects type(program) in [Program,str]'''
         if not type(program) == str: program = program.short
@@ -152,18 +159,23 @@ class Programset(object):
             self.updateprogset()
             printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [thisprog.short for thisprog in self.programs.values()]), 4, verbose)
 
+    
     def optimizable(self):
         return [True if prog.optimizable() else False for prog in self.programs.values()]
 
+    
     def optimizableprograms(self):
         return odict((program.short, program) for program in self.programs.values() if program.optimizable())
 
+    
     def hasbudget(self):
         return [True if prog.hasbudget() else False for prog in self.programs.values()]
 
+    
     def programswithbudget(self):
         return odict((program.short, program) for program in self.programs.values() if program.hasbudget())
 
+    
     def hasallcovoutpars(self, detail=False):
         ''' Checks whether all the **required** coverage-outcome parameters are there for coverage-outcome rships'''
         result = True
@@ -173,7 +185,7 @@ class Programset(object):
                 if not self.covout[thispartype][thispop].ccopars['intercept']:
                     result = False
                     details.append((thispartype,thispop))
-                if thispartype not in coveragepars:
+                if thispartype not in _coveragepars:
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
                         if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
                             result = False
@@ -181,6 +193,7 @@ class Programset(object):
         if detail: return list(set(details))
         else: return result
 
+    
     def hasallcostcovpars(self, detail=False):
         ''' Checks whether all the **required** cost-coverage parameters are there for coverage-outcome rships'''
         result = True
@@ -192,13 +205,16 @@ class Programset(object):
         if detail: return list(set(details))
         else: return result
                 
+    
     def readytooptimize(self):
         ''' True if the progset is ready to optimize (i.e. has all required pars) and False otherwise''' 
         return (self.hasallcostcovpars() and self.hasallcovoutpars())        
 
-    def coveragepar(self, coveragepars=coveragepars):
+    
+    def coveragepar(self, coveragepars=_coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
 
+    
     def changepopname(self, oldname=None, newname=None):
         '''
         Change the short name of a population in a progset.
@@ -267,6 +283,7 @@ class Programset(object):
         if filter_pop: return progs_by_targetpop[filter_pop]
         else: return progs_by_targetpop
 
+    
     def progs_by_targetpartype(self, filter_partype=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
@@ -281,6 +298,7 @@ class Programset(object):
         if filter_partype: return progs_by_targetpartype[filter_partype]
         else: return progs_by_targetpartype
 
+    
     def progs_by_targetpar(self, filter_partype=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
@@ -298,6 +316,7 @@ class Programset(object):
         if filter_partype: return progs_by_targetpar[filter_partype]
         else: return progs_by_targetpar
 
+    
     def loadspreadsheet(self, filename, verbose=3):
         '''Load a spreadsheet with cost and coverage data and parametres for the cost functions''' 
 
@@ -326,7 +345,7 @@ class Programset(object):
                     bestdata = ~isnan(data[prog][par.short]['best'])
                     for estimate in ['best','low','high']:
                         if sum(bestdata): 
-                            par.t[estimate] = getvalidyears(data['years'], bestdata)
+                            par.t[estimate] = getvaliddata(data['years'], bestdata)
                             par.y[estimate] = sanitize(data[prog][par.short]['best']) # We use the best estimates to population the low and hig, ad then later we overwrite if there are actual estimates provided
                         else:
                             printv('No data for cost parameter "%s"' % (par.short), 3, verbose)
@@ -335,8 +354,8 @@ class Programset(object):
                         if estimate != 'best': # Here we overwrite the range data, if provided
                             rangedata = ~isnan(data[prog][par.short][estimate])
                             rangevalues = sanitize(data[prog][par.short][estimate])
-                            rangeyears = getvalidyears(data['years'], rangedata)
-                            addsingleccopar(self.programs[prog].costcovpars,parname=par.short,values=rangevalues,years=rangeyears,estimate=estimate,overwrite=True)
+                            rangeyears = getvaliddata(data['years'], rangedata)
+                            addsingleccopar(self.programs[prog].costcovpars, parname=par.short, values=rangevalues, years=rangeyears, estimate=estimate, overwrite=True)
                     
         return None
 
@@ -1168,7 +1187,7 @@ class Program(object):
 ########################################################
 # COST COVERAGE OUTCOME FUNCTIONS
 ########################################################
-def addsingleccopar(ccopars, parname, values, years, estimate='best', overwrite=False, verbose=2):
+def addsingleccopar(ccopars=None, parname=None, values=None, years=None, estimate='best', overwrite=False, verbose=2):
     ''' Add a single parameter.
     parname is a string; value is a number; year is a year'''
     
@@ -1217,7 +1236,7 @@ def addsingleccopar(ccopars, parname, values, years, estimate='best', overwrite=
     return None
 
 
-def addccopar(ccopars, ccopar, overwrite=False, verbose=2):
+def addccopar(ccopars=None, ccopar=None, overwrite=False, verbose=2):
     ''' Add a set of parameters for a single year'''
     
     # Separate the ccopar into the parameter bits and the year bits
@@ -1238,7 +1257,7 @@ def addccopar(ccopars, ccopar, overwrite=False, verbose=2):
     return None
 
 
-def getccopar(ccopars, t, verbose=2, sample='best'):
+def getccopar(ccopars=None, t=None, sample='best', verbose=2):
     '''Get a cost-coverage-outcome parameter set'''
 
     # Error checks
@@ -1277,9 +1296,11 @@ def getccopar(ccopars, t, verbose=2, sample='best'):
 
 
 ########################################################
-# COST COVERAGE FUNCTIONS
+#%% COST COVERAGE FUNCTIONS
 ########################################################
 '''
+WARNING, NEED TO UPDATE
+
 Cost-coverage object - used to calculate the coverage for a certain
 budget in a program. Best initialized with empty parameters,
 and later, add cost-coverage parameters with self.addccopar.
@@ -1323,6 +1344,22 @@ Methods:
                 the given intervals
 
 '''
+
+class Covout(object):
+    
+    def __init__(self, covoutpars=None, interaction=_defaultinteraction):
+        self.covoutpars = covoutpars
+        self.interaction = interaction
+    
+    def addcovoutpar(self, covoutpar=None, overwrite=False, verbose=2):
+        addccopar(self.covoutpars, ccopar=covoutpar, overwrite=overwrite, verbose=verbose)
+        return None
+    
+    def getcovoutpar(self, t=None, overwrite=False, verbose=2):
+        getccopar(self.covoutpars, t=t, overwrite=overwrite, verbose=verbose)
+        return None
+
+
 
 
 def evalcostcov(ccopars=None, x=None, t=None, popsize=None, inverse=False, sample='best', eps=None, verbose=2):

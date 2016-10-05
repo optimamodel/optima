@@ -220,7 +220,7 @@ def popgrow(exppars, tvec):
 
 
 
-def getvalidyears(years, validdata, defaultind=0):
+def getvaliddata(years, validdata, defaultind=0):
     ''' Return the years that are valid based on the validity of the input data '''
     if sum(validdata): # There's at least one data point entered
         if len(years)==len(validdata): # They're the same length: use for logical indexing
@@ -336,7 +336,7 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
     for row,key in enumerate(keys):
         try:
             validdata = ~isnan(data[short][row])
-            par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
+            par.t[key] = getvaliddata(data['years'], validdata, defaultind=defaultind) 
             if sum(validdata): 
                 par.y[key] = sanitize(data[short][row])
             else:
@@ -369,7 +369,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
-    for row in range(npops): yearstouse.append(getvalidyears(data['years'], ~isnan(data[which+act][row])))
+    for row in range(npops): yearstouse.append(getvaliddata(data['years'], ~isnan(data[which+act][row])))
     minyear = Inf
     maxyear = -Inf
     npts = 1 # Don't use fewer than 1 point
