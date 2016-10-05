@@ -83,15 +83,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       // Check if project has spreadsheet uploaded
-      if (!project.hasData) {
-        modalService.inform(
-          function() {
-          },
-          'Okay',
-          'Please upload spreadsheet to proceed.',
-          'Cannot proceed'
-        );
-        $scope.missingData = true;
+      $scope.isMissingData = !project.hasParset;
+      if ($scope.isMissingData) {
         return;
       }
 

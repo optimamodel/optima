@@ -94,3 +94,7 @@ class InvalidFileType(BaseRESTException):
             self.description = self._message
         else:
             self.description = 'File type of {} is not accepted!'.format(filename)
+
+
+class UserDoesNotExist(RecordDoesNotExist):
+    _model = 'user'
