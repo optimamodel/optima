@@ -9,16 +9,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     var parameters;
 
     function initialize() {
-      var isDataSpreadsheetNotUploaded = !project.hasData;
 
-      if (isDataSpreadsheetNotUploaded) {
-        modalService.inform(
-          function() { },
-          'Okay',
-          'Please upload spreadsheet to proceed.',
-          'Cannot proceed'
-        );
-        $scope.missingData = true;
+      $scope.isMissingData = !project.hasParset;
+      if ($scope.isMissingData) {
         return;
       }
 

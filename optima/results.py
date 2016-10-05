@@ -80,12 +80,14 @@ class Resultset(object):
         
         self.main['numplhiv']           = Result('Number of PLHIV')
         self.main['numdiag']            = Result('Number of diagnosed PLHIV')
+        self.main['numevercare']        = Result('Number of PLHIV initially linked to care')
         self.main['numincare']          = Result('Number of PLHIV in care')
         self.main['numtreat']           = Result('Number of PLHIV on treatment')
         self.main['numsuppressed']      = Result('Number of virally suppressed PLHIV')
         
         self.main['propdiag']           = Result('PLHIV who are diagnosed (%)', ispercentage=True)
-        self.main['propincare']         = Result('Diagnosed PLHIV who are in care (%)', ispercentage=True)
+        self.main['propevercare']       = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True)
+        self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True)
         self.main['proptreat']          = Result('PLHIV in care who are on treatment (%)', ispercentage=True)
         self.main['propsuppressed']     = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True)
         
@@ -194,6 +196,7 @@ class Resultset(object):
         allreceivepmtct = dcp(array([self.raw[i]['receivepmtct'] for i in range(len(self.raw))]))
         allplhiv = self.settings.allplhiv
         alldx = self.settings.alldx
+        allevercare = self.settings.allevercare
         allcare = self.settings.allcare
         alltx = self.settings.alltx
         svl = self.settings.svl
@@ -240,6 +243,12 @@ class Resultset(object):
         self.main['propdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'])
         
+        self.main['numevercare'].pops = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numevercare'].tot = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+
+        self.main['propevercare'].pops = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)/allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) 
+        self.main['propevercare'].tot = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))/allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+
         self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
 
