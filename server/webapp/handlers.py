@@ -21,21 +21,20 @@ from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
 from flask_restful import Api
 
-from server.webapp.dataio import create_user, parse_user_args, update_user, do_login_user, delete_user, \
-    do_logout_current_user, report_exception_decorator, verify_admin_request_decorator
-
 from . import dataio
 from .dataio import load_project_summaries, create_project_with_spreadsheet_download, delete_projects, \
     load_project_summary, update_project_followed_by_template_data_spreadsheet, download_project, \
     update_project_from_prj, create_project_from_prj, copy_project, load_project_program_summaries, \
     load_project_parameters, load_zip_of_prj_files, load_data_spreadsheet_binary, load_template_data_spreadsheet, \
     update_project_from_data_spreadsheet, update_project_from_econ_spreadsheet, load_project_name, delete_econ, \
-    load_parset_summaries, create_parset, copy_parset, delete_parset, rename_parset, load_parset_graphs, load_parameters, save_parameters, load_result_csv, load_result_mpld3_graphs, load_progset_summaries, create_progset, \
+    load_parset_summaries, create_parset, copy_parset, delete_parset, rename_parset, load_parset_graphs, \
+    load_parameters, save_parameters, load_result_csv, load_result_mpld3_graphs, load_progset_summaries, create_progset, \
     save_progset, delete_progset, upload_progset, load_parameters_from_progset_parset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
     upload_optimization_summary, load_optimization_graphs, get_users, create_project_from_spreadsheet, \
-    load_portfolio_summaries
+    load_portfolio_summaries, create_user, parse_user_args, update_user, do_login_user, delete_user, \
+    do_logout_current_user, report_exception_decorator, verify_admin_request_decorator
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file, OptimaJSONEncoder
 from .dbconn import db
@@ -524,12 +523,7 @@ class ParsetCalibration(Resource):
     def get(self, project_id, parset_id):
         """
         GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
-        url-query:
-            autofit: boolean - true loads the results from the autofit parameters
         """
-        autofit = request.args.get('autofit', False)
-        # calculation_type = 'autofit' if autofit else "calibration"
-        # print "> Get calibration graphs for %s" % (calculation_type)
         return load_parset_graphs(project_id, parset_id, "calibration")
 
     @swagger.operation(description='Updates a parset and returns the graphs for a parset_id')
@@ -542,11 +536,8 @@ class ParsetCalibration(Resource):
             autofit: boolean indicates to fetch the autofit version of the results
         """
         args = get_post_data_json()
-        autofit = args.get('autofit', False)
-        # calculation_type = 'autofit' if autofit else "calibration"
         parameters = args.get('parameters')
         which = args.get('which')
-        # print "> Update calibration graphs for %s" % (calculation_type)
         return load_parset_graphs(
             project_id, parset_id, "calibration", which, parameters)
 

@@ -414,6 +414,11 @@ define(['./../module', 'underscore'], function(module, _) {
             return;
           }
           var pop = outcome.pop;
+
+          if (vm.state.parameter.coverage == 1) {
+            return;
+          }
+
           _.each(outcome.years, function(year) {
 
             var existingProgramShorts = _.pluck(year.programs, 'name');
