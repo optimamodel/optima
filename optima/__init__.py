@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This file performs all necessary imports, so Optima can be used either as
 
-from optima import Project, Parameters [etc.] [preferred]
+from optima import Project, Parameters [etc.]
 or
 import optima as op
 or
@@ -25,7 +24,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2016jan30 by cliffk
+Version: 2016oct05 by cliffk
 """
 
 optimalicense = '''
@@ -68,7 +67,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, getvaliddata, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -99,7 +98,7 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 
 ## Define the model parameters
 from . import parameters as _parameters
-from .parameters import Basepar, CCOpar, Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, transtable, loadtranstable, applylimits, comparepars, comparesimpars, getvaliddata # Parameter and Parameterset classes
+from .parameters import Basepar, CCOpar, Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, transtable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
 
 ## Define and run the model
 from . import model as _model

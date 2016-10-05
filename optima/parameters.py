@@ -8,7 +8,7 @@ Version: 1.5 (2016jul06)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -219,26 +219,6 @@ def popgrow(exppars, tvec):
     return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
 
 
-
-def getvaliddata(data, testdata, defaultind=0):
-    '''
-    Return the years that are valid based on the validity of the input data.
-    
-    Example:
-        getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
-    
-    '''
-    validindices = ~isnan(testdata)
-    if sum(validindices): # There's at least one data point entered
-        if len(data)==len(validindices): # They're the same length: use for logical indexing
-            validdata = array(array(data)[validindices]) # Store each year
-        elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
-            validdata = array([array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
-    else: validdata = array([0.0]) # No valid data, return 0 -- NOT an empty array, as you might expect!
-    return validdata
-
-
-
 def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
     par = Constant(y=odict(), **defaultargs) # Create structure
@@ -349,6 +329,7 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
             else:
                 printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
                 par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
+                par.t[key] = array([0.0])
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
@@ -376,7 +357,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
-    for row in range(npops): yearstouse.append(getvaliddata(data['years'], ~isnan(data[which+act][row])))
+    for row in range(npops): yearstouse.append(getvaliddata(data['years'], data[which+act][row]))
     minyear = Inf
     maxyear = -Inf
     npts = 1 # Don't use fewer than 1 point

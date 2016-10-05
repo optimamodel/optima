@@ -304,6 +304,28 @@ def sanitize(arraywithnans):
         return sanitized
 
 
+
+def getvaliddata(data=None, filterdata=None, defaultind=0):
+    '''
+    Return the years that are valid based on the validity of the input data.
+    
+    Example:
+        getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
+    '''
+    from numpy import array, isnan
+    if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
+    else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
+    if sum(validindices): # There's at least one data point entered
+        if len(data)==len(validindices): # They're the same length: use for logical indexing
+            validdata = array(array(data)[validindices]) # Store each year
+        elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
+            validdata = array([array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+    else: 
+        validdata = array([]) # No valid data, return an empty array
+    return validdata
+
+
+
 def findinds(val1, val2=None, eps=1e-6):
     """
     Little function to find matches even if two things aren't eactly equal (eg. 
