@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
-from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
+from optima import defaultobjectives, defaultconstraints, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
 import os
@@ -147,12 +147,6 @@ class Project(object):
             self.addoptim(optim)
         return None
 
-
-    def loadeconomics(self, filename):
-        ''' Load economic data and tranforms it to useful format'''
-        self.data['econ'] = loadeconomicsspreadsheet(filename) ## Load spreadsheet
-        self.modified = today()
-        return None
 
 
     #######################################################################################################

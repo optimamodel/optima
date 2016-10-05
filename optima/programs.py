@@ -485,7 +485,7 @@ class Programset(object):
         return popcoverage
 
 
-    def getoutcomes(self, coverage=None, t=None, parset=None, results=None, sample='best', coveragepars=coveragepars, ind=0):
+    def getoutcomes(self, coverage=None, t=None, parset=None, results=None, sample='best', coveragepars=_coveragepars, ind=0):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
 
         # Initialise output

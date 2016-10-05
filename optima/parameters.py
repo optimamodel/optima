@@ -220,15 +220,22 @@ def popgrow(exppars, tvec):
 
 
 
-def getvaliddata(years, validdata, defaultind=0):
-    ''' Return the years that are valid based on the validity of the input data '''
-    if sum(validdata): # There's at least one data point entered
-        if len(years)==len(validdata): # They're the same length: use for logical indexing
-            validyears = array(array(years)[validdata]) # Store each year
-        elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
-            validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
-    else: validyears = array([0.0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
-    return validyears
+def getvaliddata(data, testdata, defaultind=0):
+    '''
+    Return the years that are valid based on the validity of the input data.
+    
+    Example:
+        getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
+    
+    '''
+    validindices = ~isnan(testdata)
+    if sum(validindices): # There's at least one data point entered
+        if len(data)==len(validindices): # They're the same length: use for logical indexing
+            validdata = array(array(data)[validindices]) # Store each year
+        elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
+            validdata = array([array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+    else: validdata = array([0.0]) # No valid data, return 0 -- NOT an empty array, as you might expect!
+    return validdata
 
 
 

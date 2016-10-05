@@ -109,10 +109,6 @@ from .model import model, runmodel
 from . import programs as _programs
 from .programs import Program, Programset
 
-## Economics functions -- WARNING, not functional yet
-from . import economics as _economics
-from .economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts 
-
 ## Automatic calibration and sensitivity
 from . import calibration as _calibration
 from .calibration import sensitivity, autofit 
