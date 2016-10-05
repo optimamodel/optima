@@ -186,7 +186,7 @@ class Programset(object):
         result = True
         details = []
         for prog in self.optimizableprograms().values():
-            if prog.costcovfn.ccopars.get('unitcost') is None:
+            if prog.costcovpars.get('unitcost') is None:
                 details.append(prog.name)
                 result = False
         if detail: return list(set(details))
@@ -320,9 +320,9 @@ class Programset(object):
             
             if self.programs[prog].optimizable():
                 # Creating CCOpars
-                self.programs[prog].costcovfn.ccopars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
-                self.programs[prog].costcovfn.ccopars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
-                for par in self.programs[prog].costcovfn.ccopars.values():
+                self.programs[prog].costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
+                self.programs[prog].costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
+                for par in self.programs[prog].costcovpars.values():
                     bestdata = ~isnan(data[prog][par.short]['best'])
                     for estimate in ['best','low','high']:
                         if sum(bestdata): 
@@ -336,7 +336,7 @@ class Programset(object):
                             rangedata = ~isnan(data[prog][par.short][estimate])
                             rangevalues = sanitize(data[prog][par.short][estimate])
                             rangeyears = getvalidyears(data['years'], rangedata)
-                            self.programs[prog].costcovfn.addsingleccopar(parname=par.short,values=rangevalues,years=rangeyears,estimate=estimate,overwrite=True)
+                            addsingleccopar(self.programs[prog].costcovpars,parname=par.short,values=rangevalues,years=rangeyears,estimate=estimate,overwrite=True)
                     
         return None
 
@@ -404,7 +404,7 @@ class Programset(object):
         # Get program-level coverage for each program
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
-                if not self.programs[thisprog].costcovfn.ccopars:
+                if not self.programs[thisprog].costcovpars:
                     printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
                     coverage[thisprog] = None
                 else:
@@ -430,7 +430,7 @@ class Programset(object):
         # Get budget for each program
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
-                if not self.programs[thisprog].costcovfn.ccopars:
+                if not self.programs[thisprog].costcovpars:
                     printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
                     budget[thisprog] = None
                 else:
@@ -455,7 +455,7 @@ class Programset(object):
         # Get population-level coverage for each program
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
-                if not self.programs[thisprog].costcovfn.ccopars:
+                if not self.programs[thisprog].costcovpars:
                     printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
                     popcoverage[thisprog] = None
                 else:
@@ -813,7 +813,7 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
         cost_coverage_figures = odict()
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
-                if not self.programs[thisprog].costcovfn.ccopars:
+                if not self.programs[thisprog].costcovpars:
                     printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
                 else:
                     cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,existingFigure=existingFigure,bounds=bounds)
@@ -893,17 +893,14 @@ class Program(object):
 
     def initialize_costcov(self,ccopars=None):
         '''Initialize cost coverage function'''
-        self.costcovfn = Costcov()
-        self.costcovfn.ccopars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
-        self.costcovfn.ccopars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
-        pars = self.costcovfn.ccopars.keys()
+        self.costcovpars = odict()
+        self.costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
+        self.costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
+        pars = self.costcovpars.keys()
         for par in pars:
-            self.costcovfn.ccopars[par].y['best'] = array([])
-            self.costcovfn.ccopars[par].y['low'] = array([])
-            self.costcovfn.ccopars[par].y['high'] = array([])
-            self.costcovfn.ccopars[par].t['best'] = array([])
-            self.costcovfn.ccopars[par].t['low'] = array([])
-            self.costcovfn.ccopars[par].t['high'] = array([])
+            for key in ['best','low','high']:
+                self.costcovpars[par].y[key] = array([])
+                self.costcovpars[par].t[key] = array([])
         return None
     
     def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
@@ -1173,8 +1170,7 @@ class Program(object):
 ########################################################
 class CCOF(object):
     '''Cost-coverage and coverage-outcome objects'''
-    def __init__(self,ccopars=None,interaction=None):
-        self.ccopars = ccopars if ccopars else odict()
+    def __init__(self,interaction=None):
         self.interaction = interaction
 
 

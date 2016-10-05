@@ -199,59 +199,59 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Other')
                   
     if addcostcovpars:
-        Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
+        Condoms.addcostcovpar({'saturation': (0.75,0.75),
                                  't': 2016.0,
                                  'unitcost': (3,7)})
     
-        SBCC.costcovfn.addccopar({'saturation': (0.6,0.6),
+        SBCC.addcostcovpar({'saturation': (0.6,0.6),
                                  't': 2016.0,
                                  'unitcost': (8,12)})
     
-        STI.costcovfn.addccopar({'saturation': (0.6,0.6),
+        STI.addcostcovpar({'saturation': (0.6,0.6),
                                  't': 2016.0,
                                  'unitcost': (15,20)})
                                  
-        VMMC.costcovfn.addccopar({'saturation': (.5,.6),
+        VMMC.addcostcovpar({'saturation': (.5,.6),
                                  't': 2016.0,
                                  'unitcost': (15,25)})
                                  
-        FSW_programs.costcovfn.addccopar({'saturation': (0.9,0.9),
+        FSW_programs.addcostcovpar({'saturation': (0.9,0.9),
                                  't': 2016.0,
                                  'unitcost': (25,35)})
                                  
-        MSM_programs.costcovfn.addccopar({'saturation': (0.9,0.9),
+        MSM_programs.addcostcovpar({'saturation': (0.9,0.9),
                                  't': 2016.0,
                                  'unitcost': (25,35)})
                                  
-        PWID_programs.costcovfn.addccopar({'saturation': (0.3,0.3),
+        PWID_programs.addcostcovpar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (25,35)})
                                  
-        OST.costcovfn.addccopar({'saturation': (0.3,0.3),
+        OST.addcostcovpar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (100,200)})
                                  
-        NSP.costcovfn.addccopar({'saturation': (0.3,0.3),
+        NSP.addcostcovpar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (10,20)})
                                  
-        Cash_transfers.costcovfn.addccopar({'saturation': (0.3,0.3),
+        Cash_transfers.addcostcovpar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (50,80)})
                                  
-        PrEP.costcovfn.addccopar({'saturation': (0.3,0.3),
+        PrEP.addcostcovpar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (100,200)})
                                  
-        HTC.costcovfn.addccopar({'saturation': (0.85,0.95),
+        HTC.addcostcovpar({'saturation': (0.85,0.95),
                                  't': 2016.0,
                                  'unitcost': (5,10)})
                                  
-        ART.costcovfn.addccopar({'saturation': (0.99,0.99),
+        ART.addcostcovpar({'saturation': (0.99,0.99),
                                  't': 2016.0,
                                  'unitcost': (400,800)})
                                  
-        PMTCT.costcovfn.addccopar({'saturation': (0.9,0.9),
+        PMTCT.addcostcovpar({'saturation': (0.9,0.9),
                                  't': 2016.0,
                                  'unitcost': (100,200)})
                                  
@@ -350,11 +350,11 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         # Fix up costs if non-standard costs have been requested but 
         if addcostcovpars and not usestandardcostcovpars:
-            R.programs['ART'].costcovfn.addccopar({'saturation': (0.9,0.9),
+            R.programs['ART'].addcostcovpar({'saturation': (0.9,0.9),
                              't': 2016.0,
                              'unitcost': (1000,2000)},overwrite=True)
                              
-            R.programs['PMTCT'].costcovfn.addccopar({'saturation': (0.9,0.9),
+            R.programs['PMTCT'].addcostcovpar({'saturation': (0.9,0.9),
                              't': 2016.0,
                              'unitcost': (5000,8000)},overwrite=True)
 
@@ -382,13 +382,13 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
 
 
         if addcostcovpars:
-            HTC_workplace.costcovfn.addccopar({'saturation': (0.2,0.3),
+            HTC_workplace.addcostcovpar({'saturation': (0.2,0.3),
                                      't': 2016.0,
                                      'unitcost': (10,12)})
-            HTC_mobile.costcovfn.addccopar({'saturation': (0.5,0.6),
+            HTC_mobile.addcostcovpar({'saturation': (0.5,0.6),
                                      't': 2016.0,
                                      'unitcost': (6,10)})
-            HTC_medical.costcovfn.addccopar({'saturation': (0.4,0.6),
+            HTC_medical.addcostcovpar({'saturation': (0.4,0.6),
                                      't': 2016.0,
                                      'unitcost': (4,8)})
 
