@@ -1168,17 +1168,6 @@ class Program(object):
 ########################################################
 # COST COVERAGE OUTCOME FUNCTIONS
 ########################################################
-class CCOF(object):
-    '''Cost-coverage and coverage-outcome objects'''
-    def __init__(self,interaction=None):
-        self.interaction = interaction
-
-
-    def __repr__(self):
-        ''' Print out useful info'''
-        return defaultrepr(self)
-
-
 def addsingleccopar(ccopars, parname, values, years, estimate='best', overwrite=False, verbose=2):
     ''' Add a single parameter.
     parname is a string; value is a number; year is a year'''
@@ -1290,110 +1279,88 @@ def getccopar(ccopars, t, verbose=2, sample='best'):
 ########################################################
 # COST COVERAGE FUNCTIONS
 ########################################################
-class Costcov(CCOF):
-    '''
-    Cost-coverage object - used to calculate the coverage for a certain
-    budget in a program. Best initialized with empty parameters,
-    and later, add cost-coverage parameters with self.addccopar.
+'''
+Cost-coverage object - used to calculate the coverage for a certain
+budget in a program. Best initialized with empty parameters,
+and later, add cost-coverage parameters with self.addccopar.
 
-    Methods:
+Methods:
 
-        addccopar(ccopar, overwrite=False, verbose=2)
-            Adds a set of cost-coverage parameters for a budget year
+    addccopar(ccopar, overwrite=False, verbose=2)
+        Adds a set of cost-coverage parameters for a budget year
 
-            Args:
-                ccopar: {
-                            't': [2015,2016],
-                            'saturation': [.90,1.],
-                            'unitcost': [40,30]
-                        }
-                        The intervals in ccopar allow a randomization
-                        to explore uncertainties in the model.
+        Args:
+            ccopar: {
+                        't': [2015,2016],
+                        'saturation': [.90,1.],
+                        'unitcost': [40,30]
+                    }
+                    The intervals in ccopar allow a randomization
+                    to explore uncertainties in the model.
 
-                overwrite: whether it should be added or replaced for
-                           interpolation
+            overwrite: whether it should be added or replaced for
+                       interpolation
 
-        getccopar(t, verbose=2, sample='best')
-            Returns an odict of cost-coverage parameters
-                { 'saturation': [..], 'unitcost': [...], 't':[...] }
-            used for self.evaulate.
+    getccopar(t, verbose=2, sample='best')
+        Returns an odict of cost-coverage parameters
+            { 'saturation': [..], 'unitcost': [...], 't':[...] }
+        used for self.evaulate.
 
-            Args:
-                t: a number/list of years to interpolate the ccopar
-                randseed: used to randomly generate a varying set of parameters
-                          to help determine the sensitivity/uncertainty of
-                          certain parameters
+        Args:
+            t: a number/list of years to interpolate the ccopar
+            randseed: used to randomly generate a varying set of parameters
+                      to help determine the sensitivity/uncertainty of
+                      certain parameters
 
-        evaluate(x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2)
-            Returns coverage if x=cost, or cost if x=coverage, this is defined by inverse.
+    evaluate(x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2)
+        Returns coverage if x=cost, or cost if x=coverage, this is defined by inverse.
 
-            Args
-                x: number, or list of numbers, representing cost or coverage
-                t: years for each value of cost/coverage
-                inverse: False - returns a coverage, True - returns a cost
-                randseed: allows a randomization of the cost-cov parameters within
-                    the given intervals
+        Args
+            x: number, or list of numbers, representing cost or coverage
+            t: years for each value of cost/coverage
+            inverse: False - returns a coverage, True - returns a cost
+            randseed: allows a randomization of the cost-cov parameters within
+                the given intervals
 
-    '''
-
-    def evaluate(self, x, popsize, t, toplot, inverse=False, sample='best', verbose=2):
-        x = promotetoarray(x)
-        t = promotetoarray(t)
-        if (not toplot) and (not len(x)==len(t)):
-            try: 
-                x = x[0:1]
-                t = t[0:1]
-            except:
-                x = array([0]) # WARNING, this should maybe not be here, or should be handled with kwargs
-                t = array([2015])
-            printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
-        ccopar = self.getccopar(t=t,sample=sample)
-        if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
-        else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
+'''
 
 
-    def function(self, x, ccopar, popsize, eps=None):
-        '''Returns coverage in a given year for a given spending amount.'''
-        u = array(ccopar['unitcost'])
-        s = array(ccopar['saturation'])
-        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isnumber(popsize): popsize = array([popsize])
+def evalcostcov(ccopars=None, x=None, t=None, popsize=None, inverse=False, sample='best', eps=None, verbose=2):
+    x = promotetoarray(x)
+    t = promotetoarray(t)
+    if not len(x)==len(t):
+        errormsg = 'x needs to be the same length as t, we assume one spending amount per time point.'
+        raise OptimaException(errormsg)
+    ccopar = getccopar(ccopars, t=t,sample=sample)
+    
+    u = array(ccopar['unitcost'])
+    s = array(ccopar['saturation'])
+    if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
+    if isnumber(popsize): popsize = array([popsize])
+    nyrs,npts = len(u),len(x)
+    eps = zeros(npts)+eps
+    
+    if inverse: return covcostfunc(x, s, u, nyrs, npts, popsize, eps)
+    else:       return costcovfunc(x, s, u, nyrs, npts, popsize, eps)
+    
 
-        nyrs,npts = len(u),len(x)
-        eps = array([eps]*npts)
-        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
-        else:
-            y = zeros((nyrs,npts))
-            for yr in range(nyrs):
-                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
-            return y
+def costcovfunc(x, s, u, nyrs, npts, popsize, eps):
+    '''Returns coverage in a given year for a given spending amount.'''
+    if nyrs==npts: 
+        y = maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
+    else:
+        y = zeros((nyrs,npts))
+        for yr in range(nyrs):
+            y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
+    return y
 
-    def inversefunction(self, x, ccopar, popsize, eps=None):
-        '''Returns coverage in a given year for a given spending amount.'''
-        u = array(ccopar['unitcost'])
-        s = array(ccopar['saturation'])
-        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isnumber(popsize): popsize = array([popsize])
 
-        nyrs,npts = len(u),len(x)
-        eps = array([eps]*npts)
-        if nyrs==npts: return maximum(-0.5*popsize*s*u*log(maximum(s*popsize-x,0)/(s*popsize+x)),eps)
-        else:
-            y = zeros((nyrs,npts))
-            for yr in range(nyrs):
-                y[yr,:] = maximum(-0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x)),eps)
-            return y
-            
-
-########################################################
-# COVERAGE OUTCOME FUNCTIONS
-########################################################
-class Covout(CCOF):
-    '''Coverage-outcome objects'''
-
-    def function(self,x,ccopar,popsize):
-        pass
-
-    def inversefunction(self, x, ccopar, popsize):
-        pass
-
+def covcostfunc(x, s, u, nyrs, npts, popsize, eps):
+    '''Returns cost in a given year for a given coverage amount.'''
+    if nyrs==npts: 
+        y = maximum(-0.5*popsize*s*u*log(maximum(s*popsize-x,0)/(s*popsize+x)),eps)
+    else:
+        y = zeros((nyrs,npts))
+        for yr in range(nyrs):
+            y[yr,:] = maximum(-0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x)),eps)
+    return y
