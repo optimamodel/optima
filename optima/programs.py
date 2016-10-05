@@ -485,14 +485,16 @@ class Programset(object):
                     # NB, if there's only one program targeting this parameter, just do simple additive calc
                     if self.covout[thispartype][thispop].interaction == 'additive' or len(self.progs_by_targetpar(thispartype)[thispop])==1:
                         # Outcome += c1*delta_out1 + c2*delta_out2
+                        additions = []
                         for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
                             if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
-                            else: outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
+                            else: additions.append(thiscov[thisprog.short]*delta[thisprog.short])
+                        outcomes[thispartype][thispop] += sum(array(additions))
 
                     # GEOMETRIC CALCULATION
-                    if self.covout[thispartype][thispop].interaction == 'geometric':
+                    elif self.covout[thispartype][thispop].interaction == 'geometric':
                         # Outcome += sqrt(c1*delta_out1**2 + c2*delta_out2**2)
                         additions = []
                         for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
