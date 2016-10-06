@@ -2,16 +2,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AdminManageProjectsController', function (
-    $scope, $http, projects, users, activeProject, UserManager, modalService, projectApiService, $state) {
+    $scope, $http, projects, users, activeProject,
+    UserManager, modalService, projectApiService, $state, toastr) {
 
+    $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
     $scope.users = _.map(
       users.data.users,
       function(user) {
+        var userProjects = _.filter(
+          projects.data.projects,
+          function(p) { return p.userId == user.id; });
+        _.each(userProjects, function(project) {
+          project.creationTime = Date.parse(project.creationTime);
+          project.updatedTime = Date.parse(project.updatedTime);
+          project.dataUploadTime = Date.parse(project.dataUploadTime);
+        });
         return {
           data: user,
-          projects: _.filter(
-            projects.data.projects,
-            function(p) { return p.userId == user.id; })
+          projects: userProjects
         };
       }
     );
@@ -36,6 +44,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     $scope.edit = function (name, id) {
       activeProject.setActiveProjectFor(name, id, UserManager.data);
+      $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
       $state.go('project.edit');
     };
 
@@ -46,7 +55,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     $scope.open = function (name, id) {
       activeProject.setActiveProjectFor(name, id, UserManager.data);
-      window.location = '/';
+      $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
     };
 
     /**
@@ -62,6 +71,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       modalService.confirm(
         function () {
           removeNoQuestionsAsked(user, name, id, index);
+          toastr.success('Deleted project');
         },
         function () {
         },
