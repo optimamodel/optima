@@ -70,7 +70,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False):
     if project is None: raise OptimaException('First argument to runscenarios() must be a project')
     if len(project.scens)==0:  # Create scenario list if not existing
         defaultscens = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
-        project.addscenlist(defaultscens)
+        project.addscens(defaultscens)
     scenlist = [scen for scen in project.scens.values() if scen.active==True]
     nscens = len(scenlist)
     

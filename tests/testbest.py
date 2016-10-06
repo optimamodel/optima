@@ -56,7 +56,7 @@ if runscenarios:
         ]
     
     # Run the scenarios
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
     P.runscenarios() 
 #    plotpeople(P, P.results[ind].raw[ind][0]['people'])
     apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])

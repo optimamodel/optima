@@ -177,7 +177,7 @@ if 'standardscen' in tests:
         ]
     
     # Store these in the project
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
 
     # Run the scenarios
     P.runscenarios() 
@@ -299,7 +299,7 @@ if '90-90-90' in tests:
         ]
 
     # Store these in the project
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
     P.scens[0].active = True # Turn off 90-90-90 scenario
 
     # Run the scenarios
@@ -359,7 +359,7 @@ if 'maxcoverage' in tests:
         ]
     
     # Run the scenarios
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
     P.runscenarios() 
      
     if doplot:
@@ -395,7 +395,7 @@ if 'maxbudget' in tests:
         ]
     
     # Run the scenarios
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
     P.runscenarios() 
      
     if doplot:
@@ -449,7 +449,7 @@ if 'VMMC' in tests:
         ]
     
     # Store these in the project
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
     
     # Run the scenarios
     P.runscenarios()

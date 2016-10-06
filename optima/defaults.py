@@ -599,7 +599,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
 
     
     # Run the scenarios
-    project.addscenlist(scenlist)
+    project.addscens(scenlist)
     project.runscenarios()
     return scenlist # Return it as well
 

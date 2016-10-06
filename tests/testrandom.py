@@ -33,7 +33,7 @@ if runscenarios:
     
     # Run the scenarios
     P.scens = op.odict()
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
     P.runscenarios() 
     op.pygui(P.results[-1])
 
