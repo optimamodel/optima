@@ -27,7 +27,7 @@ ind = -1 # Default index
 P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
 R = P.progsets[0]
 
-R.loadspreadsheet(spreadsheetpath+filename)    
+R.loadspreadsheet(spreadsheetpath+programdatafile)    
 
 ## Calibration
 if autocalib: 

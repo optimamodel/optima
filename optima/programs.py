@@ -49,9 +49,9 @@ class Programset(object):
         return None
     
     
-    def getcovoutpar(self, par=None, key=None, t=None, overwrite=False, verbose=2):
-        self.covout[par][key].getcovoutpar(t=t, overwrite=overwrite, verbose=verbose)
-        return None
+    def getcovoutpar(self, par=None, key=None, t=None, overwrite=False, sample='best', verbose=2):
+        covoutpar = self.covout[par][key].getcovoutpar(t=t, overwrite=overwrite, sample=sample, verbose=verbose)
+        return covoutpar
 
 
     def getsettings(self, project=None, parset=None, results=None):
@@ -193,12 +193,12 @@ class Programset(object):
         details = []
         for thispartype in self.covout.keys():
             for thispop in self.covout[thispartype].keys():
-                if not self.covout[thispartype][thispop].ccopars['intercept']:
+                if not self.covout[thispartype][thispop].covoutpars['intercept']:
                     result = False
                     details.append((thispartype,thispop))
                 if thispartype not in _coveragepars:
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
-                        if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                        if not self.covout[thispartype][thispop].covoutpars[thisprog.short]:
                             result = False
                             details.append((thispartype,thispop))
         if detail: return list(set(details))
@@ -354,11 +354,12 @@ class Programset(object):
                 self.programs[prog].costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
                 self.programs[prog].costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
                 for par in self.programs[prog].costcovpars.values():
-                    bestdata, bestinds = sanitize(data[prog][par.short]['best'], returninds=True) # We use the best estimates to population the low and high, and then later we overwrite if there are actual estimates provided
+                    bestvalues, bestinds = sanitize(data[prog][par.short]['best'], returninds=True) # We use the best estimates to population the low and high, and then later we overwrite if there are actual estimates provided
+                    bestyears = data['years'][bestinds]
                     for estimate in ['best','low','high']:
                         if len(bestinds): 
-                            par.t[estimate] = data['years'][bestinds]
-                            par.y[estimate] = bestdata
+                            par.t[estimate] = bestyears
+                            par.y[estimate] = bestvalues
                         else:
                             printv('No data for cost parameter "%s"' % (par.short), 3, verbose)
                             par.y[estimate] = array([nan])
@@ -366,6 +367,9 @@ class Programset(object):
                         if estimate != 'best': # Here we overwrite the range data, if provided
                             rangevalues, rangeinds = sanitize(data[prog][par.short][estimate], returninds=True)
                             rangeyears = data['years'][rangeinds]
+                            if not len(rangeinds): # If no data, use best estimates
+                                rangevalues = bestvalues
+                                rangeyears = bestyears
                             addsingleccopar(self.programs[prog].costcovpars, parname=par.short, values=rangevalues, years=rangeyears, estimate=estimate, overwrite=True)
                     
         return None
@@ -390,7 +394,7 @@ class Programset(object):
         for program in self.programs:
             totalbudget[program] = dcp(emptyarray)
             selectbudget[program] = []
-            if self.programs[program].costcovdata['t']:
+            if self.programs[program].costcovdata['t'] is not None:
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
                     yrindex = findinds(tvec,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
@@ -530,7 +534,7 @@ class Programset(object):
 
                 # If it's a coverage parameter, you are done
                 if thispartype in coveragepars:
-                    outcomes[thispartype][thispop] = array(self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept'])
+                    outcomes[thispartype][thispop] = array(self.covout[thispartype][thispop].getcovoutpar(t=t, sample=sample)['intercept'])
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
                         if thispop == 'tot':
                             popcoverage = coverage[thisprog.short]
@@ -545,11 +549,11 @@ class Programset(object):
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
                         if type(thispop)==tuple: thiscovpop = thisprog.targetpops[0] # If it's a partnership parameters, get the target population separately
                         else: thiscovpop = None
-                        if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                        if not self.covout[thispartype][thispop].covoutpars[thisprog.short]:
                             print('WARNING: no coverage-outcome function defined for optimizable program  "%s", skipping over... ' % (thisprog.short))
                             outcomes[thispartype][thispop] = None
                         else:
-                            outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
+                            outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getcovoutpar(t=t, sample=sample)['intercept']
                             fullx = infbudget[thisprog.short]
                             if thiscovpop:
                                 part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
@@ -559,14 +563,14 @@ class Programset(object):
                                 part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
                                 part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False,ind=ind)[thispop]
                                 thiscov[thisprog.short] = part1/part2
-                            delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
+                            delta[thisprog.short] = [self.covout[thispartype][thispop].getcovoutpar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
                     # ADDITIVE CALCULATION
                     # NB, if there's only one program targeting this parameter, just do simple additive calc
                     if self.covout[thispartype][thispop].interaction == 'additive' or len(self.progs_by_targetpar(thispartype)[thispop])==1:
                         # Outcome += c1*delta_out1 + c2*delta_out2
                         for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
-                            if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                            if not self.covout[thispartype][thispop].covoutpars[thisprog.short]:
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
                             else: outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
@@ -589,7 +593,7 @@ class Programset(object):
                     elif self.covout[thispartype][thispop].interaction == 'random':
                         # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
     
-                        if all(self.covout[thispartype][thispop].ccopars.values()):
+                        if all(self.covout[thispartype][thispop].covoutpars.values()):
                     
                             for prog1 in thiscov.keys():
                                 product = ones(thiscov[prog1].shape)
@@ -724,10 +728,10 @@ class Programset(object):
         pardict = odict()
         for targetpartype in self.covout.keys():
             for targetparpop in self.covout[targetpartype].keys():
-                pardict[(targetpartype,targetparpop,'intercept')] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')['intercept'][0],self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')['intercept'][0]]
+                pardict[(targetpartype,targetparpop,'intercept')] = [self.covout[targetpartype][targetparpop].getcovoutpar(t=t,sample='lower')['intercept'][0],self.covout[targetpartype][targetparpop].getcovoutpar(t=t,sample='upper')['intercept'][0]]
                 for thisprog in self.progs_by_targetpar(targetpartype)[targetparpop]:
-                    lowerval = self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')[thisprog.short][0]
-                    upperval = self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')[thisprog.short][0]
+                    lowerval = self.covout[targetpartype][targetparpop].getcovoutpar(t=t,sample='lower')[thisprog.short][0]
+                    upperval = self.covout[targetpartype][targetparpop].getcovoutpar(t=t,sample='upper')[thisprog.short][0]
                     if ~isnan(lowerval): # It will be nan for things that don't have adjustable parameters -- WARNING, could test explicitly!
                         pardict[(targetpartype,targetparpop,thisprog.short)] = [lowerval, upperval]
         return pardict
@@ -861,7 +865,7 @@ class Program(object):
     targetpops, e.g. ['FSW','MSM']
     '''
 
-    def __init__(self, short, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
+    def __init__(self, short, targetpars=None, targetpops=None, costcovpars=None, costcovdata=None, nonhivdalys=0,
         category='No category', name='', criteria=None, targetcomposition=None):
         '''Initialize'''
         self.short = short
@@ -880,7 +884,8 @@ class Program(object):
         self.category = category
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
         self.targetcomposition = targetcomposition
-        self.initialize_costcov(ccopars)
+        self.costcovpars = None
+        self.initialize_costcov(costcovpars)
 
 
     def __repr__(self):
@@ -924,16 +929,19 @@ class Program(object):
         return None
 
 
-    def initialize_costcov(self,ccopars=None):
+    def initialize_costcov(self, costcovpar=None):
         '''Initialize cost coverage function'''
-        self.costcovpars = odict()
-        self.costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
-        self.costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
-        pars = self.costcovpars.keys()
-        for par in pars:
-            for key in ['best','low','high']:
-                self.costcovpars[par].y[key] = array([])
-                self.costcovpars[par].t[key] = array([])
+        if self.costcovpars is None: self.costcovpars = odict()
+        if costcovpar is not None: # If supplied at time of program creation, add
+            self.addcostcovpar(costcovpar, overwrite=True)
+        else:
+            self.costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
+            self.costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions            
+            pars = self.costcovpars.keys()
+            for par in pars:
+                for key in ['best','low','high']:
+                    self.costcovpars[par].y[key] = array([])
+                    self.costcovpars[par].t[key] = array([])
         return None
       
     
@@ -942,9 +950,9 @@ class Program(object):
         return None
     
     
-    def getcostcovpar(self, t=None, overwrite=False, verbose=2):
-        getccopar(self.costcovpars, t=t, overwrite=overwrite, verbose=verbose)
-        return None
+    def getcostcovpar(self, t=None, overwrite=False, sample='best', verbose=2):
+        costcovpar = getccopar(self.costcovpars, t=t, overwrite=overwrite, sample=sample, verbose=verbose)
+        return costcovpar
     
     
     def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
@@ -1080,7 +1088,7 @@ class Program(object):
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False, ind=ind)
 
         totaltargeted = sum(poptargeted.values())
-        totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
+        totalreached = evalcostcov(self.costcovpars, x=x, t=t, popsize=totaltargeted, sample=sample)
 
         if total: return totalreached/totaltargeted if proportion else totalreached
         else:
@@ -1386,9 +1394,9 @@ class Covout(object):
         addccopar(self.covoutpars, ccopar=covoutpar, overwrite=overwrite, verbose=verbose)
         return None
     
-    def getcovoutpar(self, t=None, overwrite=False, verbose=2):
-        getccopar(self.covoutpars, t=t, overwrite=overwrite, verbose=verbose)
-        return None
+    def getcovoutpar(self, t=None, sample='best', verbose=2):
+        covoutpar = getccopar(self.covoutpars, t=t, sample=sample, verbose=verbose)
+        return covoutpar
 
 
 
