@@ -69,9 +69,23 @@ class Programset(object):
         return covoutpar
 
 
+    def addcostcovpar(self, program=None, costcovpar=None, overwrite=False, verbose=2):
+        """
+        Helper method for adding a cost-coverage parameter. Example:
+            from optima import defaultproject; P = defaultproject()
+            P.progset().addcostcovpar('HTC', {'t':2016, 'cost':1.2e6, 'coverage':523e3})
+        """
+        self.programs[program].addcostcovpar(costcovpar=costcovpar, overwrite=overwrite, verbose=verbose)
+        return None
+    
+    
+    def getcostcovpar(self, program=None, t=None, sample='best', verbose=2):
+        costcovpar = self.programs[program].getcostcovpar(t=t, sample=sample, verbose=verbose)
+        return costcovpar
+
+
     def getsettings(self, project=None, parset=None, results=None):
         """ Try to get the freshest settings available """
-
         try: settings = project.settings
         except:
             try: settings = self.project.settings
@@ -369,7 +383,7 @@ class Programset(object):
                 self.programs[prog].costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
                 self.programs[prog].costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
                 for par in self.programs[prog].costcovpars.values():
-                    bestvalues, bestinds = sanitize(data[prog][par.short]['best'], returninds=True) # We use the best estimates to population the low and high, and then later we overwrite if there are actual estimates provided
+                    bestvalues, bestinds = sanitize(data[prog][par.short]['best'], returninds=True) # We use the best estimates to populate the low and high, and then later we overwrite if there are actual estimates provided
                     bestyears = data['years'][bestinds]
                     for estimate in ['best','low','high']:
                         if len(bestinds): 
@@ -379,7 +393,7 @@ class Programset(object):
                             printv('No data for cost parameter "%s"' % (par.short), 3, verbose)
                             par.y[estimate] = array([nan])
                             par.t[estimate] = array([0.])
-                        if estimate != 'best': # Here we overwrite the range data, if provided
+                        if estimate != 'best': # Here we overwrite the range data, if provided -- WARNING, could simplify all of this substantially!
                             rangevalues, rangeinds = sanitize(data[prog][par.short][estimate], returninds=True)
                             rangeyears = data['years'][rangeinds]
                             if not len(rangeinds): # If no data, use best estimates
@@ -607,7 +621,7 @@ class Programset(object):
                     # RANDOM CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'random':
                         # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
-    
+                        raise Exception('Do not use random interaction -- known to produce incorrect results')
                         if all(self.covout[thispartype][thispop].covoutpars.values()):
                     
                             for prog1 in thiscov.keys():
@@ -652,7 +666,6 @@ class Programset(object):
         """ Make pars"""
         
         years = t # WARNING, not renaming in the function definition for now so as to not break things
-        
         
         # Validate inputs
         if years is None: raise OptimaException('To get pars, one must supply years')
@@ -708,7 +721,6 @@ class Programset(object):
 
             pars[outcome] = thispar # WARNING, probably not needed
                 
-
         return pars
     
     
@@ -948,7 +960,7 @@ class Program(object):
         if self.costcovpars is None: self.costcovpars = odict()
         if costcovpar is not None: # If supplied at time of program creation, add
             self.addcostcovpar(costcovpar, overwrite=True)
-        else:
+        else: # Create with defaults -- WARNING, is this necessary?
             self.costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
             self.costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions            
             pars = self.costcovpars.keys()
@@ -960,6 +972,11 @@ class Program(object):
       
     
     def addcostcovpar(self, costcovpar=None, overwrite=False, verbose=2):
+        """
+        Helper method for adding a cost-coverage parameter. Example:
+            from optima import defaultproject; P = defaultproject()
+            P.progset().programs[0].addcostcovpar({'t':2016, 'cost':1.2e6, 'coverage':523e3})
+        """
         addccopar(self.costcovpars, ccopar=costcovpar, overwrite=overwrite, verbose=verbose)
         return None
     
@@ -1243,7 +1260,7 @@ def addsingleccopar(ccopars=None, parname=None, values=None, years=None, estimat
     
     # Make sure parameter exists 
     if parname not in ccopars.keys():
-        errormsg = 'Can''t add a parameter %s to the CCO structure: allowable parameters are %s.' % (parname, ccopars.keys())
+        errormsg = "Can't add a parameter %s to the CCO structure: allowable parameters are %s." % (parname, ccopars.keys())
         raise OptimaException(errormsg)
         
     else:
