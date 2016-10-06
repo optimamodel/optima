@@ -218,7 +218,7 @@
                   in the absence of any programs targeting this parameter
                   <br>
                   <br>
-                  <i>Program Effects</i>
+                  <i ng-if="vm.state.parameter.coverage != 1">Program Effects</i>
                 </td>
                 <td style="width:12em">
                   <input
@@ -233,7 +233,7 @@
                 </td>
               </tr>
 
-              <tr ng-repeat="program in yearEntry.programs">
+              <tr ng-if="vm.state.parameter.coverage != 1" ng-repeat="program in yearEntry.programs">
                 <td></td>
                 <td></td>
                 <td>
@@ -259,7 +259,7 @@
                 </td>
               </tr>
 
-              <tr>
+              <tr ng-if="vm.state.parameter.coverage != 1">
                 <td></td>
                 <td></td>
                 <td>

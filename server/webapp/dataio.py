@@ -1,6 +1,7 @@
 import traceback
 from functools import wraps
 
+from pprint import pprint
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
 from server.webapp.exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
@@ -26,9 +27,8 @@ All parameters and return types are either id's, json-summaries, or mpld3 graphs
 
 
 import os
-from pprint import pformat, pprint
 from zipfile import ZipFile
-from uuid import uuid4
+from uuid import uuid4, UUID
 from datetime import datetime
 import dateutil
 
@@ -40,9 +40,10 @@ from flask.ext.restful import Resource, marshal_with, marshal
 
 from optima.dataio import loadobj as loaddbobj
 import optima as op
+import optima
 
 from .dbconn import db
-from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, UserDb
+from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, UserDb, PyObjectDb
 from .exceptions import ProjectDoesNotExist
 from .parse import get_default_program_summaries, \
     get_parameters_for_edit_program, get_parameters_for_outcomes, \
@@ -57,10 +58,9 @@ from .parse import get_default_program_summaries, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
-    set_program_summary_on_progset
+    set_program_summary_on_progset, parse_portfolio_summary
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
-
 
 
 # USERS
@@ -457,6 +457,7 @@ def ensure_all_constraints_of_optimizations(project):
     for optim in project.optims.values():
         progset_name = optim.progsetname
         progset = project.progsets[progset_name]
+        print("optim.constraints", optim.constraints)
         if optim.constraints is None:
             optim.constraints = op.defaultconstraints(project=project, progset=progset)
             is_change = True
@@ -518,6 +519,156 @@ def load_zip_of_prj_files(project_ids):
             zipfile.write(os.path.join(dirname, prj), 'portfolio/{}'.format(prj))
 
     return dirname, zip_fname
+
+
+## PORTFOLIO
+
+
+
+def create_portfolio(name, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    print("> Create portfolio %s" % name)
+    portfolio = op.Portfolio()
+    portfolio.name = name
+    objectives = optima.portfolio.defaultobjectives(verbose=0)
+    gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+    portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
+    record = PyObjectDb(
+        user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
+    # something about dates
+    record.save_obj(portfolio)
+    db_session.add(record)
+    db_session.commit()
+    return parse_portfolio_summary(portfolio)
+
+
+def delete_portfolio(portfolio_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    print("> Delete portfolio %s" % portfolio_id)
+    record = db_session.query(PyObjectDb).get(portfolio_id)
+    record.cleanup()
+    db_session.delete(record)
+    db_session.commit()
+    return load_portfolio_summaries()
+
+
+def load_portfolio(portfolio_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    kwargs = {'id': portfolio_id, 'type': "portfolio"}
+    record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
+    if record:
+        print("> load portfolio %s" % portfolio_id)
+        return record.load()
+    return optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+
+
+def load_portfolio_summaries(db_session=None):
+    import optima.portfolio
+    if db_session is None:
+        db_session = db.session
+
+    query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
+    if query is None:
+        portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+        record = PyObjectDb(
+            user_id=current_user.id, type="portfolio", name=portfolio.name, id=portfolio.uid)
+        record.save_obj(portfolio)
+        db_session.add(record)
+        db_session.commit()
+        print("> Crreated default portfolio %s" % portfolio.name)
+        portfolios = [portfolio]
+    else:
+        portfolios = []
+        for record in query:
+            print(">> Portfolio id %s" % record.id)
+            portfolio = record.load()
+            if len(portfolio.gaoptims) == 0:
+                objectives = optima.portfolio.defaultobjectives(verbose=0)
+                gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+                portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
+                record.save_obj(portfolio)
+            portfolios.append(portfolio)
+
+    summaries = map(parse_portfolio_summary, portfolios)
+    print("> Loading portfolio summaries")
+    pprint(summaries, indent=2)
+
+    return summaries
+
+
+def save_portfolio(portfolio, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    portfolio_id = portfolio.uid
+    kwargs = {'id': portfolio_id, 'type': "portfolio"}
+    query = db_session.query(PyObjectDb).filter_by(**kwargs)
+    if query:
+        record = query.first()
+    else:
+        record = PyObjectDb(user_id=current_user.id)
+        record.id = UUID(portfolio_id)
+        record.type = "portfolio"
+        record.name = portfolio.name
+    print ">> Saved portfolio %s" % (portfolio_id)
+    record.save_obj(portfolio)
+    db_session.add(record)
+    db_session.commit()
+
+
+def set_portfolio_summary_on_portfolio(portfolio, summary):
+    gaoptim_summaries = summary['gaoptims']
+    gaoptims = portfolio.gaoptims
+    for gaoptim_summary in gaoptim_summaries:
+        gaoptim_id = str(gaoptim_summary['id'])
+        objectives = optima.odict(gaoptim_summary["objectives"])
+        if gaoptim_id in gaoptims:
+            gaoptim = gaoptims[gaoptim_id]
+            gaoptim.objectives = objectives
+        else:
+            gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+            gaoptims[gaoptim_id] = gaoptim
+    old_project_ids = portfolio.projects.keys()
+    print("> old project ids %s" % old_project_ids)
+    new_project_ids = [s["id"] for s in summary["projects"]]
+    print("> new project ids %s" % new_project_ids)
+    for old_project_id in old_project_ids:
+        if old_project_id not in new_project_ids:
+            portfolio.projects.pop(old_project_id)
+    for new_project_id in new_project_ids:
+        if new_project_id not in portfolio.projects:
+            project = load_project(new_project_id)
+            portfolio.projects[new_project_id] = project
+
+
+def load_or_create_portfolio(portfolio_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    kwargs = {'id': portfolio_id, 'type': "portfolio"}
+    record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
+    if record:
+        print("> load portfolio %s" % portfolio_id)
+        portfolio = record.load()
+    else:
+        print("> Create portfolio %s" % portfolio_id)
+        portfolio = optima.Portfolio()
+        portfolio.uid = UUID(portfolio_id)
+    return portfolio
+
+
+def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
+    portfolio = load_or_create_portfolio(portfolio_id)
+    set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
+    save_portfolio(portfolio, db_session)
+
+
+def delete_portfolio_project(portfolio_id, project_id):
+    portfolio = load_portfolio(portfolio_id)
+    portfolio.projects.pop(str(project_id))
+    print ">> Deleted project %s from portfolio %s" % (project_id, portfolio_id)
+    save_portfolio(portfolio)
 
 
 ## PARSET
@@ -632,17 +783,6 @@ def load_parset_graphs(
         "parameters": get_parameters_from_parset(parset),
         "graphs": graph_dict["graphs"]
     }
-
-
-def launch_autofit(project_id, parset_id, maxtime):
-    from server.webapp.tasks import run_autofit, start_or_report_calculation
-    work_type = 'autofit-' + str(parset_id)
-    calc_status = start_or_report_calculation(project_id, work_type)
-    if calc_status['status'] != "blocked":
-        print "> Starting autofit for %s s" % maxtime
-        run_autofit.delay(project_id, parset_id, maxtime)
-        calc_status['maxtime'] = maxtime
-    return calc_status
 
 
 # RESULT
@@ -864,28 +1004,6 @@ def load_optimization_graphs(project_id, optimization_id, which):
     else:
         print(">> Loading graphs for result '%s'" % result.name)
         return make_mpld3_graph_dict(result, which)
-
-
-def check_optimization(project_id, optimization_id):
-    from server.webapp.tasks import check_calculation_status, clear_work_log
-    work_type = 'optim-' + str(optimization_id)
-    calc_state = check_calculation_status(project_id, work_type)
-    print("> Checking calc state")
-    print(pformat(calc_state, indent=2))
-    if calc_state['status'] == 'error':
-        clear_work_log(project_id, work_type)
-        raise Exception(calc_state['error_text'])
-    return calc_state
-
-
-def launch_optimization(project_id, optimization_id, maxtime):
-    from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
-    calc_state = start_or_report_calculation(
-        project_id, 'optim-' + str(optimization_id))
-    if calc_state['status'] != 'started':
-        return calc_state, 208
-    run_optimization.delay(project_id, optimization_id, maxtime)
-    return calc_state
 
 
 ## SPREADSHEETS
