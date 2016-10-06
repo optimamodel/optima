@@ -147,7 +147,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         this_y = thispar.interp(tvec=scenpar['startyear'], asarray=False, usemeta=False) # Find what the model would get for this value
 
                     # Loop over populations
-#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     for pop in pops:
 
                         # Remove years after the last good year
@@ -223,7 +222,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 # Figure out coverage
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
-            # TODO @Robyn have a look
+            # Create parameter dictionary
             thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
             scen.pars = thisparsdict
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
@@ -253,33 +252,6 @@ def defaultscenarios(parset=None, verbose=2):
     scenlist[0].pars = [] # No changes
     
     return scenlist
-
-
-
-def getparvalues(parset, scenpar):
-    """
-    Return the default parameter values from simpars for a given scenario parameter.
-    
-    defaultvals = getparvalues(parset, scenariolist[1]['pars'][2])
-    
-    Version: 2016jan30
-    """
-    npops = len(parset.pars[0]['popkeys'])
-    simpars = parset.interp(start=scenpar['startyear'], end=scenpar['endyear'])
-
-    original = simpars[scenpar['name'][0]]
-    
-    if scenpar['pops'] < npops: # It's for a specific population, get the value
-        original = original[scenpar['pops'],:]
-    else:
-        original = original[:,:].mean(axis=0)
-    initialindex = findinds(simpars['tvec'], scenpar['startyear'])
-    finalindex = findinds(simpars['tvec'], scenpar['endyear'])
-
-    startval = original[initialindex][0]
-    endval = original[finalindex][0]
-    return [startval, endval]
-        
 
 
 
