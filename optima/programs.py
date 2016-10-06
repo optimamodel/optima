@@ -743,9 +743,7 @@ class Programset(object):
         if modifiablepars is None: raise OptimaException('Please supply modifiablepars')
         for key,val in modifiablepars.items():
             targetpartype,targetparpop,thisprogkey = key # Split out tuple
-            self.covout[targetpartype][targetparpop].addsingleccopar(parname=thisprogkey,values=(val[0]+val[1])/2,years=t,estimate='best',overwrite=True)
-            self.covout[targetpartype][targetparpop].addsingleccopar(parname=thisprogkey,values=val[0],years=t,estimate='low',overwrite=True)
-            self.covout[targetpartype][targetparpop].addsingleccopar(parname=thisprogkey,values=val[1],years=t,estimate='high',overwrite=True)
+            self.addcovoutpar(targetpartype, targetparpop, parname=thisprogkey, values=val,years=t, estimate='best', overwrite=True)
         return None
     
     
@@ -805,6 +803,20 @@ class Programset(object):
         self.odict2cco(pardict,t=year) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None
+        
+    
+    def plotallcoverage(self, t=None, parset=-1, existingFigure=None, verbose=2):
+        ''' Plot the cost-coverage curve for all programs'''
+
+        cost_coverage_figures = odict()
+        for thisprog in self.programs.keys():
+            if self.programs[thisprog].optimizable():
+                if not self.programs[thisprog].costcovpars:
+                    printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
+                else:
+                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,existingFigure=existingFigure)
+
+        return cost_coverage_figures
 
 
 def replicatevec(vec,n=2):
@@ -841,19 +853,6 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
         printv('%45s | %30s | par: %s | budget: %s | mismatch: %s' % ((budgetparpair[0],budgetparpair[1])+sigfig([parval,budgetval,thismismatch],4)), 3, verbose)
     return mismatch
 
-
-    def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,bounds=None):
-        ''' Plot the cost-coverage curve for all programs'''
-
-        cost_coverage_figures = odict()
-        for thisprog in self.programs.keys():
-            if self.programs[thisprog].optimizable():
-                if not self.programs[thisprog].costcovpars:
-                    printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
-                else:
-                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,existingFigure=existingFigure,bounds=bounds)
-
-        return cost_coverage_figures
 
 
 class Program(object):
@@ -950,9 +949,12 @@ class Program(object):
         return None
     
     
-    def getcostcovpar(self, t=None, overwrite=False, sample='best', verbose=2):
-        costcovpar = getccopar(self.costcovpars, t=t, overwrite=overwrite, sample=sample, verbose=verbose)
+    def getcostcovpar(self, t=None, sample='best', verbose=2):
+        costcovpar = getccopar(self.costcovpars, t=t, sample=sample, verbose=verbose)
         return costcovpar
+    
+    def evalcostcov(self, x=None, t=None, popsize=None, inverse=False, sample='best', eps=None, verbose=2):
+        return evalcostcov(ccopars=self.costcovpars, x=x, t=t, popsize=popsize, inverse=inverse, sample=sample, eps=eps, verbose=verbose)
     
     
     def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
