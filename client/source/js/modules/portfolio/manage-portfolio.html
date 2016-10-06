@@ -1,0 +1,193 @@
+<div class="rich">
+  <div class="section">
+
+    <h1>Manage Geospatial Portfolios</h1>
+
+    <button
+        class="btn __m"
+        ng-click="createPortfolio()">
+      Create
+    </button>
+
+    &nbsp;
+
+    Select portfolio:
+
+    <select
+        ng-model="state.portfolio"
+        ng-options="portfolio as portfolio.name for portfolio in portfolios"
+        ng-change="setActiveGaoptim()"
+        style="width: 200px;">
+    </select>
+
+    &nbsp;
+
+    <button
+        class="btn __m"
+        ng-click="deletePortfolio()">
+      Delete
+    </button>
+
+    <div
+      style="
+        display: flex;
+        padding-top: 2em;">
+
+      <div style="flex: 0 0 280px">
+
+        <h2>Optimization conditions </h2>
+
+        <br>
+
+        <div
+          style="
+            width: 230px;
+            padding-bottom: 0.1em;"
+          ng-repeat="entry in objectiveKeyLabels">
+          <label>
+            {{entry.label}}
+          </label>
+          <input
+              class="txbox __inline"
+              style="
+          float: right;
+          width:70px;"
+              ng-model="state.gaoptim.objectives[entry.key]"
+              type="number"/>
+          <br clear="all">
+        </div>
+
+        <button
+            style="
+              margin-top: 1em"
+              class="btn"
+            ng-click="savePortfolio()">
+          Save optimization condition
+        </button>
+      </div>
+
+      <div style="flex: 1">
+
+        <h2>Projects</h2>
+
+        <button
+            style="
+              margin-bottom: 1em"
+              class="btn"
+            ng-click="calculateAllBocCurves()">
+          Calculate BOC
+        </button>
+
+        &nbsp;
+        Time aprox. per optimization (7 optimizations for project)
+
+        <select ng-init="state.bocMaxtime='2'" ng-model="state.bocMaxtime">
+          <option value="2">2 seconds</option>
+          <option value="10">10 seconds</option>
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+
+        <table class="table table-bordered table-hover table-striped">
+          <tr>
+            <th>Project</th>
+            <th>BOC</th>
+            <th></th>
+          </tr>
+          <tr ng-repeat="project in state.portfolio.projects">
+            <td>
+              {{project.name}}
+            </td>
+            <td width="150px">
+              <span style="color: #00aeef;">
+                  {{bocStatusMessage[project.id]}}
+              </span>
+            </td>
+            <td width="20px">
+              <span
+                  ng-click="deleteProject(project.id)""
+                  class="fa fa-trash">
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4">
+              <button class="btn"
+                ng-click="addProject()">
+                + project
+              </button>
+
+              <div
+                  style="
+                    border: 1px solid #DDD;
+                    padding: 20px;"
+                  ng-show="isSelectNewProject">
+
+                <i>Select from optimizable projects:</i>
+                <br>
+                <label ng-repeat="project in projects">
+                  <input type="checkbox"
+                         ng-model="project.selected">
+                  {{project.name}}
+                  <br>
+                </label>
+                <br>
+                <br>
+                <button class="btn"
+                  ng-click="dismissAddProject()">
+                  Dismiss
+                </button>
+
+                <button class="btn"
+                  ng-click="saveSelectedProject()">
+                  Save
+                </button>
+            </div>
+            </td>
+          </tr>
+        </table>
+
+        <button
+            class="btn"
+            ng-click="runFullGa()">
+          Run geospatial optimization
+        </button>
+
+        &nbsp;
+
+        Time per optimization:
+
+        &nbsp;
+
+        <select ng-init="state.maxtime='2'" ng-model="state.maxtime">
+          <option value="2">2 seconds</option>
+          <option value="10">10 seconds</option>
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+        &nbsp;
+        <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
+          {{ statusMessage }}
+        </span>
+
+        <br>
+        <br>
+        <button
+            class="btn"
+            ng-disabled="hasNoResults()"
+            ng-click="exportResults()">
+          Results (CSV)
+        </button>
+
+      </div>
+
+  </div>
+
+
+</div>

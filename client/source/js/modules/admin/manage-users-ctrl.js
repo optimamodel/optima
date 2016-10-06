@@ -1,14 +1,13 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
-  module.controller('AdminManageUsersController', function ($scope, $http, users, UserManager, modalService) {
-    $scope.users = _(users.data.users).filter(function (u) {
-      return u.id != UserManager.data.id;
-    });
+  module.controller('AdminManageUsersController', function (
+      $scope, $http, users, UserManager, modalService, toastr) {
+    $scope.users = users.data.users;
 
     $scope.deleteUser = function (user) {
       modalService.confirm(function(){
-        $http.delete('/api/user/delete/' + user.id).then(function(){
-          modalService.inform(undefined,undefined, 'User deleted!');
+        $http.delete('/api/user/' + user.id).then(function(){
+          toastr.success('User deleted!');
           $scope.users = _($scope.users).filter(function(u){
             return u.id != user.id;
           });

@@ -17,7 +17,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.projectInfo = info ? info.data : void 0;
 
-      $scope.submitButtonText = "Create project & Optima template";
+      $scope.submitButtonText = "Create project & Download template data spreadsheet";
       $scope.populations = populations.data.populations;
       console.log('default populations', $scope.populations);
 
@@ -101,6 +101,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return population.active === true;
       });
       return !result;
+    };
+
+    $scope.invalid = function() {
+      return $scope.invalidName() || $scope.invalidDataStart()
+        || $scope.invalidDataEnd() || $scope.invalidPopulationSelected();
     };
 
     function openPopulationModal(population) {

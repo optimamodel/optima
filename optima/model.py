@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat
+from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
@@ -29,7 +29,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     allpeople       = zeros((npops, npts))          # Population sizes
     effallprev      = zeros((nstates, npops))       # HIV effective prevalence (prevalence times infectiousness), by health state
     inhomo          = zeros(npops)                  # Inhomogeneity calculations
-    newtreat        = zeros((ncd4, npops))          # Initialise newtreat
+    new_movers      = zeros((ncd4, npops))          # Initialise a place to store the number of people that shift into a new compartment (e.g. number of treatment initiators)
     eps             = settings.eps                  # Define another small number to avoid divide-by-zero errors
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
     rawtransit      = simpars['rawtransit']         # Raw transitions
@@ -43,14 +43,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_inciby      = zeros((nstates, npts))        # Total incidence transmitted by each health state
-    raw_births      = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
+    raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
+    raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
+    raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
-    raw_newtreat    = zeros((npops, npts))          # Number initiating ART1 per timestep
+    raw_newcare     = zeros((npops, npts))          # Number newly in care per timestep
+    raw_newtreat    = zeros((npops, npts))          # Number initiating ART per timestep
+    raw_newsupp     = zeros((npops, npts))          # Number newly suppressed per timestep
     raw_death       = zeros((npops, npts))          # Number of deaths per timestep
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
-    raw_propdx      = zeros(npts)                   # Proportion diagnosed per timestep
-    raw_proptx      = zeros(npts)                   # Proportion on treatment per timestep
     
     # Biological and failure parameters -- death etc
     prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],inf]) ))
@@ -90,7 +92,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     gt200           = settings.gt200                # >200
     gt50            = settings.gt50                 # >50
     lt50            = settings.lt50                 # <50
+    aidsind         = settings.aidsind              # AIDS
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
+    dxstates        = [dx,care,usvl,svl,lost]
+    carestates      = [care,usvl,svl]
+    txstates        = [usvl,svl]
     
     if debug and len(sus)!=2:
         errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
@@ -133,7 +139,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
-
+    
+    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (inclusing state in question), numerator, denominator, data structure for storing new moveres)
+    propdx_list     = ('propdx',propdx, undx, dx, dxstates, alldx, allplhiv, raw_diag)
+    propcare_list   = ('propcare',propcare, dx, care, carestates, allcare, alldx, raw_newcare)
+    proptx_list     = ('proptx',proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
+    propsupp_list   = ('propsupp',propsupp, usvl, svl, svl, svl, alltx, raw_newsupp)
+            
     # Population sizes
     popsize = dcp(simpars['popsize'])
     
@@ -350,7 +362,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
     people[:,:,0] = initpeople
     
-    
     ##################################################################################################################
     ### Compute the effective numbers of acts outside the time loop
     ##################################################################################################################
@@ -506,128 +517,72 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
         ##############################################################################################################
-        ### Calculate probabilities of shifting along cascade
+        ### Calculate probabilities of shifting along cascade IF programmatically determined
         ##############################################################################################################
 
-        currplhiv = people[allplhiv,:,t].sum(axis=(0,1))
-
-        ## Deaths
+        # Deaths
         for state in range(nstates):
             thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
 
-        ## Transitions to diagnosed 
-        if not(isnan(propdx[t])): # If propdx is specified...
-            currdx = people[alldx,:,t].sum()
-            currundx = currplhiv - currdx
-            fractiontodx = max(0, (propdx[t]*currplhiv - currdx)/(currundx + eps))
-            for fromstate in undx:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in undx: # Probability of not being tested
-                        thistransit[fromstate][prob][ts] *= (1.-fractiontodx)
-                    else: # Probability of being tested
-                        thistransit[fromstate][prob][ts] *= fractiontodx
-                        raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
-
-        else: # ... or if programmatically determined
-            for fromstate in undx:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if fromstate in acute: 
-                        if tostate in undx: # Probability of not being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t]*max(dt-0.25,0)/dt) # Adjust testing rates to account for the window period (0.25 years)
-                        else: # Probability of being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]*max(dt-0.25,0)/dt
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
-                    elif fromstate in lt50 or fromstate in gt50:
-                        if tostate in undx: # Probability of not being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-maximum(aidstest[t],hivtest[:,t]))
-                        else: # Probability of being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*maximum(aidstest[t],hivtest[:,t])
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
-                    else:
-                        if tostate in undx: # Probability of not being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-hivtest[:,t])
-                        else: # Probability of being tested
-                            thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*hivtest[:,t]
-                            raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
-
-
-        ## Transitions to care 
-        if not(isnan(propcare[t])): # If propcare is specified...
-            currdx = people[alldx,:,t].sum(axis=(0,1))
-            currcare = people[allcare,:,t].sum(axis=(0,1))
-            curruncare = currdx - currcare
-            fractiontocare = max(0, (propcare[t]*currdx - currcare)/(curruncare + eps))
-            for fromstate in cat([dx,lost]):
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in dx or tostate in lost: 
-                        thistransit[fromstate][prob][ts] *= (1.-fractiontocare)
-                    else: # Probability of being tested
-                        thistransit[fromstate][prob][ts] *= fractiontocare
-            for fromstate in care:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate not in care:
-                        thistransit[fromstate][prob][ts] *= 0.
-
-        else: # ... or if programmatically determined
-            # Diagnosed to care
-            for fromstate in dx:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in dx: # Probability of not moving into care
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-linktocare[:,t])
-                    else: # Probability of moving into care
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*linktocare[:,t]
-
-            # Care to lost
-            for fromstate in care:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in care: # Probability of not being lost and remaining in care
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-leavecare[:,t])
-                    else: # Probability of being lost
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*leavecare[:,t]
-    
-            # Lost to care
-            for fromstate in lost:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in lost: # Probability of not being lost and remaining in care
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-linktocare[:,t])
-                    else: # Probability of being lost
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*linktocare[:,t]
-    
-
-        ## USVL to SVL
-        if not(isnan(propsupp[t])): # If propsupp is specified...
-            currtx = people[alltx,:,t].sum(axis=(0,1))
-            currsvl = people[svl,:,t].sum(axis=(0,1))
-            currusvl = currtx - currsvl
-            fractiontosupp = max(0, (propsupp[t]*currtx - currsvl)/(currusvl + eps))
-            for fromstate in usvl:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in usvl: # Probability of not being tested
-                        thistransit[fromstate][prob][ts] *= (1.-fractiontosupp)
-                    else: # Probability of being tested
-                        thistransit[fromstate][prob][ts] *= fractiontosupp
-            for fromstate in svl:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate not in svl:
-                        thistransit[fromstate][prob][ts] *= 0.
-
-        else: # ... or if programmatically determined
-            # USVL to SVL
-            for fromstate in usvl:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in usvl: # Probability of remaining unsuppressed
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-freqvlmon[t])
-                    else: # Probability of becoming suppressed
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*freqvlmon[t]
-                                
-            # SVL to USVL
-            for fromstate in svl:
-                for ts, tostate in enumerate(thistransit[fromstate][to]):
-                    if tostate in svl: # Probability of remaining suppressed
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*(1.-treatfail)
-                    else: # Probability of becoming unsuppressed
-                        thistransit[fromstate][prob][ts] = thistransit[fromstate][prob][ts]*treatfail
+        # Undiagnosed to diagnosed
+        if isnan(propdx[t]):
+            dxprob = [hivtest[:,t]]*ncd4
+            dxprob[aidsind:] = maximum(aidstest[t],hivtest[:,t])
+        else: dxprob = zeros(ncd4)
         
+        for cd4, fromstate in enumerate(undx):
+            for ts, tostate in enumerate(thistransit[fromstate][to]):
+                if tostate in undx: # Probability of not being tested
+                    thistransit[fromstate][prob][ts] *= (1.-dxprob[cd4])
+                else: # Probability of being tested
+                    thistransit[fromstate][prob][ts] *= dxprob[cd4]
+                    raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
+
+        # Diagnosed to care
+        careprob = linktocare[:,t] if isnan(propcare[t]) else 0.
+        for fromstate in dx:
+            for ts, tostate in enumerate(thistransit[fromstate][to]):
+                if tostate in dx: # Probability of not moving into care
+                    thistransit[fromstate][prob][ts] *= (1.-careprob)
+                else: # Probability of moving into care
+                    thistransit[fromstate][prob][ts] *= careprob
+
+        # Care to lost
+        lossprob = leavecare[:,t] if isnan(propcare[t]) else 0.
+        for fromstate in care:
+            for ts, tostate in enumerate(thistransit[fromstate][to]):
+                if tostate in care: # Probability of not being lost and remaining in care
+                    thistransit[fromstate][prob][ts] *= (1.-lossprob)
+                else: # Probability of being lost
+                    thistransit[fromstate][prob][ts] *= lossprob
+    
+        # Lost to care
+        careprob = linktocare[:,t] if isnan(propcare[t]) else 0.
+        for fromstate in lost:
+            for ts, tostate in enumerate(thistransit[fromstate][to]):
+                if tostate in lost: # Probability of not being lost and remaining in care
+                    thistransit[fromstate][prob][ts] *= (1.-careprob)
+                else: # Probability of being lost
+                    thistransit[fromstate][prob][ts] *= careprob
+    
+        # USVL to SVL
+        svlprob = freqvlmon[t] if isnan(propsupp[t]) else 0.
+        for fromstate in usvl:
+            for ts, tostate in enumerate(thistransit[fromstate][to]):
+                if tostate in usvl: # Probability of remaining unsuppressed
+                    thistransit[fromstate][prob][ts] *= (1.-svlprob)
+                else: # Probability of becoming suppressed
+                    thistransit[fromstate][prob][ts] *= svlprob
+                                
+        # SVL to USVL
+        usvlprob = treatfail if isnan(propsupp[t]) else 0.
+        for fromstate in svl:
+            for ts, tostate in enumerate(thistransit[fromstate][to]):
+                if tostate in svl: # Probability of remaining suppressed
+                    thistransit[fromstate][prob][ts] *= (1.-usvlprob)
+                else: # Probability of becoming unsuppressed
+                    thistransit[fromstate][prob][ts] *= usvlprob
+
 
         # Check that probabilities all sum to 1
         if debug and not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
@@ -657,7 +612,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
         raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
-
+        
 
         ## Calculate births
         for p1,p2,birthrates,alleligbirthrate in birthslist:
@@ -667,66 +622,46 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
             mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
             thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
-            
+
             if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+                thisreceivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                mtctdx = (thiseligbirths - thisreceivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = thisreceivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
             else: # Proportion on PMTCT is specified, ignore number
-                mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
+                if isinf(proppmtct[t]): # If the prop value is infinity, we use last timestep's value
+                    if t==0: calcprop=0.
+                    else:
+                        calcpmtctprop = raw_receivepmtct[:,t-1].sum()/raw_hivbirths[:,t-1].sum()
+                else: calcpmtctprop = proppmtct[t]                
+                mtctdx = (thiseligbirths * (1-calcpmtctprop)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = (thiseligbirths * calcpmtctprop) * pmtcteff[t] # MTCT from those receiving PMTCT
+                thisreceivepmtct = thiseligbirths * calcpmtctprop
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
+            raw_receivepmtct[p1, t] += thisreceivepmtct/dt 
             raw_mtct[p2, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
+            raw_hivbirths[p1, t] += thiseligbirths/dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update incidence based on PMTCT calculation
 
 
         ###############################################################################
-        ## Shift numbers of people (circs, treatment)
+        ## Shift numbers of people (circs, treatment, age transitions, risk transitions, prop scenarios)
         ###############################################################################
         if t<npts-1:
             
-            # Add births
+            ## Births 
             people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment -- WARNING, shouldn't use a raw variable in a calculation, that's for output
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
-            # Handle circumcision
+            ## Circumcision 
             circppl = minimum(numcirc[:,t+1], people[susreg,:,t+1])
             people[susreg,:,t+1]   -= circppl
             people[progcirc,:,t+1] += circppl 
 
-            # Handle treatment
-            if isnan(propsupp[t+1]):
-                newlysuppressed = newtreat.sum()*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
-                people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
-                people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
 
-
-            currplhiv   = people[allplhiv,:,t+1].sum() 
-            currcare    = people[allcare,:,t+1].sum() # This assumes proptx refers to the proportion of those in care who are to be on treatment 
-            currtx      = people[alltx,:,t+1].sum()
-            totreat     = proptx[t+1]*currcare if not(isnan(proptx[t+1])) else numtx[t+1]
-            totnewtreat = max(0, totreat - currtx)
-            currentcare = people[care,:,t+1]
-
-            raw_propdx[t+1] = currcare/currplhiv
-            raw_proptx[t+1] = currtx/currcare
-            
-            for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
-                newtreat[cd4,:] = zeros(npops)
-                if totnewtreat>eps: # Move people onto treatment if there are spots available - don't worry about really tiny spots
-                    thisnewtreat = min(totnewtreat, sum(currentcare[cd4,:])) # Figure out how many spots are available
-                    newtreat[cd4,:] = thisnewtreat * (currentcare[cd4,:]) / (eps+sum(currentcare[cd4,:])) # Pull out evenly from each population
-                    totnewtreat -= newtreat[cd4,:].sum() # Adjust the number of available treatment spots
-
-            raw_newtreat[:,t+1] = newtreat.sum(axis=0)/dt # Save annual treatment initiation
-            people[care,:,t+1] -= newtreat # Shift people out of care... 
-            people[usvl,:,t+1] += newtreat # ... and into USVL compartment
-
-            
-            ## Handle age-related transitions
+            ## Age-related transitions
             for p1,p2 in agetransitlist:
                 peopleleaving = people[:, p1, t+1] * agetransit[p1, p2]
                 if debug and (peopleleaving > people[:, p1, t+1]).any():
@@ -739,7 +674,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
 
             
-            ## Handle risk-related transitions
+            ## Risk-related transitions
             for p1,p2,thisrisktransprob in risktransitlist:
                 peoplemoving1 = people[:, p1, t+1] * thisrisktransprob  # Number of other people who are moving pop1 -> pop2
                 peoplemoving2 = people[:, p2, t+1] * thisrisktransprob * (sum(people[:, p1, t+1])/sum(people[:, p2, t+1])) # Number of people who moving pop2 -> pop1, correcting for population size
@@ -748,9 +683,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 people[:, p2, t+1] += peoplemoving1 - peoplemoving2 # NOTE: this should not cause negative people; peoplemoving2 is guaranteed to be strictly greater than 0 and strictly less that people[:, p2, t+1]
             
             
-            
             ###############################################################################
-            ## Reconcile things
+            ## Reconcile population sizes
             ###############################################################################
             
             # Reconcile population sizes for populations with no inflows
@@ -783,6 +717,60 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 1, verbose=verbose)
             
+
+            ###########################################################################
+            ## Proportions
+            ###########################################################################
+
+            for name,prop,lowerstate,tostate,higherstates,num,denom,raw_new in [propdx_list,propcare_list,proptx_list,propsupp_list]:
+                
+                if name is 'proptx' or ~isnan(prop[t+1]): #In this section, we shift numbers of people (as opposed to shifting proportions). If any of the prop parameters are non-nan, that means that some number of people will need to shift. However, treatment is special because it is always set by shifting numbers. That's why we have this condition here.
+
+                    # Move the people who started treatment last timestep from usvl to svl
+                    if name is 'proptx':
+                        if isnan(propsupp[t+1]):
+                            newlysuppressed = raw_newtreat[:,t].sum()*dt*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
+                            people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
+                            people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
+                            
+                        if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
+            
+                    # Figure out how many people we currently have
+                    actual          = people[num,:,t+1].sum()
+                    available       = people[denom,:,t+1].sum()
+                    ppltomoveup     = people[lowerstate,:,t+1]
+
+                    # Figure out how many people we want
+                    if isinf(prop[t+1]): # If the prop value is infinity, we use last timestep's value
+                        calcprop = people[num,:,t].sum()/people[denom,:,t].sum()
+                        wanted = calcprop*available
+                    if not isnan(prop[t+1]) and not isinf(prop[t+1]): # If the prop value is finite, we use it
+                        wanted = prop[t+1]*available
+
+                    # Reconcile the differences between the number we have and the number we want
+                    diff = wanted - actual # Wanted number less actual number 
+                    if diff>0.: # We need to move people UP the cascade 
+                        new_movers      = zeros((ncd4,npops)) 
+                        for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
+                            if diff>eps: # Move people until you have the right proportions
+                                tomove = min(diff, sum(ppltomoveup[cd4,:])) # Figure out how many spots are available
+                                new_movers[cd4,:] = tomove * (ppltomoveup[cd4,:]) / (eps+sum(ppltomoveup[cd4,:])) # Pull out evenly from each population
+                                diff -= new_movers[cd4,:].sum() # Adjust the number of available spots
+                        people[lowerstate,:,t+1] -= new_movers # Shift people out of the lower state... 
+                        people[tostate,:,t+1] += new_movers # ... and into the higher state
+                        raw_new[:,t] += new_movers.sum(axis=0)/dt # Save new movers
+    
+                    else: # We need to move people DOWN the cascade
+                        for state in higherstates: # Start with the first higher state
+                            if abs(diff)>eps: 
+                                tomove = max(diff, -people[state,:,t+1].sum()) # Figure out how many spots are available
+                                new_movers = tomove*people[state,:,t+1]/(eps+people[state,:,t+1].sum()) # Figure out the distribution of people to move
+                                diff -= new_movers.sum() # Adjust the number of available spots
+                                people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
+                                people[state,:,t+1] += new_movers # ... and out of the higher state
+            
+
+
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
@@ -793,22 +781,25 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
                                 people[errstate,errpop,t+1] = 0.0 # Reset
+                                
+        raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
                 
     
-    raw               = odict()    # Sim output structure
-    raw['tvec']       = tvec
-    raw['popkeys']    = popkeys
-    raw['people']     = people
-    raw['inci']       = raw_inci
-    raw['inciby']     = raw_inciby
-    raw['mtct']       = raw_mtct
-    raw['births']     = raw_births
-    raw['diag']       = raw_diag
-    raw['newtreat']   = raw_newtreat
-    raw['death']      = raw_death
-    raw['otherdeath'] = raw_otherdeath
-    raw['propdx']     = raw_propdx # WARNING, not used in results
-    raw['proptx']     = raw_proptx
+    raw                 = odict()    # Sim output structure
+    raw['tvec']         = tvec
+    raw['popkeys']      = popkeys
+    raw['people']       = people
+    raw['inci']         = raw_inci
+    raw['inciby']       = raw_inciby
+    raw['mtct']         = raw_mtct
+    raw['births']       = raw_births
+    raw['hivbirths']    = raw_hivbirths
+    raw['receivepmtct'] = raw_receivepmtct
+    raw['diag']         = raw_diag
+    raw['newtreat']     = raw_newtreat
+    raw['death']        = raw_death
+    raw['otherdeath']   = raw_otherdeath
+    
     
     return raw # Return raw results
 

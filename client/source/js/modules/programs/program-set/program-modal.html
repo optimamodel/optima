@@ -93,40 +93,40 @@
         </span>
       </div>
 
-      <div style="padding-top: 1em;">
+      <!--<div style="padding-top: 1em;">-->
 
-        <div style="font-style: italic;">
-          Eligibility
-        </div>
+        <!--<div style="font-style: italic;">-->
+          <!--Eligibility-->
+        <!--</div>-->
 
-        <span class="section-flex-spaced">
-          <span>
-            <input
-                type="checkbox"
-                ng-model="state.allHivStates"
-                ng-click="clickAllHivStates()"/>
-            <span>All states</span></span>
-          <span>OR</span>
-          <span ng-repeat="hivState in hivStates">
-            <input
-                type="checkbox"
-                ng-model="state.hivState[hivState.short]"
-                ng-click="clickAnyHivState()"/>
-            <span>{{hivState.name}}</span>
-          </span>
-        </span>
+        <!--<span class="section-flex-spaced">-->
+          <!--<span>-->
+            <!--<input-->
+                <!--type="checkbox"-->
+                <!--ng-model="state.allHivStates"-->
+                <!--ng-click="clickAllHivStates()"/>-->
+            <!--<span>All states</span></span>-->
+          <!--<span>OR</span>-->
+          <!--<span ng-repeat="hivState in hivStates">-->
+            <!--<input-->
+                <!--type="checkbox"-->
+                <!--ng-model="state.hivState[hivState.short]"-->
+                <!--ng-click="clickAnyHivState()"/>-->
+            <!--<span>{{hivState.name}}</span>-->
+          <!--</span>-->
+        <!--</span>-->
 
-        <span class="section-flex-spaced">
-          <span>
-            <input
-                type="checkbox"
-                ng-model="state.program.criteria.pregnant"/>
-            <span>
-              Pregnant and breastfeeding mothers
-            </span>
-          </span>
-        </span>
-      </div>
+        <!--<span class="section-flex-spaced">-->
+          <!--<span>-->
+            <!--<input-->
+                <!--type="checkbox"-->
+                <!--ng-model="state.program.criteria.pregnant"/>-->
+            <!--<span>-->
+              <!--Pregnant and breastfeeding mothers-->
+            <!--</span>-->
+          <!--</span>-->
+        <!--</span>-->
+      <!--</div>-->
     </div>
 
 
@@ -148,7 +148,7 @@
           Parameter &nbsp;
           <select
               class="txbox"
-              style="width: 500px;
+              style="width: 400px;
                     display: inline;"
               ng-model="targetpar.param"
               ng-options="p.param as p.name for p in state.parameters"

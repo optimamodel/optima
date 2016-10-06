@@ -1,0 +1,46 @@
+<form
+    name="modalForm"
+    ng-submit="submit()" >
+
+  <div class="modal-header">
+    <a class="modal-close"
+       ng-click="$dismiss('cancel')">&times;</a>
+    <h4 class="modal-title">
+      {{ ::title }}
+    </h4>
+  </div>
+
+  <div class="modal-body grid" style="margin-bottom: 20px">
+
+    <div>{{ :: message }}</div>
+
+    <div style="padding-bottom: 20px">
+      <input
+          class="txbox"
+          name="name"
+          ng-model="name"
+          required>
+      <div
+          class="error-hint"
+          ng-show="checkBadForm(modalForm)">
+        {{ :: errorMessage }}
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer text-center">
+    <button
+        type="button"
+        class="btn __white"
+        ng-click="$close()">
+      Cancel
+    </button>
+
+    <button
+        type="submit"
+        class="btn"
+        ng-disabled="modalForm.$invalid">
+      Save
+    </button>
+  </div>
+</form>

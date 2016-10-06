@@ -265,9 +265,9 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             # Unpack tuple
             datatype, plotformat = plotkey 
             
-            isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
+            ispercentage = results.main[datatype].ispercentage # Distinguish between e.g. HIV prevalence and number PLHIV
             isestimate = results.main[datatype].estimate # Distinguish between real data and model-based estimates
-            factor = 1.0 if isnumber else 100.0 # Swap between number and percent
+            factor = 100.0 if ispercentage else 1.0 # Swap between number and percent
             datacolor = estimatecolor if isestimate else realdatacolor # Light grey for
             istotal   = (plotformat=='t') # Only using first letter, see above...
             isperpop  = (plotformat=='p')
@@ -343,7 +343,10 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 
                 # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
                 if not ismultisim and isstacked:
-                    if isnumber: # Stacked plot
+                    if ispercentage: # Multi-line plot
+                        for l in range(nlinesperplot):
+                            plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
+                    else: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
                         for l in range(nlinesperplot): # Loop backwards so correct ordering -- first one at the top, not bottom
                             k = nlinesperplot-1-l # And in reverse order
@@ -351,9 +354,6 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             plot((0, 0), (0, 0), color=colors[l], linewidth=10)
-                    else: # Multi-line plot
-                        for l in range(nlinesperplot):
-                            plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
                 
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
@@ -512,7 +512,8 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     budgets = dcp(multires.budget) # Copy budget
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
-            budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
+            if budgets[b][p] is not None:
+                budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
     for key in budgets.keys(): # Budgets is an odict
         for i,val in enumerate(budgets[key].values()):
             if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0
@@ -668,8 +669,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
     # Set up figure and do plot
     fig = figure(figsize=figsize)
     
-    cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
-    cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
+    cascadelist = ['numplhiv', 'numdiag', 'numevercare', 'numincare', 'numtreat', 'numsuppressed'] 
+    cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
     
     colors = gridcolormap(len(cascadelist))

@@ -105,9 +105,10 @@ Programset (Progset):
            - <target_par_short>:
                 <pop_key>: 
                     Covout
-                        self.ccopars:
+                        self.ccopars: <odict>
                             t: list of ints
                             intercept: list of 2tuple(float)
+                            <program_name>: list([float, float])
                         self.interaction: "additive", "nested", "random"
            - ...
 

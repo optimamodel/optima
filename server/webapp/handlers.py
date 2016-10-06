@@ -13,79 +13,41 @@ structure or the database.
 import json
 import os
 import pprint
-import traceback
-from functools import wraps
 
-from flask import helpers, current_app, request, Response, make_response, jsonify, abort, session, flash, redirect, \
-    url_for
-from flask.ext.login import login_required, current_user, login_user, logout_user
-from flask.ext.restful import Resource, marshal_with
+from flask import helpers, current_app, request, Response, flash, \
+    url_for, redirect, Blueprint, g, session, make_response
+from flask.ext.login import login_required, current_user
+from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
+from flask_restful import Api
 
-from .dbconn import db
-from .dbmodels import UserDb
-
+from . import dataio
 from .dataio import load_project_summaries, create_project_with_spreadsheet_download, delete_projects, \
     load_project_summary, update_project_followed_by_template_data_spreadsheet, download_project, \
     update_project_from_prj, create_project_from_prj, copy_project, load_project_program_summaries, \
     load_project_parameters, load_zip_of_prj_files, load_data_spreadsheet_binary, load_template_data_spreadsheet, \
     update_project_from_data_spreadsheet, update_project_from_econ_spreadsheet, load_project_name, delete_econ, \
-    load_parset_summaries, create_parset, copy_parset, delete_parset, rename_parset, load_parset_graphs, launch_autofit, \
+    load_parset_summaries, create_parset, copy_parset, delete_parset, rename_parset, load_parset_graphs, \
     load_parameters, save_parameters, load_result_csv, load_result_mpld3_graphs, load_progset_summaries, create_progset, \
     save_progset, delete_progset, upload_progset, load_parameters_from_progset_parset, load_progset_outcome_summaries, \
     save_outcome_summaries, save_program, load_target_popsizes, load_costcov_graph, load_scenario_summaries, \
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
-    upload_optimization_summary, launch_optimization, check_optimization, load_optimization_graphs
-from .exceptions import RecordDoesNotExist, UserAlreadyExists, InvalidCredentials
+    upload_optimization_summary, load_optimization_graphs, get_users, create_project_from_spreadsheet, \
+    load_portfolio_summaries, create_user, parse_user_args, update_user, do_login_user, delete_user, \
+    do_logout_current_user, report_exception_decorator, verify_admin_request_decorator
 from .parse import get_default_populations
-from .utils import get_post_data_json, get_upload_file, RequestParser, hashed_password, nullable_email
+from .utils import get_post_data_json, get_upload_file, OptimaJSONEncoder
+from .dbconn import db
+import server.webapp.tasks
 
+api_blueprint = Blueprint('api', __name__, static_folder='static')
 
-def report_exception(api_call):
-    @wraps(api_call)
-    def _report_exception(*args, **kwargs):
-        from werkzeug.exceptions import HTTPException
-        try:
-            return api_call(*args, **kwargs)
-        except Exception as e:
-            exception = traceback.format_exc()
-            # limiting the exception information to 10000 characters maximum
-            # (to prevent monstrous sqlalchemy outputs)
-            current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
-            if isinstance(e, HTTPException):
-                raise
-            code = 500
-            reply = {'exception': exception}
-            return make_response(jsonify(reply), code)
-
-    return _report_exception
-
-
-def verify_admin_request(api_call):
-    """
-    verification by secret (hashed pw) or by being a user with admin rights
-    """
-
-    @wraps(api_call)
-    def _verify_admin_request(*args, **kwargs):
-        u = None
-        if (not current_user.is_anonymous()) and current_user.is_authenticated() and current_user.is_admin:
-            u = current_user
-        else:
-            secret = request.args.get('secret', '')
-            u = UserDb.query.filter_by(password=secret, is_admin=True).first()
-        if u is None:
-            abort(403)
-        else:
-            current_app.logger.debug("admin_user: %s %s %s" % (u.name, u.password, u.email))
-            return api_call(*args, **kwargs)
-
-    return _verify_admin_request
+api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
 
 
 class ProjectsAll(Resource):
-    method_decorators = [report_exception, verify_admin_request]
+    method_decorators = [report_exception_decorator, verify_admin_request_decorator]
 
     @swagger.operation(summary="Returns list of project sumamaries (for admins)")
     def get(self):
@@ -96,7 +58,7 @@ class ProjectsAll(Resource):
 
 
 class Projects(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns list project summaries for current user")
     def get(self):
@@ -134,7 +96,7 @@ class Projects(Resource):
 
 
 class Project(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Returns a project summary')
     def get(self, project_id):
@@ -171,7 +133,7 @@ class Project(Resource):
 
 
 class ProjectData(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Download .prj file for project')
     def get(self, project_id):
@@ -197,21 +159,28 @@ class ProjectData(Resource):
 
 
 class ProjectFromData(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(summary='Upload project with .prj')
+    @swagger.operation(summary='Upload project with .prj/.xls')
     def post(self):
         """
         POST /api/project/data
-        form: name: name of project
+        form:
+            name: name of project
+            xls: true
         file: upload
         """
         project_name = request.form.get('name')
-        uploaded_prj_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        project_id = create_project_from_prj(
-            uploaded_prj_fname, project_name, current_user.id)
+        is_xls = request.form.get('xls', False)
+        uploaded_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        if is_xls:
+            project_id = create_project_from_spreadsheet(
+                uploaded_fname, project_name, current_user.id)
+        else:
+            project_id = create_project_from_prj(
+                uploaded_fname, project_name, current_user.id)
         response = {
-            'file': os.path.basename(uploaded_prj_fname),
+            'file': os.path.basename(uploaded_fname),
             'name': project_name,
             'id': project_id
         }
@@ -219,7 +188,7 @@ class ProjectFromData(Resource):
 
 
 class ProjectCopy(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Copies project to a different name")
     def post(self, project_id):
@@ -240,9 +209,8 @@ class ProjectCopy(Resource):
         }
         return payload
 
-
 class DefaultPrograms(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns default program summaries for program-set modal")
     def get(self, project_id):
@@ -253,7 +221,7 @@ class DefaultPrograms(Resource):
 
 
 class DefaultParameters(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns default programs for program-set modal")
     def get(self, project_id):
@@ -264,7 +232,7 @@ class DefaultParameters(Resource):
 
 
 class DefaultPopulations(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Returns default populations for project management')
     def get(self):
@@ -275,7 +243,7 @@ class DefaultPopulations(Resource):
 
 
 class Portfolio(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Download projects as .zip')
     def post(self):
@@ -289,9 +257,8 @@ class Portfolio(Resource):
         dirname, filename = load_zip_of_prj_files(project_ids)
         return helpers.send_from_directory(dirname, filename)
 
-
 class ProjectDataSpreadsheet(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Downloads template/uploaded data spreadsheet')
     def get(self, project_id):
@@ -324,9 +291,8 @@ class ProjectDataSpreadsheet(Resource):
         basename = os.path.basename(spreadsheet_fname)
         return '"%s" was successfully uploaded to project "%s"' % (basename, project_name)
 
-
 class ProjectEcon(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Downloads template/uploaded econ spreadsheet')
     def get(self, project_id):
@@ -368,9 +334,134 @@ class ProjectEcon(Resource):
         """
         delete_econ(project_id)
 
+# Portfolios
+
+class ManagePortfolio(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary="Returns portfolio information")
+    def get(self):
+        """
+        GET /api/portfolio
+        """
+        return load_portfolio_summaries()
+
+    @swagger.operation(summary="Create portfolio")
+    def post(self):
+        """
+        POST /api/portfolio
+        """
+        name = get_post_data_json()["name"]
+        return dataio.create_portfolio(name)
+
+api.add_resource(ManagePortfolio, '/api/portfolio')
+
+
+class SavePortfolio(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    def post(self, portfolio_id):
+        """
+        post /api/portfolio/<portfolio_id>
+        """
+        portfolio_summary = get_post_data_json()
+        return dataio.save_portfolio_by_summary(portfolio_id, portfolio_summary)
+
+    def delete(self, portfolio_id):
+        """
+        DELETE /api/portfolio/<portfolio_id>
+        """
+        return dataio.delete_portfolio(portfolio_id)
+
+api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
+
+
+class DeletePortfolioProject(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    def delete(self, portfolio_id, project_id):
+        """
+        delete /api/portfolio/<portfolio_id>/project/<project_id>
+        """
+        return dataio.delete_portfolio_project(portfolio_id, project_id)
+
+api.add_resource(DeletePortfolioProject, '/api/portfolio/<portfolio_id>/project/<project_id>')
+
+
+class CalculatePortfolio(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary="Returns portfolio information")
+    def post(self, portfolio_id, gaoptim_id):
+        """
+        post /api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
+        """
+        maxtime = int(get_post_data_json().get('maxtime'))
+        print("> Run BOC %s %s" % (portfolio_id, gaoptim_id))
+        return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id, maxtime)
+
+api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+
+
+class MinimizePortfolio(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary="Starts portfolio minimization")
+    def post(self, portfolio_id, gaoptim_id):
+        """
+        post /api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>
+        """
+        maxtime = int(get_post_data_json().get('maxtime'))
+        return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, gaoptim_id, maxtime)
+
+api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+
+
+
+class TaskChecker(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Poll task')
+    def get(self, pyobject_id, work_type):
+        """
+        GET /api/task/<uuid:pyobject_id>/type/<work_type>
+        """
+        return server.webapp.tasks.check_task(pyobject_id, work_type)
+
+    @swagger.operation(summary="Deletes a task")
+    def delete(self, pyobject_id, work_type):
+        """
+        DELETE /api/task/<uuid:pyobject_id>/type/<work_type>
+        """
+        return server.webapp.tasks.delete_task(pyobject_id, work_type)
+
+
+class BOCTaskChecker(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Poll task')
+    def post(self):
+        """
+        POST /api/bocs
+        """
+        project_ids = get_post_data_json()
+        return server.webapp.tasks.check_bocs(project_ids)
+
+    @swagger.operation(summary="Deletes a task")
+    def delete(self, pyobject_id, work_type):
+        """
+        DELETE /api/task/<uuid:pyobject_id>/type/<work_type>
+        """
+        return server.webapp.tasks.delete_task(pyobject_id, work_type)
+
+
+api.add_resource(TaskChecker, '/api/task/<uuid:pyobject_id>/type/<work_type>')
+
+
+# PARSETS
 
 class Parsets(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Returns a list of parset summaries')
     def get(self, project_id):
@@ -403,7 +494,7 @@ class Parsets(Resource):
 
 
 class ParsetRenameDelete(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Delete parset with parset_id.')
     def delete(self, project_id, parset_id):
@@ -426,18 +517,13 @@ class ParsetRenameDelete(Resource):
 
 
 class ParsetCalibration(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Returns parameter summaries and graphs for a project/parset')
     def get(self, project_id, parset_id):
         """
         GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
-        url-query:
-            autofit: boolean - true loads the results from the autofit parameters
         """
-        autofit = request.args.get('autofit', False)
-        # calculation_type = 'autofit' if autofit else "calibration"
-        # print "> Get calibration graphs for %s" % (calculation_type)
         return load_parset_graphs(project_id, parset_id, "calibration")
 
     @swagger.operation(description='Updates a parset and returns the graphs for a parset_id')
@@ -450,17 +536,14 @@ class ParsetCalibration(Resource):
             autofit: boolean indicates to fetch the autofit version of the results
         """
         args = get_post_data_json()
-        autofit = args.get('autofit', False)
-        # calculation_type = 'autofit' if autofit else "calibration"
         parameters = args.get('parameters')
         which = args.get('which')
-        # print "> Update calibration graphs for %s" % (calculation_type)
         return load_parset_graphs(
             project_id, parset_id, "calibration", which, parameters)
 
 
 class ParsetAutofit(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Starts autofit task and returns calc_status')
     def post(self, project_id, parset_id):
@@ -470,16 +553,16 @@ class ParsetAutofit(Resource):
             maxtime: int - number of seconds to run
         """
         maxtime = get_post_data_json().get('maxtime')
-        return launch_autofit(project_id, parset_id, maxtime)
+        return server.webapp.tasks.launch_autofit(project_id, parset_id, maxtime)
 
     @swagger.operation(summary='Returns the calc status for the current job')
     def get(self, project_id, parset_id):
         """
         GET: /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
         """
-        from server.webapp.tasks import check_calculation_status
         print "> Checking calc state"
-        calc_state = check_calculation_status(project_id, 'autofit-' + str(parset_id))
+        calc_state = server.webapp.tasks.check_calculation_status(
+            project_id, 'autofit-' + str(parset_id))
         pprint.pprint(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
@@ -487,7 +570,7 @@ class ParsetAutofit(Resource):
 
 
 class ParsetUploadDownload(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Return a JSON file of the parameters")
     def get(self, project_id, parset_id):
@@ -514,7 +597,7 @@ class ParsetUploadDownload(Resource):
 
 
 class ResultsExport(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns result as downloadable .csv file")
     def get(self, result_id):
@@ -538,7 +621,7 @@ class ResultsExport(Resource):
 
 
 class Progsets(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Return progset summaries')
     def get(self, project_id):
@@ -558,7 +641,7 @@ class Progsets(Resource):
 
 
 class Progset(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Update progset with the given id.')
     def put(self, project_id, progset_id):
@@ -579,7 +662,7 @@ class Progset(Resource):
 
 
 class ProgsetUploadDownload(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Update from JSON file of the parameters")
     def post(self, project_id, progset_id):
@@ -604,7 +687,7 @@ class ProgsetParameters(Resource):
 
 
 class ProgsetOutcomes(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Returns list of outcomes for a progset')
     def get(self, project_id, progset_id):
@@ -623,7 +706,7 @@ class ProgsetOutcomes(Resource):
 
 
 class Program(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Saves a program summary to project')
     def post(self, project_id, progset_id):
@@ -637,7 +720,7 @@ class Program(Resource):
 
 
 class ProgramPopSizes(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Return estimated popsize for a given program and parset')
     def get(self, project_id, progset_id, program_id, parset_id):
@@ -649,7 +732,7 @@ class ProgramPopSizes(Resource):
 
 
 class ProgramCostcovGraph(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Returns an mpld3 dict that can be displayed with the mpld3 plugin')
     def get(self, project_id, progset_id, program_id):
@@ -684,7 +767,7 @@ class ProgramCostcovGraph(Resource):
 
 
 class Scenarios(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='get scenarios for a project')
     def get(self, project_id):
@@ -705,7 +788,7 @@ class Scenarios(Resource):
 
 
 class ScenarioSimulationGraphs(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Run scenarios and returns the graphs')
     def get(self, project_id):
@@ -716,7 +799,7 @@ class ScenarioSimulationGraphs(Resource):
 
 
 class Optimizations(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns list of optimization summaries")
     def get(self, project_id):
@@ -736,7 +819,7 @@ class Optimizations(Resource):
 
 
 class OptimizationUpload(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Uploads json of optimization summary")
     def post(self, project_id, optimization_id):
@@ -750,7 +833,7 @@ class OptimizationUpload(Resource):
 
 
 class OptimizationCalculation(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Launch optimization calculation')
     def post(self, project_id, optimization_id):
@@ -759,18 +842,18 @@ class OptimizationCalculation(Resource):
         data-json: maxtime: time to run in int
         """
         maxtime = get_post_data_json().get('maxtime')
-        return launch_optimization(project_id, optimization_id, int(maxtime)), 201
+        return server.webapp.tasks.launch_optimization(project_id, optimization_id, int(maxtime)), 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):
         """
         GET /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results
         """
-        return check_optimization(project_id, optimization_id)
+        return server.webapp.tasks.check_optimization(project_id, optimization_id)
 
 
 class OptimizationGraph(Resource):
-    method_decorators = [report_exception, login_required]
+    method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(description='Provides optimization graph for the given project')
     def post(self, project_id, optimization_id):
@@ -782,202 +865,139 @@ class OptimizationGraph(Resource):
         return load_optimization_graphs(project_id, optimization_id, which)
 
 
-user_parser = RequestParser()
-user_parser.add_arguments({
-    'email':       {'type': nullable_email, 'help': 'A valid e-mail address'},
-    'displayName': {'dest': 'name'},
-    'username':    {'required': True},
-    'password':    {'type': hashed_password, 'required': True},
-})
-
-user_update_parser = RequestParser()
-user_update_parser.add_arguments({
-    'email':       {'type': nullable_email, 'help': 'A valid e-mail address'},
-    'displayName': {'dest': 'name'},
-    'username':    {'required': True},
-    'password':    {'type': hashed_password},
-})
-
-user_login_parser = RequestParser()
-user_login_parser.add_arguments({
-    'username': {'required': True},
-    'password': {'type': hashed_password, 'required': True},
-})
-
-
-class UserDoesNotExist(RecordDoesNotExist):
-    _model = 'user'
-
-
 class User(Resource):
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='List users'
-    )
-    @report_exception
-    @marshal_with(UserDb.resource_fields, envelope='users')
-    @verify_admin_request
+
+    method_decorators = [report_exception_decorator]
+
+    @swagger.operation(summary='List users')
+    @verify_admin_request_decorator
     def get(self):
-        current_app.logger.debug('/api/user/list {}'.format(request.args))
-        return UserDb.query.all()
+        """
+        GET /api/user
+        """
+        return {'users': get_users()}
 
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='Create a user',
-        parameters=user_parser.swagger_parameters()
-    )
-    @report_exception
-    @marshal_with(UserDb.resource_fields)
+    @swagger.operation(summary='Create a user')
     def post(self):
-        current_app.logger.info("create request: {} {}".format(request, request.data))
-        args = user_parser.parse_args()
-
-        same_user_count = UserDb.query.filter_by(username=args.username).count()
-
-        if same_user_count > 0:
-            raise UserAlreadyExists(args.username)
-
-        user = UserDb(**args)
-        db.session.add(user)
-        db.session.commit()
-
-        return user, 201
+        """
+        POST /api/user
+        """
+        args = parse_user_args(get_post_data_json())
+        return create_user(args), 201
 
 
 class UserDetail(Resource):
 
-    @swagger.operation(
-        summary='Delete a user',
-        notes='Requires admin privileges'
-    )
-    @report_exception
-    @verify_admin_request
+    method_decorators = [report_exception_decorator]
+
+    @swagger.operation(summary='Delete a user')
+    @verify_admin_request_decorator
     def delete(self, user_id):
-        current_app.logger.debug('/api/user/delete/{}'.format(user_id))
-        user = UserDb.query.get(user_id)
-
-        if user is None:
-            raise UserDoesNotExist(user_id)
-
-        user_email = user.email
-        user_name = user.username
-        from server.webapp.dbmodels import ProjectDb
-        from sqlalchemy.orm import load_only
-
-        # delete all corresponding projects and working projects as well
-        # project and related records delete should be on a method on the project model
-        projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
-        for project in projects:
-            project.recursive_delete()
-
-        db.session.delete(user)
-        db.session.commit()
-
-        current_app.logger.info("deleted user:{} {} {}".format(user_id, user_name, user_email))
-
+        """
+        DELETE /api/user/<uuid:user_id>
+        """
+        delete_user(user_id)
         return '', 204
 
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='Update a user',
-        notes='Requires admin privileges',
-        parameters=user_update_parser.swagger_parameters(),
-    )
-    @report_exception
-    @marshal_with(UserDb.resource_fields)
+    @swagger.operation(summary='Update a user')
     def put(self, user_id):
-        current_app.logger.debug('/api/user/{}'.format(user_id))
-
-        user = UserDb.query.get(user_id)
-        if user is None:
-            raise UserDoesNotExist(user_id)
-
-        try: userisanonymous = current_user.is_anonymous() # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    	except: userisanonymous = current_user.is_anonymous
-        if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
-            secret = request.args.get('secret', '')
-            u = UserDb.query.filter_by(password=secret, is_admin=True).first()
-            if u is None:
-                abort(403)
-
-        args = user_update_parser.parse_args()
-        for key, value in args.iteritems():
-            if value is not None:
-                setattr(user, key, value)
-
-        db.session.commit()
-
-        current_app.logger.info("modified user: {}".format(user_id))
-
-        return user
-
-
-# Authentication
+        """
+        PUT /api/user/<uuid:user_id>
+        """
+        args = parse_user_args(get_post_data_json())
+        return update_user(user_id, args)
 
 
 class CurrentUser(Resource):
-    method_decorators = [login_required]
+    method_decorators = [login_required, report_exception_decorator]
 
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='Return the current user'
-    )
-    @report_exception
-    @marshal_with(UserDb.resource_fields)
+    @swagger.operation(summary='Return the current user')
     def get(self):
-        return current_user
+        return dataio.marshal_user(current_user)
 
 
 class UserLogin(Resource):
 
-    @swagger.operation(
-        responseClass=UserDb.__name__,
-        summary='Try to log a user in',
-        parameters=user_login_parser.swagger_parameters()
-    )
-    @report_exception
-    @marshal_with(UserDb.resource_fields)
+    @swagger.operation(summary='Try to log a user in',)
+    @report_exception_decorator
     def post(self):
-        current_app.logger.debug("/user/login {}".format(request.get_json(force=True)))
-
-        try: userisanonymous = current_user.is_anonymous() # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    	except: userisanonymous = current_user.is_anonymous
-        if userisanonymous:
-            current_app.logger.debug("current user anonymous, proceed with logging in")
-
-            args = user_login_parser.parse_args()
-            try:
-                # Get user for this username
-                user = UserDb.query.filter_by(username=args['username']).first()
-
-                # Make sure user is valid and password matches
-                if user is not None and user.password == args['password']:
-                    login_user(user)
-                    return user
-
-            except Exception:
-                var = traceback.format_exc()
-                print("Exception when logging user {}: \n{}".format(args['username'], var))
-
-            raise InvalidCredentials
-
-        else:
-            return current_user
+        args = parse_user_args(get_post_data_json())
+        return do_login_user(args)
 
 
 class UserLogout(Resource):
-    method_decorators = [login_required]
 
-    @swagger.operation(
-        summary='Log the current user out'
-    )
-    @report_exception
+    @swagger.operation(summary='Log the current user out')
+    @report_exception_decorator
     def get(self):
-        current_app.logger.debug("logging out user {}".format(
-            current_user.name
-        ))
-        logout_user()
-        session.clear()
+        do_logout_current_user()
         flash(u'You have been signed out')
-
         return redirect(url_for("site"))
+
+
+api.add_resource(User, '/api/user')
+api.add_resource(UserDetail, '/api/user/<uuid:user_id>')
+api.add_resource(CurrentUser, '/api/user/current')
+api.add_resource(UserLogin, '/api/user/login')
+api.add_resource(UserLogout, '/api/user/logout')
+
+api.add_resource(Projects, '/api/project')
+api.add_resource(ProjectsAll, '/api/project/all')
+api.add_resource(Project, '/api/project/<uuid:project_id>')
+api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
+api.add_resource(ProjectFromData, '/api/project/data')
+api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
+api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
+api.add_resource(Portfolio, '/api/project/portfolio')
+
+api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
+api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results')
+api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
+api.add_resource(OptimizationUpload, '/api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload')
+
+api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
+api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
+
+api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
+api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
+api.add_resource(ProgsetParameters,
+     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
+api.add_resource(ProgsetOutcomes, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
+api.add_resource(ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
+
+api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
+api.add_resource(DefaultPopulations, '/api/project/populations')
+api.add_resource(DefaultParameters, '/api/project/<project_id>/parameters')
+
+api.add_resource(Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
+api.add_resource(ProgramPopSizes,
+    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
+api.add_resource(ProgramCostcovGraph,
+    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
+
+api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
+api.add_resource(ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
+api.add_resource(ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
+api.add_resource(ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
+api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
+api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
+
+
+@api.representation('application/json')
+def output_json(data, code, headers=None):
+    inner = json.dumps(data, cls=OptimaJSONEncoder)
+    resp = make_response(inner, code)
+    resp.headers.extend(headers or {})
+    return resp
+
+
+@api_blueprint.before_request
+def before_request():
+    from server.webapp.dbmodels import UserDb
+    db.engine.dispose()
+    g.user = None
+    if 'user_id' in session:
+        g.user = UserDb.query.filter_by(id=session['user_id']).first()
+
+

@@ -10,7 +10,7 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016feb06
+Version: 2016oct05
 """
 
 from numpy import arange, array, concatenate as cat, linspace, shape
@@ -21,6 +21,7 @@ class Settings(object):
     def __init__(self, verbose=2):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
+        self.now = 2016.0 # Default current year
         self.end = 2030.0 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
@@ -53,13 +54,14 @@ class Settings(object):
         self.aidsind = self.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
 
         # Combined states
-        self.sus       = cat([self.susreg, self.progcirc]) # All uninfected
-        self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost]) # All people diagnosed
-        self.allcare   = cat([         self.care, self.usvl, self.svl]) # All people in care
-        self.alltx     = cat([                    self.usvl, self.svl]) # All people on treatment
-        self.allplhiv  = cat([self.undx, self.alldx]) # All PLHIV
-        self.allstates = cat([self.sus, self.allplhiv]) # All states
-        self.nstates   = len(self.allstates) # Total number of states
+        self.sus            = cat([self.susreg, self.progcirc]) # All uninfected
+        self.alldx          = cat([self.dx, self.care, self.usvl, self.svl, self.lost]) # All people diagnosed
+        self.allcare        = cat([         self.care, self.usvl, self.svl]) # All people CURRENTLY in care
+        self.allevercare    = cat([         self.care, self.usvl, self.svl, self.lost]) # All people EVER in care
+        self.alltx          = cat([                    self.usvl, self.svl]) # All people on treatment
+        self.allplhiv       = cat([self.undx, self.alldx]) # All PLHIV
+        self.allstates      = cat([self.sus, self.allplhiv]) # All states
+        self.nstates        = len(self.allstates) # Total number of states
         
         # Set labels for each health state
         thesestates = dcp(self.healthstates)

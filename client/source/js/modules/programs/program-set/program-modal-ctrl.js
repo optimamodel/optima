@@ -1,27 +1,30 @@
  define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
+
   'use strict';
 
   module.controller('ProgramModalController', function (
     $scope, $modalInstance, program, populations, programList, modalService,
     parameters, categories, openProject) {
-    // Default list of criteria
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
       console.log(JSON.stringify(val, null, 2));
     }
 
+    function deepCopy(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
+    }
+
     function isNonemptyList(l) {
       return (!_.isUndefined(l.length) && l.length > 0);
     }
 
-    // Initializes controller state and sets some default values in the program
     function initialize() {
 
       $scope.state = {
         selectAll: false,
         isNew: !program.name,
-        populations: angular.copy(populations), // all possible populations in the program
+        populations: deepCopy(populations), // all possible populations in the program
         parameters: parameters, // all possible parameters
         categories: categories,
         program: program,
@@ -31,7 +34,7 @@
         progPopReadOnly: false
       };
 
-      consoleLogJson('default loaded parameters', parameters);
+      console.log('default loaded parameters', parameters);
       /**
        All populations for the project will be listed for
        the program for user to select from.
@@ -51,6 +54,8 @@
         $scope.state.program.targetpars,
         function(par) { return par.pops.indexOf('tot') >= 0; }
       );
+
+      console.log('$scope.state.program.targetpars', $scope.state.program.targetpars);
 
       if (isAnyTargetparForTotal) {
         $scope.state.progPopReadOnly = true;
@@ -138,11 +143,13 @@
       if (_.isUndefined(attr)) {
         return;
       }
-      targetpar.attr = _.clone(attr);
+      targetpar.attr = deepCopy(attr);
 
-      consoleLogJson('raw targetpar', targetpar);
+      console.log('raw targetpar', targetpar);
 
       if (attr.by == "pship") {
+
+        targetpar.attr.pships = deepCopy(targetpar.attr.pships);
 
         _.forEach(targetpar.attr.pships, function(pship) {
           _.forEach(targetpar.pops, function(pop) {
@@ -152,9 +159,11 @@
           });
         });
 
-        targetpar.selectAll = targetpar.attr.pships
-                                && targetpar.pops
-                                && targetpar.attr.pships.length === targetpar.pops.length;
+        targetpar.selectAll =
+          targetpar.attr.pships
+            && targetpar.pops
+            && (targetpar.attr.pships.length === targetpar.pops.length);
+
       } if (targetpar.attr.by === 'tot') {
 
         targetpar.pops = ['tot'];
@@ -165,7 +174,7 @@
         targetpar.attr.selectAll =
           targetpar.attr.populations
           && $scope.state.populations
-          && targetpar.attr.populations.length === targetpar.pops.length;
+          && (targetpar.attr.populations.length === targetpar.pops.length);
 
         targetpar.attr.populations = [];
 
@@ -186,7 +195,7 @@
         console.log('Error in setting targetpar');
       }
 
-      consoleLogJson('attr targetpar', targetpar);
+      console.log('attr targetpar', targetpar);
 
     }
 
