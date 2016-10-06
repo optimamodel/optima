@@ -333,6 +333,7 @@ class Programset(object):
 
         ## Load data
         data = loadprogramspreadsheet(filename)
+        data['years'] = array(data['years'])
         npops = len(data['pops'])
 
         ## Extract program names and check they match the ones in the progset
@@ -353,7 +354,7 @@ class Programset(object):
                 self.programs[prog].costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
                 self.programs[prog].costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
                 for par in self.programs[prog].costcovpars.values():
-                    bestdata, bestinds = sanitize(data[prog][par.short]['best']) # We use the best estimates to population the low and high, and then later we overwrite if there are actual estimates provided
+                    bestdata, bestinds = sanitize(data[prog][par.short]['best'], returninds=True) # We use the best estimates to population the low and high, and then later we overwrite if there are actual estimates provided
                     for estimate in ['best','low','high']:
                         if len(bestinds): 
                             par.t[estimate] = data['years'][bestinds]
@@ -1233,29 +1234,21 @@ def addsingleccopar(ccopars=None, parname=None, values=None, years=None, estimat
                 # Check if we already have a value for this parameter
                 if ccopars[parname].t and year in ccopars[parname].t[estimate]:
                     if not overwrite:
-                        errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % year
+                        errormsg = 'You have already entered CCO parameters for the year %s for parameter %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % (year, parname)
+                        errormsg += '\nCurrent:\n%s\nNew:\n%s' % (ccopars[parname].y[estimate], value)
                         raise OptimaException(errormsg)
                     else:
                         yearind = findinds(ccopars[parname].t[estimate],year)
                         ccopars[parname].y[estimate][yearind] = value
-                        
-                        if estimate == 'best': # If we add a best estimate, we also add a low and high
-                            ccopars[parname].y['low'][yearind] = value
-                            ccopars[parname].y['high'][yearind] = value
                         printv('\nSet CCO parameter "%s" in year "%s" to "%f"' % (parname, year, value), 4, verbose)
                     
                 else: 
+                    # WARNING, this could be simplified
                     ccopars[parname].t[estimate] = append(ccopars[parname].t[estimate],year)
                     ccopars[parname].y[estimate] = append(ccopars[parname].y[estimate],value)
                     sortedinds = argsort(ccopars[parname].t[estimate])
                     ccopars[parname].t[estimate] = ccopars[parname].t[estimate][sortedinds]
                     ccopars[parname].y[estimate] = ccopars[parname].y[estimate][sortedinds]
-                    if estimate == 'best': # If we add a best estimate, we also add a low and high
-                        for key in ['low','high']:
-                            ccopars[parname].t[key] = append(ccopars[parname].t[key],year)
-                            ccopars[parname].y[key] = append(ccopars[parname].y[key],value)
-                            ccopars[parname].t[key] = ccopars[parname].t[key][sortedinds]
-                            ccopars[parname].y[key] = ccopars[parname].y[key][sortedinds]
 
     return None
 
