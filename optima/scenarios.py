@@ -162,8 +162,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         if len(thispar.t[pop])!=len(thispar.y[pop]):
                             raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t), len(thispar.y)))
                         
-                    thisparset.pars[pardictno][scenpar['name']] = thispar # WARNING, not sure if this is needed???
-    
         elif isinstance(scen,Progscen):
 
             try: thisprogset = dcp(project.progsets[scen.progsetname])
