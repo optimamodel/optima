@@ -45,12 +45,12 @@ class Programset(object):
 
 
     def addcovoutpar(self, par=None, key=None, covoutpar=None, overwrite=False, verbose=2):
-        self.covout[par][key].addccopar(self.covoutpars, ccopar=covoutpar, overwrite=overwrite, verbose=verbose)
+        self.covout[par][key].addcovoutpar(covoutpar, overwrite=overwrite, verbose=verbose)
         return None
     
     
     def getcovoutpar(self, par=None, key=None, t=None, overwrite=False, verbose=2):
-        self.covout[par][key].getccopar(self.covoutpars, t=t, overwrite=overwrite, verbose=verbose)
+        self.covout[par][key].getcovoutpar(t=t, overwrite=overwrite, verbose=verbose)
         return None
 
 
@@ -127,7 +127,7 @@ class Programset(object):
                 for prog in progcovoutpars.keys(): 
                     if prog not in targetingprogs: del covoutpars[prog]
 
-                self.covout[targetpartype][thispop] = Covout(covoutpars=covoutpars,interaction=self.default_interaction)
+                self.covout[targetpartype][thispop] = Covout(covoutpars=covoutpars) # WARNING, should interaction be passed?
 
         # Delete any stored effects that aren't needed (if removing a program)
         for tpt in self.covout.keys():

@@ -319,6 +319,8 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
         getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
     '''
     from numpy import array, isnan
+    data = array(data)
+    filterdata = array(filterdata)
     if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
     else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
     if sum(validindices): # There's at least one data point entered
