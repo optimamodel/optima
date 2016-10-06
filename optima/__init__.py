@@ -145,20 +145,16 @@ try: from . import gui
 except: _failed.append('gui')
 
 ## Load simple function for displaying results
-try: from .gui import plotresults, pygui, plotpeople, plotallocations
-except: _failed.append('plotresults, pygui, plotpeople, plotallocations')
+try: from .gui import plotresults, pygui, plotpeople, plotallocations, plotpars
+except: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars')
 
-## Handle the browser-based plotting
+## Handle the browser-based plotting -- relies on browser so might fail
 try: from .gui import browser 
 except: _failed.append('browser')
 
-# Do manual fitting
+# Do manual fitting -- relies on PyQt4 so might fail
 try: from .gui import manualfit 
 except: _failed.append('manualfit')
-
-# Plot all parameters
-try: from .gui import plotpars 
-except: _failed.append('plotpars')
 
 
 
@@ -189,7 +185,7 @@ except:
 
 # Finally, load defaults
 from . import defaults
-from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms
+from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms, demo
 
 # And really finally, load other random things that don't matter
 try:
