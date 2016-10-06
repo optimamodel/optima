@@ -911,7 +911,7 @@ class Constant(Par):
 
 
 class CCOpar(Basepar):
-    ''' The definition of a single time-varying parameter, which may or may not vary by population '''
+    ''' The definition of a single cost-coverage-outcome parameter '''
     
     def __init__(self, t=None, y=None, m=1, **defaultargs):
         Basepar.__init__(self, **defaultargs)

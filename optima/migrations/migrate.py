@@ -185,6 +185,13 @@ def addalleverincare(project, **kwargs):
     return None
 
 
+def CCOdictstopars(project, **kwargs):
+    """
+    Migration between Optima 2.1.2 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    """
+    raise Exception('NOT IMPLEMENTED')
+
+
 migrations = {
 '2.0':   versiontostr,
 '2.0.0': addscenuid,
@@ -194,6 +201,7 @@ migrations = {
 '2.0.4': redotransitions,
 '2.1':   makepropsopt,
 '2.1.1': addalleverincare,
+'2.1.2': CCOdictstopars,
 }
 
 

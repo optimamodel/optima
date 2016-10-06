@@ -3,7 +3,7 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2016feb06
+Version: 2016oct05
 """
 
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar
@@ -14,9 +14,12 @@ from random import uniform
 # [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
 # ...though would be nice to have an easier way!
 _coveragepars = ['numtx','numpmtct','numost','numcirc'] 
-_defaultinteraction = 'additive'
 
 class Programset(object):
+    """
+    Object to store all programs. Coverage-outcome data and functions belong to the program set, 
+    while cost-coverage data/functions belong to the individual programs.
+    """
 
     def __init__(self, name='default', programs=None, project=None):
         ''' Initialize '''
@@ -40,17 +43,29 @@ class Programset(object):
         output += '       Date modified: %s\n'    % getdate(self.modified)
         output += '                 UID: %s\n'    % self.uid
         output += '============================================================\n'
-        
         return output
 
 
     def addcovoutpar(self, par=None, key=None, covoutpar=None, overwrite=False, verbose=2):
+        """
+        Helper method to add a coverage-outcome parameter. Example:
+            from optima import defaultproject; P = defaultproject()
+            P.progset().addcovoutpar(par='hivtest', key='FSW', covoutpar={'t': 2016.0, 'intercept': 0.2, 'HTC': 0.666}, overwrite=True)
+            P.progset().covout['hivtest']['FSW'].covoutpars['HTC'].y['best'] # Returns array([ 0.666])
+        """
         self.covout[par][key].addcovoutpar(covoutpar, overwrite=overwrite, verbose=verbose)
         return None
     
     
-    def getcovoutpar(self, par=None, key=None, t=None, overwrite=False, sample='best', verbose=2):
-        covoutpar = self.covout[par][key].getcovoutpar(t=t, overwrite=overwrite, sample=sample, verbose=verbose)
+    def getcovoutpar(self, par=None, key=None, t=None, sample='best', verbose=2):
+        """
+        Helper method to get the coverage-outcome parameter, e.g.:
+            from optima import defaultproject; P = defaultproject()
+            P.progset().getcovoutpar(par='hivtest', key='FSW', t=2016)
+        
+        Returns odict with keys t, intercept, and one for each program that affects parameter par.
+        """
+        covoutpar = self.covout[par][key].getcovoutpar(t=t, sample=sample, verbose=verbose)
         return covoutpar
 
 
@@ -1388,7 +1403,7 @@ Methods:
 
 class Covout(object):
     
-    def __init__(self, covoutpars=None, interaction=_defaultinteraction):
+    def __init__(self, covoutpars=None, interaction='additive'):
         self.covoutpars = covoutpars
         self.interaction = interaction
     
