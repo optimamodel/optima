@@ -225,13 +225,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
+    function deepCopyJson(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
+    }
+
     $scope.copyOptimization = function() {
       if (!$scope.state.optimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
         openOptimizationModal(
           function (name) {
-            var copyOptimization = angular.copy($scope.state.optimization);
+            var copyOptimization = deepCopyJson($scope.state.optimization);
             copyOptimization.name = name;
             delete copyOptimization.id;
             $scope.setActiveOptimization(copyOptimization);
