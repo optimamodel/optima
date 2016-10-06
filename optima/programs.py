@@ -884,8 +884,10 @@ class Program(object):
     def optimizable(self):
         return True if self.targetpars else False
 
+
     def hasbudget(self):
         return True if self.costcovdata['cost'] else False
+
 
     def addtargetpar(self, targetpar, verbose=2):
         '''Add a model parameter to be targeted by this program'''
@@ -921,6 +923,17 @@ class Program(object):
                 self.costcovpars[par].y[key] = array([])
                 self.costcovpars[par].t[key] = array([])
         return None
+      
+    
+    def addcostcovpar(self, costcovpar=None, overwrite=False, verbose=2):
+        addccopar(self.costcovpars, ccopar=costcovpar, overwrite=overwrite, verbose=verbose)
+        return None
+    
+    
+    def getcostcovpar(self, t=None, overwrite=False, verbose=2):
+        getccopar(self.costcovpars, t=t, overwrite=overwrite, verbose=verbose)
+        return None
+    
     
     def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
         '''Add cost-coverage data point'''
@@ -1073,8 +1086,8 @@ class Program(object):
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
         totaltargeted = sum(poptargeted.values())
-        if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)
-        else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)
+        if proportion: x = dcp(x)*totaltargeted
+        reqbudget = evalcostcov(self.costcovpars, x=x, t=t, popsize=totaltargeted, inverse=True, sample=sample)
         return reqbudget
 
 
