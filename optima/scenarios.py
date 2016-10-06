@@ -140,7 +140,14 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
                     last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
 
+                    # Find or set new value 
+                    if scenpar.get('startval'):
+                        this_y = scenpar['startval'] # Use supplied starting value if there is one
+                    else:
+                        this_y = thispar.interp(tvec=scenpar['startyear'], asarray=False, usemeta=False) # Find what the model would get for this value
+
                     # Loop over populations
+#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     for pop in pops:
 
                         # Remove years after the last good year
@@ -152,7 +159,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         thispar.t[pop] = append(thispar.t[pop], last_t)
                         thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
                         thispar.t[pop] = append(thispar.t[pop], scenpar['startyear'])
-                        thispar.y[pop] = append(thispar.y[pop], scenpar['startval']) 
+                        thispar.y[pop] = append(thispar.y[pop], this_y[pop]) 
                         
                         # Add end year values if supplied
                         if scenpar.get('endyear'): 
@@ -170,7 +177,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             try: results = project.parsets[scen.parsetname].getresults() # See if there are results already associated with this parset
             except: results = None
 
-            if isnumber(scen.t): scen.t = [scen.t]
+            scen.t = promotetoarray(scen.t)
             
             if isinstance(scen, Budgetscen):
                 
@@ -226,7 +233,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             errormsg = 'Unrecognized program scenario type.'
             raise OptimaException(errormsg)
             
-
         scenparsets[scen.name] = thisparset
         
     return scenparsets
@@ -261,7 +267,7 @@ def getparvalues(parset, scenpar):
     npops = len(parset.pars[0]['popkeys'])
     simpars = parset.interp(start=scenpar['startyear'], end=scenpar['endyear'])
 
-    original = simpars[scenpar['names'][0]]
+    original = simpars[scenpar['name'][0]]
     
     if scenpar['pops'] < npops: # It's for a specific population, get the value
         original = original[scenpar['pops'],:]
