@@ -58,14 +58,12 @@ if 'makeprogramspreadsheet' in tests:
     t = tic()
     
     print('Making programs spreadsheet ...')
-    from optima import defaults, makeprogramspreadsheet
+    from optima import defaults
     from os import remove
 
     P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
-    R = P.progsets[0]
     filename = 'tmpprogramspreadsheet.xlsx'
-    progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
-    makeprogramspreadsheet(filename, pops=P.data['pops']['short'], progs=progs)
+    P.makeprogramspreadsheet(filename)
     remove(filename)
     done()
 

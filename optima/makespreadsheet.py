@@ -65,7 +65,7 @@ def abbreviate(param):
 
 
 def years_range(data_start, data_end):
-    return [x for x in range(data_start, data_end+1)]
+    return [x for x in range(int(data_start), int(data_end)+1)] # Could just be arange(data_start, data_end+1).tolist()
 
 
 class OptimaContent:

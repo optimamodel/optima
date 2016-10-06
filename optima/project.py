@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
+from optima import loadspreadsheet, makeprogramspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
 from optima import defaultobjectives, defaultconstraints, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
@@ -310,6 +310,14 @@ class Project(object):
         self.modified = today()
         return None
     
+
+    def makeprogramspreadsheet(self, filename=None, progset=-1, verbose=2):
+        if filename is None: filename = self.name+'-programspreadsheet.xlsx'
+        pops = self.data['pops']['short']
+        progs = [{'short':p.short, 'name':p.name, 'targetpops': p.targetpops} for p in self.progsets[progset].programs.values()]
+        makeprogramspreadsheet(filename=filename, pops=pops, progs=progs, datastart=self.settings.start, dataend=self.settings.end, verbose=verbose)
+        return None
+
     
     def addscenlist(self, scenlist): 
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
