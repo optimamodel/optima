@@ -84,8 +84,8 @@ if 'standardscen' in tests:
                  'name': 'propcirc',
                  'for': malelist,
                  'startyear': 2015,
-                 'endval': 0.,
                  'endyear': 2020,
+                 'endval': 0.,
                  }]),
 
         Parscen(name='Increase numpmtct',
