@@ -6,6 +6,8 @@ Version: 2016jan28
 import os
 import optima as op
 from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
+try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
+except: pass
 
 
 def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
@@ -480,12 +482,15 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     elif which in ['best','concentrated']:
         printv('Creating concentrated example...', 2, verbose)
         # Make project and store results from default sim
+        dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
+        kwargs['dorun'] = False # Don't run now, run after calibration
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
         
         # "Calibrate"
 #        from numpy import array
 #        P.parsets[0].pars[0]['force'].y[:] = [ 2.09   ,  1.232  ,  0.9625 ,  0.88   ,  1.51525,  0.726  ]
         P.parsets[0].pars[0]['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
+        if dorun: P.runsim() # Run after calibration
        
     
         # Get a default progset 
@@ -597,3 +602,10 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
     project.addscenlist(scenlist)
     project.runscenarios()
     return scenlist # Return it as well
+
+
+def demo():
+    ''' Do a simple demo of Optima -- similar to simple.py '''
+    P = defaultproject()
+    pygui(P)
+    return P
