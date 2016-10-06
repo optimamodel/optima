@@ -23,7 +23,7 @@ epiformatslist = [ # WARNING, definition requires each of these to start with th
                   ['s', 'sta', 'stacked']
                  ]
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
+estimatecolor = 'none' # Color of estimates rather than real data
 defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
 defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
 
