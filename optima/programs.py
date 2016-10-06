@@ -397,6 +397,7 @@ class Programset(object):
         self.defaultbudget = lastbudget
         return selectbudget if t is not None else lastbudget
 
+
     def getdefaultcoverage(self, t=2016., parset=None, results=None, verbose=2, ind=0, sample='best', **kwargs):
         ''' Extract the coverage levels corresponding to the default budget'''
         defaultbudget = self.getdefaultbudget()
@@ -405,6 +406,7 @@ class Programset(object):
         for progno in range(len(defaultcoverage)):
             defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
         return defaultcoverage
+
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, sample='best', verbose=2, ind=0):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
@@ -525,7 +527,6 @@ class Programset(object):
 
                 # If it's an outcome parameter, need to get outcomes
                 else:
-                    
                     delta, thiscov = odict(), odict()
     
                     # Loop over the programs that target this parameter/population combo
