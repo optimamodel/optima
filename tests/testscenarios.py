@@ -10,7 +10,7 @@ tests = [
 'standardscen',
 #'maxcoverage',
 #'maxbudget',
-#'90-90-90'
+'90-90-90'
 #'VMMC'
 ]
 
@@ -231,7 +231,6 @@ if '90-90-90' in tests:
 
     print('Running standard scenarios test...')
     from optima import Parscen, defaults, pygui, findinds, plotpeople
-    from numpy import nan
     
     P = defaults.defaultproject('best')
     P.runsim(debug=True)
@@ -259,34 +258,30 @@ if '90-90-90' in tests:
               parsetname='default',
               pars=[
               {'name': 'propdx',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'startval': start_propdx,
               'endval': .9,
               },
               
               {'name': 'propcare',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'startval': start_propincare,
               'endval': .9,
               },
               
               {'name': 'proptx',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'startval': start_proptx,
               'endval': .9,
               },
               
               {'name': 'propsupp',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'startval': start_propsupp,
               'endval': .9,
               },
                 ]),
@@ -295,24 +290,12 @@ if '90-90-90' in tests:
               parsetname='default',
               pars=[
               {'name': 'numtx',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': 2030.,
-              'startval': 48100.,
               'endval': 68000.,
               }]),
-                
-         Parscen(name='Constant numtx',
-              parsetname='default',
-              pars=[
-              {'name': 'proptx',
-              'for': ['tot'],
-              'startyear': startyear,
-              'startval': nan,
-#              'endyear': 2030.,
-#              'endval': 48100.,
-              }]),
-                
+                                
         ]
 
     # Store these in the project
@@ -344,7 +327,7 @@ if '90-90-90' in tests:
     if doplot:
 #        ppl = P.results[-1].raw['90-90-90'][0]['people']
 #        plotpeople(P, ppl)
-        pygui(P.results[-1], toplot='cascade')
+        pygui(P.results[-1], toplot='default')
 
     done(t)
 
