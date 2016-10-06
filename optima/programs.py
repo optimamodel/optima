@@ -43,6 +43,17 @@ class Programset(object):
         
         return output
 
+
+    def addcovoutpar(self, par=None, key=None, covoutpar=None, overwrite=False, verbose=2):
+        self.covout[par][key].addccopar(self.covoutpars, ccopar=covoutpar, overwrite=overwrite, verbose=verbose)
+        return None
+    
+    
+    def getcovoutpar(self, par=None, key=None, t=None, overwrite=False, verbose=2):
+        self.covout[par][key].getccopar(self.covoutpars, t=t, overwrite=overwrite, verbose=verbose)
+        return None
+
+
     def getsettings(self, project=None, parset=None, results=None):
         ''' Try to get the freshest settings available '''
 
