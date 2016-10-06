@@ -73,13 +73,20 @@ class Programset(object):
         """
         Helper method for adding a cost-coverage parameter. Example:
             from optima import defaultproject; P = defaultproject()
-            P.progset().addcostcovpar('HTC', {'t':2016, 'cost':1.2e6, 'coverage':523e3})
+            P.progset().addcostcovpar('HTC', {'t':2016, 'unitcost':3, 'saturation':0.8})
         """
         self.programs[program].addcostcovpar(costcovpar=costcovpar, overwrite=overwrite, verbose=verbose)
         return None
     
     
     def getcostcovpar(self, program=None, t=None, sample='best', verbose=2):
+        """
+        Helper method for getting a cost-coverage parameter. Example:
+            from optima import defaultproject; P = defaultproject()
+            P.progset().getcostcovpar(program='HTC', t=2016)
+        
+        Returns an odict with fields 't', 'saturation', and 'unitcost'.
+        """
         costcovpar = self.programs[program].getcostcovpar(t=t, sample=sample, verbose=verbose)
         return costcovpar
 
@@ -972,20 +979,19 @@ class Program(object):
       
     
     def addcostcovpar(self, costcovpar=None, overwrite=False, verbose=2):
-        """
-        Helper method for adding a cost-coverage parameter. Example:
-            from optima import defaultproject; P = defaultproject()
-            P.progset().programs[0].addcostcovpar({'t':2016, 'cost':1.2e6, 'coverage':523e3})
-        """
+        """ Helper function -- see definition under Programset """
         addccopar(self.costcovpars, ccopar=costcovpar, overwrite=overwrite, verbose=verbose)
         return None
     
     
     def getcostcovpar(self, t=None, sample='best', verbose=2):
+        """ Helper function -- see definition under Programset """
         costcovpar = getccopar(self.costcovpars, t=t, sample=sample, verbose=verbose)
         return costcovpar
     
+    
     def evalcostcov(self, x=None, t=None, popsize=None, inverse=False, sample='best', eps=None, verbose=2):
+        """ Helper function -- see definition below """
         return evalcostcov(ccopars=self.costcovpars, x=x, t=t, popsize=popsize, inverse=inverse, sample=sample, eps=eps, verbose=verbose)
     
     
@@ -1044,10 +1050,8 @@ class Program(object):
         if not useelig:
             initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)
 
-
         # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
         else: 
-
             # Get settings
             settings = self.getsettings()
             
@@ -1254,6 +1258,59 @@ class Program(object):
 ########################################################
 # COST COVERAGE OUTCOME FUNCTIONS
 ########################################################
+"""
+Cost-coverage functions - used to calculate the coverage for a certain
+budget in a program. Best initialized with empty parameters,
+and later, add cost-coverage parameters with self.addccopar.
+
+Functions:
+
+addccopar(ccopar, overwrite=False, verbose=2)
+    Adds a set of cost-coverage parameters for a budget year
+
+    Args:
+        ccopar: {
+                    't': 2015,
+                    'saturation': [.90,1.],
+                    'unitcost': [30,40]
+                }
+                The intervals in ccopar allow a randomization
+                to explore uncertainties in the model.
+
+        overwrite: whether it should be added or replaced for
+                   interpolation
+
+getccopar(t, verbose=2, sample='best')
+    Returns an odict of cost-coverage parameters
+        { 'saturation': [..], 'unitcost': [...], 't':[...] }
+    used for evaulcostcov().
+
+    Args:
+        t: a number/list of years to interpolate the ccopar
+
+evalcostcov(x, popsize, t, toplot, inverse=False, bounds=None, verbose=2)
+    Returns coverage if x=cost, or cost if x=coverage, this is defined by inverse.
+
+    Args
+        x: number, or list of numbers, representing cost or coverage
+        t: years for each value of cost/coverage
+        inverse: False - returns a coverage, True - returns a cost
+"""
+class Covout(object):
+    
+    def __init__(self, covoutpars=None, interaction='additive'):
+        self.covoutpars = covoutpars
+        self.interaction = interaction
+    
+    def addcovoutpar(self, covoutpar=None, overwrite=False, verbose=2):
+        addccopar(self.covoutpars, ccopar=covoutpar, overwrite=overwrite, verbose=verbose)
+        return None
+    
+    def getcovoutpar(self, t=None, sample='best', verbose=2):
+        covoutpar = getccopar(self.covoutpars, t=t, sample=sample, verbose=verbose)
+        return covoutpar
+
+
 def addsingleccopar(ccopars=None, parname=None, values=None, years=None, estimate='best', overwrite=False, verbose=2):
     """ Add a single parameter.
     parname is a string; value is a number; year is a year"""
@@ -1367,75 +1424,8 @@ def getccopar(ccopars=None, t=None, sample='best', verbose=2):
     return ccopar
             
 
-
-########################################################
-#%% COST COVERAGE FUNCTIONS
-########################################################
-"""
-WARNING, NEED TO UPDATE
-
-Cost-coverage object - used to calculate the coverage for a certain
-budget in a program. Best initialized with empty parameters,
-and later, add cost-coverage parameters with self.addccopar.
-
-Methods:
-
-    addccopar(ccopar, overwrite=False, verbose=2)
-        Adds a set of cost-coverage parameters for a budget year
-
-        Args:
-            ccopar: {
-                        't': [2015,2016],
-                        'saturation': [.90,1.],
-                        'unitcost': [40,30]
-                    }
-                    The intervals in ccopar allow a randomization
-                    to explore uncertainties in the model.
-
-            overwrite: whether it should be added or replaced for
-                       interpolation
-
-    getccopar(t, verbose=2, sample='best')
-        Returns an odict of cost-coverage parameters
-            { 'saturation': [..], 'unitcost': [...], 't':[...] }
-        used for self.evaulate.
-
-        Args:
-            t: a number/list of years to interpolate the ccopar
-            randseed: used to randomly generate a varying set of parameters
-                      to help determine the sensitivity/uncertainty of
-                      certain parameters
-
-    evaluate(x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2)
-        Returns coverage if x=cost, or cost if x=coverage, this is defined by inverse.
-
-        Args
-            x: number, or list of numbers, representing cost or coverage
-            t: years for each value of cost/coverage
-            inverse: False - returns a coverage, True - returns a cost
-            randseed: allows a randomization of the cost-cov parameters within
-                the given intervals
-
-"""
-
-class Covout(object):
-    
-    def __init__(self, covoutpars=None, interaction='additive'):
-        self.covoutpars = covoutpars
-        self.interaction = interaction
-    
-    def addcovoutpar(self, covoutpar=None, overwrite=False, verbose=2):
-        addccopar(self.covoutpars, ccopar=covoutpar, overwrite=overwrite, verbose=verbose)
-        return None
-    
-    def getcovoutpar(self, t=None, sample='best', verbose=2):
-        covoutpar = getccopar(self.covoutpars, t=t, sample=sample, verbose=verbose)
-        return covoutpar
-
-
-
-
 def evalcostcov(ccopars=None, x=None, t=None, popsize=None, inverse=False, sample='best', eps=None, verbose=2):
+    """ Evaluate the cost-coverage function and return either a coverage given a cost, or vice versa """
     x = promotetoarray(x)
     t = promotetoarray(t)
     if not len(x)==len(t):
