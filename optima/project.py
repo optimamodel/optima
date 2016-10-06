@@ -100,7 +100,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Methods for I/O and spreadsheet loading
+    #%% Methods for I/O and spreadsheet loading
     #######################################################################################################
 
 
@@ -150,7 +150,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Methods to handle common tasks with structure lists
+    #%% Methods to handle common tasks with structure lists
     #######################################################################################################
 
 
@@ -353,7 +353,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Methods to perform major tasks
+    #%% Methods to perform major tasks
     #######################################################################################################
 
 
@@ -469,7 +469,7 @@ class Project(object):
 
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
-        """ Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty""""
+        """ Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty" """
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.modified = today()
@@ -538,7 +538,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Methods to handle tasks for geospatial analysis
+    #%%% Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
     def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
