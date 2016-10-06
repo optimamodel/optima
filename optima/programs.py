@@ -1239,18 +1239,32 @@ def addccopar(ccopars=None, ccopar=None, overwrite=False, verbose=2):
     ''' Add a set of parameters for a single year'''
     
     # Separate the ccopar into the parameter bits and the year bits
-    years = ccopar['t']
+    years = promotetoarray(ccopar['t'])
     ccopar.pop('t', None)
     
     for parname,parvals in ccopar.iteritems():
-        if type(parvals)==tuple: # Tuple corresponds to (low,high) parameter estimates
-            bestparval = (parvals[0]+parvals[1])/2
-            addsingleccopar(ccopars, parname=parname,values=bestparval,years=years,estimate='best',overwrite=overwrite)
-            lowparval = parvals[0]
-            addsingleccopar(ccopars, parname=parname,values=lowparval,years=years,estimate='low',overwrite=True)
-            highparval = parvals[1]
-            addsingleccopar(ccopars, parname=parname,values=highparval,years=years,estimate='high',overwrite=True)
-        else:
+        parvals = promotetoarray(parvals)
+        if len(years)>1 and len(years)!=len(parvals):
+            errormsg =  'Length of years and parvals do not match (%i vs. %i)' % (len(years), len(parvals))
+            raise OptimaException(errormsg)
+        if len(years)==1: # Tuple corresponds to (low,high) parameter estimates
+            estimate = dict()
+            if len(parvals)==1: # Only the best estimate supplied
+                for key in ['best','low','high']:
+                    estimate[key] = parvals[0]
+            elif len(parvals)==2: # Low and high supplied
+                estimate['low']  = parvals[0]
+                estimate['high'] = parvals[1]
+                estimate['best'] = (parvals[0]+parvals[1])/2.
+            elif len(parvals)==3: # Best, low, and high supplied
+                for k,key in enumerate(['best','low','high']):
+                    estimate[key] = parvals[k]
+            else:
+                errormsg = 'parvals for %s must have length 1, 2, or 3, not %i' % (parname, len(parvals))
+                raise OptimaException(errormsg)
+            for key in ['best','low','high']:
+                addsingleccopar(ccopars, parname=parname, values=estimate[key], years=years, estimate=key, overwrite=overwrite)
+        else: # Assume the person knows what they're doing with multiple years
             addsingleccopar(ccopars, parname=parname,values=parvals,years=years)
         
     return None
