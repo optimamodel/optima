@@ -86,12 +86,12 @@ from .settings import Settings, convertlimits, gettvecdt
 ## Create a blank spreadsheet
 try:
     from . import makespreadsheet as _makespreadsheet
-    from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
+    from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
 except: _failed.append('makespreadsheet')
 
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
-from .loadspreadsheet import loadspreadsheet
+from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 
 ## Generate results -- odd location, I know!
 from . import results as _results
@@ -99,7 +99,7 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 
 ## Define the model parameters
 from . import parameters as _parameters
-from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, transtable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
+from .parameters import Basepar, CCOpar, Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, transtable, loadtranstable, applylimits, comparepars, comparesimpars, getvalidyears # Parameter and Parameterset classes
 
 ## Define and run the model
 from . import model as _model

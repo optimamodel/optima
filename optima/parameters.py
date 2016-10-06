@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 1.5 (2016jul06)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones, inf, append
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
@@ -766,12 +766,23 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 #################################################################################################################################
 
 
-class Par(object):
+class Basepar(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), verbose=None):
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = defaultrepr(self)
+        return output
+
+
+class Par(Basepar):
+    ''' The base class for epidemiological model parameters '''
+    def __init__(self, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): 
+        Basepar.__init__(self, **defaultargs)
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
@@ -785,8 +796,6 @@ class Par(object):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
-
-
 
 
 class Timepar(Par):
@@ -913,6 +922,43 @@ class Constant(Par):
         return output
 
 
+class CCOpar(Basepar):
+    ''' The definition of a single time-varying parameter, which may or may not vary by population '''
+    
+    def __init__(self, t=None, y=None, m=1, **defaultargs):
+        Basepar.__init__(self, **defaultargs)
+        if t is None: t = odict()
+        if y is None: y = odict()
+        self.t = t # Time data, e.g. [2002, 2008]
+        self.y = y # Value data, e.g. [0.3, 0.7]
+    
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.y.keys()
+    
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
+        """ Take parameters and turn them into model parameters """
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
+        
+        # Set things up and do the interpolation
+        keys = self.keys()
+        npars = len(keys)
+        if asarray: output = zeros((npars,len(tvec)))
+        else: output = odict()
+        for par,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            yinterp = smoothinterp(tvec, self.t[par], self.y[par], smoothness=smoothness) # Use interpolation
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[par,:] = yinterp
+            else: output[key] = yinterp
+        if npars==1 and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
+        else: return output
 
 
 

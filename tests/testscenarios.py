@@ -9,8 +9,8 @@ Version: 2016feb07
 tests = [
 #'standardscen',
 #'maxcoverage',
-#'maxbudget',
-'90-90-90'
+'maxbudget',
+#'90-90-90'
 #'VMMC'
 ]
 

@@ -11,14 +11,16 @@ from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeop
 autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 0
-runscenarios = 0 # Run scenarios
+runscenarios = 1 # Run scenarios
 optimize = 0
 dosave = 0
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best',dorun=False)
-P.runsim(debug=True)
+P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
+R = P.progsets[0]
+filename = 'testprogramdata.xlsx'
+R.loadspreadsheet(filename)    
 
 ## Calibration
 if autocalib: 
