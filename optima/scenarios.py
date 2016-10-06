@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append, array
-from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid
+from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
 
 
 class Scen(object):
@@ -125,8 +125,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 for scenpar in scenlist[scenno].pars: # Loop over all parameters being changed
                     thispar = thisparset.pars[pardictno][scenpar['name']]
                     if type(scenpar['for'])==tuple: # If it's a partnership...
-                        par2 = (scenpar['for'][1],scenpar['for'][0])
-                        pops = [scenpar['for'], par2] # This is confusing - for partnership parameters, pops is a list of the two different partnership orderings.
+                        pops = [scenpar['for']] 
                     elif type(scenpar['for'])==int: #... if its a population.
                         pops = range(npops) if scenpar['for'] > npops else [scenpar['for']]
                     elif type(scenpar['for']) in [list, type(array([]))]: #... if its a population.
@@ -171,8 +170,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             except: raise OptimaException('Failed to extract progset "%s" from this project:\n%s' % (scen.progset, project))
             
             try: results = project.parsets[scen.parsetname].getresults() # See if there are results already associated with this parset
-            except:
-                results = None
+            except: results = None
 
             if isnumber(scen.t): scen.t = [scen.t]
             
