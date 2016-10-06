@@ -121,7 +121,7 @@ class ProjectDb(db.Model):
     def as_file(self, loaddir, filename=None):
         project = self.load()
         filename = os.path.join(loaddir, project.name + ".prj")
-        op.saveobj(filename, project)
+        optima.saveobj(filename, project)
         return project.name + ".prj"
 
     def delete_dependent_objects(self, synchronize_session=False):
