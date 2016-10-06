@@ -144,7 +144,13 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     if scenpar.get('startval'):
                         this_y = scenpar['startval'] # Use supplied starting value if there is one
                     else:
-                        this_y = thispar.interp(tvec=scenpar['startyear'], asarray=False, usemeta=False) # Find what the model would get for this value
+                        if thispar.fromdata: # If it's a regular parameter made from data, we get the default start value from the data
+                            this_y = thispar.interp(tvec=scenpar['startyear'], asarray=False, usemeta=False) # Find what the model would get for this value
+                        else:
+                            try: results = project.parsets[scen.parsetname].getresults() # See if there are results already associated with this parset
+                            except: results = None
+                            this_y = thispar.interp(tvec=scenpar['startyear'], asarray=False, usemeta=False) # Find what the model would get for this value
+                            
 
                     # Loop over populations
                     for pop in pops:
