@@ -59,12 +59,14 @@ if 'makeprogramspreadsheet' in tests:
     
     print('Making programs spreadsheet ...')
     from optima import defaults, makeprogramspreadsheet
+    from os import remove
 
     P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
     R = P.progsets[0]
     filename = 'tmpprogramspreadsheet.xlsx'
     progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
     makeprogramspreadsheet(filename, pops=P.data['pops']['short'], progs=progs)
+    remove(filename)
     done()
 
 
@@ -77,7 +79,7 @@ if 'loadprogramspreadsheet' in tests:
 
     P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
     R = P.progsets[0]
-    filename = 'testprogramdata.xlsx'
+    filename = 'concentratedprogramdata.xlsx'
     R.loadspreadsheet(filename)    
     done()
 
@@ -95,7 +97,7 @@ if 'demonstrateprogrammethods' in tests:
     HTC = progs['HTC']
 
     # 1. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
-    HTC.costcovfn.getccopar(2014)
+    HTC.getcostcovpar(2014)
 
     # 2. Get target population size
     HTC.gettargetpopsize(t=[2013,2015],parset=P.parsets['default'])
@@ -115,7 +117,7 @@ if 'demonstrateprogrammethods' in tests:
     b = HTC.getbudget(x=a,t=2016,parset=P.parsets['default'])
     assert_allclose(1e6,b,rtol=rtol)
     # NB, if you want to evaluate it for a particular population size, can also do...
-    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
+    HTC.evalcostcov(x=[1e6], popsize=[1e5], t=[2015])
 
     # 3. Get default budget and coverage
     defaultbudget = R.getdefaultbudget()

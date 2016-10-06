@@ -78,3 +78,4 @@
 0.733 2016-Sep-21_16:55:41 3da8635 feature/fix-props
 0.767 2016-Sep-22_10:40:41 a9293b9 feature/fix-props
 1.09 2016-Sep-29_14:08:15 0a10d61 develop
+0.618 2016-Oct-05_23:49:49 f6c78dc remove-costcovfn
