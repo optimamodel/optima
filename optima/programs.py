@@ -743,7 +743,7 @@ class Programset(object):
         if modifiablepars is None: raise OptimaException('Please supply modifiablepars')
         for key,val in modifiablepars.items():
             targetpartype,targetparpop,thisprogkey = key # Split out tuple
-            self.addcovoutpar(targetpartype, targetparpop, parname=thisprogkey, values=val,years=t, estimate='best', overwrite=True)
+            self.addcovoutpar(targetpartype, targetparpop, {thisprogkey:val, 't':t}, overwrite=True)
         return None
     
     
