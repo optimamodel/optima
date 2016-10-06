@@ -1,5 +1,3 @@
-import optima
-
 __doc__ = """
 parse.py
 ========
@@ -18,11 +16,9 @@ from functools import partial
 from pprint import pprint, pformat
 from uuid import UUID
 
-from flask.ext.restful import fields, marshal
 from numpy import nan, array
 
 import optima as op
-from optima import loadpartable, partable, Par
 from optima.defaults import defaultprograms
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
@@ -355,14 +351,14 @@ def get_parameters_for_scenarios(project):
 def get_parameters_for_edit_program(project):
     parameters = []
     added_par_keys = set()
-    default_par_keys = [par['short'] for par in loadpartable(partable)]
+    default_par_keys = [par['short'] for par in op.loadpartable(op.partable)]
     for parset in project.parsets.values():
         for pars in parset.pars:
             for par_key in default_par_keys:
                 if par_key in added_par_keys or par_key not in pars:
                     continue
                 par = pars[par_key]
-                if not isinstance(pars[par_key], Par):
+                if not isinstance(pars[par_key], op.Par):
                     continue
                 if not par.visible == 1 or not par.y.keys():
                     continue

@@ -27,7 +27,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if (response.progsets) {
             $scope.programSetList = response.progsets;
-            console.log("loaded_programs", $scope.programSetList);
+            console.log("loaded program sets", $scope.programSetList);
             if (response.progsets && response.progsets.length > 0) {
               $scope.state.activeProgramSet = response.progsets[0];
             }
@@ -48,6 +48,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           parameters = response.parameters;
         });
+    }
+
+    function deepCopyJson(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
     }
 
     $scope.getCategories = function() {
@@ -155,13 +159,19 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var copy = function (name) {
-          var copiedProgramSet = {name: name, programs: $scope.state.activeProgramSet.programs};
-          $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
+          var copiedProgramSet = deepCopyJson($scope.state.activeProgramSet);
+          copiedProgramSet.name = name;
+          delete copiedProgramSet.id;
+          $scope.programSetList.push(copiedProgramSet);
           $scope.state.activeProgramSet = copiedProgramSet;
           $scope.saveActiveProgramSet("Program set copied");
         };
         programSetModalService.openProgramSetModal(
-            copy, 'Copy program set', $scope.programSetList, $scope.state.activeProgramSet.name + ' copy', 'Copy');
+            copy,
+            'Copy program set',
+            $scope.programSetList,
+            $scope.state.activeProgramSet.name + ' copy',
+            'Copy');
       }
     };
 
