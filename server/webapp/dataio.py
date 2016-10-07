@@ -58,10 +58,11 @@ from .parse import get_default_program_summaries, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
-    set_program_summary_on_progset, parse_portfolio_summary
+    set_program_summary_on_progset, parse_portfolio_summary, \
+    set_progset_summary_on_progset
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
-
+from . import parse
 
 # USERS
 
@@ -1208,6 +1209,30 @@ def upload_progset(project_id, progset_id, progset_summary):
     set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
     return get_progset_summary(project, progset_summary["name"])
+
+
+def copy_progset(project_id, progset_id, new_name):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+
+    print("> Progset keys", project.progsets.keys())
+    progset = get_progset_from_project(project, progset_id)
+    progset_summary = get_progset_summary(project, progset.name)
+    progset_outcomes_summary = get_outcome_summaries_from_progset(progset)
+    # print(">> To copy summary ", progset_summary)
+    print(">> To copy outcomes ", progset_outcomes_summary)
+
+    new_progset = op.Programset(name=new_name)
+    set_progset_summary_on_progset(new_progset, progset_summary)
+    set_outcome_summaries_on_progset(progset_outcomes_summary, new_progset)
+    project.progsets[new_name] = new_progset
+
+    project_record.save_obj(project)
+    print(">> targetpartypes ", new_progset.targetpars)
+
+    # print(">> Copied summary ", get_progset_summary(project, new_name))
+    print(">> Copied outcomes ", get_outcome_summaries_from_progset(new_progset))
+    return load_progset_summaries(project_id)
 
 
 def delete_progset(project_id, progset_id):

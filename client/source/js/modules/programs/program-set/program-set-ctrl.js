@@ -159,12 +159,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var copy = function (name) {
-          var copiedProgramSet = deepCopyJson($scope.state.activeProgramSet);
-          copiedProgramSet.name = name;
-          delete copiedProgramSet.id;
-          $scope.programSetList.push(copiedProgramSet);
-          $scope.state.activeProgramSet = copiedProgramSet;
-          $scope.saveActiveProgramSet("Program set copied");
+          $http
+            .post(
+              '/api/project/' + project.id
+              + '/progset/' + $scope.state.activeProgramSet.id,
+              {name: name})
+            .success(function(response) {
+              $scope.programSetList = response.progsets;
+              console.log("loaded program sets", $scope.programSetList);
+              $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
+            });
         };
         programSetModalService.openProgramSetModal(
             copy,
