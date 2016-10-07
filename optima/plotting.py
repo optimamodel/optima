@@ -22,7 +22,8 @@ epiformatslist = [ # WARNING, definition requires each of these to start with th
                   ['p', 'pop', 'per population', 'pops', 'per', 'population'], 
                   ['s', 'sta', 'stacked']
                  ]
-datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
+realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
+estimatecolor = 'none' # Color of estimates rather than real data
 defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
 defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
 
@@ -264,8 +265,10 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             # Unpack tuple
             datatype, plotformat = plotkey 
             
-            ispercentage = results.main[datatype].ispercentage # Indicate whether result is a percentage
+            ispercentage = results.main[datatype].ispercentage # Distinguish between e.g. HIV prevalence and number PLHIV
+            isestimate = results.main[datatype].estimate # Distinguish between real data and model-based estimates
             factor = 100.0 if ispercentage else 1.0 # Swap between number and percent
+            datacolor = estimatecolor if isestimate else realdatacolor # Light grey for
             istotal   = (plotformat=='t') # Only using first letter, see above...
             isperpop  = (plotformat=='p')
             isstacked = (plotformat=='s')
@@ -376,7 +379,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 if not ismultisim and databest is not None:
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
+                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=int(isestimate))
 
 
 
@@ -509,9 +512,8 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     budgets = dcp(multires.budget) # Copy budget
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
-            if budgets[b][p] is None:
-                continue
-            budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
+            if budgets[b][p] is not None:
+                budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
     for key in budgets.keys(): # Budgets is an odict
         for i,val in enumerate(budgets[key].values()):
             if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0

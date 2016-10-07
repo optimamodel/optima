@@ -76,4 +76,6 @@
 0.773 2016-Sep-21_16:21:50 7f3c1e8 feature/make-props-standard-outputs
 0.762 2016-Sep-21_16:50:22 c4d038a feature/make-props-standard-outputs
 0.733 2016-Sep-21_16:55:41 3da8635 feature/fix-props
+0.705 2016-Sep-22_01:47:37 3db4da9 debug-stage-4
+0.684 2016-Sep-22_02:21:12 956f7eb debug-stage-4
 0.767 2016-Sep-22_10:40:41 a9293b9 feature/fix-props
