@@ -7,7 +7,7 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
+'standardscen',
 #'maxcoverage',
 #'maxbudget',
 '90-90-90'
@@ -56,79 +56,97 @@ if 'standardscen' in tests:
     
     caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
     
-    ## Define scenarios
+    
+    ## Create a scenario
+    thisname = 'Get lots of people on treatment'
+    thisparset = 0
+    thispar = 'numtx'
+    thisfor = 0
+    thisstartyear = 2016.
+    thisstartval = P.parsets[thisparset].pars[0][thispar].interp(thisstartyear)[thisfor]
+    thisendyear = 2020.
+    thisendval = 100000.
+    
     scenlist = [
         Parscen(name='Get lots of people on treatment',
-             parsetname='default',
-             pars=[{'endval': 100000.,
-                'endyear': 2020,
-                'name': 'numtx',
-                'for': 'tot',
-                'startval': 3350.,
-                'startyear': 2015}]),
+                parsetname=0,
+                pars=[{
+                 'name': 'numtx',
+                 'for': 'tot',
+                 'startyear': 2016.,
+                 'endyear': thisendyear,
+                 'endval': thisendval
+                 }]),
 
         Parscen(name='Imagine that no-one gets circumcised',
              parsetname='default',
-             pars=[{'endval': 0.,
-                'endyear': 2020,
-                'name': 'propcirc',
-                'for': malelist,
-                'startval': .97,
-                'startyear': 2015}]),
+             pars=[{
+                 'name': 'propcirc',
+                 'for': malelist,
+                 'startyear': 2015,
+                 'endyear': 2020,
+                 'endval': 0.,
+                 }]),
 
         Parscen(name='Increase numpmtct',
              parsetname='default',
-             pars=[{'endval': 0.9,
-                'endyear': 2020,
-                'name': 'numpmtct',
-                'for': ['tot'],
-                'startval': .44,
-                'startyear': 2015}]),
+             pars=[{
+                 'name': 'numpmtct',
+                 'for': 'tot',
+                 'startyear': 2015.,
+                 'endyear': 2020,
+                 'endval': 0.9,
+                 }]),
 
         Parscen(name='Full casual condom use',
              parsetname='default',
-             pars=[{'endval': 1.,
-                'endyear': 2015,
-                'name': 'condcas',
-                'for': caspships,
-                'startval': 1.,
-                'startyear': 2005}]),
+             pars=[{
+                 'name': 'condcas',
+                 'for': caspships,
+                 'startyear': 2005,
+                 'endyear': 2015,
+                 'endval': 1.,
+                 }]),
 
          Parscen(name='More casual acts',
               parsetname='default',
-              pars=[{'endval': 2.,
-                'endyear': 2015,
-                'name': 'actscas',
-                'for': caspships,
-                'startval': 2.,
-                'startyear': 2005}]),
+              pars=[{
+                  'name': 'actscas',
+                  'for': caspships,
+                  'startyear': 2005,
+                  'endyear': 2015,
+                  'endval': 2.,
+                  }]),
 
          Parscen(name='100% testing',
               parsetname='default',
-              pars=[{'endval': 1.,
-                'endyear': 2020,
-                'name': 'hivtest',
-                'for': ['FSW', 'Clients', 'MSM', 'M 15+', 'F 15+'],
-                'startval': .5,
-                'startyear': 2000}]),
+              pars=[{
+                  'name': 'hivtest',
+                  'for': ['FSW', 'Clients', 'MSM', 'M 15+', 'F 15+'],
+                  'startyear': 2000.,
+                  'endyear': 2020,
+                  'endval': 1.,
+                  }]),
 
          Parscen(name='Increased STI prevalence in FSW',
               parsetname='default',
-              pars=[{'endval': 0.8,
-                'endyear': 2015,
-                'name': 'stiprev',
-                'for': 0,
-                'startval': 0.8,
-                'startyear': 2005}]),
+              pars=[{
+                  'name': 'stiprev',
+                  'for': 0,
+                  'startyear': 2005.,
+                  'endyear': 2015,
+                  'endval': 0.8,
+                  }]),
 
          Parscen(name='Get 50K people on OST',
               parsetname='default',
-              pars=[{'endval': 50000,
-                'endyear': 2015,
-                'name': 'numost',
-                'for': 0,
-                'startval': 1250,
-                'startyear': 2005}]),
+              pars=[{
+                  'name': 'numost',
+                  'for': 0,
+                  'startyear': 2005.,
+                  'endyear': 2015,
+                  'endval': 50000,
+                  }]),
 
          Budgetscen(name='Keep current investment in condom program',
               parsetname='default',
@@ -171,7 +189,6 @@ if 'standardscen' in tests:
               progsetname='default',
               t=2016,
               budget={'Condoms': 1e7,
-                           'FSW programs':1e6,
                            'ART':1e6})
 
         ]
@@ -214,7 +231,6 @@ if '90-90-90' in tests:
 
     print('Running standard scenarios test...')
     from optima import Parscen, defaults, pygui, findinds, plotpeople
-    from numpy import nan
     
     P = defaults.defaultproject('best')
     P.runsim(debug=True)
@@ -242,34 +258,30 @@ if '90-90-90' in tests:
               parsetname='default',
               pars=[
               {'name': 'propdx',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'startval': start_propdx,
               'endval': .9,
               },
               
               {'name': 'propcare',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'startval': start_propincare,
               'endval': .9,
               },
               
               {'name': 'proptx',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'startval': start_proptx,
               'endval': .9,
               },
               
               {'name': 'propsupp',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'startval': start_propsupp,
               'endval': .9,
               },
                 ]),
@@ -278,24 +290,12 @@ if '90-90-90' in tests:
               parsetname='default',
               pars=[
               {'name': 'numtx',
-              'for': ['tot'],
+              'for': 'tot',
               'startyear': startyear,
               'endyear': 2030.,
-              'startval': 48100.,
               'endval': 68000.,
               }]),
-                
-         Parscen(name='Constant numtx',
-              parsetname='default',
-              pars=[
-              {'name': 'proptx',
-              'for': ['tot'],
-              'startyear': startyear,
-              'startval': nan,
-#              'endyear': 2030.,
-#              'endval': 48100.,
-              }]),
-                
+                                
         ]
 
     # Store these in the project
@@ -327,7 +327,7 @@ if '90-90-90' in tests:
     if doplot:
 #        ppl = P.results[-1].raw['90-90-90'][0]['people']
 #        plotpeople(P, ppl)
-        pygui(P.results[-1], toplot='cascade')
+        pygui(P.results[-1], toplot='default')
 
     done(t)
 
