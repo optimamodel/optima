@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 1.5 (2016jul06)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones, inf, append
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
@@ -950,6 +950,39 @@ class Parameterset(object):
         if self.resultsref is not None and self.project is not None:
             results = getresults(project=self.project, pointer=self.resultsref, die=die)
             return results
+        else:
+            raise OptimaException('No results associated with this parameter set')
+    
+    
+    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=True):
+        ''' Method for getting proportions'''
+
+        if self.resultsref is not None and self.project is not None:
+
+            # Get results
+            results = getresults(project=self.project, pointer=self.resultsref, die=die)
+
+            # Interpret inputs
+            if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
+            elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
+            elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
+            elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
+            elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
+            else:
+                raise OptimaException('Unknown proportion type %s' % proptype)
+        
+            if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
+            elif ind in ['lower','l','low',1]: ind=1
+            elif ind in ['upper','u','up','high','h',2]: ind=2
+            else: ind=0 # Return best estimate if can't understand whichone was requested
+            
+            timeindex = findinds(results.tvec,year) if year else Ellipsis
+
+            if bypop:
+                return results.main[proptype].pops[ind][:][timeindex]
+            else:
+                return results.main[proptype].tot[ind][timeindex]
+                
         else:
             raise OptimaException('No results associated with this parameter set')
     
