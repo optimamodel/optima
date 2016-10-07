@@ -154,6 +154,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       toastr.success("Program set deleted");
     }
 
+    function getUniqueName(name, otherNames) {
+      var i = 0;
+      var uniqueName = name;
+      while (_.indexOf(otherNames, uniqueName) >= 0) {
+        i += 1;
+        uniqueName = name + ' (' + i + ')';
+      }
+      return uniqueName;
+    }
+
     $scope.copyProgramSet = function () {
       if (!$scope.state.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
@@ -170,11 +180,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
               $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
             });
         };
+        var usedNames = _.pluck($scope.programSetList, 'name');
         programSetModalService.openProgramSetModal(
             copy,
             'Copy program set',
             $scope.programSetList,
-            $scope.state.activeProgramSet.name + ' copy',
+            getUniqueName($scope.state.activeProgramSet.name, usedNames),
             'Copy');
       }
     };
