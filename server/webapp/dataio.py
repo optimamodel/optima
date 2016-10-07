@@ -769,7 +769,12 @@ def load_parset_graphs(
     result = load_result(project.uid, parset.uid, calculation_type)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
-        result = project.runsim(simpars=parset.interp())
+        years = project.data.get('years', [])
+        if years:
+            simpars = parset.interp(start=years[0], end=years[-1])
+        else:
+            simpars = parset.interp()
+        result = project.runsim(simpars=simpars)
         result_record = update_or_create_result_record(project, result, parset.name, calculation_type)
         db.session.add(result_record)
         db.session.commit()
