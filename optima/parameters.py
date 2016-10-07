@@ -525,6 +525,7 @@ def makepars(data, label=None, verbose=2):
         if sum(row):
             for colno,colval in enumerate(row):
                 agetransit[rowno,colno] = colval/sum(row)/duration[rowno]
+    agetransit = 1./agetransit # Convert from inverse years to years
     pars['agetransit'] = agetransit
 
     # Risk transitions - these are time-constant

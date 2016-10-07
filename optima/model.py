@@ -112,7 +112,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     risktransitlist,agetransitlist = [],[]
     for p1 in range(npops):
             for p2 in range(npops):
-                if agetransit[p1,p2]: agetransitlist.append((p1,p2))
+                if agetransit[p1,p2]:   agetransitlist.append((p1,p2,(1.-exp(-dt/agetransit[p1,p2]))))
                 if risktransit[p1,p2]: risktransitlist.append((p1,p2,(1.-exp(-dt/risktransit[p1,p2]))))
     
     # Figure out which populations have age inflows -- don't force population
@@ -662,8 +662,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
             ## Age-related transitions
-            for p1,p2 in agetransitlist:
-                peopleleaving = people[:, p1, t+1] * agetransit[p1, p2]
+            for p1,p2,thisagetransprob in agetransitlist:
+                peopleleaving = people[:, p1, t+1] * thisagetransprob
                 if debug and (peopleleaving > people[:, p1, t+1]).any():
                     errormsg = 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
                     if die: raise OptimaException(errormsg)
