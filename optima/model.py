@@ -104,7 +104,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     # Births, deaths and transitions
     birth           = simpars['birth']*dt           # Multiply birth rates by dt
-    agetransit      = simpars['agetransit']*dt      # Multiply age transition rates by dt
+    agetransit      = simpars['agetransit']      # Multiply age transition rates by dt
     risktransit     = simpars['risktransit']        # Don't multiply risk trnsitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
     birthtransit    = simpars['birthtransit']       # Don't multiply the birth transitions by dt as have already multiplied birth rates by dt
     
