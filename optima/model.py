@@ -111,9 +111,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep
     risktransitlist,agetransitlist = [],[]
     for p1 in range(npops):
-            for p2 in range(npops):
-                if agetransit[p1,p2]:   agetransitlist.append((p1,p2,(1.-exp(-dt/agetransit[p1,p2]))))
-                if risktransit[p1,p2]: risktransitlist.append((p1,p2,(1.-exp(-dt/risktransit[p1,p2]))))
+        for p2 in range(npops):
+            if agetransit[p1,p2]:   agetransitlist.append((p1,p2, (1.-exp(-dt/agetransit[p1,p2]))))
+            if risktransit[p1,p2]: risktransitlist.append((p1,p2,(1.-exp(-dt/risktransit[p1,p2]))))
     
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -712,6 +712,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     if actualpeople==0: raise Exception("ERROR: no people.")
                     ratio = wantedpeople/actualpeople
                     people[susnotonart,p,t+1] *= ratio # Scale to match
+                    if t==1: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     if abs(ratio-1)>relerr:
                         errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
