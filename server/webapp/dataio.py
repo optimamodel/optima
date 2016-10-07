@@ -749,7 +749,7 @@ def save_parameters(project_id, parset_id, parameters):
 
 def load_parset_graphs(
         project_id, parset_id, calculation_type, which=None,
-        parameters=None):
+        parameters=None, start=None, end=None): # Adding hooks for selecting year range
 
     project = load_project(project_id)
     parset = get_parset_from_project(project, parset_id)
@@ -763,7 +763,7 @@ def load_parset_graphs(
     result = load_result(project.uid, parset.uid, calculation_type)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
-        result = project.runsim(name=parset.name)
+        result = project.runsim(name=parset.name, start=start, end=end) # ACTUALLY RUN THE MODEL
         result_record = update_or_create_result_record(project, result, parset.name, calculation_type)
         db.session.add(result_record)
         db.session.commit()
