@@ -1211,27 +1211,14 @@ def upload_progset(project_id, progset_id, progset_summary):
     return get_progset_summary(project, progset_summary["name"])
 
 
-def copy_progset(project_id, progset_id, new_name):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
+def copy_progset(project_id, progset_id, new_progset_name):
 
-    print("> Progset keys", project.progsets.keys())
-    progset = get_progset_from_project(project, progset_id)
-    progset_summary = get_progset_summary(project, progset.name)
-    progset_outcomes_summary = get_outcome_summaries_from_progset(progset)
-    # print(">> To copy summary ", progset_summary)
-    print(">> To copy outcomes ", progset_outcomes_summary)
+    def update_project_fn(project):
+        original_progset = get_progset_from_project(project, progset_id)
+        project.copyprogset(orig=original_progset.name, new=new_progset_name)
+        project.progsets[new_progset_name].uid = op.uuid()
 
-    new_progset = op.Programset(name=new_name)
-    set_progset_summary_on_progset(new_progset, progset_summary)
-    set_outcome_summaries_on_progset(progset_outcomes_summary, new_progset)
-    project.progsets[new_name] = new_progset
-
-    project_record.save_obj(project)
-    print(">> targetpartypes ", new_progset.targetpars)
-
-    # print(">> Copied summary ", get_progset_summary(project, new_name))
-    print(">> Copied outcomes ", get_outcome_summaries_from_progset(new_progset))
+    update_project_with_fn(project_id, update_project_fn)
     return load_progset_summaries(project_id)
 
 
