@@ -63,8 +63,8 @@
           </tbody>
           <tfoot>
           <tr>
-            <td colspan="6" class="text-right">
-              <button type="button" class="btn" ng-click="openAddPopulationModal($event)">Add a population</button>
+            <td colspan="6" class="text-left">
+              <button type="button" class="btn" ng-click="openAddPopulationModal($event)">+ population</button>
             </td>
           </tr>
           </tfoot>
@@ -73,7 +73,7 @@
     </div>
 
     <div class="section">
-      <button class="btn __green" type="submit">{{ submitButtonText }}</button>
+      <button class="btn" ng-disabled="invalid()" type="submit">{{ submitButtonText }}</button>
     </div>
 
     <input type="hidden" id="edit_params" name="edit_params" value = "{{ editParams }}">

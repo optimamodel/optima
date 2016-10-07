@@ -23,7 +23,7 @@ epiformatslist = [ # WARNING, definition requires each of these to start with th
                   ['s', 'sta', 'stacked']
                  ]
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
+estimatecolor = 'none' # Color of estimates rather than real data
 defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
 defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
 
@@ -527,9 +527,8 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     budgets = dcp(multires.budget) # Copy budget
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
-            if budgets[b][p] is None:
-                continue
-            budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
+            if budgets[b][p] is not None:
+                budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
     for key in budgets.keys(): # Budgets is an odict
         for i,val in enumerate(budgets[key].values()):
             if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0
@@ -685,8 +684,8 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
     # Set up figure and do plot
     fig = figure(facecolor=(1,1,1), figsize=figsize)
     
-    cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
-    cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
+    cascadelist = ['numplhiv', 'numdiag', 'numevercare', 'numincare', 'numtreat', 'numsuppressed'] 
+    cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
     # Handle colors
     if colors is None: colors = gridcolormap(len(cascadelist))

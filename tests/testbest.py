@@ -20,7 +20,6 @@ ind = -1 # Default index
 P = defaults.defaultproject('best',dorun=False)
 P.runsim(debug=True)
 
-
 ## Calibration
 if autocalib: 
     P.autofit(name='default', maxiters=60)

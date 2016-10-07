@@ -2,93 +2,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
 
-  module.factory('globalOptimizationPoller', ['$http', '$timeout', function($http, $timeout) {
-
-    var optimPolls = {};
-
-    function getOptimPoll(optimId) {
-      if (!(optimId in optimPolls)) {
-        console.log('Creating polling slot for', optimId)
-        optimPolls[optimId] = {isRunning: false}
-      }
-      return optimPolls[optimId];
-    }
-
-    function start(optimName, projectId, optimId, callback) {
-      var optimPoll = getOptimPoll(optimId);
-      optimPoll.optimId = optimId;
-      optimPoll.projectId = projectId;
-      optimPoll.callback = callback;
-      optimPoll.name = optimName;
-
-      if (!optimPoll.isRunning) {
-
-        console.log('Launch polling for', optimName, optimId);
-        optimPoll.isRunning = true;
-
-        function poller() {
-          var optimPoll = getOptimPoll(optimId);
-          $http
-            .get(
-              '/api/project/' + optimPoll.projectId
-              + '/optimizations/' + optimPoll.optimId
-              + '/results')
-            .success(function(response) {
-              if (response.status === 'started') {
-                optimPoll.timer = $timeout(poller, 1000);
-              } else {
-                end(optimId);
-              }
-              optimPoll.callback(optimId, response);
-            })
-            .error(function(response) {
-              end(optimId);
-              optimPoll.callback(optimId, response);
-            });
-        }
-        poller();
-
-      } else {
-        console.log('Taking over polling', optimName, optimId);
-      }
-
-    }
-
-    function end(optimId) {
-      var optimPoll = getOptimPoll(optimId);
-      console.log('Stopping polling for', optimId, optimPoll);
-      if (optimPoll.isRunning) {
-        optimPoll.isRunning = false;
-        $timeout.cancel(optimPoll.timer);
-      }
-    }
-
-    return {
-      start: start,
-      end: end
-    };
-
-  }]);
-
-
-
   module.controller('AnalysisOptimizationController', function (
-      $scope, $http, $upload, $modal, toastr, modalService, activeProject, $timeout, globalOptimizationPoller) {
+      $scope, $http, $upload, $modal, toastr, modalService, activeProject, $timeout, globalPoller) {
 
     function initialize() {
 
       $scope.isPolling = {};
 
-      if (!activeProject.data.hasData) {
-        modalService.inform(
-          function () {
-          },
-          'Okay',
-          'Please upload spreadsheet to proceed.',
-          'Cannot proceed'
-        );
-        $scope.missingData = true;
-        return;
+      $scope.isMissingData = !activeProject.data.hasParset;
+      $scope.isOptimizable = activeProject.data.isOptimizable;
+      $scope.isMissingProgramSet = activeProject.data.nProgram == 0;
+
+      console.log("$scope", $scope);
+      if ($scope.isMissingData || $scope.isMissingProgramSet || !$scope.isOptimizable) {
+        return
       }
 
       $scope.state = {
@@ -165,9 +92,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.setActiveOptimization = function(optimization) {
-      if ($scope.state.optimization) {
-        globalOptimizationPoller.end($scope.state.optimization.id);
-      }
+      globalPoller.stopPolls();
 
       $scope.state.isRunnable = false;
       $scope.state.optimization = optimization;
@@ -401,6 +326,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               + '/results',
             { maxtime: $scope.state.maxtime })
           .success(function (response) {
+            $scope.task_id = response.task_id;
             if (response.status === 'started') {
               $scope.statusMessage = 'Optimization started.';
               initPollOptimizations();
@@ -412,32 +338,37 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     function initPollOptimizations() {
-      globalOptimizationPoller.start(
-        $scope.state.optimization.name,
-        $scope.state.project.id,
+      globalPoller.startPoll(
         $scope.state.optimization.id,
-        pollCallback);
+        '/api/project/' + $scope.state.project.id
+          + '/optimizations/' + $scope.state.optimization.id
+          + '/results',
+        function(response) {
+          if (response.status === 'completed') {
+            $scope.statusMessage = 'Loading graphs...';
+            toastr.success('Optimization completed');
+            $scope.getOptimizationGraphs();
+          } else if (response.status === 'started') {
+            $scope.task_id = response.task_id;
+            var start = new Date(response.start_time);
+            var now = new Date(response.current_time);
+            var diff = now.getTime() - start.getTime();
+            var seconds = parseInt(diff / 1000);
+            $scope.statusMessage = "Optimization running for " + seconds + " s";
+          } else {
+            $scope.statusMessage = 'Optimization failed';
+            $scope.state.isRunnable = true;
+          }
+        }
+      );
     }
 
-    function pollCallback(optimId, response) {
-      if (optimId != $scope.state.optimization.id) {
-        return;
-      }
-      if (response.status === 'completed') {
-        $scope.statusMessage = 'Loading graphs...';
-        toastr.success('Optimization completed');
-        $scope.getOptimizationGraphs();
-      } else if (response.status === 'started') {
-        var start = new Date(response.start_time);
-        var now = new Date(response.current_time);
-        var diff = now.getTime() - start.getTime();
-        var seconds = parseInt(diff / 1000);
-        $scope.statusMessage = "Optimization running for " + seconds + " s";
-      } else {
-        $scope.statusMessage = 'Optimization failed';
-        $scope.state.isRunnable = true;
-      }
-    }
+    $scope.killJob = function() {
+      var projectId = $scope.state.project.id;
+      var optimizationId = $scope.state.optimization.id;
+      var workType = "optim-" + optimizationId;
+      globalPoller.killJob(projectId, workType);
+    };
 
     function getSelectors() {
       if ($scope.graphs) {

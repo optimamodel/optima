@@ -18,14 +18,24 @@ define([
     $stateProvider
       .state('home', {
         url: '/',
-        templateUrl: './js/modules/home/home.html',
-        controller: 'HomeController',
+        templateUrl: 'js/modules/home/home.html',
+        controller: 'ProjectOpenController',
         resolve: {
-          project: function (projectApiService) {
-            return projectApiService.getActiveProject();
-          }
+          projects: function (projectApiService) {
+            return projectApiService.getProjectList();
+          },
         }
       });
+      // .state('home', {
+      //   url: '/',
+      //   templateUrl: './js/modules/home/home.html',
+      //   controller: 'HomeController',
+      //   resolve: {
+      //     project: function (projectApiService) {
+      //       return projectApiService.getActiveProject();
+      //     }
+      //   }
+      // });
   });
 
 });

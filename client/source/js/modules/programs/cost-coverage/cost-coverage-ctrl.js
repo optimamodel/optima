@@ -29,15 +29,13 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.parsets = [];
 
         // Stop here if spreadsheet has not been uploaded
-        if (!vm.project.hasData) {
-          modalService.inform(
-            function() {
-            },
-            'Okay',
-            'Please upload spreadsheet to proceed.',
-            'Cannot proceed'
-          );
-          $state.go('project.open');
+        vm.isMissingData = !vm.project.hasParset;
+        if (vm.isMissingData) {
+          return;
+        }
+
+        vm.hasNoProgram = vm.project.nProgram === 0;
+        if (vm.hasNoProgram) {
           return;
         }
 
@@ -416,6 +414,11 @@ define(['./../module', 'underscore'], function(module, _) {
             return;
           }
           var pop = outcome.pop;
+
+          if (vm.state.parameter.coverage == 1) {
+            return;
+          }
+
           _.each(outcome.years, function(year) {
 
             var existingProgramShorts = _.pluck(year.programs, 'name');
