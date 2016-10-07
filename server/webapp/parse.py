@@ -174,6 +174,7 @@ def get_project_summary_from_project(project):
         this_n_program = len(progset.programs.values())
         if this_n_program > n_program:
             n_program = this_n_program
+
         if n_program > 0 and progset.readytooptimize():
             is_ready_to_optimize = True
 
