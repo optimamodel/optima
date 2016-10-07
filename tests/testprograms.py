@@ -98,11 +98,11 @@ if 'demonstrateprogrammethods' in tests:
     HTC.getcostcovpar(2014)
 
     # 2. Get target population size
-    HTC.gettargetpopsize(t=[2013,2015],parset=P.parsets['default'])
+    HTC.gettargetpopsize(year=[2013,2015],parset=P.parsets['default'])
 
     # 3. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
     from numpy import linspace, array
-    HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
+    HTC.getcoverage(x=linspace(0,1e6,3),year=[2013,2015,2017],parset=P.parsets['default'],total=False)
     HTC.targetcomposition = {'Clients': array([ 0.01]),
                        'F 15+': array([ 0.3]),
                        'FSW': array([ 0.12]),
@@ -111,35 +111,35 @@ if 'demonstrateprogrammethods' in tests:
                        'MSM': [ 0.15]}
     
     # Make sure that getcoverage and getbudget are the reciprocal of each other.
-    a = HTC.getcoverage(x=1e6,t=2016,parset=P.parsets['default'])
-    b = HTC.getbudget(x=a,t=2016,parset=P.parsets['default'])
+    a = HTC.getcoverage(x=1e6,year=2016,parset=P.parsets['default'])
+    b = HTC.getbudget(x=a,year=2016,parset=P.parsets['default'])
     assert_allclose(1e6,b,rtol=rtol)
     # NB, if you want to evaluate it for a particular population size, can also do...
-    HTC.evalcostcov(x=[1e6], popsize=[1e5], t=[2015])
+    HTC.evalcostcov(x=[1e6], popsize=[1e5], year=[2015])
 
     # 3. Get default budget and coverage
     defaultbudget = R.getdefaultbudget()
-    defaultcoverage = R.getdefaultcoverage(t=2016, parset=P.parsets['default'])
+    defaultcoverage = R.getdefaultcoverage(year=2016, parset=P.parsets['default'])
 
     R.getprogcoverage(budget=defaultbudget,
-                      t=2016,
+                      year=2016,
                       parset=P.parsets['default'])
                         
     R.getprogbudget(coverage=defaultcoverage,
-                      t=2016,
+                      year=2016,
                       parset=P.parsets['default'])
                         
     R.getpopcoverage(budget=defaultbudget,
-                      t=2016,
+                      year=2016,
                      parset=P.parsets['default'])
 
     # 4. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
     outcomes = R.getoutcomes(coverage=defaultcoverage,
-                      t=2016,
+                      year=2016,
                                 parset=P.parsets['default'])
     
-    R.getoutcomes(defaultcoverage, t=2016, parset=P.parsets['default'])
-    R.getoutcomes(t=2016, parset=P.parsets['default'])
+    R.getoutcomes(defaultcoverage, year=2016, parset=P.parsets['default'])
+    R.getoutcomes(year=2016, parset=P.parsets['default'])
             
 
     # 5. Get an odict of the ALL parameter values corresponding to a vector of program allocations
