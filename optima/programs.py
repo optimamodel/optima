@@ -165,12 +165,12 @@ class Programset(object):
         details = []
         for thispartype in self.covout.keys():
             for thispop in self.covout[thispartype].keys():
-                if 'intercept' not in self.covout[thispartype][thispop].ccopars or not self.covout[thispartype][thispop].ccopars['intercept']:
+                if not self.covout[thispartype][thispop].ccopars.get('intercept', False):
                     result = False
                     details.append((thispartype,thispop))
                 if thispartype not in coveragepars:
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
-                        if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                        if not self.covout[thispartype][thispop].ccopars.get(thisprog.short, False):
                             result = False
                             details.append((thispartype,thispop))
         if detail: return list(set(details))
