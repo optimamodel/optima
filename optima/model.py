@@ -712,7 +712,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     if actualpeople==0: raise Exception("ERROR: no people.")
                     ratio = wantedpeople/actualpeople
                     people[susnotonart,p,t+1] *= ratio # Scale to match
-                    if t==1: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     if abs(ratio-1)>relerr:
                         errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)

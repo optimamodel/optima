@@ -75,7 +75,7 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nstates   = len(project.settings.allstates) 
     project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
     project.settings.nhealth = len(project.settings.healthstates)
-    project.settings.transnorm = 0.8 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
+    project.settings.transnorm = 0.6 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
 
     if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
@@ -154,6 +154,11 @@ def redotransitions(project, dorun=False, **kwargs):
 
             # Add transitions matrix
             pd['rawtransit'] = loadtranstable(npops = project.data['npops'])
+            for transitkey in ['agetransit','risktransit']:
+                for p1 in range(pd[transitkey].shape[0]):
+                    for p2 in range(pd[transitkey].shape[1]):
+                        thistrans = pd[transitkey][p1,p2]
+                        if thistrans>0: pd[transitkey][p1,p2] = 1./thistrans # Invert if nonzero
 
         # Rerun calibrations to update results appropriately
         if dorun: project.runsim(ps.name)
