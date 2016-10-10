@@ -730,7 +730,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     if name is 'proptx':
                         if isnan(propsupp[t+1]):
                             newlysuppressed = raw_newtreat[:,t].sum()*dt*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
-                            print('%i: line 732: %f' % (t, raw_newtreat[:,t].sum())),
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                             
@@ -760,7 +759,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         people[lowerstate,:,t+1] -= new_movers # Shift people out of the lower state... 
                         people[tostate,:,t+1] += new_movers # ... and into the higher state
                         raw_new[:,t] += new_movers.sum(axis=0)/dt # Save new movers
-                        print(', line 762: %f' % (raw_new[:,t].sum()))
     
                     else: # We need to move people DOWN the cascade
                         for state in higherstates: # Start with the first higher state
