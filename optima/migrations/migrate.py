@@ -62,7 +62,7 @@ def redotransitions(project, dorun=False, **kwargs):
     Migration between Optima 2.0.4 and 2.1
     """
     from numpy import concatenate as cat
-    from optima import Constant, loadtranstable
+    from optima import Constant, loadtranstable, Par
 
     # Update settings
     project.settings.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
@@ -173,6 +173,11 @@ def redotransitions(project, dorun=False, **kwargs):
             if not usedcascade: 
                 pd['propsupp'].y['tot'][0] = 0.6 # Pick a reasonable value for viral suppression
                 pd['propsupp'].t['tot'][0] = 2000.
+            
+            # Add `fromdata` field
+            for key in pd.keys():
+                if isinstance(pd[key],Par):
+                    pd[key].fromdata = True # WARNING, this should be fixed
             
 
         # Rerun calibrations to update results appropriately
