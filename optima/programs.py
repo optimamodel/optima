@@ -18,7 +18,7 @@ coveragepars=['numtx','numpmtct','numost','numcirc']
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='geometric', project=None):
+    def __init__(self, name='default', programs=None, default_interaction='additive', project=None):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()
