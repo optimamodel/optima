@@ -130,7 +130,7 @@ def loadpartable(inputpartable=None):
         rawpars.append(dict()) # Create an odict to store attributes
         for i,attr in enumerate(attrs): # Loop over attributes
             try:
-                if attr in ['limits', 'coverage', 'visible']: alllines[l][i] = eval(alllines[l][i]) # Turn into actual values
+                if attr in ['limits', 'coverage', 'visible', 'cascade', 'fromdata']: alllines[l][i] = eval(alllines[l][i]) # Turn into actual values
                 if alllines[l][i]=='None': alllines[l][i] = None # Turn any surviving 'None' values to actual None
                 rawpars[l][attr] = alllines[l][i] # Store attributes
             except:

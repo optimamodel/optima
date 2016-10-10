@@ -56,19 +56,12 @@ if 'standardscen' in tests:
     
     caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
     
+    # Example of generating a dict to autofill parameter scenarios    
+    thisdict = setparscenvalues(parset=P.parsets[0], parname='hivtest', forwhom='FSW',startyear=2016.)
+    thisdict = setparscenvalues(parset=P.parsets[0], parname='proptx', forwhom='tot')
     
-    ## Create a scenario
-    thisname = 'Get lots of people on treatment'
-    thisparset = 0
-    thispar = 'numtx'
-    thisfor = 0
-    thisstartyear = 2016.
-    thisstartval = P.parsets[thisparset].pars[0][thispar].interp(thisstartyear)[thisfor]
-    thisendyear = 2020.
-    thisendval = 100000.
 
-    thisdict = setparscenvalues(parset=P.parsets[0], parname='hivtest', forwhom='FSW')
-    
+    ## Create scenarios
     scenlist = [
         Parscen(name='Get lots of people on treatment',
                 parsetname=0,
@@ -76,8 +69,6 @@ if 'standardscen' in tests:
                  'name': 'numtx',
                  'for': 'tot',
                  'startyear': 2016.,
-                 'endyear': thisendyear,
-                 'endval': thisendval
                  }]),
 
         Parscen(name='Imagine that no-one gets circumcised',
