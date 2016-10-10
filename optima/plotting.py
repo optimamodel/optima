@@ -762,6 +762,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         except: pass
     if indices is None: indices = arange(len(progs))
     nprogs = len(indices)
+    progs = [progs[i] for i in indices] # Trim programs
     
     if colors is None:
         colors = gridcolormap(nprogs)
@@ -782,10 +783,10 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
     for plt in range(nplt):
         ax.append(subplot(len(budgets),1,plt+1))
         ax[-1].hold(True)
-        for p in indices:
-            ax[-1].bar([xbardata[p]], [budgets[plt][p]/factor], color=colors[p], linewidth=0)
+        for p,ind in enumerate(indices):
+            ax[-1].bar([xbardata[p]], [budgets[plt][ind]/factor], color=colors[p], linewidth=0)
             if plt==1 and compare:
-                ax[-1].bar([xbardata[p]], [budgets[0][p]/factor], color='None', linewidth=1)
+                ax[-1].bar([xbardata[p]], [budgets[0][ind]/factor], color='None', linewidth=1)
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt!=nplt: ax[-1].set_xticklabels('')
         if plt==nplt-1: 
