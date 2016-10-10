@@ -19,7 +19,7 @@ from pprint import pprint, pformat
 from uuid import UUID
 
 from flask.ext.restful import fields, marshal
-from numpy import nan, array
+from numpy import nan, array, isnan
 
 import optima as op
 from optima import loadpartable, partable, Par
@@ -326,7 +326,7 @@ def get_par_limits(project, par):
 
 
 
-def get_parameters_for_scenarios(project):
+def get_parameters_for_scenarios(project, start_year=None):
     """
     Returns parameters that can be modified in a scenario:
         <parsetID>:
@@ -334,20 +334,28 @@ def get_parameters_for_scenarios(project):
                 - val: string -or- list of two string
                 - label: string
     """
+    if start_year is None:
+        start_year = project.settings.start
     result = {}
     for id, parset in project.parsets.items():
         y_keys_of_parset = {}
         for par in parset.pars[0].values():
             if not hasattr(par, 'y') or not par.visible:
                 continue
-            y_keys_of_parset[par.short] = [
-                {
+            y_keys_of_parset[par.short] = []
+            for pop in par.y.keys():
+                par_defaults = optima.setparscenvalues(
+                    parset, par.short, pop, start_year)
+                startval = par_defaults['startval']
+                if isnan(startval):
+                    startval = None
+                print(par.short, pop, project.settings.start, startval)
+                y_keys_of_parset[par.short].append({
                     'val': pop,
                     'label': make_pop_label(pop),
-                    'limits': get_par_limits(project, par)
-                }
-                for pop in par.y.keys()
-            ]
+                    'limits': get_par_limits(project, par),
+                    'startval': startval
+                })
         result[str(parset.uid)] = y_keys_of_parset
     return result
 

@@ -88,10 +88,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     /**
-     * Function opens a model in different modes
+     * Opens a scenario model in different modes
      * @param {string} action: 'add', 'edit' 'delete'
      */
     $scope.openModal = function (scenario, action, $event) {
+
       if ($event) {
         $event.preventDefault();
       }
@@ -132,9 +133,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       } else if (action === 'delete') {
 
-        var scenario = _.findWhere(newScenarios, { id: scenario.id });
+        var deleteScenario = _.findWhere(newScenarios, { id: scenario.id });
         $scope.saveScenarios(
-            _.without(newScenarios, scenario), "Deleted scenario");
+            _.without(newScenarios, deleteScenario), "Deleted scenario");
 
       }
     };

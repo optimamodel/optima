@@ -92,10 +92,10 @@ define(['angular'], function (module) {
         $scope.selectNewPar(iLast);
         $scope.buildPopsOfPar();
         newPar.for = $scope.popsOfPar[iLast][0].val;
-        newPar.startval = $scope.popsOfPar[iLast][0].limits[0];
-        newPar.endval = $scope.popsOfPar[iLast][0].limits[1];
+        newPar.startval = $scope.popsOfPar[iLast][0].startval;
+        newPar.endval = null;
         newPar.startyear = new Date().getFullYear();
-        newPar.endyear = years[years.length-1];
+        newPar.endyear = null;
         console.log('new', newPar.name, '->', _.pluck($scope.popsOfPar, 'val'))
       };
 
