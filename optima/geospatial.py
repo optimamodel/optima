@@ -3,12 +3,12 @@ GEOSPATIAL
 
 This file defines everything needed for the Python GUI for geospatial analysis.
 
-Version: 2016jan29
+Version: 2016oct10
 """
 
 from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
 from PyQt4 import QtGui
-from pylab import figure, close
+from pylab import figure, close, array
 from time import time
 import os
 
