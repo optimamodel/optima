@@ -166,11 +166,14 @@ def makepropsopt(project, **kwargs):
     """
     Migration between Optima 2.1 and 2.1.1.
     """
-    project.data['optpropdx'] = project.data.pop('propdx')
-    project.data['optpropcare'] = project.data.pop('propcare')
-    project.data['optproptx'] = project.data.pop('proptx')
-    project.data['optpropsupp'] = project.data.pop('propsupp')
-    project.data['optproppmtct'] = project.data.pop('proppmtct')
+    keys = ['propdx', 'propcare', 'proptx', 'propsupp', 'proppmtct']
+    for key in keys:
+        fullkey = 'opt'+key
+        if fullkey not in project.data.keys():
+            if key in project.data.keys():
+                project.data[fullkey] = project.data.pop(key)
+            else:
+                raise op.OptimaException('Key %s not found, but key %s not found either' % (fullkey, key))
     project.version = "2.1.1"
     return None
 
@@ -209,12 +212,8 @@ def migrate(project, verbose=2):
         upgrader = migrations[str(project.version)]
 
         op.printv("Migrating from %s ->" % project.version, 2, verbose, newline=False)
-        try: 
-            upgrader(project, verbose=verbose)
-            op.printv("%s" % project.version, 2, verbose, indent=False)
-        except Exception as E:
-            print('Migration failed!!!!')
-            raise E
+        upgrader(project, verbose=verbose) # Actually easier to debug if don't catch exception
+        op.printv("%s" % project.version, 2, verbose, indent=False)
     
     op.printv('Migration successful!', 1, verbose)
 
