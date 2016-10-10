@@ -19,7 +19,7 @@ manualcalib = 0
 reconcile = 0
 runscenarios = 1 # Run scenarios
 optimize = 0
-dosave = 0
+dosave = 1
 filename = 'best.prj'
 programdatafile = 'concentratedprogramdata.xlsx'
 ind = -1 # Default index
@@ -51,6 +51,7 @@ if runscenarios:
     scenlist = [
         Parscen(name='Current conditions', parsetname=ind, pars=[]),
         Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
+        Budgetscen(name='No FSW budget', parsetname=ind, progsetname=ind, t=[2016], budget={'FSW programs': 0.}),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
         Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
@@ -70,6 +71,6 @@ if optimize:
     
 
 if dosave:
-    saveobj(filename,P)
+    P.save(filename)
     
     

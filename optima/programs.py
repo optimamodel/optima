@@ -229,12 +229,12 @@ class Programset(object):
         details = []
         for thispartype in self.covout.keys():
             for thispop in self.covout[thispartype].keys():
-                if not self.covout[thispartype][thispop].covoutpars['intercept']:
+                if self.covout[thispartype][thispop].ccopars.get('intercept', None) is None:
                     result = False
                     details.append((thispartype,thispop))
                 if thispartype not in _coveragepars:
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
-                        if not self.covout[thispartype][thispop].covoutpars[thisprog.short]:
+                        if self.covout[thispartype][thispop].ccopars.get(thisprog.short, None) is None:
                             result = False
                             details.append((thispartype,thispop))
         if detail: return list(set(details))
@@ -246,7 +246,7 @@ class Programset(object):
         result = True
         details = []
         for prog in self.optimizableprograms().values():
-            if prog.costcovpars.get('unitcost') is None:
+            if prog.costcovfn.ccopars.get('unitcost', None) is None:
                 details.append(prog.name)
                 result = False
         if detail: return list(set(details))

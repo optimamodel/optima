@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append, array
-from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid
+from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
 
 
 class Scen(object):
@@ -123,16 +123,19 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter sets
                 if scenlist[scenno].pars is None: scenlist[scenno].pars = [] # Turn into empty list instead of None
                 for scenpar in scenlist[scenno].pars: # Loop over all parameters being changed
+
+                    # Get the parameter object
                     thispar = thisparset.pars[pardictno][scenpar['name']]
+
+                    # Parse inputs to figure out which population(s) are affected
                     if type(scenpar['for'])==tuple: # If it's a partnership...
-                        par2 = (scenpar['for'][1],scenpar['for'][0])
-                        pops = [scenpar['for'], par2] # This is confusing - for partnership parameters, pops is a list of the two different partnership orderings.
-                    elif type(scenpar['for'])==int: #... if its a population.
-                        pops = range(npops) if scenpar['for'] > npops else [scenpar['for']]
-                    elif type(scenpar['for']) in [list, type(array([]))]: #... if its a population.
+                        pops = [scenpar['for']] 
+                    elif type(scenpar['for'])==int: #... if its asingle  population.
+                        pops = [range(npops)] if scenpar['for'] > npops else [scenpar['for']]
+                    elif type(scenpar['for']) in [list, type(array([]))]: #... if its list of population.
                         pops = scenpar['for']
-                    elif scenpar['for']=='tot': #... if its a population.
-                        pops = [scenpar['for']]
+                    elif scenpar['for']=='tot': 
+                        pops = ['tot']
                     else: 
                         errormsg = 'Unrecognized population or partnership type: %s' % scenpar['for']
                         raise OptimaException(errormsg)
@@ -141,40 +144,50 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
                     last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
 
+                    # Find or set new value 
+                    if scenpar.get('startval'):
+                        this_y = promotetoarray(scenpar['startval']) # Use supplied starting value if there is one
+                    else:
+                        if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
+                            this_y = thispar.interp(tvec=scenpar['startyear'], usemeta=False) # Find what the model would get for this value
+                        else:
+                            this_y = thisparset.getprop(proptype=scenpar['name'],year=scenpar['startyear'])                            
+
                     # Loop over populations
                     for pop in pops:
 
+                        # Get the index of the population
+                        if isnumber(pop): popind = pop
+                        else: popind = thispar.y.keys().index(pop)
+                        
                         # Remove years after the last good year
-                        if last_t < max(thispar.t[pop]):
-                            thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
-                            thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
+                        if last_t < max(thispar.t[popind]):
+                            thispar.t[popind] = thispar.t[popind][findinds(thispar.t[popind] <= last_t)]
+                            thispar.y[popind] = thispar.y[popind][findinds(thispar.t[popind] <= last_t)]
                         
                         # Append the last good year, and then the new years
-                        thispar.t[pop] = append(thispar.t[pop], last_t)
-                        thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
-                        thispar.t[pop] = append(thispar.t[pop], scenpar['startyear'])
-                        thispar.y[pop] = append(thispar.y[pop], scenpar['startval']) 
+                        thispar.t[popind] = append(thispar.t[popind], last_t)
+                        thispar.y[popind] = append(thispar.y[popind], last_y[popind]) 
+                        thispar.t[popind] = append(thispar.t[popind], scenpar['startyear'])
+                        thispar.y[popind] = append(thispar.y[popind], this_y[popind]) 
                         
                         # Add end year values if supplied
                         if scenpar.get('endyear'): 
-                            thispar.t[pop] = append(thispar.t[pop], scenpar['endyear'])
-                            thispar.y[pop] = append(thispar.y[pop], scenpar['endval'])
+                            thispar.t[popind] = append(thispar.t[popind], scenpar['endyear'])
+                            thispar.y[popind] = append(thispar.y[popind], scenpar['endval'])
                         
-                        if len(thispar.t[pop])!=len(thispar.y[pop]):
+                        if len(thispar.t[popind])!=len(thispar.y[popind]):
                             raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t), len(thispar.y)))
                         
-                    thisparset.pars[pardictno][scenpar['name']] = thispar # WARNING, not sure if this is needed???
-    
         elif isinstance(scen,Progscen):
 
             try: thisprogset = dcp(project.progsets[scen.progsetname])
             except: raise OptimaException('Failed to extract progset "%s" from this project:\n%s' % (scen.progset, project))
             
             try: results = project.parsets[scen.parsetname].getresults() # See if there are results already associated with this parset
-            except:
-                results = None
+            except: results = None
 
-            if isnumber(scen.t): scen.t = [scen.t]
+            scen.t = promotetoarray(scen.t)
             
             if isinstance(scen, Budgetscen):
                 
@@ -220,7 +233,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 # Figure out coverage
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
-            # TODO @Robyn have a look
+            # Create parameter dictionary
             thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
             scen.pars = thisparsdict
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
@@ -230,7 +243,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             errormsg = 'Unrecognized program scenario type.'
             raise OptimaException(errormsg)
             
-
         scenparsets[scen.name] = thisparset
         
     return scenparsets
@@ -251,33 +263,6 @@ def defaultscenarios(parset=None, verbose=2):
     scenlist[0].pars = [] # No changes
     
     return scenlist
-
-
-
-def getparvalues(parset, scenpar):
-    """
-    Return the default parameter values from simpars for a given scenario parameter.
-    
-    defaultvals = getparvalues(parset, scenariolist[1]['pars'][2])
-    
-    Version: 2016jan30
-    """
-    npops = len(parset.pars[0]['popkeys'])
-    simpars = parset.interp(start=scenpar['startyear'], end=scenpar['endyear'])
-
-    original = simpars[scenpar['names'][0]]
-    
-    if scenpar['pops'] < npops: # It's for a specific population, get the value
-        original = original[scenpar['pops'],:]
-    else:
-        original = original[:,:].mean(axis=0)
-    initialindex = findinds(simpars['tvec'], scenpar['startyear'])
-    finalindex = findinds(simpars['tvec'], scenpar['endyear'])
-
-    startval = original[initialindex][0]
-    endval = original[finalindex][0]
-    return [startval, endval]
-        
 
 
 
