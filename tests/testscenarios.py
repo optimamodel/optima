@@ -47,7 +47,7 @@ if 'standardscen' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, Budgetscen, Coveragescen, defaults
+    from optima import Parscen, Budgetscen, Coveragescen, defaults, setparscenvalues
     from numpy import array
     
     P = defaults.defaultproject('concentrated')
@@ -66,6 +66,8 @@ if 'standardscen' in tests:
     thisstartval = P.parsets[thisparset].pars[0][thispar].interp(thisstartyear)[thisfor]
     thisendyear = 2020.
     thisendval = 100000.
+
+    thisdict = setparscenvalues(parset=P.parsets[0], parname='hivtest', forwhom='FSW')
     
     scenlist = [
         Parscen(name='Get lots of people on treatment',
