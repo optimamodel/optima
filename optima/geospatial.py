@@ -402,9 +402,9 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         if len(project.progsets) > 0:
             for progid in newproject.progsets[-1].programs:
                 program = newproject.progsets[-1].programs[progid]
-                program.costcovdata['cost'] = [x*popratio['tot'][c] for x in program.costcovdata['cost']]
+                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
                 if not program.costcovdata['coverage'] == [None]:
-                    program.costcovdata['coverage'] = [x*popratio['tot'][c] for x in program.costcovdata['coverage']]
+                    program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
             
         ### -----------------------------------------------------------------------------------------
 
