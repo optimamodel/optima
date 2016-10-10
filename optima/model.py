@@ -334,9 +334,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         fracundiagnosed = exp(-averagedurationinfected*simpars['hivtest'][:,0])
         
         # Set rates within
-        progratios = cat([prog[:-1], [simpars['deathlt50']]]) # For last rate, use CD4<50 death as dominant rate
+        progratios = cat([prog[:-1], [simpars['deathlt50']*dt]]) # For last rate, use CD4<50 death as dominant rate
         progratios = (1./progratios)  / sum(1./progratios) # Normalize
-        recovratios = cat([svlrecov[1:], [efftreatmentrate]])
+        recovratios = cat([svlrecov[1:], [efftreatmentrate*dt]])
         recovratios = (1./recovratios)  / sum(1./recovratios) # Normalize
  
         # Final calculations
