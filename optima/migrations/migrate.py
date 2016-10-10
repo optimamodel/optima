@@ -77,7 +77,10 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nhealth = len(project.settings.healthstates)
     project.settings.transnorm = 0.6 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
 
-    if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
+    usedcascade = False
+    if hasattr(project.settings, 'usecascade'):
+        usedcascade = project.settings.usecascade
+        del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
     if hasattr(project.settings, 'off'):        del project.settings.off
 
@@ -165,6 +168,11 @@ def redotransitions(project, dorun=False, **kwargs):
             # Convert more rates to transitions
             for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']:
                 pd[key].y = 1./pd[key].y # Invert
+            
+            # Make sure viral suppression isn't zero
+            if not usedcascade: 
+                pd['propsupp'].y['tot'][0] = 0.6 # Pick a reasonable value for viral suppression
+                pd['propsupp'].t['tot'][0] = 2000.
             
 
         # Rerun calibrations to update results appropriately
