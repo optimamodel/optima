@@ -154,11 +154,18 @@ def redotransitions(project, dorun=False, **kwargs):
 
             # Add transitions matrix
             pd['rawtransit'] = loadtranstable(npops = project.data['npops'])
+            
+            # Convert rates to durations
             for transitkey in ['agetransit','risktransit']:
                 for p1 in range(pd[transitkey].shape[0]):
                     for p2 in range(pd[transitkey].shape[1]):
                         thistrans = pd[transitkey][p1,p2]
                         if thistrans>0: pd[transitkey][p1,p2] = 1./thistrans # Invert if nonzero
+            
+            # Convert more rates to transitions
+            for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']:
+                pd[key].y = 1./pd[key].y # Invert
+            
 
         # Rerun calibrations to update results appropriately
         if dorun: project.runsim(ps.name)
