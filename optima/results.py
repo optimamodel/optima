@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016jul06 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds
 from numpy import array, nan, zeros, arange, shape
 from numbers import Number
 
@@ -99,6 +99,10 @@ class Resultset(object):
         self.main['numhivbirths']       = Result('Number of births to HIV+ women')
         self.main['numpmtct']           = Result('Number of HIV+ women receiving PMTCT')
         self.main['popsize']            = Result('Population size')
+
+        self.other = odict() # For storing other results -- not available in the interface
+        self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
+        self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
         
         if domake: self.make()
     
@@ -284,7 +288,11 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-
+        upperagelims = array(self.data['pops']['age'])[:,1]
+        adultpops = findinds(upperagelims>=15)
+        childpops = findinds(upperagelims<15)
+        if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         
 

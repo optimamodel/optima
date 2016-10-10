@@ -118,6 +118,33 @@ class Project(object):
         if dorun: self.runsim(name, addresult=True, **kwargs)
         if self.name is 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
         return None
+    
+    def reorderpops(self, poporder=None):
+        '''
+        Reorder populations according to a defined list.
+        
+        WARNING, doesn't reorder things like circumcision or birthrates
+        
+        '''
+        def reorder(origlist, neworder):
+            return [origlist[i] for i in neworder]
+        
+        if self.data is None: raise OptimaException('Need to load spreadsheet before can reorder populations')
+        if len(poporder) != self.data['npops']: raise OptimaException('Wrong number of populations')
+        origdata = dcp(self.data)
+        for key in self.data['pops']:
+            self.data['pops'][key] = reorder(origdata['pops'][key], poporder)
+        for key1 in self.data:
+            try:
+                if len(self.data[key1])==self.data['npops']:
+                    self.data[key1] = reorder(origdata[key1], poporder)
+                    print('    %s succeeded' % key1)
+                else:
+                    print('  %s wrong length' % key1)
+            except:
+                print('%s failed' % key1)
+        
+        
 
 
     def makeparset(self, name='default', overwrite=True):
