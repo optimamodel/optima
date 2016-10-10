@@ -104,16 +104,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     # Births, deaths and transitions
     birth           = simpars['birth']*dt           # Multiply birth rates by dt
-    agetransit      = simpars['agetransit']*dt      # Multiply age transition rates by dt
+    agetransit      = simpars['agetransit']      # Multiply age transition rates by dt
     risktransit     = simpars['risktransit']        # Don't multiply risk trnsitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
     birthtransit    = simpars['birthtransit']       # Don't multiply the birth transitions by dt as have already multiplied birth rates by dt
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep
     risktransitlist,agetransitlist = [],[]
     for p1 in range(npops):
-            for p2 in range(npops):
-                if agetransit[p1,p2]: agetransitlist.append((p1,p2))
-                if risktransit[p1,p2]: risktransitlist.append((p1,p2,(1.-exp(-dt/risktransit[p1,p2]))))
+        for p2 in range(npops):
+            if agetransit[p1,p2]:   agetransitlist.append((p1,p2, (1.-exp(-dt/agetransit[p1,p2]))))
+            if risktransit[p1,p2]: risktransitlist.append((p1,p2,(1.-exp(-dt/risktransit[p1,p2]))))
     
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -334,9 +334,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         fracundiagnosed = exp(-averagedurationinfected*simpars['hivtest'][:,0])
         
         # Set rates within
-        progratios = cat([prog[:-1], [simpars['deathlt50']]]) # For last rate, use CD4<50 death as dominant rate
+        progratios = cat([prog[:-1], [simpars['deathlt50']*dt]]) # For last rate, use CD4<50 death as dominant rate
         progratios = (1./progratios)  / sum(1./progratios) # Normalize
-        recovratios = cat([svlrecov[1:], [efftreatmentrate]])
+        recovratios = cat([svlrecov[1:], [efftreatmentrate*dt]])
         recovratios = (1./recovratios)  / sum(1./recovratios) # Normalize
  
         # Final calculations
@@ -662,8 +662,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
             ## Age-related transitions
-            for p1,p2 in agetransitlist:
-                peopleleaving = people[:, p1, t+1] * agetransit[p1, p2]
+            for p1,p2,thisagetransprob in agetransitlist:
+                peopleleaving = people[:, p1, t+1] * thisagetransprob
                 if debug and (peopleleaving > people[:, p1, t+1]).any():
                     errormsg = 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
                     if die: raise OptimaException(errormsg)
