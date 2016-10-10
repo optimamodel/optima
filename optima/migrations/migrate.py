@@ -75,7 +75,7 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nstates   = len(project.settings.allstates) 
     project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
     project.settings.nhealth = len(project.settings.healthstates)
-    project.settings.transnorm = 0.8 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
+    project.settings.transnorm = 0.6 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
 
     if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
@@ -154,6 +154,18 @@ def redotransitions(project, dorun=False, **kwargs):
 
             # Add transitions matrix
             pd['rawtransit'] = loadtranstable(npops = project.data['npops'])
+            
+            # Convert rates to durations
+            for transitkey in ['agetransit','risktransit']:
+                for p1 in range(pd[transitkey].shape[0]):
+                    for p2 in range(pd[transitkey].shape[1]):
+                        thistrans = pd[transitkey][p1,p2]
+                        if thistrans>0: pd[transitkey][p1,p2] = 1./thistrans # Invert if nonzero
+            
+            # Convert more rates to transitions
+            for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']:
+                pd[key].y = 1./pd[key].y # Invert
+            
 
         # Rerun calibrations to update results appropriately
         if dorun: project.runsim(ps.name)
@@ -166,11 +178,14 @@ def makepropsopt(project, **kwargs):
     """
     Migration between Optima 2.1 and 2.1.1.
     """
-    project.data['optpropdx'] = project.data.pop('propdx')
-    project.data['optpropcare'] = project.data.pop('propcare')
-    project.data['optproptx'] = project.data.pop('proptx')
-    project.data['optpropsupp'] = project.data.pop('propsupp')
-    project.data['optproppmtct'] = project.data.pop('proppmtct')
+    keys = ['propdx', 'propcare', 'proptx', 'propsupp', 'proppmtct']
+    for key in keys:
+        fullkey = 'opt'+key
+        if fullkey not in project.data.keys():
+            if key in project.data.keys():
+                project.data[fullkey] = project.data.pop(key)
+            else:
+                raise op.OptimaException('Key %s not found, but key %s not found either' % (fullkey, key))
     project.version = "2.1.1"
     return None
 
@@ -209,12 +224,8 @@ def migrate(project, verbose=2):
         upgrader = migrations[str(project.version)]
 
         op.printv("Migrating from %s ->" % project.version, 2, verbose, newline=False)
-        try: 
-            upgrader(project, verbose=verbose)
-            op.printv("%s" % project.version, 2, verbose, indent=False)
-        except Exception as E:
-            print('Migration failed!!!!')
-            raise E
+        upgrader(project, verbose=verbose) # Actually easier to debug if don't catch exception
+        op.printv("%s" % project.version, 2, verbose, indent=False)
     
     op.printv('Migration successful!', 1, verbose)
 
