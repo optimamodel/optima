@@ -266,3 +266,21 @@ def defaultscenarios(parset=None, verbose=2):
 
 
 
+def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ind=0, verbose=2):
+    """ Define a list of default scenarios -- only "Current conditions" by default """
+    if parset is None: raise OptimaException('You need to supply a parset to generate default scenarios')
+    
+    if parname is None: raise OptimaException('Please supply a parameter')
+    
+    ## Generate dictionary
+    if parset.pars[ind][parname].fromdata: # If it's a regular parameter made from data, we get the default start value from the data
+        if startyear is None: startyear = parset.pars[ind][parname].t[forwhom][-1]
+        startval = parset.pars[ind][parname].interp(startyear,asarray=False)[forwhom][0]
+    else:
+        if startyear is None: startyear = parset.project.settings.now
+        startval = parset.getprop(proptype=parname,year=startyear)[0]
+
+    
+    return {'startval':startval,'startyear':startyear}
+
+
