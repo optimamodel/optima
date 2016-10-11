@@ -5,7 +5,7 @@ define(['angular', 'underscore'], function(module, _) {
   return angular.module('app.program-scenarios-modal', [])
       .controller('ProgramScenariosModalController', function(
           $scope, $modalInstance, modalService, scenarios, scenario,
-          parsets, progsets, years) {
+          parsets, progsets, years, budgetsByProgsetId) {
 
         function initialize() {
           $scope.parsets = parsets;
@@ -13,11 +13,8 @@ define(['angular', 'underscore'], function(module, _) {
 
           $scope.activePrograms = [];
           _.each(progsets[0].programs, function(program) {
-            var years = program.ccopars.t;
-            if (!_.isUndefined(years) && years.length > 0) {
-              if (program.active) {
-                $scope.activePrograms.push(program);
-              }
+            if (program.active) {
+              $scope.activePrograms.push(program);
             }
           });
           $scope.nProgram = $scope.activePrograms.length;
@@ -33,8 +30,9 @@ define(['angular', 'underscore'], function(module, _) {
 
           convertYears();
           revertYears();
+          console.log('activePrograms', $scope.activePrograms);
           console.log('converted scenario', $scope.scenario);
-
+          console.log('budgetsByProgsetId', budgetsByProgsetId);
         }
 
         $scope.getActivePrograms = function() {
@@ -69,10 +67,24 @@ define(['angular', 'underscore'], function(module, _) {
         };
 
         $scope.addProgram = function(year) {
-          year.programs.push({
+          var newProgram = {
             short: $scope.getActivePrograms()[0].short,
-            value: null,
-          });
+            value: null
+          };
+          $scope.changeProgram(newProgram);
+          year.programs.push(newProgram);
+        };
+
+        $scope.changeProgram = function(program) {
+          if ($scope.scenario_type == "budget") {
+            var defaultBudget = budgetsByProgsetId[$scope.scenario.progset_id];
+            var value = defaultBudget[program.short];
+          }
+          program.value = value;
+        };
+
+        $scope.removeProgram = function(years, iProgram) {
+          years.programs.splice(iProgram, 1);
         };
 
         $scope.getSelectableYears = function(year) {
@@ -82,7 +94,7 @@ define(['angular', 'underscore'], function(module, _) {
         $scope.getScenarioType = function() {
           var s = $scope.scenario_type;
           return s.charAt(0).toUpperCase() + s.slice(1);
-        }
+        };
 
         $scope.removeYear = function(i) {
           console.log('delete iyear', i);
@@ -100,7 +112,6 @@ define(['angular', 'underscore'], function(module, _) {
             $scope.scenario[$scope.scenario_type],
             function(program) {
               _.each(program.values, function(value, i) {
-                console.log('year', program.program, i, $scope.years[i]);
                 $scope.years[i].programs.push({
                   'short': program.program,
                   'value': value

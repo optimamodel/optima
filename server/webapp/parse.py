@@ -344,10 +344,13 @@ def get_parameters_for_scenarios(project, start_year=None):
                 continue
             y_keys_of_parset[par.short] = []
             for pop in par.y.keys():
-                par_defaults = optima.setparscenvalues(
-                    parset, par.short, pop, start_year)
-                startval = par_defaults['startval']
-                if isnan(startval):
+                try:
+                    par_defaults = optima.setparscenvalues(
+                        parset, par.short, pop, start_year)
+                    startval = par_defaults['startval']
+                    if isnan(startval):
+                        startval = None
+                except:
                     startval = None
                 print(par.short, pop, project.settings.start, startval)
                 y_keys_of_parset[par.short].append({
@@ -496,6 +499,30 @@ program_summary
   'updated': 'Mon, 02 May 2016 06:22:29 -0000'
 }
 """
+
+
+def get_budgets_for_scenarios(project):
+    result = {
+        str(progset.uid): normalize_obj(progset.getdefaultbudget())
+        for progset in project.progsets.values()}
+    print('default budgets', result)
+    return result
+
+
+def get_coverages_for_scenarios(project, year=None):
+    result = {}
+    if year is None:
+        year = int(project.settings.start)
+    for parset in project.parsets.values():
+        parset_id = str(parset.uid)
+        result[parset_id] = {}
+        for progset in project.progsets.values():
+            progset_id = str(progset.uid)
+            coverage = progset.getdefaultcoverage(t=year, parset=parset)
+            coverage = normalize_obj(coverage)
+            result[parset_id][progset_id] = coverage
+    print('result', result)
+    return result
 
 
 def convert_program_targetpars(targetpars):

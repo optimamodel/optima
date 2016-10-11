@@ -83,6 +83,16 @@ define(['angular'], function (module) {
         if (!_.contains(labels, par.forLabel)) {
           par.forLabel = labels[0];
         }
+        par.startval = $scope.popsOfPar[iPar][0].startval;
+        par.startyear = new Date().getFullYear();
+      };
+
+      $scope.selectNewPop = function (iPar) {
+        var par = $scope.scenario.pars[iPar];
+        var popsOfPar = $scope.popsOfPar[iPar];
+        var pop = _.findWhere(popsOfPar, {label: par.forLabel});
+        console.log(pop, popsOfPar);
+        par.startval = pop.startval;
       };
 
       $scope.addPar = function () {

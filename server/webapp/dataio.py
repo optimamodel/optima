@@ -57,6 +57,7 @@ from .parse import get_default_program_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
     set_program_summary_on_progset, parse_portfolio_summary
+from . import parse
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
 
@@ -948,6 +949,8 @@ def load_scenario_summaries(project_id):
     return {
         'scenarios': get_scenario_summaries(project),
         'ykeysByParsetId': get_parameters_for_scenarios(project),
+        'defaultBudgetsByProgsetId': parse.get_budgets_for_scenarios(project),
+        'defaultCoveragesByParsetIdyProgsetId': parse.get_coverages_for_scenarios(project),
         'years': get_project_years(project)
     }
 

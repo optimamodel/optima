@@ -363,13 +363,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       );
     }
 
-    $scope.killJob = function() {
-      var projectId = $scope.state.project.id;
-      var optimizationId = $scope.state.optimization.id;
-      var workType = "optim-" + optimizationId;
-      globalPoller.killJob(projectId, workType);
-    };
-
     function getSelectors() {
       if ($scope.graphs) {
         var selectors = $scope.graphs.selectors;

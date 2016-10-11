@@ -53,7 +53,7 @@
       style="
         width: 100%">
     <th width="80px">Year</th>
-    <th width="500px">Program</th>
+    <th width="460px">Program</th>
     <th>{{getScenarioType()}}</th>
   </table>
 </div>
@@ -81,9 +81,10 @@
       ng-repeat="program in year.programs"">
       <select
           class="txbox __inline"
-          style="width: 500px;"
+          style="width: 460px;"
           type="text"
           ng-model="program.short"
+          ng-change="changeProgram(program)"
           ng-options="p.short as p.name for p in getActivePrograms()">
       </select>
       <input
@@ -91,6 +92,11 @@
           style="width:70px;"
           ng-model="program.value"
           type="number"/>
+      <span
+        class="fa fa-times"
+        style="padding-left: 1em"
+        ng-click="removeProgram(year, $index)">
+      </span>
     </div>
     <button
         ng-click="addProgram(year)"

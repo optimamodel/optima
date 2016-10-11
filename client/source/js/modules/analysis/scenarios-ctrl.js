@@ -12,6 +12,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parsets = parsetResponse.data.parsets;
       $scope.progsets = progsetsResponse.data.progsets;
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+      $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
+      $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
       $scope.years = scenariosResponse.data.years;
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.isOptimizable = $scope.project.isOptimizable;
@@ -82,6 +84,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           parsets: function () { return $scope.parsets; },
           progsets: function () { return $scope.progsets; },
           ykeys: function () { return $scope.parametersByParsetId; },
+          budgetsByProgsetId: function() { return $scope.budgetsByProgsetId; },
+          coveragesByParsetIdyProgsetId: function() { return $scope.defaultCoveragesByParsetIdyProgsetId; },
           years: function() { return $scope.years }
         }
       });

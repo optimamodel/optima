@@ -54,6 +54,7 @@
           style="width: 100px;"
           type="text"
           ng-model="par.forLabel"
+          ng-change="selectNewPop($index)"
           ng-options="pop.label as pop.label for pop in popsOfPar[$index]">
       </select>
     </td>
