@@ -664,7 +664,7 @@ def get_outcome_summaries_from_progset(progset):
                 'interact': covout.interaction,
                 'years': []
             }
-            n_year = len(covout.ccopars['t'])
+            n_year = len(covout.ccopars.get('t', []))
             for i_year in range(n_year):
                 year = {
                     'intercept_upper': covout.ccopars['intercept'][i_year][1],
