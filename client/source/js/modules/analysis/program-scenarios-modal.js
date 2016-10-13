@@ -5,45 +5,52 @@ define(['angular', 'underscore'], function(module, _) {
   return angular.module('app.program-scenarios-modal', [])
       .controller('ProgramScenariosModalController', function(
           $scope, $modalInstance, modalService, scenarios, scenario,
-          parsets, progsets, years, budgetsByProgsetId) {
+          parsets, progsets, years, budgetsByProgsetId,
+          coveragesByParsetIdyProgsetId) {
 
         function initialize() {
           $scope.parsets = parsets;
           $scope.progsets = progsets;
+          $scope.years = years;
 
-          $scope.activePrograms = [];
-          _.each(progsets[0].programs, function(program) {
-            if (program.active) {
-              $scope.activePrograms.push(program);
-            }
-          });
-          $scope.nProgram = $scope.activePrograms.length;
+          console.log('budgetsByProgsetId', budgetsByProgsetId);
 
-          $scope.dataEntry = new Array($scope.nProgram + 1);
+          $scope.state = {};
 
+          $scope.otherNames = _.without(_.pluck(scenarios, 'name'), scenario.name);
           $scope.scenario = scenario;
           $scope.scenario_type = $scope.scenario.scenario_type;
           $scope.scenario_type = $scope.scenario_type.toLowerCase();
+
           if (_.isUndefined($scope.scenario.parset_id)) {
             initNewScenario();
           }
+          $scope.resetParsetAndProgset();
 
-          convertYears();
-          revertYears();
-          console.log('activePrograms', $scope.activePrograms);
-          console.log('converted scenario', $scope.scenario);
-          console.log('budgetsByProgsetId', budgetsByProgsetId);
         }
 
-        $scope.getActivePrograms = function() {
-          return $scope.activePrograms;
+        $scope.resetParsetAndProgset = function() {
+          $scope.state.progset = _.findWhere(progsets, {id: scenario.progset_id});
+          $scope.state.parset = _.findWhere(parsets, {id: scenario.parset_id});
+
+          $scope.state.programs = [];
+          _.each($scope.state.progset.programs, function(program) {
+            if (program.active) {
+              $scope.state.programs.push(program);
+            }
+          });
+          console.log('state.programs', $scope.state.programs);
+
+          extractYearEntries();
         };
 
-        $scope.checkForClashingName = function(scenario) {
-          function hasClash(s) {
-            return s.name == scenario.name && s.id != scenario.id;
-          }
-          return _.some(scenarios, hasClash);
+        $scope.getScenarioType = function() {
+          var s = $scope.scenario_type;
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        };
+
+        $scope.isNameClash = function(scenario_name) {
+          return _.contains($scope.otherNames, scenario_name);
         };
 
         function initNewScenario() {
@@ -55,56 +62,47 @@ define(['angular', 'underscore'], function(module, _) {
           do {
             $scope.scenario.name = "Scenario " + i;
             i += 1;
-          } while ($scope.checkForClashingName($scope.scenario));
-
+          } while ($scope.isNameClash($scope.scenario.name));
         }
 
-        $scope.addYear = function() {
-          $scope.years.push({
+        $scope.addYearEntry = function() {
+          $scope.state.yearEntries.push({
             value: new Date().getFullYear(),
             programs: []
           });
         };
 
-        $scope.addProgram = function(year) {
+        $scope.addProgram = function(yearEntry) {
           var newProgram = {
-            short: $scope.getActivePrograms()[0].short,
+            short: $scope.state.programs[0].short,
             value: null
           };
-          $scope.changeProgram(newProgram);
-          year.programs.push(newProgram);
+          $scope.selectProgram(newProgram);
+          yearEntry.programs.push(newProgram);
         };
 
-        $scope.changeProgram = function(program) {
+        $scope.selectProgram = function(program) {
           if ($scope.scenario_type == "budget") {
-            var defaultBudget = budgetsByProgsetId[$scope.scenario.progset_id];
-            var value = defaultBudget[program.short];
+            var budgets = budgetsByProgsetId[$scope.scenario.progset_id];
+            var value = budgets[program.short];
+          } else if ($scope.scenario_type == "coverage") {
+            var coveragesByProgsetId = coveragesByParsetIdyProgsetId[$scope.scenario.parset_id];
+            var coverages = coveragesByProgsetId[$scope.scenario.progset_id];
+            var value = coverages[program.short];
           }
           program.value = value;
         };
 
-        $scope.removeProgram = function(years, iProgram) {
-          years.programs.splice(iProgram, 1);
+        $scope.removeProgram = function(yearEntry, iProgram) {
+          yearEntry.programs.splice(iProgram, 1);
         };
 
-        $scope.getSelectableYears = function(year) {
-          return years;
+        $scope.removeYearEntry = function(i) {
+          $scope.state.yearEntries.splice(i, 1);
         };
 
-        $scope.getScenarioType = function() {
-          var s = $scope.scenario_type;
-          return s.charAt(0).toUpperCase() + s.slice(1);
-        };
-
-        $scope.removeYear = function(i) {
-          console.log('delete iyear', i);
-          var changesByProgram = $scope.scenario[$scope.scenario_type];
-          $scope.years.splice(i, 1);
-        };
-
-        function convertYears() {
-          console.log('original scenario', $scope.scenario);
-          $scope.years = _.map(
+        function extractYearEntries() {
+          $scope.state.yearEntries = _.map(
             $scope.scenario.years,
             function(year) { return {value: year, programs: []}; });
 
@@ -112,41 +110,39 @@ define(['angular', 'underscore'], function(module, _) {
             $scope.scenario[$scope.scenario_type],
             function(program) {
               _.each(program.values, function(value, i) {
-                $scope.years[i].programs.push({
+                $scope.state.yearEntries[i].programs.push({
                   'short': program.program,
                   'value': value
                 })
               });
             });
 
-          console.log('input years', $scope.years);
+          console.log('extracted year entries', $scope.state.yearEntries);
         }
 
-        function revertYears() {
-          console.log('input years', $scope.years);
-          $scope.scenario.years = _.pluck($scope.years, 'value');
+        function revertYearEntriesToScenario() {
+          $scope.scenario.years = _.pluck($scope.state.yearEntries, 'value');
 
           var programShorts = _.uniq(_.flatten(_.map(
-            $scope.years,
+            $scope.state.yearEntries,
             function(year) {
               return _.pluck(year.programs, 'short');
             }
           )));
 
-          console.log(programShorts);
           var iProgramByShort = {};
           _.each(programShorts, function(short, i) {
             iProgramByShort[short] = i;
           });
 
-          var nYear = $scope.years.length;
+          var nYear = $scope.state.yearEntries.length;
           $scope.scenario[$scope.scenario_type] = _.map(
             programShorts,
             function(short) { return {program: short, values: new Array(nYear)}; }
           );
           var programList = $scope.scenario[$scope.scenario_type];
 
-          _.each($scope.years, function(year, iYear) {
+          _.each($scope.state.yearEntries, function(year, iYear) {
             _.each(year.programs, function(program) {
               var iProgram = iProgramByShort[program.short];
               programList[iProgram].values[iYear] = program.value;
@@ -156,7 +152,7 @@ define(['angular', 'underscore'], function(module, _) {
         }
 
         $scope.save = function() {
-          revertYears();
+          revertYearEntriesToScenario();
           console.log('saving scenario', $scope.scenario);
           $modalInstance.close($scope.scenario);
         };

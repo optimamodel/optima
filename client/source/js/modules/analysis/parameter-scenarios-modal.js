@@ -28,7 +28,7 @@ define(['angular'], function (module) {
         $scope.buildPopsOfPar();
       }
 
-      $scope.checkForClashingName = function(scenario) {
+      $scope.isNameClash = function(scenario) {
         function hasClash(s) {
           return s.name == scenario.name && s.id != scenario.id;
         }
@@ -45,7 +45,7 @@ define(['angular'], function (module) {
         do {
           $scope.scenario.name = "Scenario " + i;
           i += 1;
-        } while ($scope.checkForClashingName(scenario));
+        } while ($scope.isNameClash(scenario));
 
       };
 
