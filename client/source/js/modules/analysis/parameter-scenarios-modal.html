@@ -10,7 +10,7 @@
       required/>
   <div
       class="error-hint"
-      ng-show="checkScenarioExists()">
+      ng-show="isNameClash(scenario.name)">
     Scenario with this name already exists, please choose a different name.
   </div>
 </div>
@@ -21,6 +21,7 @@
       class="txbox"
       type="text"
       ng-model="scenario.parset_id"
+      ng-change = "selectParset()"
       required
       ng-options="parset.id as parset.name for parset in parsets">
   </select>
@@ -59,17 +60,23 @@
       </select>
     </td>
     <td>
-      <input
+      <select
           class="txbox __inline"
           style="width:70px;"
           ng-model="par.startyear"
-          type="number"/></td>
+          ng-change="selectNewYear($index)"
+          ng-options="year for year in years"
+          type="number">
+      </select>
+    </td>
     <td>
-      <input
+      <select
           class="txbox __inline"
           style="width:70px;"
           ng-model="par.endyear"
-          type="number"/>
+          ng-options="year for year in years"
+          type="number">
+      </select>
     </td>
     <td>
       <input

@@ -77,18 +77,18 @@ define(['angular', 'underscore'], function(module, _) {
             short: $scope.state.programs[0].short,
             value: null
           };
-          $scope.selectProgram(newProgram);
+          $scope.selectProgram(yearEntry, newProgram);
           yearEntry.programs.push(newProgram);
         };
 
-        $scope.selectProgram = function(program) {
+        $scope.selectProgram = function(yearEntry, program) {
           if ($scope.scenario_type == "budget") {
             var budgets = budgetsByProgsetId[$scope.scenario.progset_id];
             var value = budgets[program.short];
           } else if ($scope.scenario_type == "coverage") {
             var coveragesByProgsetId = coveragesByParsetIdyProgsetId[$scope.scenario.parset_id];
-            var coverages = coveragesByProgsetId[$scope.scenario.progset_id];
-            var value = coverages[program.short];
+            var coveragesByYear = coveragesByProgsetId[$scope.scenario.progset_id];
+            var value = coveragesByYear[yearEntry.value][program.short];
           }
           program.value = value;
         };
