@@ -353,7 +353,7 @@ def get_parameters_for_scenarios(project, start_year=None):
                 for pop in par.y.keys():
                     try:
                         par_defaults = optima.setparscenvalues(
-                            parset, par.short, pop, start_year)
+                            parset, par.short, pop, year)
                         startval = par_defaults['startval']
                         if isnan(startval):
                             startval = None

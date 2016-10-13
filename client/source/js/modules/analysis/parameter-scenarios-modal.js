@@ -88,7 +88,7 @@ define(['angular'], function (module) {
         par.startval = $scope.popsOfPar[iPar][0].startval;
       };
 
-      $scope.selectNewPop = function (iPar) {
+      $scope.resetStartValue = function (iPar) {
         var par = $scope.scenario.pars[iPar];
         var popsOfPar = $scope.popsOfPar[iPar];
         var pop = _.findWhere(popsOfPar, {label: par.forLabel});
@@ -96,11 +96,8 @@ define(['angular'], function (module) {
       };
 
       $scope.selectNewYear = function (iPar) {
-        var par = $scope.scenario.pars[iPar];
         buildPopsOfPar();
-        var popsOfPar = $scope.popsOfPar[iPar];
-        var pop = _.findWhere(popsOfPar, {label: par.forLabel});
-        par.startval = pop.startval;
+        $scope.resetStartValue(iPar);
       };
 
       $scope.addPar = function () {
