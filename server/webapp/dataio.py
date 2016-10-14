@@ -760,11 +760,11 @@ def load_parset_graphs(
         delete_result_by_parset_id(project_id, parset_id)
         update_project(project)
 
-    result = load_result(project.uid, parset.uid, calculation_type)
+    result = load_result(project_id, parset_id, calculation_type)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
         result = project.runsim(name=parset.name, start=start, end=end) # ACTUALLY RUN THE MODEL
-        result_record = update_or_create_result_record(project, result, parset.name, calculation_type)
+        result_record = update_or_create_result_record_by_id(result, project_id, parset_id, calculation_type)
         db.session.add(result_record)
         db.session.commit()
 
@@ -781,16 +781,10 @@ def load_parset_graphs(
 
 # RESULT
 
-def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
-    result_record = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
-    if result_record is None:
-        return None
-    return result_record
-
 
 def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
-    result_record = load_result_record(project_id, parset_id, calculation_type)
+    result_record = db.session.query(ResultsDb).filter_by(
+        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
     if result_record is None:
         return None
     return result_record.load()
@@ -803,10 +797,10 @@ def load_result_by_id(result_id):
     return result_record.load()
 
 
-def update_or_create_result_record(
-        project,
+def update_or_create_result_record_by_id(
         result,
-        parset_name='default',
+        project_id,
+        parset_id,
         calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
         db_session=None):
 
@@ -815,14 +809,13 @@ def update_or_create_result_record(
 
     result_record = db_session.query(ResultsDb).get(result.uid)
     if result_record is not None:
-        print ">> Updating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+        print ">> Updating record for result '%s'" % (result.name)
     else:
-        parset = project.parsets[parset_name]
         result_record = ResultsDb(
-            parset_id=parset.uid,
-            project_id=project.uid,
+            parset_id=parset_id,
+            project_id=project_id,
             calculation_type=calculation_type)
-        print ">> Creating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+        print ">> Creating record for result '%s'" % (result.name)
 
     result_record.id = result.uid
     result_record.save_obj(result)
@@ -832,11 +825,16 @@ def update_or_create_result_record(
 
 
 def delete_result_by_parset_id(
-        project_id, parset_id, db_session=None):
+        project_id, parset_id, calculation_type=None, db_session=None):
     if db_session is None:
         db_session = db.session
-    records = db_session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id)
+    if calculation_type is None:
+        records = db_session.query(ResultsDb).filter_by(
+            project_id=project_id, parset_id=parset_id)
+    else:
+        records = db_session.query(ResultsDb).filter_by(
+            project_id=project_id, parset_id=parset_id,
+            calculation_type=calculation_type)
     for record in records:
         record.cleanup()
     records.delete()
@@ -855,21 +853,6 @@ def delete_result_by_name(
             print ">> Deleting outdated result '%s'" % result_name
             record.cleanup()
             db_session.delete(record)
-    db_session.commit()
-
-
-def save_result(
-        project_id, result, parset_name='default',
-        calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
-        db_session=None):
-    if db_session is None:
-        db_session = db.session
-    project = load_project(project_id)
-    result_record = update_or_create_result_record(
-        project, result, parset_name=parset_name,
-        calculation_type=calculation_type, db_session=db_session)
-    db_session.add(result_record)
-    db_session.flush()
     db_session.commit()
 
 
@@ -916,18 +899,16 @@ def load_result_mpld3_graphs(result_id, which):
 
 
 def make_scenarios_graphs(project_id):
-    db.session\
-        .query(ResultsDb)\
-        .filter_by(project_id=project_id, calculation_type="scenarios")\
-        .delete()
-    db.session.commit()
-    project = load_project(project_id)
-    project.runscenarios()
-    result = project.results[-1]
-    record = update_or_create_result_record(
-        project, result, 'default', 'scenarios')
-    db.session.add(record)
-    db.session.commit()
+    result = load_result(project_id, None, "scenarios")
+    if result is None:
+        print(">> Run scenarios for project '%s'" % project_id)
+        project = load_project(project_id)
+        project.runscenarios()
+        result = project.results[-1]
+        record = update_or_create_result_record_by_id(
+            result, project.uid, None, 'scenarios')
+        db.session.add(record)
+        db.session.commit()
     return make_mpld3_graph_dict(result)
 
 
@@ -938,6 +919,8 @@ def save_scenario_summaries(project_id, scenario_summaries):
     set_scenario_summaries_on_project(project, scenario_summaries)
 
     project_record.save_obj(project)
+
+    delete_result_by_parset_id(project_id, None, "scenarios")
 
     return {'scenarios': get_scenario_summaries(project)}
 
@@ -1085,8 +1068,9 @@ def update_project_from_data_spreadsheet(project_id, full_filename):
 
     # importing spreadsheet will also runsim to project.results[-1]
     result = project.results[-1]
-    result_record = update_or_create_result_record(
-        project, result, parset_name, "calibration")
+    parset = project.parsets[parset_name]
+    result_record = update_or_create_result_record_by_id(
+        result, project_id, parset.uid, "calibration")
 
     # save the binary data of spreadsheet for later download
     with open(full_filename, 'rb') as f:

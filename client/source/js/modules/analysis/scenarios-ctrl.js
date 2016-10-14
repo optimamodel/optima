@@ -17,6 +17,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.isOptimizable = $scope.project.isOptimizable;
       $scope.isMissingProgramSet = $scope.project.nProgram == 0;
       loadScenarios(scenariosResponse.data.scenarios);
+      $scope.runScenarios()
     }
 
     function loadScenarios(scenarios) {
@@ -28,24 +29,25 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.saveScenarios = function(scenarios, successMsg) {
       console.log("saving scenarios", scenarios);
-      $http.put(
-        '/api/project/' + $scope.project.id + '/scenarios',
-        {'scenarios': scenarios })
-      .success(function (response) {
-        loadScenarios(response.scenarios);
-        if (successMsg) {
-          toastr.success(successMsg)
-        }
-      });
+      $http
+        .put(
+          '/api/project/' + $scope.project.id + '/scenarios',
+          {'scenarios': scenarios })
+        .success(function (response) {
+          loadScenarios(response.scenarios);
+          if (successMsg) {
+            toastr.success(successMsg)
+          }
+        });
     };
 
     $scope.runScenarios = function () {
       $scope.graphs = {};
-      $http.get(
-        '/api/project/' + $scope.project.id + '/scenarios/results')
-      .success(function (data) {
-        $scope.graphs = data.graphs;
-      });
+      $http
+        .get('/api/project/' + $scope.project.id + '/scenarios/results')
+        .success(function (data) {
+          $scope.graphs = data.graphs;
+        });
     };
 
     $scope.isRunnable = function () {
