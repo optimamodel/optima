@@ -1132,8 +1132,13 @@ def get_odict_item(odict, key):
     return None
 
 
-
 def resolve_project(project):
+    """
+    This function does some checks on the project to ensure that all the cross-reference
+    fields are properly specified and that defaults are sensibly populated.
+
+    Returns: boolean to whether any changes needed to be made to the project
+    """
     print(">> Resolve project")
     is_change = False
 
@@ -1200,7 +1205,7 @@ def resolve_project(project):
 
     is_change = is_change or len(del_optim_keys) > 0
 
-    # decide when to trigger this and save
+    # ensure constraints set to None are given a default
     for optim in project.optims.values():
         progset_name = optim.progsetname
         progset = project.progsets[progset_name]
