@@ -52,13 +52,7 @@
             ng-click="startOptimization()"
             ng-disabled="checkNotRunnable()"/>
         &nbsp;
-        <input
-            type="button"
-            ng-disabled="!task_id"
-            value="Cancel Job"
-            class="updateGraph btn"
-            ng-click="killJob()">
-        &nbsp;
+
         Run optimization for about
         &nbsp;
         <select ng-init="state.maxtime=10" ng-model="state.maxtime">

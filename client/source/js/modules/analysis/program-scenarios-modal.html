@@ -8,8 +8,14 @@
 <!-- Name -->
 <div class="o-form__field-wrap">
   <label> Name </label>
-  <input class="txbox" type="text" ng-model="scenario.name" required/>
-  <div class="error-hint" ng-show="checkScenarioExists()">
+  <input
+      class="txbox"
+      type="text"
+      ng-model="scenario.name"
+      required/>
+  <div
+      class="error-hint"
+      ng-show="isNameClash(scenario.name)">
     Scenario with this name already exists, please choose a different name.
   </div>
 </div>
@@ -19,17 +25,26 @@
   <!--  Select a parameter set to use as baseline  -->
   <div class="o-form__field-wrap c-prosce-modal__input-with-space">
     <label class="o-form__label"> Select a parameter set to use as baseline </label>
-    <select class="o-form__input txbox" type="text" ng-model="scenario.parset_id"
-            ng-options="parset.id as parset.name for parset in parsets"
-            required>
+    <select
+        class="o-form__input txbox"
+        type="text"
+        ng-model="scenario.parset_id"
+        ng-change="resetParsetAndProgset()"
+        ng-options="parset.id as parset.name for parset in parsets"
+        required>
     </select>
   </div>
 
   <!--  Select a program set to use as baseline  -->
   <div class="o-form__field-wrap c-prosce-modal__input-with-space">
     <label class="o-form__label"> Select a program set to use as baseline </label>
-    <select class="o-form__input txbox" type="text" ng-model="scenario.progset_id"
-            ng-options="progset.id as progset.name for progset in progsets" required>
+    <select
+        class="o-form__input txbox"
+        type="text"
+        ng-model="scenario.progset_id"
+        ng-change="resetParsetAndProgset()"
+        ng-options="progset.id as progset.name for progset in progsets"
+        required>
     </select>
   </div>
 
@@ -49,11 +64,9 @@
       margin-top: 2em;
       margin-bottom: 1em;
       width: 100%">
-  <table
-      style="
-        width: 100%">
+  <table style="width: 100%">
     <th width="80px">Year</th>
-    <th width="500px">Program</th>
+    <th width="350px">Program</th>
     <th>{{getScenarioType()}}</th>
   </table>
 </div>
@@ -63,48 +76,59 @@
       border-bottom: 1px solid #999;
       margin-bottom: 1em;
       width: 100%"
-    ng-repeat="year in years">
+    ng-repeat="yearEntry in state.yearEntries">
 
   <td width="80px" valign="top">
       <select
           class="txbox __inline"
           style="width: 60px;"
           type="number"
-          ng-model="year.value"
-          ng-options="year for year in getSelectableYears(year.value)">
+          ng-model="yearEntry.value"
+          ng-options="year for year in years">
       </select>
   </td>
+
   <td width="580px" valign="top">
-    <div
-      style="padding-bottom: 0.5em"
-      ng-repeat="program in year.programs"">
+
+    <div ng-repeat="program in yearEntry.programs"">
       <select
           class="txbox __inline"
-          style="width: 500px;"
+          style="width: 350px;"
           type="text"
           ng-model="program.short"
-          ng-options="p.short as p.name for p in getActivePrograms()">
+          ng-change="selectProgram(program)"
+          ng-options="p.short as p.name for p in state.programs">
       </select>
       <input
           class="txbox __inline"
-          style="width:70px;"
+          style="width: 200px;"
           ng-model="program.value"
           type="number"/>
+      <i
+        class="fa fa-times"
+        style="padding-left: 1em"
+        ng-click="removeProgram(yearEntry, $index)">
+      </i>
     </div>
+
     <button
-        ng-click="addProgram(year)"
+        ng-click="addProgram(yearEntry)"
         class="btn"
-        style="margin-bottom: 0.5em;">
+        style="
+          margin-top: 0.5em;
+          margin-bottom: 0.5em;">
       + program
     </button>
   </td>
+
   <td valign="top">
     <div
       class="fa fa-times"
       style="float: right"
-      ng-click="removeYear($index)">
+      ng-click="removeYearEntry($index)">
     </div>
   </td>
+
 </table>
 
 <div
@@ -114,7 +138,7 @@
     padding-top: 0.3em;
     padding-bottom: 2em;">
   <button
-      ng-click="addYear()" class="btn">
+      ng-click="addYearEntry()" class="btn">
     + year
   </button>
 </div>

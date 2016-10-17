@@ -19,7 +19,7 @@ from pprint import pprint, pformat
 from uuid import UUID
 
 from flask.ext.restful import fields, marshal
-from numpy import nan, array
+from numpy import nan, array, isnan
 
 import optima as op
 from optima import loadpartable, partable, Par
@@ -326,29 +326,45 @@ def get_par_limits(project, par):
 
 
 
-def get_parameters_for_scenarios(project):
+def get_parameters_for_scenarios(project, start_year=None):
     """
     Returns parameters that can be modified in a scenario:
         <parsetID>:
-            <parameterShort>:
-                - val: string -or- list of two string
-                - label: string
+            <year>:
+                <parameterShort>:
+                    - val: string -or- list of two string
+                    - label: string
     """
+    if start_year is None:
+        start_year = project.settings.start
+        end_year = project.settings.end
+        years = range(int(start_year), int(end_year) + 1)
     result = {}
     for id, parset in project.parsets.items():
-        y_keys_of_parset = {}
-        for par in parset.pars[0].values():
-            if not hasattr(par, 'y') or not par.visible:
-                continue
-            y_keys_of_parset[par.short] = [
-                {
-                    'val': pop,
-                    'label': make_pop_label(pop),
-                    'limits': get_par_limits(project, par)
-                }
-                for pop in par.y.keys()
-            ]
-        result[str(parset.uid)] = y_keys_of_parset
+        parset_id = str(parset.uid)
+        result[parset_id] = {}
+        for year in years:
+            y_keys_of_parset = {}
+            result[parset_id][year] = y_keys_of_parset
+            for par in parset.pars[0].values():
+                if not hasattr(par, 'y') or not par.visible:
+                    continue
+                y_keys_of_parset[par.short] = []
+                for pop in par.y.keys():
+                    try:
+                        par_defaults = optima.setparscenvalues(
+                            parset, par.short, pop, year)
+                        startval = par_defaults['startval']
+                        if isnan(startval):
+                            startval = None
+                    except:
+                        startval = None
+                    y_keys_of_parset[par.short].append({
+                        'val': pop,
+                        'label': make_pop_label(pop),
+                        'limits': get_par_limits(project, par),
+                        'startval': startval
+                    })
     return result
 
 
@@ -490,6 +506,40 @@ program_summary
 """
 
 
+def get_budgets_for_scenarios(project):
+    result = {
+        str(progset.uid): normalize_obj(progset.getdefaultbudget())
+        for progset in project.progsets.values()}
+    return result
+
+
+def get_coverages_for_scenarios(project, year=None):
+    """
+
+    Returns:
+        { <parset_id>:
+            { <progset_id>:
+                { <year>:
+                    { <program_short>: coverage (float) }}}
+
+    """
+    result = {}
+    start = project.settings.start
+    end = project.settings.end
+    years = range(int(start), int(end) + 1)
+    for parset in project.parsets.values():
+        parset_id = str(parset.uid)
+        result[parset_id] = {}
+        for progset in project.progsets.values():
+            progset_id = str(progset.uid)
+            result[parset_id][progset_id] = {}
+            for year in years:
+                coverage = progset.getdefaultcoverage(t=year, parset=parset)
+                coverage = normalize_obj(coverage)
+                result[parset_id][progset_id][year] = coverage
+    return result
+
+
 def convert_program_targetpars(targetpars):
     parameters = defaultdict(list)
     for parameter in targetpars:
@@ -629,7 +679,7 @@ def get_outcome_summaries_from_progset(progset):
                 'interact': covout.interaction,
                 'years': []
             }
-            n_year = len(covout.ccopars['t'])
+            n_year = len(covout.ccopars.get('t', []))
             for i_year in range(n_year):
                 year = {
                     'intercept_upper': covout.ccopars['intercept'][i_year][1],
