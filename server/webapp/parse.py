@@ -1061,9 +1061,10 @@ def get_scenario_summary(project, scenario):
 
 
 def get_scenario_summaries(project):
-    scenario_summaries = map(partial(get_scenario_summary, project), project.scens.values())
-    print("get scenario")
-    pprint(scenario_summaries, indent=2)
+    scenario_summaries = []
+    for scen in project.scens.values():
+        summary = get_scenario_summary(project, scen)
+        scenario_summaries.append(summary)
     return normalize_obj(scenario_summaries)
 
 
