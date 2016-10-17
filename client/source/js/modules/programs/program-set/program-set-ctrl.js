@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    modalService, toastr, currentProject, projectApiService, $upload) {
+    modalService, toastr, currentProject, projectApiService, $upload, $state) {
 
     var project = currentProject.data;
     var defaultPrograms;
@@ -148,6 +148,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       toastr.success("Program set deleted");
+      $state.reload();
     }
 
     $scope.copyProgramSet = function () {

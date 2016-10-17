@@ -25,8 +25,8 @@
               name="optimization-selection"
               class="updateGraph txbox"
               ng-model="state.optimization"
-              ng-change="setActiveOptimization(state.optimization)"
-              ng-options="optimization.name for optimization in state.optimizations"
+              ng-change="selectOptimization()"
+              ng-options="optimization as optimization.name for optimization in state.optimizations"
               style="width: 20%;">
       </select>
       <button ng-click="addOptimization()" type="button" class="btn" style="margin-left:2%">New optimization</button>
@@ -37,45 +37,46 @@
       <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
     </div>
 
-    <div style="width: 100%; margin-top: 25px;">
-        <input
-            type="button"
-            value="Save Optimization"
-            class="updateGraph btn"
-            ng-click="saveOptimizationForm(optimizationForm)"
-            ng-disabled="checkNotSavale()"/>
-        &nbsp;
-        <input
-            type="button"
-            value="Run Optimization"
-            class="updateGraph btn"
-            ng-click="startOptimization()"
-            ng-disabled="checkNotRunnable()"/>
-        &nbsp;
-        <input
-            type="button"
-            ng-disabled="!task_id"
-            value="Cancel Job"
-            class="updateGraph btn"
-            ng-click="killJob()">
-        &nbsp;
-        Run optimization for about
-        &nbsp;
-        <select ng-init="state.maxtime=10" ng-model="state.maxtime">
-          <option value="10">10 seconds</option>
-          <option value="30">30 seconds</option>
-          <option value="60">1 minute</option>
-          <option value="300">5 minutes</option>
-          <option value="600">10 minutes</option>
-          <option value="1800">30 minutes</option>
-        </select>
-        &nbsp;
-        <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
-          {{ statusMessage }}
-        </span>
-    </div>
+    <div ng-if="state.optimizations.length > 0">
+      <div style="width: 100%; margin-top: 25px;">
+          <input
+              type="button"
+              value="Save Optimization"
+              class="updateGraph btn"
+              ng-click="saveOptimizationForm(optimizationForm)"
+              ng-disabled="checkNotSavale()"/>
+          &nbsp;
+          <input
+              type="button"
+              value="Run Optimization"
+              class="updateGraph btn"
+              ng-click="startOptimization()"
+              ng-disabled="checkNotRunnable()"/>
+          &nbsp;
+          <input
+              type="button"
+              ng-disabled="!task_id"
+              value="Cancel Job"
+              class="updateGraph btn"
+              ng-click="killJob()">
+          &nbsp;
+          Run optimization for about
+          &nbsp;
+          <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+            <option value="10">10 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60">1 minute</option>
+            <option value="300">5 minutes</option>
+            <option value="600">10 minutes</option>
+            <option value="1800">30 minutes</option>
+          </select>
+          &nbsp;
+          <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
+            {{ statusMessage }}
+          </span>
+      </div>
 
-    <div style="
+      <div style="
           display: flex;
           margin-top: 20px;
           justify-content: space-between;
@@ -188,6 +189,7 @@
       </div>
 
 
+    </div>
     </div>
   </div>
 </div>
