@@ -887,8 +887,11 @@ def load_result_mpld3_graphs(result_id, which):
 def make_scenarios_graphs(project_id):
     result = load_result(project_id, None, "scenarios")
     if result is None:
-        print(">> Run scenarios for project '%s'" % project_id)
         project = load_project(project_id)
+        if len(project.scens) == 0:
+            print(">> No scenarios in project")
+            return {}
+        print(">> Run scenarios for project '%s'" % project_id)
         project.runscenarios()
         result = project.results[-1]
         record = update_or_create_result_record_by_id(
@@ -899,15 +902,11 @@ def make_scenarios_graphs(project_id):
 
 
 def save_scenario_summaries(project_id, scenario_summaries):
+    delete_result_by_parset_id(project_id, None, "scenarios")
     project_record = load_project_record(project_id)
     project = project_record.load()
-
     set_scenario_summaries_on_project(project, scenario_summaries)
-
     project_record.save_obj(project)
-
-    delete_result_by_parset_id(project_id, None, "scenarios")
-
     return {'scenarios': get_scenario_summaries(project)}
 
 
