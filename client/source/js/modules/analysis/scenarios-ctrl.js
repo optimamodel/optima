@@ -17,7 +17,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.isOptimizable = $scope.project.isOptimizable;
       $scope.isMissingProgramSet = $scope.project.nProgram == 0;
       loadScenarios(scenariosResponse.data.scenarios);
-      $scope.runScenarios()
     }
 
     function loadScenarios(scenarios) {
@@ -25,9 +24,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       function returnName(s) { return s.name }
       $scope.scenarios = _.sortBy($scope.scenarios, returnName);
       console.log("loading scenarios", $scope.scenarios);
+      delete $scope.graphs;
+      if ($scope.scenarios) {
+        $scope.runScenarios()
+      };
     }
 
     $scope.saveScenarios = function(scenarios, successMsg) {
+      delete $scope.graphs;
       console.log("saving scenarios", scenarios);
       $http
         .put(
