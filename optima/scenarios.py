@@ -144,15 +144,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
                     last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
 
-                    # Find or set new value 
-                    if scenpar.get('startval'):
-                        this_y = promotetoarray(scenpar['startval']) # Use supplied starting value if there is one
-                    else:
-                        if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
-                            this_y = thispar.interp(tvec=scenpar['startyear'], usemeta=False) # Find what the model would get for this value
-                        else:
-                            this_y = thisparset.getprop(proptype=scenpar['name'],year=scenpar['startyear'])                            
-
                     # Loop over populations
                     for pop in pops:
 
@@ -160,6 +151,15 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         if isnumber(pop): popind = pop
                         else: popind = thispar.y.keys().index(pop)
                         
+                        # Find or set new value 
+                        if scenpar.get('startval'):
+                            this_y = promotetoarray(scenpar['startval']) # Use supplied starting value if there is one
+                        else:
+                            if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
+                                this_y = thispar.interp(tvec=scenpar['startyear'], usemeta=False)[popind] # Find what the model would get for this value
+                            else:
+                                this_y = thisparset.getprop(proptype=scenpar['name'],year=scenpar['startyear'])                            
+
                         # Remove years after the last good year
                         if last_t < max(thispar.t[popind]):
                             thispar.t[popind] = thispar.t[popind][findinds(thispar.t[popind] <= last_t)]
@@ -169,7 +169,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         thispar.t[popind] = append(thispar.t[popind], last_t)
                         thispar.y[popind] = append(thispar.y[popind], last_y[popind]) 
                         thispar.t[popind] = append(thispar.t[popind], scenpar['startyear'])
-                        thispar.y[popind] = append(thispar.y[popind], this_y[popind]) 
+                        thispar.y[popind] = append(thispar.y[popind], this_y) 
                         
                         # Add end year values if supplied
                         if scenpar.get('endyear'): 
