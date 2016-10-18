@@ -129,13 +129,23 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                     # Parse inputs to figure out which population(s) are affected
                     if type(scenpar['for'])==tuple: # If it's a partnership...
-                        pops = [scenpar['for']] 
-                    elif type(scenpar['for'])==int: #... if its asingle  population.
+                        if not scenpar['for'] in thispar.y.keys():
+                            errormsg = 'Partnership %s not associated with parameter %s' % (scenpar['for'],thispar.short)
+                            raise OptimaException(errormsg)
+                        else: pops = [scenpar['for']] 
+
+                    elif isnumber(scenpar['for']): #... if its asingle  population.
                         pops = [range(npops)] if scenpar['for'] > npops else [scenpar['for']]
+
                     elif type(scenpar['for']) in [list, type(array([]))]: #... if its list of population.
                         pops = scenpar['for']
-                    elif scenpar['for']=='tot': 
-                        pops = ['tot']
+
+                    elif type(scenpar['for'])==str: 
+                        if not scenpar['for'] in thispar.y.keys():
+                            errormsg = 'Population %s not associated with parameter %s' % (scenpar['for'],thispar.short)
+                            raise OptimaException(errormsg)
+                        else: pops = [scenpar['for']] 
+
                     else: 
                         errormsg = 'Unrecognized population or partnership type: %s' % scenpar['for']
                         raise OptimaException(errormsg)
