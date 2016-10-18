@@ -464,7 +464,7 @@ def makepars(data, label=None, verbose=2):
         partype = rawpar.pop('partype')
         parname = rawpar['short']
         by = rawpar['by']
-        fromdata = int(rawpar['fromdata'])
+        fromdata = rawpar['fromdata']
         rawpar['verbose'] = verbose # Easiest way to pass it in
         
         
