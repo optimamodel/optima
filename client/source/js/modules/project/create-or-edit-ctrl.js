@@ -262,6 +262,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           getSelectedPopulations(), removeExtraFields);
         var originalPopulations = _.map(
           $scope.projectInfo.populations, removeExtraFields);
+        var message;
         if (!angular.equals(selectedPopulations, originalPopulations)) {
           $scope.editParams.canUpdate =
               $scope.populations.length == $scope.projectInfo.populations.length;
