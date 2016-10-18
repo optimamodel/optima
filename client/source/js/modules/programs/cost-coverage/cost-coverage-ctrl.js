@@ -146,8 +146,13 @@ define(['./../module', 'underscore'], function(module, _) {
           _.filter(vm.state.progset.programs, isActive),
           'name');
         vm.state.program = vm.programs[0];
+        if (!("attr" in vm.state.program)) {
+          console.log('new attr for program');
+          vm.state.program.attr = {caption: "", xupperlim: null};
+        }
+        console.log('selected program', vm.state.program);
         vm.state.popsizes = {};
-
+        
         // Fetch outcomes for this progset
         $http
           .get(
@@ -174,16 +179,6 @@ define(['./../module', 'underscore'], function(module, _) {
           + '/programs/' + vm.state.program.id
           + '/costcoverage/graph?t=' + years.join(',')
           + '&parset_id=' + vm.state.parset.id;
-        if (vm.state.remarks) {
-          vm.state.displayCaption = angular.copy(vm.state.remarks);
-          url += '&caption=' + encodeURIComponent(vm.state.remarks);
-        }
-        if (vm.state.maxFunc) {
-          url += '&xupperlim=' + vm.state.maxFunc;
-        }
-        if (vm.state.dispCost) {
-          url += '&perperson=1';
-        }
         $http
           .get(
             url)
@@ -199,7 +194,8 @@ define(['./../module', 'underscore'], function(module, _) {
           );
       };
 
-      function saveProgram() {
+      vm.saveProgram = function() {
+        console.log('saveing program', vm.state.program);
         $http
           .post(
             '/api/project/' + vm.project.id
@@ -235,7 +231,7 @@ define(['./../module', 'underscore'], function(module, _) {
         });
         vm.state.program.costcov = costcov;
         console.log('save costcov', costcov);
-        saveProgram();
+        vm.saveProgram();
       }
 
       function saveProgramCcoparsTable(table) {
@@ -248,7 +244,7 @@ define(['./../module', 'underscore'], function(module, _) {
           }
         });
         vm.state.program.ccopars = ccopars;
-        saveProgram();
+        vm.saveProgram();
       }
 
       function showEstPopFn(row) {

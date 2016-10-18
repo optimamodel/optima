@@ -634,6 +634,8 @@ def get_program_summary(program, progset, active):
         'costcov': convert_program_costcovdata(program.costcovdata),
         'optimizable': program.optimizable()
     }
+    if hasattr(program, "attr"):
+        result["attr"] = program.attr
     return result
 
 
@@ -875,6 +877,9 @@ def set_program_summary_on_progset(progset, summary):
         criteria=summary["criteria"],
         ccopars=ccopars,
         costcovdata=costcov)
+
+    if "attr" in summary:
+        program.attr = summary["attr"]
 
     if program_id:
         program.uid = program_id

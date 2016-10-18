@@ -1338,11 +1338,16 @@ def save_program(project_id, progset_id, program_summary):
     project_record.save_obj(project)
 
 
-def load_costcov_graph(project_id, progset_id, program_id, parset_id, t, plotoptions):
-    project = load_project(project_id)
+def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
     progset = get_progset_from_project(project, progset_id)
 
     program = get_program_from_progset(progset, program_id)
+    plotoptions = None
+    if hasattr(program, "attr"):
+        plotoptions = program.attr
+
     parset = get_parset_from_project(project, parset_id)
     plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
 

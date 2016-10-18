@@ -24,7 +24,7 @@
           display: inline;
           margin-left: 0.5em;
           margin-right: 2em; "
-        ng-options="progset as progset.name for progset in vm.progsets"
+        ng-attr="progset as progset.name for progset in vm.progsets"
         ng-change="vm.changeProgsetAndParset()"
         ng-model="vm.state.progset">
       </select>
@@ -36,7 +36,7 @@
           width: 15em;
           display: inline;
           margin-left: 0.5em; "
-        ng-options="parset as parset.name for parset in vm.parsets"
+        ng-attr="parset as parset.name for parset in vm.parsets"
         ng-change="vm.changeProgsetAndParset()"
         ng-model="vm.state.parset">
       </select>
@@ -98,11 +98,12 @@
                   display: inline;
                   width: 30em;"
                 class="txbox"
-                ng-options="p.name for p in vm.programs"
+                ng-attr="p.name for p in vm.programs"
                 ng-change="vm.changeProgram()"
                 ng-model="vm.state.program">
             </select>
           </div>
+
 
           <div ng-if="vm.state.program"
                style="
@@ -117,17 +118,32 @@
                    flex-basis: auto;
                    flex-grow: 1;
                   overflow: hidden;">
+              <a
+                  ng-click="vm.saveProgram()"
+                  class="btn"
+                  style="margin-bottom: 1em">
+                Save and update cost function graph
+              </a>
               <div
                   style="overflow: hidden"
                   mpld3-chart="vm.state.chartData"
                   chart-id="{{ vm.state.chartData.id }}"
                   ng-if="vm.state.chartData">
               </div>
-              <div
-                  class="c-caption"
-                  ng-if="vm.statedisplayCaption">
-                {{vm.statedisplayCaption}}
-              </div>
+              <br>
+              <br>
+              Maximum spending:
+              <input
+                  placeholder="e.g. 1000000"
+                  sytle="width: 150px"
+                  ng-model="vm.state.program.attr.xupperlim"
+                  type="number"/>
+              <br>
+              Remarks
+              <input
+                  style="width: 150px"
+                  ng-model="vm.state.program.attr.caption"/>
+
             </div>
 
             <div style="flex: 0 0 580px;"
@@ -164,7 +180,7 @@
                 display: inline;
                 width: 30em;
                 margin-left: 0.5em; "
-              ng-options="parameter.name for parameter in vm.parameters"
+              ng-attr="parameter.name for parameter in vm.parameters"
               ng-change="vm.changeTargetParameter()"
               ng-model="vm.state.parameter">
             </select>
@@ -307,7 +323,7 @@
 
                 <!--<div class="flex-column margin_top">-->
 
-                  <!--<h3>Options for displaying curves</h3>-->
+                  <!--<h3>attr for displaying curves</h3>-->
                   <!--<div>-->
                     <!--Specify the maximum coverage shown on the plot:-->
                     <!--<input-->

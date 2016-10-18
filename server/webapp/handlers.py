@@ -756,14 +756,9 @@ class ProgramCostcovGraph(Resource):
         if t is None:
             return {}
 
-        plotoptions = {}
-        for x in ['caption', 'xupperlim', 'perperson']:
-            if args.get(x):
-                plotoptions[x] = args[x]
-
         print '>>>> Generating plot...'
         return load_costcov_graph(
-            project_id, progset_id, program_id, parset_id, t, plotoptions)
+            project_id, progset_id, program_id, parset_id, t)
 
 
 class Scenarios(Resource):
