@@ -117,47 +117,7 @@
                   width: 100%;
                   margin-top: 10px">
 
-            <div
-                ng-if="vm.chartData"
-                class="costcov-chart-container"
-                style="
-                   max-width: 700px;
-                   flex-basis: auto;
-                   flex-grow: 1;
-                  overflow: hidden;">
-
-              <h3>Cost-coverage function</h3>
-
-              Maximum spending shown on graph:
-              <input
-                  placeholder="e.g. 1000000"
-                  sytle="width: 150px"
-                  ng-model="vm.state.program.attr.xupperlim"
-                  type="number"/>
-              <br>
-              <br>
-              <br>
-
-              <div
-                  style="overflow: hidden"
-                  mpld3-chart="vm.state.chartData"
-                  chart-id="{{ vm.state.chartData.id }}"
-                  ng-if="vm.state.chartData">
-              </div>
-
-              <br>
-              Remarks
-              <br>
-              <textarea
-                  style="width: 100%; height:4em;"
-                  ng-model="vm.state.program.attr.caption">
-              </textarea>
-              <br>
-
-            </div>
-
-            <div style="flex: 0 0 500px;"
-                 class="margin_left">
+            <div style="flex: 0 0 500px;">
 
               <h3>Parameters for defining cost function</h3>
 
@@ -277,6 +237,53 @@
                   </td>
                 </tr>
               </table>
+            </div>
+
+            <div
+                ng-if="!vm.chartData"
+                style=" margin-left: 30px;">
+              <h3>Graph of cost function (spending vs. number-covered)</h3>
+              <i>Parameters need to be defined to show graph</i>
+
+            </div>
+            <div
+                ng-if="vm.chartData"
+                class="costcov-chart-container"
+                style="
+                   margin-left: 30px;
+                   max-width: 700px;
+                   flex-basis: auto;
+                   flex-grow: 1;
+                   overflow: hidden;">
+
+              <h3>Graph of cost function (spending vs. number-covered)</h3>
+
+              Maximum spending shown on graph:
+              <input
+                  placeholder="e.g. 1000000"
+                  sytle="width: 150px"
+                  ng-model="vm.state.program.attr.xupperlim"
+                  type="number"/>
+              <br>
+              <br>
+              <br>
+
+              <div
+                  style="overflow: hidden"
+                  mpld3-chart="vm.state.chartData"
+                  chart-id="{{ vm.state.chartData.id }}"
+                  ng-if="vm.state.chartData">
+              </div>
+
+              <br>
+              Remarks
+              <br>
+              <textarea
+                  style="width: 100%; height:4em;"
+                  ng-model="vm.state.program.attr.caption">
+              </textarea>
+              <br>
+
             </div>
 
           </div>
