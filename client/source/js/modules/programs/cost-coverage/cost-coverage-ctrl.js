@@ -39,6 +39,14 @@ define(['./../module', 'underscore'], function(module, _) {
           return;
         }
 
+        if (_.isUndefined(window.loadCostCovGraphResize)) {
+          console.log('bind resize');
+          $(window).bind('resize', function() {
+            $scope.onResize();
+          });
+          window.loadCostCovGraphResize = true;
+        }
+
         // Fetch progsets
         $http
           .get(
@@ -60,6 +68,23 @@ define(['./../module', 'underscore'], function(module, _) {
               });
           });
       }
+
+      $scope.onResize = function() {
+        console.log('costcov graph resize');
+        function setAllFiguresToWidth($element) {
+          $element.find('svg.mpld3-figure').each(function () {
+            var $svgFigure = $(this);
+            var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
+            var parent = $svgFigure.parent().parent().parent().parent();
+            var width = parent.width();
+            var height = width / ratio;
+            $svgFigure.attr('width', width);
+            $svgFigure.attr('height', height);
+          });
+          $scope.$apply();
+        }
+        setAllFiguresToWidth($(".costcov-chart-container"));
+      };
 
       function consoleLogJson(name, val) {
         console.log(name + ' = ');

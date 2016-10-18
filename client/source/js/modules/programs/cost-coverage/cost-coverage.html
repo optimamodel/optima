@@ -110,18 +110,24 @@
                   width: 100%;
                   margin-top: 10px">
 
-            <div class="chart-container" style="flex: 1 1;">
-
-              <div mpld3-chart="vm.state.chartData"
-                   style="width: 100%"
-                   chart-id="{{ vm.state.chartData.id }}"
-                   ng-if="vm.state.chartData">
+            <div
+                class="costcov-chart-container"
+                style="
+                   max-width: 600px;
+                   flex-basis: auto;
+                   flex-grow: 1;
+                  overflow: hidden;">
+              <div
+                  style="overflow: hidden"
+                  mpld3-chart="vm.state.chartData"
+                  chart-id="{{ vm.state.chartData.id }}"
+                  ng-if="vm.state.chartData">
               </div>
-
-              <div class="c-caption" ng-if="vm.statedisplayCaption">
+              <div
+                  class="c-caption"
+                  ng-if="vm.statedisplayCaption">
                 {{vm.statedisplayCaption}}
               </div>
-
             </div>
 
             <div style="flex: 0 0 580px;"
