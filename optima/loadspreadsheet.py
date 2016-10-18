@@ -94,7 +94,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'optpropdx', 'optpropcare', 'optproptx', 'optproppmtct', 'optpropsupp']
     sheets['Cascade']             = ['linktocare', 'leavecare', 'freqvlmon']
-    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
+    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population

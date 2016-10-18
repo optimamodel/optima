@@ -33,12 +33,12 @@ HIV testing rate (per year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	0	1	r
 AIDS testing rate (per year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	0	1	random	1
 STI prevalence	stiprev	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
 Tuberculosis prevalence	tbprev	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
-Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1	1	random	1
-Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random	1
+Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1	1	additive	1
+Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	additive	1
 Proportion of women who breastfeed	breast	(0, 1)	tot	timepar	meta	other	0	0	1	random	1
 Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	0	1	random	1
 Male circumcision prevalence	propcirc	(0, 1)	mpop	timepar	meta	other	0	0	1	random	1
-Number of circumcisions	numcirc	(0, 'maxpopsize')	mpop	timepar	meta	other	0	1	1	random	1
+Number of circumcisions	numcirc	(0, 'maxpopsize')	mpop	timepar	no	other	0	1	1	additive	0
 Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random	1
 Probability of needle sharing (per injection)	sharing	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
 Proportion of people on PrEP	prep	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
@@ -485,7 +485,9 @@ def makepars(data, label=None, verbose=2):
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
             if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-            else: pars[parname] = Timepar(m=1, y=odict({'tot':array([nan])}), t=odict({'tot':array([0.0])}), **rawpar) # Create structure
+            else:
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
@@ -542,7 +544,7 @@ def makepars(data, label=None, verbose=2):
     pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
     for key in pars['numcirc'].y.keys():
-        pars['numcirc'].y[key] *= 0.0 # WARNING, forcilby set to 0 for all populations, since program parameter only
+        pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
     # Metaparameters
     for key in popkeys: # Define values
