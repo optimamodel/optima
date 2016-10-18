@@ -21,7 +21,7 @@ ind = -1 # Default index
 
 ## Make or load&migrate a project
 if standardrun:
-    P = defaults.defaultproject('generalized',dorun=False)
+    P = defaults.defaultproject('best',dorun=False)
     P.runsim(debug=True)
 
 if migrations:
