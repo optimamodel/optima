@@ -24,7 +24,7 @@
           display: inline;
           margin-left: 0.5em;
           margin-right: 2em; "
-        ng-attr="progset as progset.name for progset in vm.progsets"
+        ng-options="progset as progset.name for progset in vm.progsets"
         ng-change="vm.changeProgsetAndParset()"
         ng-model="vm.state.progset">
       </select>
@@ -36,7 +36,7 @@
           width: 15em;
           display: inline;
           margin-left: 0.5em; "
-        ng-attr="parset as parset.name for parset in vm.parsets"
+        ng-options="parset as parset.name for parset in vm.parsets"
         ng-change="vm.changeProgsetAndParset()"
         ng-model="vm.state.parset">
       </select>
@@ -98,7 +98,7 @@
                   display: inline;
                   width: 30em;"
                 class="txbox"
-                ng-attr="p.name for p in vm.programs"
+                ng-options="p.name for p in vm.programs"
                 ng-change="vm.changeProgram()"
                 ng-model="vm.state.program">
             </select>
@@ -180,7 +180,7 @@
                 display: inline;
                 width: 30em;
                 margin-left: 0.5em; "
-              ng-attr="parameter.name for parameter in vm.parameters"
+              ng-options="parameter.name for parameter in vm.parameters"
               ng-change="vm.changeTargetParameter()"
               ng-model="vm.state.parameter">
             </select>
