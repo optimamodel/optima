@@ -497,7 +497,6 @@ class OptimaSpreadsheet:
     def emit_ref_years_block(self, name, current_row, ref_range, row_format = OptimaFormats.GENERAL,
         assumption = None, row_levels = None, row_formats = None, data = None):
         content = make_ref_years_range(name, ref_range, self.data_start, self.data_end, data=data)
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
@@ -527,12 +526,19 @@ class OptimaSpreadsheet:
         self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
         self.ref_child_range = filter_by_properties(self.ref_pop_range, self.pops, {'age_from':0})
 
-    def generate_key(self, data=None):
+    def generate_key(self):
         row_levels = ['high', 'best', 'low']
         current_row = 0
 
+        if self.data is not None:
+            hivprevdata = self.data.get('hivprev')
+            newhivprevdata = []
+            for j in range(len(hivprevdata[0])):
+                newhivprevdata.append(nan2blank(hivprevdata[2][j]))
+                newhivprevdata.append(nan2blank(hivprevdata[0][j]))
+                newhivprevdata.append(nan2blank(hivprevdata[1][j]))
         current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, 
-            row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True, row_levels = row_levels, data = data)
+            row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True, row_levels = row_levels, data=newhivprevdata)
 
     def generate_popsize(self):
         row_levels = ['high', 'best', 'low']
