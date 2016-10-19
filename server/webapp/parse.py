@@ -46,23 +46,23 @@ def get_project_years(project):
 
 
 ALL_POPULATIONS_SOURCE = """
-Short name;Full name;Male;Female;AgeFrom;AgeTo;Injects;SexWorker
-FSW;Female sex workers;0;1;15;49;0;1;
-Clients;Clients of sex workers;1;0;15;49;0;1;
-MSM;Men who have sex with men;1;0;15;49;0;1;
-Transgender;Transgender individuals;0;0;15;49;0;1;
-PWID;People who inject drugs;0;0;15;49;1;0;
-Male PWID;Males who inject drugs;1;0;15;49;1;0;
-Female PWID;Females who inject drugs;0;1;15;49;1;0;
-Children;Children;0;0;2;15;0;0;
-Infants;Infants;0;0;0;2;0;0;
-Males;Other males;1;0;15;49;0;0;
-Females;Other females;0;1;15;49;0;0;
-Other males;Other males [enter age];1;0;0;0;0;0;
-Other females;Other females [enter age];0;1;0;0;0;0;
+Short name;Full name;Male;Female;AgeFrom;AgeTo;
+FSW;Female sex workers;0;1;15;49;
+Clients;Clients of sex workers;1;0;15;49;
+MSM;Men who have sex with men;1;0;15;49;
+Transgender;Transgender individuals;0;0;15;49;
+PWID;People who inject drugs;0;0;15;49;
+Male PWID;Males who inject drugs;1;0;15;49;
+Female PWID;Females who inject drugs;0;1;15;49;
+Children;Children;0;0;2;15;
+Infants;Infants;0;0;0;2;
+Males;Other males;1;0;15;49;
+Females;Other females;0;1;15;49;
+Other males;Other males [enter age];1;0;0;0;
+Other females;Other females [enter age];0;1;0;0;
 """
 
-keys = "short name male female age_from age_to injects sexworker".split()
+keys = "short name male female age_from age_to".split()
 
 
 def get_default_populations():
@@ -74,7 +74,7 @@ def get_default_populations():
     for piece in result:
         for key in ['age_from', 'age_to']:
             piece[key] = int(piece[key])
-        for key in "male female injects sexworker".split():
+        for key in "male female".split():
             piece[key] = bool(int(piece[key]))
     return result
 
@@ -87,8 +87,6 @@ PyOptima Population project.data['pops'] structure;
  - male: [0, 1, 1, 1, 1, 0]
  - female: [1, 0, 0, 0, 0, 1]
  - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
- - injects: [0, 0, 0, 1, 0, 0]
- - sexworker: [1, 0, 0, 0, 0, 0]
 
 populations data structure (based on the pops parameter in makespreadsheets):
 -
@@ -98,8 +96,6 @@ populations data structure (based on the pops parameter in makespreadsheets):
   female: bool
   age_from: int
   age_to: int
-  injects: bool
-  sexworker: bool
 - ...
 """
 
@@ -115,8 +111,6 @@ def get_populations_from_project(project):
             'female': bool(data_pops['female'][i]),
             'age_from': int(data_pops['age'][i][0]),
             'age_to': int(data_pops['age'][i][1]),
-            'injects': bool(data_pops['injects'][i]),
-            'sexworker': bool(data_pops['sexworker'][i]),
         }
         populations.append(population)
     return populations
@@ -126,7 +120,7 @@ def set_populations_on_project(project, populations):
     data_pops = op.odict()
 
     pprint(populations, indent=2)
-    for key in ['short', 'long', 'male', 'female', 'age', 'injects', 'sexworker']:
+    for key in ['short', 'long', 'male', 'female', 'age']:
         data_pops[key] = []
 
     for pop in populations:
@@ -135,8 +129,6 @@ def set_populations_on_project(project, populations):
         data_pops['male'].append(int(pop['male']))
         data_pops['female'].append(int(pop['female']))
         data_pops['age'].append((int(pop['age_from']), int(pop['age_to'])))
-        data_pops['injects'].append(int(pop['injects']))
-        data_pops['sexworker'].append(int(pop['sexworker']))
 
     if project.data.get("pops") != data_pops:
         # We need to delete the data here off the project?
