@@ -21,7 +21,7 @@ def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default
         npops = pops
         pops = [] # Create real pops list
         for p in range(npops):
-            pops.append({'short_name':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99, 'injects':0, 'sexworker':0}) # Must match make_populations_range definitions
+            pops.append({'short_name':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
     
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
 
