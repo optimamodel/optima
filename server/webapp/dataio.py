@@ -644,6 +644,7 @@ def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     portfolio = load_or_create_portfolio(portfolio_id)
     set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
     save_portfolio(portfolio, db_session)
+    return load_portfolio_summaries()
 
 
 def delete_portfolio_project(portfolio_id, project_id):
@@ -651,7 +652,7 @@ def delete_portfolio_project(portfolio_id, project_id):
     portfolio.projects.pop(str(project_id))
     print ">> Deleted project %s from portfolio %s" % (project_id, portfolio_id)
     save_portfolio(portfolio)
-
+    return load_portfolio_summaries()
 
 ## PARSET
 

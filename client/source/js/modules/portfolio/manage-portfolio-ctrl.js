@@ -29,6 +29,7 @@ define(
         }
 
         function loadPortfolios(portfolios) {
+          console.log('loading portfolios', portfolios)
           var currentPortfolioId = null;
           if (!_.isUndefined($scope.state.portfolio)) {
             currentPortfolioId = $scope.state.portfolio.id;
@@ -137,7 +138,10 @@ define(
         $scope.deletePortfolio = function() {
           $http
             .delete('/api/portfolio/' + $scope.state.portfolio.id)
-            .success(loadPortfolios);
+            .success(function(portfolios) {
+              toastr.success('Deleted portfolio');
+              loadPortfolios(portfolios);
+            });
         };
 
        function reloadPortfolio() {
@@ -177,8 +181,9 @@ define(
             .delete(
               '/api/portfolio/' + $scope.state.portfolio.id
                 + '/project/' + projectId)
-            .success(function() {
-
+            .success(function(portfolios) {
+              toastr.success('Deleted project in portfolio');
+              loadPortfolios(portfolios);
             });
         };
 
@@ -247,13 +252,14 @@ define(
         }
 
         $scope.savePortfolio = function() {
+          console.log('Saving portfolio', $scope.state.portfolio);
           $http
             .post(
               "/api/portfolio/" + $scope.state.portfolio.id,
               angular.copy($scope.state.portfolio))
             .success(function(response) {
-              console.log(response);
-              toastr.success('saved objectives')
+              toastr.success('Portfolio saved');
+              loadPortfolios(response);
             });
         };
 
@@ -300,9 +306,7 @@ define(
             }
           });
 
-          console.log($scope.state.portfolio.projects)
           $scope.savePortfolio();
-          toastr.success('stop adding')
         };
 
         $scope.hasNoResults = function() {
