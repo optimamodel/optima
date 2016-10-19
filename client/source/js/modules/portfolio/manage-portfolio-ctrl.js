@@ -39,7 +39,9 @@ define(
           if (!$scope.state.portfolio) {
             $scope.state.portfolio = $scope.portfolios[0];
           }
-          $scope.setActiveGaoptim();
+          if ($scope.portfolios.length > 0) {
+            $scope.setActiveGaoptim();
+          }
         }
 
         $scope.setActiveGaoptim = function() {
