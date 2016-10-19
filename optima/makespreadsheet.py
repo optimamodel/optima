@@ -560,6 +560,12 @@ class OptimaSpreadsheet:
 
         for name in ['Percentage of people who die from non-HIV-related causes per year',
         'Prevalence of any ulcerative STIs', 'Tuberculosis prevalence']:
+            if self.data is not None:
+                thesedata = self.data.get('name')
+                ## Change names to be consistent
+                ## Handle assumptions
+                ## Write generic method for processeing data
+                
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
                 row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True, data = data)
 
