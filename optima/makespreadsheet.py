@@ -9,11 +9,12 @@ import xlsxwriter
 from xlsxwriter.utility import re, xl_rowcol_to_cell
 from collections import OrderedDict
 from utils import printv, isnumber
+from numpy import isnan
 
 default_datastart = 2000
 default_dataend = 2020
 
-def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, verbose=2):
+def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
     # An integer argument is given: just create a pops dict using empty entries
@@ -25,7 +26,7 @@ def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default
     
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
 
-    book = OptimaSpreadsheet(filename, pops, datastart, dataend)
+    book = OptimaSpreadsheet(filename, pops, datastart, dataend, data=data)
     book.create(filename)
 
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
@@ -115,11 +116,11 @@ class OptimaContent:
 
 """ It's not truly pythonic, they say, to have class methods """
 
-def make_matrix_range(name, params):
-    return OptimaContent(name, params, params)
+def make_matrix_range(name, params, data=None):
+    return OptimaContent(name, params, params, data=data)
 
-def make_years_range(name, params, data_start, data_end):
-    return OptimaContent(name, params, years_range(data_start, data_end))
+def make_years_range(name, params, data_start, data_end, data=None):
+    return OptimaContent(name, params, years_range(data_start, data_end), data=data)
 
 def make_populations_range(name, items):
     """ 
@@ -153,9 +154,9 @@ def make_constant_range(name, row_names, best_data, low_data, high_data):
     range_data = [[best, low, high] for (best, low, high) in zip(best_data, low_data, high_data)]
     return OptimaContent(name, row_names, column_names, range_data)
 
-def make_ref_years_range(name, ref_range, data_start, data_end):
+def make_ref_years_range(name, ref_range, data_start, data_end, data=None):
     params = ref_range.param_refs()
-    return make_years_range(name, params, data_start, data_end)
+    return make_years_range(name, params, data_start, data_end, data=data)
 
 def filter_by_properties(param_refs, base_params, the_filter):
     """
@@ -168,6 +169,9 @@ def filter_by_properties(param_refs, base_params, the_filter):
             result.append(param_ref)
     return result
 
+def nan2blank(thesedata):
+    ''' Convert a nan entry to a blank entry'''
+    return list(map(lambda val: '' if isnan(val) else val, thesedata))
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
@@ -319,7 +323,6 @@ class TitledRange:
                 formats.write_rowcol_name(self.sheet, current_row, start_col+n, name, rc_row_align)
             #emit data if present
             if self.content.has_data():
-                #print self.content.data
                 for j, item in enumerate(self.content.data[i]):
                     formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, row_format)
             else:
@@ -415,7 +418,7 @@ class EconomicsSpreadsheet:
 
 
 class OptimaSpreadsheet:
-    def __init__(self, name, pops, data_start = default_datastart, data_end = default_dataend, verbose = 0):
+    def __init__(self, name, pops, data_start = default_datastart, data_end = default_dataend, data = None, verbose = 0):
         self.sheet_names = OrderedDict([
             ('instr', 'Instructions'),
             ('meta','Populations'),
@@ -433,6 +436,7 @@ class OptimaSpreadsheet:
         self.pops = pops
         self.data_start = data_start
         self.data_end = data_end
+        self.data = data
         self.verbose = verbose
         self.book = None
         self.sheets = None
@@ -460,7 +464,7 @@ class OptimaSpreadsheet:
         return current_row
 
 
-    def emit_matrix_block(self, name, current_row, row_names, column_names = None):
+    def emit_matrix_block(self, name, current_row, row_names, column_names = None, data = None):
         if column_names is None:
             column_names = row_names
         content = OptimaContent(name, row_names, column_names)
@@ -477,7 +481,7 @@ class OptimaSpreadsheet:
         return current_row
 
     def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL,
-        assumption = False, row_levels = None, row_formats = None):
+        assumption = False, row_levels = None, row_formats = None, data = None):
         content = make_years_range(name, row_names, self.data_start, self.data_end)
         content.set_row_format(row_format)
         if assumption:
@@ -491,8 +495,9 @@ class OptimaSpreadsheet:
         return current_row
 
     def emit_ref_years_block(self, name, current_row, ref_range, row_format = OptimaFormats.GENERAL,
-        assumption = None, row_levels = None, row_formats = None):
-        content = make_ref_years_range(name, ref_range, self.data_start, self.data_end)
+        assumption = None, row_levels = None, row_formats = None, data = None):
+        content = make_ref_years_range(name, ref_range, self.data_start, self.data_end, data=data)
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
@@ -522,40 +527,48 @@ class OptimaSpreadsheet:
         self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
         self.ref_child_range = filter_by_properties(self.ref_pop_range, self.pops, {'age_from':0})
 
-    def generate_key(self):
+    def generate_key(self, data=None):
         row_levels = ['high', 'best', 'low']
         current_row = 0
 
         current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, 
-            row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True, row_levels = row_levels)
+            row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True, row_levels = row_levels, data = data)
 
     def generate_popsize(self):
         row_levels = ['high', 'best', 'low']
         current_row = 0
 
+        if self.data is not None:
+            popsizedata = self.data.get('popsize')
+            newpopsizedata = []
+            for j in range(len(popsizedata[0])):
+                newpopsizedata.append(nan2blank(popsizedata[2][j]))
+                newpopsizedata.append(nan2blank(popsizedata[0][j]))
+                newpopsizedata.append(nan2blank(popsizedata[1][j]))
         current_row = self.emit_ref_years_block('Population size', current_row, self.pop_range, 
-            row_format = OptimaFormats.SCIENTIFIC, assumption = True, row_levels = row_levels)
+                            row_format=OptimaFormats.GENERAL, assumption=True, row_levels=row_levels, data=newpopsizedata)
+            
 
-    def generate_epi(self):
+    def generate_epi(self, data=None):
         current_row = 0
 
         for name in ['Percentage of people who die from non-HIV-related causes per year',
         'Prevalence of any ulcerative STIs', 'Tuberculosis prevalence']:
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
-                row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True)
+                row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True, data = data)
 
-    def generate_txrx(self):
+    def generate_txrx(self, data=None):
         current_row = 0
-        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months',current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year',      current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_years_block('Number of people on treatment',                                    current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis',     current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)',                           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)        
+        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months',current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data)
+        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year',      current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True, data=data)
+        current_row = self.emit_years_block('Number of people on treatment',                                    current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, data=data)
+        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis',     current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data)
+        current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)',                           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, data=data)
+        current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True, data=data)
+        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data)
 
 
-    def generate_opt(self):
+    def generate_opt(self, data=None):
         current_row = 0
         
         for name in [
@@ -566,7 +579,7 @@ class OptimaSpreadsheet:
         'Modeled estimate of number of PLHIV', 
         'Number of HIV-related deaths', 
         'Number of people initiating ART each year']:
-            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
+            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True, data=data)
 
         for name in [
         'PLHIV aware of their status (%)', 
@@ -574,17 +587,17 @@ class OptimaSpreadsheet:
         'PLHIV in care on treatment (%)',
         'Pregnant women on PMTCT (%)',
         'People on ART with viral suppression (%)']:
-            current_row = self.emit_years_block(name, current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True) 
+            current_row = self.emit_years_block(name, current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data) 
     
-    def generate_casc(self):
+    def generate_casc(self, data=None):
         current_row = 0
-        current_row = self.emit_ref_years_block('Average time taken to be linked to care (years)',                               current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',      current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Viral load monitoring (number/year)',                                               current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True)
+        current_row = self.emit_ref_years_block('Average time taken to be linked to care (years)',                               current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True, data=data)
+        current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',      current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data)
+        current_row = self.emit_years_block('Viral load monitoring (number/year)',                                               current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True, data=data)
 
             
 
-    def generate_sex(self):
+    def generate_sex(self, data=None):
         current_row = 0
         names_formats_ranges = [('Average number of acts with regular partners per person per year', OptimaFormats.GENERAL, self.ref_pop_range),
         ('Average number of acts with casual partners per person per year', OptimaFormats.GENERAL, self.ref_pop_range),
@@ -595,18 +608,18 @@ class OptimaSpreadsheet:
         ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE, self.ref_males_range)]
 
         for (name, row_format, row_range) in names_formats_ranges:
-            current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True)
+            current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True, data=data)
 
-    def generate_inj(self):
+    def generate_inj(self, data=None):
         current_row = 0
         names_formats_ranges = [('Average number of injections per person per year', OptimaFormats.GENERAL, self.ref_pop_range),
         ('Average percentage of people who receptively shared a needle/syringe at last injection', OptimaFormats.PERCENTAGE, self.ref_pop_range),
         ('Number of people who inject drugs who are on opiate substitution therapy', OptimaFormats.GENERAL, ['Average'])]
 
         for (name, row_format, row_range) in names_formats_ranges:
-            current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True)
+            current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True, data=data)
 
-    def generate_ptrans(self):
+    def generate_ptrans(self, data=None):
         current_row = 0
         names = ['Interactions between regular partners', 'Interactions between casual partners',
         'Interactions between commercial partners', 'Interactions between people who inject drugs',
@@ -615,8 +628,8 @@ class OptimaSpreadsheet:
         for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range)
-            else: current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
+            if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range, data=data)
+            else: current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range, data=data)
 
     def generate_const(self):
         self.current_sheet.set_column(1,1,40)
