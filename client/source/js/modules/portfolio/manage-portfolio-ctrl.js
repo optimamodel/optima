@@ -311,6 +311,23 @@ define(
           $scope.savePortfolio();
         };
 
+
+        $scope.checkBocCurvesNotCalculated = function() {
+          if (_.isUndefined($scope.state.portfolio)) {
+            return true;
+          }
+          var allCalculated = true;
+          _.each($scope.state.portfolio.projects, function(project) {
+            if ($scope.bocStatusMessage[project.id] !== "calculated") {
+              allCalculated = false;
+            }
+          });
+          if (!allCalculated) {
+            $scope.state.portfolio.outputstring = "";
+          }
+          return !allCalculated;
+        };
+
         $scope.hasNoResults = function() {
           if (_.isUndefined($scope.state.portfolio)) {
             return true;

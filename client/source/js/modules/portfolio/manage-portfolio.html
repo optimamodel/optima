@@ -139,7 +139,7 @@
           <button
               style="
                 margin-bottom: 1em"
-                class="btn"
+              class="btn"
               ng-click="calculateAllBocCurves()">
             Calculate BOC curves for projects
           </button>
@@ -163,7 +163,8 @@
           <br>
           <button
               class="btn"
-              ng-click="runFullGa()">
+              ng-click="runFullGa()"
+              ng-disabled="checkBocCurvesNotCalculated()">
             Run geospatial optimization over BOC curves
           </button>
 
