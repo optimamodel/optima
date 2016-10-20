@@ -339,7 +339,8 @@ class TitledRange:
                     name = self.content.assumption_properties['connector'])
                 for index, col_name in enumerate(self.content.assumption_properties['columns']):
                     if self.content.has_assumption_data():
-                        formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, item, row_format)
+                        try: formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[index], row_format)
+                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         #
                     else:
                         formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, row_format)
@@ -489,8 +490,8 @@ class OptimaSpreadsheet:
         current_row = the_range.emit(self.formats, rc_row_align = 'left')
         return current_row
 
-    def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL,
-        assumption = False, row_levels = None, row_formats = None, data = None):
+    def emit_years_block(self, name, current_row, row_names, row_format=OptimaFormats.GENERAL,
+        assumption=False, row_levels=None, row_formats=None, data=None, assumption_data=None):
         content = make_years_range(name, row_names, self.data_start, self.data_end)
         content.set_row_format(row_format)
         if assumption:
@@ -504,11 +505,13 @@ class OptimaSpreadsheet:
         return current_row
 
     def emit_ref_years_block(self, name, current_row, ref_range, row_format = OptimaFormats.GENERAL,
-        assumption = None, row_levels = None, row_formats = None, data = None):
+        assumption = None, row_levels = None, row_formats = None, data = None, assumption_data=None):
         content = make_ref_years_range(name, ref_range, self.data_start, self.data_end, data=data)
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
+            if assumption_data:
+                content.assumption_data = assumption_data
         if row_levels is not None:
             content.set_row_levels(row_levels)
         if row_formats is not None:
@@ -535,7 +538,7 @@ class OptimaSpreadsheet:
                 elif len(data[est][pop])==npts: # It's data
                     newdata.append(nan2blank(data[est][pop]))
                     assumption.append('')
-        return {'data':newdata,'assumption':assumption}
+        return {'data':newdata,'assumption_data':assumption}
 
     def formattimedata(self, data):
         ''' Return standard time data in a format that can be written to spreadsheet'''
@@ -546,11 +549,11 @@ class OptimaSpreadsheet:
         for pop in range(npops):
             if len(data[pop])==1: # It's an assumption
                 newdata.append(['']*npts)
-                assumption.append(data[pop])
+                assumption.append(data[pop][0])
             elif len(data[pop])==npts: # It's data
                 newdata.append(nan2blank(data[pop]))                
                 assumption.append('')
-        return {'data':newdata,'assumption':assumption}
+        return {'data':newdata,'assumption_data':assumption}
 
     def getshortname(self, name):
         ''' Get the short name of indicators in the data sheet'''
@@ -601,14 +604,15 @@ class OptimaSpreadsheet:
         'Prevalence of any ulcerative STIs', 'Tuberculosis prevalence']:
             if self.data is not None:
                 try:
-                    thesedata = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+                    data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+                    assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
 #                    if name == 'Prevalence of any ulcerative STIs': import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                    
                 except:
                     import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                    
                 ## Handle assumptions
                 
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
-                row_format=OptimaFormats.DECIMAL_PERCENTAGE, assumption=True, data=thesedata)
+                row_format=OptimaFormats.DECIMAL_PERCENTAGE, assumption=True, data=data, assumption_data=assumption_data)
 
     def generate_txrx(self, data=None):
         current_row = 0
