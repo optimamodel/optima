@@ -114,18 +114,22 @@ Disutility of CD4>200	constant	disutilgt200	disutilgt200	(0, 1)	tot	constant	no	
 Disutility of CD4>50	constant	disutilgt50	disutilgt50	(0, 1)	tot	constant	no	no	0	None	0	None	1
 Disutility of CD4<50	constant	disutillt50	disutillt50	(0, 1)	tot	constant	no	no	0	None	0	None	1
 Disutility on treatment	constant	disutiltx	disutiltx	(0, 1)	tot	constant	no	no	0	None	0	None	1
-Number of HIV tests per year	Number of HIV tests per year	optnumtest	optnumtest	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Number of HIV diagnoses per year	Number of HIV diagnoses per year	optnumdiag	optnumdiag	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Modeled estimate of new HIV infections per year	Modeled estimate of new HIV infections per year	optnuminfect	optnuminfect	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Modeled estimate of HIV prevalence	Modeled estimate of HIV prevalence	optprev	optprev	(0, 1)	tot	None	no	no	0	None	0	None	1
-Modeled estimate of number of PLHIV	Modeled estimate of number of PLHIV	optplhiv	optplhiv	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Number of HIV-related deaths	Number of HIV-related deaths	optdeath	optdeath	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Number of people initiating ART each year	Number of people initiating ART each year	optnewtreat	optnewtreat	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-PLHIV aware of their status (%)	PLHIV aware of their status (%)	optpropdx	optpropdx	(0, 1)	tot	None	no	no	0	None	0	None	1
-Diagnosed PLHIV in care (%)	Diagnosed PLHIV in care (%)	optpropcare	optpropcare	(0, 1)	tot	None	no	no	0	None	0	None	1
-PLHIV in care on treatment (%)	PLHIV in care on treatment (%)	optproptx	optproptx	(0, 1)	tot	None	no	no	0	None	0	None	1
-Pregnant women on PMTCT (%)	Pregnant women on PMTCT (%)	optproppmtct	optproppmtct	(0, 1)	tot	None	no	no	0	None	0	None	1
-People on ART with viral suppression (%)	People on ART with viral suppression (%)	optpropsupp	optpropsupp	(0, 1)	tot	None	no	no	0	None	0	None	1
+Number of HIV tests per year	Number of HIV tests per year	None	optnumtest	None	tot	None	no	no	0	None	0	None	1
+Number of HIV diagnoses per year	Number of HIV diagnoses per year	None	optnumdiag	None	tot	None	no	no	0	None	0	None	1
+Modeled estimate of new HIV infections per year	Modeled estimate of new HIV infections per year	None	optnuminfect	None	tot	None	no	no	0	None	0	None	1
+Modeled estimate of HIV prevalence	Modeled estimate of HIV prevalence	None	optprev	None	tot	None	no	no	0	None	0	None	1
+Modeled estimate of number of PLHIV	Modeled estimate of number of PLHIV	None	optplhiv	None	tot	None	no	no	0	None	0	None	1
+Number of HIV-related deaths	Number of HIV-related deaths	None	optdeath	None	tot	None	no	no	0	None	0	None	1
+Number of people initiating ART each year	Number of people initiating ART each year	None	optnewtreat	None	tot	None	no	no	0	None	0	None	1
+PLHIV aware of their status (%)	PLHIV aware of their status (%)	None	optpropdx	None	tot	None	no	no	0	None	0	None	1
+Diagnosed PLHIV in care (%)	Diagnosed PLHIV in care (%)	None	optpropcare	None	tot	None	no	no	0	None	0	None	1
+PLHIV in care on treatment (%)	PLHIV in care on treatment (%)	None	optproptx	None	tot	None	no	no	0	None	0	None	1
+Pregnant women on PMTCT (%)	Pregnant women on PMTCT (%)	None	optproppmtct	None	tot	None	no	no	0	None	0	None	1
+People on ART with viral suppression (%)	People on ART with viral suppression (%)	None	optpropsupp	None	tot	None	no	no	0	None	0	None	1
+Interactions between regular partners	Interactions between regular partners	partreg	partreg	None	tot	None	no	no	0	None	0	None	1
+Interactions between casual partners	Interactions between casual partners	partcas	partcas	None	tot	None	no	no	0	None	0	None	1
+Interactions between commercial partners	Interactions between commercial partners	partcom	partcom	None	tot	None	no	no	0	None	0	None	1
+Interactions between people who inject drugs	Interactions between people who inject drugs	partinj	partinj	None	tot	None	no	no	0	None	0	None	1
 '''
 
 

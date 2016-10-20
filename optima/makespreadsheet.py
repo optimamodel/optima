@@ -652,9 +652,9 @@ class OptimaSpreadsheet:
     def generate_casc(self, data=None):
         current_row = 0
         methods_names_formats_ranges = [
-        ('emit_ref_years_block',    'Average time taken to be linked to care (years)',    OptimaFormats.NUMBER,   self.pop_range),
+        ('emit_ref_years_block',    'Average time taken to be linked to care (years)',                  OptimaFormats.NUMBER,       self.pop_range),
         ('emit_ref_years_block',    'Percentage of people in care who are lost to follow-up per year (%/year)',    OptimaFormats.PERCENTAGE,   self.pop_range),
-        ('emit_years_block',    'Viral load monitoring (number/year)',    OptimaFormats.NUMBER,   ['Average']),
+        ('emit_years_block',        'Viral load monitoring (number/year)',                              OptimaFormats.NUMBER,           ['Average']),
         ]
         for (method, name, row_format, row_range) in methods_names_formats_ranges:
             if self.data is not None:
@@ -701,6 +701,7 @@ class OptimaSpreadsheet:
         for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
+            if self.data is not None: data = self.data.get(self.getshortname(names[0]))
             if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range, data=data)
             else: current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range, data=data)
 
