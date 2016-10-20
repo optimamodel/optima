@@ -20,112 +20,112 @@ defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 ##  Edit there, then copy and paste from there into here; be sure to include header row
 #############################################################################################################################
 partable = '''
-name	dataname	short	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract	fromdata
-Initial HIV prevalence	None	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None	1
-Population size	Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None	1
-Force-of-infection (unitless)	None	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None	0
-Inhomogeneity (unitless)	None	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	0	None	0	None	0
-Risk transitions (average number of years before movement)	Risk-related population transitions (average number of years before movement)	risktransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None	1
-Age transitions (average number of years before movement)	Aging	agetransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None	1
-Birth transitions (fraction born/year)	Births	birthtransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None	1
-Mortality rate (per year)	Percentage of people who die from non-HIV-related causes per year	death	(0, 'maxrate')	pop	timepar	meta	other	0	0	1	random	1
-HIV testing rate (per year)	Percentage of population tested for HIV in the last 12 months	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	0	1	random	1
-AIDS testing rate (per year)	Probability of a person with CD4 <200 being tested per year	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	0	1	random	1
-STI prevalence	Prevalence of any ulcerative STIs	stiprev	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
-Tuberculosis prevalence	Tuberculosis prevalence	tbprev	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
-Number of people on treatment	Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1	1	additive	1
-Number of people on PMTCT	Number of women on PMTCT (Option B/B+)	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	additive	1
-Proportion of women who breastfeed	Percentage of HIV-positive women who breastfeed	breast	(0, 1)	tot	timepar	meta	other	0	0	1	random	1
-Birth rate (births/woman/year)	Birth rate (births per woman per year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	0	1	random	1
-Male circumcision prevalence	Percentage of males who have been circumcised	propcirc	(0, 1)	mpop	timepar	meta	other	0	0	1	random	1
-Number of circumcisions	None	numcirc	(0, 'maxpopsize')	mpop	timepar	no	other	0	1	1	additive	0
-Number of PWID on OST	Number of people who inject drugs who are on opiate substitution therapy	numost	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random	1
-Probability of needle sharing (per injection)	Average percentage of people who receptively shared a needle/syringe at last injection	sharing	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
-Proportion of people on PrEP	Percentage of people covered by pre-exposure prophylaxis	prep	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
-Number of regular acts (acts/year)	Average number of acts with regular partners per person per year	actsreg	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random	1
-Number of casual acts (acts/year)	Average number of acts with casual partners per person per year	actscas	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random	1
-Number of commercial acts (acts/year)	Average number of acts with commercial partners per person per year	actscom	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random	1
-Number of injecting acts (injections/year)	Average number of injections per person per year	actsinj	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random	1
-Condom use for regular acts	Percentage of people who used a condom at last act with regular partners	condreg	(0, 1)	pship	timepar	meta	other	0	0	1	random	1
-Condom use for casual acts	Percentage of people who used a condom at last act with casual partners	condcas	(0, 1)	pship	timepar	meta	other	0	0	1	random	1
-Condom use for commercial acts	Percentage of people who used a condom at last act with commercial partners	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	random	1
-Average time taken to be linked to care (years)	Average time taken to be linked to care (years)	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random	1
-Viral load monitoring (number/year)	Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random	1
-People in care lost to follow-up (per year)	Percentage of people in care who are lost to follow-up per year (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random	1
-PLHIV aware of their status	None	propdx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
-Diagnosed PLHIV in care	None	propcare	(0, 1)	tot	timepar	no	other	1	0	1	None	0
-PLHIV in care on treatment	None	proptx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
-People on ART with viral suppression	None	propsupp	(0, 1)	tot	timepar	no	other	1	0	1	None	0
-Pregnant women and mothers on PMTCT	None	proppmtct	(0, 1)	tot	timepar	no	other	0	0	1	None	0
-Male-female insertive transmissibility (per act)	constant	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Male-female receptive transmissibility (per act)	constant	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Male-male insertive transmissibility (per act)	constant	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Male-male receptive transmissibility (per act)	constant	transmmr	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Injection-related transmissibility (per injection)	constant	transinj	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Mother-to-child breastfeeding transmissibility	constant	mtctbreast	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Mother-to-child no-breastfeeding transmissibility	constant	mtctnobreast	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Relative transmissibility for acute HIV (unitless)	constant	cd4transacute	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Relative transmissibility for CD4>500 (unitless)	constant	cd4transgt500	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Relative transmissibility for CD4>350 (unitless)	constant	cd4transgt350	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Relative transmissibility for CD4>200 (unitless)	constant	cd4transgt200	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Relative transmissibility for CD4>50 (unitless)	constant	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Relative transmissibility for CD4<50 (unitless)	constant	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Relative transmissibility with STIs (unitless)	constant	effsti	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Progression time from acute HIV (years)	constant	progacute	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Progression from CD4>500 (years)	constant	proggt500	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Progression from CD4>350 (years)	constant	proggt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Progression from CD4>200 (years)	constant	proggt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Progression from CD4>50 (years)	constant	proggt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Treatment recovery into CD4>500 (years)	constant	svlrecovgt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Treatment recovery into CD4>350 (years)	constant	svlrecovgt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Treatment recovery into CD4>200 (years)	constant	svlrecovgt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Treatment recovery into CD4>50 (years)	constant	svlrecovlt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Time after initiating ART to achieve viral suppression (years)	constant	treatvs	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
-Progression from CD4>500 to CD4>350 on unsuppressive ART	constant	usvlproggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Recovery from CD4>350 to CD4>500 on unsuppressive ART	constant	usvlrecovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Progression from CD4>350 to CD4>200 on unsuppressive ART	constant	usvlproggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Recovery from CD4>200 to CD4>350 on unsuppressive ART	constant	usvlrecovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Progression from CD4>200 to CD4>50 on unsuppressive ART	constant	usvlproggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Recovery from CD4>50 to CD4>200 on unsuppressive ART	constant	usvlrecovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Progression from CD4>50 to CD4<50 on unsuppressive ART	constant	usvlproggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Recovery from CD4<50 to CD4>50 on unsuppressive ART	constant	usvlrecovlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Treatment failure rate	constant	treatfail	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Death rate for acute HIV (per year)	constant	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Death rate for CD4>500 (per year)	constant	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Death rate for CD4>350 (per year)	constant	deathgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Death rate for CD4>200 (per year)	constant	deathgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Death rate for CD4>50 (per year)	constant	deathgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Death rate for CD4<50 (per year)	constant	deathlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
-Relative death rate on suppressive ART (unitless)	constant	deathsvl	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Relative death rate on unsuppressive ART (unitless)	constant	deathusvl	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Relative death rate with tuberculosis (unitless)	constant	deathtb	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
-Efficacy of unsuppressive ART	constant	efftxunsupp	(0, 1)	tot	constant	const	const	1	None	0	None	1
-Efficacy of suppressive ART	constant	efftxsupp	(0, 1)	tot	constant	const	const	1	None	0	None	1
-Efficacy of PMTCT	constant	effpmtct	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Efficacy of PrEP	constant	effprep	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Efficacy of condoms	constant	effcondom	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Efficacy of circumcision	constant	effcirc	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Efficacy of OST	constant	effost	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Efficacy of diagnosis for behavior change	constant	effdx	(0, 1)	tot	constant	const	const	0	None	0	None	1
-Disutility of acute HIV	constant	disutilacute	(0, 1)	tot	constant	no	no	0	None	0	None	1
-Disutility of CD4>500	constant	disutilgt500	(0, 1)	tot	constant	no	no	0	None	0	None	1
-Disutility of CD4>350	constant	disutilgt350	(0, 1)	tot	constant	no	no	0	None	0	None	1
-Disutility of CD4>200	constant	disutilgt200	(0, 1)	tot	constant	no	no	0	None	0	None	1
-Disutility of CD4>50	constant	disutilgt50	(0, 1)	tot	constant	no	no	0	None	0	None	1
-Disutility of CD4<50	constant	disutillt50	(0, 1)	tot	constant	no	no	0	None	0	None	1
-Disutility on treatment	constant	disutiltx	(0, 1)	tot	constant	no	no	0	None	0	None	1
-Number of HIV tests per year	Number of HIV tests per year	optnumtest	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Number of HIV diagnoses per year	Number of HIV diagnoses per year	optnumdiag	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Modeled estimate of new HIV infections per year	Modeled estimate of new HIV infections per year	optnuminfect	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Modeled estimate of HIV prevalence	Modeled estimate of HIV prevalence	optprev	(0, 1)	tot	None	no	no	0	None	0	None	1
-Modeled estimate of number of PLHIV	Modeled estimate of number of PLHIV	optplhiv	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Number of HIV-related deaths	Number of HIV-related deaths	optdeath	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-Number of people initiating ART each year	Number of people initiating ART each year	optnewtreat	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
-PLHIV aware of their status (%)	PLHIV aware of their status (%)	optpropdx	(0, 1)	tot	None	no	no	0	None	0	None	1
-Diagnosed PLHIV in care (%)	Diagnosed PLHIV in care (%)	optpropcare	(0, 1)	tot	None	no	no	0	None	0	None	1
-PLHIV in care on treatment (%)	PLHIV in care on treatment (%)	optproptx	(0, 1)	tot	None	no	no	0	None	0	None	1
-Pregnant women on PMTCT (%)	Pregnant women on PMTCT (%)	optproppmtct	(0, 1)	tot	None	no	no	0	None	0	None	1
-People on ART with viral suppression (%)	People on ART with viral suppression (%)	optpropsupp	(0, 1)	tot	None	no	no	0	None	0	None	1
+name	dataname	short	datashort	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract	fromdata
+Initial HIV prevalence	None	initprev	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None	1
+Population size	Population size	popsize	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None	1
+Force-of-infection (unitless)	None	force	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None	0
+Inhomogeneity (unitless)	None	inhomo	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	0	None	0	None	0
+Risk transitions (average number of years before movement)	Risk-related population transitions (average number of years before movement)	risktransit	risktransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None	1
+Age transitions (average number of years before movement)	Aging	agetransit	agetransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None	1
+Birth transitions (fraction born/year)	Births	birthtransit	birthtransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None	1
+Mortality rate (per year)	Percentage of people who die from non-HIV-related causes per year	death	death	(0, 'maxrate')	pop	timepar	meta	other	0	0	1	random	1
+HIV testing rate (per year)	Percentage of population tested for HIV in the last 12 months	hivtest	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	0	1	random	1
+AIDS testing rate (per year)	Probability of a person with CD4 <200 being tested per year	aidstest	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	0	1	random	1
+STI prevalence	Prevalence of any ulcerative STIs	stiprev	stiprev	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
+Tuberculosis prevalence	Tuberculosis prevalence	tbprev	tbprev	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
+Number of people on treatment	Number of people on treatment	numtx	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1	1	additive	1
+Number of people on PMTCT	Number of women on PMTCT (Option B/B+)	numpmtct	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	additive	1
+Proportion of women who breastfeed	Percentage of HIV-positive women who breastfeed	breast	breast	(0, 1)	tot	timepar	meta	other	0	0	1	random	1
+Birth rate (births/woman/year)	Birth rate (births per woman per year)	birth	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	0	1	random	1
+Male circumcision prevalence	Percentage of males who have been circumcised	propcirc	propcirc	(0, 1)	mpop	timepar	meta	other	0	0	1	random	1
+Number of circumcisions	None	numcirc	numcirc	(0, 'maxpopsize')	mpop	timepar	no	other	0	1	1	additive	0
+Number of PWID on OST	Number of people who inject drugs who are on opiate substitution therapy	numost	numost	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random	1
+Probability of needle sharing (per injection)	Average percentage of people who receptively shared a needle/syringe at last injection	sharing	sharing	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
+Proportion of people on PrEP	Percentage of people covered by pre-exposure prophylaxis	prep	prep	(0, 1)	pop	timepar	meta	other	0	0	1	random	1
+Number of regular acts (acts/year)	Average number of acts with regular partners per person per year	actsreg	numactsreg	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random	1
+Number of casual acts (acts/year)	Average number of acts with casual partners per person per year	actscas	numactscas	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random	1
+Number of commercial acts (acts/year)	Average number of acts with commercial partners per person per year	actscom	numactscom	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random	1
+Number of injecting acts (injections/year)	Average number of injections per person per year	actsinj	numactsinj	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random	1
+Condom use for regular acts	Percentage of people who used a condom at last act with regular partners	condreg	condomreg	(0, 1)	pship	timepar	meta	other	0	0	1	random	1
+Condom use for casual acts	Percentage of people who used a condom at last act with casual partners	condcas	condomcas	(0, 1)	pship	timepar	meta	other	0	0	1	random	1
+Condom use for commercial acts	Percentage of people who used a condom at last act with commercial partners	condcom	condomcom	(0, 1)	pship	timepar	meta	other	0	0	1	random	1
+Average time taken to be linked to care (years)	Average time taken to be linked to care (years)	linktocare	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random	1
+Viral load monitoring (number/year)	Viral load monitoring (number/year)	freqvlmon	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random	1
+People in care lost to follow-up (per year)	Percentage of people in care who are lost to follow-up per year (%/year)	leavecare	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random	1
+PLHIV aware of their status	None	propdx	propdx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
+Diagnosed PLHIV in care	None	propcare	propcare	(0, 1)	tot	timepar	no	other	1	0	1	None	0
+PLHIV in care on treatment	None	proptx	proptx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
+People on ART with viral suppression	None	propsupp	propsupp	(0, 1)	tot	timepar	no	other	1	0	1	None	0
+Pregnant women and mothers on PMTCT	None	proppmtct	proppmtct	(0, 1)	tot	timepar	no	other	0	0	1	None	0
+Male-female insertive transmissibility (per act)	constant	transmfi	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Male-female receptive transmissibility (per act)	constant	transmfr	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Male-male insertive transmissibility (per act)	constant	transmmi	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Male-male receptive transmissibility (per act)	constant	transmmr	transmmr	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Injection-related transmissibility (per injection)	constant	transinj	transinj	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Mother-to-child breastfeeding transmissibility	constant	mtctbreast	mtctbreast	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Mother-to-child no-breastfeeding transmissibility	constant	mtctnobreast	mtctnobreast	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Relative transmissibility for acute HIV (unitless)	constant	cd4transacute	cd4transacute	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Relative transmissibility for CD4>500 (unitless)	constant	cd4transgt500	cd4transgt500	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Relative transmissibility for CD4>350 (unitless)	constant	cd4transgt350	cd4transgt350	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Relative transmissibility for CD4>200 (unitless)	constant	cd4transgt200	cd4transgt200	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Relative transmissibility for CD4>50 (unitless)	constant	cd4transgt50	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Relative transmissibility for CD4<50 (unitless)	constant	cd4translt50	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Relative transmissibility with STIs (unitless)	constant	effsti	effsti	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Progression time from acute HIV (years)	constant	progacute	progacute	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Progression from CD4>500 (years)	constant	proggt500	proggt500	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Progression from CD4>350 (years)	constant	proggt350	proggt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Progression from CD4>200 (years)	constant	proggt200	proggt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Progression from CD4>50 (years)	constant	proggt50	proggt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Treatment recovery into CD4>500 (years)	constant	svlrecovgt350	svlrecovgt350	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Treatment recovery into CD4>350 (years)	constant	svlrecovgt200	svlrecovgt200	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Treatment recovery into CD4>200 (years)	constant	svlrecovgt50	svlrecovgt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Treatment recovery into CD4>50 (years)	constant	svlrecovlt50	svlrecovlt50	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Time after initiating ART to achieve viral suppression (years)	constant	treatvs	treatvs	(0, 'maxduration')	tot	constant	const	const	0	None	0	None	1
+Progression from CD4>500 to CD4>350 on unsuppressive ART	constant	usvlproggt500	usvlproggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Recovery from CD4>350 to CD4>500 on unsuppressive ART	constant	usvlrecovgt350	usvlrecovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Progression from CD4>350 to CD4>200 on unsuppressive ART	constant	usvlproggt350	usvlproggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Recovery from CD4>200 to CD4>350 on unsuppressive ART	constant	usvlrecovgt200	usvlrecovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Progression from CD4>200 to CD4>50 on unsuppressive ART	constant	usvlproggt200	usvlproggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Recovery from CD4>50 to CD4>200 on unsuppressive ART	constant	usvlrecovgt50	usvlrecovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Progression from CD4>50 to CD4<50 on unsuppressive ART	constant	usvlproggt50	usvlproggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Recovery from CD4<50 to CD4>50 on unsuppressive ART	constant	usvlrecovlt50	usvlrecovlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Treatment failure rate	constant	treatfail	treatfail	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Death rate for acute HIV (per year)	constant	deathacute	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Death rate for CD4>500 (per year)	constant	deathgt500	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Death rate for CD4>350 (per year)	constant	deathgt350	deathgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Death rate for CD4>200 (per year)	constant	deathgt200	deathgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Death rate for CD4>50 (per year)	constant	deathgt50	deathgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Death rate for CD4<50 (per year)	constant	deathlt50	deathlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None	1
+Relative death rate on suppressive ART (unitless)	constant	deathsvl	deathsvl	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Relative death rate on unsuppressive ART (unitless)	constant	deathusvl	deathusvl	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Relative death rate with tuberculosis (unitless)	constant	deathtb	deathtb	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None	1
+Efficacy of unsuppressive ART	constant	efftxunsupp	efftxunsupp	(0, 1)	tot	constant	const	const	1	None	0	None	1
+Efficacy of suppressive ART	constant	efftxsupp	efftxsupp	(0, 1)	tot	constant	const	const	1	None	0	None	1
+Efficacy of PMTCT	constant	effpmtct	effpmtct	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Efficacy of PrEP	constant	effprep	effprep	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Efficacy of condoms	constant	effcondom	effcondom	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Efficacy of circumcision	constant	effcirc	effcirc	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Efficacy of OST	constant	effost	effost	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Efficacy of diagnosis for behavior change	constant	effdx	effdx	(0, 1)	tot	constant	const	const	0	None	0	None	1
+Disutility of acute HIV	constant	disutilacute	disutilacute	(0, 1)	tot	constant	no	no	0	None	0	None	1
+Disutility of CD4>500	constant	disutilgt500	disutilgt500	(0, 1)	tot	constant	no	no	0	None	0	None	1
+Disutility of CD4>350	constant	disutilgt350	disutilgt350	(0, 1)	tot	constant	no	no	0	None	0	None	1
+Disutility of CD4>200	constant	disutilgt200	disutilgt200	(0, 1)	tot	constant	no	no	0	None	0	None	1
+Disutility of CD4>50	constant	disutilgt50	disutilgt50	(0, 1)	tot	constant	no	no	0	None	0	None	1
+Disutility of CD4<50	constant	disutillt50	disutillt50	(0, 1)	tot	constant	no	no	0	None	0	None	1
+Disutility on treatment	constant	disutiltx	disutiltx	(0, 1)	tot	constant	no	no	0	None	0	None	1
+Number of HIV tests per year	Number of HIV tests per year	optnumtest	optnumtest	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Number of HIV diagnoses per year	Number of HIV diagnoses per year	optnumdiag	optnumdiag	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Modeled estimate of new HIV infections per year	Modeled estimate of new HIV infections per year	optnuminfect	optnuminfect	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Modeled estimate of HIV prevalence	Modeled estimate of HIV prevalence	optprev	optprev	(0, 1)	tot	None	no	no	0	None	0	None	1
+Modeled estimate of number of PLHIV	Modeled estimate of number of PLHIV	optplhiv	optplhiv	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Number of HIV-related deaths	Number of HIV-related deaths	optdeath	optdeath	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Number of people initiating ART each year	Number of people initiating ART each year	optnewtreat	optnewtreat	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+PLHIV aware of their status (%)	PLHIV aware of their status (%)	optpropdx	optpropdx	(0, 1)	tot	None	no	no	0	None	0	None	1
+Diagnosed PLHIV in care (%)	Diagnosed PLHIV in care (%)	optpropcare	optpropcare	(0, 1)	tot	None	no	no	0	None	0	None	1
+PLHIV in care on treatment (%)	PLHIV in care on treatment (%)	optproptx	optproptx	(0, 1)	tot	None	no	no	0	None	0	None	1
+Pregnant women on PMTCT (%)	Pregnant women on PMTCT (%)	optproppmtct	optproppmtct	(0, 1)	tot	None	no	no	0	None	0	None	1
+People on ART with viral suppression (%)	People on ART with viral suppression (%)	optpropsupp	optpropsupp	(0, 1)	tot	None	no	no	0	None	0	None	1
 '''
 
 
@@ -783,10 +783,11 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, dataname=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, dataname=None, short=None, datashort=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
+        self.datashort = datashort # The short name used for the data, e.g. "numactsreg" (which may be different to the paramter name, e.g. "actsreg")
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
