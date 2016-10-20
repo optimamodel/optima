@@ -180,11 +180,11 @@ if 'makespreadsheetwithdata' in tests:
     t = tic()
     print('Running makespreadsheetwithdata test...')
     
-    from optima import makespreadsheet, defaults
+    from optima import makespreadsheet, defaults, Project
     from os import remove
 
     # Create simple project
-    P = defaults.defaultproject('simple')
+    P = defaults.defaultproject('best')
     
     # Modify some data
     P.data['hivtest'][0][3] = 0.45
@@ -200,6 +200,9 @@ if 'makespreadsheetwithdata' in tests:
 
     filename = 'tmpspreadsheet.xlsx'
     makespreadsheet(filename, pops=pops, data=P.data)
+    
+    # Try reloading the spreadsheet you just made
+    Q = Project(spreadsheet='tmpspreadsheet.xlsx',dorun=False)
 
     if not dosave: remove(filename)
         

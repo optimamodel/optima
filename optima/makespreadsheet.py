@@ -339,7 +339,7 @@ class TitledRange:
                     name = self.content.assumption_properties['connector'])
                 for index, col_name in enumerate(self.content.assumption_properties['columns']):
                     if self.content.has_assumption_data():
-                        formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[index], row_format)
+                        formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[i], row_format)
                     else:
                         formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, row_format)
             current_row+=1
@@ -618,13 +618,15 @@ class OptimaSpreadsheet:
         ('emit_years_block',        'Number of people on treatment',                                    OptimaFormats.GENERAL,      ['Total']),
         ('emit_ref_years_block',    'Percentage of people covered by pre-exposure prophylaxis',         OptimaFormats.PERCENTAGE,   self.pop_range),
         ('emit_years_block',        'Number of women on PMTCT (Option B/B+)',                           OptimaFormats.GENERAL,      ['Total']),
+        ('emit_years_block',        'Birth rate (births per woman per year)',                           OptimaFormats.NUMBER,       self.ref_females_range),
         ('emit_years_block',        'Percentage of HIV-positive women who breastfeed',                  OptimaFormats.PERCENTAGE,   ['Total']),
         ]
         for (method, name, row_format, row_range) in methods_names_formats_ranges:
             if self.data is not None:
                 data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
                 assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
-            current_row = getattr(self, method)(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
+            try: current_row = getattr(self, method)(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     def generate_opt(self, data=None):
         current_row = 0
