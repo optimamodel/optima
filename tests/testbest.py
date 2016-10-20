@@ -5,11 +5,11 @@ which is an outdated version of the same thing!
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj, migrate # analysis:ignore
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj, migrate, makespreadsheet # analysis:ignore
 
 ## Options
-standardrun = 1
-migrations = 0 # Whether or not to try migrating an old project
+standardrun = 0
+migrations = 1 # Whether or not to try migrating an old project
 autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 0
@@ -25,10 +25,11 @@ if standardrun:
     P.runsim(debug=True)
 
 if migrations:
-    oldprojectfile = 'oldbest.prj'
+    oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_0160816_reconciled.prj'
     oldP = loadobj(filename=oldprojectfile)
     P = migrate(oldP)
     P.runsim()
+    makespreadsheet('newspreadsheet.xlsx', data=P.data)
 
 ## Calibration
 if autocalib: 

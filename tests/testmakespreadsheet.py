@@ -166,10 +166,10 @@ if 'checkexisting' in tests:
                         raise Exception(errormsg)
             print('Constants are OK for spreadsheet "%s"!' % tochecknames[ntc])
                 
-    ## Tidy up
-    for name in freshnames:
-        print('Removing temporary file "%s"...' % name)
-        remove(name)
+#    ## Tidy up
+#    for name in freshnames:
+#        print('Removing temporary file "%s"...' % name)
+#        remove(name)
     
     done(t)
 
@@ -185,9 +185,9 @@ if 'makespreadsheetwithdata' in tests:
 
     # Create simple project
     P = defaults.defaultproject('best')
+    P.runsim(debug=True)
     
-    # Modify some data
-    P.data['hivtest'][0][3] = 0.45
+    # Modify pop names
     pops = []
     npops = len(P.data['pops']['short'])
     newpopnames = ['SW', 'Clients', 'MSM', 'MWID', 'M 15+', 'F 15+']
@@ -203,7 +203,9 @@ if 'makespreadsheetwithdata' in tests:
     makespreadsheet(filename, pops=pops, data=P.data)
     
     # Try reloading the spreadsheet you just made
-    Q = Project(spreadsheet='tmpspreadsheet.xlsx',dorun=False)
+    Q = Project(spreadsheet='tmpspreadsheet.xlsx', dorun=False)
+    Q.pars()['force'] = P.pars()['force']
+    Q.runsim(debug=True)    
 
     if not dosave: remove(filename)
         
