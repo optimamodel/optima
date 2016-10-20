@@ -159,6 +159,20 @@ def set_project_summary_on_project(project, summary):
     project.settings.end = summary["dataEnd"]
 
 
+def is_progset_optimizable(progset):
+    n_program = len(progset.programs.values())
+    has_ccopars = progset.hasallcostcovpars()
+    has_covout = progset.hasallcovoutpars()
+    print(">> Check optimizability, progset %s, %s, %s" % (progset.name, has_ccopars, has_covout))
+    if n_program > 0 and has_ccopars and has_covout:
+        for program in progset.programs.values():
+            if not program.costcovdata.get('t', False):
+                return False
+        return True
+    else:
+        return False
+
+
 def get_project_summary_from_project(project):
     years = project.data.get('years')
     if years:
@@ -168,14 +182,12 @@ def get_project_summary_from_project(project):
         data_start = project.settings.start
         data_end = project.settings.end
 
-    n_program = 0
-    is_ready_to_optimize = False
+    is_ready_to_optimize = True
     for progset in project.progsets.values():
-        this_n_program = len(progset.programs.values())
-        if this_n_program > n_program:
-            n_program = this_n_program
-        if n_program > 0 and progset.readytooptimize():
-            is_ready_to_optimize = True
+        if not is_progset_optimizable(progset):
+            is_ready_to_optimize = False
+    if len(project.progsets.values()) == 0:
+        is_ready_to_optimize = False
 
     project_summary = {
         'id': project.uid,
@@ -184,7 +196,6 @@ def get_project_summary_from_project(project):
         'dataEnd': data_end,
         'version': project.version,
         'populations': get_populations_from_project(project),
-        'nProgram': n_program,
         'creationTime': project.created,
         'updatedTime': project.modified,
         'dataUploadTime': project.spreadsheetdate,
@@ -534,8 +545,11 @@ def get_coverages_for_scenarios(project, year=None):
             progset_id = str(progset.uid)
             result[parset_id][progset_id] = {}
             for year in years:
-                coverage = progset.getdefaultcoverage(t=year, parset=parset)
-                coverage = normalize_obj(coverage)
+                try:
+                    coverage = progset.getdefaultcoverage(t=year, parset=parset)
+                    coverage = normalize_obj(coverage)
+                except:
+                    coverage = None
                 result[parset_id][progset_id][year] = coverage
     return result
 
@@ -781,12 +795,15 @@ def get_progset_summary(project, progset_name):
         if not program_summary['name']:
             program_summary['name'] = program_summary['short']
 
+
+
     progset_summary = {
         'id': progset.uid,
         'name': progset.name,
         'created': progset.created,
         'updated': progset.modified,
         'programs': program_summaries,
+        'isOptimizable': is_progset_optimizable(progset),
     }
     return normalize_obj(progset_summary)
 

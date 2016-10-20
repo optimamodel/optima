@@ -461,7 +461,9 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     xmin = zeros(len(budgetvec))
 
     ## Constrain the budget
+    print "debug->", origbudget, budgetvec, totalbudget, optim.constraints, optiminds
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    print "debug->", constrainedbudget, constrainedbudgetvec
 
     ## Actually run the optimization
     # for ind in inds: # WARNING, kludgy -- should be a loop!
