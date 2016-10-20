@@ -339,9 +339,7 @@ class TitledRange:
                     name = self.content.assumption_properties['connector'])
                 for index, col_name in enumerate(self.content.assumption_properties['columns']):
                     if self.content.has_assumption_data():
-                        try: formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[index], row_format)
-                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                        #
+                        formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[index], row_format)
                     else:
                         formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, row_format)
             current_row+=1
@@ -492,10 +490,12 @@ class OptimaSpreadsheet:
 
     def emit_years_block(self, name, current_row, row_names, row_format=OptimaFormats.GENERAL,
         assumption=False, row_levels=None, row_formats=None, data=None, assumption_data=None):
-        content = make_years_range(name, row_names, self.data_start, self.data_end)
+        content = make_years_range(name, row_names, self.data_start, self.data_end, data=data)
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
+            if assumption_data:
+                content.assumption_data = assumption_data
         if row_levels is not None:
             content.set_row_levels(row_levels)
         if row_formats is not None:
@@ -596,33 +596,62 @@ class OptimaSpreadsheet:
         current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
                             row_format=OptimaFormats.GENERAL, assumption=True, row_levels=row_levels, data=data)
             
-
     def generate_epi(self):
         current_row = 0
 
         for name in ['Percentage of people who die from non-HIV-related causes per year',
         'Prevalence of any ulcerative STIs', 'Tuberculosis prevalence']:
             if self.data is not None:
-                try:
-                    data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
-                    assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
-#                    if name == 'Prevalence of any ulcerative STIs': import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                    
-                except:
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()                    
-                ## Handle assumptions
+                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
                 
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
                 row_format=OptimaFormats.DECIMAL_PERCENTAGE, assumption=True, data=data, assumption_data=assumption_data)
 
     def generate_txrx(self, data=None):
         current_row = 0
-        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months',current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data)
-        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year',      current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True, data=data)
-        current_row = self.emit_years_block('Number of people on treatment',                                    current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, data=data)
-        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis',     current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data)
-        current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)',                           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, data=data)
-        current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True, data=data)
-        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data)
+
+        name = 'Percentage of population tested for HIV in the last 12 months'
+        if self.data is not None:
+            data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+            assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+        current_row = self.emit_ref_years_block(name,current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption=True, data=data, assumption_data=assumption_data)
+            
+        name = 'Probability of a person with CD4 <200 being tested per year'
+        if self.data is not None:
+            data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+            assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+        current_row = self.emit_years_block(name, current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption=True, data=data, assumption_data=assumption_data)
+
+        name = 'Number of people on treatment'
+        if self.data is not None:
+            data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+            assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+        current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption=True, data=data, assumption_data=assumption_data)
+
+        name = 'Percentage of people covered by pre-exposure prophylaxis'
+        if self.data is not None:
+            data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+            assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+        current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption=True, data=data, assumption_data=assumption_data)
+
+        name = 'Number of women on PMTCT (Option B/B+)'
+        if self.data is not None:
+            data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+            assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+        current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption=True, data=data, assumption_data=assumption_data)
+        
+        name = 'Number of women on PMTCT (Option B/B+)'
+        if self.data is not None:
+            data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+            assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+        current_row = self.emit_years_block(name, current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption=True, data=data, assumption_data=assumption_data)
+
+        name = 'Percentage of HIV-positive women who breastfeed'
+        if self.data is not None:
+            data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+            assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+        current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption=True, data=data, assumption_data=assumption_data)
 
 
     def generate_opt(self, data=None):
@@ -636,7 +665,10 @@ class OptimaSpreadsheet:
         'Modeled estimate of number of PLHIV', 
         'Number of HIV-related deaths', 
         'Number of people initiating ART each year']:
-            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True, data=data)
+            if self.data is not None:
+                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True, data=data, assumption_data=assumption_data)
 
         for name in [
         'PLHIV aware of their status (%)', 
@@ -644,7 +676,10 @@ class OptimaSpreadsheet:
         'PLHIV in care on treatment (%)',
         'Pregnant women on PMTCT (%)',
         'People on ART with viral suppression (%)']:
-            current_row = self.emit_years_block(name, current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data) 
+            if self.data is not None:
+                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
+                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+            current_row = self.emit_years_block(name, current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True, data=data, assumption_data=assumption_data) 
     
     def generate_casc(self, data=None):
         current_row = 0

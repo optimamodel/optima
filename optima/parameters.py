@@ -114,6 +114,18 @@ Disutility of CD4>200	constant	disutilgt200	(0, 1)	tot	constant	no	no	0	None	0	N
 Disutility of CD4>50	constant	disutilgt50	(0, 1)	tot	constant	no	no	0	None	0	None	1
 Disutility of CD4<50	constant	disutillt50	(0, 1)	tot	constant	no	no	0	None	0	None	1
 Disutility on treatment	constant	disutiltx	(0, 1)	tot	constant	no	no	0	None	0	None	1
+Number of HIV tests per year	Number of HIV tests per year	optnumtest	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Number of HIV diagnoses per year	Number of HIV diagnoses per year	optnumdiag	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Modeled estimate of new HIV infections per year	Modeled estimate of new HIV infections per year	optnuminfect	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Modeled estimate of HIV prevalence	Modeled estimate of HIV prevalence	optprev	(0, 1)	tot	None	no	no	0	None	0	None	1
+Modeled estimate of number of PLHIV	Modeled estimate of number of PLHIV	optplhiv	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Number of HIV-related deaths	Number of HIV-related deaths	optdeath	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+Number of people initiating ART each year	Number of people initiating ART each year	optnewtreat	(0, 'maxpopsize')	tot	None	no	no	0	None	0	None	1
+PLHIV aware of their status (%)	PLHIV aware of their status (%)	optpropdx	(0, 1)	tot	None	no	no	0	None	0	None	1
+Diagnosed PLHIV in care (%)	Diagnosed PLHIV in care (%)	optpropcare	(0, 1)	tot	None	no	no	0	None	0	None	1
+PLHIV in care on treatment (%)	PLHIV in care on treatment (%)	optproptx	(0, 1)	tot	None	no	no	0	None	0	None	1
+Pregnant women on PMTCT (%)	Pregnant women on PMTCT (%)	optproppmtct	(0, 1)	tot	None	no	no	0	None	0	None	1
+People on ART with viral suppression (%)	People on ART with viral suppression (%)	optpropsupp	(0, 1)	tot	None	no	no	0	None	0	None	1
 '''
 
 
@@ -483,9 +495,7 @@ def makepars(data, label=None, verbose=2):
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
             if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-            else:
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
+            else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
