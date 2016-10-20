@@ -15,10 +15,23 @@ from optima import loadpartable
 default_datastart = 2000
 default_dataend = 2020
 
-def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
+def makespreadsheet(filename, pops=None, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
-    # An integer argument is given: just create a pops dict using empty entries
+    # If population information isn't given...
+    if pops is None:
+        if data is None: pops=2 # No data provided either, so just make a 2 population spreadsheet
+        else:
+            pops = []
+            npops = len(data['pops']['short'])
+            for pop in range(npops):
+                pops.append({'short_name':data['pops']['short'][pop],
+                         'name':data['pops']['long'][pop],
+                         'male':bool(data['pops']['male'][pop]),
+                         'female':bool(data['pops']['female'][pop]),
+                         'age_from':data['pops']['age'][pop][0],
+                         'age_to':data['pops']['age'][pop][1]})
+        
     if isnumber(pops):
         npops = pops
         pops = [] # Create real pops list

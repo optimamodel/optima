@@ -190,8 +190,9 @@ if 'makespreadsheetwithdata' in tests:
     P.data['hivtest'][0][3] = 0.45
     pops = []
     npops = len(P.data['pops']['short'])
+    newpopnames = ['SW', 'Clients', 'MSM', 'MWID', 'M 15+', 'F 15+']
     for pop in range(npops):
-        pops.append({'short':P.data['pops']['short'][pop],
+        pops.append({'short':newpopnames[pop],
                      'name':P.data['pops']['long'][pop],
                      'male':bool(P.data['pops']['male'][pop]),
                      'female':bool(P.data['pops']['female'][pop]),
