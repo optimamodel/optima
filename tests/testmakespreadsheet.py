@@ -200,7 +200,7 @@ if 'makespreadsheetwithdata' in tests:
                      'age_to':P.data['pops']['age'][pop][1]})
 
     filename = 'tmpspreadsheet.xlsx'
-    makespreadsheet(filename, pops=pops, data=P.data)
+    P.makespreadsheet(filename, pops=pops)
     
     # Try reloading the spreadsheet you just made
     Q = Project(spreadsheet='tmpspreadsheet.xlsx', dorun=False)
