@@ -359,7 +359,6 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
                 printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
                 par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
         except:
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
 
@@ -499,9 +498,7 @@ def makepars(data, label=None, verbose=2):
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
-            if fromdata:
-                try: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
             else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
