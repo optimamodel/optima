@@ -267,7 +267,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                                 errormsg += '"mse"  = mean squared error'
                                 raise OptimaException(errormsg)
                             allmismatches.append(thismismatch)
-                            mismatch += thismismatch
+                            try: mismatch += thismismatch
+                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                             
                             if doplot:
                                 tmpdebugdata = (count, key, rowname, year, datay[i], modely, thismismatch, mismatch)
