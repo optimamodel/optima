@@ -14,7 +14,7 @@ default_datastart = 2000
 default_dataend = 2020
 
 def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, verbose=2):
-    """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
+    """ Generate the Optima spreadsheet"""
 
     # An integer argument is given: just create a pops dict using empty entries
     if isnumber(pops):
@@ -32,16 +32,24 @@ def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default
     return filename
 
 
-def makeeconspreadsheet(filename, datastart=default_datastart, dataend=default_dataend, verbose=2):
-    """ Generate the Optima economics spreadsheet -- the hard work is done by makespreadsheet.py """
 
-    printv('Generating economics spreadsheet: start=%s, end=%i' % (datastart, dataend), 1, verbose)
-    book = EconomicsSpreadsheet(filename, datastart, dataend)
+def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, dataend=default_dataend, verbose=2):
+    """ Generate the Optima programs spreadsheet """
+
+    # An integer argument is given: just create a pops dict using empty entries
+    if isnumber(pops):
+        npops = pops
+        pops = [] # Create real pops list
+        for p in range(npops):
+            pops.append({'short_name':'Pop %i'%(p+1)}) # Must match make_populations_range definitions
+    
+    printv('Generating program spreadsheet: pops=%i, progs=%i, datastart=%s, dataend=%s' % (len(pops), len(progs), datastart, dataend), 1, verbose)
+
+    book = OptimaProgramSpreadsheet(filename, pops, progs, datastart, dataend)
     book.create(filename)
 
-    printv('  ...done making economics spreadsheet %s.' % filename, 2, verbose)
+    printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
     return filename
-
 
 
 
@@ -55,8 +63,10 @@ def abbreviate(param):
             short_param += w
     return short_param.upper()
 
+
 def years_range(data_start, data_end):
     return [x for x in range(data_start, data_end+1)]
+
 
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
@@ -116,10 +126,13 @@ class OptimaContent:
 """ It's not truly pythonic, they say, to have class methods """
 
 def make_matrix_range(name, params):
-    return OptimaContent(name, params, params)
+    return OptimaContent(name=name, row_names=params, column_names=params)
 
 def make_years_range(name, params, data_start, data_end):
-    return OptimaContent(name, params, years_range(data_start, data_end))
+    return OptimaContent(name=name, row_names=params, column_names=years_range(data_start, data_end))
+
+def make_costcovpars_range(name, row_names, column_names):
+    return OptimaContent(name=name, row_names=row_names, column_names=column_names)
 
 def make_populations_range(name, items):
     """ 
@@ -150,16 +163,36 @@ def make_populations_range(name, items):
             injects = 0
             sexworker = 0
         coded_params.append([short_name, item_name, male, female, age_from, age_to, injects, sexworker])
-    return OptimaContent(name, row_names, column_names, coded_params)
+    return OptimaContent(name=name, row_names=row_names, column_names=column_names, data=coded_params)
+
+def make_programs_range(name, popnames, items):
+    """ 
+    every programs item is a dictionary is expected to have the following fields:
+    short_name, name, targetpops
+    (2x str, 1x list of booleans)
+    """
+    column_names = ['Short name','Long name']+popnames
+    row_names = range(1, len(items)+1)
+    coded_params = []
+    for item in items:
+        if type(item) is dict:
+            item_name = item['name']
+            short_name = item['short']
+            item_targetpops = [1 if popname in item['targetpops'] else 0 for popname in popnames]
+        coded_params.append([short_name, item_name]+item_targetpops)
+    return OptimaContent(name=name, row_names=row_names, column_names=column_names, data=coded_params)
 
 def make_constant_range(name, row_names, best_data, low_data, high_data):
     column_names = ['best', 'low', 'high']
     range_data = [[best, low, high] for (best, low, high) in zip(best_data, low_data, high_data)]
-    return OptimaContent(name, row_names, column_names, range_data)
+    return OptimaContent(name=name, row_names=row_names, column_names=column_names, data=range_data)
+
 
 def make_ref_years_range(name, ref_range, data_start, data_end):
     params = ref_range.param_refs()
     return make_years_range(name, params, data_start, data_end)
+
+
 
 def filter_by_properties(param_refs, base_params, the_filter):
     """
@@ -177,8 +210,10 @@ class OptimaFormats:
     """ the formats used in the spreadsheet """
     darkgray = '#413839'
     originalblue = '#18C1FF'
+    optionalorange = '#FFA500'
     hotpink = '#FFC0CB'
     BG_COLOR = originalblue
+    OPT_COLOR = optionalorange
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
@@ -186,6 +221,7 @@ class OptimaFormats:
     SCIENTIFIC = 'scientific'
     NUMBER = 'number'
     GENERAL = 'general'
+    OPTIONAL = 'optional'
 
     def __init__(self, book):
         self.formats = {}
@@ -209,11 +245,14 @@ class OptimaFormats:
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['general'] = self.book.add_format({'locked':0, 'num_format':0x00, \
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['optional'] = self.book.add_format({'locked':0, 'num_format':0x00, \
+        'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['info_header'] = self.book.add_format({'align':'center','valign':'vcenter', \
             'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
         self.formats['grey'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
         self.formats['info_url'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
         self.formats['grey_bold'] = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
+        self.formats['merge_format'] = self.book.add_format({'bold': 1,'align': 'center','text_wrap':True})
 
 
     def write_block_name(self, sheet, name, row):
@@ -343,79 +382,6 @@ class TitledRange:
 
     def param_refs(self, column_number = 0):
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
-
-class EconomicsSpreadsheet:
-    def __init__(self, name, data_start = default_datastart, data_end = default_dataend, verbose = 0):
-        self.sheet_names = OrderedDict([
-            ('instr', 'Instructions'),
-            ('econ', 'Economics and costs')])
-        self.name = name
-        self.data_start = data_start
-        self.data_end = data_end
-        self.verbose = verbose
-        self.book = None
-        self.sheets = None
-        self.formats = None
-        self.current_sheet = None
-        self.years_range = years_range(self.data_start, self.data_end)
-
-    def emit_content_block(self, name, current_row, row_names, column_names, data = None,
-        row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None,
-        assumption_properties = None):
-        content = OptimaContent(name, row_names, column_names, data)
-        content.set_row_format(row_format)
-        if assumption:
-            content.add_assumption()
-        if assumption_properties:
-            content.set_assumption_properties(assumption_properties)
-        if row_levels is not None:
-            content.set_row_levels(row_levels)
-        the_range = TitledRange(self.current_sheet, current_row, content)
-        current_row = the_range.emit(self.formats)
-        return current_row
-
-    def generate_instr(self):
-        current_row = 0
-        self.current_sheet.set_column('A:A',80)
-        self.current_sheet.merge_range('A1:A3', 'OPTIMA ECONOMIC DATA', self.formats.formats['info_header'])
-        current_row = 3
-        current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the spreadsheet for entering economic data into Optima. Uploading this spreadsheet is required if you wish to view estimates of the financial costs associated with epidemic projections. All rows are optional, but if you do enter data for a row, you must also enter a growth assumption. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
-
-    def generate_econ(self):
-        current_row = 0
-
-        names = ['Consumer price index','Gross domestic product', 'Government revenue', 'Government expenditure', \
-        'Total domestic and international health expenditure', 'General government health expenditure']
-
-        assumption_properties = {'title':'Growth assumptions', 'connector':'AND', 'columns':['best','low','high']}
-
-        for name in names:
-            current_row = self.emit_content_block(name, current_row, ['Total'], self.years_range, assumption = True, \
-                row_format = OptimaFormats.SCIENTIFIC, assumption_properties = assumption_properties)
-
-        names_rows = [('HIV-related health care costs (excluding treatment)', \
-        ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<50)']), \
-        ('Social mitigation costs', \
-        ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(50-200)','CD4(<50)'])]
-        for (name, row_names) in names_rows:
-            current_row = self.emit_content_block(name, current_row, row_names, self.years_range, assumption = True, \
-                row_format = OptimaFormats.NUMBER, assumption_properties = assumption_properties)
-                
-    def create(self, path):
-        if self.verbose >=1: 
-            print("""Creating spreadsheet %s with parameters:
-            npops = %s, data_start = %s, data_end = %s""" % \
-            (path, self.npops, self.data_start, self.data_end))
-        self.book = xlsxwriter.Workbook(path)
-        self.formats = OptimaFormats(self.book)
-        self.sheets = {}
-        for name in self.sheet_names:
-            self.sheets[name] = self.book.add_worksheet(self.sheet_names[name])
-            self.current_sheet = self.sheets[name]
-            getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
-        self.book.close()
 
 
 class OptimaSpreadsheet:
@@ -753,6 +719,97 @@ class OptimaSpreadsheet:
             self.current_sheet = self.sheets[name]
             getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
         self.book.close()
+
+
+class OptimaProgramSpreadsheet:
+    def __init__(self, name, pops, progs, data_start = default_datastart, data_end = default_dataend, verbose = 0):
+        self.sheet_names = OrderedDict([
+            ('instr', 'Instructions'),
+            ('targeting','Populations & programs'),
+            ('costcovdata', 'Program data'),
+            ])
+        self.name = name
+        self.pops = pops
+        self.progs = progs
+        self.data_start = data_start
+        self.data_end = data_end
+        self.verbose = verbose
+        self.book = None
+        self.sheets = None
+        self.formats = None
+        self.current_sheet = None
+        self.prog_range = None
+        self.ref_pop_range = None
+        self.years_range = years_range(self.data_start, self.data_end)
+
+        self.npops = len(pops)
+        self.nprogs = len(progs)
+
+    def generate_targeting(self):
+        self.current_sheet.set_column(2,2,15)
+        self.current_sheet.set_column(3,3,40)
+        self.current_sheet.set_column(6,6,12)
+        self.current_sheet.set_column(7,7,16)
+        self.current_sheet.set_column(8,8,16)
+        self.current_sheet.set_column(9,9,12)
+        current_row = 0
+
+        targeting_content = make_programs_range('Populations & programs', self.pops, self.progs)
+        self.prog_range = TitledRange(sheet=self.current_sheet, first_row=current_row, content=targeting_content)
+        current_row = self.prog_range.emit(self.formats, rc_title_align = 'left')
+
+        self.ref_prog_range = self.prog_range
+
+
+    def generate_instr(self):
+        current_row = 0
+        self.current_sheet.set_column('A:A',80)
+        self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
+        current_row = 3
+        current_row = self.formats.write_info_line(self.current_sheet, current_row)
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 program data entry spreadsheet. This is where all program data will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+
+
+    def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL,
+        assumption = False, row_levels = None, row_formats = None):
+        content = make_years_range(name, row_names, self.data_start, self.data_end)
+        content.set_row_format(row_format)
+        if assumption:
+            content.add_assumption()
+        if row_levels is not None:
+            content.set_row_levels(row_levels)
+        if row_formats is not None:
+            content.set_row_formats(row_formats)
+        the_range = TitledRange(self.current_sheet, current_row, content)
+        current_row = the_range.emit(self.formats)
+        return current_row
+
+
+    def generate_costcovdata(self):
+        row_levels = ['Total spend', 'Unit cost: best', 'Unit cost: low', 'Unit cost: high', 'Coverage', 'Saturation: best', 'Saturation: low', 'Saturation: high']
+        self.current_sheet.set_column('C:C',20)
+        current_row = 0
+        current_row = self.emit_years_block(name='Cost & coverage', current_row=current_row, row_names=self.ref_prog_range.param_refs(), row_formats = [OptimaFormats.SCIENTIFIC,OptimaFormats.GENERAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL], assumption = True, row_levels = row_levels)
+
+
+    def create(self, path):
+        if self.verbose >=1: 
+            print("""Creating program spreadsheet %s with parameters:
+            npops = %s, nprogs = %s, data_start = %s, data_end = %s""" % \
+            (path, self.npops, self.nprogs, self.data_start, self.data_end))
+        self.book = xlsxwriter.Workbook(path)
+        self.formats = OptimaFormats(self.book)
+        self.sheets = {}
+        for name in self.sheet_names:
+            self.sheets[name] = self.book.add_worksheet(self.sheet_names[name])
+            self.current_sheet = self.sheets[name]
+            getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
+        self.book.close()
+
+
+
+
 
 class OptimaGraphTable:
     def __init__ (self, sheets, verbose = 2):

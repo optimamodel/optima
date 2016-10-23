@@ -8,7 +8,7 @@ Version: 1.5 (2016jul06)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -219,19 +219,6 @@ def popgrow(exppars, tvec):
     return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
 
 
-
-def getvalidyears(years, validdata, defaultind=0):
-    ''' Return the years that are valid based on the validity of the input data '''
-    if sum(validdata): # There's at least one data point entered
-        if len(years)==len(validdata): # They're the same length: use for logical indexing
-            validyears = array(array(years)[validdata]) # Store each year
-        elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
-            validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
-    else: validyears = array([0.0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
-    return validyears
-
-
-
 def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
     par = Constant(y=odict(), **defaultargs) # Create structure
@@ -335,13 +322,14 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
-            validdata = ~isnan(data[short][row])
-            par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
+            validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
+            par.t[key] = getvaliddata(data['years'], validdata, defaultind=defaultind) 
             if sum(validdata): 
                 par.y[key] = sanitize(data[short][row])
             else:
                 printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
                 par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
+                par.t[key] = array([0.0])
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
@@ -369,7 +357,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
-    for row in range(npops): yearstouse.append(getvalidyears(data['years'], ~isnan(data[which+act][row])))
+    for row in range(npops): yearstouse.append(getvaliddata(data['years'], data[which+act][row]))
     minyear = Inf
     maxyear = -Inf
     npts = 1 # Don't use fewer than 1 point
@@ -767,12 +755,23 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 #################################################################################################################################
 
 
-class Par(object):
+class Basepar(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), verbose=None):
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = defaultrepr(self)
+        return output
+
+
+class Par(Basepar):
+    ''' The base class for epidemiological model parameters '''
+    def __init__(self, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): 
+        Basepar.__init__(self, **defaultargs)
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
@@ -786,8 +785,6 @@ class Par(object):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
-
-
 
 
 class Timepar(Par):
@@ -914,6 +911,43 @@ class Constant(Par):
         return output
 
 
+class CCOpar(Basepar):
+    ''' The definition of a single cost-coverage-outcome parameter '''
+    
+    def __init__(self, t=None, y=None, m=1, **defaultargs):
+        Basepar.__init__(self, **defaultargs)
+        if t is None: t = odict()
+        if y is None: y = odict()
+        self.t = t # Time data, e.g. [2002, 2008]
+        self.y = y # Value data, e.g. [0.3, 0.7]
+    
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.y.keys()
+    
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
+        """ Take parameters and turn them into model parameters """
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
+        
+        # Set things up and do the interpolation
+        keys = self.keys()
+        npars = len(keys)
+        if asarray: output = zeros((npars,len(tvec)))
+        else: output = odict()
+        for par,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            yinterp = smoothinterp(tvec, self.t[par], self.y[par], smoothness=smoothness) # Use interpolation
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[par,:] = yinterp
+            else: output[key] = yinterp
+        if npars==1 and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
+        else: return output
 
 
 

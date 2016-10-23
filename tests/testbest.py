@@ -2,10 +2,16 @@
 Create a good test project -- WARNING, this should be combined with testworkflow,
 which is an outdated version of the same thing!
 
-Version: 2016feb08
+Version: 2016oct05
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj # analysis:ignore
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj, __file__ as optimapath # analysis:ignore
+import os
+
+# Figure out the path 
+parentdir = optimapath.split(os.sep)[:-2] # exclude /optima/__init__.pyc
+testdir = parentdir + ['tests'+os.sep]
+spreadsheetpath = os.sep.join(testdir)
 
 ## Options
 autocalib = 0 # Whether or not to run autofitting
@@ -15,10 +21,13 @@ runscenarios = 1 # Run scenarios
 optimize = 0
 dosave = 1
 filename = 'best.prj'
+programdatafile = 'concentratedprogramdata.xlsx'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best',dorun=False)
-P.runsim(debug=True)
+P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
+R = P.progsets[0]
+
+R.loadspreadsheet(spreadsheetpath+programdatafile)    
 
 ## Calibration
 if autocalib: 

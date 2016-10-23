@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
-from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
+from optima import defaultobjectives, defaultconstraints, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
 import os
@@ -174,12 +174,6 @@ class Project(object):
             self.addoptim(optim)
         return None
 
-
-    def loadeconomics(self, filename):
-        ''' Load economic data and tranforms it to useful format'''
-        self.data['econ'] = loadeconomicsspreadsheet(filename) ## Load spreadsheet
-        self.modified = today()
-        return None
 
 
     #######################################################################################################
@@ -466,6 +460,10 @@ class Project(object):
     def pars(self, key=-1, ind=0):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
         return self.parsets[key].pars[ind]
+    
+    def progs(self, key=-1, ind=0):
+        ''' Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs '''
+        return self.progsets[key].programs
     
     def parset(self, key=-1):
         ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''

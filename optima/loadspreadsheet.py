@@ -1,3 +1,84 @@
+###########################################################################
+## Preliminaries
+###########################################################################
+
+from optima import OptimaException, odict, printv, today, isnumber
+from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
+from xlrd import open_workbook # For opening Excel workbooks
+
+    
+def forcebool(entry, location=''):
+    """ Convert an entry to be Boolean """
+    if entry in [1, 'TRUE', 'true', 'True', 't', 'T']:
+        return 1
+    elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']:
+        return 0
+    else:
+        errormsg = 'Boolean data "%s" not understood in spreadsheet location "%s"' % (entry, location)
+        raise OptimaException(errormsg)
+    
+    
+    
+
+def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklower=True, checkblank=True):
+    ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
+    
+    # Check that only numeric data have been entered
+    for column,datum in enumerate(thesedata):
+        if not isnumber(datum):
+            errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
+            errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
+            errormsg += 'Be sure all entries are numeric'
+            raise OptimaException(errormsg)
+    
+    # Now check integrity of data itself
+    validdata = array(thesedata)[~isnan(thesedata)]
+    if len(validdata):
+        invalid = array([False]*len(validdata)) # By default, set everything to valid
+        if checkupper and checklower: invalid = logical_or(array(validdata)>1, array(validdata)<0) # If upper & lower check specified
+        if checkupper and not checklower: invalid = array(validdata)>1
+        if not checkupper and checklower: invalid = array(validdata)<0
+        if any(invalid):
+            column = nonzero(invalid)[0]
+            errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
+            errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
+            if checkupper and checklower: errormsg += 'Be sure that all values are >=0 and <=1'
+            elif checkupper and not checklower: errormsg += 'Be sure that all values are <=1'
+            elif not checkupper and checklower: errormsg += 'Be sure that all values are >=0'
+            raise OptimaException(errormsg)
+    
+    # No data entered
+    elif checkblank:
+        errormsg = 'No data or assumption entered for sheet "%s", parameter "%s", row=%i' % (sheetname, thispar, row) 
+        raise OptimaException(errormsg)
+    
+    return None
+
+
+
+def blank2nan(thesedata):
+    ''' Convert a blank entry to a nan '''
+    return list(map(lambda val: nan if val=='' else val, thesedata))
+    
+
+def getyears(sheetdata):
+    ''' Get years from a worksheet'''
+    years = [] # Initialize epidemiology data years
+    for col in range(sheetdata.ncols):
+        thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
+        if thiscell=='' and len(years)>0: #  We've gotten to the end
+            lastdatacol = col # Store this column number
+            break # Quit
+        elif thiscell != '': # Nope, more years, keep going
+            years.append(float(thiscell)) # Add this year
+    
+    return lastdatacol, years
+    
+
+###########################################################################################################
+## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
+###########################################################################################################
+        
 def loadspreadsheet(filename='simple.xlsx', verbose=2):
     """
     Loads the spreadsheet (i.e. reads its contents into the data).
@@ -9,75 +90,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Version: 1.4 (2016feb07)
     """
     
-    ###########################################################################
-    ## Preliminaries
-    ###########################################################################
-    
-    from optima import OptimaException, odict, printv, today, isnumber
-    from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
-    from xlrd import open_workbook # For opening Excel workbooks
     printv('Loading data from %s...' % filename, 1, verbose)
-    
-    
-    def forcebool(entry, location=''):
-        """ Convert an entry to be Boolean """
-        if entry in [1, 'TRUE', 'true', 'True', 't', 'T']:
-            return 1
-        elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']:
-            return 0
-        else:
-            errormsg = 'Boolean data "%s" not understood in spreadsheet location "%s"' % (entry, location)
-            raise OptimaException(errormsg)
-        
-        
-        
-    
-    def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklower=True, checkblank=True):
-        ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
-        
-        # Check that only numeric data have been entered
-        for column,datum in enumerate(thesedata):
-            if not isnumber(datum):
-                errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
-                errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
-                errormsg += 'Be sure all entries are numeric'
-                raise OptimaException(errormsg)
-        
-        # Now check integrity of data itself
-        validdata = array(thesedata)[~isnan(thesedata)]
-        if len(validdata):
-            invalid = array([False]*len(validdata)) # By default, set everything to valid
-            if checkupper and checklower: invalid = logical_or(array(validdata)>1, array(validdata)<0) # If upper & lower check specified
-            if checkupper and not checklower: invalid = array(validdata)>1
-            if not checkupper and checklower: invalid = array(validdata)<0
-            if any(invalid):
-                column = nonzero(invalid)[0]
-                errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
-                errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
-                if checkupper and checklower: errormsg += 'Be sure that all values are >=0 and <=1'
-                elif checkupper and not checklower: errormsg += 'Be sure that all values are <=1'
-                elif not checkupper and checklower: errormsg += 'Be sure that all values are >=0'
-                raise OptimaException(errormsg)
-        
-        # No data entered
-        elif checkblank:
-            errormsg = 'No data or assumption entered for sheet "%s", parameter "%s", row=%i' % (sheetname, thispar, row) 
-            raise OptimaException(errormsg)
-        
-        return None
-
-
-
-    def blank2nan(thesedata):
-        ''' Convert a blank entry to a nan '''
-        return list(map(lambda val: nan if val=='' else val, thesedata))
-        
-    
-    
-    ###########################################################################################################
-    ## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
-    ###########################################################################################################
-        
     sheets = odict()
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
@@ -132,14 +145,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     
     ## Calculate columns for which data are entered, and store the year ranges
     sheetdata = workbook.sheet_by_name('Population size') # Load this workbook
-    data['years'] = [] # Initialize epidemiology data years
-    for col in range(sheetdata.ncols):
-        thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
-        if thiscell=='' and len(data['years'])>0: #  We've gotten to the end
-            lastdatacol = col # Store this column number
-            break # Quit
-        elif thiscell != '': # Nope, more years, keep going
-            data['years'].append(float(thiscell)) # Add this year
+    lastdatacol, data['years'] = getyears(sheetdata)
     assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
     
     ## Initialize populations
@@ -295,4 +301,86 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     return data
 
 
-#loadspreadsheet('test.xlsx') # Uncomment for debugging
+
+
+###########################################################################################################
+## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
+###########################################################################################################
+        
+def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
+    """
+    Loads the spreadsheet (i.e. reads its contents into the data).
+    Version: 1.0 (2016sep30)
+    """
+    
+    printv('Loading data from %s...' % filename, 1, verbose)
+    sheets = odict()
+    sheets['Populations & programs'] = ['programs'] # Data on program names and targeting
+    sheets['Program data'] = odict()
+    
+    ## Basic setup
+    data = odict() # Create structure for holding data
+    data['meta'] = odict()
+    data['meta']['date'] = today()
+    data['meta']['sheets'] = sheets # Store parameter names
+    try: 
+        workbook = open_workbook(filename) # Open workbook
+    except: 
+        errormsg = 'Failed to load program spreadsheet: file "%s" not found or other problem' % filename
+        raise OptimaException(errormsg)
+
+    
+    ## Calculate columns for which data are entered, and store the year ranges
+    sheetdata = workbook.sheet_by_name('Program data') # Load this workbook
+    lastdatacol, data['years'] = getyears(sheetdata)
+    assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
+    
+    ## Load program information
+    sheetdata = workbook.sheet_by_name('Populations & programs') # Load 
+    for row in range(sheetdata.nrows): 
+        if sheetdata.cell_value(row,0)=='':
+            thesedata = sheetdata.row_values(row, start_colx=2) # Data starts in 3rd column, finishes in 11th column
+            if sheetdata.cell_value(row,1)=='':
+                data['pops'] = thesedata[2:]
+            else:
+                progname = str(thesedata[0])
+                data[progname] = odict()
+                data[progname]['name'] = str(thesedata[1])
+                data[progname]['targetpops'] = thesedata[2:]
+                data[progname]['cost'] = []
+                data[progname]['coverage'] = []
+                data[progname]['unitcost'] = odict()
+                data[progname]['saturation'] = odict()
+    
+    namemap = {'Total spend': 'cost',
+               'Unit cost':'unitcost',
+               'Coverage': 'coverage',
+               'Saturation': 'saturation'} 
+    sheetdata = workbook.sheet_by_name('Program data') # Load 
+    parcount = -1    
+    
+    for row in range(sheetdata.nrows): 
+        sheetname = sheetdata.cell_value(row,0) # Sheet name
+        progname = sheetdata.cell_value(row, 1) # Get the name of the program
+
+        if sheetname == 'Program data': 
+            printv('Loading "%s"...' % sheetname, 3, verbose)
+            parcount += 1 # Increment the parameter count
+
+        elif progname != '': # The first column is blank: it's time for the data
+            thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 3rd column, and ends lastdatacol-1
+            assumptiondata = sheetdata.cell_value(row, assumptioncol)
+            if assumptiondata != '': # There's an assumption entered
+                thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+            if sheetdata.cell_value(row, 2) in namemap.keys(): # It's a regular variable without ranges
+                thisvar = namemap[sheetdata.cell_value(row, 2)]  # Get the name of the indicator
+                printv('Program: %s, indicator %s' % (progname, thisvar), 4, verbose)
+                data[progname][thisvar] = thesedata # Store data
+            else:
+                thisvar = namemap[sheetdata.cell_value(row, 2).split(' - ')[0]]  # Get the name of the indicator
+                thisestimate = sheetdata.cell_value(row, 2).split(' - ')[1]
+                data[progname][thisvar][thisestimate] = thesedata # Store data
+            checkblank = False if thisvar in ['unitcost', 'coverage', 'saturation'] else True # Don't check optional indicators, check everything else
+            validatedata(thesedata, sheetname, thisvar, row, checkblank=checkblank)
+            
+    return data
