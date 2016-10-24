@@ -130,7 +130,7 @@ def loadpartable(inputpartable=None):
         rawpars.append(dict()) # Create an odict to store attributes
         for i,attr in enumerate(attrs): # Loop over attributes
             try:
-                if attr in ['limits', 'coverage', 'visible']: alllines[l][i] = eval(alllines[l][i]) # Turn into actual values
+                if attr in ['limits', 'coverage', 'visible', 'cascade', 'fromdata']: alllines[l][i] = eval(alllines[l][i]) # Turn into actual values
                 if alllines[l][i]=='None': alllines[l][i] = None # Turn any surviving 'None' values to actual None
                 rawpars[l][attr] = alllines[l][i] # Store attributes
             except:
@@ -524,7 +524,8 @@ def makepars(data, label=None, verbose=2):
     for rowno,row in enumerate(data['agetransit']):
         if sum(row):
             for colno,colval in enumerate(row):
-                agetransit[rowno,colno] = colval/sum(row)/duration[rowno]
+                if colval:
+                    agetransit[rowno,colno] = sum(row)*duration[rowno]/colval
     pars['agetransit'] = agetransit
 
     # Risk transitions - these are time-constant
@@ -1187,15 +1188,26 @@ class Parameterset(object):
     
                 # parset.interp() and calculate results are supposed to be called from the outside
     
-    def export(self, filename=None, ind=0):
+    def export(self, filename=None, compare=None, ind=0):
         '''
         Little function to export code for the current parameter set. To use, do something like:
         
         pars = P.parsets[0].pars[0]
         
         and then paste in the output of this function.
+        
+        If compare is not None, then only print out parameter values that differ. Most useful for
+        comparing to default, e.g.
+        P.parsets[-1].export(compare='default')
         '''
         pars = self.pars[ind]
+        cpars, cvalues = None, None
+        if compare is not None:
+            try: 
+                cpars = self.project.parsets[compare].pars[ind]
+            except: 
+                print('Could not compare parset %s to parset %s; printing all parameters' % (self.name, compare))
+                compare = None
         
         def oneline(values): return str(values).replace('\n',' ') 
         
@@ -1205,19 +1217,23 @@ class Parameterset(object):
                 if par.fittable=='pop': 
                     values = par.y[:].tolist()
                     prefix = "pars['%s'].y[:] = " % parname
+                    if cpars is not None: cvalues = cpars[parname].y[:].tolist()
                 elif par.fittable=='const': 
                     values = par.y
                     prefix = "pars['%s'].y = " % parname
+                    if cpars is not None: cvalues = cpars[parname].y
                 elif par.fittable=='meta':
                     values = par.m
                     prefix = "pars['%s'].m = " % parname
+                    if cpars is not None: cvalues = cpars[parname].m
                 elif par.fittable=='no':
                     values = None
                 else: 
                     print('Parameter fittable type "%s" not implemented' % par.fittable)
                     values = None
                 if values is not None:
-                    output += prefix+oneline(values)+'\n'
+                    if compare is None or (values!=cvalues):
+                        output += prefix+oneline(values)+'\n'
         
         if filename is not None:
             with open(filename, 'w') as f:

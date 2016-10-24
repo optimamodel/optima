@@ -87,6 +87,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     }
 
+    function deepCopyJson(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
+    }
+
     /**
      * Function opens a model in different modes
      * @param {string} action: 'add', 'edit' 'delete'
@@ -96,7 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $event.preventDefault();
       }
 
-      var newScenarios = angular.copy($scope.scenarios);
+      var newScenarios = deepCopyJson($scope.scenarios);
 
       if (action === 'add') {
 
@@ -124,7 +128,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       } else if (action === 'copy') {
 
-        var newScenario = angular.copy(scenario);
+        var newScenario = deepCopyJson(scenario);
         newScenario.name = scenario.name + ' Copy';
         newScenario.id = null;
         newScenarios.push(newScenario);
