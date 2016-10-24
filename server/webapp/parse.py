@@ -115,9 +115,11 @@ def get_populations_from_project(project):
             'female': bool(data_pops['female'][i]),
             'age_from': int(data_pops['age'][i][0]),
             'age_to': int(data_pops['age'][i][1]),
-            'injects': bool(data_pops['injects'][i]),
-            'sexworker': bool(data_pops['sexworker'][i]),
         }
+        if 'injects' in data_pops:
+            population['injects'] = bool((data_pops['injects'][i]))
+        if 'sexworker' in data_pops:
+            population['sexworker'] = bool((data_pops['sexworker'][i]))
         populations.append(population)
     return populations
 
