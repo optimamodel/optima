@@ -35,6 +35,76 @@
         Delete
       </button>
 
+      <div style="
+          width: 100%;
+          border-bottom: 1px solid #AAA;
+          padding-top: 30px;
+          margin-bottom: 30px">
+      </div>
+
+      <button
+          class="btn __m __inline"
+          ng-click="chooseTemplateProject()">
+        Template Project
+      </button>
+
+      &nbsp;
+
+      {{ state.templateProject.name}}
+
+      number of regions to spawn
+
+      <select
+          ng-model="state.nRegion"
+          ng-init="2"
+          ng-options="n for n in [2, 3, 4, 5, 6, 7, 8, 9, 10]">
+        </select>
+
+      <button
+          class="btn __m __inline"
+          ng-click="generateTemplateSpreadsheet()">
+        Generate spreadsheet
+      </button>
+
+      <button
+          class="btn __m __inline"
+          ng-click="spawnRegionsFromSpreadsheet()">
+        Spawn regions from spreadsheet
+      </button>
+
+      <div
+          style="
+            border: 1px solid #DDD;
+            padding: 20px;"
+          ng-show="isSelectTemplateProject">
+
+        <i>Select from optimizable projects:</i>
+        <br>
+        <div ng-repeat="project in projects">
+          <input
+            type="radio"
+            ng-model="state.templateProject"
+            ng-value="project">
+          {{project.name}}
+        </div>
+        <br>
+        <br>
+        <button class="btn"
+          ng-click="dismissSelectTemplateProject()">
+          Dismiss
+        </button>
+
+        <button class="btn"
+          ng-click="saveTemplateProject()">
+          Save
+        </button>
+      </div>
+
+
+
+      <br>
+      <br>
+
       <div
         style="
           display: flex;

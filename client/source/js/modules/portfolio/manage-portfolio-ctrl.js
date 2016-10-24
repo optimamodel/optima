@@ -20,9 +20,12 @@ define(
           ];
 
           $scope.isSelectNewProject = false;
+          $scope.isSelectTemplateProject = false;
           $scope.state = {
             portfolio: undefined,
-            gaoptim: undefined
+            nRegion: 2,
+            gaoptim: undefined,
+            tempateProjectId: null
           };
 
           reloadPortfolio();
@@ -311,6 +314,47 @@ define(
           $scope.savePortfolio();
         };
 
+        $scope.chooseTemplateProject = function() {
+          $scope.isSelectTemplateProject = true;
+          $http
+            .get('/api/project')
+            .success(function(response) {
+              var selectedIds = _.pluck($scope.state.portfolio.projects, "id");
+              $scope.projects = [];
+              _.each(response.projects, function(project) {
+                var isSelected = _.contains(selectedIds, project.id);
+                if (project.isOptimizable) {
+                  $scope.projects.push({
+                    'name': project.name,
+                    'id': project.id,
+                    'selected': isSelected
+                  })
+                }
+              });
+              console.log("$scope.projects", $scope.projects);
+            });
+        };
+
+        $scope.dismissSelectTemplateProject = function() {
+          $scope.isSelectTemplateProject = false;
+        };
+
+        $scope.saveTemplateProject = function() {
+          $scope.isSelectTemplateProject = false;
+          console.log('template project', $scope.state.templateProject);
+        };
+
+        $scope.generateTemplateSpreadsheet = function() {
+          toastr.success('create spreadsheet')
+          // call server to generate template spreadsheet then
+          // download
+        };
+
+        $scope.spawnRegionsFromSpreadsheet = function() {
+          // upload file then create projects
+          // then add to portfolio
+          toastr.success('uploaded spreadsheet and spawned regions')
+        };
 
         $scope.checkBocCurvesNotCalculated = function() {
           if (_.isUndefined($scope.state.portfolio)) {
