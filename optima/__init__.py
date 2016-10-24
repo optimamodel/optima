@@ -119,7 +119,7 @@ from .calibration import sensitivity, autofit
 
 ## Scenario analyses
 from . import scenarios as _scenarios 
-from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios
+from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, setparscenvalues
 
 ## Optimization analyses
 from . import optimization as _optimization

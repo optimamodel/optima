@@ -165,12 +165,12 @@ class Programset(object):
         details = []
         for thispartype in self.covout.keys():
             for thispop in self.covout[thispartype].keys():
-                if 'intercept' not in self.covout[thispartype][thispop].ccopars or not self.covout[thispartype][thispop].ccopars['intercept']:
+                if self.covout[thispartype][thispop].ccopars.get('intercept', None) is None:
                     result = False
                     details.append((thispartype,thispop))
                 if thispartype not in coveragepars:
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
-                        if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                        if self.covout[thispartype][thispop].ccopars.get(thisprog.short, None) is None:
                             result = False
                             details.append((thispartype,thispop))
         if detail: return list(set(details))
@@ -181,7 +181,7 @@ class Programset(object):
         result = True
         details = []
         for prog in self.optimizableprograms().values():
-            if prog.costcovfn.ccopars.get('unitcost') is None:
+            if prog.costcovfn.ccopars.get('unitcost', None) is None:
                 details.append(prog.name)
                 result = False
         if detail: return list(set(details))
@@ -1132,7 +1132,7 @@ class CCOF(object):
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
-                    if ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
+                    if ccopartype in ccopar.keys():
                         self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
@@ -1191,7 +1191,7 @@ class CCOF(object):
         
         # Get the appropriate sample type
         for parname, parvalue in self.ccopars.iteritems():
-            if parname is not 't' and parvalue:
+            if parname is not 't' and len(parvalue):
                 ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
                     thisval = parvalue[j]

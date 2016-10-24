@@ -89,7 +89,9 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         global autofitfig, autofitresults
         autofitfig, autofitresults = [None]*2
     
-    printv('Performing automatic fitting...', 1, verbose)
+    timestr = 'unlimited' if maxtime is None else str(maxtime)
+    itersstr = 'unlimited' if maxiters is None else str(maxiters)
+    printv('Performing automatic fitting for %s time/%s iterations...' % (timestr,itersstr), 1, verbose)
     
     # Validate input
     if project is None: raise OptimaException('autofit() requires a project in order to run')
