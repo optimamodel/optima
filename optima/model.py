@@ -144,7 +144,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     propdx_list     = ('propdx',propdx, undx, dx, dxstates, alldx, allplhiv, raw_diag)
     propcare_list   = ('propcare',propcare, dx, care, carestates, allcare, alldx, raw_newcare)
     proptx_list     = ('proptx',proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
-    propsupp_list   = ('propsupp',propsupp, usvl, svl, svl, svl, alltx, raw_newsupp)
+    propsupp_list   = ('propsupp',propsupp, usvl, svl, [svl], svl, alltx, raw_newsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -645,7 +645,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
         raw_inci[:,t] += raw_mtct[:,t] # Update incidence based on PMTCT calculation
 
-
         ###############################################################################
         ## Shift numbers of people (circs, treatment, age transitions, risk transitions, prop scenarios)
         ###############################################################################
@@ -734,12 +733,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                             
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
-            
+
                     # Figure out how many people we currently have
                     actual          = people[num,:,t+1].sum()
                     available       = people[denom,:,t+1].sum()
                     ppltomoveup     = people[lowerstate,:,t+1]
-
+                    
                     # Figure out how many people we want
                     if isinf(prop[t+1]): # If the prop value is infinity, we use last timestep's value
                         calcprop = people[num,:,t].sum()/people[denom,:,t].sum()
@@ -758,7 +757,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 diff -= new_movers[cd4,:].sum() # Adjust the number of available spots
                         people[lowerstate,:,t+1] -= new_movers # Shift people out of the lower state... 
                         people[tostate,:,t+1] += new_movers # ... and into the higher state
-                        raw_new[:,t] += new_movers.sum(axis=0)/dt # Save new movers
+                        raw_new[:,t+1] += new_movers.sum(axis=0)/dt # Save new movers
     
                     else: # We need to move people DOWN the cascade
                         for state in higherstates: # Start with the first higher state
@@ -769,7 +768,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
             
-
 
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
