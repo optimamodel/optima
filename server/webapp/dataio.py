@@ -56,11 +56,11 @@ from .parse import get_default_program_summaries, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
-    set_program_summary_on_progset, parse_portfolio_summary
-from . import parse
+    set_program_summary_on_progset, parse_portfolio_summary, \
+    set_progset_summary_on_progset
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
-
+from . import parse
 
 # USERS
 
@@ -1288,6 +1288,17 @@ def upload_progset(project_id, progset_id, progset_summary):
     set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
     return get_progset_summary(project, progset_summary["name"])
+
+
+def copy_progset(project_id, progset_id, new_progset_name):
+
+    def update_project_fn(project):
+        original_progset = get_progset_from_project(project, progset_id)
+        project.copyprogset(orig=original_progset.name, new=new_progset_name)
+        project.progsets[new_progset_name].uid = op.uuid()
+
+    update_project_with_fn(project_id, update_project_fn)
+    return load_progset_summaries(project_id)
 
 
 def delete_progset(project_id, progset_id):
