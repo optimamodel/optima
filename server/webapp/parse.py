@@ -635,6 +635,8 @@ def get_program_summary(program, progset, active):
         'costcov': convert_program_costcovdata(program.costcovdata),
         'optimizable': program.optimizable()
     }
+    if hasattr(program, "attr"):
+        result["attr"] = program.attr
     return result
 
 
@@ -884,6 +886,9 @@ def set_program_summary_on_progset(progset, summary):
         ccopars=ccopars,
         costcovdata=costcov)
 
+    if "attr" in summary:
+        program.attr = summary["attr"]
+
     if program_id:
         program.uid = program_id
 
@@ -1069,9 +1074,10 @@ def get_scenario_summary(project, scenario):
 
 
 def get_scenario_summaries(project):
-    scenario_summaries = map(partial(get_scenario_summary, project), project.scens.values())
-    print("get scenario")
-    pprint(scenario_summaries, indent=2)
+    scenario_summaries = []
+    for scen in project.scens.values():
+        summary = get_scenario_summary(project, scen)
+        scenario_summaries.append(summary)
     return normalize_obj(scenario_summaries)
 
 

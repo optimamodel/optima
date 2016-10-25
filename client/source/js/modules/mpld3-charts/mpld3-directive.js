@@ -422,7 +422,8 @@ define(
   });
 
   function setAllFiguresToWidth($element) {
-    $element.find('svg.mpld3-figure').each(function () {
+    var $figures = $element.find('svg.mpld3-figure');
+    $figures.each(function () {
       var $svgFigure = $(this);
       var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
       var width = $svgFigure.parent().width();

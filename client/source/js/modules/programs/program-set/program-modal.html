@@ -248,59 +248,59 @@
     </div>
 
     <div
-      class="section_dashed_border"
-      style="padding: 10px;">
+        class="section_dashed_border"
+        style="padding: 10px;">
       <table
-        style="
-          border-spacing: 10px;
-          border-collapse: separate;">
-      <tr>
-        <td>Year</td>
-        <td>Cost</td>
-        <td>Coverage</td>
-        <td></td>
-      </tr>
-      <tr ng-repeat="costcovData in state.program.costcov">
-        <td>
-          <select
-              ng-model="costcovData.year"
-              type="number"
-              style="width: 120px"
-              ng-options="year for year in years"
-              class="txbox __inline"/>
-        </td>
-        <td>
-          <input
-              name="cost"
-              ng-model="costcovData.cost"
-              type="number"
-              style="width: 120px"
-              class="txbox __inline"/>
-        </td>
-        <td>
-          <input
-              name="coverage"
-              ng-model="costcovData.coverage"
-              style="width: 120px"
-              type="number"
-              class="txbox __inline"/>
-        </td>
-        <td>
-          <span
-              style="padding-left: 1em"
-              class="fa fa-trash-o"
-              ng-click="deleteAddData(costcovData)">
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <td colspan="3">
-          <a class="btn" ng-click="addHistoricalYearCostcovData()">
-            + Year
-          </a>
-        </td>
-      </tr>
-    </table>
+          style="
+            border-spacing: 10px;
+            border-collapse: separate;">
+        <tr>
+          <td>Year</td>
+          <td>Cost</td>
+          <td>Coverage</td>
+          <td></td>
+        </tr>
+        <tr ng-repeat="costcovData in state.program.costcov">
+          <td>
+            <select
+                ng-model="costcovData.year"
+                type="number"
+                style="width: 120px"
+                ng-options="year for year in years"
+                class="txbox __inline"/>
+          </td>
+          <td>
+            <input
+                name="cost"
+                ng-model="costcovData.cost"
+                type="number"
+                style="width: 120px"
+                class="txbox __inline"/>
+          </td>
+          <td>
+            <input
+                name="coverage"
+                ng-model="costcovData.coverage"
+                style="width: 120px"
+                type="number"
+                class="txbox __inline"/>
+          </td>
+          <td>
+            <span
+                style="padding-left: 1em"
+                class="fa fa-trash-o"
+                ng-click="vm.deleteAddData(costcovData)">
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <a class="btn" ng-click="vm.addHistoricalYearCostcovData()">
+              + Year
+            </a>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <div class="section text-center" style="margin-top: 20px">

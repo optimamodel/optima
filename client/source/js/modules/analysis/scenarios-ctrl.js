@@ -26,28 +26,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       function returnName(s) { return s.name }
       $scope.scenarios = _.sortBy($scope.scenarios, returnName);
       console.log("loading scenarios", $scope.scenarios);
+      delete $scope.graphs;
+      if ($scope.scenarios) {
+        $scope.runScenarios()
+      };
     }
 
     $scope.saveScenarios = function(scenarios, successMsg) {
+      delete $scope.graphs;
       console.log("saving scenarios", scenarios);
-      $http.put(
-        '/api/project/' + $scope.project.id + '/scenarios',
-        {'scenarios': scenarios })
-      .success(function (response) {
-        loadScenarios(response.scenarios);
-        if (successMsg) {
-          toastr.success(successMsg)
-        }
-      });
+      $http
+        .put(
+          '/api/project/' + $scope.project.id + '/scenarios',
+          {'scenarios': scenarios })
+        .success(function (response) {
+          loadScenarios(response.scenarios);
+          if (successMsg) {
+            toastr.success(successMsg)
+          }
+        });
     };
 
     $scope.runScenarios = function () {
       $scope.graphs = {};
-      $http.get(
-        '/api/project/' + $scope.project.id + '/scenarios/results')
-      .success(function (data) {
-        $scope.graphs = data.graphs;
-      });
+      $http
+        .get('/api/project/' + $scope.project.id + '/scenarios/results')
+        .success(function (data) {
+          $scope.graphs = data.graphs;
+        });
     };
 
     $scope.isRunnable = function () {

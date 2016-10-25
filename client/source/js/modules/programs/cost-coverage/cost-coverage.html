@@ -90,7 +90,7 @@
 
           <div style="
                 width: 100%;
-                margin: 10px 0px 40px;">
+                margin: 10px 0px 30px;">
             <label>Select program</label>
             <select
                 style="
@@ -104,41 +104,186 @@
             </select>
           </div>
 
+          <a
+              ng-click="vm.saveProgram()"
+              class="btn"
+              style="margin-bottom: 3em">
+            Update cost function & graph
+          </a>
+
           <div ng-if="vm.state.program"
                style="
                   display: flex;
                   width: 100%;
                   margin-top: 10px">
 
-            <div class="chart-container" style="flex: 1 1;">
+            <div style="flex: 0 0 500px;">
 
-              <div mpld3-chart="vm.state.chartData"
-                   style="width: 100%"
-                   chart-id="{{ vm.state.chartData.id }}"
-                   ng-if="vm.state.chartData">
-              </div>
+              <h3>Parameters for defining cost function</h3>
 
-              <div class="c-caption" ng-if="vm.statedisplayCaption">
-                {{vm.statedisplayCaption}}
-              </div>
+              <table
+                  class="section table table-bordered">
+                <tr>
+                  <td>Year</td>
+                  <td>Estimated<br>Population</td>
+                  <td>Saturation %</td>
+                  <td>Unit cost</td>
+                  <td></td>
+                </tr>
+                <tr ng-repeat="row in vm.state.ccoparsTable.rows">
+                  <td>
+                    <select
+                        ng-model="row[0]"
+                        ng-change="vm.setEstPopulationForCcopar()"
+                        ng-options="year for year in vm.state.yearSelector"
+                        class="txbox"/>
+                  </td>
+                  <td valign="center">
+                    <div class="txbox">
+                      {{row[1]}}
+                    </div>
+                  </td>
+                  <td>
+                    <input
+                        name="cost"
+                        ng-model="row[2]"
+                        type="number"
+                        style="width: 50px"
+                        class="txbox __inline"/>
+                    -
+                    <input
+                        name="cost"
+                        ng-model="row[3]"
+                        type="number"
+                        style="width: 50px"
+                        class="txbox __inline"/>
+                  </td>
+                  <td>
+                    <input
+                        name="cost"
+                        ng-model="row[4]"
+                        type="number"
+                        style="width: 50px"
+                        class="txbox __inline"/>
+                    -
+                    <input
+                        name="cost"
+                        ng-model="row[5]"
+                        type="number"
+                        style="width: 50px"
+                        class="txbox __inline"/>
+                  </td>
+                  <td>
+                    <i class="fa fa-trash-o"
+                       ng-click="vm.deleteCccoparYear($index)"
+                    </i>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="5">
+                    <a class="btn" ng-click="vm.addCcoparYear()">
+                      + Year
+                    </a>
+                  </td>
+                </tr>
+              </table>
 
+              <h3>Historical cost and coverage data</h3>
+
+              <table
+                  class="section table table-bordered">
+                <tr>
+                  <td>Year</td>
+                  <td>Cost</td>
+                  <td>Coverage</td>
+                  <td></td>
+                </tr>
+                <tr ng-repeat="costcovYear in vm.state.program.costcov">
+                  <td>
+                    <select
+                        ng-model="costcovYear.year"
+                        ng-options="year for year in vm.state.yearSelector"
+                        class="txbox __inline"/>
+                  </td>
+                  <td>
+                    <input
+                        name="cost"
+                        ng-model="costcovYear.cost"
+                        type="number"
+                        style="width: 120px"
+                        class="txbox __inline"/>
+                  </td>
+                  <td>
+                    <input
+                        name="coverage"
+                        ng-model="costcovYear.coverage"
+                        style="width: 120px"
+                        type="number"
+                        class="txbox __inline"/>
+                  </td>
+                  <td>
+                    <span
+                        style="padding-left: 1em"
+                        class="fa fa-trash-o"
+                        ng-click="vm.deleteCostCovDataYear($index)">
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    <a class="btn" ng-click="vm.addCostCovDataYear()">
+                      + Year
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </div>
 
-            <div style="flex: 0 0 580px;"
-                 class="flex-column margin_left">
+            <div
+                ng-if="!vm.chartData"
+                style=" margin-left: 30px;">
+              <h3>Graph of cost function (spending vs. number-covered)</h3>
+              <i>Parameters need to be defined to show graph</i>
 
-              <div class="flex-column">
-                <h3>Parameters for defining cost function</h3>
-                <entry-table table="vm.state.ccoparsTable"></entry-table>
+            </div>
+            <div
+                ng-if="vm.chartData"
+                class="costcov-chart-container"
+                style="
+                   margin-left: 30px;
+                   max-width: 700px;
+                   flex-basis: auto;
+                   flex-grow: 1;
+                   overflow: hidden;">
+
+              <h3>Graph of cost function (spending vs. number-covered)</h3>
+
+              Maximum spending shown on graph:
+              <input
+                  placeholder="e.g. 1000000"
+                  sytle="width: 150px"
+                  ng-model="vm.state.program.attr.xupperlim"
+                  type="number"/>
+              <br>
+              <br>
+              <br>
+
+              <div
+                  style="overflow: hidden"
+                  mpld3-chart="vm.state.chartData"
+                  chart-id="{{ vm.state.chartData.id }}"
+                  ng-if="vm.state.chartData">
               </div>
 
               <br>
+              Remarks
+              <br>
+              <textarea
+                  style="width: 100%; height:4em;"
+                  ng-model="vm.state.program.attr.caption">
+              </textarea>
               <br>
 
-              <div class="flex-column">
-                <h3>Historical cost and coverage data</h3>
-                <entry-table table="vm.state.costcovTable"></entry-table>
-              </div>
             </div>
 
           </div>
@@ -299,31 +444,5 @@
 </div>
 
 
-                <!--<div class="flex-column margin_top">-->
 
-                  <!--<h3>Options for displaying curves</h3>-->
-                  <!--<div>-->
-                    <!--Specify the maximum coverage shown on the plot:-->
-                    <!--<input-->
-                        <!--placeholder="e.g. 1000000"-->
-                        <!--class="txbox __inline __xl"-->
-                        <!--ng-model="maxFunc"-->
-                        <!--type="number"/>-->
-                  <!--</div>-->
-                  <!--<div>-->
-                    <!--Display program costs in dollar spent per-->
-                    <!--person in the targeted population-->
-                    <!--<input-->
-                        <!--type="checkbox"-->
-                        <!--ng-model="dispCost"/>-->
-                  <!--</div>-->
-
-                <!--</div>-->
-
-                <!--<div class="flex-column margin_top">-->
-
-                  <!--<h3>Captions: warning - not saved in database at the moment</h3>-->
-                  <!--<textarea ng-model="remarks"/>-->
-
-                <!--</div>-->
 
