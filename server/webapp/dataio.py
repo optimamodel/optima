@@ -949,6 +949,8 @@ def load_scenario_summaries(project_id):
     return {
         'scenarios': get_scenario_summaries(project),
         'ykeysByParsetId': get_parameters_for_scenarios(project),
+        'defaultBudgetsByProgsetId': parse.get_budgets_for_scenarios(project),
+        'defaultCoveragesByParsetIdyProgsetId': parse.get_coverages_for_scenarios(project),
         'years': get_project_years(project)
     }
 

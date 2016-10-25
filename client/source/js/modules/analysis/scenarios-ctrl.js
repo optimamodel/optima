@@ -12,6 +12,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parsets = parsetResponse.data.parsets;
       $scope.progsets = progsetsResponse.data.progsets;
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+      $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
+      $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
       $scope.years = scenariosResponse.data.years;
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.isOptimizable = $scope.project.isOptimizable;
@@ -82,6 +84,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           parsets: function () { return $scope.parsets; },
           progsets: function () { return $scope.progsets; },
           ykeys: function () { return $scope.parametersByParsetId; },
+          budgetsByProgsetId: function() { return $scope.budgetsByProgsetId; },
+          coveragesByParsetIdyProgsetId: function() { return $scope.defaultCoveragesByParsetIdyProgsetId; },
           years: function() { return $scope.years }
         }
       });
@@ -92,10 +96,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     /**
-     * Function opens a model in different modes
+     * Opens a scenario model in different modes
      * @param {string} action: 'add', 'edit' 'delete'
      */
     $scope.openModal = function (scenario, action, $event) {
+
       if ($event) {
         $event.preventDefault();
       }
@@ -136,9 +141,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       } else if (action === 'delete') {
 
-        var scenario = _.findWhere(newScenarios, { id: scenario.id });
+        var deleteScenario = _.findWhere(newScenarios, { id: scenario.id });
         $scope.saveScenarios(
-            _.without(newScenarios, scenario), "Deleted scenario");
+            _.without(newScenarios, deleteScenario), "Deleted scenario");
 
       }
     };
