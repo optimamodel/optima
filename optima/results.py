@@ -233,8 +233,8 @@ class Resultset(object):
             self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
             self.main['numnewdiag'].estimate = True # It's not real data, just an estimate
         
-        self.main['numdeath'].pops = quantile(alldeaths[:,:,indices], quantiles=quantiles)
-        self.main['numdeath'].tot = quantile(alldeaths[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.main['numdeath'].pops = quantile(alldeaths[:,:,:,indices].sum(axis=1), quantiles=quantiles)
+        self.main['numdeath'].tot = quantile(alldeaths[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: 
             self.main['numdeath'].datatot = processdata(data['optdeath'])
             self.main['numdeath'].estimate = True # It's not real data, just an estimate

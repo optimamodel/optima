@@ -51,7 +51,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_newcare     = zeros((npops, npts))          # Number newly in care per timestep
     raw_newtreat    = zeros((npops, npts))          # Number initiating ART per timestep
     raw_newsupp     = zeros((npops, npts))          # Number newly suppressed per timestep
-    raw_death       = zeros((npops, npts))          # Number of deaths per timestep
+    raw_death       = zeros((nstates, npops, npts)) # Number of deaths per timestep
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
     
     # Biological and failure parameters -- death etc
@@ -608,7 +608,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
         ## Calculate main indicators
-        raw_death[:,t]      = einsum('ij,i->j',  people[:,:,t], deathprob)/dt
+        raw_death[:,:,t]      = einsum('ij,i->ij',  people[:,:,t], deathprob)/dt
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
         raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
