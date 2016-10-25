@@ -1,8 +1,0 @@
-[Unit]
-Description=Optima {{ service_name }} Celery
-
-[Service]
-ExecStart=/software/anaconda/bin/celery -A server.webapp.tasks.celery_instance worker -l info
-Restart=always
-User={{ user }}
-WorkingDirectory={{ dir }}
