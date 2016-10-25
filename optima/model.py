@@ -547,11 +547,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 else: # Probability of moving into care
                     thistransit[fromstate][prob][ts] *= careprob
 
-        # Care to lost
+        # Care/USVL/SVL to lost
         lossprob = leavecare[:,t] if isnan(propcare[t]) else 0.
-        for fromstate in care:
+        for fromstate in allcare:
             for ts, tostate in enumerate(thistransit[fromstate][to]):
-                if tostate in care: # Probability of not being lost and remaining in care
+                if tostate in allcare: # Probability of not being lost and remaining in care
                     thistransit[fromstate][prob][ts] *= (1.-lossprob)
                 else: # Probability of being lost
                     thistransit[fromstate][prob][ts] *= lossprob
@@ -571,7 +571,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for ts, tostate in enumerate(thistransit[fromstate][to]):
                 if tostate in usvl: # Probability of remaining unsuppressed
                     thistransit[fromstate][prob][ts] *= (1.-svlprob)
-                else: # Probability of becoming suppressed
+                elif tostate in svl: # Probability of becoming suppressed
                     thistransit[fromstate][prob][ts] *= svlprob
                                 
         # SVL to USVL
@@ -580,7 +580,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             for ts, tostate in enumerate(thistransit[fromstate][to]):
                 if tostate in svl: # Probability of remaining suppressed
                     thistransit[fromstate][prob][ts] *= (1.-usvlprob)
-                else: # Probability of becoming unsuppressed
+                elif tostate in usvl: # Probability of becoming unsuppressed
                     thistransit[fromstate][prob][ts] *= usvlprob
 
 
@@ -724,7 +724,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
             for name,prop,lowerstate,tostate,higherstates,num,denom,raw_new in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
-                if name is 'proptx' or ~isnan(prop[t+1]): #In this section, we shift numbers of people (as opposed to shifting proportions). If any of the prop parameters are non-nan, that means that some number of people will need to shift. However, treatment is special because it is always set by shifting numbers. That's why we have this condition here.
+                if name is 'proptx' or ~isnan(prop[t+1]): # In this section, we shift numbers of people (as opposed to shifting proportions). If any of the prop parameters are non-nan, that means that some number of people will need to shift. However, treatment is special because it is always set by shifting numbers. That's why we have this condition here.
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
