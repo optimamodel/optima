@@ -174,6 +174,7 @@ def get_project_summary_from_project(project):
         this_n_program = len(progset.programs.values())
         if this_n_program > n_program:
             n_program = this_n_program
+
         if n_program > 0 and progset.readytooptimize():
             is_ready_to_optimize = True
 
@@ -408,7 +409,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset = get_progset_from_project(project, progset_id)
     parset = get_parset_from_project(project, parset_id)
 
-    print ">> Fetching target parameters from progset '%s'", progset.name
+    print ">> Fetching target parameters from progset '%s'" % progset.name
 
     progset.gettargetpops()
     progset.gettargetpars()
@@ -688,15 +689,21 @@ def get_outcome_summaries_from_progset(progset):
                     'programs': []
                 }
                 for program_name, program_intercepts in covout.ccopars.items():
-                    if program_name not in ['intercept', 't', 'interact']:
-                        program = {
-                            'name': program_name,
-                            'intercept_lower': program_intercepts[i_year][0] if len(
-                                program_intercepts) > i_year else None,
-                            'intercept_upper': program_intercepts[i_year][1] if len(
-                                program_intercepts) > i_year else None,
-                        }
-                        year['programs'].append(program)
+                    if program_name in ['intercept', 't', 'interact']:
+                        continue
+                    lower = None
+                    upper = None
+                    if len(program_intercepts) > i_year:
+                        pair = program_intercepts[i_year]
+                        if pair is not None:
+                            lower = program_intercepts[i_year][0]
+                            upper = program_intercepts[i_year][1]
+                    program = {
+                        'name': program_name,
+                        'intercept_lower': lower,
+                        'intercept_upper': upper,
+                    }
+                    year['programs'].append(program)
 
                 outcome['years'].append(year)
             outcomes.append(outcome)
@@ -779,6 +786,7 @@ def get_progset_summary(project, progset_name):
         if not program_summary['name']:
             program_summary['name'] = program_summary['short']
 
+    print(">> Extract progset summary %s-%s " % (project.name, progset.name))
     progset_summary = {
         'id': progset.uid,
         'name': progset.name,
@@ -887,19 +895,11 @@ def set_program_summary_on_progset(progset, summary):
     progset.updateprogset()
 
 
-def set_progset_summary_on_project(project, progset_summary, progset_id=None):
-    """
-    Updates/creates a progset from a progset_summary, with the addition
-    of inactive_programs that are taken from the default programs
-    generated from pyOptima.
-    """
-
-    print(">> Finding progset '%s'" % progset_summary['name'])
-    progset_name = progset_summary['name']
-    progset_programs = progset_summary['programs']
-
+def get_progset_from_name(project, progset_name, progset_id=None):
+    print(">> Finding progset '%s'" % progset_name)
     if progset_name not in project.progsets:
         if progset_id:
+            print("> Updated program set %s with new id %s" % (progset_name, progset_id))
             # It may have changed, so try getting via ID if we have it...
             progset = get_progset_from_project(project, progset_id)
             project.progsets.pop(progset.name)
@@ -908,22 +908,30 @@ def set_progset_summary_on_project(project, progset_summary, progset_id=None):
             progset.name = progset_name
             project.progsets[progset_name] = progset
         else:
-            # Probably a new one.
+            print("> Created program set %s" % progset_name)
             project.progsets[progset_name] = op.Programset(name=progset_name)
+    return project.progsets[progset_name]
 
-    progset = project.progsets[progset_name]
 
+def set_progset_summary_on_progset(progset, progset_summary):
     # Clear the current programs...
     progset.programs = op.odict()
     progset.inactive_programs = op.odict()
-
-    print(">> Setting %d programs" % len(progset_programs))
+    progset_programs = progset_summary['programs']
+    print(">> Setting %d programs on progset" % len(progset_programs))
     for p in progset_programs:
         set_program_summary_on_progset(progset, p)
-
     progset.updateprogset()
 
-    print("> Created/updated program %s" % progset_name)
+
+def set_progset_summary_on_project(project, progset_summary, progset_id=None):
+    """
+    Updates/creates a progset from a progset_summary, with the addition
+    of inactive_programs that are taken from the default programs
+    generated from pyOptima.
+    """
+    progset = get_progset_from_name(project, progset_summary['name'], progset_id)
+    set_progset_summary_on_progset(progset, progset_summary)
 
 
 # SCENARIOS
