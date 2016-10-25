@@ -324,11 +324,13 @@ define(
               _.each(response.projects, function(project) {
                 var isSelected = _.contains(selectedIds, project.id);
                 if (project.isOptimizable) {
-                  $scope.projects.push({
+                  var project = angular.copy(project);
+                  _.extend(project, {
                     'name': project.name,
                     'id': project.id,
                     'selected': isSelected
-                  })
+                  });
+                  $scope.projects.push(project)
                 }
               });
               console.log("$scope.projects", $scope.projects);
@@ -341,13 +343,30 @@ define(
 
         $scope.saveTemplateProject = function() {
           $scope.isSelectTemplateProject = false;
+          var project = $scope.state.templateProject;
+          $scope.years = _.range(project.dataStart, project.dataEnd+1);
+          $scope.state.templateYear = $scope.years[0];
           console.log('template project', $scope.state.templateProject);
+          console.log('years', $scope.years);
         };
 
         $scope.generateTemplateSpreadsheet = function() {
-          toastr.success('create spreadsheet')
-          // call server to generate template spreadsheet then
-          // download
+          $http
+            .post(
+              '/api/region',
+              {
+                projectId: $scope.state.templateProject.id,
+                nRegion: $scope.state.nRegion,
+                year: $scope.state.templateYear
+              })
+            .success(function(response, status, headers) {
+              // var newProjectId = headers()['x-project-id'];
+              var blob = new Blob(
+                  [response],
+                  { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+              saveAs(blob, ('template.xls'));
+              toastr.success('got spreadsheet back');
+            });
         };
 
         $scope.spawnRegionsFromSpreadsheet = function() {

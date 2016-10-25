@@ -417,6 +417,24 @@ class MinimizePortfolio(Resource):
 api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
 
 
+class RegionTemplate(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary="Make portfolio region template")
+    def post(self):
+        """
+        post /api/region
+        """
+        args = get_post_data_json()
+        project_id = args['projectId']
+        n_region = int(args['nRegion'])
+        year = int(args['year'])
+        dirname, basename = dataio.make_region_template_spreadsheet(project_id, n_region, year)
+        print("> Got spreadsheet now download")
+        return helpers.send_from_directory(dirname, basename, as_attachment=True)
+
+api.add_resource(RegionTemplate, '/api/region')
+
 
 class TaskChecker(Resource):
     method_decorators = [report_exception_decorator, login_required]

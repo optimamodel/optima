@@ -654,6 +654,17 @@ def delete_portfolio_project(portfolio_id, project_id):
     save_portfolio(portfolio)
     return load_portfolio_summaries()
 
+def make_region_template_spreadsheet(project_id, n_region, year):
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    project_fname = load_project_record(project_id).as_file(dirname)
+    full_project_fname = os.path.join(dirname, project_fname)
+    # temporary spreadsheet fname
+    xls_fname = full_project_fname.replace('.prj', '.xls')
+    optima.geospatial.makesheet(full_project_fname, xls_fname, copies=n_region, refyear=year)
+    return os.path.split(xls_fname)
+
 ## PARSET
 
 
