@@ -97,6 +97,10 @@ def getplotselections(results):
     plotselections['keys'] += ['deathbycd4']
     plotselections['names'] += ['Deaths by CD4']
     
+    ## People by CD4
+    plotselections['keys'] += ['plhivbycd4']
+    plotselections['names'] += ['PLHIV by CD4']
+    
     ## Get plot selections for plotepi
     plotepikeys = list()
     plotepinames = list()
@@ -198,6 +202,16 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot deaths by CD4: "%s"' % E.message, 1, verbose)
+    
+    
+    ## Add PLHIV by CD4 plot
+    if 'plhivbycd4' in toplot:
+        toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
+        try: 
+            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot PLHIV by CD4: "%s"' % E.message, 1, verbose)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
@@ -752,19 +766,20 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
     # Set up figure and do plot
     fig = figure(figsize=figsize)
     
+    titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
     hivstates = results.project.settings.hivstates
     indices = arange(0, len(results.raw[ind]['tvec']), int(round(1.0/(results.raw[ind]['tvec'][1]-results.raw[ind]['tvec'][0]))))
     colors = gridcolormap(len(hivstates))
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0.*results.tvec # Easy way of setting to 0...
+        thisdata = 0.*results.tvec # Initialise
         
         ## Do the plotting
         subplot(nsims,1,plt+1)
         for s,state in enumerate(reversed(hivstates)): # Loop backwards so correct ordering -- first one at the top, not bottom
-#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            if ismultisim: thisdata = results.raw[plt][ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
-            else:          thisdata = results.raw[ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
+            if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata += results.raw[ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
             plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
@@ -782,8 +797,8 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
         # Configure plot specifics
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
                           'frameon':False}
-        if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
-        else: ax.set_title('Cascade')
+        if ismultisim: ax.set_title(titlemap[whattoplot]+'-- %s' % titles[plt])
+        else: ax.set_title(titlemap[whattoplot])
         ax.set_xlabel('Year')
         ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
