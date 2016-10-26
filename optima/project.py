@@ -2,6 +2,7 @@ from optima import OptimaException, Settings, Parameterset, Programset, Resultse
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
+from optima import make_upgradeable
 from optima import __version__ # Get current version
 from numpy import argmin, array
 import os
@@ -10,6 +11,7 @@ import os
 ## Project class -- this contains everything else!
 #######################################################################################################
 
+@make_upgradeable
 class Project(object):
     """
     PROJECT
@@ -38,7 +40,6 @@ class Project(object):
 
     Version: 2016jan22 by cliffk
     """
-
 
 
     #######################################################################################################
@@ -187,7 +188,7 @@ class Project(object):
         if type(what)==odict: structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
         if isnumber(checkexists): # It's a numerical index
-            try: checkexists = structlist.keys()[checkexists] # Convert from 
+            try: checkexists = structlist.keys()[checkexists] # Convert from
             except: raise OptimaException('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
         if checkabsent is not None:
             if checkabsent in structlist:
@@ -195,7 +196,7 @@ class Project(object):
                     raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
                 else:
                     printv('Structure list already has item named "%s"' % (checkabsent), 2, self.settings.verbose)
-                
+
         if checkexists is not None:
             if not checkexists in structlist:
                 raise OptimaException('Structure list has no item named "%s"' % (checkexists))
@@ -208,7 +209,7 @@ class Project(object):
             try: name = item.name # Try getting name from the item
             except: name = 'default' # If not, revert to default
         if item is None and type(name)!=str: # Maybe an item has been supplied as the only argument
-            try: 
+            try:
                 item = name # It's actully an item, not a name
                 name = item.name # Try getting name from the item
             except: raise OptimaException('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
@@ -257,7 +258,7 @@ class Project(object):
         printv('%s "%s" renamed "%s"' % (what, orig, new), 2, self.settings.verbose)
         self.modified = today()
         return None
-        
+
 
     #######################################################################################################
     ## Convenience functions -- NOTE, do we need these...?
@@ -284,21 +285,21 @@ class Project(object):
     def renamescen(self,     orig='default', new='new', overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def addresult(self, result=None, overwrite=True): 
+    def addresult(self, result=None, overwrite=True):
         ''' Try adding result by name, but if no name, add by UID '''
         if result.name is None: keyname = str(result.uid)
         else: keyname = result.name
         self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=overwrite) # Use UID for key but keep name
         self.modified = today()
         return keyname # Can be useful to know what ended up being chosen
-    
+
     def rmresult(self, name=-1):
         ''' Remove a single result by name '''
         resultuids = self.results.keys() # Pull out UID keys
         resultnames = [res.name for res in self.results.values()] # Pull out names
         if isnumber(name) and name<len(self.results):  # Remove by index rather than name
             self.remove(what='result', name=self.results.keys()[name])
-        elif name in resultuids: # It's a UID: remove directly 
+        elif name in resultuids: # It's a UID: remove directly
             self.remove(what='result', name=name)
         elif name in resultnames: # It's a name: find the UID corresponding to this name and remove
             self.remove(what='result', name=resultuids[resultnames.index(name)]) # WARNING, if multiple names match, will delete oldest one -- expected behavior?
@@ -308,22 +309,22 @@ class Project(object):
             raise OptimaException(errormsg)
         self.modified = today()
         return None
-    
-    
+
+
     def cleanresults(self):
         ''' Remove all results '''
         self.results = odict() # Just replace with an empty odict, as at initialization
         self.modified = today()
         return None
-    
-    
-    def addscenlist(self, scenlist): 
+
+
+    def addscenlist(self, scenlist):
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
         self.modified = today()
         return None
-    
-    
+
+
     def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
@@ -348,7 +349,7 @@ class Project(object):
 
     def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
         ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
-        
+
         WARNING, do we need this? What's it for? Why not use runmodel()?
         '''
         if start is None: start=self.settings.start # Specify the start year
@@ -356,7 +357,7 @@ class Project(object):
         if dt is None: dt=self.settings.dt # Specify the timestep
         if name is None and simpars is None: name = -1 # Set default name
         if verbose is None: verbose = self.settings.verbose
-        
+
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = []
@@ -393,13 +394,13 @@ class Project(object):
     def refreshparset(self, name=None, orig='default'):
         '''
         Reset the chosen (or all) parsets to reflect the parameter values from the spreadsheet (or another parset).
-        
+
         Usage:
             P.refreshparset() # Refresh all parsets in the project to match 'default'
             P.refreshparset(name='calibrated') # Reset parset 'calibrated' to match 'default'
             P.refreshparset(name=['default', 'bugaboo'], orig='calibrated') # Reset parsets 'default' and 'bugaboo' to match 'calibrated'
         '''
-        
+
         if name is None: name = self.parsets.keys() # If none is given, use all
         if type(name)!=list: name = [name] # Make sure it's a list
         origpars = self.parsets[orig].pars[0] # "Original" parameters to copy from (based on data)
@@ -410,11 +411,11 @@ class Project(object):
                 for key in keys:
                     if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
                     if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
-        
+
         self.modified = today()
         return None
-        
-        
+
+
 
     def reconcileparsets(self, name=None, orig=None):
         ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
@@ -428,7 +429,7 @@ class Project(object):
         if name is None and orig is not None: name = orig # Specify name if not supplied
         if name is not None and orig is None: orig = name # Specify orig if not supplied
         if name not in self.parsets.keys():
-            if orig not in self.parsets.keys(): 
+            if orig not in self.parsets.keys():
                 errormsg = 'Cannot use original parset "%s": parset does not exist; choices are:\n:%s' % (orig, self.parsets.keys())
                 raise OptimaException(errormsg)
             else:
@@ -439,11 +440,11 @@ class Project(object):
     def pars(self, key=-1, ind=0):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
         return self.parsets[key].pars[ind]
-    
+
     def parset(self, key=-1):
         ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
         return self.parsets[key]
-    
+
     def programs(self, key=-1):
         ''' Shortcut for getting the latest active set of programs '''
         return self.progsets[key].programs
@@ -480,8 +481,8 @@ class Project(object):
         self.parsets[name].resultsref = keyname
         self.modified = today()
         return None
-    
-    
+
+
     def runscenarios(self, scenlist=None, verbose=2, debug=False):
         ''' Function to run scenarios '''
         if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
@@ -489,7 +490,7 @@ class Project(object):
         self.addresult(result=multires)
         self.modified = today()
         return None
-    
+
 
     def runbudget(self, name='runbudget', budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
@@ -499,7 +500,7 @@ class Project(object):
             try:
                 progsetname = self.progsets[0].name
                 printv('No program set entered to runbudget, using stored program set "%s"' % (self.progsets[0].name), 1, self.settings.verbose)
-            except: raise OptimaException("No program set entered, and there are none stored in the project") 
+            except: raise OptimaException("No program set entered, and there are none stored in the project")
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = runmodel(pars=progpars, project=self, parset=self.parsets[parsetname], progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
@@ -508,13 +509,13 @@ class Project(object):
         self.modified = today()
         return None
 
-    
+
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed)
         optim.resultsref = multires.name
-        if saveprocess:        
+        if saveprocess:
             self.addoptim(optim=optim)
             self.addresult(result=multires)
             self.modified = today()
@@ -525,7 +526,7 @@ class Project(object):
     #######################################################################################################
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
-        
+
     def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
@@ -533,15 +534,15 @@ class Project(object):
             printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progset=progsetname)
         projectBOC.objectives = objectives
-        
+
         if parsetname is None:
             printv('Warning, using default parset', 3, verbose)
             parsetname = 0
-        
+
         if progsetname is None:
             printv('Warning, using default progset', 3, verbose)
             progsetname = 0
-        
+
         if budgetlist == None:
             if not progsetname == None:
                 baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
@@ -552,7 +553,7 @@ class Project(object):
                 except:
                     OptimaException('Error: No progsets associated with project for which BOC is being generated!')
             budgetlist = [x*baseline for x in [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0]] # Start from original, go down, then go up
-                
+
         results = None
         owbudget = None
         tmptotals = []
@@ -561,7 +562,7 @@ class Project(object):
             print('Running budget %i/%i (%0.0f)' % (i+1, len(budgetlist), budget))
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-            
+
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
             if len(tmptotals):
                 closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
@@ -574,8 +575,8 @@ class Project(object):
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
         self.modified = today()
-        return None        
-    
+        return None
+
     def getBOC(self, objectives):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         for x in self.results:
@@ -589,8 +590,8 @@ class Project(object):
                     return boc
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
-        
-        
+
+
     def delBOC(self, objectives):
         ''' Deletes BOC results with the required objectives (budget notwithstanding) '''
         while not self.getBOC(objectives = objectives) == None:
@@ -599,15 +600,15 @@ class Project(object):
             self.rmresult(str(ind))
         self.modified = today()
         return None
-    
-    
+
+
     def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
         from pylab import title, show
         if boc is None:
             try: boc = self.getBOC(objectives=objectives)
             except: raise OptimaException('Cannot plot a nonexistent BOC!')
-        
+
         if not deriv:
             print('Plotting BOC for "%s"...' % self.name)
         else:
@@ -622,26 +623,25 @@ class Project(object):
 
 class Spreadsheet(object):
     ''' A class for reading and writing spreadsheet data in binary format, so a project contains the spreadsheet loaded '''
-    
+
     def __init__(self, filename=None):
         self.data = None
         self.filename = None
         if filename is not None: self.load(filename)
         return None
-    
+
     def __repr__(self):
         output = defaultrepr(self)
         return output
-    
+
     def load(self, filename=None):
         if filename is not None:
             self.filename = filename
             with open(filename, mode='rb') as f: self.data = f.read()
-    
+
     def save(self, filename=None, verbose=2):
         if filename is None:
             if self.filename is not None: filename = self.filename
         if filename is not None:
             with open(filename, mode='wb') as f: f.write(self.data)
         printv('Spreadsheet "%s" saved.' % filename, 2, verbose)
-    

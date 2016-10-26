@@ -129,6 +129,8 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 from . import plotting as _plotting 
 from .plotting import getplotselections, makeplots
 
+## Upgrading objects
+from .migrations.perobj import make_upgradeable
 
 #####################################################################################################################
 ### Want to add more modules to Optima? Do that above this line (unless they're non-essential plotting functions)
