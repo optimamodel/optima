@@ -432,7 +432,7 @@ class RegionTemplate(Resource):
         year = int(args['year'])
         dirname, basename = dataio.make_region_template_spreadsheet(project_id, n_region, year)
         print("> Got spreadsheet now download")
-        return helpers.send_from_directory(dirname, basename, as_attachment=True)
+        return helpers.send_from_directory(dirname, basename)
 
 api.add_resource(RegionTemplate, '/api/region')
 

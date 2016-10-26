@@ -358,13 +358,14 @@ define(
                 projectId: $scope.state.templateProject.id,
                 nRegion: $scope.state.nRegion,
                 year: $scope.state.templateYear
+              },
+              {
+                responseType: "arraybuffer"
               })
-            .success(function(response, status, headers) {
-              // var newProjectId = headers()['x-project-id'];
+            .success(function(data) {
               var blob = new Blob(
-                  [response],
-                  { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-              saveAs(blob, ('template.xls'));
+                  [data], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+              saveAs(blob, 'template.xlsx');
               toastr.success('got spreadsheet back');
             });
         };
