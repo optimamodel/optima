@@ -1,1 +1,0 @@
-from convert1to2 import convert1to2, loaddata

@@ -35,13 +35,14 @@ Copyright (C) 2016 by the Optima Consortium
 print(optimalicense)
 
 
-
+import matplotlib
+matplotlib.use('Agg')
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 from ._version import __version__
 
 # Create an empty list to stored failed imports
-_failed = [] 
+_failed = []
 
 
 
@@ -111,14 +112,14 @@ from .programs import Program, Programset
 
 ## Economics functions -- WARNING, not functional yet
 from . import economics as _economics
-from .economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts 
+from .economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts
 
 ## Automatic calibration and sensitivity
 from . import calibration as _calibration
-from .calibration import sensitivity, autofit 
+from .calibration import sensitivity, autofit
 
 ## Scenario analyses
-from . import scenarios as _scenarios 
+from . import scenarios as _scenarios
 from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, setparscenvalues
 
 ## Optimization analyses
@@ -126,9 +127,11 @@ from . import optimization as _optimization
 from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 
 ## Plotting functions
-from . import plotting as _plotting 
+from . import plotting as _plotting
 from .plotting import getplotselections, makeplots
 
+## Upgrading objects
+from .migrations.perobj import make_upgradeable
 
 #####################################################################################################################
 ### Want to add more modules to Optima? Do that above this line (unless they're non-essential plotting functions)
@@ -149,11 +152,11 @@ try: from .gui import plotresults, pygui, plotpeople, plotallocations, plotpars
 except: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars')
 
 ## Handle the browser-based plotting -- relies on browser so might fail
-try: from .gui import browser 
+try: from .gui import browser
 except: _failed.append('browser')
 
 # Do manual fitting -- relies on PyQt4 so might fail
-try: from .gui import manualfit 
+try: from .gui import manualfit
 except: _failed.append('manualfit')
 
 
@@ -168,7 +171,7 @@ from .project import Project
 
 # Portfolio class (container of Projects)
 import portfolio as _portfolio
-from .portfolio import Portfolio 
+from .portfolio import Portfolio
 
 
 try:
@@ -177,7 +180,7 @@ try:
     from .batchtools import batchautofit
     from .batchtools import batchBOC
     from .geospatial import geogui # Import GUI tools for geospatial analysis
-except: 
+except:
     _failed.append('geospatial')
 
 
@@ -193,6 +196,6 @@ try:
     from .migrations.migrate import migrate
 except:
     _failed.append('migrations')
-    
+
 
 if not len(_failed): del _failed # If it's empty, don't bother keeping it
