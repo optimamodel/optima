@@ -11,6 +11,7 @@ def make_upgradeable(obj):
         def __setstate__(self, state):
             from optima.migrations.migrate import migrate_obj
             state = migrate_obj(self, state)
+            self.__dict__.pop("_optimaversion")
 
         def __getstate__(self):
             state = self.__dict__

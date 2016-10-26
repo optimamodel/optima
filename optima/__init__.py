@@ -34,10 +34,6 @@ Copyright (C) 2016 by the Optima Consortium
 '''
 print(optimalicense)
 
-
-import matplotlib
-matplotlib.use('Agg')
-
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 from ._version import __version__
 
