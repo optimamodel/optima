@@ -166,6 +166,8 @@ class TwoZeroFour(object):
                 for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']:
                     pd[key].y = 1./pd[key].y # Invert
 
+            dorun = False
+
             # Rerun calibrations to update results appropriately
             if dorun: project.runsim(ps.name)
 
