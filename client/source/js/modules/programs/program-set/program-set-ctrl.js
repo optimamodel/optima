@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    modalService, toastr, currentProject, projectApiService, $upload) {
+    modalService, toastr, currentProject, projectApiService, $upload, $state) {
 
     var project = currentProject.data;
     var defaultPrograms;
@@ -27,7 +27,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if (response.progsets) {
             $scope.programSetList = response.progsets;
-            console.log("loaded_programs", $scope.programSetList);
+            console.log("loaded program sets", $scope.programSetList);
             if (response.progsets && response.progsets.length > 0) {
               $scope.state.activeProgramSet = response.progsets[0];
             }
@@ -48,6 +48,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           parameters = response.parameters;
         });
+    }
+
+    function deepCopyJson(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
     }
 
     $scope.getCategories = function() {
@@ -148,6 +152,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       toastr.success("Program set deleted");
+      $state.reload();
+    }
+
+    function getUniqueName(name, otherNames) {
+      var i = 0;
+      var uniqueName = name;
+      while (_.indexOf(otherNames, uniqueName) >= 0) {
+        i += 1;
+        uniqueName = name + ' (' + i + ')';
+      }
+      return uniqueName;
     }
 
     $scope.copyProgramSet = function () {
@@ -155,13 +170,24 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var copy = function (name) {
-          var copiedProgramSet = {name: name, programs: $scope.state.activeProgramSet.programs};
-          $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
-          $scope.state.activeProgramSet = copiedProgramSet;
-          $scope.saveActiveProgramSet("Program set copied");
+          $http
+            .post(
+              '/api/project/' + project.id
+              + '/progset/' + $scope.state.activeProgramSet.id,
+              {name: name})
+            .success(function(response) {
+              $scope.programSetList = response.progsets;
+              console.log("loaded program sets", $scope.programSetList);
+              $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
+            });
         };
+        var usedNames = _.pluck($scope.programSetList, 'name');
         programSetModalService.openProgramSetModal(
-            copy, 'Copy program set', $scope.programSetList, $scope.state.activeProgramSet.name + ' copy', 'Copy');
+            copy,
+            'Copy program set',
+            $scope.programSetList,
+            getUniqueName($scope.state.activeProgramSet.name, usedNames),
+            'Copy');
       }
     };
 

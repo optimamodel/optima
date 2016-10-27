@@ -217,6 +217,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     }
 
+    function consoleLogJson(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
+
+
     $scope.prepareCreateOrEditForm = function () {
       var errors = [];
 
@@ -238,10 +244,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return false;
       }
 
+      function removeExtraFields(aDict) {
+        var copyDict = angular.copy(aDict);
+        if (copyDict.hasOwnProperty("$$hashKey")) {
+          delete copyDict["$$hashKey"];
+        }
+        if (copyDict.hasOwnProperty("active")) {
+          delete copyDict["active"];
+        }
+        return copyDict;
+      }
+
       if ($state.current.name == "project.edit") {
+        var selectedPopulations = _.map(
+          getSelectedPopulations(), removeExtraFields);
+        var originalPopulations = _.map(
+          $scope.projectInfo.populations, removeExtraFields);
         var message;
-        if (!angular.equals(
-                $scope.populations, $scope.projectInfo.populations)) {
+        if (!angular.equals(selectedPopulations, originalPopulations)) {
           $scope.editParams.canUpdate =
               $scope.populations.length == $scope.projectInfo.populations.length;
           message = 'You have made changes to populations. All existing data will be lost. Would you like to continue?';

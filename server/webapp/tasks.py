@@ -9,6 +9,13 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 import optima
 
+from multiprocessing.dummy import Process, Queue
+
+# this is needed to disable multiprocessing in the portfolio
+# module so that celery can handle the multiprocessing itself
+optima.portfolio.Process = Process
+optima.portfolio.Queue = Queue
+
 # must import api first
 from ..api import app
 from .dbconn import db
@@ -261,8 +268,8 @@ def run_autofit(project_id, parset_id, maxtime=60):
         project_record.save_obj(project)
         db_session.add(project_record)
         dataio.delete_result_by_parset_id(project_id, parset_id, db_session=db_session)
-        result_record = dataio.update_or_create_result_record(
-            project, result, orig_parset_name, 'calibration', db_session=db_session)
+        result_record = dataio.update_or_create_result_record_by_id(
+            result, project_id, orig_parset.uid, 'calibration', db_session=db_session)
         print(">> Save result '%s'" % result.name)
         db_session.add(result_record)
         db_session.commit()
@@ -369,8 +376,9 @@ def run_optimization(self, project_id, optimization_id, maxtime):
         if result:
             db_session = init_db_session()
             dataio.delete_result_by_name(project_id, result.name, db_session)
-            result_record = dataio.update_or_create_result_record(
-                project, result, optim.parsetname, 'optimization', db_session=db_session)
+            parset = project.parsets[optim.parsetname]
+            result_record = dataio.update_or_create_result_record_by_id(
+                result, project_id, parset.uid, 'optimization', db_session=db_session)
             db_session.add(result_record)
             db_session.commit()
             close_db_session(db_session)
