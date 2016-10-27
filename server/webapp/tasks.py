@@ -9,6 +9,13 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 import optima
 
+from multiprocessing.dummy import Process, Queue
+
+# this is needed to disable multiprocessing in the portfolio
+# module so that celery can handle the multiprocessing itself
+optima.portfolio.Process = Process
+optima.portfolio.Queue = Queue
+
 # must import api first
 from ..api import app
 from .dbconn import db
