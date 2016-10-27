@@ -134,8 +134,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         age_from: '',
         female: false,
         male: false,
-        injects: false,
-        sexworker: false,
       };
 
       return openPopulationModal(population).result.then(

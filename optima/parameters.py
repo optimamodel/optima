@@ -440,17 +440,15 @@ def makepars(data, label=None, verbose=2):
     pars = odict()
     pars['label'] = label # Add optional label, default None
     
-    # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
+    # Shorten information on which populations are male, which are female
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
-    pars['injects'] = array(data['pops']['injects']).astype(bool) # Populations that inject
-    pars['sexworker'] = array(data['pops']['sexworker']).astype(bool) # Populations that provide commercial sex
     
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
     fpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['female'][popno]]
-    mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]] # WARNING, these two lines should be consistent -- they both work, so the question is which is more elegant -- if pars['male'] is a dict then could do: [popkeys[key] for key in popkeys if pars['male'][key]]
+    mpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['male'][popno]]
     pars['popkeys'] = dcp(popkeys)
     
     # Read in parameters automatically
@@ -577,6 +575,10 @@ def makepars(data, label=None, verbose=2):
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
     
+    # Store information about injecting and commercial sex providing populations
+    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
+    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
+
     return pars
 
 
@@ -597,7 +599,7 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     simpars = odict() 
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys','rawtransit']
+    generalkeys = ['male', 'female', 'popkeys', 'injects', 'sexworker', 'rawtransit']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if start is None: start=2000 # WARNING, should be a better way of declaring defaults...
     if end is None: end=2030

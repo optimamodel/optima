@@ -208,6 +208,15 @@ def removenumcircdata(project, **kwargs):
     project.version = "2.1.3"
     return None
 
+def removepopcharacteristicsdata(project, **kwargs):
+    """
+    Migration between Optima 2.1.3 and 2.1.4.
+    """
+    project.data['pops'].pop('sexworker',None)        
+    project.data['pops'].pop('injects',None)        
+    project.version = "2.1.4"
+    return None
+
 
 
 migrations = {
@@ -220,6 +229,7 @@ migrations = {
 '2.1':   makepropsopt,
 '2.1.1': addalleverincare,
 '2.1.2': removenumcircdata,
+'2.1.3': removepopcharacteristicsdata,
 }
 
 
