@@ -29,6 +29,7 @@ define(
         }
 
         function loadPortfolios(portfolios) {
+          console.log('loading portfolios', portfolios)
           var currentPortfolioId = null;
           if (!_.isUndefined($scope.state.portfolio)) {
             currentPortfolioId = $scope.state.portfolio.id;
@@ -38,7 +39,9 @@ define(
           if (!$scope.state.portfolio) {
             $scope.state.portfolio = $scope.portfolios[0];
           }
-          $scope.setActiveGaoptim();
+          if ($scope.portfolios.length > 0) {
+            $scope.setActiveGaoptim();
+          }
         }
 
         $scope.setActiveGaoptim = function() {
@@ -137,7 +140,10 @@ define(
         $scope.deletePortfolio = function() {
           $http
             .delete('/api/portfolio/' + $scope.state.portfolio.id)
-            .success(loadPortfolios);
+            .success(function(portfolios) {
+              toastr.success('Deleted portfolio');
+              loadPortfolios(portfolios);
+            });
         };
 
        function reloadPortfolio() {
@@ -177,8 +183,9 @@ define(
             .delete(
               '/api/portfolio/' + $scope.state.portfolio.id
                 + '/project/' + projectId)
-            .success(function() {
-
+            .success(function(portfolios) {
+              toastr.success('Deleted project in portfolio');
+              loadPortfolios(portfolios);
             });
         };
 
@@ -247,13 +254,14 @@ define(
         }
 
         $scope.savePortfolio = function() {
+          console.log('Saving portfolio', $scope.state.portfolio);
           $http
             .post(
               "/api/portfolio/" + $scope.state.portfolio.id,
               angular.copy($scope.state.portfolio))
             .success(function(response) {
-              console.log(response);
-              toastr.success('saved objectives')
+              toastr.success('Portfolio saved');
+              loadPortfolios(response);
             });
         };
 
@@ -300,9 +308,24 @@ define(
             }
           });
 
-          console.log($scope.state.portfolio.projects)
           $scope.savePortfolio();
-          toastr.success('stop adding')
+        };
+
+
+        $scope.checkBocCurvesNotCalculated = function() {
+          if (_.isUndefined($scope.state.portfolio)) {
+            return true;
+          }
+          var allCalculated = true;
+          _.each($scope.state.portfolio.projects, function(project) {
+            if ($scope.bocStatusMessage[project.id] !== "calculated") {
+              allCalculated = false;
+            }
+          });
+          if (!allCalculated) {
+            $scope.state.portfolio.outputstring = "";
+          }
+          return !allCalculated;
         };
 
         $scope.hasNoResults = function() {

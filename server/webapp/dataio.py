@@ -56,10 +56,11 @@ from .parse import get_default_program_summaries, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
-    set_program_summary_on_progset, parse_portfolio_summary
+    set_program_summary_on_progset, parse_portfolio_summary, \
+    set_progset_summary_on_progset
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
-
+from . import parse
 
 # USERS
 
@@ -446,27 +447,14 @@ def copy_project(project_id, new_project_name):
     return copy_project_id
 
 
-def ensure_all_constraints_of_optimizations(project):
-    is_change = False
-    for optim in project.optims.values():
-        progset_name = optim.progsetname
-        progset = project.progsets[progset_name]
-        print("optim.constraints", optim.constraints)
-        if optim.constraints is None:
-            optim.constraints = op.defaultconstraints(project=project, progset=progset)
-            is_change = True
-    if is_change:
-        update_project(project)
-
-
 def create_project_from_prj(prj_filename, project_name, user_id):
     project = loaddbobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)
     project = op.migrate(project)
     print('>> ...to version %s' % project.version)
     project.name = project_name
+    resolve_project(project)
     save_project_as_new(project, user_id)
-    ensure_all_constraints_of_optimizations(project)
     return project.uid
 
 
@@ -474,8 +462,8 @@ def create_project_from_spreadsheet(prj_filename, project_name, user_id):
     project = op.Project(spreadsheet=prj_filename)
     project = op.migrate(project)
     project.name = project_name
+    resolve_project(project)
     save_project_as_new(project, user_id)
-    ensure_all_constraints_of_optimizations(project)
     return project.uid
 
 
@@ -656,6 +644,7 @@ def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     portfolio = load_or_create_portfolio(portfolio_id)
     set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
     save_portfolio(portfolio, db_session)
+    return load_portfolio_summaries()
 
 
 def delete_portfolio_project(portfolio_id, project_id):
@@ -663,7 +652,7 @@ def delete_portfolio_project(portfolio_id, project_id):
     portfolio.projects.pop(str(project_id))
     print ">> Deleted project %s from portfolio %s" % (project_id, portfolio_id)
     save_portfolio(portfolio)
-
+    return load_portfolio_summaries()
 
 ## PARSET
 
@@ -684,11 +673,10 @@ def delete_parset(project_id, parset_id):
     def update_project_fn(project):
         parset = get_parset_from_project(project, parset_id)
         project.parsets.pop(parset.name)
+        resolve_project(project)
 
     update_project_with_fn(project_id, update_project_fn)
     delete_result_by_parset_id(project_id, parset_id)
-    db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id).delete()
 
 
 def rename_parset(project_id, parset_id, new_parset_name):
@@ -760,11 +748,11 @@ def load_parset_graphs(
         delete_result_by_parset_id(project_id, parset_id)
         update_project(project)
 
-    result = load_result(project.uid, parset.uid, calculation_type)
+    result = load_result(project_id, parset_id, calculation_type)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
         result = project.runsim(name=parset.name, start=start, end=end) # ACTUALLY RUN THE MODEL
-        result_record = update_or_create_result_record(project, result, parset.name, calculation_type)
+        result_record = update_or_create_result_record_by_id(result, project_id, parset_id, calculation_type)
         db.session.add(result_record)
         db.session.commit()
 
@@ -781,16 +769,10 @@ def load_parset_graphs(
 
 # RESULT
 
-def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
-    result_record = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
-    if result_record is None:
-        return None
-    return result_record
-
 
 def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
-    result_record = load_result_record(project_id, parset_id, calculation_type)
+    result_record = db.session.query(ResultsDb).filter_by(
+        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
     if result_record is None:
         return None
     return result_record.load()
@@ -803,10 +785,10 @@ def load_result_by_id(result_id):
     return result_record.load()
 
 
-def update_or_create_result_record(
-        project,
+def update_or_create_result_record_by_id(
         result,
-        parset_name='default',
+        project_id,
+        parset_id,
         calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
         db_session=None):
 
@@ -815,14 +797,13 @@ def update_or_create_result_record(
 
     result_record = db_session.query(ResultsDb).get(result.uid)
     if result_record is not None:
-        print ">> Updating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+        print ">> Updating record for result '%s'" % (result.name)
     else:
-        parset = project.parsets[parset_name]
         result_record = ResultsDb(
-            parset_id=parset.uid,
-            project_id=project.uid,
+            parset_id=parset_id,
+            project_id=project_id,
             calculation_type=calculation_type)
-        print ">> Creating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
+        print ">> Creating record for result '%s'" % (result.name)
 
     result_record.id = result.uid
     result_record.save_obj(result)
@@ -832,11 +813,16 @@ def update_or_create_result_record(
 
 
 def delete_result_by_parset_id(
-        project_id, parset_id, db_session=None):
+        project_id, parset_id, calculation_type=None, db_session=None):
     if db_session is None:
         db_session = db.session
-    records = db_session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id)
+    if calculation_type is None:
+        records = db_session.query(ResultsDb).filter_by(
+            project_id=project_id, parset_id=parset_id)
+    else:
+        records = db_session.query(ResultsDb).filter_by(
+            project_id=project_id, parset_id=parset_id,
+            calculation_type=calculation_type)
     for record in records:
         record.cleanup()
     records.delete()
@@ -855,21 +841,6 @@ def delete_result_by_name(
             print ">> Deleting outdated result '%s'" % result_name
             record.cleanup()
             db_session.delete(record)
-    db_session.commit()
-
-
-def save_result(
-        project_id, result, parset_name='default',
-        calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
-        db_session=None):
-    if db_session is None:
-        db_session = db.session
-    project = load_project(project_id)
-    result_record = update_or_create_result_record(
-        project, result, parset_name=parset_name,
-        calculation_type=calculation_type, db_session=db_session)
-    db_session.add(result_record)
-    db_session.flush()
     db_session.commit()
 
 
@@ -916,38 +887,47 @@ def load_result_mpld3_graphs(result_id, which):
 
 
 def make_scenarios_graphs(project_id):
-    db.session\
-        .query(ResultsDb)\
-        .filter_by(project_id=project_id, calculation_type="scenarios")\
-        .delete()
-    db.session.commit()
-    project = load_project(project_id)
-    project.runscenarios()
-    result = project.results[-1]
-    record = update_or_create_result_record(
-        project, result, 'default', 'scenarios')
-    db.session.add(record)
-    db.session.commit()
+    result = load_result(project_id, None, "scenarios")
+    if result is None:
+        project = load_project(project_id)
+        if len(project.scens) == 0:
+            print(">> No scenarios in project")
+            return {}
+        print(">> Run scenarios for project '%s'" % project_id)
+        project.runscenarios()
+        result = project.results[-1]
+        record = update_or_create_result_record_by_id(
+            result, project.uid, None, 'scenarios')
+        db.session.add(record)
+        db.session.commit()
     return make_mpld3_graph_dict(result)
 
 
 def save_scenario_summaries(project_id, scenario_summaries):
+    delete_result_by_parset_id(project_id, None, "scenarios")
     project_record = load_project_record(project_id)
     project = project_record.load()
-
     set_scenario_summaries_on_project(project, scenario_summaries)
-
     project_record.save_obj(project)
-
     return {'scenarios': get_scenario_summaries(project)}
 
 
-def load_scenario_summaries(project_id):
+def load_and_resolve_project(project_id):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    if resolve_project(project):
+        print(">> Resolved project updated")
+        project_record.save_obj(project)
+    return project
+
+
+def load_scenario_summaries(project_id):
+    project = load_and_resolve_project(project_id)
     return {
         'scenarios': get_scenario_summaries(project),
         'ykeysByParsetId': get_parameters_for_scenarios(project),
+        'defaultBudgetsByProgsetId': parse.get_budgets_for_scenarios(project),
+        'defaultCoveragesByParsetIdyProgsetId': parse.get_coverages_for_scenarios(project),
         'years': get_project_years(project)
     }
 
@@ -955,9 +935,7 @@ def load_scenario_summaries(project_id):
 ## OPTIMIZATION
 
 def load_optimization_summaries(project_id):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-    ensure_all_constraints_of_optimizations(project)
+    project = load_and_resolve_project(project_id)
     return {
         'optimizations': get_optimization_summaries(project),
         'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project)
@@ -1085,8 +1063,9 @@ def update_project_from_data_spreadsheet(project_id, full_filename):
 
     # importing spreadsheet will also runsim to project.results[-1]
     result = project.results[-1]
-    result_record = update_or_create_result_record(
-        project, result, parset_name, "calibration")
+    parset = project.parsets[parset_name]
+    result_record = update_or_create_result_record_by_id(
+        result, project_id, parset.uid, "calibration")
 
     # save the binary data of spreadsheet for later download
     with open(full_filename, 'rb') as f:
@@ -1147,6 +1126,113 @@ def delete_econ(project_id):
     db.session.commit()
 
 
+def get_odict_item(odict, key):
+    if type(key) == int:
+        if 0 <= key < len(odict):
+            return odict[key]
+    elif key in odict:
+        return odict[key]
+    return None
+
+
+def resolve_project(project):
+    """
+    This function does some checks on the project to ensure that all the cross-reference
+    fields are properly specified and that defaults are sensibly populated.
+
+    Returns: boolean to whether any changes needed to be made to the project
+    """
+    print(">> Resolve project")
+    is_change = False
+
+    del_scenario_keys = []
+    for scenario_key, scenario in project.scens.items():
+        print(">> Checking scenario", scenario_key)
+        if type(scenario.parsetname) is int:
+            i = scenario.parsetname
+            try:
+                scenario.parsetname = project.parsets[i].name
+                is_change = True
+            except:
+                del_scenario_keys.append(scenario_key)
+        elif scenario.parsetname not in project.parsets:
+            del_scenario_keys.append(scenario_key)
+        if hasattr(scenario, "progsetname"):
+            if type(scenario.progsetname) is int:
+                i = scenario.progsetname
+                try:
+                    scenario.progsetname = project.progsets[i].name
+                    is_change = True
+                except:
+                    del_scenario_keys.append(scenario_key)
+            if scenario.progsetname not in project.progsets:
+                del_scenario_keys.append(scenario_key)
+    print(">> Delete deprecated scenarios", del_scenario_keys)
+    for scenario_key in del_scenario_keys:
+        del project.scens[scenario_key]
+
+    is_change = is_change or len(del_scenario_keys) > 0
+
+    # makes sure there is a parset called default as defaultprograms requires this
+    if "default" not in project.parsets and len(project.parsets) > 0:
+        parsetname = project.parsets[0].name
+        project.copyparset(orig=parsetname, new="default")
+        is_change = True
+
+    # check optimizations are good
+    del_optim_keys = []
+    for optim_key, optim in project.scens.items():
+        print(">> Checking optim", optim_key)
+        if type(optim.parsetname) is int:
+            i = optim.parsetname
+            try:
+                optim.parsetname = project.parsets[i].name
+                is_change = True
+            except:
+                del_optim_keys.append(optim_key)
+        elif optim.parsetname not in project.parsets:
+            del_optim_keys.append(optim_key)
+        if hasattr(optim, "progsetname"):
+            if type(optim.progsetname) is int:
+                i = optim.progsetname
+                try:
+                    optim.progsetname = project.progsets[i].name
+                    is_change = True
+                except:
+                    del_optim_keys.append(optim_key)
+            if optim.progsetname not in project.progsets:
+                del_optim_keys.append(optim_key)
+    print(">> Delete deprecated optims", del_optim_keys)
+    for optim_key in del_optim_keys:
+        del project.optimis[optim_key]
+
+    is_change = is_change or len(del_optim_keys) > 0
+
+    # ensure constraints set to None are given a default
+    for optim in project.optims.values():
+        progset_name = optim.progsetname
+        progset = project.progsets[progset_name]
+        if optim.constraints is None:
+            print(">> Fill out default constraints for constraints = None")
+            optim.constraints = op.defaultconstraints(project=project, progset=progset)
+            is_change = True
+
+    results = db.session.query(ResultsDb).filter_by(project_id=project.uid)
+    parset_ids = [parset.uid for parset in project.parsets.values()]
+    is_delete_result = False
+    for result in results:
+        if result.parset_id is not None and result.parset_id not in parset_ids:
+            print(">> Delete deprecated result", result.parset_id)
+            db.session.delete(result)
+            is_delete_result = True
+    db.session.commit()
+
+    is_change = is_change or is_delete_result
+
+    return is_change
+
+
+
 ## PROGRAMS
 
 
@@ -1204,6 +1290,17 @@ def upload_progset(project_id, progset_id, progset_summary):
     return get_progset_summary(project, progset_summary["name"])
 
 
+def copy_progset(project_id, progset_id, new_progset_name):
+
+    def update_project_fn(project):
+        original_progset = get_progset_from_project(project, progset_id)
+        project.copyprogset(orig=original_progset.name, new=new_progset_name)
+        project.progsets[new_progset_name].uid = op.uuid()
+
+    update_project_with_fn(project_id, update_project_fn)
+    return load_progset_summaries(project_id)
+
+
 def delete_progset(project_id, progset_id):
     project_record = load_project_record(project_id)
     project = project_record.load()
@@ -1253,11 +1350,16 @@ def save_program(project_id, progset_id, program_summary):
     project_record.save_obj(project)
 
 
-def load_costcov_graph(project_id, progset_id, program_id, parset_id, t, plotoptions):
-    project = load_project(project_id)
+def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
+    project_record = load_project_record(project_id)
+    project = project_record.load()
     progset = get_progset_from_project(project, progset_id)
 
     program = get_program_from_progset(progset, program_id)
+    plotoptions = None
+    if hasattr(program, "attr"):
+        plotoptions = program.attr
+
     parset = get_parset_from_project(project, parset_id)
     plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
 
