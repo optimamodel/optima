@@ -734,7 +734,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
-                        if isnan(propsupp[t+1]):
+                        if isnan(propsupp[t+1]) and people[usvl,:,t+1].sum()>eps:
                             newlysuppressed = raw_newtreat[:,t].sum()*dt*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
@@ -766,7 +766,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         people[tostate,:,t+1] += new_movers # ... and into the higher state
                         raw_new[:,t] += new_movers.sum(axis=0)/dt # Save new movers
     
-                    else: # We need to move people DOWN the cascade
+                    elif diff<0.: # We need to move people DOWN the cascade
                         for state in higherstates: # Start with the first higher state
                             if abs(diff)>eps: 
                                 tomove = max(diff, -people[state,:,t+1].sum()) # Figure out how many spots are available
