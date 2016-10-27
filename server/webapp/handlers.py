@@ -437,6 +437,23 @@ class RegionTemplate(Resource):
 api.add_resource(RegionTemplate, '/api/region')
 
 
+class SpawnRegion(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary="Spawn projects with region spreadsheet")
+    def post(self):
+        """
+        post /api/spawnregion
+        file-upload
+        """
+        project_id = request.form.get('projectId')
+        spreadsheet_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        dataio.make_region_projects(project_id, spreadsheet_fname)
+        return 'regions made'
+
+api.add_resource(SpawnRegion, '/api/spawnregion')
+
+
 class TaskChecker(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
@@ -685,7 +702,7 @@ class Progset(Resource):
         POST /api/project/<uuid:project_id>/progset/<uuid:progset_id>
         data-json: name:
         """
-        new_name = get_post_data_json()['name']
+        # new_name = get_post_data_json()['name']
         return copy_progset(project_id, progset_id, new_name)
 
 

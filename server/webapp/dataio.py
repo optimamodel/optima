@@ -665,6 +665,22 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     optima.geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
     return os.path.split(xlsx_fname)
 
+
+def make_region_projects(project_id, spreadsheet_fname):
+    print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
+    dirname = upload_dir_user(TEMPLATEDIR)
+    prj_basename = load_project_record(project_id).as_file(dirname)
+    prj_fname = os.path.join(dirname, prj_basename)
+    spawn_dir = os.path.join(dirname, 'spawn')
+    optima.geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
+    district_prj_basenames = os.listdir(spawn_dir)
+    for prj_basename in district_prj_basenames:
+        print("> Slurping project %s" % prj_basename)
+        prj_name = prj_basename.replace('.prj', '')
+        prj_fname = os.path.join(spawn_dir, prj_basename)
+        create_project_from_prj(prj_fname, prj_name, current_user.id)
+
+
 ## PARSET
 
 

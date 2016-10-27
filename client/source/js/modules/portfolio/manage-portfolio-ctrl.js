@@ -7,7 +7,7 @@ define(
       'PortfolioController',
       function (
         $scope, $http, activeProject, modalService, fileUpload,
-        UserManager, $state, toastr, globalPoller, $modal) {
+        UserManager, $state, toastr, globalPoller, $modal, $upload) {
 
         function initialize() {
 
@@ -25,7 +25,7 @@ define(
             portfolio: undefined,
             nRegion: 2,
             gaoptim: undefined,
-            tempateProjectId: null
+            tempateProject: null
           };
 
           reloadPortfolio();
@@ -364,7 +364,10 @@ define(
               })
             .success(function(data) {
               var blob = new Blob(
-                  [data], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+                [data],
+                {
+                  type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                });
               saveAs(blob, 'template.xlsx');
               toastr.success('got spreadsheet back');
             });
@@ -373,7 +376,22 @@ define(
         $scope.spawnRegionsFromSpreadsheet = function() {
           // upload file then create projects
           // then add to portfolio
-          toastr.success('uploaded spreadsheet and spawned regions')
+          angular
+            .element('<input type="file">')
+            .change(function (event) {
+              $upload
+                .upload({
+                  url: '/api/spawnregion',
+                  fields: {projectId: $scope.state.templateProject.id},
+                  file: event.target.files[0]
+                })
+                .success(function (response) {
+                  toastr.success('Spreadsheet uploaded for project');
+                  $state.reload();
+                });
+
+            })
+            .click();
         };
 
         $scope.checkBocCurvesNotCalculated = function() {
