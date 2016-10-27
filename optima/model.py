@@ -745,12 +745,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     actual          = people[num,:,t+1].sum()
                     available       = people[denom,:,t+1].sum()
                     ppltomoveup     = people[lowerstate,:,t+1]
-<<<<<<< HEAD
                     new_movers      = zeros((ncd4,npops)) 
 
-=======
-                    
->>>>>>> develop
                     # Figure out how many people we want
                     if isinf(prop[t+1]): # If the prop value is infinity, we use last timestep's value
                         calcprop = people[num,:,t].sum()/people[denom,:,t].sum()
@@ -779,11 +775,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
             
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> develop
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
