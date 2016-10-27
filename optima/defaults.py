@@ -15,9 +15,9 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
     
     # Shorten variable names
     pops = project.data['pops']['short']
-    malelist = [pops[i] for i in range(len(pops)) if project.data['pops']['male'][i]]
-    pwidlist = [pops[i] for i in range(len(pops)) if project.data['pops']['injects'][i]]
-    fswlist = [pops[i] for i in range(len(pops)) if project.data['pops']['sexworker'][i] and project.data['pops']['female'][i]]
+    malelist = [pop for popno,pop in enumerate(pops) if project.data['pops']['male'][popno]]
+    pwidlist = [pop for popno,pop in enumerate(pops) if project.pars()['injects'][popno]]
+    fswlist = [pop for popno,pop in enumerate(pops) if project.pars()['sexworker'][popno]]
 
     regpships = project.parsets['default'].pars[0]['condreg'].y.keys()
     caspships = project.parsets['default'].pars[0]['condcas'].y.keys()

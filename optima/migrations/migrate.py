@@ -200,6 +200,25 @@ def addalleverincare(project, **kwargs):
     return None
 
 
+def removenumcircdata(project, **kwargs):
+    """
+    Migration between Optima 2.1.2 and 2.1.3.
+    """
+    project.data.pop('numcirc',None)        
+    project.version = "2.1.3"
+    return None
+
+def removepopcharacteristicsdata(project, **kwargs):
+    """
+    Migration between Optima 2.1.3 and 2.1.4.
+    """
+    project.data['pops'].pop('sexworker',None)        
+    project.data['pops'].pop('injects',None)        
+    project.version = "2.1.4"
+    return None
+
+
+
 migrations = {
 '2.0':   versiontostr,
 '2.0.0': addscenuid,
@@ -209,6 +228,8 @@ migrations = {
 '2.0.4': redotransitions,
 '2.1':   makepropsopt,
 '2.1.1': addalleverincare,
+'2.1.2': removenumcircdata,
+'2.1.3': removepopcharacteristicsdata,
 }
 
 

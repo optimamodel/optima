@@ -52,11 +52,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
                   if ($scope.state.optimizations.length > 0) {
                     $scope.setActiveOptimization($scope.state.optimizations[0]);
+                    selectDefaultProgsetAndParset($scope.state.optimization);
                   } else {
-                    addNewOptimization('Optimization 1');
+                    $scope.state.optimization = undefined;
                   }
-
-                  selectDefaultProgsetAndParset($scope.state.optimization);
 
                 });
             });
@@ -92,10 +91,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.setActiveOptimization = function(optimization) {
+      $scope.state.optimization = optimization;
+      $scope.selectOptimization();
+    };
+
+    $scope.selectOptimization = function() {
       globalPoller.stopPolls();
 
       $scope.state.isRunnable = false;
-      $scope.state.optimization = optimization;
+      var optimization = $scope.state.optimization;
       $scope.state.constraintKeys = _.keys(optimization.constraints.name);
       $scope.objectiveLabels = objectiveLabels[optimization.which];
 
@@ -106,11 +110,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.statusMessage = '';
 
       // not a new optimization
-      if ($scope.state.optimization.id) {
+      if (optimization.id) {
         $http
           .get(
             '/api/project/' + $scope.state.project.id
-              + '/optimizations/' + $scope.state.optimization.id
+              + '/optimizations/' + optimization.id
               + '/results')
           .success(function(response) {
             if (response.status === 'started') {
@@ -132,11 +136,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         name = $scope.state.optimization.name;
       }
       $scope.state.optimizations = response.optimizations;
-      console.log('returned saved optimizations', $scope.state.optimizations);
-      if (name !== null) {
+      if (name == null) {
+        $scope.state.optimization = null;
+      } else {
         $scope.state.optimization = _.findWhere(
-            $scope.state.optimizations, { 'name': name });
+          $scope.state.optimizations, {'name': name});
       }
+      console.log('loaded optimizations', $scope.state.optimizations);
+      console.log('selected optimization', name, $scope.state.optimization);
     }
 
     function saveOptimizations() {
@@ -183,25 +190,27 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return modalInstance;
     };
 
+    function addNewOptimization(name) {
+      console.log("Create new optimization");
+      var newOptimization = {
+        name: name,
+        which: 'outcomes',
+        constraints: {},
+        objectives: {}
+      };
+      selectDefaultProgsetAndParset(newOptimization);
+      $scope.state.optimizations.push(newOptimization);
+      var progset_id = newOptimization.progset_id;
+      var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
+      newOptimization.constraints = defaultOptimization.constraints;
+      newOptimization.objectives = defaultOptimization.objectives.outcomes;
+      $scope.setActiveOptimization(newOptimization);
+      saveOptimizations();
+    }
+
     $scope.addOptimization = function() {
       openOptimizationModal(
-        function (name) {
-          console.log("Create new optimization");
-          var newOptimization = {
-            name: name,
-            which: 'outcomes',
-            constraints: {},
-            objectives: {}
-          };
-          selectDefaultProgsetAndParset(newOptimization);
-          $scope.state.optimizations.push(newOptimization);
-          var progset_id = newOptimization.progset_id;
-          var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
-          newOptimization.constraints = defaultOptimization.constraints;
-          newOptimization.objectives = defaultOptimization.objectives.outcomes;
-          $scope.setActiveOptimization(newOptimization);
-          saveOptimizations();
-        },
+        addNewOptimization,
         'Add optimization',
         $scope.state.optimizations,
         null,
@@ -225,13 +234,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
+    function deepCopyJson(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
+    }
+
     $scope.copyOptimization = function() {
       if (!$scope.state.optimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
         openOptimizationModal(
           function (name) {
-            var copyOptimization = angular.copy($scope.state.optimization);
+            var copyOptimization = deepCopyJson($scope.state.optimization);
             copyOptimization.name = name;
             delete copyOptimization.id;
             $scope.setActiveOptimization(copyOptimization);
@@ -251,11 +264,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         modalService.confirm(
           function () {
-            function isActive(optimization) {
+            function isSelected(optimization) {
               return optimization.name !== $scope.state.optimization.name;
             }
-            $scope.state.optimizations = _.filter($scope.state.optimizations, isActive);
-            if($scope.state.optimizations && $scope.state.optimizations.length > 0) {
+            $scope.state.optimizations = _.filter($scope.state.optimizations, isSelected);
+            if ($scope.state.optimizations && $scope.state.optimizations.length > 0) {
               $scope.state.optimization = $scope.state.optimizations[0];
             } else {
               $scope.state.optimization = undefined;
@@ -362,13 +375,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       );
     }
-
-    $scope.killJob = function() {
-      var projectId = $scope.state.project.id;
-      var optimizationId = $scope.state.optimization.id;
-      var workType = "optim-" + optimizationId;
-      globalPoller.killJob(projectId, workType);
-    };
 
     function getSelectors() {
       if ($scope.graphs) {

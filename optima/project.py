@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
@@ -117,6 +117,13 @@ class Project(object):
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True, **kwargs)
         if self.name is 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
+        return None
+        
+    def makespreadsheet(self, filename=None, pops=None):
+        ''' Create a spreadsheet with the data from the project'''
+        if filename is None: filename = self.name+'.xlsx'
+        if filename[-5:]!='.xlsx': filename += '.xlsx'
+        makespreadsheet(filename=filename, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
         return None
 
 
