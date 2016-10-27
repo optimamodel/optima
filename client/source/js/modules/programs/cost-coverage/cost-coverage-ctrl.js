@@ -28,6 +28,9 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.progsets = [];
         vm.parsets = [];
 
+        vm.state.yearSelector = _.range(
+          vm.project.dataStart, vm.project.dataEnd+1);
+
         // Stop here if spreadsheet has not been uploaded
         vm.isMissingData = !vm.project.hasParset;
         if (vm.isMissingData) {
@@ -37,6 +40,13 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.hasNoProgram = vm.project.nProgram === 0;
         if (vm.hasNoProgram) {
           return;
+        }
+
+        if (_.isUndefined(window.loadCostCovGraphResize)) {
+          $(window).bind('resize', function() {
+            $scope.onResize();
+          });
+          window.loadCostCovGraphResize = true;
         }
 
         // Fetch progsets
@@ -55,11 +65,26 @@ define(['./../module', 'underscore'], function(module, _) {
                 vm.parsets = response.parsets;
                 console.log('vm.parsets', vm.parsets);
                 vm.state.parset = vm.parsets[0];
-                console.log('vm.state.parset', vm.state.parset);
                 vm.changeProgsetAndParset();
               });
           });
       }
+
+      $scope.onResize = function() {
+        function setAllFiguresToWidth($element) {
+          $element.find('svg.mpld3-figure').each(function () {
+            var $svgFigure = $(this);
+            var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
+            var parent = $svgFigure.parent().parent().parent().parent();
+            var width = parent.width();
+            var height = width / ratio;
+            $svgFigure.attr('width', width);
+            $svgFigure.attr('height', height);
+          });
+          $scope.$apply();
+        }
+        setAllFiguresToWidth($(".costcov-chart-container"));
+      };
 
       function consoleLogJson(name, val) {
         console.log(name + ' = ');
@@ -69,7 +94,6 @@ define(['./../module', 'underscore'], function(module, _) {
       function changeParset() {
         console.log('vm.state.parset', vm.state.parset);
         if (vm.state.progset && vm.state.parset) {
-          // todo: parse the parsets directly here
           $http
             .get(
               '/api/project/' + vm.project.id
@@ -85,7 +109,6 @@ define(['./../module', 'underscore'], function(module, _) {
       }
 
       vm.changeProgram = function() {
-        console.log('ask server to change program');
         $http
           .get(
             '/api/project/' + vm.project.id
@@ -94,13 +117,8 @@ define(['./../module', 'underscore'], function(module, _) {
               + '/parset/' + vm.state.parset.id
               + '/popsizes')
           .success(function(response) {
+            console.log('Est populations for program', response);
             vm.state.popsizes = response;
-            vm.state.yearSelector = [];
-            var years = _.keys(vm.state.popsizes);
-            years.forEach(function(year) {
-              vm.state.yearSelector.push(
-                {'value': year, 'label': year.toString()});
-            });
             buildCostFunctionTables();
             vm.updateCostCovGraph();
           });
@@ -121,6 +139,11 @@ define(['./../module', 'underscore'], function(module, _) {
           _.filter(vm.state.progset.programs, isActive),
           'name');
         vm.state.program = vm.programs[0];
+        if (!("attr" in vm.state.program)) {
+          console.log('new attr for program');
+          vm.state.program.attr = {caption: "", xupperlim: null};
+        }
+        console.log('selected program', vm.state.program);
         vm.state.popsizes = {};
 
         // Fetch outcomes for this progset
@@ -149,43 +172,19 @@ define(['./../module', 'underscore'], function(module, _) {
           + '/programs/' + vm.state.program.id
           + '/costcoverage/graph?t=' + years.join(',')
           + '&parset_id=' + vm.state.parset.id;
-        if (vm.state.remarks) {
-          vm.state.displayCaption = angular.copy(vm.state.remarks);
-          url += '&caption=' + encodeURIComponent(vm.state.remarks);
-        }
-        if (vm.state.maxFunc) {
-          url += '&xupperlim=' + vm.state.maxFunc;
-        }
-        if (vm.state.dispCost) {
-          url += '&perperson=1';
-        }
         $http
           .get(
             url)
           .success(
             function(data) {
-              console.log('draw graph', vm.state.program.short, data);
               vm.state.chartData = data;
             })
           .error(
             function() {
-              console.log('failed graph', vm.state.program.short);
+              console.log('Failed to load graph for', vm.state.program.short);
             }
           );
       };
-
-      function saveProgram() {
-        $http
-          .post(
-            '/api/project/' + vm.project.id
-              + '/progsets/' + vm.state.program.progset_id
-              + '/program',
-            {'program': vm.state.program})
-          .success(function() {
-            toastr.success('Cost data were saved');
-            vm.updateCostCovGraph();
-          });
-      }
 
       function toNullIfEmpty(val) {
         if (_.isUndefined(val)) {
@@ -197,78 +196,85 @@ define(['./../module', 'underscore'], function(module, _) {
         return val;
       }
 
-      function saveProgramCostCovTable(table) {
-        var costcov = [];
-        table.rows.forEach(function(row, iRow, rows) {
-          if (iRow != table.iEditRow) {
-            costcov.push({
-              year: parseInt(row[0]),
-              cost: toNullIfEmpty(row[1]),
-              coverage: toNullIfEmpty(row[2])
-            });
-          }
-        });
-        vm.state.program.costcov = costcov;
-        console.log('save costcov', costcov);
-        saveProgram();
-      }
-
-      function saveProgramCcoparsTable(table) {
+      function revertCcoparsTable() {
+        var table = vm.state.ccoparsTable;
         var ccopars = {t: [], saturation: [], unitcost: []};
         table.rows.forEach(function(row, iRow) {
           if (iRow != table.iEditRow) {
-            ccopars.t.push(parseInt(row[0]));
+            ccopars.t.push(row[0]);
             ccopars.saturation.push([row[2] / 100., row[3] / 100.]);
             ccopars.unitcost.push([row[4], row[5]]);
           }
         });
         vm.state.program.ccopars = ccopars;
-        saveProgram();
       }
 
-      function showEstPopFn(row) {
-        var year = row[0];
-        if (_.isUndefined(year) || _.isUndefined(vm.state.popsizes)) {
-          return "";
-        }
-        var popsize = vm.state.popsizes[year.toString()];
-        if (!_.isNumber(popsize))
-          return "";
-        return parseInt(popsize);
-      }
+      vm.saveProgram = function() {
+        revertCcoparsTable();
+        console.log('saving program', vm.state.program);
+        $http
+          .post(
+            '/api/project/' + vm.project.id
+              + '/progsets/' + vm.state.program.progset_id
+              + '/program',
+            {'program': vm.state.program})
+          .success(function() {
+            toastr.success('Cost data were saved');
+            vm.updateCostCovGraph();
+          });
+      };
 
-      function getYearSelectors(row) {
-        if (_.isUndefined(vm.state.popsizes)) {
-          console.log("no popsizes for selectors");
-          return [];
-        }
-        var years = _.keys(vm.state.popsizes);
-        var result = [];
-        years.forEach(function(year) {
-          var yearStr = year.toString();
-          result.push({'value': yearStr, 'label': yearStr});
+      vm.addCcoparYear = function() {
+        var row = [
+          2016,
+          '',
+          null,
+          null,
+          null,
+          null
+        ];
+        vm.state.ccoparsTable.rows.push(row);
+        vm.setEstPopulationForCcopar();
+      };
+
+      vm.setEstPopulationForCcopar = function() {
+        _.each(vm.state.ccoparsTable.rows, function(row) {
+          var year = row[0];
+          if (_.isUndefined(year) || _.isUndefined(vm.state.popsizes)) {
+            row[1] = "";
+          } else {
+            var popsize = vm.state.popsizes[year.toString()];
+            if (!_.isNumber(popsize)) {
+              row[1] = "";
+            } else {
+              row[1] = parseInt(popsize);
+            }
+          }
         });
-        return result;
-      }
+      };
+
+      vm.deleteCccoparYear = function(iRow) {
+        vm.state.ccoparsTable.rows.splice(iRow, 1);
+      };
+
+      vm.deleteCostCovDataYear = function(iYear) {
+        vm.state.program.costcov.splice(iYear, 1);
+      };
+
+      vm.addCostCovDataYear = function() {
+        vm.state.program.costcov.push({
+          year: 2016, cost: null, coverage: null});
+      };
+
 
       function buildCostFunctionTables() {
-        vm.state.ccoparsTable = {
-          titles: [
-            "Year", "Estimated Population", "Saturation % (low)", "Saturation % (high)",
-            "Unit cost (low)", "Unit cost (high)"],
-          rows: [],
-          types: ["selector", "display", "number", "number", "number", "number"],
-          widths: ["5em", "5em", "5em", "5em", "5em", "5em"],
-          displayRowFns: [null, showEstPopFn, null, null, null, null],
-          options: [vm.state.yearSelector],
-          validateFn: saveProgramCcoparsTable
-        };
+        vm.state.ccoparsTable = {rows: []};
         var ccopars = angular.copy(vm.state.program.ccopars);
         var table = vm.state.ccoparsTable;
         if (ccopars && ccopars.t && ccopars.t.length > 0) {
           for (var iYear = 0; iYear < ccopars.t.length; iYear++) {
             table.rows.push([
-              ccopars.t[iYear].toString(),
+              ccopars.t[iYear],
               "",
               ccopars.saturation[iYear][0] * 100.,
               ccopars.saturation[iYear][1] * 100.,
@@ -277,23 +283,7 @@ define(['./../module', 'underscore'], function(module, _) {
             ])
           }
         }
-        console.log('ccoparsTable', vm.state.ccoparsTable);
-
-        vm.state.costcovTable = {
-          titles: ["Year", "Cost", "Coverage"],
-          rows: [],
-          types: ["selector", "number", "number"],
-          widths: ["5em", "5em", "5em"],
-          displayRowFns: [],
-          selectors: [getYearSelectors],
-          options: [vm.state.yearSelector],
-          validateFn: saveProgramCostCovTable
-        };
-        var table = vm.state.costcovTable;
-        vm.state.program.costcov.forEach(function(val, i, list) {
-          table.rows.push([val.year.toString(), val.cost, val.coverage]);
-        });
-        console.log("costcovTable", vm.state.costcovTable);
+        vm.setEstPopulationForCcopar();
       }
 
       function getFilteredOutcomes(outcomes) {

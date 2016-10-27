@@ -12,6 +12,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parsets = parsetResponse.data.parsets;
       $scope.progsets = progsetsResponse.data.progsets;
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+      $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
+      $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
       $scope.years = scenariosResponse.data.years;
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.isOptimizable = $scope.project.isOptimizable;
@@ -24,28 +26,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       function returnName(s) { return s.name }
       $scope.scenarios = _.sortBy($scope.scenarios, returnName);
       console.log("loading scenarios", $scope.scenarios);
+      delete $scope.graphs;
+      if ($scope.scenarios) {
+        $scope.runScenarios()
+      };
     }
 
     $scope.saveScenarios = function(scenarios, successMsg) {
+      delete $scope.graphs;
       console.log("saving scenarios", scenarios);
-      $http.put(
-        '/api/project/' + $scope.project.id + '/scenarios',
-        {'scenarios': scenarios })
-      .success(function (response) {
-        loadScenarios(response.scenarios);
-        if (successMsg) {
-          toastr.success(successMsg)
-        }
-      });
+      $http
+        .put(
+          '/api/project/' + $scope.project.id + '/scenarios',
+          {'scenarios': scenarios })
+        .success(function (response) {
+          loadScenarios(response.scenarios);
+          if (successMsg) {
+            toastr.success(successMsg)
+          }
+        });
     };
 
     $scope.runScenarios = function () {
       $scope.graphs = {};
-      $http.get(
-        '/api/project/' + $scope.project.id + '/scenarios/results')
-      .success(function (data) {
-        $scope.graphs = data.graphs;
-      });
+      $http
+        .get('/api/project/' + $scope.project.id + '/scenarios/results')
+        .success(function (data) {
+          $scope.graphs = data.graphs;
+        });
     };
 
     $scope.isRunnable = function () {
@@ -82,21 +90,28 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           parsets: function () { return $scope.parsets; },
           progsets: function () { return $scope.progsets; },
           ykeys: function () { return $scope.parametersByParsetId; },
+          budgetsByProgsetId: function() { return $scope.budgetsByProgsetId; },
+          coveragesByParsetIdyProgsetId: function() { return $scope.defaultCoveragesByParsetIdyProgsetId; },
           years: function() { return $scope.years }
         }
       });
     }
 
+    function deepCopyJson(jsonObject) {
+      return JSON.parse(JSON.stringify(jsonObject));
+    }
+
     /**
-     * Function opens a model in different modes
+     * Opens a scenario model in different modes
      * @param {string} action: 'add', 'edit' 'delete'
      */
     $scope.openModal = function (scenario, action, $event) {
+
       if ($event) {
         $event.preventDefault();
       }
 
-      var newScenarios = angular.copy($scope.scenarios);
+      var newScenarios = deepCopyJson($scope.scenarios);
 
       if (action === 'add') {
 
@@ -124,7 +139,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       } else if (action === 'copy') {
 
-        var newScenario = angular.copy(scenario);
+        var newScenario = deepCopyJson(scenario);
         newScenario.name = scenario.name + ' Copy';
         newScenario.id = null;
         newScenarios.push(newScenario);
@@ -132,9 +147,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       } else if (action === 'delete') {
 
-        var scenario = _.findWhere(newScenarios, { id: scenario.id });
+        var deleteScenario = _.findWhere(newScenarios, { id: scenario.id });
         $scope.saveScenarios(
-            _.without(newScenarios, scenario), "Deleted scenario");
+            _.without(newScenarios, deleteScenario), "Deleted scenario");
 
       }
     };
