@@ -5,20 +5,30 @@ which is an outdated version of the same thing!
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj # analysis:ignore
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj, migrate # analysis:ignore
 
 ## Options
+standardrun = 1
+migrations = 0 # Whether or not to try migrating an old project
 autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 0
-runscenarios = 1 # Run scenarios
+runscenarios = 0 # Run scenarios
 optimize = 0
 dosave = 1
 filename = 'best.prj'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best',dorun=False)
-P.runsim(debug=True)
+## Make or load&migrate a project
+if standardrun:
+    P = defaults.defaultproject('best',dorun=False)
+    P.runsim(debug=True)
+
+if migrations:
+    oldprojectfile = 'oldbest.prj'
+    oldP = loadobj(filename=oldprojectfile)
+    P = migrate(oldP)
+    P.runsim()
 
 ## Calibration
 if autocalib: 
