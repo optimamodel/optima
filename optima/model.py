@@ -97,6 +97,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     dxstates        = [dx,care,usvl,svl,lost]
     carestates      = [care,usvl,svl]
     txstates        = [usvl,svl]
+    svlstates       = [svl] # Silly but makes it clearer below
     
     if debug and len(sus)!=2:
         errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
@@ -140,11 +141,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
     
-    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (inclusing state in question), numerator, denominator, data structure for storing new moveres)
-    propdx_list     = ('propdx',propdx, undx, dx, dxstates, alldx, allplhiv, raw_diag)
-    propcare_list   = ('propcare',propcare, dx, care, carestates, allcare, alldx, raw_newcare)
-    proptx_list     = ('proptx',proptx, care, usvl,  txstates, alltx, allcare, raw_newtreat)
-    propsupp_list   = ('propsupp',propsupp, usvl, svl, [svl], svl, alltx, raw_newsupp)
+    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
+    propdx_list     = ('propdx',   propdx,   undx, dx,   dxstates,   alldx,   allplhiv, raw_diag)
+    propcare_list   = ('propcare', propcare, dx,   care, carestates, allcare, alldx,    raw_newcare)
+    proptx_list     = ('proptx',   proptx,   care, usvl, txstates,   alltx,   allcare,  raw_newtreat)
+    propsupp_list   = ('propsupp', propsupp, usvl, svl,  svlstates,  svl,     alltx,    raw_newsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
