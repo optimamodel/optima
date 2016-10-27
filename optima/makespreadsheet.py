@@ -15,7 +15,7 @@ from optima import loadpartable
 default_datastart = 2000
 default_dataend = 2020
 
-def makespreadsheet(filename, pops=None, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
+def makespreadsheet(filename=None, pops=None, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
     # If population information isn't given...
