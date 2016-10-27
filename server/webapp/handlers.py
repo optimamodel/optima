@@ -34,7 +34,8 @@ from .dataio import load_project_summaries, create_project_with_spreadsheet_down
     save_scenario_summaries, make_scenarios_graphs, load_optimization_summaries, save_optimization_summaries, \
     upload_optimization_summary, load_optimization_graphs, get_users, create_project_from_spreadsheet, \
     load_portfolio_summaries, create_user, parse_user_args, update_user, do_login_user, delete_user, \
-    do_logout_current_user, report_exception_decorator, verify_admin_request_decorator
+    do_logout_current_user, report_exception_decorator, verify_admin_request_decorator, \
+    copy_progset
 from .parse import get_default_populations
 from .utils import get_post_data_json, get_upload_file, OptimaJSONEncoder
 from .dbconn import db
@@ -660,6 +661,15 @@ class Progset(Resource):
         delete_progset(project_id, progset_id)
         return '', 204
 
+    @swagger.operation(description='Copy progset with the given id.')
+    def post(self, project_id, progset_id):
+        """
+        POST /api/project/<uuid:project_id>/progset/<uuid:progset_id>
+        data-json: name:
+        """
+        new_name = get_post_data_json()['name']
+        return copy_progset(project_id, progset_id, new_name)
+
 
 class ProgsetUploadDownload(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -756,14 +766,9 @@ class ProgramCostcovGraph(Resource):
         if t is None:
             return {}
 
-        plotoptions = {}
-        for x in ['caption', 'xupperlim', 'perperson']:
-            if args.get(x):
-                plotoptions[x] = args[x]
-
         print '>>>> Generating plot...'
         return load_costcov_graph(
-            project_id, progset_id, program_id, parset_id, t, plotoptions)
+            project_id, progset_id, program_id, parset_id, t)
 
 
 class Scenarios(Resource):

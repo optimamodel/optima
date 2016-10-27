@@ -157,67 +157,74 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.state.parset) {
         modalService.informError(
           [{message: 'No parameter set selected.'}]);
-      } else {
-        function rename(name) {
-          $http
-            .put(
-              '/api/project/' + project.id
-              + '/parsets/' + $scope.state.parset.id,
-              {name: name})
-            .success(function() {
-              $scope.state.parset.name = name;
-              toastr.success('Copied parset');
-            });
-        }
-
-        openParameterSetModal(
-          rename, 'Rename parameter set', $scope.parsets,
-          $scope.state.parset.name, 'Rename', true);
+        return;
       }
+
+      if ($scope.state.parset.name === "default") {
+        modalService.informError(
+          [{message: 'Deleting the default parameter set is not permitted.'}]);
+        return;
+      }
+
+      function rename(name) {
+        $http
+          .put(
+            '/api/project/' + project.id
+            + '/parsets/' + $scope.state.parset.id,
+            {name: name})
+          .success(function() {
+            $scope.state.parset.name = name;
+            toastr.success('Copied parset');
+          });
+      }
+
+      openParameterSetModal(
+        rename, 'Rename parameter set', $scope.parsets,
+        $scope.state.parset.name, 'Rename', true);
     };
 
     $scope.deleteParameterSet = function() {
       if (!$scope.state.parset) {
         modalService.informError(
           [{message: 'No parameter set selected.'}]);
-      } else {
-        function remove() {
-          $http
-            .delete(
-              '/api/project/' + project.id
-              + '/parsets/' + $scope.state.parset.id)
-            .success(function() {
-              $scope.parsets = _.filter(
-                $scope.parsets, function(parset) {
-                  return parset.id !== $scope.state.parset.id;
-                }
-              );
-              if ($scope.parsets.length > 0) {
-                $scope.state.parset = $scope.parsets[0];
-                toastr.success('Deleted parset');
-                $scope.setActiveParset();
-              }
-            });
-        }
-
-        // This has been temporarily commented out: https://trello.com/c/omuvJSYD/853-reuploading-spreadsheets-fails-in-several-ways
-        // if ($scope.state.parset.name === "default") {
-        if (false) {
-          modalService.informError(
-            [{message: 'Deleting the default parameter set is not permitted.'}]);
-        } else {
-          modalService.confirm(
-            remove,
-            function() {
-            },
-            'Yes, remove this parameter set',
-            'No',
-            'Are you sure you want to permanently remove parameter set "'
-            + $scope.state.parset.name + '"?',
-            'Delete parameter set'
-          );
-        }
+        return;
       }
+
+      if ($scope.state.parset.name === "default") {
+        modalService.informError(
+          [{message: 'Deleting the default parameter set is not permitted.'}]);
+        return;
+      }
+
+      function remove() {
+        $http
+          .delete(
+            '/api/project/' + project.id
+            + '/parsets/' + $scope.state.parset.id)
+          .success(function() {
+            $scope.parsets = _.filter(
+              $scope.parsets, function(parset) {
+                return parset.id !== $scope.state.parset.id;
+              }
+            );
+            if ($scope.parsets.length > 0) {
+              $scope.state.parset = $scope.parsets[0];
+              toastr.success('Deleted parset');
+              $scope.setActiveParset();
+            }
+          });
+      }
+
+      modalService.confirm(
+        remove,
+        function() {
+        },
+        'Yes, remove this parameter set',
+        'No',
+        'Are you sure you want to permanently remove parameter set "'
+        + $scope.state.parset.name + '"?',
+        'Delete parameter set'
+      );
     };
 
     $scope.downloadParameterSet = function() {
@@ -253,8 +260,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).click();
     };
 
-    function openParameterSetModal(callback, title, parameterSetList, parameterSetName,
-                                   operation, isRename) {
+    function openParameterSetModal(
+        callback, title, parameterSetList, parameterSetName,
+        operation, isRename) {
 
       var onModalKeyDown = function(event) {
         if (event.keyCode == 27) {

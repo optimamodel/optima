@@ -23,7 +23,7 @@ ind = -1 # Default index
 if standardrun:
     P = defaults.defaultproject('best',dorun=False)
     P.runsim(debug=True)
-    pygui(P, toplot=['plhivbycd4'])
+    P.results[-1].export()
 
 if migrations:
     oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_0160816_reconciled.prj'
