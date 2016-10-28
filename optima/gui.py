@@ -171,7 +171,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    checkboxaxes = axes([0.1, 0.10, 0.8, 0.9]) # Create checkbox locations
+    checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
     updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location
     clearaxes    = axes([0.4, 0.02, 0.2, 0.03]) # Create close button location
     closeaxes    = axes([0.7, 0.02, 0.2, 0.03]) # Create close button location
