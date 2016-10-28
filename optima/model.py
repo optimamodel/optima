@@ -300,7 +300,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     #################################################################################################################
     
     # Set parameters
-    averagedurationinfected = 8.0/2.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
+    averagedurationinfected = 10.0/2.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
 
     # Check wither the initial distribution was specified
     if initpeople:
@@ -333,13 +333,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Set initial distributions for  
         testingrates = array([simpars['hivtest'][:,0]]*ncd4)
         for cd4 in range(aidsind, ncd4): testingrates[cd4,:] = maximum(simpars['aidstest'][0],simpars['hivtest'][:,0])
-        undxdist = exp(-averagedurationinfected*testingrates)
-#        linktocarefrac = linktocare[:,0]/(testingrates+linktocare[:,0]) # Fraction of people linked to care is ratio of linkage rate to all rates (?)
-        linktocarefrac = exp(-0.1*averagedurationinfected*linktocare[:,0])
-        lostfrac = leavecare[:,0]/(leavecare[:,0]+linktocare[:,0]) # Ditto for lost
-        dxdist = (1.-undxdist)*(1.-linktocarefrac)
-        incaredist = (1.-undxdist)*linktocarefrac*(1.-lostfrac)
-        lostdist = (1.-undxdist)*linktocarefrac*lostfrac
+        dxfrac = 1.-exp(-averagedurationinfected*testingrates)
+        linktocarefrac = 1.-exp(-averagedurationinfected*linktocare[:,0])
+        lostfrac = 1.-exp(-averagedurationinfected*leavecare[:,0])
+        undxdist = 1.-dxfrac
+        dxdist = dxfrac*(1.-linktocarefrac)
+        incaredist = dxfrac*linktocarefrac*(1.-lostfrac)
+        lostdist = dxfrac*linktocarefrac*lostfrac
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         # Set initial distributions within treated & untreated 
         untxdist    = (1./prog) / sum(1./prog) # Normalize progression rates to get initial distribution
