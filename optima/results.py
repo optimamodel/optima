@@ -4,8 +4,8 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
-from numpy import array, nan, zeros, arange, shape, maximum, findinds
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds
+from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 
 
