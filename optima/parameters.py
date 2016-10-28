@@ -166,18 +166,18 @@ transtable = '''
 17																		1	1																	1	1	
 18																			1	1																	1	1
 19																				1																		1
-20																					1	1					1	1										
-21																						1	1					1	1									
-22																						1	1	1				1	1	1								
-23																							1	1	1				1	1	1							
-24																								1	1	1				1	1	1						
-25																									1	1					1	1						
-26																					1	1					1	1										
-27																						1						1										
-28																						1	1					1	1									
-29																							1	1					1	1								
-30																								1	1					1	1							
-31																									1	1					1	1						
+20																					1	1					1	1					1	1				
+21																						1	1					1	1					1	1			
+22																						1	1	1				1	1	1				1	1	1		
+23																							1	1	1				1	1	1				1	1	1	
+24																								1	1	1				1	1	1				1	1	1
+25																									1	1					1	1					1	1
+26																					1	1					1	1					1	1				
+27																						1						1						1				
+28																						1	1					1	1					1	1			
+29																							1	1					1	1					1	1		
+30																								1	1					1	1					1	1	
+31																									1	1					1	1					1	1
 32															1	1																	1	1				
 33																1	1																	1	1			
 34																	1	1																	1	1		
@@ -576,6 +576,10 @@ def makepars(data, label=None, verbose=2):
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
     
+    # Store information about injecting and commercial sex providing populations
+    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
+    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
+
     return pars
 
 
@@ -596,7 +600,7 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     simpars = odict() 
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys','rawtransit']
+    generalkeys = ['male', 'female', 'popkeys', 'injects', 'sexworker', 'rawtransit']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if start is None: start=2000 # WARNING, should be a better way of declaring defaults...
     if end is None: end=2030
