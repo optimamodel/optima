@@ -93,6 +93,14 @@ def getplotselections(results):
     plotselections['keys'] += ['cascade']
     plotselections['names'] += ['Treatment cascade']
     
+    ## Deaths by CD4
+    plotselections['keys'] += ['deathbycd4']
+    plotselections['names'] += ['Deaths by CD4']
+    
+    ## People by CD4
+    plotselections['keys'] += ['plhivbycd4']
+    plotselections['names'] += ['PLHIV by CD4']
+    
     ## Get plot selections for plotepi
     plotepikeys = list()
     plotepinames = list()
@@ -184,6 +192,26 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot cascade: "%s"' % E.message, 1, verbose)
+    
+    
+    ## Add deaths by CD4 plot
+    if 'deathbycd4' in toplot:
+        toplot.remove('deathbycd4') # Because everything else is passed to plotepi()
+        try: 
+            allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot deaths by CD4: "%s"' % E.message, 1, verbose)
+    
+    
+    ## Add PLHIV by CD4 plot
+    if 'plhivbycd4' in toplot:
+        toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
+        try: 
+            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot PLHIV by CD4: "%s"' % E.message, 1, verbose)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
@@ -711,3 +739,72 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
     close(fig)
     
     return fig
+    
+    
+##################################################################
+## Plot things by CD4
+##################################################################
+def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+                ticksize=globalticksize, legendsize=globallegendsize, ind=0, **kwargs):
+    ''' 
+    Plot deaths or people by CD4
+    NOTE: do not call this function directly; instead, call via plotresults().
+    '''
+    
+    # Figure out what kind of result it is
+    if type(results)==Resultset: 
+        ismultisim = False
+        nsims = 1
+    elif type(results)==Multiresultset:
+        ismultisim = True
+        titles = results.keys # Figure out the labels for the different lines
+        nsims = len(titles) # How ever many things are in results
+    else: 
+        errormsg = 'Results input to plotbycd4() must be either Resultset or Multiresultset, not "%s".' % type(results)
+        raise OptimaException(errormsg)
+
+    # Set up figure and do plot
+    fig = figure(figsize=figsize)
+    
+    titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
+    hivstates = results.project.settings.hivstates
+    indices = arange(0, len(results.raw[ind]['tvec']), int(round(1.0/(results.raw[ind]['tvec'][1]-results.raw[ind]['tvec'][0]))))
+    colors = gridcolormap(len(hivstates))
+    
+    for plt in range(nsims): # WARNING, copied from plotallocs()
+        bottom = 0.*results.tvec # Easy way of setting to 0...
+        thisdata = 0.*results.tvec # Initialise
+        
+        ## Do the plotting
+        subplot(nsims,1,plt+1)
+        for s,state in enumerate(reversed(hivstates)): # Loop backwards so correct ordering -- first one at the top, not bottom
+            if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata += results.raw[ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
+            fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
+            bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
+            plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
+        
+        ## Configure plot -- WARNING, copied from plotepi()
+        ax = gca()
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        ax.title.set_fontsize(titlesize)
+        ax.xaxis.label.set_fontsize(labelsize)
+        for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+
+        # Configure plot specifics
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
+                          'frameon':False}
+        if ismultisim: ax.set_title(titlemap[whattoplot]+'-- %s' % titles[plt])
+        else: ax.set_title(titlemap[whattoplot])
+        ax.set_xlabel('Year')
+        ax.set_ylim((0,ylim()[1]))
+        ax.set_xlim((results.tvec[0], results.tvec[-1]))
+        ax.legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
+        
+    SIticks(fig)
+    close(fig)
+    
+    return fig    

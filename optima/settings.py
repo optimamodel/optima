@@ -28,6 +28,8 @@ class Settings(object):
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
         self.ncd4 = len(self.hivstates)
         self.nhealth = len(self.healthstates)
+        self.hivstatesfull = ['Acute infection', 'CD4>500', '350<CD4<500', '200<CD4<350', '50<CD4<200', 'CD4<50']
+        self.healthstatesfull = ['Susceptible', 'Programmatically circumcised', 'Undiagnosed', 'Diagnosed', 'Initially linked to care', 'On unsuppressive ART', 'On suppressive ART', 'Lost to follow up']
         
         # Health states by diagnosis
         self.susreg   = arange(0,1) # Regular uninfected, may be uncircumcised

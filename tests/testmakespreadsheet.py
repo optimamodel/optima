@@ -10,8 +10,8 @@ Version: 2016feb06 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-#'makespreadsheet',
-#'checkexisting',
+'makespreadsheet',
+'checkexisting',
 'makespreadsheetwithdata',
 #'unittests',
 ]
