@@ -332,11 +332,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         # Set initial distributions for  
         testingrates = array([simpars['hivtest'][:,0]]*ncd4)
-        for cd4 in range(aidsind, ncd4): testingrates[cd4] = maximum(simpars['aidstest'][0],simpars['hivtest'][:,0])
+        for cd4 in range(aidsind, ncd4): testingrates[cd4,:] = maximum(simpars['aidstest'][0],simpars['hivtest'][:,0])
         undxdist = exp(-averagedurationinfected*testingrates)
-        dxdist = (1.-undxdist)*(1.-linktocare[:,0])
-        incaredist = (1.-undxdist)*linktocare[:,0]*(1.-leavecare[:,0])
-        lostdist = (1.-undxdist)*linktocare[:,0]*leavecare[:,0]
+#        linktocarefrac = linktocare[:,0]/(testingrates+linktocare[:,0]) # Fraction of people linked to care is ratio of linkage rate to all rates (?)
+        linktocarefrac = exp(-0.1*averagedurationinfected*linktocare[:,0])
+        lostfrac = leavecare[:,0]/(leavecare[:,0]+linktocare[:,0]) # Ditto for lost
+        dxdist = (1.-undxdist)*(1.-linktocarefrac)
+        incaredist = (1.-undxdist)*linktocarefrac*(1.-lostfrac)
+        lostdist = (1.-undxdist)*linktocarefrac*lostfrac
         
         # Set initial distributions within treated & untreated 
         untxdist    = (1./prog) / sum(1./prog) # Normalize progression rates to get initial distribution
