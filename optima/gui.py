@@ -167,14 +167,14 @@ def pygui(tmpresults, toplot=None, verbose=2):
     
     ## Set up control panel
     figwidth = 7
-    figheight = 1+len(checkboxes)*0.20 # Scale dynamically based on how many options are available
+    figheight = 0.2+len(checkboxes)*0.18 # Scale dynamically based on how many options are available
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    checkboxaxes = axes([0.1, 0.15, 0.8, 0.8]) # Create checkbox locations
-    updateaxes   = axes([0.1, 0.05, 0.2, 0.03]) # Create update button location
-    clearaxes    = axes([0.4, 0.05, 0.2, 0.03]) # Create close button location
-    closeaxes    = axes([0.7, 0.05, 0.2, 0.03]) # Create close button location
+    checkboxaxes = axes([0.1, 0.10, 0.8, 0.9]) # Create checkbox locations
+    updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location
+    clearaxes    = axes([0.4, 0.02, 0.2, 0.03]) # Create close button location
+    closeaxes    = axes([0.7, 0.02, 0.2, 0.03]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     
     # Reformat the checkboxes
