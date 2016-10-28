@@ -7,7 +7,7 @@ define(
       'PortfolioController',
       function (
         $scope, $http, activeProject, modalService, fileUpload,
-        UserManager, $state, toastr, globalPoller, $modal) {
+        UserManager, $state, toastr, globalPoller, $modal, $upload) {
 
         function initialize() {
 
@@ -20,9 +20,12 @@ define(
           ];
 
           $scope.isSelectNewProject = false;
+          $scope.isSelectTemplateProject = false;
           $scope.state = {
             portfolio: undefined,
-            gaoptim: undefined
+            nRegion: 2,
+            gaoptim: undefined,
+            tempateProject: null
           };
 
           reloadPortfolio();
@@ -311,6 +314,88 @@ define(
           $scope.savePortfolio();
         };
 
+        $scope.chooseTemplateProject = function() {
+          $scope.isSelectTemplateProject = true;
+          $http
+            .get('/api/project')
+            .success(function(response) {
+              var selectedIds = _.pluck($scope.state.portfolio.projects, "id");
+              $scope.projects = [];
+              _.each(response.projects, function(project) {
+                var isSelected = _.contains(selectedIds, project.id);
+                if (project.isOptimizable) {
+                  var project = angular.copy(project);
+                  _.extend(project, {
+                    'name': project.name,
+                    'id': project.id,
+                    'selected': isSelected
+                  });
+                  $scope.projects.push(project)
+                }
+              });
+              console.log("$scope.projects", $scope.projects);
+            });
+        };
+
+        $scope.dismissSelectTemplateProject = function() {
+          $scope.isSelectTemplateProject = false;
+        };
+
+        $scope.saveTemplateProject = function() {
+          $scope.isSelectTemplateProject = false;
+          var project = $scope.state.templateProject;
+          $scope.years = _.range(project.dataStart, project.dataEnd+1);
+          $scope.state.templateYear = $scope.years[0];
+          console.log('template project', $scope.state.templateProject);
+          console.log('years', $scope.years);
+        };
+
+        $scope.generateTemplateSpreadsheet = function() {
+          $http
+            .post(
+              '/api/region',
+              {
+                projectId: $scope.state.templateProject.id,
+                nRegion: $scope.state.nRegion,
+                year: $scope.state.templateYear
+              },
+              {
+                responseType: "arraybuffer"
+              })
+            .success(function(data) {
+              var blob = new Blob(
+                [data],
+                {
+                  type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                });
+              saveAs(blob, 'template.xlsx');
+              toastr.success('got spreadsheet back');
+            });
+        };
+
+        $scope.spawnRegionsFromSpreadsheet = function() {
+          // upload file then create projects
+          // then add to portfolio
+          angular
+            .element('<input type="file">')
+            .change(function (event) {
+              $upload
+                .upload({
+                  url: '/api/spawnregion',
+                  fields: {projectId: $scope.state.templateProject.id},
+                  file: event.target.files[0]
+                })
+                .success(function (prjNames) {
+                  $scope.state.prjNames = prjNames;
+                  console.log('$scope.state.prjNames', $scope.state.prjNames);
+                  _.each(prjNames, function(prjName) {
+                    toastr.success('Project created: ' + prjName);
+                  });
+                });
+
+            })
+            .click();
+        };
 
         $scope.checkBocCurvesNotCalculated = function() {
           if (_.isUndefined($scope.state.portfolio)) {

@@ -15,11 +15,6 @@
       Manage projects
     </div>
   </div>
-  <div ng-click="showPortfolioMenu = !showPortfolioMenu" ng-mouseleave="showPortfolioMenu = false">
-    <div ui-sref="portfolio.manage" class="btn __blue">
-      Manage portfolios
-    </div>
-  </div>
   <div ng-click="showCalibrateMenu = !showCalibrateMenu" ng-mouseleave="showCalibrateMenu = false">
     <div class="btn __blue">
       Calibrate model
@@ -51,6 +46,11 @@
     <div ng-if="showAnalysisMenu" class="menu-dropdown" style="width: 150px;">
       <div ng-click="goIfProjectActive('analysis.scenarios')">Scenario analyses</div>
       <div ng-click="goIfProjectActive('analysis.optimization')">Optimization analyses</div>
+    </div>
+  </div>
+  <div ng-click="showPortfolioMenu = !showPortfolioMenu" ng-mouseleave="showPortfolioMenu = false">
+    <div ui-sref="portfolio.manage" class="btn __blue">
+      Geospatial analysis
     </div>
   </div>
   <div ng-click="showAccountHelpMenu = !showAccountHelpMenu" ng-mouseleave="showAccountHelpMenu = false">

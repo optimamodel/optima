@@ -418,6 +418,43 @@ class MinimizePortfolio(Resource):
 api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
 
 
+class RegionTemplate(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary="Make portfolio region template")
+    def post(self):
+        """
+        post /api/region
+        """
+        args = get_post_data_json()
+        project_id = args['projectId']
+        n_region = int(args['nRegion'])
+        year = int(args['year'])
+        dirname, basename = dataio.make_region_template_spreadsheet(project_id, n_region, year)
+        print("> Got spreadsheet now download")
+        return helpers.send_from_directory(dirname, basename)
+
+api.add_resource(RegionTemplate, '/api/region')
+
+
+class SpawnRegion(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary="Spawn projects with region spreadsheet")
+    def post(self):
+        """
+        post /api/spawnregion
+        file-upload
+        """
+        project_id = request.form.get('projectId')
+        spreadsheet_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        project_summaries = load_project_summaries(current_user.id)
+        project_names = [p['name'] for p in project_summaries]
+        prj_names = dataio.make_region_projects(project_id, spreadsheet_fname, project_names)
+        return prj_names
+
+api.add_resource(SpawnRegion, '/api/spawnregion')
+
 
 class TaskChecker(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -667,7 +704,7 @@ class Progset(Resource):
         POST /api/project/<uuid:project_id>/progset/<uuid:progset_id>
         data-json: name:
         """
-        new_name = get_post_data_json()['name']
+        # new_name = get_post_data_json()['name']
         return copy_progset(project_id, progset_id, new_name)
 
 
