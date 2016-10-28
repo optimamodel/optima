@@ -8,7 +8,7 @@
 
     <ol>
       <li>
-        Choose project as template for districts
+        Choose a project as template for districts
         &nbsp;
 
         <button
@@ -49,6 +49,7 @@
           </button>
         </div>
       </li>
+
       <li>
         Generate template spreadsheet with
 
@@ -74,8 +75,13 @@
           Generate spreadsheet
         </button>
       </li>
+
       <li>
-        Create district projects by uploading the filled in spreadsheet:
+        Enter the district populations in the downloaded spreadsheet using Excel
+      </li>
+
+      <li>
+        Create district projects by uploading the spreadsheet:
         &nbsp;
 
         <button
@@ -95,7 +101,7 @@
         </div>
       </li>
       <li>
-        Calibrate the new district projects in the <a ui-sref="home">manage projects page.</a>
+        Calibrate the new district projects from the <a ui-sref="home">project management</a> page.
       </li>
     </ol>
 
@@ -213,7 +219,7 @@
               <td colspan="4">
                 <button class="btn"
                   ng-click="addProject()">
-                  + import districts from existing projects
+                  + import districts from projects
                 </button>
 
                 <div
