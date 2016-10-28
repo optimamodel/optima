@@ -385,9 +385,12 @@ define(
                   fields: {projectId: $scope.state.templateProject.id},
                   file: event.target.files[0]
                 })
-                .success(function (response) {
-                  toastr.success('Spreadsheet uploaded for project');
-                  $state.reload();
+                .success(function (prjNames) {
+                  $scope.state.prjNames = prjNames;
+                  console.log('$scope.state.prjNames', $scope.state.prjNames);
+                  _.each(prjNames, function(prjName) {
+                    toastr.success('Project created: ' + prjName);
+                  });
                 });
 
             })

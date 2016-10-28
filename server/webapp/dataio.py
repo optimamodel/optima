@@ -18,18 +18,13 @@ All parameters and return types are either id's, json-summaries, or mpld3 graphs
 
 import traceback
 from functools import wraps
-
-from pprint import pprint
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import UserDb
-from server.webapp.exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
-from server.webapp.utils import nullable_email, hashed_password
-
 import os
 from zipfile import ZipFile
 from uuid import uuid4, UUID
 from datetime import datetime
 import dateutil
+import shutil
+from pprint import pprint
 
 from flask import helpers, current_app, abort, request, session, make_response, jsonify
 from flask.ext.login import current_user, login_user, logout_user
@@ -41,6 +36,10 @@ from optima.dataio import loadobj as loaddbobj
 import optima as op
 import optima
 
+from server.webapp.dbconn import db
+from server.webapp.dbmodels import UserDb
+from server.webapp.exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
+from server.webapp.utils import nullable_email, hashed_password
 from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
 from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists
 from .parse import get_default_program_summaries, \
@@ -56,11 +55,11 @@ from .parse import get_default_program_summaries, \
     get_program_from_progset, get_project_years, get_progset_summaries, \
     set_progset_summary_on_project, get_progset_summary, \
     get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
-    set_program_summary_on_progset, parse_portfolio_summary, \
-    set_progset_summary_on_progset
+    set_program_summary_on_progset, parse_portfolio_summary
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
 from . import parse
+
 
 # USERS
 
@@ -229,6 +228,8 @@ def verify_admin_request_decorator(api_call):
             return api_call(*args, **kwargs)
 
     return _verify_admin_request
+
+
 
 ## PROJECT
 
@@ -666,19 +667,32 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     return os.path.split(xlsx_fname)
 
 
-def make_region_projects(project_id, spreadsheet_fname):
+def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
     dirname = upload_dir_user(TEMPLATEDIR)
+
     prj_basename = load_project_record(project_id).as_file(dirname)
     prj_fname = os.path.join(dirname, prj_basename)
-    spawn_dir = os.path.join(dirname, 'spawn')
+
+    spawn_dir = os.path.join(dirname, prj_basename + '-spawn-districts')
+    if os.path.isdir(spawn_dir):
+        shutil.rmtree(spawn_dir)
+
     optima.geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
+
     district_prj_basenames = os.listdir(spawn_dir)
+    prj_names = []
     for prj_basename in district_prj_basenames:
-        print("> Slurping project %s" % prj_basename)
         prj_name = prj_basename.replace('.prj', '')
-        prj_fname = os.path.join(spawn_dir, prj_basename)
+        print("> Slurping project %s" % prj_name, existing_prj_names, prj_name in existing_prj_names)
+        if prj_name in existing_prj_names:
+            prj_name = prj_name + ' (1)'
         create_project_from_prj(prj_fname, prj_name, current_user.id)
+        prj_names.append(prj_name)
+
+    print("> Cleanup districts for template project %s" % prj_basename)
+    shutil.rmtree(spawn_dir)
+    return prj_names
 
 
 ## PARSET
@@ -1174,7 +1188,6 @@ def resolve_project(project):
 
     del_scenario_keys = []
     for scenario_key, scenario in project.scens.items():
-        print(">> Checking scenario", scenario_key)
         if type(scenario.parsetname) is int:
             i = scenario.parsetname
             try:
@@ -1209,7 +1222,6 @@ def resolve_project(project):
     # check optimizations are good
     del_optim_keys = []
     for optim_key, optim in project.scens.items():
-        print(">> Checking optim", optim_key)
         if type(optim.parsetname) is int:
             i = optim.parsetname
             try:
@@ -1229,7 +1241,7 @@ def resolve_project(project):
                     del_optim_keys.append(optim_key)
             if optim.progsetname not in project.progsets:
                 del_optim_keys.append(optim_key)
-    print(">> Delete deprecated optims", del_optim_keys)
+    print(">> Delete deprecated optims %s" % del_optim_keys)
     for optim_key in del_optim_keys:
         del project.optimis[optim_key]
 
@@ -1249,7 +1261,7 @@ def resolve_project(project):
     is_delete_result = False
     for result in results:
         if result.parset_id is not None and result.parset_id not in parset_ids:
-            print(">> Delete deprecated result", result.parset_id)
+            print(">> Delete deprecated result %s" % result.parset_id)
             db.session.delete(result)
             is_delete_result = True
     db.session.commit()

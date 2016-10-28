@@ -448,8 +448,10 @@ class SpawnRegion(Resource):
         """
         project_id = request.form.get('projectId')
         spreadsheet_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        dataio.make_region_projects(project_id, spreadsheet_fname)
-        return 'regions made'
+        project_summaries = load_project_summaries(current_user.id)
+        project_names = [p['name'] for p in project_summaries]
+        prj_names = dataio.make_region_projects(project_id, spreadsheet_fname, project_names)
+        return prj_names
 
 api.add_resource(SpawnRegion, '/api/spawnregion')
 

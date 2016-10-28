@@ -1,8 +1,112 @@
 <div class="rich">
   <div class="section">
 
-    <h1>Portfolios for Geospatial Analysis</h1>
+    <h1>Geospatial Analysis</h1>
 
+
+    <h2>Preparing districts for analysis</h2>
+
+    <ol>
+      <li>
+        Choose project as template for districts
+        &nbsp;
+
+        <button
+            class="btn __m __inline"
+            ng-click="chooseTemplateProject()">Choose project
+        </button>
+
+        &nbsp;
+        <i ng-if="!state.templateProject.name">No template project selected</i>
+
+        {{ state.templateProject.name}}
+
+        <div
+            style="
+              border: 1px solid #DDD;
+              padding: 20px;"
+            ng-show="isSelectTemplateProject">
+
+          <i>Select from optimizable projects:</i>
+          <br>
+          <div ng-repeat="project in projects">
+            <input
+              type="radio"
+              ng-model="state.templateProject"
+              ng-value="project">
+            {{project.name}}
+          </div>
+          <br>
+          <br>
+          <button class="btn"
+            ng-click="dismissSelectTemplateProject()">
+            Dismiss
+          </button>
+
+          <button class="btn"
+            ng-click="saveTemplateProject()">
+            Save
+          </button>
+        </div>
+      </li>
+      <li>
+        Generate template spreadsheet with
+
+          <select
+              ng-model="state.nRegion"
+              ng-init="2"
+              ng-options="n for n in [2, 3, 4, 5, 6, 7, 8, 9, 10]">
+          </select>
+
+        districts for the year
+
+        <select
+            ng-model="state.templateYear"
+            ng-options="year for year in years">
+        </select>
+
+        &nbsp;
+
+        <button
+            class="btn __m __inline"
+            ng-click="generateTemplateSpreadsheet()"
+            ng-disabled=" !state.templateProject || isSelectTemplateProject">
+          Generate spreadsheet
+        </button>
+      </li>
+      <li>
+        Create district projects by uploading the filled in spreadsheet:
+        &nbsp;
+
+        <button
+            class="btn __m __inline"
+            ng-click="spawnRegionsFromSpreadsheet()"
+            ng-disabled=" !state.templateProject || isSelectTemplateProject">
+          Upload spreadsheet
+        </button>
+
+        <div
+            style="font-style: italic"
+            ng-if="state.prjNames.length > 0">
+          New district projects:
+          <ul>
+            <li ng-repeat="prjName in state.prjNames">{{prjName}}</li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        Calibrate the new district projects in the <a ui-sref="home">manage projects page.</a>
+      </li>
+    </ol>
+
+    <div style="
+        width: 100%;
+        border-bottom: 1px solid #AAA;
+        padding-top: 30px;
+        margin-bottom: 30px">
+    </div>
+
+    <h2>Select portfolio for geospatial analysis</h2>
     <button
         class="btn __m"
         ng-click="createPortfolio()">
@@ -13,11 +117,10 @@
     <br>
 
     <div ng-if="portfolios.length == 0">
-      <i>No portfolios</i>
+      <i>No portfolios have been created</i>
     </div>
 
     <div ng-if="portfolios.length > 0">
-      &nbsp;
 
       Select portfolio:
 
@@ -41,74 +144,6 @@
           padding-top: 30px;
           margin-bottom: 30px">
       </div>
-
-      <button
-          class="btn __m __inline"
-          ng-click="chooseTemplateProject()">
-        Template Project
-      </button>
-
-      &nbsp;
-
-      {{ state.templateProject.name}}
-
-      number of regions to spawn
-
-      <select
-          ng-model="state.nRegion"
-          ng-init="2"
-          ng-options="n for n in [2, 3, 4, 5, 6, 7, 8, 9, 10]">
-      </select>
-
-      <select
-          ng-model="state.templateYear"
-          ng-options="year for year in years">
-      </select>
-
-      <button
-          class="btn __m __inline"
-          ng-click="generateTemplateSpreadsheet()">
-        Generate spreadsheet
-      </button>
-
-      <button
-          class="btn __m __inline"
-          ng-click="spawnRegionsFromSpreadsheet()">
-        Spawn regions from spreadsheet
-      </button>
-
-      <div
-          style="
-            border: 1px solid #DDD;
-            padding: 20px;"
-          ng-show="isSelectTemplateProject">
-
-        <i>Select from optimizable projects:</i>
-        <br>
-        <div ng-repeat="project in projects">
-          <input
-            type="radio"
-            ng-model="state.templateProject"
-            ng-value="project">
-          {{project.name}}
-        </div>
-        <br>
-        <br>
-        <button class="btn"
-          ng-click="dismissSelectTemplateProject()">
-          Dismiss
-        </button>
-
-        <button class="btn"
-          ng-click="saveTemplateProject()">
-          Save
-        </button>
-      </div>
-
-
-
-      <br>
-      <br>
 
       <div
         style="
@@ -150,11 +185,11 @@
 
         <div style="flex: 1">
 
-          <h2>Geospatial analysis of regions in a portfolio</h2>
+          <h2>Geospatial analysis of districts</h2>
 
           <table class="table table-bordered table-hover table-striped">
             <tr>
-              <th>Regions</th>
+              <th>Disctricts</th>
               <th>BOC</th>
               <th></th>
             </tr>
@@ -178,7 +213,7 @@
               <td colspan="4">
                 <button class="btn"
                   ng-click="addProject()">
-                  + import regions from existing projects
+                  + import districts from existing projects
                 </button>
 
                 <div
@@ -216,7 +251,7 @@
                 margin-bottom: 1em"
               class="btn"
               ng-click="calculateAllBocCurves()">
-            Calculate BOC curves for projects
+            Calculate BOC curves for distrcits
           </button>
 
           &nbsp;
