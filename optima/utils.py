@@ -289,19 +289,51 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 
-def sanitize(arraywithnans):
-        """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
-        from numpy import array, isnan
+def sanitize(data=None, returninds=False):
+        """
+        Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
+        
+        Example:
+            sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
+        """
+        from numpy import array, isnan, nonzero
         try:
-            arraywithnans = array(arraywithnans,dtype=float) # Make sure it's an array of float type
-            sanitized = arraywithnans[~isnan(arraywithnans)]
+            data = array(data,dtype=float) # Make sure it's an array of float type
+            sanitized = data[~isnan(data)]
         except:
-            raise Exception('Sanitization failed on array:\n %s' % arraywithnans)
+            raise Exception('Sanitization failed on array:\n %s' % data)
         if len(sanitized)==0:
             sanitized = 0.0
             print('                WARNING, no data entered for this parameter, assuming 0')
 
-        return sanitized
+        if returninds: 
+            inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
+            return sanitized, inds
+        else:          return sanitized
+
+
+
+def getvaliddata(data=None, filterdata=None, defaultind=0):
+    '''
+    Return the years that are valid based on the validity of the input data.
+    
+    Example:
+        getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
+    '''
+    from numpy import array, isnan
+    data = array(data)
+    filterdata = array(filterdata)
+    if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
+    else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
+    if sum(validindices): # There's at least one data point entered
+        if len(data)==len(validindices): # They're the same length: use for logical indexing
+            validdata = array(array(data)[validindices]) # Store each year
+        elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
+            validdata = array([array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+    else: 
+        validdata = array([]) # No valid data, return an empty array
+    return validdata
+
 
 
 def findinds(val1, val2=None, eps=1e-6):

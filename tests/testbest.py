@@ -2,10 +2,16 @@
 Create a good test project -- WARNING, this should be combined with testworkflow,
 which is an outdated version of the same thing!
 
-Version: 2016feb08
+Version: 2016oct28
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj, migrate, makespreadsheet # analysis:ignore
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj, migrate, makespreadsheet, __file__ as optimapath # analysis:ignore
+import os
+
+# Figure out the path 
+parentdir = optimapath.split(os.sep)[:-2] # exclude /optima/__init__.pyc
+testdir = parentdir + ['tests'+os.sep]
+spreadsheetpath = os.sep.join(testdir)
 
 ## Options
 standardrun = 1
@@ -17,6 +23,7 @@ runscenarios = 0 # Run scenarios
 optimize = 0
 dosave = 1
 filename = 'best.prj'
+programdatafile = 'concentratedprogramdata.xlsx'
 ind = -1 # Default index
 
 ## Make or load&migrate a project

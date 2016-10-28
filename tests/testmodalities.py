@@ -84,15 +84,15 @@ if 'modalities' in tests:
                   targetpops=['F 15-49'])
     
     # Add cost-coverage function parameters to each program
-    HTC_clinics.costcovfn.addccopar({'t': 2013.0,
+    HTC_clinics.addcostcovpar({'t': 2013.0,
                                      'saturation':(0.35,0.45),
                                      'unitcost': (35,45)})
                              
-    HTC_outreach.costcovfn.addccopar({'t': 2013.0,
+    HTC_outreach.addcostcovpar({'t': 2013.0,
                                      'saturation':(0.55,0.65),
                                       'unitcost': (45,55)})
                              
-    HTC_hometest.costcovfn.addccopar({'t': 2013.0,
+    HTC_hometest.addcostcovpar({'t': 2013.0,
                                      'saturation':(0.35,0.45),
                                       'unitcost': (15,25)})
     
@@ -100,7 +100,7 @@ if 'modalities' in tests:
     R = Programset(programs=[HTC_clinics,HTC_outreach,HTC_hometest])
     
     # Add parameters for the coverage-outcome functions
-    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.25,0.35),
+    R.addcovoutpar('hivtest', 'F 15-49', {'intercept': (0.25,0.35),
                                                     't': 2013.0,
                                                     'HTC_clinics': (0.75,0.85),
                                                     'HTC_outreach': (0.85,0.95),
@@ -112,8 +112,7 @@ if 'modalities' in tests:
               'HTC_hometest': array([ 1e6,])}
     
     # Plot the cost-coverage curves for each program if asked
-    if doplot: R.plotallcoverage(t=2013,
-                      parset=P.parsets['default'])
+    if doplot: R.plotallcoverage(t=2013, parset=P.parsets['default'])
     
     # Get the coverage of each program associated with this budget
     coverage = R.getprogcoverage(budget=budget,

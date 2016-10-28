@@ -2,7 +2,7 @@
 """
 This file performs all necessary imports, so Optima can be used either as
 
-from optima import Project, Parameters [etc.] [preferred]
+from optima import Project, Parameters [etc.]
 or
 import optima as op
 or
@@ -25,7 +25,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2016jan30 by cliffk
+Version: 2016oct05 by cliffk
 """
 
 optimalicense = '''
@@ -68,7 +68,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, getvaliddata, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -94,12 +94,12 @@ from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepa
 ## Create a blank spreadsheet
 try:
     from . import makespreadsheet as _makespreadsheet
-    from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
+    from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
 except: _failed.append('makespreadsheet')
 
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
-from .loadspreadsheet import loadspreadsheet
+from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 
 ## Define and run the model
 from . import model as _model
@@ -108,10 +108,6 @@ from .model import model, runmodel
 ## Define the programs and cost functions
 from . import programs as _programs
 from .programs import Program, Programset
-
-## Economics functions -- WARNING, not functional yet
-from . import economics as _economics
-from .economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts 
 
 ## Automatic calibration and sensitivity
 from . import calibration as _calibration
@@ -127,7 +123,7 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 
 ## Plotting functions
 from . import plotting as _plotting 
-from .plotting import getplotselections, makeplots
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations
 
 
 #####################################################################################################################

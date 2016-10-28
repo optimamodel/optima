@@ -62,7 +62,7 @@ def redotransitions(project, dorun=False, **kwargs):
     Migration between Optima 2.0.4 and 2.1
     """
     from numpy import concatenate as cat
-    from optima import Constant, loadtranstable
+    from optima import Constant, loadtranstable, Par
 
     # Update settings
     project.settings.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
@@ -77,7 +77,10 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nhealth = len(project.settings.healthstates)
     project.settings.transnorm = 0.6 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
 
-    if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
+    usedcascade = False
+    if hasattr(project.settings, 'usecascade'):
+        usedcascade = project.settings.usecascade
+        del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
     if hasattr(project.settings, 'off'):        del project.settings.off
 
@@ -166,6 +169,16 @@ def redotransitions(project, dorun=False, **kwargs):
             for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']:
                 pd[key].y = 1./pd[key].y # Invert
             
+            # Make sure viral suppression isn't zero
+            if not usedcascade: 
+                pd['propsupp'].y['tot'][0] = 0.6 # Pick a reasonable value for viral suppression
+                pd['propsupp'].t['tot'][0] = 2000.
+            
+            # Add `fromdata` field
+            for key in pd.keys():
+                if isinstance(pd[key],Par):
+                    pd[key].fromdata = True # WARNING, this should be fixed
+            
 
         # Rerun calibrations to update results appropriately
         if dorun: project.runsim(ps.name)
@@ -218,6 +231,12 @@ def removepopcharacteristicsdata(project, **kwargs):
     return None
 
 
+def CCOdictstopars(project, **kwargs):
+    """
+    Migration between Optima 2.1.4 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    """
+    raise Exception('NOT IMPLEMENTED')
+
 
 migrations = {
 '2.0':   versiontostr,
@@ -230,6 +249,7 @@ migrations = {
 '2.1.1': addalleverincare,
 '2.1.2': removenumcircdata,
 '2.1.3': removepopcharacteristicsdata,
+'2.1.4': CCOdictstopars,
 }
 
 

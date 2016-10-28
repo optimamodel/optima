@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2016jul06
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, sum as npsum
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
@@ -50,6 +50,15 @@ def SIticks(figure, axis='y'):
         elif axis=='z': thisaxis = ax.zaxis
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+
+def commaticks(figure, axis='y'):
+    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
+    for ax in figure.axes:
+        if axis=='x':   thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise OptimaException('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 
 def getplotselections(results):
@@ -228,8 +237,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 
-def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
+def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, colors=None, reorder=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -293,8 +302,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             # Unpack tuple
             datatype, plotformat = plotkey 
             
-            ispercentage = results.main[datatype].ispercentage # Distinguish between e.g. HIV prevalence and number PLHIV
-            isestimate = results.main[datatype].estimate # Distinguish between real data and model-based estimates
+            ispercentage = results.main[datatype].ispercentage # Indicate whether result is a percentage
+            isestimate = results.main[datatype].estimate # Indicate whether result is a percentage
             factor = 100.0 if ispercentage else 1.0 # Swap between number and percent
             datacolor = estimatecolor if isestimate else realdatacolor # Light grey for
             istotal   = (plotformat=='t') # Only using first letter, see above...
@@ -350,11 +359,11 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
-                epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
+                epiplots[pk] = figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
-                colors = gridcolormap(nlinesperplot)
+                if colors is None: colors = gridcolormap(nlinesperplot)
                 
 
                 ################################################################################################################
@@ -376,9 +385,11 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                             plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
                     else: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
-                        for l in range(nlinesperplot): # Loop backwards so correct ordering -- first one at the top, not bottom
-                            k = nlinesperplot-1-l # And in reverse order
-                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0)
+                        origorder = arange(nlinesperplot)
+                        plotorder = nlinesperplot-1-origorder
+                        if reorder: plotorder = [reorder[k] for k in plotorder]
+                        for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
+                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             plot((0, 0), (0, 0), color=colors[l], linewidth=10)
@@ -404,7 +415,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     except: print('Plotting uncertainty failed and/or not yet implemented')
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
-                if not ismultisim and databest is not None:
+                if not ismultisim and databest is not None and plotdata:
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
                     scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=int(isestimate))
@@ -424,6 +435,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 ax.get_yaxis().tick_left()
                 ax.title.set_fontsize(titlesize)
                 ax.xaxis.label.set_fontsize(labelsize)
+                ax.yaxis.label.set_fontsize(labelsize)
                 for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
     
                 # Configure plot specifics
@@ -441,11 +453,14 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 if not ismultisim:
                     if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
                     if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
-                    if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
+                    if isstacked: 
+                        handles, labels = ax.get_legend_handles_labels()
+                        ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
                 else:
                     legend(labels, **legendsettings) # Multiple simulations
-                SIticks(epiplots[pk])
-                close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
+                if useSIticks: SIticks(epiplots[pk])
+                else:          commaticks(epiplots[pk])
+                if doclose: close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
 
@@ -477,7 +492,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
     
     # Set up figure and do plot
     sigfigs = 2 # Number of significant figures
-    fig = figure(figsize=figsize)
+    fig = figure(facecolor=(1,1,1), figsize=figsize)
     colors = gridcolormap(ncurves)
     
     # Plot model estimates with uncertainty
@@ -552,7 +567,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     nallocs = len(alloclabels)
     progcolors = gridcolormap(nprogs)
     
-    fig = figure(figsize=figsize)
+    fig = figure(facecolor=(1,1,1), figsize=figsize)
     ax = subplot(1,1,1)
     
     fig.subplots_adjust(bottom=0.50) # Less space on bottom
@@ -612,7 +627,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
-    fig = figure(figsize=figsize)
+    fig = figure(facecolor=(1,1,1), figsize=figsize)
     fig.subplots_adjust(bottom=0.30) # Less space on bottom
     fig.subplots_adjust(hspace=0.50) # More space between
     colors = gridcolormap(nprogs)
@@ -672,17 +687,17 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
 ##################################################################
 ## Plot cascade
 ##################################################################
-def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
+def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+                ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, plotdata=True, **kwargs):
     ''' 
     Plot the treatment cascade.
     
     NOTE: do not call this function directly; instead, call via plotresults().
     
-    Version: 2016jan28    
+    Version: 2016sep28    
     '''
     
-    # Figure out what kind of result it is -- WARNING, copied from 
+    # Figure out what kind of result it is
     if type(results)==Resultset: 
         ismultisim = False
         nsims = 1
@@ -695,13 +710,16 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = figure(figsize=figsize)
+    fig = figure(facecolor=(1,1,1), figsize=figsize)
     
     cascadelist = ['numplhiv', 'numdiag', 'numevercare', 'numincare', 'numtreat', 'numsuppressed'] 
     cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
-    
-    colors = gridcolormap(len(cascadelist))
+    # Handle colors
+    if colors is None: colors = gridcolormap(len(cascadelist))
+    elif colors=='alpine': colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
+    elif type(colors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=colors)[1:-1] # Remove first and last element
+    else: raise OptimaException('Can''t figure out color %s' % colors)
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0*results.tvec # Easy way of setting to 0...
@@ -709,34 +727,108 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
         ## Do the plotting
         subplot(nsims,1,plt+1)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
-            if ismultisim: thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
-            else:          thisdata = results.main[key].tot[0] # Get the best estimate
+            if ismultisim: 
+                thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
+                if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[plt]
+            else:
+                thisdata = results.main[key].tot[0] # Get the best estimate
+                if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[0]
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
-            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10) # Colors are in reverse order
+            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
+        if plotdata and not aspercentage: # Don't try to plot if it's a percentage
+            thisdata = results.main['numtreat'].datatot[0]
+            scatter(results.datayears, thisdata, c=(0,0,0), label='Treatment data')
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax = gca()
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
         ax.title.set_fontsize(titlesize)
         ax.xaxis.label.set_fontsize(labelsize)
+        ax.yaxis.label.set_fontsize(labelsize)
         for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
 
         # Configure plot specifics
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
-                          'frameon':False}
+                          'frameon':False, 'scatterpoints':1}
         if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
-        else: ax.set_title('Cascade')
+        else:          ax.set_title('Cascade')
         ax.set_xlabel('Year')
-        ax.set_ylim((0,ylim()[1]))
+        if aspercentage: ax.set_ylabel('Percentage of PLHIV')
+        else:            ax.set_ylabel('Number of PLHIV')
+                
+        if aspercentage: ax.set_ylim((0,100))
+        else:            ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
-        ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
+        ax.legend(**legendsettings) # Multiple entries, all populations
         
-    SIticks(fig)
-    close(fig)
+    if useSIticks: SIticks(fig)
+    else:          commaticks(fig)
+    if doclose: close(fig)
+    
+    return fig
+
+
+
+
+
+
+def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False):
+    ''' Plot allocations in bar charts '''
+    
+    if budgets is None:
+        try: budgets = project.results[-1].budget
+        except: budgets = project # Maybe first argument is budget
+    
+    labels = budgets.keys()
+    progs = budgets[0].keys()
+    
+    indices = None
+    if not plotfixed:
+        try: indices = findinds(project.progset().optimizable()) # Not possible if project not defined
+        except: pass
+    if indices is None: indices = arange(len(progs))
+    nprogs = len(indices)
+    progs = [progs[i] for i in indices] # Trim programs
+    
+    if colors is None:
+        colors = gridcolormap(nprogs)
+            
+    
+    fig = figure(facecolor=(1,1,1), figsize=(10,10))
+    fig.subplots_adjust(left=0.10) # Less space on left
+    fig.subplots_adjust(right=0.98) # Less space on right
+    fig.subplots_adjust(top=0.95) # Less space on bottom
+    fig.subplots_adjust(bottom=0.35) # Less space on bottom
+    fig.subplots_adjust(wspace=0.30) # More space between
+    fig.subplots_adjust(hspace=0.40) # More space between
+    
+    ax = []
+    xbardata = arange(nprogs)+0.5
+    ymax = 0
+    nplt = len(budgets)
+    for plt in range(nplt):
+        ax.append(subplot(len(budgets),1,plt+1))
+        ax[-1].hold(True)
+        for p,ind in enumerate(indices):
+            ax[-1].bar([xbardata[p]], [budgets[plt][ind]/factor], color=colors[p], linewidth=0)
+            if plt==1 and compare:
+                ax[-1].bar([xbardata[p]], [budgets[0][ind]/factor], color='None', linewidth=1)
+        ax[-1].set_xticks(arange(nprogs)+1)
+        if plt!=nplt: ax[-1].set_xticklabels('')
+        if plt==nplt-1: 
+            ax[-1].set_xticklabels(progs,rotation=90)
+            plot([0,nprogs+1],[0,0],c=(0,0,0))
+        ax[-1].set_xlim(0,nprogs+1)
+        
+        if factor==1: ax[-1].set_ylabel('Spending (US$)')
+        elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
+        elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
+        ax[-1].set_title(labels[plt])
+        ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    for a in ax:
+        a.set_ylim([0,ymax])
     
     return fig
     

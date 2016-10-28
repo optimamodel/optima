@@ -767,6 +767,97 @@ class OptimaSpreadsheet:
             getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
         self.book.close()
 
+
+class OptimaProgramSpreadsheet:
+    def __init__(self, name, pops, progs, data_start = default_datastart, data_end = default_dataend, verbose = 0):
+        self.sheet_names = OrderedDict([
+            ('instr', 'Instructions'),
+            ('targeting','Populations & programs'),
+            ('costcovdata', 'Program data'),
+            ])
+        self.name = name
+        self.pops = pops
+        self.progs = progs
+        self.data_start = data_start
+        self.data_end = data_end
+        self.verbose = verbose
+        self.book = None
+        self.sheets = None
+        self.formats = None
+        self.current_sheet = None
+        self.prog_range = None
+        self.ref_pop_range = None
+        self.years_range = years_range(self.data_start, self.data_end)
+
+        self.npops = len(pops)
+        self.nprogs = len(progs)
+
+    def generate_targeting(self):
+        self.current_sheet.set_column(2,2,15)
+        self.current_sheet.set_column(3,3,40)
+        self.current_sheet.set_column(6,6,12)
+        self.current_sheet.set_column(7,7,16)
+        self.current_sheet.set_column(8,8,16)
+        self.current_sheet.set_column(9,9,12)
+        current_row = 0
+
+        targeting_content = make_programs_range('Populations & programs', self.pops, self.progs)
+        self.prog_range = TitledRange(sheet=self.current_sheet, first_row=current_row, content=targeting_content)
+        current_row = self.prog_range.emit(self.formats, rc_title_align = 'left')
+
+        self.ref_prog_range = self.prog_range
+
+
+    def generate_instr(self):
+        current_row = 0
+        self.current_sheet.set_column('A:A',80)
+        self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
+        current_row = 3
+        current_row = self.formats.write_info_line(self.current_sheet, current_row)
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 program data entry spreadsheet. This is where all program data will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+
+
+    def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL,
+        assumption = False, row_levels = None, row_formats = None):
+        content = make_years_range(name, row_names, self.data_start, self.data_end)
+        content.set_row_format(row_format)
+        if assumption:
+            content.add_assumption()
+        if row_levels is not None:
+            content.set_row_levels(row_levels)
+        if row_formats is not None:
+            content.set_row_formats(row_formats)
+        the_range = TitledRange(self.current_sheet, current_row, content)
+        current_row = the_range.emit(self.formats)
+        return current_row
+
+
+    def generate_costcovdata(self):
+        row_levels = ['Total spend', 'Unit cost: best', 'Unit cost: low', 'Unit cost: high', 'Coverage', 'Saturation: best', 'Saturation: low', 'Saturation: high']
+        self.current_sheet.set_column('C:C',20)
+        current_row = 0
+        current_row = self.emit_years_block(name='Cost & coverage', current_row=current_row, row_names=self.ref_prog_range.param_refs(), row_formats = [OptimaFormats.SCIENTIFIC,OptimaFormats.GENERAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL,OptimaFormats.OPTIONAL], assumption = True, row_levels = row_levels)
+
+
+    def create(self, path):
+        if self.verbose >=1: 
+            print("""Creating program spreadsheet %s with parameters:
+            npops = %s, nprogs = %s, data_start = %s, data_end = %s""" % \
+            (path, self.npops, self.nprogs, self.data_start, self.data_end))
+        self.book = xlsxwriter.Workbook(path)
+        self.formats = OptimaFormats(self.book)
+        self.sheets = {}
+        for name in self.sheet_names:
+            self.sheets[name] = self.book.add_worksheet(self.sheet_names[name])
+            self.current_sheet = self.sheets[name]
+            getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
+        self.book.close()
+
+
+
+
+
 class OptimaGraphTable:
     def __init__ (self, sheets, verbose = 2):
         self.verbose = verbose

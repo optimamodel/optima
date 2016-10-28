@@ -33,7 +33,7 @@ Parameterset (Parset):
             # initialized by partype: "initprev", "popsize", "meta", "timepar", "no", "constant"
             initprev: ...
             popsize: ...
-            <par_short>: 
+            <par_short>:
                 Par
                     self.name: str
                     self.short: str
@@ -55,7 +55,7 @@ Parameterset (Parset):
                 PopsizePar
                     <same as Par>
                     self.p: odict ??
-                    self.m: float 
+                    self.m: float
                     self.start: int
                   -or-
                 Constant
@@ -74,15 +74,13 @@ Program:
     self.targetpops:
         - string or tuple of 2 strings
     self.targetpartypes
-    self.costcovfn: 
-        Costcov
-            self.ccopars: 
-                <odict>
-                    t: list of ints
-                    unitcost: list of 2tuple(float)
-                    saturation: list of 2tuple(float)
+    self.costcovpars:
+            <odict>
+                t: list of ints
+                unitcost: scalar or list/tuple of length 2,3 (float)
+                saturation: list of list/tuple of length 2,3 (float)
             self.interaction: "additive", "nested", "random"
-    self.costcovdata: 
+    self.costcovdata:
         t: list of ints
         cost: list of [float or None]
         coverage: list of [float or None]
@@ -91,19 +89,19 @@ Program:
         hivstatus: 'allstates', -or- list of strings ['gt200'...]
         pregnant: boolean
     self.targetcomposition:
- 
+
 Programset (Progset):
     self.name: string
     self.uid: uuid
     self.default_interaction = default_interaction ??
-    self.programs = odict() ?? 
+    self.programs = odict() ??
     self.defaultbudget = odict() ??
     self.created = Datetime
     self.modified = Datetime
-    self.covout: 
+    self.covout:
         <odict>
            - <target_par_short>:
-                <pop_key>: 
+                <pop_key>:
                     Covout
                         self.ccopars: <odict>
                             t: list of ints
@@ -127,7 +125,7 @@ Parscen
           startval: float
           startyear: int
         - ...
-  
+
 Budgetscen
     self.name: string
     self.parsetname: string
@@ -161,7 +159,7 @@ Optimizations:
     self.parsetname: string
     self.progsetname: string
     self.resultsref = None # Store pointer to results
-    self.objectives: 
+    self.objectives:
        base:
        budget: int
        deathfrac: float
@@ -194,13 +192,13 @@ Result
     self.tot = tot # The model result total, if available
     self.datapops = datapops # The input data by population, if available
     ...?
-    
+
 Resultset
     self.uid: uuid
     self.created: Datetime
     self.name: string
     ...?
-    
+
 Settings
     self.dt: float # Timestep
     self.start: float # implied int, Default start year
@@ -214,7 +212,7 @@ Settings
     self.progcirc = arange(1,2) # Uninfected, programatically circumcised
     self.undx     = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
     self.dx       = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
-    self.care     = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
+    self.care     = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care
     self.usvl     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
     self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
     self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
@@ -222,7 +220,7 @@ Settings
     self.nsus     = len(self.susreg) + len(self.progcirc)
     self.ninf     = self.nhealth - self.nsus
     # Health states by CD4 count
-    spacing = arange(self.ninf)*self.ncd4 
+    spacing = arange(self.ninf)*self.ncd4
     self.acute = 2 + spacing
     self.gt500 = 3 + spacing
     self.gt350 = 4 + spacing
@@ -247,7 +245,7 @@ Settings
     self.verbose = verbose # Default verbosity for how much to print out -- see definitions in utils.py:printv()
     self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
     self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
-    
+
 Project
     self.uid: uuid
     self.created: Datetime
@@ -261,7 +259,7 @@ Project
     self.name = string
     self.settings = Settings(verbose=verbose) # Global settings
     self.data = {} # Data from the spreadsheet
-    self.parsets: 
+    self.parsets:
       <odict>
         - <parset_name>: Parameterset
         - ...
@@ -333,10 +331,10 @@ progset:
     updated: datetime_string
     programs: [program] # contains also default programs that are not active
 
-# used in create new parameter scenario modal 
+# used in create new parameter scenario modal
 ykeysByParsetId:
-    <parsetId>: 
-        <parameterShortName>: 
+    <parsetId>:
+        <parameterShortName>:
             - val: number
               label: string
             - ...
@@ -375,7 +373,7 @@ project:
     user_id: uuid_string
     dataStart: number
     dataEnd: number
-    populations: 
+    populations:
         - age_from: number
           age_to: number
           female: number
@@ -436,19 +434,19 @@ defaultPopulations:
 
 optimizations:
     - constraints:
-          max: 
+          max:
               <program_short>: float or null
               ...
-          min: 
+          min:
               <program_short>: float or null
               ...
-          name: 
+          name:
               <program_short>: float or null
               ...
       id: string
       name: string
       objectives:
-          base: null 
+          base: null
           budget: number
           deathfrac: number
           deathweight: number
@@ -584,7 +582,7 @@ class ProgsetsDb(db.Model):
 
 class ScenariosDb(db.Model):
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
-    project_id = db.Column(UUID(True), db.ForeignKey('projects.id')) 
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.String)
     scenario_type = db.Column(db.String)
     active = db.Column(db.Boolean)
