@@ -176,6 +176,25 @@ def make_populations_range(name, items):
         coded_params.append([short_name, item_name, male, female, age_from, age_to])
     return OptimaContent(name, row_names, column_names, coded_params)
 
+
+def make_programs_range(name, popnames, items):
+    """ 
+    every programs item is a dictionary is expected to have the following fields:
+    short_name, name, targetpops
+    (2x str, 1x list of booleans)
+    """
+    column_names = ['Short name','Long name']+popnames
+    row_names = range(1, len(items)+1)
+    coded_params = []
+    for item in items:
+        if type(item) is dict:
+            item_name = item['name']
+            short_name = item['short']
+            item_targetpops = [1 if popname in item['targetpops'] else 0 for popname in popnames]
+        coded_params.append([short_name, item_name]+item_targetpops)
+    return OptimaContent(name=name, row_names=row_names, column_names=column_names, data=coded_params)
+
+
 def make_constant_range(name, row_names, best_data, low_data, high_data):
     column_names = ['best', 'low', 'high']
     range_data = [[best, low, high] for (best, low, high) in zip(best_data, low_data, high_data)]
@@ -204,8 +223,10 @@ class OptimaFormats:
     """ the formats used in the spreadsheet """
     darkgray = '#413839'
     originalblue = '#18C1FF'
+    optionalorange = '#FFA500'
     hotpink = '#FFC0CB'
     BG_COLOR = originalblue
+    OPT_COLOR = optionalorange
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
@@ -213,6 +234,7 @@ class OptimaFormats:
     SCIENTIFIC = 'scientific'
     NUMBER = 'number'
     GENERAL = 'general'
+    OPTIONAL = 'optional'
 
     def __init__(self, book):
         self.formats = {}
@@ -236,11 +258,14 @@ class OptimaFormats:
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['general'] = self.book.add_format({'locked':0, 'num_format':0x00, \
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['optional'] = self.book.add_format({'locked':0, 'num_format':0x00, \
+        'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['info_header'] = self.book.add_format({'align':'center','valign':'vcenter', \
             'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
         self.formats['grey'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
         self.formats['info_url'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
         self.formats['grey_bold'] = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
+        self.formats['merge_format'] = self.book.add_format({'bold': 1,'align': 'center','text_wrap':True})
 
 
     def write_block_name(self, sheet, name, row):

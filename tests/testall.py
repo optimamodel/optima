@@ -23,7 +23,7 @@ MASTER = [
 'testmakespreadsheet',
 'testproject',
 'testprograms',
-'testmodalities',
+#'testmodalities',
 'testmodel',
 'testscenarios',
 'testcalibration',
