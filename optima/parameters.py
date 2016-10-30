@@ -445,11 +445,6 @@ def makepars(data, label=None, verbose=2):
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
     
-    # Store information about injecting and commercial sex providing populations
-    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
-    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
-
-
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
@@ -578,7 +573,10 @@ def makepars(data, label=None, verbose=2):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    
+    # Store information about injecting and commercial sex providing populations -- needs to be here since relies on other calculations
+    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
+    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
+
     return pars
 
 
