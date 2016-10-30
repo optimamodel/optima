@@ -141,7 +141,7 @@ try: from . import gui
 except: _failed.append('gui')
 
 ## Load simple function for displaying results
-try: from .gui import plotresults, pygui, plotpeople, plotallocations, plotpars
+try: from .gui import plotresults, pygui, plotpeople, plotpars
 except: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars')
 
 ## Handle the browser-based plotting -- relies on browser so might fail
