@@ -444,9 +444,12 @@ def makepars(data, label=None, verbose=2):
     # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
-    pars['injects'] = array(data['pops']['injects']).astype(bool) # Populations that inject
-    pars['sexworker'] = array(data['pops']['sexworker']).astype(bool) # Populations that provide commercial sex
     
+    # Store information about injecting and commercial sex providing populations
+    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
+    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
+
+
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
@@ -576,10 +579,6 @@ def makepars(data, label=None, verbose=2):
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
     
-    # Store information about injecting and commercial sex providing populations
-    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
-    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
-
     return pars
 
 
