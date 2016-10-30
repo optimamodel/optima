@@ -50,6 +50,25 @@ def makespreadsheet(filename=None, pops=None, datastart=default_datastart, datae
     return filename
 
 
+def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, dataend=default_dataend, verbose=2):
+    """ Generate the Optima programs spreadsheet """
+
+    # An integer argument is given: just create a pops dict using empty entries
+    if isnumber(pops):
+        npops = pops
+        pops = [] # Create real pops list
+        for p in range(npops):
+            pops.append({'short_name':'Pop %i'%(p+1)}) # Must match make_populations_range definitions
+    
+    printv('Generating program spreadsheet: pops=%i, progs=%i, datastart=%s, dataend=%s' % (len(pops), len(progs), datastart, dataend), 1, verbose)
+
+    book = OptimaProgramSpreadsheet(filename, pops, progs, datastart, dataend)
+    book.create(filename)
+
+    printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
+    return filename
+
+
 def abbreviate(param):
     words = re.sub('([^a-z0-9+]+)',' ',param.lower()).strip().split()
     short_param = ''
