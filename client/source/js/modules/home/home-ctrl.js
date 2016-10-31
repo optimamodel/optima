@@ -270,8 +270,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 })
               .success(function () {
                 project.name = name;
-                $state.reload()
                 toastr.success('Renamed project');
+                $state.reload();
               });
           },
           'Edit project name',

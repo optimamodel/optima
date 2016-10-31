@@ -204,9 +204,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             isSpreadsheet: isSpreadsheet,
             isDeleteData: true,
           });
-        if (!isDeleteData) {
-          responseType = null;
-        }
       } else {
         promise = projectApiService.createProject(params);
       }
@@ -273,7 +270,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       } else {
         // Create new project
-        saveProject(false, true);
+        saveProject(false, false, true);
       }
     };
 
