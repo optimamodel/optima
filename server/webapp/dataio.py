@@ -373,7 +373,10 @@ def update_project_from_summary(project_id, project_summary, is_delete_data):
     project_entry = load_project_record(project_id)
     project = project_entry.load()
 
-    set_project_summary_on_project(project, project_summary, is_delete_data)
+    if is_delete_data:
+        parse.clear_project_data(project)
+
+    set_project_summary_on_project(project, project_summary)
     project_entry.save_obj(project)
     db.session.add(project_entry)
     db.session.commit()

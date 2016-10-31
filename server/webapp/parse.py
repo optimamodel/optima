@@ -137,20 +137,20 @@ def revert_populations_to_pop(populations):
     return data_pops
 
 
-def set_project_summary_on_project(project, summary, is_delete_data):
+def clear_project_data(project):
+    print(">> Deleting project.data")
+    project.data = {}
+    project.progsets.clear()
+    project.parsets.clear()
+    project.scens.clear()
+    project.optims.clear()
+
+
+def set_project_summary_on_project(project, summary):
 
     print(">> Update project")
 
     data_pops = revert_populations_to_pop(summary['populations'])
-
-    if is_delete_data:
-        print(">> Deleting project.data")
-        # We need to delete the data here off the project?
-        project.data = {}
-        project.progsets.clear()
-        project.parsets.clear()
-        project.scens.clear()
-        project.optims.clear()
 
     project.data["pops"] = data_pops
     project.data["npops"] = len(data_pops)

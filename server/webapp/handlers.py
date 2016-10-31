@@ -130,7 +130,7 @@ class Project(Resource):
             return response
         else:
             dataio.update_project_from_summary(project_id, project_summary, is_delete_data)
-            return 201
+            return '', 202
 
     @swagger.operation(summary='Delete project')
     def delete(self, project_id):

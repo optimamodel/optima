@@ -191,30 +191,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function saveProject(isUpdate, isDeleteData, isSpreadsheet) {
-      console.log('isUpdate', isUpdate, 'isSpreadsheet', isSpreadsheet)
+      console.log('isUpdate', isUpdate, 'isDeleteData', isDeleteData, 'isSpreadsheet', isSpreadsheet)
       var params = angular.copy($scope.projectParams);
       params.populations = getSelectedPopulations();
       var promise;
+      var responseType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       if (isUpdate) {
         promise = projectApiService.updateProject(
-            $scope.projectInfo.id,
-            {
-              project: params,
-              isSpreadsheet: isSpreadsheet,
-              isDeleteData: isDeleteData,
-            });
+          $scope.projectInfo.id,
+          {
+            project: params,
+            isSpreadsheet: isSpreadsheet,
+            isDeleteData: isDeleteData,
+          });
+        if (!isDeleteData) {
+          responseType = null;
+        }
       } else {
         promise = projectApiService.createProject(params);
       }
       promise
         .success(function (response, status, headers) {
-          var newProjectId = headers()['x-project-id'];
-          var blob = new Blob(
-              [response],
-              {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-          saveAs(blob, ($scope.projectParams.name + '.xlsx'));
-          activeProject.setActiveProjectFor(
-              $scope.projectParams.name, newProjectId, UserManager.data);
+          if (responseType) {
+            var blob = new Blob([response], {type: responseType});
+            saveAs(blob, ($scope.projectParams.name + '.xlsx'));
+            var newProjectId = headers()['x-project-id'];
+            activeProject.setActiveProjectFor(
+                $scope.projectParams.name, newProjectId, UserManager.data);
+          }
           $state.go('home');
         });
     }
