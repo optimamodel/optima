@@ -106,7 +106,7 @@ def defaultrepr(obj, maxlen=55):
 
 
 
-def printarr(arr, arrformat='%0.2f  '):
+def printarr(arr, arrformat='%0.2f  ', doprint=True):
     """ 
     Print a numpy array nicely.
     
@@ -117,23 +117,27 @@ def printarr(arr, arrformat='%0.2f  '):
     
     Version: 2014dec01 by cliffk
     """
+    output = ''
     from numpy import ndim
     if ndim(arr)==1:
-        string = ''
         for i in range(len(arr)):
-            string += arrformat % arr[i]
-        print(string)
+            output += arrformat % arr[i]
     elif ndim(arr)==2:
         for i in range(len(arr)):
-            printarr(arr[i], arrformat)
+            output += printarr(arr[i], arrformat, doprint=False)
     elif ndim(arr)==3:
         for i in range(len(arr)):
-            print('='*len(arr[i][0])*len(arrformat % 1))
+            output += '='*len(arr[i][0])*len(arrformat % 1)
             for j in range(len(arr[i])):
-                printarr(arr[i][j], arrformat)
+                output += printarr(arr[i][j], arrformat, doprint=False)
     else:
-        print(arr) # Give up
-    return None
+        output = str(arr) # Give up
+    output += '\n'
+    if doprint:
+        print(output)
+        return None
+    else:
+        return output
     
 
 
