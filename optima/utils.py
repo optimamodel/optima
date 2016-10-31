@@ -106,7 +106,7 @@ def defaultrepr(obj, maxlen=55):
 
 
 
-def printarr(arr, arrformat='%0.2f  ', doprint=True):
+def printarr(arr, arrformat='%0.2f  '):
     """ 
     Print a numpy array nicely.
     
@@ -117,27 +117,23 @@ def printarr(arr, arrformat='%0.2f  ', doprint=True):
     
     Version: 2014dec01 by cliffk
     """
-    output = ''
     from numpy import ndim
     if ndim(arr)==1:
+        string = ''
         for i in range(len(arr)):
-            output += arrformat % arr[i]
+            string += arrformat % arr[i]
+        print(string)
     elif ndim(arr)==2:
         for i in range(len(arr)):
-            output += printarr(arr[i], arrformat, doprint=False)
+            printarr(arr[i], arrformat)
     elif ndim(arr)==3:
         for i in range(len(arr)):
-            output += '='*len(arr[i][0])*len(arrformat % 1)
+            print('='*len(arr[i][0])*len(arrformat % 1))
             for j in range(len(arr[i])):
-                output += printarr(arr[i][j], arrformat, doprint=False)
+                printarr(arr[i][j], arrformat)
     else:
-        output = str(arr) # Give up
-    output += '\n'
-    if doprint:
-        print(output)
-        return None
-    else:
-        return output
+        print(arr) # Give up
+    return None
     
 
 
@@ -1018,6 +1014,59 @@ class odict(OrderedDict):
 
 
 
+##############################################################################
+## DATA FRAME CLASS
+##############################################################################
+
+
+
+'''
+a = dataframe(['x','y'],[[1,2,3],[4,5,6]])
+a['x'] # [1,2,3]
+a[0] # [1,4]
+a['x',0] # 1
+a.cols() # ['x','y']
+a[0] = [5,6]
+a['y'] = [8,5,0]
+a['z'] = [14,14,14] # valid
+a[4] = [3,4,5] # not valid, out of index range
+'''
+
+
+from optima import odict, isnumber
+
+
+class dataframe(object):
+    def __init__(self, cols=None, data=None):
+        if cols is None: cols = list()
+        if data is None: data = list()
+        self._colnames = cols
+        self._data = array(data)
+        return None
+    
+    def __repr__(self):
+        outputlist = []
+        
+        
+        
+    
+    def __setitem__():
+    
+    def __getitem__():
+    
+    def __keys__():
+    
+    def addcol():
+    
+    def rmcol():
+    
+    def append():
+    
+    def pop():
+    
+
+from pylab import *; from optima import *
+a = dataframe(3,dtype=[('foo',float), ('bar',float)])
 
 
 
