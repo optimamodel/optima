@@ -1019,7 +1019,7 @@ class odict(OrderedDict):
 ##############################################################################
 
 # These are repeated to make this frationally more self-contained
-from numpy import array, vstack, hstack, matrix, argsort # analysis:ignore
+from numpy import array, zeros, vstack, hstack, matrix, argsort # analysis:ignore
 from numbers import Number # analysis:ignore
 
 class dataframe(object):
@@ -1047,7 +1047,7 @@ class dataframe(object):
 
     def __init__(self, cols=None, data=None):
         if cols is None: cols = list()
-        if data is None: data = list()
+        if data is None: data = zeros((len(cols),0))
         self.cols = cols
         self.data = array(data)
         return None
@@ -1062,16 +1062,17 @@ class dataframe(object):
             outputformats = dict()
             
             # Gather data
+            nrows = self.nrows()
             for c,col in enumerate(self.cols):
                 outputlist[col] = list()
                 maxlen = -1
-                for val in self.data[c,:]:
-                    output = str(val)
-                    maxlen = max(maxlen, len(output))
-                    outputlist[col].append(output)
+                if nrows:
+                    for val in self.data[c,:]:
+                        output = str(val)
+                        maxlen = max(maxlen, len(output))
+                        outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            nrows = self.nrows()
             if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY
             elif nrows<100:  indformat = '%3s'
             elif nrows<1000: indformat = '%4s'
@@ -1131,11 +1132,12 @@ class dataframe(object):
     
     def ncols(self):
         ''' Get the number of columns in the data frame '''
-        return self.data.shape[0]
+        return len(self.cols)
 
     def nrows(self):
         ''' Get the number of rows in the data frame '''
-        return self.data.shape[1]
+        try:    return self.data.shape[1]
+        except: return 0 # If it didn't work, probably because it's empty
     
     def addcol(self, key, value):
         ''' Add a new colun to the data frame -- for consistency only '''
@@ -1159,6 +1161,15 @@ class dataframe(object):
     def append(self, value):
         ''' Add a row to the end of the data frame '''
         self.data = hstack((self.data, array(matrix(value).transpose())))
+        return None
+    
+    def addrow(self, value):
+        ''' Alias for append '''
+        return self.append(value)
+    
+    def rmrow(self, key):
+        ''' Alias for pop '''
+        self.pop(key)
         return None
     
     def insert(self, row=0, value=None):

@@ -10,10 +10,7 @@ from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, f
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose
 from random import uniform
 
-# WARNING, this should not be hard-coded!!! Available from
-# [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
-# ...though would be nice to have an easier way!
-_coveragepars = ['numtx','numpmtct','numost','numcirc'] 
+# [par.coverage for par in P.pars().values() if hasattr(par,'coverage')]
 
 class Programset(object):
     """
@@ -25,126 +22,194 @@ class Programset(object):
         """ Initialize """
         self.name = name
         self.uid = uuid()
-        self.programs = odict()
-        if programs is not None: self.addprograms(programs)
-        self.defaultbudget = odict()
         self.created = today()
         self.modified = today()
         self.project = project # Store pointer for the project, if available
+        self.programs = odict()
+        self.covout = odict()
+        if programs is not None: self.addprograms(programs)
 
     def __repr__(self):
         """ Print out useful information"""
         output = defaultrepr(self)
         return output
-
     
-    def loadspreadsheet(self, filename, verbose=3):
-        """Load a spreadsheet with cost and coverage data and parametres for the cost functions""" 
-
-        ## Load data
-        data = loadprogramspreadsheet(filename)
-        data['years'] = array(data['years'])
-        npops = len(data['pops'])
-
-        ## Extract program names and check they match the ones in the progset
-        prognames = [key for key in data.keys() if key not in ['meta','years','pops']]
-        if set(prognames) != set(self.programs.keys()):
-            errormsg = 'The short names of the programs in the spreadsheet (%s) must match the short names of the programs in the progset (%s).' % (prognames, self.programs.keys())
-            raise OptimaException(errormsg)
+    def addprograms(self):
+        pass
         
-        ## Load data 
-        for prog in prognames:
-            self.programs[prog].targetpops = [data['pops'][tp] for tp in range(npops) if data[prog]['targetpops'][tp]] # Set target populations
-            self.programs[prog].costcovdata['cost'] = data[prog]['cost'] # Load cost data
-            self.programs[prog].costcovdata['coverage'] = data[prog]['coverage'] # Load coverage data
-            self.programs[prog].costcovdata['t'] = data['years']
-            
-            if self.programs[prog].optimizable():
-                # Creating CCOpars
-                self.programs[prog].costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
-                self.programs[prog].costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
-                for par in self.programs[prog].costcovpars.values():
-                    bestvalues, bestinds = sanitize(data[prog][par.short]['best'], returninds=True) # We use the best estimates to populate the low and high, and then later we overwrite if there are actual estimates provided
-                    bestyears = data['years'][bestinds]
-                    for estimate in ['best','low','high']:
-                        if len(bestinds): 
-                            par.t[estimate] = bestyears
-                            par.y[estimate] = bestvalues
-                        else:
-                            printv('No data for cost parameter "%s"' % (par.short), 3, verbose)
-                            par.y[estimate] = array([nan])
-                            par.t[estimate] = array([0.])
-                        if estimate != 'best': # Here we overwrite the range data, if provided -- WARNING, could simplify all of this substantially!
-                            rangevalues, rangeinds = sanitize(data[prog][par.short][estimate], returninds=True)
-                            rangeyears = data['years'][rangeinds]
-                            if not len(rangeinds): # If no data, use best estimates
-                                rangevalues = bestvalues
-                                rangeyears = bestyears
-                            addsingleccopar(self.programs[prog].costcovpars, parname=par.short, values=rangevalues, years=rangeyears, estimate=estimate, overwrite=True)
-                    
-        return None
-
-
+    def rmprograms(self):
+        pass
+        
+    def addcovout(self):
+        pass
+        
+    def defaultbudget(self):
+        pass
+        
+    def defaultcoverage(self):
+        pass
+        
+    def getcoverage(self):
+        pass
+        
+    def getoutcomes(self):
+        pass
+        
 
 
     
     
+
+class Program(object):
+    """
+    Defines a single program. 
+    Can be initialized with:
+    ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
+    targetpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]
+    targetpops, e.g. ['FSW','MSM']
+    """
+
+    def __init__(self, name=None, short=None, targetpars=None, targetpops=None, costcovpars=None, costcovdata=None, category=None):
+        """Initialize"""
+        self.short = short
+        self.name = name
+        self.uid = uuid()
+        if targetpars:
+            self.targetpars = targetpars
+        else: self.targetpars = []
+        self.targetpops = targetpops if targetpops else []
+        try:
+            self.targetpartypes = list(set([thispar['param'] for thispar in self.targetpars])) if self.targetpars else []
+        except:
+            print("Error while initializing targetpartypes in program %s for targetpars %s" % (short, self.targetpars))
+            self.targetpartypes = []
+        self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
+        self.category = category
+        self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
+        self.targetcomposition = targetcomposition
+        self.costcovpars = None
+        self.initialize_costcov(costcovpars)
+
+
+    def __repr__(self):
+        """ Print out useful info"""
+        output = defaultrepr(self)
+        output += '          Program name: %s\n'    % self.short
+        output += '  Targeted populations: %s\n'    % self.targetpops
+        output += '   Targeted parameters: %s\n'    % self.targetpars
+        output += '\n'
+        return output
     
-    def reconcile(self, parset=None, year=None, ind=0, objective='mape', maxiters=400, maxtime=None, uselimits=True, verbose=2, **kwargs):
-        """
-        A method for automatically reconciling coverage-outcome parameters with model parameters.
+    
+    
+def loadspreadsheet(self, filename, verbose=3):
+    """Load a spreadsheet with cost and coverage data and parametres for the cost functions""" 
+
+    ## Load data
+    data = loadprogramspreadsheet(filename)
+    data['years'] = array(data['years'])
+    npops = len(data['pops'])
+
+    ## Extract program names and check they match the ones in the progset
+    prognames = [key for key in data.keys() if key not in ['meta','years','pops']]
+    if set(prognames) != set(self.programs.keys()):
+        errormsg = 'The short names of the programs in the spreadsheet (%s) must match the short names of the programs in the progset (%s).' % (prognames, self.programs.keys())
+        raise OptimaException(errormsg)
+    
+    ## Load data 
+    for prog in prognames:
+        self.programs[prog].targetpops = [data['pops'][tp] for tp in range(npops) if data[prog]['targetpops'][tp]] # Set target populations
+        self.programs[prog].costcovdata['cost'] = data[prog]['cost'] # Load cost data
+        self.programs[prog].costcovdata['coverage'] = data[prog]['coverage'] # Load coverage data
+        self.programs[prog].costcovdata['t'] = data['years']
         
-        Example code to test:
-        
-        import optima as op
-        P = op.defaults.defaultproject('best')
-        P.progset().reconcile(year=2016, uselimits=False, verbose=4)
-        """
-        printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
-        
-        # Try defaults if none supplied
-        if not hasattr(self,'project'):
-            try: self.project = parset.project
-            except: raise OptimaException('Could not find a usable project')
+        if self.programs[prog].optimizable():
+            # Creating CCOpars
+            self.programs[prog].costcovpars['unitcost'] = CCOpar(short='unitcost',name='Unit cost',y=odict(),t=odict(), limits=(0,1e9)) # Load unit cost assumptions
+            self.programs[prog].costcovpars['saturation'] = CCOpar(short='saturation',name='Maximal attainable coverage',y=odict(),t=odict()) # Load unit cost assumptions
+            for par in self.programs[prog].costcovpars.values():
+                bestvalues, bestinds = sanitize(data[prog][par.short]['best'], returninds=True) # We use the best estimates to populate the low and high, and then later we overwrite if there are actual estimates provided
+                bestyears = data['years'][bestinds]
+                for estimate in ['best','low','high']:
+                    if len(bestinds): 
+                        par.t[estimate] = bestyears
+                        par.y[estimate] = bestvalues
+                    else:
+                        printv('No data for cost parameter "%s"' % (par.short), 3, verbose)
+                        par.y[estimate] = array([nan])
+                        par.t[estimate] = array([0.])
+                    if estimate != 'best': # Here we overwrite the range data, if provided -- WARNING, could simplify all of this substantially!
+                        rangevalues, rangeinds = sanitize(data[prog][par.short][estimate], returninds=True)
+                        rangeyears = data['years'][rangeinds]
+                        if not len(rangeinds): # If no data, use best estimates
+                            rangevalues = bestvalues
+                            rangeyears = bestyears
+                        addsingleccopar(self.programs[prog].costcovpars, parname=par.short, values=rangevalues, years=rangeyears, estimate=estimate, overwrite=True)
                 
-        if parset is None:
-            try: parset = self.project.parset()
-            except: raise OptimaException('Could not find a usable parset')
-        
-        # Initialise internal variables 
-        settings = self.getsettings()
-        origpardict = dcp(self.cco2odict(t=year))
-        pardict = dcp(origpardict)
-        pararray = dcp(pardict[:]) # Turn into array format
-        parmeans = pararray.mean(axis=1)
-        if uselimits: # Use user-specified limits
-            parlower = dcp(pararray[:,0])
-            parupper = dcp(pararray[:,1])
-        else: # Just use parameter limits
-            npars = len(parmeans)            
-            parlower = zeros(npars)
-            parupper = zeros(npars)
-            for k,tmp in enumerate(pardict.keys()):
-                parname = tmp[0] # First entry is parameter name
-                limits = convertlimits(parset.pars[0][parname].limits, dt=settings.dt)
-                parlower[k] = limits[0]
-                parupper[k] = limits[1]
-        if any(parupper<parlower): 
-            problemind = findinds(parupper<parlower)
-            errormsg = 'At least one lower limit is higher than one upper limit:\n%s %s' % (pardict.keys()[problemind], pardict[problemind])
-            raise OptimaException(errormsg)
-        
-        # Prepare inputs to optimization method
-        args = odict([('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('verbose',verbose)])
-        origmismatch = costfuncobjectivecalc(parmeans, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
-        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, MaxIter=maxiters, timelimit=maxtime, verbose=verbose, **kwargs)
-        currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
-        
-        # Wrap up
-        pardict[:] = replicatevec(parvecnew)
-        self.odict2cco(pardict,t=year) # Copy best values
-        printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
-        return None
+    return None
+
+
+
+
+
+    
+    
+    
+def reconcile(self, parset=None, year=None, ind=0, objective='mape', maxiters=400, maxtime=None, uselimits=True, verbose=2, **kwargs):
+    """
+    A method for automatically reconciling coverage-outcome parameters with model parameters.
+    
+    Example code to test:
+    
+    import optima as op
+    P = op.defaults.defaultproject('best')
+    P.progset().reconcile(year=2016, uselimits=False, verbose=4)
+    """
+    printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
+    
+    # Try defaults if none supplied
+    if not hasattr(self,'project'):
+        try: self.project = parset.project
+        except: raise OptimaException('Could not find a usable project')
+            
+    if parset is None:
+        try: parset = self.project.parset()
+        except: raise OptimaException('Could not find a usable parset')
+    
+    # Initialise internal variables 
+    settings = self.getsettings()
+    origpardict = dcp(self.cco2odict(t=year))
+    pardict = dcp(origpardict)
+    pararray = dcp(pardict[:]) # Turn into array format
+    parmeans = pararray.mean(axis=1)
+    if uselimits: # Use user-specified limits
+        parlower = dcp(pararray[:,0])
+        parupper = dcp(pararray[:,1])
+    else: # Just use parameter limits
+        npars = len(parmeans)            
+        parlower = zeros(npars)
+        parupper = zeros(npars)
+        for k,tmp in enumerate(pardict.keys()):
+            parname = tmp[0] # First entry is parameter name
+            limits = convertlimits(parset.pars[0][parname].limits, dt=settings.dt)
+            parlower[k] = limits[0]
+            parupper[k] = limits[1]
+    if any(parupper<parlower): 
+        problemind = findinds(parupper<parlower)
+        errormsg = 'At least one lower limit is higher than one upper limit:\n%s %s' % (pardict.keys()[problemind], pardict[problemind])
+        raise OptimaException(errormsg)
+    
+    # Prepare inputs to optimization method
+    args = odict([('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('verbose',verbose)])
+    origmismatch = costfuncobjectivecalc(parmeans, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
+    parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, MaxIter=maxiters, timelimit=maxtime, verbose=verbose, **kwargs)
+    currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
+    
+    # Wrap up
+    pardict[:] = replicatevec(parvecnew)
+    self.odict2cco(pardict,t=year) # Copy best values
+    printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
+    return None
         
     
 
@@ -175,48 +240,6 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
         printv('%45s | %30s | par: %s | budget: %s | mismatch: %s' % ((budgetparpair[0],budgetparpair[1])+sigfig([parval,budgetval,thismismatch],4)), 3, verbose)
     return mismatch
 
-
-
-class Program(object):
-    """
-    Defines a single program. 
-    Can be initialized with:
-    ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
-    targetpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]
-    targetpops, e.g. ['FSW','MSM']
-    """
-
-    def __init__(self, short, targetpars=None, targetpops=None, costcovpars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', name='', criteria=None, targetcomposition=None):
-        """Initialize"""
-        self.short = short
-        self.name = name
-        self.uid = uuid()
-        if targetpars:
-            self.targetpars = targetpars
-        else: self.targetpars = []
-        self.targetpops = targetpops if targetpops else []
-        try:
-            self.targetpartypes = list(set([thispar['param'] for thispar in self.targetpars])) if self.targetpars else []
-        except:
-            print("Error while initializing targetpartypes in program %s for targetpars %s" % (short, self.targetpars))
-            self.targetpartypes = []
-        self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
-        self.category = category
-        self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
-        self.targetcomposition = targetcomposition
-        self.costcovpars = None
-        self.initialize_costcov(costcovpars)
-
-
-    def __repr__(self):
-        """ Print out useful info"""
-        output = defaultrepr(self)
-        output += '          Program name: %s\n'    % self.short
-        output += '  Targeted populations: %s\n'    % self.targetpops
-        output += '   Targeted parameters: %s\n'    % self.targetpars
-        output += '\n'
-        return output
 
 
 
