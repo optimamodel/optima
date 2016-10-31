@@ -202,7 +202,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           {
             project: params,
             isSpreadsheet: isSpreadsheet,
-            isDeleteData: isDeleteData,
+            isDeleteData: true,
           });
         if (!isDeleteData) {
           responseType = null;
@@ -260,7 +260,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var originalPopulations = _.map($scope.projectInfo.populations, removeExtraFields);
         var isPopulationsSame = angular.equals(selectedPopulations, originalPopulations);
         if (isPopulationsSame) {
-          saveProject(true, false, false)
+          saveProject(true, false, true)
         } else {
           modalService.confirm(
               function() { saveProject(true, true, true) },

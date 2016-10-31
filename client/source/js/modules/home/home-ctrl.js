@@ -5,7 +5,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller(
     'ProjectOpenController',
     function ($scope, $http, activeProject, projects, modalService,
-        fileUpload, UserManager, projectApiService, $state, $upload, toastr) {
+        fileUpload, UserManager, projectApiService, $state, $upload,
+        $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
@@ -208,6 +209,76 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           })
           .click();
+      };
+
+      function openEditNameModal(
+         acceptName, title, message, name, errorMessage, invalidNames) {
+
+        var modalInstance = $modal.open({
+          templateUrl: 'js/modules/portfolio/portfolio-modal.html',
+          controller: [
+            '$scope', '$document',
+            function($scope, $document) {
+
+              $scope.name = name;
+              $scope.title = title;
+              $scope.message = message;
+              $scope.errorMessage = errorMessage;
+
+              $scope.checkBadForm = function(form) {
+                var isGoodName = !_.contains(invalidNames, $scope.name);
+                form.$setValidity("name", isGoodName);
+                return !isGoodName;
+              };
+
+              $scope.submit = function() {
+                acceptName($scope.name);
+                modalInstance.close();
+              };
+
+              function onKey(event) {
+                if (event.keyCode == 27) {
+                  return modalInstance.dismiss('ESC');
+                }
+              }
+
+              $document.on('keydown', onKey);
+              $scope.$on(
+                '$destroy',
+                function() { $document.off('keydown', onKey); });
+
+            }
+          ]
+        });
+
+        return modalInstance;
+      }
+
+      $scope.editProjectName = function(project) {
+        var otherNames = _.pluck($scope.projects, 'name');
+        otherNames = _.without(otherNames, project.name)
+        openEditNameModal(
+          function(name) {
+            project.name = name;
+            projectApiService
+              .updateProject(
+                project.id,
+                {
+                  project: project,
+                  isSpreadsheet: false,
+                  isDeleteData: false,
+                })
+              .success(function () {
+                project.name = name;
+                $state.reload()
+                toastr.success('Renamed project');
+              });
+          },
+          'Edit project name',
+          "Enter project name",
+          project.name,
+          "Name already exists",
+          otherNames);
       };
 
       /**
