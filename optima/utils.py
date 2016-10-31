@@ -1033,36 +1033,73 @@ a[4] = [3,4,5] # not valid, out of index range
 '''
 
 
-from optima import odict, isnumber
+
 
 
 class dataframe(object):
+
     def __init__(self, cols=None, data=None):
         if cols is None: cols = list()
         if data is None: data = list()
-        self._colnames = cols
+        self._cols = cols
         self._data = array(data)
         return None
     
-    def __repr__(self):
-        outputlist = []
+    def __repr__(self, spacing=2):
+        ''' spacing = space between columns '''
+        if not self._cols: # No keys, give up
+            return ''
+        
+        else: # Go for it
+            outputlist = dict()
+            outputformats = dict()
+            
+            # Gather data
+            for c,col in enumerate(self._cols):
+                outputlist[col] = list()
+                maxlen = -1
+                for val in self._data[c,:]:
+                    output = str(val)
+                    maxlen = max(maxlen, len(output))
+                    outputlist[col].append(output)
+                outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
+            
+            nrows = len(outputlist[self._cols[0]])
+            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY
+            elif nrows<100:  indformat = '%3s'
+            elif nrows<1000: indformat = '%4s'
+            else:            indformat = '%5s'
+            
+            # Assemble output
+            output = indformat % '' # Empty column for index
+            for col in self._cols: # Print out header
+                output += outputformats[col] % col
+            output += '\n'
+            
+            for ind in range(nrows): # WARNING, KLUDGY
+                output += indformat % str(ind)
+                for col in self._cols: # Print out data
+                    output += outputformats[col] % outputlist[col][ind]
+                output += '\n'
+            
+            return output
         
         
         
     
-    def __setitem__():
-    
-    def __getitem__():
-    
-    def __keys__():
-    
-    def addcol():
-    
-    def rmcol():
-    
-    def append():
-    
-    def pop():
+#    def __setitem__():
+#    
+#    def __getitem__():
+#    
+#    def __keys__():
+#    
+#    def addcol():
+#    
+#    def rmcol():
+#    
+#    def append():
+#    
+#    def pop():
     
 
 from pylab import *; from optima import *
