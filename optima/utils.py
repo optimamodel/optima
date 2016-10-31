@@ -1027,19 +1027,20 @@ class dataframe(object):
     A simple data frame, based on simple lists, for simply storing simple data.
     
     Example usage:
-        a = dataframe(['x','y'],[[1238,2,3],[0.04,5,6]])
-        print a['x']
-        print a[0]
-        print a['x',0]
-        a[0] = [5,6]; print a
-        a['y'] = [8,5,0]; print a
-        a['z'] = [14,14,14]; print a
-        a.rmcol('z'); print a
-        a.pop(1); print a
-        a.append([1,2]); print a
-        a.insert(1,[9,9]); print a
-        a.sort(); print a
-        a.sort('y'); print a
+        a = dataframe(['x','y'],[[1238,2,3],[0.04,5,6]]) # Create data frame
+        print a['x'] # Print out a column
+        print a[0] # Print out a row
+        print a['x',0] # Print out an element
+        a[0] = [5,6]; print a # Set values for a whole row
+        a['y'] = [8,5,0]; print a # Set values for a whole column
+        a['z'] = [14,14,14]; print a # Add new column
+        a.addcol('z', [14,14,14]); print a # Alternate way to add new column
+        a.rmcol('z'); print a # Remove a column
+        a.pop(1); print a # Remove a row
+        a.append([1,2]); print a # Append a new row
+        a.insert(1,[9,9]); print a # Insert a new row
+        a.sort(); print a # Sort by the first column
+        a.sort('y'); print a # Sort by the second column
     
     Version: 2016oct30
     '''
