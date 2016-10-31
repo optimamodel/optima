@@ -46,7 +46,7 @@ from .parse import get_default_program_summaries, \
     get_parameters_for_edit_program, get_parameters_for_outcomes, \
     get_parameters_from_parset, set_parameters_on_parset, \
     get_progset_from_project, get_populations_from_project, \
-    set_populations_on_project, set_project_summary_on_project, \
+    set_project_summary_on_project, \
     get_project_summary_from_project, get_parset_from_project, \
     get_parset_summaries, set_scenario_summaries_on_project, \
     get_scenario_summaries, get_parameters_for_scenarios, \
@@ -334,9 +334,17 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     project.created = datetime.now(dateutil.tz.tzutc())
     project.modified = datetime.now(dateutil.tz.tzutc())
     project.uid = project_entry.id
-    set_populations_on_project(project, project_summary["populations"])
-    project.data["years"] = (
-        project_summary['dataStart'], project_summary['dataEnd'])
+
+    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
+    project.data["pops"] = data_pops
+    project.data["npops"] = len(data_pops)
+
+    dataStart = project_summary['dataStart']
+    dataEnd = project_summary['dataEnd']
+    project.data["years"] = (dataStart, dataEnd)
+    project.settings.start = dataStart
+    project.settings.end = dataEnd
+
     project_entry.save_obj(project)
     db.session.commit()
 
@@ -361,13 +369,21 @@ def delete_projects(project_ids):
     db.session.commit()
 
 
-def update_project_followed_by_template_data_spreadsheet(project_id, project_summary):
+def update_project_from_summary(project_id, project_summary, is_delete_data):
     project_entry = load_project_record(project_id)
     project = project_entry.load()
-    set_project_summary_on_project(project, project_summary)
+
+    set_project_summary_on_project(project, project_summary, is_delete_data)
     project_entry.save_obj(project)
     db.session.add(project_entry)
     db.session.commit()
+
+    return project
+
+
+def update_project_followed_by_template_data_spreadsheet(
+        project_id, project_summary, is_delete_data):
+    project = update_project_from_summary(project_id, project_summary, is_delete_data)
 
     secure_project_name = secure_filename(project.name)
     new_project_template = secure_project_name

@@ -106,23 +106,31 @@ class Project(Resource):
         """
         return load_project_summary(project_id)
 
-    @swagger.operation(summary='Update a project')
+    @swagger.operation(summary='Update a project & download spreadsheet')
     def put(self, project_id):
         """
         PUT /api/project/<uuid:project_id>
         data-json: project_summary
         """
-        project_summary = get_post_data_json()
-        dirname, basename = update_project_followed_by_template_data_spreadsheet(
-            project_id, project_summary)
-        print("> Project template: %s" % basename)
-        response = helpers.send_from_directory(
-            dirname,
-            basename,
-            as_attachment=True,
-            attachment_filename=basename)
-        response.headers['X-project-id'] = project_id
-        return response
+        args = get_post_data_json()
+        project_summary = args['project']
+        is_spreadsheet = args['isSpreadsheet']
+        is_delete_data = args['isDeleteData']
+        print("> project" % project_summary)
+        if is_spreadsheet:
+            dirname, basename = update_project_followed_by_template_data_spreadsheet(
+                project_id, project_summary, is_delete_data)
+            print("> Project template: %s" % basename)
+            response = helpers.send_from_directory(
+                dirname,
+                basename,
+                as_attachment=True,
+                attachment_filename=basename)
+            response.headers['X-project-id'] = project_id
+            return response
+        else:
+            dataio.update_project_from_summary(project_id, project_summary, is_delete_data)
+            return 201
 
     @swagger.operation(summary='Delete project')
     def delete(self, project_id):

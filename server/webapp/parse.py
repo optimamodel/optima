@@ -120,7 +120,7 @@ def get_populations_from_project(project):
     return populations
 
 
-def set_populations_on_project(project, populations):
+def revert_populations_to_pop(populations):
     data_pops = op.odict()
 
     pprint(populations, indent=2)
@@ -134,25 +134,37 @@ def set_populations_on_project(project, populations):
         data_pops['female'].append(int(pop['female']))
         data_pops['age'].append((int(pop['age_from']), int(pop['age_to'])))
 
-    if project.data.get("pops") != data_pops:
+    return data_pops
+
+
+def set_project_summary_on_project(project, summary, is_delete_data):
+
+    print(">> Update project")
+
+    data_pops = revert_populations_to_pop(summary['populations'])
+
+    if is_delete_data:
+        print(">> Deleting project.data")
         # We need to delete the data here off the project?
         project.data = {}
+        project.progsets.clear()
+        project.parsets.clear()
+        project.scens.clear()
+        project.optims.clear()
 
     project.data["pops"] = data_pops
+    project.data["npops"] = len(data_pops)
 
-    project.data["npops"] = len(populations)
-
-
-def set_project_summary_on_project(project, summary):
-
-    set_populations_on_project(project, summary.get('populations', {}))
     project.name = summary["name"]
 
     if not project.settings:
         project.settings = op.Settings()
 
-    project.settings.start = summary["dataStart"]
-    project.settings.end = summary["dataEnd"]
+    dataStart = summary['dataStart']
+    dataEnd = summary['dataEnd']
+    project.data["years"] = (dataStart, dataEnd)
+    project.settings.start = dataStart
+    project.settings.end = dataEnd
 
 
 def is_progset_optimizable(progset):
