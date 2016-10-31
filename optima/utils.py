@@ -1018,36 +1018,42 @@ class odict(OrderedDict):
 ## DATA FRAME CLASS
 ##############################################################################
 
-
-
-'''
-a = dataframe(['x','y'],[[1,2,3],[4,5,6]])
-a['x'] # [1,2,3]
-a[0] # [1,4]
-a['x',0] # 1
-a.cols() # ['x','y']
-a[0] = [5,6]
-a['y'] = [8,5,0]
-a['z'] = [14,14,14] # valid
-a[4] = [3,4,5] # not valid, out of index range
-'''
-
-
-
-
+# These are repeated to make this frationally more self-contained
+from numpy import array, vstack, hstack, matrix, argsort # analysis:ignore
+from numbers import Number # analysis:ignore
 
 class dataframe(object):
+    '''
+    A simple data frame, based on simple lists, for simply storing simple data.
+    
+    Example usage:
+        a = dataframe(['x','y'],[[1238,2,3],[0.04,5,6]])
+        print a['x']
+        print a[0]
+        print a['x',0]
+        a[0] = [5,6]; print a
+        a['y'] = [8,5,0]; print a
+        a['z'] = [14,14,14]; print a
+        a.rmcol('z'); print a
+        a.pop(1); print a
+        a.append([1,2]); print a
+        a.insert(1,[9,9]); print a
+        a.sort(); print a
+        a.sort('y'); print a
+    
+    Version: 2016oct30
+    '''
 
     def __init__(self, cols=None, data=None):
         if cols is None: cols = list()
         if data is None: data = list()
-        self._cols = cols
-        self._data = array(data)
+        self.cols = cols
+        self.data = array(data)
         return None
     
     def __repr__(self, spacing=2):
         ''' spacing = space between columns '''
-        if not self._cols: # No keys, give up
+        if not self.cols: # No keys, give up
             return ''
         
         else: # Go for it
@@ -1055,16 +1061,16 @@ class dataframe(object):
             outputformats = dict()
             
             # Gather data
-            for c,col in enumerate(self._cols):
+            for c,col in enumerate(self.cols):
                 outputlist[col] = list()
                 maxlen = -1
-                for val in self._data[c,:]:
+                for val in self.data[c,:]:
                     output = str(val)
                     maxlen = max(maxlen, len(output))
                     outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            nrows = len(outputlist[self._cols[0]])
+            nrows = self.nrows()
             if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY
             elif nrows<100:  indformat = '%3s'
             elif nrows<1000: indformat = '%4s'
@@ -1072,38 +1078,102 @@ class dataframe(object):
             
             # Assemble output
             output = indformat % '' # Empty column for index
-            for col in self._cols: # Print out header
+            for col in self.cols: # Print out header
                 output += outputformats[col] % col
             output += '\n'
             
             for ind in range(nrows): # WARNING, KLUDGY
                 output += indformat % str(ind)
-                for col in self._cols: # Print out data
+                for col in self.cols: # Print out data
                     output += outputformats[col] % outputlist[col][ind]
                 output += '\n'
             
             return output
         
         
+    def __getitem__(self, key):
+        if isinstance(key, (str, unicode)):
+            colindex = self.cols.index(key)
+            output = self.data[colindex,:]
+        elif isinstance(key, Number):
+            rowindex = int(key)
+            output = self.data[:,rowindex]
+        elif isinstance(key, tuple):
+            colindex = self.cols.index(key[0])
+            rowindex = int(key[1])
+            output = self.data[colindex,rowindex]
+        return output
         
+        
+    def __setitem__(self, key, value):
+        if isinstance(key, (str, unicode)):
+            if len(value) != self.nrows(): 
+                raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows()))
+            try:
+                colindex = self.cols.index(key)
+                self.data[colindex,:] = value
+            except:
+                self.cols.append(key)
+                colindex = self.cols.index(key)
+                self.data = vstack((self.data, array(value)))
+        elif isinstance(key, Number):
+            if len(value) != self.ncols(): 
+                raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols()))
+            rowindex = int(key)
+            self.data[:,rowindex] = value
+        elif isinstance(key, tuple):
+            colindex = self.cols.index(key[0])
+            rowindex = int(key[1])
+            self.data[colindex,rowindex] = value
+        return None
     
-#    def __setitem__():
-#    
-#    def __getitem__():
-#    
-#    def __keys__():
-#    
-#    def addcol():
-#    
-#    def rmcol():
-#    
-#    def append():
-#    
-#    def pop():
     
+    def ncols(self):
+        ''' Get the number of columns in the data frame '''
+        return self.data.shape[0]
 
-from pylab import *; from optima import *
-a = dataframe(3,dtype=[('foo',float), ('bar',float)])
+    def nrows(self):
+        ''' Get the number of rows in the data frame '''
+        return self.data.shape[1]
+    
+    def addcol(self, key, value):
+        ''' Add a new colun to the data frame -- for consistency only '''
+        self.__setitem__(key, value)
+    
+    def rmcol(self, key):
+        ''' Remove a column from the data frame '''
+        colindex = self.cols.index(key)
+        self.cols.pop(colindex)
+        thiscol = self.data[colindex,:]
+        self.data = vstack((self.data[:colindex,:], self.data[colindex+1:,:]))
+        return thiscol
+    
+    def pop(self, key):
+        ''' Remove a row from the data frame '''
+        rowindex = int(key)
+        thisrow = self.data[:,rowindex]
+        self.data = hstack((self.data[:,:rowindex], self.data[:,rowindex+1:]))
+        return thisrow
+    
+    def append(self, value):
+        ''' Add a row to the end of the data frame '''
+        self.data = hstack((self.data, array(matrix(value).transpose())))
+        return None
+    
+    def insert(self, row=0, value=None):
+        ''' Insert a row at the specified location '''
+        rowindex = int(row)
+        self.data = hstack((self.data[:,:rowindex], array(matrix(value).transpose()), self.data[:,rowindex:]))
+        return None
+    
+    def sort(self, col=None, reverse=False):
+        ''' Sort the data frame by the specified column '''
+        if col is None: colindex = 0
+        else: colindex = self.cols.index(col)
+        sortorder = argsort(self.data[colindex,:])
+        if reverse: sortorder = array(list(reversed(sortorder)))
+        self.data = self.data[:,sortorder]
+        return None
 
 
 
