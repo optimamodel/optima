@@ -37,14 +37,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           console.log('parsets', parsets);
           if (parsets) {
             $scope.parsets = parsets;
-            var parsetsByDate = _.sortBy(parsets, function(p) {
-              return new Date(p.updated);
-            });
-            var iLast = parsetsByDate.length - 1;
-            $scope.state.parset = parsetsByDate[iLast];
+            $scope.state.parset = getMostRecentItem(parsets, 'updated');
             $scope.setActiveParset();
           }
         });
+    }
+
+    function getMostRecentItem(aList, datetimeProp) {
+      var aListByDate = _.sortBy(aList, function(item) {
+        return new Date(item[datetimeProp]);
+      });
+      var iLast = aListByDate.length - 1;
+      return aListByDate[iLast];
     }
 
     function getSelectors() {
