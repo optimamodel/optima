@@ -598,7 +598,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 elif tostate in usvl: # Probability of becoming unsuppressed
                     thistransit[fromstate][prob][ts] *= usvlprob
 
-
         # Check that probabilities all sum to 1
         if debug and not all([(abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
             wrongstatesindices = [j for j in range(nstates) if not (abs(thistransit[j][prob].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all()]
