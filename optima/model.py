@@ -70,6 +70,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     freqvlmon       = 1.-exp(-dt*simpars['freqvlmon'])                    # Probability of getting virally monitored in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
     leavecare       = simpars['leavecare']*dt                             # Proportion of people lost to follow-up per year
+    aidsleavecare   = simpars['aidsleavecare']*dt                         # Proportion of people with AIDS being lost to follow-up per year
         
     # Disease state indices
     susreg          = settings.susreg               # Susceptible, regular
@@ -559,13 +560,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     thistransit[fromstate][prob][ts] *= careprob
 
         # Care/USVL/SVL to lost
-        lossprob = leavecare[:,t] if isnan(propcare[t]) else 0.
-        for fromstate in allcare:
+        if isnan(propcare[t]):
+            lossprob = [leavecare[:,t]]*ncd4 
+            for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
+        else: lossprob = zeros(ncd4)
+        for cd4, fromstate in enumerate(allcare):
             for ts, tostate in enumerate(thistransit[fromstate][to]):
                 if tostate in allcare: # Probability of not being lost and remaining in care
-                    thistransit[fromstate][prob][ts] *= (1.-lossprob)
+                    thistransit[fromstate][prob][ts] *= (1.-lossprob[cd4%ncd4])
                 else: # Probability of being lost
-                    thistransit[fromstate][prob][ts] *= lossprob
+                    thistransit[fromstate][prob][ts] *= lossprob[cd4%ncd4]
     
         # Lost to care
         careprob = linktocare[:,t] if isnan(propcare[t]) else 0.
