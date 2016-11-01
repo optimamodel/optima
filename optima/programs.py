@@ -129,6 +129,30 @@ class Programset(object):
         return None
 
 
+    def compareoutcomes(self, parset=None, year=None, ind=0, doprint=False):
+        """ For every parameter affected by a program, return a list comparing the default parameter values with the budget ones """
+        outcomes = self.getoutcomes(year=year, parset=parset, ind=ind)
+        comparison = list()
+        maxnamelen = 0
+        maxkeylen = 0
+        for key1 in outcomes.keys():
+            for key2 in outcomes[key1].keys():
+                name = parset.pars[ind][key1].name
+                maxnamelen = max(len(name),maxnamelen)
+                maxkeylen = max(len(str(key2)),maxkeylen)
+                parvalue = parset.pars[ind][key1].interp(tvec=year, asarray=False)[key2]
+                budgetvalue = outcomes[key1][key2] 
+                if budgetvalue is not None: comparison.append([name, key2, parvalue[0], budgetvalue[0]])
+                else: comparison.append([name, key2, parvalue[0], None])
+        
+        if doprint:
+            for item in comparison:
+                strctrl = '%%%is | %%%is | Par: %%8s | Budget: %%8s' % (maxnamelen, maxkeylen)
+                print(strctrl % (item[0], item[1], sigfig(item[2]), sigfig(item[3])))
+                
+        return comparison
+    
+    
     
     
 
@@ -211,6 +235,10 @@ class Covout(object):
         self.zerocov = zerocov
         self.fullcov = fullcov
         self.progs = odict(progs) # Allows for None, creating an empty odict
+    
+    def __repr__(self):
+        return defaultrepr(self)
+        
 
     
     

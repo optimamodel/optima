@@ -922,7 +922,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     
     # Get caption & scatter data 
     caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
-    costdata = dcp(program.costcovdata['cost']) if program.costcovdata.get('cost') else []
+    costdata = dcp(program.costcovdata['cost'])
 
     # Make x data... 
     if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):

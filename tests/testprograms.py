@@ -154,7 +154,7 @@ if 'demonstrateprogrammethods' in tests:
 
 ## Try program plotting
 if 'plotprogram' in tests:
-    from optima import plotcoverage
+    from optima import plotcostcov
     P = defaults.defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
     progs = P.progs()
@@ -170,7 +170,7 @@ if 'plotprogram' in tests:
     plotoptions['perperson'] = False
 
     if doplot:
-        plotcoverage(program=HTC, year=[2014,2015], parset=P.parsets['default'], plotoptions=plotoptions, doplot=doplot)
+        plotcostcov(program=HTC, year=[2014,2015], parset=P.parsets['default'], plotoptions=plotoptions, doplot=doplot)
 
 
 
