@@ -5,7 +5,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller(
     'ProjectOpenController',
     function ($scope, $http, activeProject, projects, modalService,
-        fileUpload, UserManager, projectApiService, $state, $upload, toastr) {
+        fileUpload, UserManager, projectApiService, $state, $upload,
+              renameModalService,
+        $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
@@ -208,6 +210,33 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           })
           .click();
+      };
+
+      $scope.editProjectName = function(project) {
+        var otherNames = _.pluck($scope.projects, 'name');
+        otherNames = _.without(otherNames, project.name)
+        renameModalService.openEditNameModal(
+          function(name) {
+            project.name = name;
+            projectApiService
+              .updateProject(
+                project.id,
+                {
+                  project: project,
+                  isSpreadsheet: false,
+                  isDeleteData: false,
+                })
+              .success(function () {
+                project.name = name;
+                toastr.success('Renamed project');
+                $state.reload();
+              });
+          },
+          'Edit project name',
+          "Enter project name",
+          project.name,
+          "Name already exists",
+          otherNames);
       };
 
       /**
