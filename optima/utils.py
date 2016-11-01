@@ -1057,7 +1057,7 @@ class dataframe(object):
         if cols is None: cols = list()
         if data is None: data = zeros((len(cols),0))
         self.cols = cols
-        self.data = array(data)
+        self.data = array(data, dtype=object)
         return None
     
     def __repr__(self, spacing=2):
@@ -1102,18 +1102,16 @@ class dataframe(object):
     
     def _val2row(self, value):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
-        if isinstance(value, type(array([]))): # It's already an array
-            return value
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             output = zeros(self.ncols())
             for c,col in enumerate(self.cols):
                 try: 
                     output[c] = value[col]
                 except: 
                     raise Exception('Entry for column %s not found; keys you supplied are: %s' % (col, value.keys()))
-            return output
+            return array(output, dtype=object)
         else: # Not sure what it is, just make it an array
-            return array(value)
+            return array(value, dtype=object)
     
     def _sanitizecol(self, col):
         ''' Take None or a string and return the index of the column '''
@@ -1145,7 +1143,7 @@ class dataframe(object):
             except:
                 self.cols.append(key)
                 colindex = self.cols.index(key)
-                self.data = vstack((self.data, array(value)))
+                self.data = vstack((self.data, array(value, dtype=object)))
         elif isinstance(key, Number):
             value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols(): 
@@ -1191,7 +1189,7 @@ class dataframe(object):
     def append(self, value):
         ''' Add a row to the end of the data frame '''
         value = self._val2row(value) # Make sure it's in the correct format
-        self.data = hstack((self.data, array(matrix(value).transpose())))
+        self.data = hstack((self.data, array(matrix(value).transpose(), dtype=object)))
         return None
     
     def addrow(self, value, overwrite=True, col=None, reverse=False):
@@ -1219,7 +1217,7 @@ class dataframe(object):
         ''' Insert a row at the specified location '''
         rowindex = int(row)
         value = self._val2row(value) # Make sure it's in the correct format
-        self.data = hstack((self.data[:,:rowindex], array(matrix(value).transpose()), self.data[:,rowindex:]))
+        self.data = hstack((self.data[:,:rowindex], array(matrix(value).transpose(), dtype=object), self.data[:,rowindex:]))
         return None
     
     def sort(self, col=None, reverse=False):
