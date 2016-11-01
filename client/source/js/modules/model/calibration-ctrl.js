@@ -34,12 +34,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .get('/api/project/' + project.id + '/parsets')
         .success(function(response) {
           var parsets = response.parsets;
+          console.log('parsets', parsets);
           if (parsets) {
             $scope.parsets = parsets;
-            $scope.state.parset = parsets[0];
+            $scope.state.parset = getMostRecentItem(parsets, 'updated');
             $scope.setActiveParset();
           }
         });
+    }
+
+    function getMostRecentItem(aList, datetimeProp) {
+      var aListByDate = _.sortBy(aList, function(item) {
+        return new Date(item[datetimeProp]);
+      });
+      var iLast = aListByDate.length - 1;
+      return aListByDate[iLast];
     }
 
     function getSelectors() {
@@ -61,7 +70,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function loadParametersAndGraphs(response) {
-      console.log(response);
+      console.log("loaded response", response);
       $scope.graphs = response.graphs;
       $scope.parameters = angular.copy(response.parameters);
     }
@@ -71,7 +80,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     $scope.getCalibrationGraphs = function() {
-      console.log('current parset', $scope.state.parset.id);
+      console.log('active parset id', $scope.state.parset.id);
       $http
         .get(
           '/api/project/' + project.id
@@ -317,7 +326,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ($scope.state.parset.id) {
 
         globalPoller.stopPolls();
-        console.log('check parset autofit calc status parset', $scope.state.parset.id);
 
         $scope.state.isRunnable = false;
         $http

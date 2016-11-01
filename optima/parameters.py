@@ -51,7 +51,8 @@ Condom use for casual acts	Percentage of people who used a condom at last act wi
 Condom use for commercial acts	Percentage of people who used a condom at last act with commercial partners	condcom	condomcom	(0, 1)	pship	timepar	meta	other	0	0	1	random	1
 Average time taken to be linked to care (years)	Average time taken to be linked to care (years)	linktocare	linktocare	(0, 'maxduration')	pop	timepar	meta	cascade	1	0	1	random	1
 Viral load monitoring (number/year)	Viral load monitoring (number/year)	freqvlmon	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random	1
-People in care lost to follow-up (per year)	Percentage of people in care who are lost to follow-up per year (%/year)	leavecare	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random	1
+Loss to follow-up rate (per year)	Percentage of people in care who are lost to follow-up per year (%/year)	leavecare	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random	1
+AIDS loss to follow-up rate (per year)	Percentage of people with CD4<200 lost to follow-up (%/year)	aidsleavecare	aidsleavecare	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random	1
 PLHIV aware of their status	None	propdx	propdx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
 Diagnosed PLHIV in care	None	propcare	propcare	(0, 1)	tot	timepar	no	other	1	0	1	None	0
 PLHIV in care on treatment	None	proptx	proptx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
