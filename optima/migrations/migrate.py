@@ -2,6 +2,16 @@ import optima as op
 from numpy import nan, concatenate as cat
 
 
+def addparameter(project=None, copyfrom=None, short=None, name=None):
+    ''' Function for adding a new parameter to a project -- used by several migrations '''
+    for ps in project.parsets.values():
+        for i in range(len(ps.pars)):
+            ps.pars[i][short] = op.dcp(project.pars()[copyfrom])
+            ps.pars[i][short].name = name
+            ps.pars[i][short].short = short
+    project.data[short] = [[nan]*len(project.data['years'])]
+
+
 def versiontostr(project, **kwargs):
     """
     Convert Optima version number from number to string.
@@ -47,12 +57,7 @@ def addproppmtct(project, **kwargs):
     """
     Migration between Optima 2.0.3 and 2.0.4.
     """
-    for ps in project.parsets.values():
-        for i in range(len(ps.pars)):
-            ps.pars[i]['proppmtct'] = op.dcp(project.pars()['proptx'])
-            ps.pars[i]['proppmtct'].name = 'Pregnant women and mothers on PMTCT'
-            ps.pars[i]['proppmtct'].short = 'proppmtct'
-    project.data['proppmtct'] = [[nan]*len(project.data['years'])]
+    addparameter(project=project, copyfrom='proptx', short='proppmtct', name='Pregnant women and mothers on PMTCT')
     project.version = "2.0.4"
     return None
 
@@ -208,6 +213,7 @@ def removenumcircdata(project, **kwargs):
     project.version = "2.1.3"
     return None
 
+
 def removepopcharacteristicsdata(project, **kwargs):
     """
     Migration between Optima 2.1.3 and 2.1.4.
@@ -217,7 +223,13 @@ def removepopcharacteristicsdata(project, **kwargs):
     project.version = "2.1.4"
     return None
 
-
+def addaidsleavecare(project, **kwargs):
+    """
+    Migration between Optima 2.1.4 and 2.1.5.
+    """
+    addparameter(project=project, copyfrom='leavecare', short='aidsleavecare', name='Percentage of people with CD4<200 lost to follow-up (%/year)')
+    project.version = "2.1.5"
+    return None
 
 migrations = {
 '2.0':   versiontostr,
@@ -230,6 +242,7 @@ migrations = {
 '2.1.1': addalleverincare,
 '2.1.2': removenumcircdata,
 '2.1.3': removepopcharacteristicsdata,
+'2.1.4': addaidsleavecare,
 }
 
 
