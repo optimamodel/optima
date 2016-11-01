@@ -190,38 +190,35 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .value();
     }
 
-    function submit() {
-      var populations = getSelectedPopulations();
-      var params, promise;
-      if ($scope.editParams.isEdit) {
-        params = angular.copy($scope.projectParams);
-        params.populations = populations;
+    function saveProject(isUpdate, isDeleteData, isSpreadsheet) {
+      console.log('isUpdate', isUpdate, 'isDeleteData', isDeleteData, 'isSpreadsheet', isSpreadsheet)
+      var params = angular.copy($scope.projectParams);
+      params.populations = getSelectedPopulations();
+      var promise;
+      var responseType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      if (isUpdate) {
         promise = projectApiService.updateProject(
-            $scope.projectInfo.id, params);
+          $scope.projectInfo.id,
+          {
+            project: params,
+            isSpreadsheet: isSpreadsheet,
+            isDeleteData: true,
+          });
       } else {
-        params = angular.copy($scope.projectParams);
-        params.populations = populations;
         promise = projectApiService.createProject(params);
       }
       promise
-        .success(function (response, status, headers, config) {
-          var newProjectId = headers()['x-project-id'];
-          var blob = new Blob(
-              [response],
-              { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-          saveAs(blob, ($scope.projectParams.name + '.xlsx'));
-          // update active project
-          activeProject.setActiveProjectFor(
-              $scope.projectParams.name, newProjectId, UserManager.data);
+        .success(function (response, status, headers) {
+          if (responseType) {
+            var blob = new Blob([response], {type: responseType});
+            saveAs(blob, ($scope.projectParams.name + '.xlsx'));
+            var newProjectId = headers()['x-project-id'];
+            activeProject.setActiveProjectFor(
+                $scope.projectParams.name, newProjectId, UserManager.data);
+          }
           $state.go('home');
         });
     }
-
-    function consoleLogJson(name, val) {
-      console.log(name + ' = ');
-      console.log(JSON.stringify(val, null, 2));
-    }
-
 
     $scope.prepareCreateOrEditForm = function () {
       var errors = [];
@@ -256,39 +253,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       if ($state.current.name == "project.edit") {
-        var selectedPopulations = _.map(
-          getSelectedPopulations(), removeExtraFields);
-        var originalPopulations = _.map(
-          $scope.projectInfo.populations, removeExtraFields);
-        var message;
-        if (!angular.equals(selectedPopulations, originalPopulations)) {
-          $scope.editParams.canUpdate =
-              $scope.populations.length == $scope.projectInfo.populations.length;
-          message = 'You have made changes to populations. All existing data will be lost. Would you like to continue?';
-          if ($scope.editParams.canUpdate) {
-            message = 'You have changed some population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
-          }
+        var selectedPopulations = _.map(getSelectedPopulations(), removeExtraFields);
+        var originalPopulations = _.map($scope.projectInfo.populations, removeExtraFields);
+        var isPopulationsSame = angular.equals(selectedPopulations, originalPopulations);
+        if (isPopulationsSame) {
+          saveProject(true, false, true)
+        } else {
           modalService.confirm(
-              submit,
+              function() { saveProject(true, true, true) },
               function() {},
               'Yes, save this project',
               'No',
-              message,
+              'You have made changes to populations. All existing data will be lost. Would you like to continue?',
               'Save Project?'
-          );
-        } else {
-          message = 'No parameters have been changed. Do you intend to reload the original data and start from scratch?';
-          modalService.confirm(
-              submit,
-              function() {},
-              'Yes, reload this project',
-              'No',
-              message,
-              'Reload project?'
           );
         }
       } else {
-        submit();
+        // Create new project
+        saveProject(false, false, true);
       }
     };
 

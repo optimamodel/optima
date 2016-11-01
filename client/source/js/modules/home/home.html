@@ -94,8 +94,12 @@
         <td>
           <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
         </td>
+
         <td>
-          <button class="btn" ng-click="edit(project.name, project.id)">Edit</button>
+          <button class="btn" ng-click="editProjectName(project)">Rename</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>
         </td>
         <td>
           <button class="btn" ng-click="getData(project.name, project.id)">Download</button>

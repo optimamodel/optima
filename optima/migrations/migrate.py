@@ -1,5 +1,19 @@
 import optima as op
-from numpy import nan, concatenate as cat
+from numpy import nan, concatenate as cat, array
+
+
+def addparameter(project=None, copyfrom=None, short=None, **kwargs):
+    ''' 
+    Function for adding a new parameter to a project -- used by several migrations.
+    Use kwargs to arbitrarily specify the new parameter's properties.
+    '''
+    for ps in project.parsets.values():
+        for i in range(len(ps.pars)):
+            ps.pars[i][short] = op.dcp(project.pars()[copyfrom])
+            ps.pars[i][short].short = short
+            for kwargkey,kwargval in kwargs.items():
+                setattr(ps.pars[i][short], kwargkey, kwargval)
+    project.data[short] = [[nan]*len(project.data['years'])]
 
 
 def versiontostr(project, **kwargs):
@@ -47,12 +61,7 @@ def addproppmtct(project, **kwargs):
     """
     Migration between Optima 2.0.3 and 2.0.4.
     """
-    for ps in project.parsets.values():
-        for i in range(len(ps.pars)):
-            ps.pars[i]['proppmtct'] = op.dcp(project.pars()['proptx'])
-            ps.pars[i]['proppmtct'].name = 'Pregnant women and mothers on PMTCT'
-            ps.pars[i]['proppmtct'].short = 'proppmtct'
-    project.data['proppmtct'] = [[nan]*len(project.data['years'])]
+    addparameter(project=project, copyfrom='proptx', short='proppmtct', name='Pregnant women and mothers on PMTCT')
     project.version = "2.0.4"
     return None
 
@@ -62,7 +71,7 @@ def redotransitions(project, dorun=False, **kwargs):
     Migration between Optima 2.0.4 and 2.1
     """
     from numpy import concatenate as cat
-    from optima import Constant, loadtranstable, Par
+    from optima import Constant, loadtranstable
 
     # Update settings
     project.settings.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
@@ -77,10 +86,7 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nhealth = len(project.settings.healthstates)
     project.settings.transnorm = 0.6 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
 
-    usedcascade = False
-    if hasattr(project.settings, 'usecascade'):
-        usedcascade = project.settings.usecascade
-        del project.settings.usecascade
+    if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
     if hasattr(project.settings, 'off'):        del project.settings.off
 
@@ -169,16 +175,6 @@ def redotransitions(project, dorun=False, **kwargs):
             for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']:
                 pd[key].y = 1./pd[key].y # Invert
             
-            # Make sure viral suppression isn't zero
-            if not usedcascade: 
-                pd['propsupp'].y['tot'][0] = 0.6 # Pick a reasonable value for viral suppression
-                pd['propsupp'].t['tot'][0] = 2000.
-            
-            # Add `fromdata` field
-            for key in pd.keys():
-                if isinstance(pd[key],Par):
-                    pd[key].fromdata = True # WARNING, this should be fixed
-            
 
         # Rerun calibrations to update results appropriately
         if dorun: project.runsim(ps.name)
@@ -221,6 +217,7 @@ def removenumcircdata(project, **kwargs):
     project.version = "2.1.3"
     return None
 
+
 def removepopcharacteristicsdata(project, **kwargs):
     """
     Migration between Optima 2.1.3 and 2.1.4.
@@ -230,13 +227,28 @@ def removepopcharacteristicsdata(project, **kwargs):
     project.version = "2.1.4"
     return None
 
+def addaidsleavecare(project, **kwargs):
+    """
+    Migration between Optima 2.1.4 and 2.1.5.
+    """
+    short = 'aidsleavecare'
+    copyfrom = 'leavecare'
+    kwargs['by'] = 'tot'
+    kwargs['name'] = 'AIDS loss to follow-up rate (per year)'
+    kwargs['dataname'] = 'Percentage of people with CD4<200 lost to follow-up (%/year)'
+    kwargs['datashort'] = 'aidsleavecare'
+    kwargs['t'] = op.odict([('tot',array([2000.]))])
+    kwargs['y'] = op.odict([('tot',array([0.01]))])
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    project.version = "2.1.5"
+    return None
+
 
 def CCOdictstopars(project, **kwargs):
     """
-    Migration between Optima 2.1.4 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.5 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     raise Exception('NOT IMPLEMENTED')
-
 
 migrations = {
 '2.0':   versiontostr,
@@ -249,7 +261,8 @@ migrations = {
 '2.1.1': addalleverincare,
 '2.1.2': removenumcircdata,
 '2.1.3': removepopcharacteristicsdata,
-'2.1.4': CCOdictstopars,
+'2.1.4': addaidsleavecare,
+'2.1.5': CCOdictstopars,
 }
 
 
