@@ -45,9 +45,6 @@ class Programset(object):
                 raise OptimaException(errormsg)
             self.programs[program.short] = program
             printv('Added program "%s" to programset "%s"' % (program.short, self.name), 3, verbose)
-        else:
-            errormsg = 'Must supply either a single program or a list of programs, not object of type %s' % type(programs)
-            raise OptimaException(errormsg)
         return None
         
     def rmprograms(self, programs=None):
@@ -57,8 +54,10 @@ class Programset(object):
             self.programs.pop(program)
         return None
         
-    def addcovoutpar(self):
-        pass
+    def addcovoutpar(self, par=None, key=None, covoutpar=None, overwrite=True, verbose=2):
+        self.costcovpars.addrow(covoutpar, overwrite=overwrite)
+        printv('Added coverage-outcome parameter: %s' % covoutpar, 4, verbose)
+        return None
         
     def defaultbudget(self):
         pass
@@ -116,20 +115,22 @@ class Program(object):
     
     
     def addcostcovpar(self, costcovpar=None, overwrite=False, verbose=2):
+        self.costcovpars.addrow(costcovpar, overwrite=overwrite)
+        printv('Added cost-coverage parameter: %s' % costcovpar, 4, verbose)
         pass
     
     
-    def getcostcovpar(self, t=None, sample='best', verbose=2):
+    def getcostcovpar():#self, year=None, sample='best', verbose=2):
         pass
     
     
     def addcostcovdata(self, costcovdata=None, overwrite=False, verbose=2):
         self.costcovdata.addrow(costcovdata, overwrite=overwrite)
-        printv('Added costcov data point: %s' % costcovdata, 4, verbose)
+        printv('Added cost-coverage data point: %s' % costcovdata, 4, verbose)
         return None
     
     
-    def rmcostcovdata(self, year=None, verbose=2):
+    def rmcostcovdata():#self, year=None, verbose=2):
         pass
 
     
