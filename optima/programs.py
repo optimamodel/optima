@@ -55,11 +55,15 @@ class Programset(object):
         return None
         
     def addcovoutpar(self, parname=None, popname=None, covoutpar=None, verbose=2):
-        zerocov = covoutpar.pop('zerocov') # Pull out the value at zero coverage
-        fullcov = covoutpar.pop('fullcov') # Pull out the value at full coverage
+        try:
+            zerocov = covoutpar.pop('zerocov') # Pull out the value at zero coverage
+            fullcov = covoutpar.pop('fullcov') # Pull out the value at full coverage
+        except:
+            errormsg = 'Covout parameter must be dict with keys zerocov and fullcov at minimum; yours is:\n%s' % covoutpar
+            raise OptimaException(errormsg)
         for key in covoutpar.keys(): # Check that all remaining keys are valid
             if key not in self.programs.keys():
-                errormsg = 'Program key %s not found; available keys are:\n%s' % (key, self.programs.keys())
+                errormsg = 'Program key "%s" not found; available keys are:\n%s' % (key, self.programs.keys())
                 raise OptimaException(errormsg)
         key = (parname, popname) # For a dict key, make a tuple from the parameter name and the population name
         self.covout[key] = Covout(parname=parname, popname=popname, zerocov=zerocov, fullcov=fullcov, progs=covoutpar) # Everything remaining is the programs

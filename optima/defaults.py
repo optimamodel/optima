@@ -324,17 +324,14 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
             R.addcovoutpar('condcas', ('F 15+', 'M 15+'),  {'zerocov': (0.3,0.35), 'fullcov': 0.95, 'Condoms':(0.45,0.50)})
             R.addcovoutpar('condcas', ('F 15+', 'PWID'),   {'zerocov': (0.15,0.2), 'fullcov': 0.95, 'Condoms':(0.35,0.45)})
             R.addcovoutpar('condcas', ('MSM', 'MSM'),      {'zerocov': (0.1,0.15), 'fullcov': 0.95, 'Condoms':(0.55,0.65)})
-        
-            R.addcovoutpar('condcom', ('Clients', 'FSW'), {'zerocov': (0.3,0.35), 'year': 2016.0, 'FSW programs':(0.9,0.95)})
-        
-            R.addcovoutpar('hivtest', 'FSW', {'zerocov': (0.30,0.40), 'year': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
-            R.addcovoutpar('hivtest', 'Clients', {'zerocov': (0.10,0.15), 'year': 2016.0, 'HTC': (0.40,0.60)})
-            R.addcovoutpar('hivtest', 'M 15+', {'zerocov': (0.01,0.02), 'year': 2016.0, 'HTC': (0.20,0.30)})
-            R.addcovoutpar('hivtest', 'F 15+', {'zerocov': (0.01,0.02), 'year': 2016.0, 'HTC': (0.20,0.30)})
-            R.addcovoutpar('hivtest', 'PWID', {'zerocov': (0.10,0.15), 'year': 2016.0, 'HTC': (0.80,0.90)})
-            R.addcovoutpar('hivtest', 'MSM', {'zerocov': (0.12,0.20), 'year': 2016.0, 'HTC': (0.80,0.90)})
-        
-            R.addcovoutpar('numtx', 'tot', {'zerocov': (10.0,15.0), 'year': 2016.0})
+            R.addcovoutpar('condcom', ('Clients', 'FSW'),  {'zerocov': (0.3,0.35), 'fullcov': 0.99, 'FSW programs':(0.9,0.95)})
+            R.addcovoutpar('hivtest', 'FSW',     {'zerocov': (0.30,0.40), 'fullcov':2.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
+            R.addcovoutpar('hivtest', 'Clients', {'zerocov': (0.10,0.15), 'fullcov':2.0, 'HTC': (0.40,0.60)})
+            R.addcovoutpar('hivtest', 'M 15+',   {'zerocov': (0.01,0.02), 'fullcov':2.0, 'HTC': (0.20,0.30)})
+            R.addcovoutpar('hivtest', 'F 15+',   {'zerocov': (0.01,0.02), 'fullcov':2.0, 'HTC': (0.20,0.30)})
+            R.addcovoutpar('hivtest', 'PWID',    {'zerocov': (0.10,0.15), 'fullcov':2.0, 'HTC': (0.80,0.90)})
+            R.addcovoutpar('hivtest', 'MSM',     {'zerocov': (0.12,0.20), 'fullcov':2.0, 'HTC': (0.80,0.90)})
+            R.addcovoutpar('numtx', 'tot', {'zerocov':None, 'fullcov':None})
         
         # Store this program set in the project
         P.addprogset(R)
