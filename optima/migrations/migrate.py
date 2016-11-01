@@ -243,6 +243,27 @@ def addaidsleavecare(project, **kwargs):
     project.version = "2.1.5"
     return None
 
+def addaidslinktocare(project, **kwargs):
+    """
+    Migration between Optima 2.1.5 and 2.1.6.
+    """
+    short = 'aidslinktocare'
+    copyfrom = 'linktocare'
+    kwargs['by'] = 'tot'
+    kwargs['name'] = 'Average time taken to be linked to care for people with CD4<200 (years)'
+    kwargs['dataname'] = 'Average time taken to be linked to care for people with CD4<200 (years)'
+    kwargs['datashort'] = 'aidslinktocare'
+    kwargs['t'] = op.odict([('tot',array([2000.]))])
+    kwargs['y'] = op.odict([('tot',array([0.01]))])
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    if not hasattr(project.settings, 'dxnotincare'):
+        project.settings.dxnotincare = cat([project.settings.dx,project.settings.lost])
+
+    project.version = "2.1.6"
+    return None
+
+
+
 migrations = {
 '2.0':   versiontostr,
 '2.0.0': addscenuid,
@@ -255,6 +276,7 @@ migrations = {
 '2.1.2': removenumcircdata,
 '2.1.3': removepopcharacteristicsdata,
 '2.1.4': addaidsleavecare,
+'2.1.5': addaidslinktocare,
 }
 
 
