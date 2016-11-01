@@ -19,9 +19,9 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     pwidlist = [pop for popno,pop in enumerate(pops) if project.pars()['injects'][popno]]
     fswlist = [pop for popno,pop in enumerate(pops) if project.pars()['sexworker'][popno]]
 
-    regpships = project.parsets['default'].pars[0]['condreg'].y.keys()
-    caspships = project.parsets['default'].pars[0]['condcas'].y.keys()
-    compships = project.parsets['default'].pars[0]['condcom'].y.keys()
+    regpships = project.pars()['condreg'].y.keys()
+    caspships = project.pars()['condcas'].y.keys()
+    compships = project.pars()['condcom'].y.keys()
     
     # Extract casual partnerships that include at least one female sex worker
     fsw_caspships = []
@@ -60,205 +60,163 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     
     # Set up default programs
     Condoms = Program(short='Condoms',
+                  name='Condom promotion and distribution',
+                  category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
                   targetpops=pops,
-                  category='Prevention',
-                  name='Condom promotion and distribution',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     SBCC = Program(short='SBCC',
+                  name='Social and behavior change communication',
+                  category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
                   targetpops=pops,
-                  category='Prevention',
-                  name='Social and behavior change communication',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     STI = Program(short='STI',
+                  name='Diagnosis and treatment of sexually transmissible infections',
+                  category='Prevention',
                   targetpars=[{'param': 'stiprev', 'pop': pop} for pop in pops],
                   targetpops=pops,
-                  category='Prevention',
-                  name='Diagnosis and treatment of sexually transmissible infections',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     VMMC = Program(short='VMMC',
+                  name='Voluntary medical male circumcision',
+                  category='Prevention',
                   targetpars=[{'param': 'numcirc', 'pop': male} for male in malelist],
                   targetpops=malelist,
-                  category='Prevention',
-                  name='Voluntary medical male circumcision',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})              
                   
     FSW_programs = Program(short='FSW programs',
+                  name='Programs for female sex workers and clients',
+                  category='Prevention',
                   targetpars=[{'param': 'condcom', 'pop': compship} for compship in fsw_compships] + [{'param': 'condcas', 'pop': caspship} for caspship in fsw_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in fswlist],
                   targetpops=fswlist,
-                  category='Prevention',
-                  name='Programs for female sex workers and clients',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                  
     MSM_programs = Program(short='MSM programs',
+                  name='Programs for men who have sex with men',
+                  category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in msm_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in msmlist],
                   targetpops=msmlist,
-                  category='Prevention',
-                  name='Programs for men who have sex with men',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     PWID_programs = Program(short='PWID programs',
+                  name='Programs for people who inject drugs',
+                  category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in pwid_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in pwidlist] + [{'param': 'sharing', 'pop': pop} for pop in pwidlist],
                   targetpops=pwidlist,
-                  category='Prevention',
-                  name='Programs for people who inject drugs',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     OST = Program(short='OST',
+                  name='Opiate substitution therapy',
+                  category='Prevention',
                   targetpars=[{'param': 'numost', 'pop': 'tot'}],
                   targetpops=pops,
-                  category='Prevention',
-                  name='Opiate substitution therapy',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     NSP = Program(short='NSP',
+                  name='Needle-syringe programs',
+                  category='Prevention',
                   targetpars=[{'param': 'sharing', 'pop': pop} for pop in pwidlist],
                   targetpops=pwidlist,
-                  category='Prevention',
-                  name='Needle-syringe programs',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    Cash_transfers = Program(short='Cash transfers',
+    Cash = Program(short='Cash transfers',
+                  name='Cash transfers for HIV risk reduction',
+                  category='Prevention',
                   targetpars=[{'param': 'actscas', 'pop': caspship} for caspship in caspships],
                   targetpops=pops,
-                  category='Prevention',
-                  name='Cash transfers for HIV risk reduction',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     PrEP = Program(short='PrEP',
+                  name='Pre-exposure prophylaxis',
+                  category='Prevention',
                   targetpars=[{'param': 'prep', 'pop':  pop} for pop in pops],
                   targetpops=pops,
-                  category='Prevention',
-                  name='Pre-exposure prophylaxis',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    PEP = Program(name='PEP',
+    PEP = Program(short='PEP',
+                  name='Post-exposure prophylaxis',
                   category='Care and treatment',
-                  short='PEP',
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
                   
     HTC = Program(short='HTC',
+                  name='HIV testing and counseling',
+                  category='Care and treatment',
                   targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
                   targetpops=pops,
-                  category='Care and treatment',
-                  name='HIV testing and counseling',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     ART = Program(short='ART',
+                  name='Antiretroviral therapy',
+                  category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
-                  category='Care and treatment',
-                  name='Antiretroviral therapy',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
+                  name='Prevention of mother-to-child transmission',
+                  category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
                   targetpops=pops,
-                  category='Care and treatment',
-                  name='Prevention of mother-to-child transmission',
                   criteria = {'hivstatus': 'allstates', 'pregnant': True})
                   
     OVC = Program(short='OVC',
-                  category='Care and treatment',
                   name='Orphans and vulnerable children',
+                  category='Care and treatment',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     Other_care = Program(short='Other care',
-                  category='Care and treatment',
                   name='Other HIV care',
+                  category='Care and treatment',
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200'], 'pregnant': False})
     
     MGMT = Program(short='MGMT',
-                  category='Management and administration',
-                  name='Management')
+                  name='Management',
+                  category='Management and administration')
     
     HR = Program(short='HR',
-                  category='Management and administration',
-                  name='HR and training')
+                 name='HR and training',
+                 category='Management and administration')
     
     ENV = Program(short='ENV',
-                  category='Management and administration',
-                  name='Enabling environment')
+                  name='Enabling environment',
+                  category='Management and administration')
     
     SP = Program(short='SP',
-                  category='Other',
-                  name='Social protection')
+                 name='Social protection',
+                 category='Other')
     
     ME = Program(short='ME',
-                  category='Other',
-                  name='Monitoring, evaluation, surveillance, and research')
+                 name='Monitoring, evaluation, surveillance, and research',
+                 category='Other')
     
     INFR = Program(short='INFR',
-                  category='Other',
-                  name='Health infrastructure')
+                   name='Health infrastructure',
+                   category='Other')
     
     Other = Program(short='Other',
-                  category='Other',
-                  name='Other')
+                    name='Other',
+                    category='Other')
                   
     if addcostcovpars:
-        Condoms.addcostcovpar({'saturation': (0.75,0.75),
-                                 't': 2016.0,
-                                 'unitcost': (3,7)})
-    
-        SBCC.addcostcovpar({'saturation': (0.6,0.6),
-                                 't': 2016.0,
-                                 'unitcost': (8,12)})
-    
-        STI.addcostcovpar({'saturation': (0.6,0.6),
-                                 't': 2016.0,
-                                 'unitcost': (15,20)})
-                                 
-        VMMC.addcostcovpar({'saturation': (.5,.6),
-                                 't': 2016.0,
-                                 'unitcost': (15,25)})
-                                 
-        FSW_programs.addcostcovpar({'saturation': (0.9,0.9),
-                                 't': 2016.0,
-                                 'unitcost': (25,35)})
-                                 
-        MSM_programs.addcostcovpar({'saturation': (0.9,0.9),
-                                 't': 2016.0,
-                                 'unitcost': (25,35)})
-                                 
-        PWID_programs.addcostcovpar({'saturation': (0.3,0.3),
-                                 't': 2016.0,
-                                 'unitcost': (25,35)})
-                                 
-        OST.addcostcovpar({'saturation': (0.3,0.3),
-                                 't': 2016.0,
-                                 'unitcost': (100,200)})
-                                 
-        NSP.addcostcovpar({'saturation': (0.3,0.3),
-                                 't': 2016.0,
-                                 'unitcost': (10,20)})
-                                 
-        Cash_transfers.addcostcovpar({'saturation': (0.3,0.3),
-                                 't': 2016.0,
-                                 'unitcost': (50,80)})
-                                 
-        PrEP.addcostcovpar({'saturation': (0.3,0.3),
-                                 't': 2016.0,
-                                 'unitcost': (100,200)})
-                                 
-        HTC.addcostcovpar({'saturation': (0.85,0.95),
-                                 't': 2016.0,
-                                 'unitcost': (5,10)})
-                                 
-        ART.addcostcovpar({'saturation': (0.99,0.99),
-                                 't': 2016.0,
-                                 'unitcost': (400,800)})
-                                 
-        PMTCT.addcostcovpar({'saturation': (0.9,0.9),
-                                 't': 2016.0,
-                                 'unitcost': (100,200)})
+        Condoms.addcostcovpar({'saturation': (0.75,0.75), 't': 2016.0, 'unitcost': (3,7)})
+        SBCC.addcostcovpar({'saturation': (0.6,0.6), 't': 2016.0, 'unitcost': (8,12)})
+        STI.addcostcovpar({'saturation': (0.6,0.6), 't': 2016.0, 'unitcost': (15,20)})
+        VMMC.addcostcovpar({'saturation': (.5,.6), 't': 2016.0, 'unitcost': (15,25)})
+        FSW_programs.addcostcovpar({'saturation': (0.9,0.9), 't': 2016.0, 'unitcost': (25,35)})
+        MSM_programs.addcostcovpar({'saturation': (0.9,0.9), 't': 2016.0, 'unitcost': (25,35)})
+        PWID_programs.addcostcovpar({'saturation': (0.3,0.3), 't': 2016.0, 'unitcost': (25,35)})
+        OST.addcostcovpar({'saturation': (0.3,0.3), 't': 2016.0, 'unitcost': (100,200)})
+        NSP.addcostcovpar({'saturation': (0.3,0.3), 't': 2016.0, 'unitcost': (10,20)})
+        Cash.addcostcovpar({'saturation': (0.3,0.3), 't': 2016.0, 'unitcost': (50,80)})
+        PrEP.addcostcovpar({'saturation': (0.3,0.3), 't': 2016.0, 'unitcost': (100,200)})
+        HTC.addcostcovpar({'saturation': (0.85,0.95), 't': 2016.0, 'unitcost': (5,10)})
+        ART.addcostcovpar({'saturation': (0.99,0.99), 't': 2016.0, 'unitcost': (400,800)})
+        PMTCT.addcostcovpar({'saturation': (0.9,0.9), 't': 2016.0, 'unitcost': (100,200)})
                                  
     if addcostcovdata:
-        
         Condoms.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
         SBCC.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
         STI.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
@@ -268,7 +226,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         PWID_programs.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         OST.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         NSP.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
-        Cash_transfers.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
+        Cash.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         PrEP.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         HTC.addcostcovdatum({'t':2014,'cost':2e7,'coverage':1.3e6})
         ART.addcostcovdatum({'t':2014,'cost':1e6,'coverage':3308.})
@@ -284,14 +242,10 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         INFR.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
         Other.addcostcovdatum({'t':2014,'cost':5e5,'coverage':None})
         
-    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash_transfers, PrEP, PEP, HTC, ART, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
+    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTC, ART, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
-    if filterprograms: # WARNING, could be made simpler probably :)
-        finalprograms = []
-        for name in filterprograms:
-            for prog in allprograms:
-                if prog.short==name:
-                    finalprograms.append(prog)
+    if filterprograms: # Only select those programs in filterprograms
+        finalprograms = [program for program in allprograms if program.name in filterprograms]
     
     return finalprograms if filterprograms else allprograms
     
@@ -335,6 +289,55 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     
     
     
+    
+    ##########################################################################################################################
+    ## Concentrated
+    ##########################################################################################################################
+    elif which in ['best','concentrated']:
+        printv('Creating concentrated example...', 2, verbose)
+        # Make project and store results from default sim
+        dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
+        kwargs['dorun'] = False # Don't run now, run after calibration
+        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
+        
+        # "Calibrate"
+        P.parsets[0].pars[0]['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
+        if dorun: P.runsim() # Run after calibration
+       
+    
+        # Get a default progset 
+        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
+        
+        # Add cost and coverage data if requested
+        if addcostcovdata and not usestandardcostcovdata:
+            R.programs['Condoms'].addcostcovdata(      {'t':2014, 'cost':1.3e7, 'coverage':3e5})
+            R.programs['FSW programs'].addcostcovdata( {'t':2014, 'cost':2.5e6, 'coverage':1e9})
+            R.programs['HTC'].addcostcovdata(          {'t':2014, 'cost':1e7, 'coverage':1.3e6})
+            R.programs['ART'].addcostcovdata(          {'t':2014, 'cost':2e7, 'coverage':2e4})
+            R.programs['Other'].addcostcovdata(        {'t':2014, 'cost':1.5e7, 'coverage':None})
+        
+        # Add program effects if requested
+        if addcovoutpars:
+            R.addcovoutpar('condcas', ('Clients', 'FSW'), {'intercept':  (0.2,0.25), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
+            R.addcovoutpar('condcas', ('F 15+','Clients'), {'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
+            R.addcovoutpar('condcas', ('M 15+', 'FSW'), {'intercept':    (0.3,0.35), 't': 2016.0, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
+            R.addcovoutpar('condcas', ('F 15+', 'M 15+'), {'intercept':  (0.30,0.35), 't': 2016.0, 'Condoms':(0.45,0.50)})
+            R.addcovoutpar('condcas', ('F 15+', 'PWID'), {'intercept':   (0.15,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+            R.addcovoutpar('condcas', ('MSM', 'MSM'), {'intercept': (0.1,0.15), 't': 2016.0, 'Condoms':(0.55,0.65)})
+        
+            R.addcovoutpar('condcom', ('Clients', 'FSW'), {'intercept': (0.3,0.35), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+        
+            R.addcovoutpar('hivtest', 'FSW', {'intercept': (0.30,0.40), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
+            R.addcovoutpar('hivtest', 'Clients', {'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60)})
+            R.addcovoutpar('hivtest', 'M 15+', {'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
+            R.addcovoutpar('hivtest', 'F 15+', {'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
+            R.addcovoutpar('hivtest', 'PWID', {'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
+            R.addcovoutpar('hivtest', 'MSM', {'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
+        
+            R.addcovoutpar('numtx', 'tot', {'intercept': (10.0,15.0), 't': 2016.0})
+        
+        # Store this program set in the project
+        P.addprogset(R)
     
     
     ##########################################################################################################################
@@ -476,56 +479,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
 
     
     
-    ##########################################################################################################################
-    ## Concentrated
-    ##########################################################################################################################
-    elif which in ['best','concentrated']:
-        printv('Creating concentrated example...', 2, verbose)
-        # Make project and store results from default sim
-        dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
-        kwargs['dorun'] = False # Don't run now, run after calibration
-        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
-        
-        # "Calibrate"
-#        from numpy import array
-#        P.parsets[0].pars[0]['force'].y[:] = [ 2.09   ,  1.232  ,  0.9625 ,  0.88   ,  1.51525,  0.726  ]
-        P.parsets[0].pars[0]['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
-        if dorun: P.runsim() # Run after calibration
-       
-    
-        # Get a default progset 
-        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
-        
-        # Add cost and coverage data if requested
-        if addcostcovdata and not usestandardcostcovdata:
-            R.programs['Condoms'].costcovdata =      {'t':[2014],'cost':[1.3e7],'coverage':[3e5]}
-            R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
-            R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
-            R.programs['ART'].costcovdata =          {'t':[2014],'cost':[2e7],'coverage':[2e4]}
-            R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
-        
-        # Add program effects if requested
-        if addcovoutpars:
-            R.addcovoutpar('condcas', ('Clients', 'FSW'), {'intercept':  (0.2,0.25), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
-            R.addcovoutpar('condcas', ('F 15+','Clients'), {'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
-            R.addcovoutpar('condcas', ('M 15+', 'FSW'), {'intercept':    (0.3,0.35), 't': 2016.0, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
-            R.addcovoutpar('condcas', ('F 15+', 'M 15+'), {'intercept':  (0.30,0.35), 't': 2016.0, 'Condoms':(0.45,0.50)})
-            R.addcovoutpar('condcas', ('F 15+', 'PWID'), {'intercept':   (0.15,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
-            R.addcovoutpar('condcas', ('MSM', 'MSM'), {'intercept': (0.1,0.15), 't': 2016.0, 'Condoms':(0.55,0.65)})
-        
-            R.addcovoutpar('condcom', ('Clients', 'FSW'), {'intercept': (0.3,0.35), 't': 2016.0, 'FSW programs':(0.9,0.95)})
-        
-            R.addcovoutpar('hivtest', 'FSW', {'intercept': (0.30,0.40), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
-            R.addcovoutpar('hivtest', 'Clients', {'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60)})
-            R.addcovoutpar('hivtest', 'M 15+', {'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
-            R.addcovoutpar('hivtest', 'F 15+', {'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
-            R.addcovoutpar('hivtest', 'PWID', {'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
-            R.addcovoutpar('hivtest', 'MSM', {'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
-        
-            R.addcovoutpar('numtx', 'tot', {'intercept': (10.0,15.0), 't': 2016.0})
-        
-        # Store this program set in the project
-        P.addprogset(R)
+
         
         
     
