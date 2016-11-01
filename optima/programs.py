@@ -18,7 +18,7 @@ class Programset(object):
     while cost-coverage data/functions belong to the individual programs.
     """
 
-    def __init__(self, name='default', programs=None, project=None):
+    def __init__(self, name='default', programs=None, project=None, verbose=2):
         """ Initialize """
         self.name = name
         self.uid = uuid()
@@ -27,7 +27,7 @@ class Programset(object):
         self.project = project # Store pointer for the project, if available
         self.programs = odict()
         self.covout = odict()
-        if programs is not None: self.addprograms(programs)
+        if programs is not None: self.addprograms(programs, verbose=verbose)
 
     def __repr__(self):
         """ Print out useful information"""
@@ -35,26 +35,29 @@ class Programset(object):
         return output
     
     def addprograms(self, programs=None, overwrite=True, verbose=2):
-        if type(programs)==Program: programs = [programs] # Make into a list if a single program supplied
-        if type(programs)==list: # This is actually if, not elif, to handle the case of a single program
-            for program in programs:
-                if type(program)!=Program:
-                    errormsg = 'Can only add programs, not objects of type %s' % type(program)
-                    raise OptimaException(errormsg)
-                if program.short in self.programs.keys() and not overwrite:
-                    errormsg = 'Program %s already exists in program set' % program.short
-                    raise OptimaException(errormsg)
-                self.programs[program.short] = program
-                printv('Added program "%s" to programset "%s"' % (program.short, self.name), 3, verbose)
+        if type(programs)!=list: programs = [programs] # Make into a list if a single program supplied
+        for program in programs:
+            if type(program)!=Program:
+                errormsg = 'Can only add programs, not objects of type %s' % type(program)
+                raise OptimaException(errormsg)
+            if program.short in self.programs.keys() and not overwrite:
+                errormsg = 'Program %s already exists in program set' % program.short
+                raise OptimaException(errormsg)
+            self.programs[program.short] = program
+            printv('Added program "%s" to programset "%s"' % (program.short, self.name), 3, verbose)
         else:
             errormsg = 'Must supply either a single program or a list of programs, not object of type %s' % type(programs)
             raise OptimaException(errormsg)
         return None
         
-    def rmprograms(self):
-        pass
+    def rmprograms(self, programs=None):
+        if type(programs)!=list: programs = [programs] # Make into a list if a single program supplied
+        for program in programs:
+            if type(program)==Program: program = program.short
+            self.programs.pop(program)
+        return None
         
-    def addcovout(self):
+    def addcovoutpar(self):
         pass
         
     def defaultbudget(self):
@@ -120,11 +123,13 @@ class Program(object):
         pass
     
     
-    def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
-        pass
+    def addcostcovdata(self, costcovdata=None, overwrite=False, verbose=2):
+        self.costcovdata.addrow(costcovdata, overwrite=overwrite)
+        printv('Added costcov data point: %s' % costcovdata, 4, verbose)
+        return None
     
     
-    def rmcostcovdatum(self, year, verbose=2):
+    def rmcostcovdata(self, year=None, verbose=2):
         pass
 
     

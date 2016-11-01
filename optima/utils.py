@@ -1096,6 +1096,7 @@ class dataframe(object):
             return output
     
     def _val2row(self, value):
+        ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, type(array([]))): # It's already an array
             return value
         elif isinstance(value, dict):
@@ -1108,6 +1109,13 @@ class dataframe(object):
             return output
         else: # Not sure what it is, just make it an array
             return array(value)
+    
+    def _sanitizecol(self, col):
+        ''' Take None or a string and return the index of the column '''
+        if col is None: output = 0 # If not supplied, assume first column is control
+        elif isinstance(col, (str, unicode)): output = self.cols.index(col) # Convert to index
+        else: output = col
+        return output
         
     def __getitem__(self, key):
         if isinstance(key, (str, unicode)):
@@ -1184,7 +1192,8 @@ class dataframe(object):
     def addrow(self, value, overwrite=True, col=None, reverse=False):
         ''' Like append, but removes duplicates in the first column and resorts '''
         value = self._val2row(value) # Make sure it's in the correct format
-        try:    index = self.data[0,:].tolist().index(value[0]) # Try to find duplicates
+        col = self._sanitizecol(col)
+        try:    index = self.data[col,:].tolist().index(value[col]) # Try to find duplicates
         except: index = None
         if index is None or not overwrite: self.append(value)
         else: self.data[:,index] = value # If it exists already, just replace it
@@ -1193,8 +1202,7 @@ class dataframe(object):
     
     def rmrow(self, key=None, col=None, returnval=False):
         ''' Like pop, but removes by matching the first column instead of the index '''
-        if col is None: col = 0 # If not supplied, assume first column is control
-        elif isinstance(col, (str, unicode)): col = self.cols.index(col) # Convert to index
+        col = self._sanitizecol(col)
         if key is None: key = self.data[col,-1] # If not supplied, pick the last element
         try:    index = self.data[col,:].tolist().index(key) # Try to find duplicates
         except: raise Exception('Item %s not found; choices are: %s' % (key, self.data[col,:]))
@@ -1211,9 +1219,8 @@ class dataframe(object):
     
     def sort(self, col=None, reverse=False):
         ''' Sort the data frame by the specified column '''
-        if col is None: colindex = 0
-        else: colindex = self.cols.index(col)
-        sortorder = argsort(self.data[colindex,:])
+        col = self._sanitizecol(col)
+        sortorder = argsort(self.data[col,:])
         if reverse: sortorder = array(list(reversed(sortorder)))
         self.data = self.data[:,sortorder]
         return None
