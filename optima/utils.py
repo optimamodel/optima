@@ -1055,7 +1055,7 @@ class dataframe(object):
 
     def __init__(self, cols=None, data=None):
         if cols is None: cols = list()
-        if data is None: data = zeros((len(cols),0))
+        if data is None: data = zeros((len(cols),0), dtype=object)
         self.cols = cols
         self.data = array(data, dtype=object)
         return None
@@ -1103,7 +1103,7 @@ class dataframe(object):
     def _val2row(self, value):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
-            output = zeros(self.ncols())
+            output = zeros(self.ncols(), dtype=object)
             for c,col in enumerate(self.cols):
                 try: 
                     output[c] = value[col]

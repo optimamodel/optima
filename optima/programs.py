@@ -62,7 +62,7 @@ class Programset(object):
                 errormsg = 'Program key %s not found; available keys are:\n%s' % (key, self.programs.keys())
                 raise OptimaException(errormsg)
         key = (parname, popname) # For a dict key, make a tuple from the parameter name and the population name
-        self.costcov[key] = Covout(parname=parname, popname=popname, zerocov=zerocov, fullcov=fullcov, progs=covoutpar) # Everything remaining is the programs
+        self.covout[key] = Covout(parname=parname, popname=popname, zerocov=zerocov, fullcov=fullcov, progs=covoutpar) # Everything remaining is the programs
         printv('Added coverage-outcome parameter: %s' % covoutpar, 4, verbose)
         return None
         
