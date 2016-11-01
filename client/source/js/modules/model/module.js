@@ -43,21 +43,5 @@ define([
             }
           }
         })
-        .state('model.auto', {
-          url: '/auto',
-          templateUrl: 'js/modules/model/autofit.html',
-          controller: 'ModelCalibrationController',
-          resolve: {
-            parameters: function (Model) {
-              //return Model.getCalibrateParameters().$promise;
-            },
-            meta: function (Model) {
-              // return Model.getKeyDataMeta().$promise;
-            },
-            info: function (projectApiService) {
-              return projectApiService.getActiveProject();
-            }
-          }
-        })
     });
 });
