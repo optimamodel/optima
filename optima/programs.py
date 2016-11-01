@@ -54,8 +54,15 @@ class Programset(object):
             self.programs.pop(program)
         return None
         
-    def addcovoutpar(self, par=None, key=None, covoutpar=None, overwrite=True, verbose=2):
-        self.costcovpars.addrow(covoutpar, overwrite=overwrite)
+    def addcovoutpar(self, parname=None, popname=None, covoutpar=None, verbose=2):
+        zerocov = covoutpar.pop('zerocov') # Pull out the value at zero coverage
+        fullcov = covoutpar.pop('fullcov') # Pull out the value at full coverage
+        for key in covoutpar.keys(): # Check that all remaining keys are valid
+            if key not in self.programs.keys():
+                errormsg = 'Program key %s not found; available keys are:\n%s' % (key, self.programs.keys())
+                raise OptimaException(errormsg)
+        key = (parname, popname) # For a dict key, make a tuple from the parameter name and the population name
+        self.costcov[key] = Covout(parname=parname, popname=popname, zerocov=zerocov, fullcov=fullcov, progs=covoutpar) # Everything remaining is the programs
         printv('Added coverage-outcome parameter: %s' % covoutpar, 4, verbose)
         return None
         
@@ -139,6 +146,16 @@ class Program(object):
     
     def covcostfunc():
         pass
+
+class Covout(object):
+    ''' Object for storing coverage-outcome properties '''
+    
+    def __init__(self, parname=None, popname=None, zerocov=None, fullcov=None, progs=None):
+        self.parname = parname
+        self.popname = popname
+        self.zerocov = zerocov
+        self.fullcov = fullcov
+        self.progs = odict(progs) # Allows for None, creating an empty odict
 
     
     

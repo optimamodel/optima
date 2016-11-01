@@ -801,6 +801,11 @@ class odict(OrderedDict):
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing, slicing, and appending.
     Version: 2016sep14 (cliffk)
     '''
+    
+    def __init__(self, *args, **kwargs):
+        ''' See collections.py '''
+        if len(args)==1 and args[0] is None: args = [] # Remove a None argument
+        OrderedDict.__init__(self, *args, **kwargs) # Standard init
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
@@ -818,7 +823,7 @@ class odict(OrderedDict):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, (str,tuple)):
             try:
-                output = OrderedDict.__getitem__(self,key)
+                output = OrderedDict.__getitem__(self, key)
                 return output
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 

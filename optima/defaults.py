@@ -318,23 +318,23 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         # Add program effects if requested
         if addcovoutpars:
-            R.addcovoutpar('condcas', ('Clients', 'FSW'), {'intercept':  (0.2,0.25), 'year': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
-            R.addcovoutpar('condcas', ('F 15+','Clients'), {'intercept': (0.25,0.3), 'year': 2016.0, 'Condoms':(0.85,0.95)})
-            R.addcovoutpar('condcas', ('M 15+', 'FSW'), {'intercept':    (0.3,0.35), 'year': 2016.0, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
-            R.addcovoutpar('condcas', ('F 15+', 'M 15+'), {'intercept':  (0.30,0.35), 'year': 2016.0, 'Condoms':(0.45,0.50)})
-            R.addcovoutpar('condcas', ('F 15+', 'PWID'), {'intercept':   (0.15,0.2), 'year': 2016.0, 'Condoms':(0.35,0.45)})
-            R.addcovoutpar('condcas', ('MSM', 'MSM'), {'intercept': (0.1,0.15), 'year': 2016.0, 'Condoms':(0.55,0.65)})
+            R.addcovoutpar('condcas', ('Clients', 'FSW'),  {'zerocov': (0.2,0.25), 'fullcov': 0.95, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
+            R.addcovoutpar('condcas', ('F 15+','Clients'), {'zerocov': (0.25,0.3), 'fullcov': 0.95, 'Condoms':(0.85,0.95)})
+            R.addcovoutpar('condcas', ('M 15+', 'FSW'),    {'zerocov': (0.3,0.35), 'fullcov': 0.95, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
+            R.addcovoutpar('condcas', ('F 15+', 'M 15+'),  {'zerocov': (0.3,0.35), 'fullcov': 0.95, 'Condoms':(0.45,0.50)})
+            R.addcovoutpar('condcas', ('F 15+', 'PWID'),   {'zerocov': (0.15,0.2), 'fullcov': 0.95, 'Condoms':(0.35,0.45)})
+            R.addcovoutpar('condcas', ('MSM', 'MSM'),      {'zerocov': (0.1,0.15), 'fullcov': 0.95, 'Condoms':(0.55,0.65)})
         
-            R.addcovoutpar('condcom', ('Clients', 'FSW'), {'intercept': (0.3,0.35), 'year': 2016.0, 'FSW programs':(0.9,0.95)})
+            R.addcovoutpar('condcom', ('Clients', 'FSW'), {'zerocov': (0.3,0.35), 'year': 2016.0, 'FSW programs':(0.9,0.95)})
         
-            R.addcovoutpar('hivtest', 'FSW', {'intercept': (0.30,0.40), 'year': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
-            R.addcovoutpar('hivtest', 'Clients', {'intercept': (0.10,0.15), 'year': 2016.0, 'HTC': (0.40,0.60)})
-            R.addcovoutpar('hivtest', 'M 15+', {'intercept': (0.01,0.02), 'year': 2016.0, 'HTC': (0.20,0.30)})
-            R.addcovoutpar('hivtest', 'F 15+', {'intercept': (0.01,0.02), 'year': 2016.0, 'HTC': (0.20,0.30)})
-            R.addcovoutpar('hivtest', 'PWID', {'intercept': (0.10,0.15), 'year': 2016.0, 'HTC': (0.80,0.90)})
-            R.addcovoutpar('hivtest', 'MSM', {'intercept': (0.12,0.20), 'year': 2016.0, 'HTC': (0.80,0.90)})
+            R.addcovoutpar('hivtest', 'FSW', {'zerocov': (0.30,0.40), 'year': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
+            R.addcovoutpar('hivtest', 'Clients', {'zerocov': (0.10,0.15), 'year': 2016.0, 'HTC': (0.40,0.60)})
+            R.addcovoutpar('hivtest', 'M 15+', {'zerocov': (0.01,0.02), 'year': 2016.0, 'HTC': (0.20,0.30)})
+            R.addcovoutpar('hivtest', 'F 15+', {'zerocov': (0.01,0.02), 'year': 2016.0, 'HTC': (0.20,0.30)})
+            R.addcovoutpar('hivtest', 'PWID', {'zerocov': (0.10,0.15), 'year': 2016.0, 'HTC': (0.80,0.90)})
+            R.addcovoutpar('hivtest', 'MSM', {'zerocov': (0.12,0.20), 'year': 2016.0, 'HTC': (0.80,0.90)})
         
-            R.addcovoutpar('numtx', 'tot', {'intercept': (10.0,15.0), 'year': 2016.0})
+            R.addcovoutpar('numtx', 'tot', {'zerocov': (10.0,15.0), 'year': 2016.0})
         
         # Store this program set in the project
         P.addprogset(R)
@@ -406,69 +406,69 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
 
         if addcovoutpars:
             
-            R.addcovoutpar('condcas', ('Clients', 'FSW'), {'intercept': (0.3,0.35), 'year': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
-            R.addcovoutpar('condcas', ('F 50+', 'Clients'), {'intercept': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
-            R.addcovoutpar('condcas', ('F 15-49', 'Clients'), {'intercept': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
-            R.addcovoutpar('condcas', ('M 15-49', 'FSW'), {'intercept': (0.3,0.35), 'year': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
-            R.addcovoutpar('condcas', ('F 15-49', 'M 15-49'), {'intercept': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
-            R.addcovoutpar('condcas', ('F 50+', 'M 15-49'), {'intercept': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
-            R.addcovoutpar('condcas', ('M 50+', 'FSW'), {'intercept': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.55,0.65)})
-            R.addcovoutpar('condcas', ('M 50+', 'F 15-49'), {'intercept': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
-            R.addcovoutpar('condcas', ('F 50+', 'M 50+'), {'intercept': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
-            R.addcovoutpar('condcas', ('MSM', 'MSM'), {'intercept': (0.5,0.55), 'year': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
+            R.addcovoutpar('condcas', ('Clients', 'FSW'), {'zerocov': (0.3,0.35), 'year': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+            R.addcovoutpar('condcas', ('F 50+', 'Clients'), {'zerocov': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
+            R.addcovoutpar('condcas', ('F 15-49', 'Clients'), {'zerocov': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
+            R.addcovoutpar('condcas', ('M 15-49', 'FSW'), {'zerocov': (0.3,0.35), 'year': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+            R.addcovoutpar('condcas', ('F 15-49', 'M 15-49'), {'zerocov': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
+            R.addcovoutpar('condcas', ('F 50+', 'M 15-49'), {'zerocov': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
+            R.addcovoutpar('condcas', ('M 50+', 'FSW'), {'zerocov': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.55,0.65)})
+            R.addcovoutpar('condcas', ('M 50+', 'F 15-49'), {'zerocov': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
+            R.addcovoutpar('condcas', ('F 50+', 'M 50+'), {'zerocov': (0.2,0.3), 'year': 2016.0, 'Condoms':(0.35,0.45)})
+            R.addcovoutpar('condcas', ('MSM', 'MSM'), {'zerocov': (0.5,0.55), 'year': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
     
-            R.addcovoutpar('condcom', ('Clients', 'FSW'), {'intercept': (0.6,0.65), 'year': 2016.0, 'FSW programs':(0.9,0.95)})
+            R.addcovoutpar('condcom', ('Clients', 'FSW'), {'zerocov': (0.6,0.65), 'year': 2016.0, 'FSW programs':(0.9,0.95)})
         
-            R.addcovoutpar('hivtest', 'FSW', {'intercept': (0.35,0.45), 
+            R.addcovoutpar('hivtest', 'FSW', {'zerocov': (0.35,0.45), 
                                                   'year': 2016.0,
                                                   'HTC mobile': (0.85,0.9),
                                                   'HTC medical': (0.65,0.75),
                                                   'FSW programs':(0.95,0.99)})
                                                     
-            R.addcovoutpar('hivtest', 'MSM', {'intercept': (0.05,0.1),
+            R.addcovoutpar('hivtest', 'MSM', {'zerocov': (0.05,0.1),
                                                   'year': 2016.0,
                                                   'HTC mobile': (0.85,0.9),
                                                   'HTC medical': (0.65,0.75),
                                                   'MSM programs':(0.95,0.99)})
                                                   
-            R.addcovoutpar('hivtest', 'Clients', {'intercept': (0.05,0.1),
+            R.addcovoutpar('hivtest', 'Clients', {'zerocov': (0.05,0.1),
                                                       'year': 2016.0,
                                                       'HTC workplace': (0.85,0.9),
                                                       'HTC mobile': (0.85,0.9),
                                                       'HTC medical': (0.65,0.75)})
                                                       
-            R.addcovoutpar('hivtest', 'M 15-49', {'intercept': (0.35,0.4),
+            R.addcovoutpar('hivtest', 'M 15-49', {'zerocov': (0.35,0.4),
                                                       'year': 2016.0,
                                                       'HTC workplace': (0.85,0.9),
                                                       'HTC mobile': (0.85,0.9),
                                                       'HTC medical': (0.85,0.95)})
     
-            R.addcovoutpar('hivtest', 'F 15-49', {'intercept': (0.35,0.4),
+            R.addcovoutpar('hivtest', 'F 15-49', {'zerocov': (0.35,0.4),
                                                       'year': 2016.0, 
                                                       'HTC workplace': (0.85,0.9),
                                                       'HTC mobile': (0.85,0.9),
                                                       'HTC medical': (0.85,0.95)})
     
-            R.addcovoutpar('hivtest', 'M 50+', {'intercept': (0.15,0.2), 
+            R.addcovoutpar('hivtest', 'M 50+', {'zerocov': (0.15,0.2), 
                                                     'year': 2016.0,
                                                       'HTC workplace': (0.85,0.9),
                                                       'HTC mobile': (0.85,0.9),
                                                       'HTC medical': (0.65,0.75)})
     
-            R.addcovoutpar('hivtest', 'F 50+', {'intercept': (0.15,0.2),
+            R.addcovoutpar('hivtest', 'F 50+', {'zerocov': (0.15,0.2),
                                                     'year': 2016.0,
                                                       'HTC workplace': (0.85,0.9),
                                                       'HTC mobile': (0.85,0.9),
                                                       'HTC medical': (0.65,0.75)})
     
-            R.addcovoutpar('numtx', 'tot', {'intercept': (100.0,150.0), 'year': 2016.0})
-            R.addcovoutpar('numpmtct', 'tot', {'intercept': (100.0,150.0), 'year': 2016.0})
+            R.addcovoutpar('numtx', 'tot', {'zerocov': (100.0,150.0), 'year': 2016.0})
+            R.addcovoutpar('numpmtct', 'tot', {'zerocov': (100.0,150.0), 'year': 2016.0})
     
-            R.addcovoutpar('numcirc', 'MSM', {'intercept': (0,0), 'year': 2016.0})
-            R.addcovoutpar('numcirc', 'Clients', {'intercept': (0,0), 'year': 2016.0})
-            R.addcovoutpar('numcirc', 'M 15-49', {'intercept': (0,0), 'year': 2016.0})
-            R.addcovoutpar('numcirc', 'M 50+', {'intercept': (0,0), 'year': 2016.0})
-            R.addcovoutpar('numcirc', 'M 0-14', {'intercept': (0,0), 'year': 2016.0})
+            R.addcovoutpar('numcirc', 'MSM', {'zerocov': (0,0), 'year': 2016.0})
+            R.addcovoutpar('numcirc', 'Clients', {'zerocov': (0,0), 'year': 2016.0})
+            R.addcovoutpar('numcirc', 'M 15-49', {'zerocov': (0,0), 'year': 2016.0})
+            R.addcovoutpar('numcirc', 'M 50+', {'zerocov': (0,0), 'year': 2016.0})
+            R.addcovoutpar('numcirc', 'M 0-14', {'zerocov': (0,0), 'year': 2016.0})
 
 
         P.addprogset(name='default', progset=R)
