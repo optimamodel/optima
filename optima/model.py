@@ -333,12 +333,17 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         treatment = initnumtx * fractotal # Number of people on 1st-line treatment
         nevertreated = allinfected - treatment
 
-        # Set initial distributions for  
-        testingrates = array([simpars['hivtest'][:,0]]*ncd4)
-        for cd4 in range(aidsind, ncd4): testingrates[cd4,:] = maximum(simpars['aidstest'][0],simpars['hivtest'][:,0])
+        # Set initial distributions for cascade
+        testingrates =  array([simpars['hivtest'][:,0]]*ncd4)
+        linkagerates = array([1.-exp(-averagedurationinfected/(maximum(eps,simpars['linktocare'][:,0])))]*ncd4)
+        lossrates = array([simpars['leavecare'][:,0]]*ncd4)
+        for cd4 in range(aidsind, ncd4):
+            testingrates[cd4,:] = maximum(simpars['aidstest'][0],simpars['hivtest'][:,0])
+            linkagerates[cd4,:] = maximum(linkagerates[cd4,:],1.-exp(-averagedurationinfected/(maximum(eps,simpars['aidslinktocare'][0]))))
+            lossrates[cd4,:] = minimum(simpars['aidsleavecare'][0],simpars['leavecare'][:,0])
         dxfrac = 1.-exp(-averagedurationinfected*testingrates)
-        linktocarefrac = 1.-exp(-averagedurationinfected*linktocare[:,0])
-        lostfrac = 1.-exp(-averagedurationinfected*leavecare[:,0])
+        linktocarefrac = linkagerates
+        lostfrac = 1.-exp(-averagedurationinfected*lossrates)
         undxdist = 1.-dxfrac
         dxdist = dxfrac*(1.-linktocarefrac)
         incaredist = dxfrac*linktocarefrac*(1.-lostfrac)
