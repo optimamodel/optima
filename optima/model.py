@@ -560,7 +560,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Diagnosed/lost to care
         if isnan(propcare[t]):
             careprob = [linktocare[:,t]]*ncd4
-            for cd4 in range(aidsind, ncd4): careprob[cd4] = minimum(aidslinktocare[t],linktocare[:,t])
+            for cd4 in range(aidsind, ncd4): careprob[cd4] = maximum(aidslinktocare[t],linktocare[:,t])
         else: careprob = zeros(ncd4)
         for cd4ind, fromstate in enumerate(dxnotincare):  # 2 categories x 6 states per category = 12 states
             cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
