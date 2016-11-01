@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016oct30
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar
+from optima import OptimaException, printv, uuid, today, sigfig, dataframe, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose
 from random import uniform
 
@@ -64,29 +64,25 @@ class Program(object):
     """
     Defines a single program. 
     Can be initialized with:
-    ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
+    costcovpars, e.g. {'year': 2015, 'saturation': 0.9, 'unitcost': 40}
     targetpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]
     targetpops, e.g. ['FSW','MSM']
     """
 
     def __init__(self, name=None, short=None, targetpars=None, targetpops=None, costcovpars=None, costcovdata=None, category=None):
         """Initialize"""
-        self.short = short
         self.name = name
+        self.short = short
         self.uid = uuid()
-        if targetpars:
-            self.targetpars = targetpars
-        else: self.targetpars = []
+        self.targetpars = targetpars if targetpars else []
         self.targetpops = targetpops if targetpops else []
         try:
             self.targetpartypes = list(set([thispar['param'] for thispar in self.targetpars])) if self.targetpars else []
         except:
             print("Error while initializing targetpartypes in program %s for targetpars %s" % (short, self.targetpars))
             self.targetpartypes = []
-        self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
+        self.costcovdata = dataframe(costcovdata) if costcovdata else dataframe(['year','cost','coverage'])
         self.category = category
-        self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
-        self.targetcomposition = targetcomposition
         self.costcovpars = None
         self.initialize_costcov(costcovpars)
 
@@ -99,6 +95,30 @@ class Program(object):
         output += '   Targeted parameters: %s\n'    % self.targetpars
         output += '\n'
         return output
+    
+    
+    def addcostcovpar(self, costcovpar=None, overwrite=False, verbose=2):
+        pass
+    
+    
+    def getcostcovpar(self, t=None, sample='best', verbose=2):
+        pass
+    
+    
+    def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
+        pass
+    
+    
+    def rmcostcovdatum(self, year, verbose=2):
+        pass
+
+    
+    def costcovfunc():
+        pass
+    
+    def covcostfunc():
+        pass
+
     
     
     

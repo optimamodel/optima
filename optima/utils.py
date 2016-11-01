@@ -1041,8 +1041,11 @@ class dataframe(object):
         a.insert(1,[9,9]); print a # Insert a new row
         a.sort(); print a # Sort by the first column
         a.sort('y'); print a # Sort by the second column
+        a.addrow([1,44]); print a # Replace the previous row and sort
+        a.rmrow(); print a # Remove last row
+        a.rmrow(3); print a # Remove the row starting with element '3'
     
-    Version: 2016oct30
+    Version: 2016oct31
     '''
 
     def __init__(self, cols=None, data=None):
@@ -1091,7 +1094,20 @@ class dataframe(object):
                 output += '\n'
             
             return output
-        
+    
+    def _val2row(self, value):
+        if isinstance(value, type(array([]))): # It's already an array
+            return value
+        elif isinstance(value, dict):
+            output = zeros(self.ncols())
+            for c,col in enumerate(self.cols):
+                try: 
+                    output[c] = value[col]
+                except: 
+                    raise Exception('Entry for column %s not found; keys you supplied are: %s' % (col, value.keys()))
+            return output
+        else: # Not sure what it is, just make it an array
+            return array(value)
         
     def __getitem__(self, key):
         if isinstance(key, (str, unicode)):
@@ -1106,7 +1122,6 @@ class dataframe(object):
             output = self.data[colindex,rowindex]
         return output
         
-        
     def __setitem__(self, key, value):
         if isinstance(key, (str, unicode)):
             if len(value) != self.nrows(): 
@@ -1119,6 +1134,7 @@ class dataframe(object):
                 colindex = self.cols.index(key)
                 self.data = vstack((self.data, array(value)))
         elif isinstance(key, Number):
+            value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols(): 
                 raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols()))
             rowindex = int(key)
@@ -1128,7 +1144,6 @@ class dataframe(object):
             rowindex = int(key[1])
             self.data[colindex,rowindex] = value
         return None
-    
     
     def ncols(self):
         ''' Get the number of columns in the data frame '''
@@ -1143,38 +1158,54 @@ class dataframe(object):
         ''' Add a new colun to the data frame -- for consistency only '''
         self.__setitem__(key, value)
     
-    def rmcol(self, key):
+    def rmcol(self, key, returnval=True):
         ''' Remove a column from the data frame '''
         colindex = self.cols.index(key)
         self.cols.pop(colindex)
         thiscol = self.data[colindex,:]
         self.data = vstack((self.data[:colindex,:], self.data[colindex+1:,:]))
-        return thiscol
+        if returnval: return thiscol
+        else: return None
     
-    def pop(self, key):
+    def pop(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
         thisrow = self.data[:,rowindex]
         self.data = hstack((self.data[:,:rowindex], self.data[:,rowindex+1:]))
-        return thisrow
+        if returnval: return thisrow
+        else:         return None
     
     def append(self, value):
         ''' Add a row to the end of the data frame '''
+        value = self._val2row(value) # Make sure it's in the correct format
         self.data = hstack((self.data, array(matrix(value).transpose())))
         return None
     
-    def addrow(self, value):
-        ''' Alias for append '''
-        return self.append(value)
-    
-    def rmrow(self, key):
-        ''' Alias for pop '''
-        self.pop(key)
+    def addrow(self, value, overwrite=True, col=None, reverse=False):
+        ''' Like append, but removes duplicates in the first column and resorts '''
+        value = self._val2row(value) # Make sure it's in the correct format
+        try:    index = self.data[0,:].tolist().index(value[0]) # Try to find duplicates
+        except: index = None
+        if index is None or not overwrite: self.append(value)
+        else: self.data[:,index] = value # If it exists already, just replace it
+        self.sort(col=col, reverse=reverse) # Sort
         return None
+    
+    def rmrow(self, key=None, col=None, returnval=False):
+        ''' Like pop, but removes by matching the first column instead of the index '''
+        if col is None: col = 0 # If not supplied, assume first column is control
+        elif isinstance(col, (str, unicode)): col = self.cols.index(col) # Convert to index
+        if key is None: key = self.data[col,-1] # If not supplied, pick the last element
+        try:    index = self.data[col,:].tolist().index(key) # Try to find duplicates
+        except: raise Exception('Item %s not found; choices are: %s' % (key, self.data[col,:]))
+        thisrow = self.pop(index)
+        if returnval: return thisrow
+        else:         return None
     
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
         rowindex = int(row)
+        value = self._val2row(value) # Make sure it's in the correct format
         self.data = hstack((self.data[:,:rowindex], array(matrix(value).transpose()), self.data[:,rowindex:]))
         return None
     
@@ -1186,6 +1217,7 @@ class dataframe(object):
         if reverse: sortorder = array(list(reversed(sortorder)))
         self.data = self.data[:,sortorder]
         return None
+        
 
 
 
