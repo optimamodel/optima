@@ -1,14 +1,18 @@
 import optima as op
-from numpy import nan, concatenate as cat
+from numpy import nan, concatenate as cat, array
 
 
-def addparameter(project=None, copyfrom=None, short=None, name=None):
-    ''' Function for adding a new parameter to a project -- used by several migrations '''
+def addparameter(project=None, copyfrom=None, short=None, **kwargs):
+    ''' 
+    Function for adding a new parameter to a project -- used by several migrations.
+    Use kwargs to arbitrarily specify the new parameter's properties.
+    '''
     for ps in project.parsets.values():
         for i in range(len(ps.pars)):
             ps.pars[i][short] = op.dcp(project.pars()[copyfrom])
-            ps.pars[i][short].name = name
             ps.pars[i][short].short = short
+            for kwargkey,kwargval in kwargs.items():
+                setattr(ps.pars[i][short], kwargkey, kwargval)
     project.data[short] = [[nan]*len(project.data['years'])]
 
 
@@ -227,7 +231,15 @@ def addaidsleavecare(project, **kwargs):
     """
     Migration between Optima 2.1.4 and 2.1.5.
     """
-    addparameter(project=project, copyfrom='leavecare', short='aidsleavecare', name='Percentage of people with CD4<200 lost to follow-up (%/year)')
+    short = 'aidsleavecare'
+    copyfrom = 'leavecare'
+    kwargs['by'] = 'tot'
+    kwargs['name'] = 'AIDS loss to follow-up rate (per year)'
+    kwargs['dataname'] = 'Percentage of people with CD4<200 lost to follow-up (%/year)'
+    kwargs['datashort'] = 'aidsleavecare'
+    kwargs['t'] = op.odict([('tot',array([2000.]))])
+    kwargs['y'] = op.odict([('tot',array([0.01]))])
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     project.version = "2.1.5"
     return None
 
