@@ -585,6 +585,7 @@ class OptimaSpreadsheet:
         methods_names_formats_ranges = [
         ('emit_ref_years_block',    'Average time taken to be linked to care (years)',                  OptimaFormats.NUMBER,       self.pop_range),
         ('emit_ref_years_block',    'Percentage of people in care who are lost to follow-up per year (%/year)',    OptimaFormats.PERCENTAGE,   self.pop_range),
+        ('emit_years_block',        'Percentage of people with CD4<200 lost to follow-up (%/year)',     OptimaFormats.PERCENTAGE,           ['Average']),
         ('emit_years_block',        'Viral load monitoring (number/year)',                              OptimaFormats.NUMBER,           ['Average']),
         ]
         for (method, name, row_format, row_range) in methods_names_formats_ranges:
