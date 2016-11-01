@@ -1,5 +1,19 @@
 import optima as op
-from numpy import nan, concatenate as cat
+from numpy import nan, concatenate as cat, array
+
+
+def addparameter(project=None, copyfrom=None, short=None, **kwargs):
+    ''' 
+    Function for adding a new parameter to a project -- used by several migrations.
+    Use kwargs to arbitrarily specify the new parameter's properties.
+    '''
+    for ps in project.parsets.values():
+        for i in range(len(ps.pars)):
+            ps.pars[i][short] = op.dcp(project.pars()[copyfrom])
+            ps.pars[i][short].short = short
+            for kwargkey,kwargval in kwargs.items():
+                setattr(ps.pars[i][short], kwargkey, kwargval)
+    project.data[short] = [[nan]*len(project.data['years'])]
 
 
 def versiontostr(project, **kwargs):
@@ -47,12 +61,7 @@ def addproppmtct(project, **kwargs):
     """
     Migration between Optima 2.0.3 and 2.0.4.
     """
-    for ps in project.parsets.values():
-        for i in range(len(ps.pars)):
-            ps.pars[i]['proppmtct'] = op.dcp(project.pars()['proptx'])
-            ps.pars[i]['proppmtct'].name = 'Pregnant women and mothers on PMTCT'
-            ps.pars[i]['proppmtct'].short = 'proppmtct'
-    project.data['proppmtct'] = [[nan]*len(project.data['years'])]
+    addparameter(project=project, copyfrom='proptx', short='proppmtct', name='Pregnant women and mothers on PMTCT')
     project.version = "2.0.4"
     return None
 
@@ -208,6 +217,7 @@ def removenumcircdata(project, **kwargs):
     project.version = "2.1.3"
     return None
 
+
 def removepopcharacteristicsdata(project, **kwargs):
     """
     Migration between Optima 2.1.3 and 2.1.4.
@@ -217,7 +227,21 @@ def removepopcharacteristicsdata(project, **kwargs):
     project.version = "2.1.4"
     return None
 
-
+def addaidsleavecare(project, **kwargs):
+    """
+    Migration between Optima 2.1.4 and 2.1.5.
+    """
+    short = 'aidsleavecare'
+    copyfrom = 'leavecare'
+    kwargs['by'] = 'tot'
+    kwargs['name'] = 'AIDS loss to follow-up rate (per year)'
+    kwargs['dataname'] = 'Percentage of people with CD4<200 lost to follow-up (%/year)'
+    kwargs['datashort'] = 'aidsleavecare'
+    kwargs['t'] = op.odict([('tot',array([2000.]))])
+    kwargs['y'] = op.odict([('tot',array([0.01]))])
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    project.version = "2.1.5"
+    return None
 
 migrations = {
 '2.0':   versiontostr,
@@ -230,6 +254,7 @@ migrations = {
 '2.1.1': addalleverincare,
 '2.1.2': removenumcircdata,
 '2.1.3': removepopcharacteristicsdata,
+'2.1.4': addaidsleavecare,
 }
 
 
