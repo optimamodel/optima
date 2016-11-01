@@ -69,6 +69,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     treatfail       = simpars['treatfail']*dt                             # Probability of treatment failure in 1 time step
     freqvlmon       = 1.-exp(-dt*simpars['freqvlmon'])                    # Probability of getting virally monitored in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
+    aidslinktocare  = 1.-exp(-dt/(maximum(eps,simpars['aidslinktocare'])))# Probability of being linked to care in 1 time step for people with AIDS
     leavecare       = simpars['leavecare']*dt                             # Proportion of people lost to follow-up per year
     aidsleavecare   = simpars['aidsleavecare']*dt                         # Proportion of people with AIDS being lost to follow-up per year
         
@@ -83,6 +84,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     alltx           = settings.alltx                # All on treatment
     allplhiv        = settings.allplhiv             # All PLHIV
     notonart        = settings.notonart             # All PLHIV who are not on ART    
+    dxnotincare     = settings.dxnotincare          # Diagnosed people not in care
     care            = settings.care                 # In care
     usvl            = settings.usvl                 # On treatment - Unsuppressed Viral Load
     svl             = settings.svl                  # On treatment - Suppressed Viral Load
@@ -550,14 +552,18 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     thistransit[fromstate][prob][ts] *= dxprob[cd4]
                     raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate][prob][ts]/dt
 
-        # Diagnosed to care
-        careprob = linktocare[:,t] if isnan(propcare[t]) else 0.
-        for fromstate in dx:
+        # Diagnosed/lost to care
+        if isnan(propcare[t]):
+            careprob = [linktocare[:,t]]*ncd4
+            for cd4 in range(aidsind, ncd4): careprob[cd4] = minimum(aidslinktocare[t],linktocare[:,t])
+        else: careprob = zeros(ncd4)
+        for cd4ind, fromstate in enumerate(dxnotincare):  # 2 categories x 6 states per category = 12 states
+            cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
             for ts, tostate in enumerate(thistransit[fromstate][to]):
-                if tostate in dx: # Probability of not moving into care
-                    thistransit[fromstate][prob][ts] *= (1.-careprob)
+                if tostate in dxnotincare: # Probability of not moving into care
+                    thistransit[fromstate][prob][ts] *= (1.-careprob[cd4])
                 else: # Probability of moving into care
-                    thistransit[fromstate][prob][ts] *= careprob
+                    thistransit[fromstate][prob][ts] *= careprob[cd4]
 
         # Care/USVL/SVL to lost
         if isnan(propcare[t]):
@@ -571,15 +577,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     thistransit[fromstate][prob][ts] *= (1.-lossprob[cd4])
                 else: # Probability of being lost
                     thistransit[fromstate][prob][ts] *= lossprob[cd4]
-    
-        # Lost to care
-        careprob = linktocare[:,t] if isnan(propcare[t]) else 0.
-        for fromstate in lost:
-            for ts, tostate in enumerate(thistransit[fromstate][to]):
-                if tostate in lost: # Probability of not being lost and remaining in care
-                    thistransit[fromstate][prob][ts] *= (1.-careprob)
-                else: # Probability of being lost
-                    thistransit[fromstate][prob][ts] *= careprob
     
         # USVL to SVL
         svlprob = freqvlmon[t] if isnan(propsupp[t]) else 0.
