@@ -123,7 +123,7 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 
 ## Plotting functions
 from . import plotting as _plotting 
-from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov
 
 
 #####################################################################################################################

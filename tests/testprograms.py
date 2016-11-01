@@ -15,8 +15,8 @@ Version: 2016feb06
 ## Define tests to run here!!!
 tests = [
 'makeprogramspreadsheet',
-'loadprogramspreadsheet',
-'demonstrateprogrammethods',
+#'loadprogramspreadsheet',
+#'demonstrateprogrammethods',
 'plotprogram',
 'compareoutcomes',
 'reconcilepars',
@@ -154,6 +154,7 @@ if 'demonstrateprogrammethods' in tests:
 
 ## Try program plotting
 if 'plotprogram' in tests:
+    from optima import plotcoverage
     P = defaults.defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
     progs = P.progs()
@@ -169,7 +170,7 @@ if 'plotprogram' in tests:
     plotoptions['perperson'] = False
 
     if doplot:
-        HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions,doplot=doplot)
+        plotcoverage(program=HTC, year=[2014,2015], parset=P.parsets['default'], plotoptions=plotoptions, doplot=doplot)
 
 
 
