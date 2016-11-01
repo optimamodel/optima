@@ -1,6 +1,5 @@
 define([
   'angular',
-  './editable/index',
   './menu/index',
   './spreadsheet-upload-hint/index',
   './modal/modal-service',
@@ -12,7 +11,6 @@ define([
 
   return angular.module('app.ui', [
     'app.active-project',
-    'app.ui.editable',
     'app.ui.modal',
     'app.common.file-upload',
     'app.ui.menu'
