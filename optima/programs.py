@@ -34,8 +34,22 @@ class Programset(object):
         output = defaultrepr(self)
         return output
     
-    def addprograms(self):
-        pass
+    def addprograms(self, programs=None, overwrite=True, verbose=2):
+        if type(programs)==Program: programs = [programs] # Make into a list if a single program supplied
+        if type(programs)==list: # This is actually if, not elif, to handle the case of a single program
+            for program in programs:
+                if type(program)!=Program:
+                    errormsg = 'Can only add programs, not objects of type %s' % type(program)
+                    raise OptimaException(errormsg)
+                if program.short in self.programs.keys() and not overwrite:
+                    errormsg = 'Program %s already exists in program set' % program.short
+                    raise OptimaException(errormsg)
+                self.programs[program.short] = program
+                printv('Added program "%s" to programset "%s"' % (program.short, self.name), 3, verbose)
+        else:
+            errormsg = 'Must supply either a single program or a list of programs, not object of type %s' % type(programs)
+            raise OptimaException(errormsg)
+        return None
         
     def rmprograms(self):
         pass
@@ -64,12 +78,12 @@ class Program(object):
     """
     Defines a single program. 
     Can be initialized with:
-    costcovpars, e.g. {'year': 2015, 'saturation': 0.9, 'unitcost': 40}
+    costcovpars, e.g. {'year': 2015, 'saturation': 0.9, 'unitcost': 40} # NOT ANY MORE
     targetpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]
     targetpops, e.g. ['FSW','MSM']
     """
 
-    def __init__(self, name=None, short=None, targetpars=None, targetpops=None, costcovpars=None, costcovdata=None, category=None):
+    def __init__(self, name=None, short=None, targetpars=None, targetpops=None, category=None, criteria=None):
         """Initialize"""
         self.name = name
         self.short = short
@@ -81,10 +95,11 @@ class Program(object):
         except:
             print("Error while initializing targetpartypes in program %s for targetpars %s" % (short, self.targetpars))
             self.targetpartypes = []
-        self.costcovdata = dataframe(costcovdata) if costcovdata else dataframe(['year','cost','coverage'])
         self.category = category
-        self.costcovpars = None
-        self.initialize_costcov(costcovpars)
+        self.criteria = criteria
+        self.costcovdata = dataframe(['year','cost','coverage']) # Initialize, but don't populate until later
+        self.costcovpars = dataframe(['year','unitcost','saturation'])
+        
 
 
     def __repr__(self):
