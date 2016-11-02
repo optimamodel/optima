@@ -923,10 +923,11 @@ class Constant(Par):
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
-        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
+        meta = self.m if usemeta else 1.0
         
         if self.keys() is None: # Just a simple constant
-            yinterp = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
+            yinterp = applylimits(par=self, y=self.y*meta, limits=self.limits, dt=dt)
             if asarray: output = yinterp
             else: output = odict([('tot',yinterp)])
         else: # No, it has keys, return as an array
@@ -935,7 +936,7 @@ class Constant(Par):
             if asarray: output = zeros(npops)
             else: output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
+                yinterp = applylimits(par=self, y=self.y[key]*meta, limits=self.limits, dt=dt)
                 if asarray: output[pop] = yinterp
                 else: output[key] = yinterp
         return output
