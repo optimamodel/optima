@@ -390,13 +390,18 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
     Version: 2016nov02 by cliffk
     """
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil, float64
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
     # Ensure arrays and remove NaNs
     if isnumber(newx): newx = [newx] # Make sure it has dimension
-    newx = array(newx, dtype=float64)
-    origx = array(origx, dtype=float64)
-    origy = array(origy, dtype=float64)
+    newx = array(newx)
+    origx = array(origx)
+    origy = array(origy)
+    
+    # If only a single element, just return it, without checking everything else
+    if len(origy)==1: 
+        newy = zeros(newx.shape)+origy[0]
+        return newy
     
     if not(newx.shape): raise Exception('To interpolate, must have at least one new x value to interpolate to')
     if not(origx.shape): raise Exception('To interpolate, must have at least one original x value to interpolate to')
