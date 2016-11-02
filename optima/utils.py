@@ -388,14 +388,15 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         hold(True)
         scatter(origx,origy)
     
-    Version: 2016jan29 by cliffk
+    Version: 2016nov02 by cliffk
     """
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil, float64
     
     # Ensure arrays and remove NaNs
-    newx = array(newx)
-    origx = array(origx)
-    origy = array(origy)
+    if isnumber(newx): newx = [newx] # Make sure it has dimension
+    newx = array(newx, dtype=float64)
+    origx = array(origx, dtype=float64)
+    origy = array(origy, dtype=float64)
     
     if not(newx.shape): raise Exception('To interpolate, must have at least one new x value to interpolate to')
     if not(origx.shape): raise Exception('To interpolate, must have at least one original x value to interpolate to')

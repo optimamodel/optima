@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016oct30
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, dataframe, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar
+from optima import OptimaException, printv, uuid, today, sigfig, dataframe, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, smoothinterp
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose
 from random import uniform
 
@@ -84,16 +84,29 @@ class Programset(object):
         return budget
     
     
-    def getcoverage(self, budget=None, year=None, parset=None, verbose=2):
+    def getcoverage(self, budget=None, year=None, parset=None, ind=0, fraction=True, verbose=2):
         ''' Return coverage based on a given budget. If None, then use default. '''
         coverage = odict()
         if budget is None: budget = self.defaultbudget(verbose=verbose)
         if year is None: year = self.project.settings.now
+        if parset is None: parset = -1
+        popsizes = self.project.parsets[parset].pars[ind]['popsize'].interp(tvec=year, asarray=False)
+        
         for progname,program in self.programs.items():
-            try:
-                coverage[progname] = program.getcoverage(budget=budget[progname], year=year, parset=parset, verbose=verbose)
-            except:
-                coverage[progname] = None
+            yearvec = program.costcovpars['year']
+            unitcostvec = program.costcovpars['unitcost']
+            print('NO NEED TO HANDLE TUPLES')
+            saturationvec = program.costcovpars['saturation']
+            unitcost = smoothinterp(newx=year, origx=yearvec, origy=unitcostvec)
+            saturation = smoothinterp(newx=year, origx=yearvec, origy=saturationvec)
+            linearpeoplecovered = budget[progname]/unitcost # Calculate the number of people covered purely linearly
+            popsize = popsizes[program.targetpops].sum() # WARNING, need to implement criteria!
+            fracpeoplecovered = linearpeoplecovered/popsize
+            fracsquashed = squashfunc(fracpeoplecovered, 0, saturation) # Squash nonlinearly 
+            if fraction: thiscoverage = fracsquashed
+            else: thiscoverage = fracsquashed*popsize
+            coverage[progname] = thiscoverage         
+        
         return coverage
     
     
