@@ -85,18 +85,26 @@ class Programset(object):
     
     
     def getcoverage(self, budget=None, year=None, parset=None, verbose=2):
-        pass
-    
+        ''' Return coverage based on a given budget. If None, then use default. '''
+        coverage = odict()
+        if budget is None: budget = self.defaultbudget(verbose=verbose)
+        if year is None: year = self.project.settings.now
+        for progname,program in self.programs.items():
+            try:
+                coverage[progname] = program.getcoverage(budget=budget[progname], year=year, parset=parset, verbose=verbose)
+            except:
+                coverage[progname] = None
+        return coverage
     
     
     def getoutcomes(self, coverage=None, budget=None, year=None, parset=None, sample='best', randseed=0, verbose=2):
         
-        # Check input arguments
-        if coverage is not None and budget is not None:
-            raise OptimaException('getoutcomes() accepts a coverage or a budget input, but not both')
+        # Get year
+        if year is None: year = self.project.settings.now
         
-        # Calculate coverage, using default if budget is not supplied
-        elif coverage is None:
+        if coverage is not None and budget is not None: # Check input arguments
+            raise OptimaException('getoutcomes() accepts a coverage or a budget input, but not both')
+        elif coverage is None: # Calculate coverage, using default if budget is not supplied
             coverage = self.getcoverage(budget=budget, year=year, parset=parset)
         
         pass
@@ -221,29 +229,29 @@ class Program(object):
         pass
     
     
-    def getcostcovpar():#self, year=None, sample='best', verbose=2):
-        pass
-    
-    
     def addcostcovdata(self, costcovdata=None, overwrite=False, verbose=2):
         self.costcovdata.addrow(costcovdata, overwrite=overwrite)
         printv('Added cost-coverage data point: %s' % costcovdata, 4, verbose)
         return None
     
     
-    def rmcostcovdata():#self, year=None, verbose=2):
-        pass
+    def rmcostcovpar(self, year=None, verbose=2):
+        self.costcovpar.rmrow(year)
+        printv('Removed cost-coverage parameter point for %s' % year, 4, verbose)
+        return None
+    
+    
+    def rmcostcovdata(self, year=None, verbose=2):
+        self.costcovdata.rmrow(year)
+        printv('Removed cost-coverage data point for %s' % year, 4, verbose)
+        return None
 
-    
-    def costcovfunc():
-        pass
-    
-    def covcostfunc():
-        pass
-    
+
     def optimizable(self):
         ''' Simply determine whether or not a program can be optimized -- if it has any target parameters '''
         return True if self.targetpars else False
+    
+    
 
 
 
@@ -359,6 +367,18 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
     return mismatch
 
 
+
+def squashfunc(x, lim1=0, lim2=1):
+    ''' Calculate a saturating curve in the forward direction, e.g. cost to coverage '''
+    y = 2/(1+exp(-2*x))-1 # Calculate point on curve -- x should be >0, y should be [0,1)
+    y = y*(lim2-lim1)+lim1 # Scale to fall within [lim1,lim2)
+    return y
+
+def unsquashfunc(y, lim1=0, lim2=1):
+    ''' Calculate a saturating curve in the inverse direction, e.g. coverage to cost '''
+    y = y-lim1/(lim2-lim1) # Unscale y from [lim1,lim2) to [0,1)
+    x = -0.5*log(2/(y+1)-1) # Calculate x, should be >0
+    return x
 
 
 def evalcostcov(ccopars=None, x=None, t=None, popsize=None, inverse=False, sample='best', eps=None, verbose=2):
