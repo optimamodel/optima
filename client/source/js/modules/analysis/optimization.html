@@ -106,7 +106,7 @@
         style="
           border: 1px solid #DDD;
           padding: 10px;
-          flex: 0 0 400px;
+          flex: 0 0 280px;
           height: 100%;
           width: 100%;
           overflow:auto">
@@ -139,24 +139,19 @@
             </div>
             <div class="section">
               <div class="label">Type</div>
-              <div>
-                  <span style="width: 45%">
-                    <input
-                        type="radio"
-                        name="objectives_which"
-                        ng-click="setType('outcomes')"
-                        ng-checked="state.optimization.which==='outcomes'"/>
-                    Minimize outcomes
-                  </span>
-                  <span style="width: 45%">
-                    <input
-                        type="radio"
-                        name="objectives_which"
-                        ng-click="setType('money')"
-                        ng-checked="state.optimization.which==='money'"/>
-                    Minimize money
-                  </span>
-              </div>
+              <input
+                  type="radio"
+                  name="objectives_which"
+                  ng-click="setType('outcomes')"
+                  ng-checked="state.optimization.which==='outcomes'"/>
+              Minimize outcomes
+              <br>
+              <input
+                  type="radio"
+                  name="objectives_which"
+                  ng-click="setType('money')"
+                  ng-checked="state.optimization.which==='money'"/>
+              Minimize money
             </div>
             <div ng-if="state.optimization.objectives" class="section">
               <div class="label">Objectives</div>
@@ -174,20 +169,22 @@
             </div>
             <div ng-if="state.optimization.constraints" class="section">
               <div class="label">Constraints</div>
-              <div style="justify-content: space-around; font-weight: bold" class="option">
-                <span style="width: 60%">Program Name</span>
-                <span style="width: 20%">Minimum</span>
-                <span style="width: 20%">Maximum</span>
+              <div style="justify-content: space-around; font-style: italic" class="option">
+                <span style="width: 60%">Program</span>
+                <span style="width: 20%">Min</span>
+                <span style="width: 20%">Max</span>
               </div>
             </div>
             <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
-              <span style="width: 60%">{{ state.optimization.constraints.name[constraintKey] }}</span>
-                <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.optimization.constraints.min[constraintKey]"/>
-                </span>
-                <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.optimization.constraints.max[constraintKey]"/>
-                </span>
+              <span style="width: 60%">
+                {{ state.optimization.constraints.name[constraintKey] }}
+              </span>
+              <span style="width: 20%">
+                <input class="txbox" type="number" ng-model="state.optimization.constraints.min[constraintKey]"/>
+              </span>
+              <span style="width: 20%">
+                <input class="txbox" type="number" ng-model="state.optimization.constraints.max[constraintKey]"/>
+              </span>
             </div>
           </div>
 
