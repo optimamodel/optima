@@ -1,6 +1,6 @@
-<div class="rich" style="margin: 0 -25px; padding: 10px;">
+<div class="rich">
 
-  <h1>Optimization</h1>
+  <h1>Optimization analysis</h1>
 
   <div class="error-hint" ng-show="isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
@@ -16,42 +16,60 @@
 
   <div ng-if="!isMissingData && isOptimizable && !isMissingProgramSet" class="rich"">
 
-    <div class="3">
-      <label for="optimization-selection">Select an optimization:</label>
-    </div>
+    <div
+      style="
+        display: flex;
+        align-items: center">
 
-    <div style="display: flex;justify-content: flex-start;">
-      <select id="optimization-selection"
-              name="optimization-selection"
-              class="updateGraph txbox"
-              ng-model="state.optimization"
-              ng-change="selectOptimization()"
-              ng-options="optimization as optimization.name for optimization in state.optimizations"
-              style="width: 20%;">
+      Optimization: &nbsp;
+
+      <select
+        class="txbox"
+        ng-model="state.optimization"
+        ng-change="selectOptimization()"
+        ng-options="optimization as optimization.name for optimization in state.optimizations"
+        style="width: 20%;">
       </select>
-      <button ng-click="addOptimization()" type="button" class="btn" style="margin-left:2%">New optimization</button>
-      <button ng-click="copyOptimization()" type="button" class="btn" style="margin-left:2%">Copy optimization</button>
-      <button ng-click="renameOptimization()" type="button" class="btn" style="margin-left:2%">Rename optimization</button>
-      <button ng-click="downloadOptimization()" type="button" class="btn" style="margin-left:2%">Download optimization</button>
-      <button ng-click="uploadOptimization()" type="button" class="btn" style="margin-left:2%">Upload optimization</button>
-      <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
+      <a
+        ng-click="addOptimization()"
+        class="fa fa-file-o"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="copyOptimization()"
+        class="fa fa-copy"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="renameOptimization()"
+        class="fa fa-pencil"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="downloadOptimization()"
+        class="fa fa-download"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="uploadOptimization()"
+        class="fa fa-upload"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="deleteOptimization()"
+        class="fa fa-trash-o"
+        style="margin-left: 0.5em">
+      </a>
     </div>
 
     <div ng-if="state.optimizations.length > 0">
-      <div style="width: 100%; margin-top: 25px;">
+      <div style="width: 100%; margin-top: 10px;">
           <input
-              type="button"
-              value="Save Optimization"
-              class="updateGraph btn"
-              ng-click="saveOptimizationForm(optimizationForm)"
-              ng-disabled="checkNotSavale()"/>
-          &nbsp;
-          <input
-              type="button"
-              value="Run Optimization"
-              class="updateGraph btn"
-              ng-click="startOptimization()"
-              ng-disabled="checkNotRunnable()"/>
+            type="button"
+            value="Save Optimization"
+            class="btn"
+            ng-click="saveOptimizationForm(optimizationForm)"
+            ng-disabled="checkNotSavale()"/>
           &nbsp;
           Run optimization for about
           &nbsp;
@@ -64,26 +82,34 @@
             <option value="1800">30 minutes</option>
           </select>
           &nbsp;
+          <button
+            class="btn"
+            ng-click="startOptimization()"
+            ng-disabled="checkNotRunnable()">
+            Optimize
+          </button>
+          &nbsp;
           <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
             {{ statusMessage }}
           </span>
       </div>
 
-      <div style="
+      <div
+        style="
           display: flex;
-          margin-top: 20px;
+          margin-top: 10px;
           justify-content: space-between;
-          height: calc(100vh - 300px);">
+          height: calc(100vh - 200px);">
 
-      <div class="small_bordered_list"
-           style="
-              margin-left: 10px;
-              border: 1px solid #DDD;
-              padding: 10px;
-              flex: 0 0 400px;
-              height: 100%;
-              width: 100%;
-              overflow:auto">
+      <div
+        class="small_bordered_list"
+        style="
+          border: 1px solid #DDD;
+          padding: 10px;
+          flex: 0 0 400px;
+          height: 100%;
+          width: 100%;
+          overflow:auto">
 
         <form name="optimizationForm">
           <div>

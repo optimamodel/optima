@@ -1,9 +1,7 @@
 
 <div class="rich">
 
-  <div class="grid">
-    <h1>Calibration</h1>
-  </div>
+  <h1>Calibration</h1>
 
   <div class="error-hint" ng-show="isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
@@ -15,49 +13,46 @@
       style="
         display: flex;
         align-items: center">
+
       Parameter set:
       &nbsp;
-      <button
-          ng-click="addParameterSet()"
-          class="btn"
-          style="">
-        Create
-      </button>
-      &nbsp;
-      select
-      &nbsp;
       <select
-        class="updateGraph txbox"
+        class="txbox"
         ng-model="state.parset"
         ng-change="setActiveParset()"
         ng-options="parset.name for parset in parsets"
         style="width: 20%;">
       </select>
-      <span
-          ng-click="copyParameterSet()"
-          class="fa fa-copy"
-          style="margin-left: 0.5em">
-      </span>
-      <span
-          ng-click="renameParameterSet()"
-          class="fa fa-pencil"
-          style="margin-left: 0.5em">
-      </span>
-      <span
-          ng-click="downloadParameterSet()"
-          class="fa fa-download"
-          style="margin-left: 0.5em">
-      </span>
-      <span
-          ng-click="uploadParameterSet()"
-          class="fa fa-upload"
-          style="margin-left: 0.5em">
-      </span>
-      <span
-          ng-click="deleteParameterSet()"
-          class="fa fa-trash"
-          style="margin-left: 0.5em">
-      </span>
+      <a
+        ng-click="addParameterSet()"
+        class="fa fa-file-o"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="copyParameterSet()"
+        class="fa fa-copy"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="renameParameterSet()"
+        class="fa fa-pencil"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="downloadParameterSet()"
+        class="fa fa-download"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="uploadParameterSet()"
+        class="fa fa-upload"
+        style="margin-left: 0.5em">
+      </a>
+      <a
+        ng-click="deleteParameterSet()"
+        class="fa fa-trash-o"
+        style="margin-left: 0.5em">
+      </a>
     </div>
 
     <div
@@ -65,14 +60,12 @@
         display: flex;
         align-items: center;
         padding-top: 10px;
-        padding-bottom: 10px;">
+        padding-bottom: 15px;">
 
       <button class="btn __m" ng-click="saveAndUpdateGraphs()">
         Save parameters
       </button>
 
-      &nbsp;
-      &nbsp;
       &nbsp;
 
       Run auto-fit for about
@@ -97,8 +90,8 @@
       </button>
 
       &nbsp;
-      &nbsp;
 
+      &nbsp;
       <span style="color: #00aeef;"> {{ statusMessage }} </span>
 
     </div>
@@ -109,7 +102,7 @@
         flex-direction: row;
         justify-content: space-between;
         width: 100%;
-        height: calc(100vh - 300px)">
+        height: calc(100vh - 200px)">
 
       <div class="small_bordered_list"
            style="flex: 0 0 320px;"

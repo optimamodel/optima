@@ -1,7 +1,7 @@
 <div class="menu">
 
   <div ng-if="isAdmin" ng-click="showAdminMenu = !showAdminMenu" ng-mouseleave="showAdminMenu = false">
-    <div class="btn __blue">
+    <div class="btn __light-blue">
       Admin
       <i class="fa fa-angle-up" ng-if="showAdminMenu"></i>
       <i class="fa fa-angle-down" ng-if="!showAdminMenu"></i>
@@ -13,50 +13,50 @@
   </div>
 
   <div ng-click="showProjectMenu = !showProjectMenu" ng-mouseleave="showProjectMenu = false">
-    <div ui-sref="home" class="btn __blue">
-      Manage projects
+    <div ui-sref="home" class="btn __light-blue">
+      Projects
     </div>
   </div>
 
   <div ng-click="showCalibrateMenu = !showCalibrateMenu" ng-mouseleave="showCalibrateMenu = false">
-    <div ng-click="goIfProjectActive('model.manual')" class="btn __blue">
-      Calibrate model
+    <div ng-click="goIfProjectActive('model.manual')" class="btn __light-blue">
+      Calibration
     </div>
   </div>
 
   <div ng-click="showProjectSetMenu = !showProjectSetMenu" ng-mouseleave="showProjectSetMenu = false">
-    <div class="btn __blue">
-      Define programs
+    <div class="btn __light-blue">
+      Programs
       <i class="fa fa-angle-up" ng-if="showProjectSetMenu"></i>
       <i class="fa fa-angle-down" ng-if="!showProjectSetMenu"></i>
     </div>
     <div ng-if="showProjectSetMenu" class="menu-dropdown" style="width: 250px;">
-      <div ng-click="goIfProjectActive('programs.manageProgramSet')">Define/manage program set</div>
+      <div ng-click="goIfProjectActive('programs.manageProgramSet')">Manage program set</div>
       <div ng-click="goIfProjectActive('programs.define-cost-coverage-outcome')">Define cost and outcome functions</div>
     </div>
   </div>
 
   <div ng-click="showAnalysisMenu = !showAnalysisMenu" ng-mouseleave="showAnalysisMenu = false">
-    <div class="btn __blue">
-      Perform analyses
+    <div class="btn __light-blue">
+      Analysis
       <i class="fa fa-angle-up" ng-if="showAnalysisMenu"></i>
       <i class="fa fa-angle-down" ng-if="!showAnalysisMenu"></i>
     </div>
     <div ng-if="showAnalysisMenu" class="menu-dropdown" style="width: 150px;">
-      <div ng-click="goIfProjectActive('analysis.scenarios')">Scenario analyses</div>
-      <div ng-click="goIfProjectActive('analysis.optimization')">Optimization analyses</div>
+      <div ng-click="goIfProjectActive('analysis.scenarios')">Scenario analysis</div>
+      <div ng-click="goIfProjectActive('analysis.optimization')">Optimization analysis</div>
     </div>
   </div>
 
   <div ng-click="showPortfolioMenu = !showPortfolioMenu" ng-mouseleave="showPortfolioMenu = false">
-    <div ui-sref="portfolio.manage" class="btn __blue">
-      Geospatial analysis
+    <div ui-sref="portfolio.manage" class="btn __light-blue">
+      Geospatial
     </div>
   </div>
 
   <div ng-click="showAccountHelpMenu = !showAccountHelpMenu" ng-mouseleave="showAccountHelpMenu = false">
-    <div class="btn __blue">
-      Account and help
+    <div class="btn __light-blue">
+      Account & help
       <i class="fa fa-angle-up" ng-if="showAccountHelpMenu"></i>
       <i class="fa fa-angle-down" ng-if="!showAccountHelpMenu"></i>
     </div>
