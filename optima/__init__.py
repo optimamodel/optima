@@ -185,10 +185,10 @@ from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultp
 
 # And really finally, load other random things that don't matter
 try:
-    from . import migrations
-    from .migrations.migrate import migrate
+    import migrate as _migrate
+    from .migrate import migrate
 except:
-    _failed.append('migrations')
+    _failed.append('migrate')
     
 
 if not len(_failed): del _failed # If it's empty, don't bother keeping it
