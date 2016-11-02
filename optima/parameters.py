@@ -505,8 +505,11 @@ def makepars(data, label=None, verbose=2):
             else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
-            pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+            best = data['const'][parname][0] 
+            low = data['const'][parname][1] 
+            high = data['const'][parname][2]
+            mrange = (low, high)
+            pars[parname] = Constant(m=best, mrange=mrange, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Constant(y=odict(), **rawpar)
@@ -907,9 +910,8 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, y=None, **defaultargs):
+    def __init__(self, **defaultargs):
         Par.__init__(self, **defaultargs)
-        self.y = y # y-value data, e.g. [0.3, 0.7]
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
