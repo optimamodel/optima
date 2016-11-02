@@ -910,8 +910,9 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, **defaultargs):
+    def __init__(self, y=None, **defaultargs):
         Par.__init__(self, **defaultargs)
+        self.y = y # y-value data, e.g. [0.3, 0.7]
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
