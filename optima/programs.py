@@ -78,10 +78,27 @@ class Programset(object):
         
     def getcoverage(self):
         pass
-        
-    def getoutcomes(self):
-        pass
     
+    
+    
+    def getoutcomes(self, coverage=None, budget=None, year=None, parset=None, sample='best', randseed=0, verbose=2):
+        
+        # Check input arguments
+        if coverage is not None and budget is not None:
+            raise OptimaException('getoutcomes() accepts a coverage or a budget input, but not both')
+        
+        # Use default coverage
+        elif coverage is None and budget is None:
+            coverage = self.defaultcoverage(year=year, parset=parset)
+        
+        # Calculate coverage
+        elif coverage is None and budget is not None:
+            coverage = self.getcoverage(budget=budget, year=year, parset=parset)
+        
+        pass
+
+
+  
     def loadspreadsheet(self, filename, verbose=3):
         """Load a spreadsheet with cost and coverage data and parametres for the cost functions""" 
     
