@@ -53,7 +53,8 @@ class Programset(object):
             if type(program)==Program: program = program.short
             self.programs.pop(program)
         return None
-        
+    
+    
     def addcovoutpar(self, parname=None, popname=None, covoutpar=None, verbose=2):
         try:
             zerocov = covoutpar.pop('zerocov') # Pull out the value at zero coverage
@@ -69,14 +70,21 @@ class Programset(object):
         self.covout[key] = Covout(parname=parname, popname=popname, zerocov=zerocov, fullcov=fullcov, progs=covoutpar) # Everything remaining is the programs
         printv('Added coverage-outcome parameter: %s' % covoutpar, 4, verbose)
         return None
+    
         
-    def defaultbudget(self):
-        pass
-        
-    def defaultcoverage(self):
-        pass
-        
-    def getcoverage(self):
+    def defaultbudget(self, verbose=2):
+        ''' Extract the most recent budget information for each program '''
+        budget = odict()
+        for progname,program in self.programs.items():
+            try: 
+                budget[progname] = program.costcovdata['cost',-1]
+            except: 
+                budget[progname] = 0.0
+                printv('defaultbudget(): No cost data entered for program %s' % progname, 1, verbose)
+        return budget
+    
+    
+    def getcoverage(self, budget=None, year=None, parset=None, verbose=2):
         pass
     
     
@@ -87,12 +95,8 @@ class Programset(object):
         if coverage is not None and budget is not None:
             raise OptimaException('getoutcomes() accepts a coverage or a budget input, but not both')
         
-        # Use default coverage
-        elif coverage is None and budget is None:
-            coverage = self.defaultcoverage(year=year, parset=parset)
-        
-        # Calculate coverage
-        elif coverage is None and budget is not None:
+        # Calculate coverage, using default if budget is not supplied
+        elif coverage is None:
             coverage = self.getcoverage(budget=budget, year=year, parset=parset)
         
         pass
