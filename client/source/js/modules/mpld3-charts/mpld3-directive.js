@@ -511,6 +511,12 @@ define(
           }
         );
 
+        scope.clearSelectors = function() {
+            _.each(scope.graphs.selectors, function (selector) {
+              selector.checked = false;
+            });
+        };
+
         scope.changeFigWidth = function(figWidth) {
           console.log('resizing to', figWidth);
           function setAllFiguresToWidth($element) {
@@ -518,17 +524,13 @@ define(
             $figures.each(function() {
               var $svgFigure = $(this);
               var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
-              // var width = $svgFigure.parent().width();
               var width = figWidth;
               var height = width / ratio;
               $svgFigure.attr('width', width);
               $svgFigure.attr('height', height);
-              $svgFigure.parent().attr('width', width);
-              $svgFigure.parent().attr('height', height);
             });
           }
           setAllFiguresToWidth($(elem).find(".allcharts"));
-          // scope.$apply();
         };
 
         initialize();

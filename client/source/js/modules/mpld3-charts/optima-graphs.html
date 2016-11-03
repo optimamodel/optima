@@ -70,12 +70,19 @@
         Update Graphs
       </button>
       <br>
-      Width:
+      Figure width:
       <input
         class="txbox __inline"
         type="number"
         ng-change="changeFigWidth(figWidth)"
         ng-model="figWidth"/>
+      <br>
+      <button
+          style="margin-bottom: 10px;"
+          class="btn"
+          ng-click="clearSelectors()">
+        Clear
+      </button>
     </div>
     <div
         style="
