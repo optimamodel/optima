@@ -5,7 +5,7 @@ from optima import OptimaException, dcp, today, odict, printv, findinds, runmode
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
-    def __init__(self, name=None, parsetname=None, t=None, active=True):
+    def __init__(self, name=None, parsetname=-1, t=None, active=True):
         self.uid = uuid()
         self.name = name
         self.parsetname = parsetname
@@ -39,7 +39,7 @@ class Parscen(Scen):
 
 class Progscen(Scen):
     ''' The program scenario base class -- not to be used directly, instead use Budgetscen or Coveragescen '''
-    def __init__(self, progsetname=None, **defaultargs):
+    def __init__(self, progsetname=-1, **defaultargs):
         Scen.__init__(self, **defaultargs)
         self.progsetname = progsetname # Programset
 
@@ -115,8 +115,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             thisparset = dcp(project.parsets[scen.parsetname])
             thisparset.project = project # Replace copy of project with pointer -- WARNING, hacky
         except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
-        thisparset.modified = today()
-        thisparset.name = scen.name
         npops = len(thisparset.popkeys)
 
         if isinstance(scen,Parscen):
@@ -253,6 +251,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             errormsg = 'Unrecognized program scenario type.'
             raise OptimaException(errormsg)
             
+        thisparset.modified = today()
+        thisparset.name = scen.name
         scenparsets[scen.name] = thisparset
         
     return scenparsets

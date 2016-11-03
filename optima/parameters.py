@@ -8,7 +8,7 @@ Version: 1.5 (2016jul06)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -353,13 +353,14 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
-            validdata = ~isnan(data[short][row])
-            par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
+            validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
+            par.t[key] = getvaliddata(data['years'], validdata, defaultind=defaultind) 
             if sum(validdata): 
                 par.y[key] = sanitize(data[short][row])
             else:
                 printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
                 par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
+                par.t[key] = array([0.0])
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
@@ -387,7 +388,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
-    for row in range(npops): yearstouse.append(getvalidyears(data['years'], ~isnan(data[which+act][row])))
+    for row in range(npops): yearstouse.append(getvaliddata(data['years'], data[which+act][row]))
     minyear = Inf
     maxyear = -Inf
     npts = 1 # Don't use fewer than 1 point
@@ -458,7 +459,7 @@ def makepars(data, label=None, verbose=2):
     pars = odict()
     pars['label'] = label # Add optional label, default None
     
-    # Shorten information on which populations are male, which are female
+    # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
     
@@ -590,8 +591,7 @@ def makepars(data, label=None, verbose=2):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    
-    # Store information about injecting and commercial sex providing populations
+    # Store information about injecting and commercial sex providing populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
     pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
 
@@ -977,13 +977,17 @@ class Parameterset(object):
             raise OptimaException('No results associated with this parameter set')
     
     
-    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=True):
+    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
         ''' Method for getting proportions'''
 
         if self.resultsref is not None and self.project is not None:
 
             # Get results
             results = getresults(project=self.project, pointer=self.resultsref, die=die)
+            if results is None: # Generate results if there aren't any and die is False (if die is true, it will've already died on the previous step)
+                self.project.runsim(name=self.name)
+                results = self.project.results[-1]
+                
 
             # Interpret inputs
             if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'

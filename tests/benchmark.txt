@@ -79,3 +79,6 @@
 0.705 2016-Sep-22_01:47:37 3db4da9 debug-stage-4
 0.684 2016-Sep-22_02:21:12 956f7eb debug-stage-4
 0.767 2016-Sep-22_10:40:41 a9293b9 feature/fix-props
+1.09 2016-Sep-29_14:08:15 0a10d61 develop
+0.850 2016-Nov-03_12:19:07 39757ed various-fixes
+0.782 2016-Nov-03_12:20:22 0ddc046 various-fixes
