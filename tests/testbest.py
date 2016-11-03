@@ -5,7 +5,7 @@ which is an outdated version of the same thing!
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj, migrate, makespreadsheet # analysis:ignore
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 
 ## Options
 standardrun = 1
@@ -27,10 +27,9 @@ if standardrun:
 
 if migrations:
     oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_0160816_reconciled.prj'
-    oldP = loadobj(filename=oldprojectfile)
-    P = migrate(oldP)
+    P = loadproj(filename=oldprojectfile)
     P.runsim()
-    makespreadsheet('newspreadsheet.xlsx', data=P.data)
+    P.makespreadsheet('newspreadsheet.xlsx')
 
 ## Calibration
 if autocalib: 

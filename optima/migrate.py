@@ -264,9 +264,17 @@ def addaidslinktocare(project, **kwargs):
     return None
 
 
+def adddataend(project, **kwargs):
+    """
+    Migration between Optima 2.1.6 and 2.1.7.
+    """
+    if not hasattr(project.settings, 'dataend'):
+        if hasattr(project, 'data'):
+            project.settings.dataend = project.data['years'][-1]
+        else: project.settings.dataend = project.settings.end
 
-
-
+    project.version = "2.1.7"
+    return None
 
 
 
@@ -275,7 +283,7 @@ def addaidslinktocare(project, **kwargs):
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.6 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.7 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -297,8 +305,11 @@ migrations = {
 '2.1.3': removepopcharacteristicsdata,
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
-'2.1.6': redoprograms,
+'2.1.6': adddataend,
+#'2.1.7': redoprograms,
 }
+
+
 
 
 
@@ -316,7 +327,7 @@ def migrate(project, verbose=2):
         upgrader(project, verbose=verbose) # Actually easier to debug if don't catch exception
         op.printv("%s" % project.version, 2, verbose, indent=False)
     
-    op.printv('Migration successful!', 1, verbose)
+    op.printv('Migration successful!', 3, verbose)
 
     return project
 
@@ -328,20 +339,21 @@ def migrate(project, verbose=2):
 
 
 
-
-def loadproj(filename, loadverbose=2, verbose=0):
+def loadproj(filename, verbose=2):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
-    # Load legacy classes for compatibility
-    class CCOF(object):
-        def __init__(self,ccopars=None,interaction=None):
-            self.ccopars = ccopars
-            self.interaction = interaction
-    class Costcov(CCOF): pass
-    class Covout(CCOF): pass
-    op.programs.CCOF = CCOF
-    op.programs.Costcov = Costcov
-    op.programs.Covout = Covout
+    # Create legacy classes for compatibility -- FOR FUTURE
+#    class CCOF(): pass
+#    class Costcov(): pass
+#    class Covout(): pass
+#    op.programs.CCOF = CCOF
+#    op.programs.Costcov = Costcov
+#    op.programs.Covout = Covout
 
-    proj = migrate(op.loadobj(filename, verbose=loadverbose), verbose=verbose)
+    proj = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose)
+    
+#    del op.programs.CCOF
+#    del op.programs.Costcov
+#    del op.programs.Covout
+    
     return proj

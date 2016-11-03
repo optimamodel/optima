@@ -11,12 +11,13 @@ Version: 2016feb06 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makespreadsheet',
+'makeprogramspreadsheet',
 'checkexisting',
 'makespreadsheetwithdata',
 #'unittests',
 ]
 
-dosave = True
+dosave = False
 
 
 ##############################################################################
@@ -57,6 +58,21 @@ if 'makespreadsheet' in tests:
     done(t)
 
 
+
+
+if 'makeprogramspreadsheet' in tests:
+    t = tic()
+    
+    print('Making programs spreadsheet ...')
+    from optima import defaults, makeprogramspreadsheet
+
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
+    R = P.progsets[0]
+    filename = 'tmpprogramspreadsheet.xlsx'
+    progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
+    makeprogramspreadsheet(filename, pops=P.data['pops']['short'], progs=progs)
+    if not dosave: remove(filename)
+    done()
 
 
 
@@ -166,10 +182,11 @@ if 'checkexisting' in tests:
                         raise Exception(errormsg)
             print('Constants are OK for spreadsheet "%s"!' % tochecknames[ntc])
                 
-#    ## Tidy up
-#    for name in freshnames:
-#        print('Removing temporary file "%s"...' % name)
-#        remove(name)
+    ## Tidy up
+    if not dosave:
+        for name in freshnames:
+            print('Removing temporary file "%s"...' % name)
+            remove(name)
     
     done(t)
 

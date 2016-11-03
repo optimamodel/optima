@@ -471,6 +471,10 @@ class Project(object):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
         return self.parsets[key].pars[ind]
     
+    def progs(self, key=-1, ind=0):
+        ''' Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs '''
+        return self.progsets[key].programs
+    
     def parset(self, key=-1):
         ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
         return self.parsets[key]

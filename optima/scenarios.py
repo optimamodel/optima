@@ -115,8 +115,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             thisparset = dcp(project.parsets[scen.parsetname])
             thisparset.project = project # Replace copy of project with pointer -- WARNING, hacky
         except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
-        thisparset.modified = today()
-        thisparset.name = scen.name
         npops = len(thisparset.popkeys)
 
         if isinstance(scen,Parscen):
@@ -253,6 +251,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             errormsg = 'Unrecognized program scenario type.'
             raise OptimaException(errormsg)
             
+        thisparset.modified = today()
+        thisparset.name = scen.name
         scenparsets[scen.name] = thisparset
         
     return scenparsets

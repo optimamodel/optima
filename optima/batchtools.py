@@ -9,7 +9,7 @@ Version: 2016mar20
 from multiprocessing import Process, Queue
 from numpy import empty
 from glob import glob
-from optima import loadobj, saveobj, loadbalancer
+from optima import loadproj, saveobj, loadbalancer
 from os import path
 
 
@@ -75,7 +75,7 @@ def batchautofit(
     processes = []
     for i in range(nfiles):
         loadbalancer(0.5)
-        project = loadobj(filelist[i])
+        project = loadproj(filelist[i])
         prc = Process(
             target=autofit_task, 
             args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, 
@@ -156,7 +156,7 @@ def batchBOC(
     outputlist = empty(nfiles, dtype=object)
     processes = []
     for i in range(nfiles):
-        project = loadobj(filelist[i])
+        project = loadproj(filelist[i])
         project.tmpfilename = filelist[i]
         prjobjectives = project.optims[-1].objectives \
             if objectives == 'latest' else objectives

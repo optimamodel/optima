@@ -505,11 +505,8 @@ def makepars(data, label=None, verbose=2):
             else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] 
-            low = data['const'][parname][1] 
-            high = data['const'][parname][2]
-            mrange = (best/low, best/high) # Convert to fractional limits
-            pars[parname] = Constant(y=best, mrange=mrange, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+            best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
+            pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Constant(y=odict(), **rawpar)
@@ -792,14 +789,12 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 
 
 class Par(object):
-    ''' The base class for epidemiological model parameters '''
-    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., mrange=(1.,1.), limits=(0.,1.), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    ''' The base class for parameters '''
+    def __init__(self, name=None, dataname=None, short=None, datashort=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
         self.datashort = datashort # The short name used for the data, e.g. "numactsreg" (which may be different to the paramter name, e.g. "actsreg")
-        self.m = m # Multiplicative metaparameter, e.g. 1
-        self.mrange = mrange # Range for multiplicative metaparameter, e.g. (0.9, 1.1)
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
@@ -821,15 +816,13 @@ class Par(object):
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, t=None, y=None, m=1, mrange=None, **defaultargs):
+    def __init__(self, t=None, y=None, m=1, **defaultargs):
         Par.__init__(self, **defaultargs)
         if t is None: t = odict()
         if y is None: y = odict()
-        if mrange is None: mrange = (1., 1.) # Lower and upper limits on the metaparameter, for uncertainty analysis
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.mrange = mrange # Range for multiplicative metaparameter, e.g. [0.8, 1.2]
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
@@ -926,11 +919,10 @@ class Constant(Par):
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
-        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        meta = self.m if usemeta else 1.0
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
         
         if self.keys() is None: # Just a simple constant
-            yinterp = applylimits(par=self, y=self.y*meta, limits=self.limits, dt=dt)
+            yinterp = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
             if asarray: output = yinterp
             else: output = odict([('tot',yinterp)])
         else: # No, it has keys, return as an array
@@ -939,10 +931,11 @@ class Constant(Par):
             if asarray: output = zeros(npops)
             else: output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = applylimits(par=self, y=self.y[key]*meta, limits=self.limits, dt=dt)
+                yinterp = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
                 if asarray: output[pop] = yinterp
                 else: output[key] = yinterp
         return output
+
 
 
 
@@ -985,13 +978,17 @@ class Parameterset(object):
             raise OptimaException('No results associated with this parameter set')
     
     
-    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=True):
+    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
         ''' Method for getting proportions'''
 
         if self.resultsref is not None and self.project is not None:
 
             # Get results
             results = getresults(project=self.project, pointer=self.resultsref, die=die)
+            if results is None: # Generate results if there aren't any and die is False (if die is true, it will've already died on the previous step)
+                self.project.runsim(name=self.name)
+                results = self.project.results[-1]
+                
 
             # Interpret inputs
             if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'

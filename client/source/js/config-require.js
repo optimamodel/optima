@@ -7,7 +7,7 @@ define({
   // Here paths are set relative to `/source/js` folder
   paths: {
     'angular'       : './vendor/angular/angular',
-    'toastr'       : './vendor/angular-toastr/dist/angular-toastr.tpls',
+    'toastr'        : './vendor/angular-toastr/dist/angular-toastr.tpls',
     'angular-loading-bar'  : './js/modules/angular-loading-bar/loading-bar',
     'async'         : './vendor/requirejs-plugins/src/async',
     'canvg'         : './vendor/canvg/dist/canvg.bundle',
@@ -24,7 +24,8 @@ define({
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'underscore'    : './vendor/underscore/underscore',
-    'tooltip' : './vendor/tooltip/dist/tooltip',
+    'tooltip'       : './vendor/tooltip/dist/tooltip',
+    'rzModule'      : './vendor/angularjs-slider/dist/rzslider.min',
     'mpld3'         : './js/modules/mpld3-charts/mpld3.v0.3-patched'
   },
 
@@ -36,6 +37,7 @@ define({
     'toastr': ['angular'],
     'angular-loading-bar': ['angular'],
     'tooltip': ['angular'],
+    'rzModule': ['angular'],
     'd3-box': ['d3'],
     'angular-messages': ['angular'],
     'angular-resource': ['angular'],
