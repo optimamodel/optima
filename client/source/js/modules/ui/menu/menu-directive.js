@@ -19,10 +19,23 @@ define(['./module'], function (module) {
           controller: [
             '$scope',
             function ($scope) {
+
+              $scope.state = $state.current;
+              console.log('$state', $state);
+
               $scope.isAdmin = UserManager.isAdmin;
+
+              $scope.getState = function() {
+                return $state.current.name;
+              };
+
+              $scope.isState = function(testName) {
+                return $scope.getState().indexOf(testName) !== -1;
+              };
 
               $scope.goIfProjectActive = function(stateName) {
                 if(activeProject.isSet()){
+                  console.log('current state', $state.current.name, '->', stateName);
                   $state.go(stateName);
                 } else {
                   modalService.inform(
