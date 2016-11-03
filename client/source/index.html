@@ -43,9 +43,12 @@
 <div class="actionbar">
     <div class="elastic header">
         <div class="logo"></div>
-        <div style="" data-menu ng-if="userLogged()"></div>
         <div
-            style="font-size: 0.8em;"
+            data-menu
+            ng-if="userLogged()">
+        </div>
+        <div
+            style=""
             ng-cloak
             ng-if="userLogged()"
             class="logged-in">
