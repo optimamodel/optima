@@ -14,7 +14,6 @@ Version: 2016feb06
 
 ## Define tests to run here!!!
 tests = [
-'makeprogramspreadsheet',
 #'loadprogramspreadsheet', # TEMPORARILY NON-FUNCTIONAL
 'demonstrateprogrammethods',
 'plotprogram',
@@ -54,18 +53,7 @@ rtol = 1e-2
 ##############################################################################
 
 
-if 'makeprogramspreadsheet' in tests:
-    t = tic()
-    
-    print('Making programs spreadsheet ...')
-    from optima import defaults, makeprogramspreadsheet
 
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
-    R = P.progsets[0]
-    filename = 'tmpprogramspreadsheet.xlsx'
-    progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
-    makeprogramspreadsheet(filename, pops=P.data['pops']['short'], progs=progs)
-    done()
 
 
 
