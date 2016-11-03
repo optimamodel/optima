@@ -3,12 +3,12 @@ GEOSPATIAL
 
 This file defines everything needed for the Python GUI for geospatial analysis.
 
-Version: 2016jan29
+Version: 2016oct10
 """
 
 from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
 from PyQt4 import QtGui
-from pylab import figure, close
+from pylab import figure, close, array
 from time import time
 import os
 
@@ -402,9 +402,9 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         if len(project.progsets) > 0:
             for progid in newproject.progsets[-1].programs:
                 program = newproject.progsets[-1].programs[progid]
-                program.costcovdata['cost'] = [x*popratio['tot'][c] for x in program.costcovdata['cost']]
+                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
                 if not program.costcovdata['coverage'] == [None]:
-                    program.costcovdata['coverage'] = [x*popratio['tot'][c] for x in program.costcovdata['coverage']]
+                    program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
             
         ### -----------------------------------------------------------------------------------------
 

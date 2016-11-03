@@ -8,7 +8,7 @@ Version: 1.5 (2016jul06)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -353,13 +353,14 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
-            validdata = ~isnan(data[short][row])
-            par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
+            validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
+            par.t[key] = getvaliddata(data['years'], validdata, defaultind=defaultind) 
             if sum(validdata): 
                 par.y[key] = sanitize(data[short][row])
             else:
                 printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
                 par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
+                par.t[key] = array([0.0])
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
@@ -387,7 +388,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
-    for row in range(npops): yearstouse.append(getvalidyears(data['years'], ~isnan(data[which+act][row])))
+    for row in range(npops): yearstouse.append(getvaliddata(data['years'], data[which+act][row]))
     minyear = Inf
     maxyear = -Inf
     npts = 1 # Don't use fewer than 1 point
@@ -504,8 +505,11 @@ def makepars(data, label=None, verbose=2):
             else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
-            pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+            best = data['const'][parname][0] 
+            low = data['const'][parname][1] 
+            high = data['const'][parname][2]
+            mrange = (best/low, best/high) # Convert to fractional limits
+            pars[parname] = Constant(y=best, mrange=mrange, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Constant(y=odict(), **rawpar)
@@ -590,8 +594,7 @@ def makepars(data, label=None, verbose=2):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    
-    # Store information about injecting and commercial sex providing populations
+    # Store information about injecting and commercial sex providing populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
     pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
 
@@ -788,12 +791,14 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 
 
 class Par(object):
-    ''' The base class for parameters '''
-    def __init__(self, name=None, dataname=None, short=None, datashort=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
+    ''' The base class for epidemiological model parameters '''
+    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., mrange=(1.,1.), limits=(0.,1.), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
         self.datashort = datashort # The short name used for the data, e.g. "numactsreg" (which may be different to the paramter name, e.g. "actsreg")
+        self.m = m # Multiplicative metaparameter, e.g. 1
+        self.mrange = mrange # Range for multiplicative metaparameter, e.g. (0.9, 1.1)
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
@@ -815,13 +820,15 @@ class Par(object):
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, t=None, y=None, m=1, **defaultargs):
+    def __init__(self, t=None, y=None, m=1, mrange=None, **defaultargs):
         Par.__init__(self, **defaultargs)
         if t is None: t = odict()
         if y is None: y = odict()
+        if mrange is None: mrange = (1., 1.) # Lower and upper limits on the metaparameter, for uncertainty analysis
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
+        self.mrange = mrange # Range for multiplicative metaparameter, e.g. [0.8, 1.2]
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
@@ -918,10 +925,11 @@ class Constant(Par):
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
-        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
+        meta = self.m if usemeta else 1.0
         
         if self.keys() is None: # Just a simple constant
-            yinterp = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
+            yinterp = applylimits(par=self, y=self.y*meta, limits=self.limits, dt=dt)
             if asarray: output = yinterp
             else: output = odict([('tot',yinterp)])
         else: # No, it has keys, return as an array
@@ -930,11 +938,10 @@ class Constant(Par):
             if asarray: output = zeros(npops)
             else: output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
+                yinterp = applylimits(par=self, y=self.y[key]*meta, limits=self.limits, dt=dt)
                 if asarray: output[pop] = yinterp
                 else: output[key] = yinterp
         return output
-
 
 
 

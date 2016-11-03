@@ -243,6 +243,7 @@ def addaidsleavecare(project, **kwargs):
     project.version = "2.1.5"
     return None
 
+
 def addaidslinktocare(project, **kwargs):
     """
     Migration between Optima 2.1.5 and 2.1.6.
@@ -264,6 +265,25 @@ def addaidslinktocare(project, **kwargs):
 
 
 
+
+
+
+
+
+
+
+
+def redoprograms(project, **kwargs):
+    """
+    Migration between Optima 2.1.6 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    """
+    project.version = "2.2"
+    print('NOT IMPLEMENTED')
+    return None
+
+
+
+
 migrations = {
 '2.0':   versiontostr,
 '2.0.0': addscenuid,
@@ -277,6 +297,7 @@ migrations = {
 '2.1.3': removepopcharacteristicsdata,
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
+'2.1.6': redoprograms,
 }
 
 
@@ -298,3 +319,29 @@ def migrate(project, verbose=2):
     op.printv('Migration successful!', 1, verbose)
 
     return project
+
+
+
+
+
+
+
+
+
+
+def loadproj(filename, loadverbose=2, verbose=0):
+    ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
+    
+    # Load legacy classes for compatibility
+    class CCOF(object):
+        def __init__(self,ccopars=None,interaction=None):
+            self.ccopars = ccopars
+            self.interaction = interaction
+    class Costcov(CCOF): pass
+    class Covout(CCOF): pass
+    op.programs.CCOF = CCOF
+    op.programs.Costcov = Costcov
+    op.programs.Covout = Covout
+
+    proj = migrate(op.loadobj(filename, verbose=loadverbose), verbose=verbose)
+    return proj
