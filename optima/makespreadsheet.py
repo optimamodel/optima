@@ -15,7 +15,7 @@ default_datastart = 2000
 default_dataend = 2020
 
 def makespreadsheet(filename=None, pops=None, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
-    """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
+    """ Generate the Optima spreadsheet """
 
     # If population information isn't given...
     if pops is None:
@@ -24,7 +24,7 @@ def makespreadsheet(filename=None, pops=None, datastart=default_datastart, datae
             pops = []
             npops = len(data['pops']['short'])
             for pop in range(npops):
-                pops.append({'short_name':data['pops']['short'][pop], # WARNING - why is is short_name here?? Will it break the FE is we change it?
+                pops.append({'short':data['pops']['short'][pop],
                          'name':data['pops']['long'][pop],
                          'male':bool(data['pops']['male'][pop]),
                          'female':bool(data['pops']['female'][pop]),
