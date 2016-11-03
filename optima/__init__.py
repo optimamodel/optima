@@ -2,7 +2,7 @@
 """
 This file performs all necessary imports, so Optima can be used either as
 
-from optima import Project, Parameters [etc.] [preferred]
+from optima import Project, Parameters [etc.]
 or
 import optima as op
 or
@@ -25,7 +25,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2016jan30 by cliffk
+Version: 2016nov03 by cliffk
 """
 
 optimalicense = '''
@@ -33,6 +33,8 @@ Optima HIV -- HIV optimization and analysis tool
 Copyright (C) 2016 by the Optima Consortium
 '''
 print(optimalicense)
+
+
 
 
 
@@ -68,7 +70,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, dataindex, dataframe, defaultrepr, findinds, getdate, getvaliddata, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -94,12 +96,12 @@ from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepa
 ## Create a blank spreadsheet
 try:
     from . import makespreadsheet as _makespreadsheet
-    from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
+    from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
 except: _failed.append('makespreadsheet')
 
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
-from .loadspreadsheet import loadspreadsheet
+from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 
 ## Define and run the model
 from . import model as _model
@@ -108,10 +110,6 @@ from .model import model, runmodel
 ## Define the programs and cost functions
 from . import programs as _programs
 from .programs import Program, Programset
-
-## Economics functions -- WARNING, not functional yet
-from . import economics as _economics
-from .economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts 
 
 ## Automatic calibration and sensitivity
 from . import calibration as _calibration
@@ -127,7 +125,7 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 
 ## Plotting functions
 from . import plotting as _plotting 
-from .plotting import getplotselections, makeplots
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov
 
 
 #####################################################################################################################
@@ -145,7 +143,7 @@ try: from . import gui
 except: _failed.append('gui')
 
 ## Load simple function for displaying results
-try: from .gui import plotresults, pygui, plotpeople, plotallocations, plotpars
+try: from .gui import plotresults, pygui, plotpeople, plotpars
 except: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars')
 
 ## Handle the browser-based plotting -- relies on browser so might fail
@@ -189,10 +187,10 @@ from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultp
 
 # And really finally, load other random things that don't matter
 try:
-    from . import migrations
-    from .migrations.migrate import migrate
+    import migrate as _migrate
+    from .migrate import migrate, loadproj
 except:
-    _failed.append('migrations')
+    _failed.append('migrate')
     
 
 if not len(_failed): del _failed # If it's empty, don't bother keeping it

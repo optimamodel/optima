@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
+from optima import defaultobjectives, defaultconstraints, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
 import os
@@ -118,13 +118,43 @@ class Project(object):
         if dorun: self.runsim(name, addresult=True, **kwargs)
         if self.name is 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
         return None
-        
+
+
     def makespreadsheet(self, filename=None, pops=None):
         ''' Create a spreadsheet with the data from the project'''
         if filename is None: filename = self.name+'.xlsx'
         if filename[-5:]!='.xlsx': filename += '.xlsx'
         makespreadsheet(filename=filename, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
         return None
+
+
+    
+    def reorderpops(self, poporder=None):
+        '''
+        Reorder populations according to a defined list.
+        
+        WARNING, doesn't reorder things like circumcision or birthrates
+        
+        '''
+        def reorder(origlist, neworder):
+            return [origlist[i] for i in neworder]
+        
+        if self.data is None: raise OptimaException('Need to load spreadsheet before can reorder populations')
+        if len(poporder) != self.data['npops']: raise OptimaException('Wrong number of populations')
+        origdata = dcp(self.data)
+        for key in self.data['pops']:
+            self.data['pops'][key] = reorder(origdata['pops'][key], poporder)
+        for key1 in self.data:
+            try:
+                if len(self.data[key1])==self.data['npops']:
+                    self.data[key1] = reorder(origdata[key1], poporder)
+                    print('    %s succeeded' % key1)
+                else:
+                    print('  %s wrong length' % key1)
+            except:
+                print('%s failed' % key1)
+        
+        
 
 
     def makeparset(self, name='default', overwrite=True):
@@ -154,12 +184,6 @@ class Project(object):
             self.addoptim(optim)
         return None
 
-
-    def loadeconomics(self, filename):
-        ''' Load economic data and tranforms it to useful format'''
-        self.data['econ'] = loadeconomicsspreadsheet(filename) ## Load spreadsheet
-        self.modified = today()
-        return None
 
 
     #######################################################################################################
@@ -447,6 +471,10 @@ class Project(object):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
         return self.parsets[key].pars[ind]
     
+    def progs(self, key=-1, ind=0):
+        ''' Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs '''
+        return self.progsets[key].programs
+    
     def parset(self, key=-1):
         ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
         return self.parsets[key]
@@ -516,10 +544,10 @@ class Project(object):
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None):
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed)
+        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)

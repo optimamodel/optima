@@ -210,7 +210,7 @@ def vectocolor(vector,cmap=None):
    vector to provide maximum dynamic range for the color map.
 
    Usage:
-   colors=vectocolor(vector,cmap=None)
+   colors = vectocolor(vector,cmap=None)
 
    where:
    colors is an Nx4 list of RGB-alpha color values
@@ -218,19 +218,22 @@ def vectocolor(vector,cmap=None):
    cmap is the colormap (default: jet)
 
    Example:
-   n=1000
-   x=randn(n,1);
-   y=randn(n,1);
-   c=vectocolor(y);
+   n = 1000
+   x = randn(n,1);
+   y = randn(n,1);
+   c = vectocolor(y);
    scatter(x,y,20,c)
 
-   Version: 1.0 (2012sep13 by cliffk)
+   Version: 1.1 (2016sep28 by cliffk)
    """
    from numpy import array, zeros
    from pylab import cm
 
    if cmap==None:
-      cmap=cm.jet
+      cmap = cm.jet
+   elif type(cmap)==str:
+      try: cmap = getattr(cm,cmap)
+      except: raise Exception('%s is not a valid color map; choices are:\n%s' % (cmap, '\n'.join(sorted(cm.datad.keys()))))
 
    # The vector has elements
    if len(vector):

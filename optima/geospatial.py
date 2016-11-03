@@ -3,12 +3,12 @@ GEOSPATIAL
 
 This file defines everything needed for the Python GUI for geospatial analysis.
 
-Version: 2016jan29
+Version: 2016nov03
 """
 
-from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
+from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
 from PyQt4 import QtGui
-from pylab import figure, close
+from pylab import figure, close, array
 from time import time
 import os
 
@@ -42,7 +42,7 @@ def _loadproj(filepath=None, usegui=True):
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+projext)
     project = None
     if filepath:
-        try: project = loadobj(filepath, verbose=0)
+        try: project = loadproj(filepath, verbose=0)
         except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.message))
         if type(project)==Project: return project
         else: print('File "%s" is not an Optima project file' % filepath)
@@ -402,9 +402,9 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         if len(project.progsets) > 0:
             for progid in newproject.progsets[-1].programs:
                 program = newproject.progsets[-1].programs[progid]
-                program.costcovdata['cost'] = [x*popratio['tot'][c] for x in program.costcovdata['cost']]
+                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
                 if not program.costcovdata['coverage'] == [None]:
-                    program.costcovdata['coverage'] = [x*popratio['tot'][c] for x in program.costcovdata['coverage']]
+                    program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
             
         ### -----------------------------------------------------------------------------------------
 
@@ -470,7 +470,7 @@ def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
         if type(filepaths)==str: filepaths = [filepaths] # Convert to list
         for filepath in filepaths:
             tmpproj = None
-            try: tmpproj = loadobj(filepath, verbose=0)
+            try: tmpproj = loadproj(filepath, verbose=0)
             except: print('Could not load file "%s"; moving on...' % filepath)
             if tmpproj is not None: 
                 try: 
