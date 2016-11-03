@@ -5,6 +5,10 @@ from cStringIO import StringIO
 from contextlib import closing
 
 
+
+
+
+
 def saveobj(filename, obj, verbose=True):
     ''' Save an object to file '''
     with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)

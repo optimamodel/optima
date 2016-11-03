@@ -508,8 +508,8 @@ def makepars(data, label=None, verbose=2):
             best = data['const'][parname][0] 
             low = data['const'][parname][1] 
             high = data['const'][parname][2]
-            mrange = (low, high)
-            pars[parname] = Constant(m=best, mrange=mrange, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+            mrange = (best/low, best/high) # Convert to fractional limits
+            pars[parname] = Constant(y=best, mrange=mrange, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Constant(y=odict(), **rawpar)

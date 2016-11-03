@@ -6,7 +6,9 @@ set of programs, respectively.
 Version: 2016oct30
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, dataframe, dcp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar, smoothinterp
+from optima import OptimaException, printv, uuid, today, sigfig, dataframe, dcp, \
+findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, \
+vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, smoothinterp
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose
 from random import uniform
 
@@ -434,3 +436,30 @@ def covcostfunc(x, s, u, nyrs, npts, popsize, eps):
         for yr in range(nyrs):
             y[yr,:] = maximum(-0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x)),eps)
     return y
+
+
+
+
+
+
+########################################################
+# COST COVERAGE FUNCTIONS
+########################################################
+class CCOF(object):
+    '''Cost-coverage, coverage-outcome and cost-outcome objects'''
+    def __init__(self,ccopars=None,interaction=None):
+        self.ccopars = ccopars
+        self.interaction = interaction
+        
+class Costcov(CCOF):
+    '''
+    Cost-coverage object - used to calculate the coverage for a certain
+    budget in a program. Best initialized with empty parameters,
+    and later, add cost-coverage parameters with self.addccopar.
+    '''
+    pass
+            
+
+class Covout(CCOF):
+    '''Coverage-outcome objects'''
+    pass

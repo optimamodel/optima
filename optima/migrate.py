@@ -264,10 +264,20 @@ def addaidslinktocare(project, **kwargs):
     return None
 
 
-def CCOdictstopars(project, **kwargs):
+
+
+
+
+
+
+
+
+
+def redoprograms(project, **kwargs):
     """
     Migration between Optima 2.1.6 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
+    project.version = "2.2"
     raise Exception('NOT IMPLEMENTED')
 
 
@@ -286,7 +296,7 @@ migrations = {
 '2.1.3': removepopcharacteristicsdata,
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
-'2.1.6': CCOdictstopars,
+'2.1.6': redoprograms,
 }
 
 
