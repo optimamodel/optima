@@ -10,7 +10,7 @@ from xlsxwriter.utility import re, xl_rowcol_to_cell
 from collections import OrderedDict
 from utils import printv, isnumber
 from numpy import isnan
-from optima import loadpartable
+import optima as op
 
 default_datastart = 2000
 default_dataend = 2020
@@ -487,7 +487,7 @@ class OptimaSpreadsheet:
 
     def getshortname(self, name):
         ''' Get the short name of indicators in the data sheet'''
-        rawpars = loadpartable()
+        rawpars = op.loadpartable()
         return [par['datashort'] for par in rawpars if par['dataname']==name][0]
 
     def generate_meta(self):
@@ -754,6 +754,8 @@ class OptimaSpreadsheet:
         current_row = self.formats.write_info_line(self.current_sheet, current_row)
         current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % op.__version__)
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Date created: %s' % op.getdate(op.today()))
 
     def create(self, path):
         if self.verbose >=1: 
