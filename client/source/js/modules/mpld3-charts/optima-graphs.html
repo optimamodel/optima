@@ -38,8 +38,7 @@
       <div
           ng-repeat="chart in graphs.mpld3_graphs"
           ng-show="chart.isChecked()"
-          class="repeat-box"
-          style="width: 48%;">
+          class="repeat-box">
         <div
             style="
               padding: 15px 0px 5px 0px;
@@ -70,10 +69,18 @@
           ng-click="updateGraphs()">
         Update Graphs
       </button>
+      <br>
+      Width:
+      <input
+        class="txbox __inline"
+        type="number"
+        ng-change="changeFigWidth(figWidth)"
+        ng-model="figWidth"/>
     </div>
-    <div style="
-              text-indent: -15px;
-              padding-left: 15px;"
+    <div
+        style="
+            text-indent: -15px;
+            padding-left: 15px;"
         ng-repeat="selector in graphs.selectors"
         class="option">
       <input
