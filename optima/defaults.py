@@ -10,7 +10,7 @@ try: from optima import pygui # Only used for demo.py, don't worry if can't be i
 except: pass
 
 
-def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
+def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
     ''' Make some default programs'''
     
     # Shorten variable names
@@ -237,7 +237,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                                  't': 2016.0,
                                  'unitcost': (10,20)})
                                  
-        Cash_transfers.costcovfn.addccopar({'saturation': (0.3,0.3),
+        Cash.costcovfn.addccopar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (50,80)})
                                  
@@ -268,7 +268,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
         PWID_programs.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         OST.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         NSP.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
-        Cash_transfers.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
+        Cash.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         PrEP.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         HTC.addcostcovdatum({'t':2014,'cost':2e7,'coverage':1.3e6})
         ART.addcostcovdatum({'t':2014,'cost':1e6,'coverage':3308.})
@@ -298,7 +298,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
 def defaultprogset(P, addcostcovpars=False, addcostcovdata=False, filterprograms=None, verbose=2):
     ''' Make a default programset (for testing optimisations)'''
     programs = defaultprograms(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=filterprograms)
-    R = Programset(programs=programs, project=P, verbose=verbose)   
+    R = Programset(programs=programs, project=P)   
     return R
 
 
@@ -328,7 +328,54 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         printv('Creating simple epidemic project...', 2, verbose)
         P = Project(spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
     
+
+
+
+
+    ##########################################################################################################################
+    ## Concentrated
+    ##########################################################################################################################
+    elif which in ['best','concentrated']:
+        printv('Creating concentrated example...', 2, verbose)
+        # Make project and store results from default sim
+        dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
+        kwargs['dorun'] = False # Don't run now, run after calibration
+        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
+        
+        # "Calibrate"
+        P.parsets[0].pars[0]['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
+        if dorun: P.runsim() # Run after calibration
     
+        # Get a default progset 
+        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
+        
+        R.programs['Condoms'].costcovdata =      {'t':[2014],'cost':[1.3e7],'coverage':[3e5]}
+        R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
+        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
+        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[2e7],'coverage':[2e4]}
+        R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
+        
+        # Add program effects
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.2,0.25), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
+        R.covout['condcas'][('F 15+','Clients')].addccopar({'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
+        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.3,0.35), 't': 2016.0, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
+        R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept':  (0.30,0.35), 't': 2016.0, 'Condoms':(0.45,0.50)})
+        R.covout['condcas'][('F 15+', 'PWID')].addccopar({'intercept':   (0.15,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.1,0.15), 't': 2016.0, 'Condoms':(0.55,0.65)})
+    
+        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+    
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
+        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60)})
+        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
+        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
+        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
+    
+        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
+        
+        # Store this program set in the project
+        P.addprogset(R)
     
     
     
@@ -464,58 +511,6 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         # Do a super-manual calibration
         P.parsets[0].pars[0]['inhomo'].y[:] = 0.2
-
-    
-    
-    ##########################################################################################################################
-    ## Concentrated
-    ##########################################################################################################################
-    elif which in ['best','concentrated']:
-        printv('Creating concentrated example...', 2, verbose)
-        # Make project and store results from default sim
-        dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
-        kwargs['dorun'] = False # Don't run now, run after calibration
-        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
-        
-        # "Calibrate"
-#        from numpy import array
-#        P.parsets[0].pars[0]['force'].y[:] = [ 2.09   ,  1.232  ,  0.9625 ,  0.88   ,  1.51525,  0.726  ]
-        P.parsets[0].pars[0]['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
-        if dorun: P.runsim() # Run after calibration
-       
-    
-        # Get a default progset 
-        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
-        
-        R.programs['Condoms'].costcovdata =      {'t':[2014],'cost':[1.3e7],'coverage':[3e5]}
-        R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
-        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
-        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[2e7],'coverage':[2e4]}
-        R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
-        
-        # Add program effects
-        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.2,0.25), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
-        R.covout['condcas'][('F 15+','Clients')].addccopar({'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
-        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.3,0.35), 't': 2016.0, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
-        R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept':  (0.30,0.35), 't': 2016.0, 'Condoms':(0.45,0.50)})
-        R.covout['condcas'][('F 15+', 'PWID')].addccopar({'intercept':   (0.15,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.1,0.15), 't': 2016.0, 'Condoms':(0.55,0.65)})
-    
-        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'FSW programs':(0.9,0.95)})
-    
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
-        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60)})
-        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
-        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
-        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
-    
-        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
-        
-        # Store this program set in the project
-        P.addprogset(R)
-        
-        
     
     
     
