@@ -7,10 +7,9 @@ Version: 2016jan18 by robyns
 
 import xlsxwriter
 from xlsxwriter.utility import re, xl_rowcol_to_cell
-from collections import OrderedDict
 from utils import printv, isnumber
 from numpy import isnan
-from optima import __version__, loadpartable, getdate, today
+from optima import __version__, odict, getdate, today, loadpartable
 
 default_datastart = 2000
 default_dataend = 2020
@@ -357,7 +356,7 @@ class TitledRange:
 
 class OptimaSpreadsheet:
     def __init__(self, name, pops, data_start = default_datastart, data_end = default_dataend, data = None, verbose = 0):
-        self.sheet_names = OrderedDict([
+        self.sheet_names = odict([
             ('instr', 'Instructions'),
             ('meta','Populations'),
             ('popsize', 'Population size'),
