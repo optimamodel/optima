@@ -442,24 +442,3 @@ def covcostfunc(x, s, u, nyrs, npts, popsize, eps):
 
 
 
-########################################################
-# COST COVERAGE FUNCTIONS
-########################################################
-class CCOF(object):
-    '''Cost-coverage, coverage-outcome and cost-outcome objects'''
-    def __init__(self,ccopars=None,interaction=None):
-        self.ccopars = ccopars
-        self.interaction = interaction
-        
-class Costcov(CCOF):
-    '''
-    Cost-coverage object - used to calculate the coverage for a certain
-    budget in a program. Best initialized with empty parameters,
-    and later, add cost-coverage parameters with self.addccopar.
-    '''
-    pass
-            
-
-class Covout(CCOF):
-    '''Coverage-outcome objects'''
-    pass

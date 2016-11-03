@@ -109,7 +109,7 @@ from .model import model, runmodel
 
 ## Define the programs and cost functions
 from . import programs as _programs
-from .programs import Program, Programset, CCOF, Costcov, Covout
+from .programs import Program, Programset
 
 ## Automatic calibration and sensitivity
 from . import calibration as _calibration
@@ -188,7 +188,7 @@ from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultp
 # And really finally, load other random things that don't matter
 try:
     import migrate as _migrate
-    from .migrate import migrate
+    from .migrate import migrate, loadproj
 except:
     _failed.append('migrate')
     

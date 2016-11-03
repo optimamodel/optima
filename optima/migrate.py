@@ -278,7 +278,8 @@ def redoprograms(project, **kwargs):
     Migration between Optima 2.1.6 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
-    raise Exception('NOT IMPLEMENTED')
+    print('NOT IMPLEMENTED')
+    return None
 
 
 
@@ -318,3 +319,29 @@ def migrate(project, verbose=2):
     op.printv('Migration successful!', 1, verbose)
 
     return project
+
+
+
+
+
+
+
+
+
+
+def loadproj(filename, loadverbose=2, verbose=0):
+    ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
+    
+    # Load legacy classes for compatibility
+    class CCOF(object):
+        def __init__(self,ccopars=None,interaction=None):
+            self.ccopars = ccopars
+            self.interaction = interaction
+    class Costcov(CCOF): pass
+    class Covout(CCOF): pass
+    op.programs.CCOF = CCOF
+    op.programs.Costcov = Costcov
+    op.programs.Covout = Covout
+
+    proj = migrate(op.loadobj(filename, verbose=loadverbose), verbose=verbose)
+    return proj
