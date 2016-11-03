@@ -29,7 +29,7 @@ if migrations:
     oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_0160816_reconciled.prj'
     P = loadproj(filename=oldprojectfile)
     P.runsim()
-    makespreadsheet('newspreadsheet.xlsx', data=P.data)
+    P.makespreadsheet('newspreadsheet.xlsx')
 
 ## Calibration
 if autocalib: 
