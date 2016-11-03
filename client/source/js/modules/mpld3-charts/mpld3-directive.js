@@ -428,12 +428,19 @@ define(
       link: function (scope, elem, attrs) {
 
         function initialize() {
-          scope.figWidth = 400;
+          scope.state = {
+            slider: {
+              value: 400,
+              options: {
+                floor: 200,
+                ceil: 1300,
+                onChange: scope.changeFigWidth
+              }
+            }
+          };
+
           moduleAllCharts = $(elem).find('.allcharts');
           moduleScrollTop = moduleAllCharts.scrollTop();
-          // $(window).bind('resize', function() {
-          //   scope.onResize();
-          // });
           moduleAllCharts.scroll(function() {
             moduleScrollTop = moduleAllCharts.scrollTop();
           });
@@ -490,13 +497,7 @@ define(
         function isChecked(iGraph) {
           var graph_selector = scope.graphs.graph_selectors[iGraph];
           var selector = _.findWhere(scope.graphs.selectors, { key: graph_selector });
-          var result;
-          if (!_.isUndefined(selector) && (selector.checked)) {
-            result = true;
-          } else {
-            result = false;
-          }
-          return result;
+          return (!_.isUndefined(selector) && (selector.checked));
         }
 
         scope.$watch(
@@ -517,14 +518,13 @@ define(
             });
         };
 
-        scope.changeFigWidth = function(figWidth) {
-          console.log('resizing to', figWidth);
+        scope.changeFigWidth = function() {
           function setAllFiguresToWidth($element) {
             var $figures = $element.find('svg.mpld3-figure');
             $figures.each(function() {
               var $svgFigure = $(this);
               var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
-              var width = figWidth;
+              var width = scope.state.slider.value;
               var height = width / ratio;
               $svgFigure.attr('width', width);
               $svgFigure.attr('height', height);

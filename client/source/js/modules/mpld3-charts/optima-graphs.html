@@ -25,19 +25,12 @@
       <br clear="all">
     </div>
 
-    <style>
-      .repeat-box:nth-child(even) {
-        clear:both;
-      }
-    </style>
-
     <div
       style="
         display: flex;
-        flex-wrap: wrap">
+        flex-wrap: wrap;">
       <div
           ng-repeat="chart in graphs.mpld3_graphs"
-          ng-show="chart.isChecked()"
           class="repeat-box">
         <div
             style="
@@ -63,6 +56,14 @@
          padding: 0px 20px 5px 20px;
          overflow: auto;">
     <div>
+      <br>
+      Adjust width of figures:
+      <rzslider
+          rz-slider-model="state.slider.value"
+          rz-slider-options="state.slider.options">
+      </rzslider>
+      <br>
+      <br>
       <button
           style="margin-bottom: 10px;"
           class="btn"
@@ -70,18 +71,11 @@
         Update Graphs
       </button>
       <br>
-      Figure width:
-      <input
-        class="txbox __inline"
-        type="number"
-        ng-change="changeFigWidth(figWidth)"
-        ng-model="figWidth"/>
-      <br>
       <button
           style="margin-bottom: 10px;"
           class="btn"
           ng-click="clearSelectors()">
-        Clear
+        Clear selections
       </button>
     </div>
     <div

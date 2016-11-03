@@ -6,6 +6,7 @@ define([
   'ui.bootstrap',
   'ui.router',
   'tooltip',
+  'rzModule',
   './config',
   './modules/contact/index',
   './modules/help/index',
@@ -29,7 +30,7 @@ define([
   './modules/programs/index',
   './modules/user-manager/index',
   './modules/ui/modal/modal-service',
-  './modules/ui/index'
+  './modules/ui/index',
 ], function (angular) {
   'use strict';
 
@@ -64,7 +65,8 @@ define([
     'ngMessages',
     'ui.bootstrap',
     'ui.router',
-    'tooltip.module'
+    'tooltip.module',
+    'rzModule',
   ])
 
     .config(function ($httpProvider) {
