@@ -30,36 +30,48 @@
         ng-options="optimization as optimization.name for optimization in state.optimizations"
         style="width: 20%;">
       </select>
-      <a
+      <i
         ng-click="addOptimization()"
         class="fa fa-file-o"
+        tp-text="New" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="copyOptimization()"
         class="fa fa-copy"
+        tp-text="Copy" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="renameOptimization()"
         class="fa fa-pencil"
+        tp-text="Rename" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="downloadOptimization()"
         class="fa fa-download"
+        tp-text="Download" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="uploadOptimization()"
         class="fa fa-upload"
+        tp-text="Upload" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="deleteOptimization()"
         class="fa fa-trash-o"
+        tp-text="Delete" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
+      </i>
     </div>
 
     <div ng-if="state.optimizations.length > 0">

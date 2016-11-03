@@ -25,36 +25,48 @@
         style="width: 20%;">
       </select>
 
-      <a
+      <i
         ng-click="addProgramSet()"
         class="fa fa-file-o"
+        tp-text="New" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="copyProgramSet()"
         class="fa fa-copy"
+        tp-text="Copy" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="renameProgramSet()"
         class="fa fa-pencil"
+        tp-text="Rename" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="downloadProgramSet()"
         class="fa fa-download"
+        tp-text="Download" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="uploadProgramSet()"
         class="fa fa-upload"
+        tp-text="Upload" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
-      <a
+      </i>
+      <i
         ng-click="deleteProgramSet()"
         class="fa fa-trash-o"
+        tp-text="Delete" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
-      </a>
+      </i>
     </div>
     <div class="6" ng-if="state.activeProgramSet.programs && state.activeProgramSet.programs.length > 0">
       <p></p>

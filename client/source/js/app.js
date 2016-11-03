@@ -5,6 +5,7 @@ define([
   'ng-file-upload',
   'ui.bootstrap',
   'ui.router',
+  'tooltip',
   './config',
   './modules/contact/index',
   './modules/help/index',
@@ -62,7 +63,8 @@ define([
     'app.user-manager',
     'ngMessages',
     'ui.bootstrap',
-    'ui.router'
+    'ui.router',
+    'tooltip.module'
   ])
 
     .config(function ($httpProvider) {
