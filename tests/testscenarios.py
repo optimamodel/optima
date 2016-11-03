@@ -7,10 +7,10 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 #'maxcoverage',
-'maxbudget',
-#'90-90-90'
+#'maxbudget',
+'90-90-90'
 #'VMMC'
 ]
 
@@ -226,21 +226,14 @@ if '90-90-90' in tests:
     from optima import Parscen, defaults, pygui, findinds, plotpeople
     
     P = defaults.defaultproject('best')
-    P.runsim(debug=True)
+    P.cleanresults() # Check that scenarios can be run even if no results stored
     
     pops = P.data['pops']['short']
     
     startyear = 2014.
     endyear = 2020.
-    res_startind = findinds(P.results[-1].tvec, startyear)
-    res_endind = findinds(P.results[-1].tvec, endyear)
+#    res_endind = findinds(P.results[-1].tvec, endyear)
     
-    start_propdx = P.results[-1].main['numdiag'].tot[0][res_startind]/P.results[-1].main['numplhiv'].tot[0][res_startind]
-    start_propincare = P.results[-1].main['numincare'].tot[0][res_startind]/P.results[-1].main['numdiag'].tot[0][res_startind]
-    start_proptx = P.results[-1].main['numtreat'].tot[0][res_startind]/P.results[-1].main['numincare'].tot[0][res_startind]
-    start_propsupp = P.results[-1].main['numsuppressed'].tot[0][res_startind]/P.results[-1].main['numtreat'].tot[0][res_startind]
-    
-
     ## Define scenarios
     scenlist = [
         Parscen(name='Current conditions',
