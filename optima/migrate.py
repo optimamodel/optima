@@ -302,6 +302,8 @@ migrations = {
 
 
 
+
+
 def migrate(project, verbose=2):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
@@ -316,7 +318,7 @@ def migrate(project, verbose=2):
         upgrader(project, verbose=verbose) # Actually easier to debug if don't catch exception
         op.printv("%s" % project.version, 2, verbose, indent=False)
     
-    op.printv('Migration successful!', 1, verbose)
+    op.printv('Migration successful!', 3, verbose)
 
     return project
 
@@ -328,20 +330,21 @@ def migrate(project, verbose=2):
 
 
 
-
-def loadproj(filename, loadverbose=2, verbose=0):
+def loadproj(filename, verbose=2):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
-    # Load legacy classes for compatibility
-    class CCOF(object):
-        def __init__(self,ccopars=None,interaction=None):
-            self.ccopars = ccopars
-            self.interaction = interaction
-    class Costcov(CCOF): pass
-    class Covout(CCOF): pass
-    op.programs.CCOF = CCOF
-    op.programs.Costcov = Costcov
-    op.programs.Covout = Covout
+    # Create legacy classes for compatibility -- FOR FUTURE
+#    class CCOF(): pass
+#    class Costcov(): pass
+#    class Covout(): pass
+#    op.programs.CCOF = CCOF
+#    op.programs.Costcov = Costcov
+#    op.programs.Covout = Covout
 
-    proj = migrate(op.loadobj(filename, verbose=loadverbose), verbose=verbose)
+    proj = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose)
+    
+#    del op.programs.CCOF
+#    del op.programs.Costcov
+#    del op.programs.Covout
+    
     return proj
