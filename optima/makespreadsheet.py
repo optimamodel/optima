@@ -817,7 +817,7 @@ class OptimaSpreadsheet:
 
 class OptimaProgramSpreadsheet:
     def __init__(self, name, pops, progs, data_start = default_datastart, data_end = default_dataend, verbose = 0):
-        self.sheet_names = OrderedDict([
+        self.sheet_names = odict([
             ('instr', 'Instructions'),
             ('targeting','Populations & programs'),
             ('costcovdata', 'Program data'),
