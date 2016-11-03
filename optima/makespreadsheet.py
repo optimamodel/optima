@@ -7,10 +7,9 @@ Version: 2016jan18 by robyns
 
 import xlsxwriter
 from xlsxwriter.utility import re, xl_rowcol_to_cell
-from collections import OrderedDict
 from utils import printv, isnumber
 from numpy import isnan
-from optima import loadpartable
+from optima import __version__, odict, getdate, today, loadpartable
 
 default_datastart = 2000
 default_dataend = 2020
@@ -357,7 +356,7 @@ class TitledRange:
 
 class OptimaSpreadsheet:
     def __init__(self, name, pops, data_start = default_datastart, data_end = default_dataend, data = None, verbose = 0):
-        self.sheet_names = OrderedDict([
+        self.sheet_names = odict([
             ('instr', 'Instructions'),
             ('meta','Populations'),
             ('popsize', 'Population size'),
@@ -754,6 +753,8 @@ class OptimaSpreadsheet:
         current_row = self.formats.write_info_line(self.current_sheet, current_row)
         current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % __version__)
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
     def create(self, path):
         if self.verbose >=1: 
