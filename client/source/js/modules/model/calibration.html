@@ -1,46 +1,83 @@
 
 <div class="rich">
 
-  <div class="grid" style="margin: 0px 0px;">
-    <h1>Manual Calibration</h1>
-  </div>
+  <h1>Calibration</h1>
 
   <div class="error-hint" ng-show="isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
 
   <div ng-if="!isMissingData">
-    <div class="3">
-      <label for="programSet-selection">Select a parameter set:</label>
-    </div>
 
-    <div style="display: flex; justify-content: flex-start;">
-      <select id="programSet-selection"
-              name="programSet-selection"
-              class="updateGraph txbox"
-              ng-model="state.parset"
-              ng-change="setActiveParset()"
-              ng-options="parset.name for parset in parsets"
-              style="width: 20%;">
+    <div
+      style="
+        display: flex;
+        align-items: center">
+
+      Parameter set:
+      &nbsp;
+      <select
+        class="txbox"
+        ng-model="state.parset"
+        ng-change="setActiveParset()"
+        ng-options="parset.name for parset in parsets"
+        style="width: 20%;">
       </select>
-      <button ng-click="addParameterSet()" type="button" class="btn" style="margin-left:2%">New parameter set</button>
-      <button ng-click="copyParameterSet()" type="button" class="btn" style="margin-left:2%">Copy parameter set</button>
-      <button ng-click="renameParameterSet()" type="button" class="btn" style="margin-left:2%">Rename parameter set</button>
-      <button ng-click="downloadParameterSet()" type="button" class="btn" style="margin-left:2%">Download parameter set</button>
-      <button ng-click="uploadParameterSet()" type="button" class="btn" style="margin-left:2%">Upload parameter set</button>
-      <button ng-click="deleteParameterSet()" type="button" class="btn" style="margin-left:2%">Delete parameter set</button>
+      <i
+        ng-click="addParameterSet()"
+        class="fa fa-file-o"
+        tp-text="New" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+        style="margin-left: 0.5em">
+      </i>
+      <i
+        ng-click="copyParameterSet()"
+        class="fa fa-copy"
+        tp-text="Copy" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+        style="margin-left: 0.5em">
+      </i>
+      <i
+        ng-click="renameParameterSet()"
+        class="fa fa-pencil"
+        tp-text="Rename" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+        style="margin-left: 0.5em">
+      </i>
+      <i
+        ng-click="downloadParameterSet()"
+        class="fa fa-download"
+        tp-text="Download" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+        style="margin-left: 0.5em">
+      </i>
+      <i
+        ng-click="uploadParameterSet()"
+        class="fa fa-upload"
+        tp-text="Upload" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+        style="margin-left: 0.5em">
+      </i>
+      <i
+        ng-click="deleteParameterSet()"
+        class="fa fa-trash-o"
+        tp-text="Delete" tooltip tp-class="tooltip"
+        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+        style="margin-left: 0.5em">
+      </i>
     </div>
 
     <div
-       style="
-         padding-top: 10px;
-         padding-bottom: 10px;">
+      style="
+        display: flex;
+        align-items: center;
+        padding-top: 10px;
+        padding-bottom: 15px;">
 
       <button class="btn __m" ng-click="saveAndUpdateGraphs()">
         Save parameters
       </button>
 
-      &nbsp;
       &nbsp;
 
       Run auto-fit for about
@@ -65,8 +102,8 @@
       </button>
 
       &nbsp;
-      &nbsp;
 
+      &nbsp;
       <span style="color: #00aeef;"> {{ statusMessage }} </span>
 
     </div>
@@ -77,7 +114,7 @@
         flex-direction: row;
         justify-content: space-between;
         width: 100%;
-        height: calc(100vh - 300px)">
+        height: calc(100vh - 200px)">
 
       <div class="small_bordered_list"
            style="flex: 0 0 320px;"

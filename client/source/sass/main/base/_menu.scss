@@ -1,46 +1,111 @@
 .menu {
   display: flex;
+  align-items: center;
 
   & > div {
+
     position: relative;
-    margin-left: 10px;
+    margin-left: 3px;
 
     & > .menu-dropdown {
       position: absolute;
-      background: white;
-      border: 1px solid grey;
-      border-radius: 5px;
+
+      width: 200px;
+
+      background: #EEF9FF;
+      color: #53646F;
+
+      border-color: #C7DDEA;
+      border-style: solid;
+      border-width: 1px;
+      border-radius: 2px;
+
       z-index: 100;
 
       div {
-        height: 40px;
+        @include font-height(13px, 16px);
         cursor: pointer;
-        border-bottom: 1px solid grey;
-        padding: 5px;
+        border-bottom: 1px solid #C7DDEA;
+        padding: 5px 4px;
         display: flex;
-        justify-content: center;
-        align-items: center;
+        text-align: left;
+        border-top: none;
       }
 
       div:hover {
-        background: #e7f6ff;
+        background: #BEDFF4;
+        border-color: #9DC6DF;
+        color: #3F4D55;
       }
 
       div:last-of-type {
         border-bottom: none;
-        border-bottom-left-radius: 5px;
-        border-bottom-right-radius: 5px;
+        border-bottom-left-radius: 2px;
+        border-bottom-right-radius: 2px;
       }
 
       div:first-of-type {
-        border-top-left-radius: 5px;
-        border-top-right-radius: 5px;
+        border-top-left-radius: 2px;
+        border-top-right-radius: 2px;
       }
     }
   }
 
-  .fa {
-    margin-left: 10px;
+}
+
+.menu-item {
+
+  cursor: pointer;
+  display: inline-block;
+  padding: 5px 4px;
+
+  @include font-height(13px, 16px);
+
+  background: #EEF9FF;
+  color: #53646F;
+
+  border-radius: 2px;
+  border: 1px solid #C7DDEA;
+
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+
+  &:focus {
+    box-shadow: 0 0 6px 2px rgba($color-yellow, 0.7);
+    outline: 0;
   }
 
+  &:disabled {
+    cursor: default !important;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  &:disabled {
+    color: #708897
+  }
+
+  &:hover:not(:disabled) {
+    background: #BEDFF4;
+    border-color: #9DC6DF;
+    color: #3F4D55;
+  }
+
+  &.__active,
+  &:active:not(:disabled) {
+    background: #AFD8F2;
+    border-color: #9DC6DF;
+    color: #3F4D55;
+  }
+
+  &.__active,
+  &.__active:hover {
+    background: #AFD8F2;
+    color: #3F4D55;
+  }
+}
+
+.menu-active {
+  background: #BEDFF4;
 }

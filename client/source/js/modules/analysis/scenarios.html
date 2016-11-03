@@ -1,6 +1,6 @@
 <div class="rich" xmlns="http://www.w3.org/1999/html">
 
-  <h1>Manage scenarios</h1>
+  <h1>Scenario analysis</h1>
 
   <div class="error-hint" ng-show="isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
@@ -47,12 +47,10 @@
                 <a class="fa fa-pencil"
                    ng-click="openModal(scenario, 'edit', $event)">
                 </a>
-                &nbsp;
                 <i class="fa fa-copy"
                    ng-click="openModal(scenario, 'copy', $event)">
                 </i>
-                &nbsp;
-                <i class="fa fa-times"
+                <i class="fa fa-trash-o"
                    ng-click="openModal(scenario, 'delete', $event)">
                 </i>
             </td>

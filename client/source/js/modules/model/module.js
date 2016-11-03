@@ -3,7 +3,6 @@ define([
   'ui.router',
   '../project/project-api-service',
   '../resources/model',
-  '../ui/type-selector/index',
   '../mpld3-charts/export-all-charts',
   '../mpld3-charts/export-all-data',
   '../validations/more-than-directive',
@@ -15,7 +14,6 @@ define([
     'app.export-all-charts',
     'app.export-all-data',
     'app.resources.model',
-    'app.ui.type-selector',
     'ui.router',
     'app.validations.more-than',
     'app.validations.less-than'
