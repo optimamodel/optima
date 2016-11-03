@@ -264,9 +264,17 @@ def addaidslinktocare(project, **kwargs):
     return None
 
 
+def adddataend(project, **kwargs):
+    """
+    Migration between Optima 2.1.6 and 2.1.7.
+    """
+    if not hasattr(project.settings, 'dataend'):
+        if hasattr(project, 'data'):
+            project.settings.dataend = project.data['years'][-1]
+        else: project.settings.dataend = project.settings.end
 
-
-
+    project.version = "2.1.7"
+    return None
 
 
 
@@ -275,7 +283,7 @@ def addaidslinktocare(project, **kwargs):
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.6 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.7 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -297,7 +305,8 @@ migrations = {
 '2.1.3': removepopcharacteristicsdata,
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
-'2.1.6': redoprograms,
+'2.1.6': adddataend,
+#'2.1.7': redoprograms,
 }
 
 
