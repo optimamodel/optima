@@ -8,8 +8,8 @@ Version: 2016feb08
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 
 ## Options
-standardrun = 0
-migrations = 1 # Whether or not to try migrating an old project
+standardrun = 1
+migrations = 0 # Whether or not to try migrating an old project
 autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 0
