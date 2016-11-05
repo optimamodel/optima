@@ -515,7 +515,7 @@ def makepars(data, label=None, verbose=2):
             pars[parname] = Constant(y=best, prior=prior, **rawpar)
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
-            pars[parname] = Constant(y=odict(), **rawpar)
+            pars[parname] = Metapar(y=odict(), **rawpar)
             
     
     ###############################################################################
