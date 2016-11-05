@@ -138,7 +138,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                     elif par.fittable=='pop':
                         for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
                     elif par.fittable=='exp':
-                        for i in range(len(par.p)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
+                        for i in range(len(par.i)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
                     elif par.fittable=='const':
                         parlist.append({'name':par.short, 'type':'const', 'limits':par.limits, 'ind':None})
                     else:
