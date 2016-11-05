@@ -7,7 +7,7 @@ Version: 1.5 (2016jul06)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
-
+from numpy.random import random
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
@@ -789,12 +789,28 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 ### Define the classes
 #################################################################################################################################
 
+class Dist(object):
+    ''' Define a distribution object for drawing samples from, usually to create a prior '''
+    def __init__(self, dist=None, pars=None):
+        defaultdist = 'uniform'
+        defaultpars = (0.9, 1.1)
+        self.dist if dist is not None else defaultdist
+        self.pars if pars is not None else defaultpars
+    
+    def sample(self, n=1):
+        if self.dist=='uniform':
+            samples = random(n)
+            samples = samples * (self.pars[1] - self.pars[0])  + self.pars[0] # Scale to correct range
+            return samples
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
 
 
 class Par(object):
     ''' The base class for epidemiological model parameters '''
     def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, posterior=None, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
-        defaultprior = {'dist':'uniform', 'pars':(0.9,1.1)} # Define the default prior 
+        ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
@@ -809,13 +825,99 @@ class Par(object):
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
         self.fromdata = fromdata # Whether or not the parameter is made from data
-        self.prior = prior if prior is not None else defaultprior
+        if prior is None:
+            self.prior = Dist()
+        elif isinstance(prior, dict):
+            self.prior = Dist(**prior)
+        else:
+            errormsg = 'Prior must either be None or a dict with keys "dist" and "pars", not %s' % type(prior)
+            raise OptimaException(errormsg)
         self.posterior = posterior if posterior is not None else [] # Only supplied after uncertainty has been run: a list of m values
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
+    
+    def sample(self):
+        ''' Replace the current value of the metaparameter m with a sample from the prior '''
+        self.m = self.prior.sample()
+
+
+
+class Constant(Par):
+    ''' The definition of a single constant parameter, which may or may not vary by population '''
+    
+    def __init__(self, y=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
+        self.y = y # y-value data, e.g. 0.3
+    
+    def keys(self):
+        ''' Constants don't have any keys '''
+        return None 
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
+        """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
+        meta = self.m if usemeta else 1.0
+        yinterp = applylimits(par=self, y=self.y*meta, limits=self.limits, dt=dt)
+        if asarray: output = yinterp
+        else: output = odict([('tot',yinterp)])
+        return output
+    
+    def sample(self):
+        ''' Replace the current value of the value y (not the metaparameter!) with a sample from the prior '''
+        self.y = self.prior.sample()
+
+
+
+class Metapar(Par):
+    ''' The definition of a single metaparameter, such as force of infection, which usually does vary by population '''
+    
+    def __init__(self, y=None, prior=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
+        self.y = y # y-value data, e.g. {'FSW:'0.3, 'MSM':0.7}
+        if type(prior)==odict:
+            self.prior = prior
+        elif prior is None:
+            self.prior = odict()
+            for key in self.keys():
+                self.prior[key] = Dist() # Initialize with defaults
+        else:
+            errormsg = 'Prior for metaparameters must be an odict, not %s' % type(prior)
+            raise OptimaException(errormsg)
+            
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        if isnumber(self.y): return None
+        else: return self.y.keys()
+        return self.y.keys()
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
+        """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
+        meta = self.m if usemeta else 1.0
+        
+        if self.keys() is None: # Just a simple constant
+            yinterp = applylimits(par=self, y=self.y*meta, limits=self.limits, dt=dt)
+            if asarray: output = yinterp
+            else: output = odict([('tot',yinterp)])
+        else: # No, it has keys, return as an array
+            keys = self.keys()
+            npops = len(keys)
+            if asarray: output = zeros(npops)
+            else: output = odict()
+            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+                yinterp = applylimits(par=self, y=self.y[key]*meta, limits=self.limits, dt=dt)
+                if asarray: output[pop] = yinterp
+                else: output[key] = yinterp
+        return output
+    
+    def sample(self):
+        ''' Replace the current value of the value y (not the metaparameter!) with a sample from the prior '''
+        for key in self.keys():
+            self.y[key] = self.prior[key].sample() # Unlike other types of parameters, here we need to draw for each key
 
 
 
@@ -909,42 +1011,7 @@ class Popsizepar(Par):
 
 
 
-class Constant(Par):
-    ''' The definition of a single constant parameter, which may or may not vary by population '''
-    
-    def __init__(self, y=None, **defaultargs):
-        Par.__init__(self, **defaultargs)
-        self.y = y # y-value data, e.g. [0.3, 0.7]
-    
-    def keys(self):
-        ''' Return the valid keys for using with this parameter '''
-        if isnumber(self.y):
-            return None
-        else:
-            return self.y.keys()
-        return self.y.keys()
-    
-    
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
-        """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        
-        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        meta = self.m if usemeta else 1.0
-        
-        if self.keys() is None: # Just a simple constant
-            yinterp = applylimits(par=self, y=self.y*meta, limits=self.limits, dt=dt)
-            if asarray: output = yinterp
-            else: output = odict([('tot',yinterp)])
-        else: # No, it has keys, return as an array
-            keys = self.keys()
-            npops = len(keys)
-            if asarray: output = zeros(npops)
-            else: output = odict()
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = applylimits(par=self, y=self.y[key]*meta, limits=self.limits, dt=dt)
-                if asarray: output[pop] = yinterp
-                else: output[key] = yinterp
-        return output
+
 
 
 
