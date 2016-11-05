@@ -9,7 +9,7 @@ from numpy import median, zeros, array, mean
 
 
 
-def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
+def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=0, randseed=None, verbose=2):
     ''' 
     Function to perturb the parameters to get "uncertainties".
     
@@ -41,12 +41,11 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
     parset.pars = []
     for n in range(ncopies):
         parset.pars.append(dcp(origpars))
-    popkeys = origpars['popkeys']
     
-    if what=='force':
-        for n in range(ncopies):
-            for key in popkeys:
-                parset.pars[n]['force'].y[key] = perturb(n=1, span=span)[0] # perturb() returns array, so need to index -- WARNING, could make more efficient and remove loop
+    if type(what)!=list: what = [what] # Ensure it's a list
+    for n in range(ncopies):
+        for wh in what:
+            parset.pars[wh].sample(n=ncopies, randseed=randseed, span=span)
     else:
         raise OptimaException('Sorry, only "force" is implemented currently')
     
