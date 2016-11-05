@@ -797,8 +797,8 @@ class Dist(object):
     def __init__(self, dist=None, pars=None):
         defaultdist = 'uniform'
         defaultpars = (0.9, 1.1)
-        self.dist if dist is not None else defaultdist
-        self.pars if pars is not None else defaultpars
+        self.dist = dist if dist is not None else defaultdist
+        self.pars = pars if pars is not None else defaultpars
     
     def sample(self, n=1, randseed=None):
         ''' Draw random samples from the specified distribution '''
@@ -832,10 +832,12 @@ class Par(object):
         self.fromdata = fromdata # Whether or not the parameter is made from data
         if prior is None:
             self.prior = Dist()
+        elif isinstance(prior, Dist):
+            self.prior = prior
         elif isinstance(prior, dict):
             self.prior = Dist(**prior)
         else:
-            errormsg = 'Prior must either be None or a dict with keys "dist" and "pars", not %s' % type(prior)
+            errormsg = 'Prior must either be None, a Dist, or a dict with keys "dist" and "pars", not %s' % type(prior)
             raise OptimaException(errormsg)
         self.posterior = posterior if posterior is not None else [] # Only supplied after uncertainty has been run: a list of m values
     
