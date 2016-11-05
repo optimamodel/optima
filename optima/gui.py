@@ -400,8 +400,8 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
             elif fulltypelist[b]=='exp': # Population growth
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
-                tmppars[key].p[subkey][0] = eval(str(box.text()))
-                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
+                tmppars[key].i[subkey] = eval(str(box.text()))
+                printv('%s.i[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             elif fulltypelist[b]=='const': # Constants
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))

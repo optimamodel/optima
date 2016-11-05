@@ -177,8 +177,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                 if tv: parvec[i] = pars[thisname].y[thisind]
                 else:  pars[thisname].y[thisind] = parvec[i]
             elif thistype=='exp': 
-                if tv: parvec[i] = pars[thisname].p[thisind][0] # Don't change growth rates
-                else:  pars[thisname].p[thisind][0] = parvec[i]
+                if tv: parvec[i] = pars[thisname].i[thisind] # Don't change growth rates, just intercept i
+                else:  pars[thisname].i[thisind] = parvec[i]
             elif thistype=='meta': 
                 if tv: parvec[i] = pars[thisname].m
                 else:  pars[thisname].m = parvec[i]

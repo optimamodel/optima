@@ -368,8 +368,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     
     ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
     projlist = []
-    c = 0
-    for districtname in districtlist:
+    for c,districtname in enumerate(districtlist):
         newproject = dcp(project)
         newproject.name = districtname
         
@@ -391,7 +390,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         # Scale calibration.
         for popid in xrange(npops):
             popname = poplist[popid]
-            newproject.parsets[-1].pars[bestindex]['popsize'].p[popname][0] *= popratio[popname][c]
+            newproject.parsets[-1].pars[bestindex]['popsize'].i[popname] *= popratio[popname][c]
             newproject.parsets[-1].pars[bestindex]['initprev'].y[popname] *= prevfactors[popname][c]
             newproject.parsets[-1].pars[bestindex]['numcirc'].y[popname] *= plhivratio['tot'][c]
         newproject.parsets[-1].pars[bestindex]['numtx'].y['tot'] *= plhivratio['tot'][c]
@@ -429,7 +428,6 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
 #            
         newproject.runsim(newproject.parsets[-1].name) # Re-simulate autofit curves, but for old data.
         projlist.append(newproject)
-        c += 1
     project.runsim(project.parsets[-1].name)
     
     ## 6. Save each project file into the directory

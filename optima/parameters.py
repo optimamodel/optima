@@ -312,15 +312,17 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         thisyear[key] = sanitizedt[key][0]
         thispopsize[key] = sanitizedy[key][0]
         largestthatyear = popgrow(largestpars, thisyear[key]-startyear)
-        par.p[key] = [largestpars[0]*thispopsize[key]/largestthatyear, largestpars[1]]
-    par.p = par.p.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+        par.i[key] = largestpars[0]*thispopsize[key]/largestthatyear # Scale population size
+        par.e[key] = largestpars[1] # Copy exponent
+    par.i = par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    par.e = par.e.sort(keys)
     
     if uniformgrowth:
         for key in keys:
-            par.p[key][1] = par.p[largestpopkey][1] # Reset exponent to match the largest population
+            par.e[key] = par.e[largestpopkey] # Reset exponent to match the largest population
             meanpopulationsize = mean(sanitizedy[key]) # Calculate the mean of all the data
             weightedyear = mean(sanitizedy[key][:]*sanitizedt[key][:])/meanpopulationsize # Calculate the "mean year"
-            par.p[key][0] = meanpopulationsize*(1+par.p[key][1])**(startyear-weightedyear) # Project backwards to starting population size
+            par.i[key] = meanpopulationsize*(1+par.e[key])**(startyear-weightedyear) # Project backwards to starting population size
     
     if doplot:
         from pylab import figure, subplot, plot, scatter, arange, show, title
@@ -335,7 +337,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
             else: raise OptimaException('This population is nonexistent')
             plot(tvec, yvec[k])
             title('Pop size: ' + key)
-            print(par.p[key])
+            print([par.i[key], par.e[key]])
             show()
     
     return par
@@ -987,7 +989,7 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, i=None, e=None, m=1, start=2000, **defaultargs):
+    def __init__(self, i=None, e=None, m=1., start=2000., **defaultargs):
         Par.__init__(self, **defaultargs)
         if i is None: i = odict()
         if e is None: e = odict()
@@ -998,7 +1000,7 @@ class Popsizepar(Par):
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
-        return self.p.keys()
+        return self.i.keys()
 
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
@@ -1260,7 +1262,7 @@ class Parameterset(object):
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.fittable)
-                        valuelist.append(par.p[subkey][0])
+                        valuelist.append(par.i[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
                 else:
                     print('Parameter type "%s" not implemented!' % par.fittable)
@@ -1295,9 +1297,9 @@ class Parameterset(object):
                 tmppars[key].y[subkey] = vtype(value)
                 printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype == 'exp':  # Population growth
-                vtype = type(tmppars[key].p[subkey][0])
-                tmppars[key].p[subkey][0] = vtype(value)
-                printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose)
+                vtype = type(tmppars[key].i[subkey])
+                tmppars[key].i[subkey] = vtype(value)
+                printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype == 'const':  # Constants
                 vtype = type(tmppars[key].y)
                 tmppars[key].y = vtype(value)
