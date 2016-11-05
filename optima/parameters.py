@@ -252,7 +252,7 @@ def getvalidyears(years, validdata, defaultind=0):
 
 def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(y=odict(), **defaultargs) # Create structure
+    par = Metapar(y=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -508,8 +508,8 @@ def makepars(data, label=None, verbose=2):
             best = data['const'][parname][0] 
             low = data['const'][parname][1] 
             high = data['const'][parname][2]
-            mrange = (best/low, best/high) # Convert to fractional limits
-            pars[parname] = Constant(y=best, mrange=mrange, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+            prior = Dist({'dist':'uniform', 'pars':(low, high)}) # Convert to fractional limits
+            pars[parname] = Constant(y=best, prior=prior, **rawpar)
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Constant(y=odict(), **rawpar)
