@@ -293,7 +293,8 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         ydata[key] = log(sanitizedy[key])
         try:
             fitpars = polyfit(tdata[key], ydata[key], 1)
-            par.p[key] = array([exp(fitpars[1]), fitpars[0]])
+            par.i[key] = fitpars[1] # Intercept/initial value
+            par.e[key] = fitpars[0] # Exponent
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
             raise OptimaException(errormsg)
@@ -303,7 +304,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     thisyear = odict()
     thispopsize = odict()
     for key in only1datapoint:
-        largestpars = par.p[largestpopkey] # Get the parameters from the largest population
+        largestpars = [par.i[largestpopkey], par.e[largestpopkey]] # Get the parameters from the largest population
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
             errormsg += 'Please ensure at least one time point is entered'
@@ -986,17 +987,18 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, p=None, m=1, start=2000, **defaultargs):
+    def __init__(self, i=None, e=None, m=1, start=2000, **defaultargs):
         Par.__init__(self, **defaultargs)
-        if p is None: p = odict()
-        self.p = p # Exponential fit parameters
+        if i is None: i = odict()
+        if e is None: e = odict()
+        self.i = i # Exponential fit intercept, e.g. 3.4e6
+        self.e = e # Exponential fit exponent, e.g. 0.03
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
         return self.p.keys()
-    
 
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
@@ -1014,7 +1016,7 @@ class Popsizepar(Par):
         else: output = odict()
         meta = self.m if usemeta else 1.0
         for pop,key in enumerate(keys):
-            yinterp = meta * popgrow(self.p[key], array(tvec)-self.start)
+            yinterp = meta * popgrow([self.i[key], self.e[key]], array(tvec)-self.start)
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
