@@ -793,13 +793,13 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 
 class Par(object):
     ''' The base class for epidemiological model parameters '''
-    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., mrange=(1.,1.), limits=(0.,1.), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, posterior=None, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+        defaultprior = {'dist':'uniform', 'pars':(0.9,1.1)} # Define the default prior 
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
         self.datashort = datashort # The short name used for the data, e.g. "numactsreg" (which may be different to the paramter name, e.g. "actsreg")
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.mrange = mrange # Range for multiplicative metaparameter, e.g. (0.9, 1.1)
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
@@ -809,6 +809,8 @@ class Par(object):
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
         self.fromdata = fromdata # Whether or not the parameter is made from data
+        self.prior = prior if prior is not None else defaultprior
+        self.posterior = posterior if posterior is not None else [] # Only supplied after uncertainty has been run: a list of m values
     
     def __repr__(self):
         ''' Print out useful information when called'''
