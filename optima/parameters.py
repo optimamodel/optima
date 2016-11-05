@@ -293,7 +293,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         ydata[key] = log(sanitizedy[key])
         try:
             fitpars = polyfit(tdata[key], ydata[key], 1)
-            par.i[key] = fitpars[1] # Intercept/initial value
+            par.i[key] = exp(fitpars[1]) # Intercept/initial value
             par.e[key] = fitpars[0] # Exponent
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
