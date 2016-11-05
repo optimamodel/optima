@@ -1,13 +1,13 @@
 """
-This module defines the Timepar, Popsizepar, and Constant classes, which are 
+This module defines the Constant, Metapar, Timepar, and Popsizepar classes, which are 
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 1.5 (2016jul06)
+Version: 2.0 (2016nov05)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
-from numpy.random import random
+from numpy.random import random, seed
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
@@ -797,7 +797,9 @@ class Dist(object):
         self.dist if dist is not None else defaultdist
         self.pars if pars is not None else defaultpars
     
-    def sample(self, n=1):
+    def sample(self, n=1, randseed=None):
+        ''' Draw random samples from the specified distribution '''
+        if randseed is not None: seed(randseed) # Reset the random seed, if specified
         if self.dist=='uniform':
             samples = random(n)
             samples = samples * (self.pars[1] - self.pars[0])  + self.pars[0] # Scale to correct range
@@ -839,9 +841,20 @@ class Par(object):
         output = defaultrepr(self)
         return output
     
-    def sample(self):
-        ''' Replace the current value of the metaparameter m with a sample from the prior '''
-        self.m = self.prior.sample()
+    def sample(self, n=1, randseed=None):
+        ''' Repopulate the list of "posteriors" with a sample from the prior '''
+        self.posterior = self.prior.sample(n=n, randseed=randseed)
+        return None
+    
+    def updateprior(self):
+        ''' Update the prior to match the metaparameter '''
+        if self.prior.dist=='uniform':
+            tmppars = array(self.prior.pars) # Convert to array for numerical magic
+            self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+        return None
 
 
 
@@ -865,9 +878,9 @@ class Constant(Par):
         else: output = odict([('tot',yinterp)])
         return output
     
-    def sample(self):
+    def sample(self, n=1, randseed=None):
         ''' Replace the current value of the value y (not the metaparameter!) with a sample from the prior '''
-        self.y = self.prior.sample()
+        self.posterior = self.prior.sample(n=n, randseed=randseed)
 
 
 
