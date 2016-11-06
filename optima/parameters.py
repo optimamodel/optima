@@ -831,12 +831,9 @@ class Par(object):
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
         self.fromdata = fromdata # Whether or not the parameter is made from data
-        if prior is None:
-            self.prior = Dist()
-        elif isinstance(prior, Dist):
-            self.prior = prior
-        elif isinstance(prior, dict):
-            self.prior = Dist(**prior)
+        if prior is None:             self.prior = Dist()
+        elif isinstance(prior, Dist): self.prior = prior
+        elif isinstance(prior, dict): self.prior = Dist(**prior)
         else:
             errormsg = 'Prior must either be None, a Dist, or a dict with keys "dist" and "pars", not %s' % type(prior)
             raise OptimaException(errormsg)
@@ -919,8 +916,6 @@ class Metapar(Par):
             
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
-        if isnumber(self.y): return None
-        else: return self.y.keys()
         return self.y.keys()
     
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None): # Keyword arguments are for consistency but not actually used
