@@ -4,7 +4,7 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds, isnumber, odict
+from optima import OptimaException, Parameterset, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
 from numpy import median, zeros, array, mean
 
 
@@ -37,10 +37,6 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
     # Copy things
     parset = dcp(orig) # Copy the original parameter set
     parset.project = project # Keep original project information
-    origpars = dcp(parset.pars[ind])
-    parset.pars = []
-    for n in range(ncopies):
-        parset.pars.append(dcp(origpars))
     
     if type(what)!=list: what = [what] # Ensure it's a list
     for n in range(ncopies):

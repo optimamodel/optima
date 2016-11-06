@@ -232,9 +232,9 @@ def loadtranstable(npops=None,inputtranstable=None):
 
 ### Define the functions for handling the parameters
 
-def popgrow(exppars, tvec):
+def grow(exponent, tvec):
     ''' Return a time vector for a population growth '''
-    return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
+    return exp(tvec*exponent) # Simple exponential growth
 
 
 
@@ -304,16 +304,17 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     thisyear = odict()
     thispopsize = odict()
     for key in only1datapoint:
-        largestpars = [par.i[largestpopkey], par.e[largestpopkey]] # Get the parameters from the largest population
+        largest_i = par.i[largestpopkey] # Get the parameters from the largest population
+        largest_e = par.e[largestpopkey]
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
             errormsg += 'Please ensure at least one time point is entered'
             raise OptimaException(errormsg)
         thisyear[key] = sanitizedt[key][0]
         thispopsize[key] = sanitizedy[key][0]
-        largestthatyear = popgrow(largestpars, thisyear[key]-startyear)
-        par.i[key] = largestpars[0]*thispopsize[key]/largestthatyear # Scale population size
-        par.e[key] = largestpars[1] # Copy exponent
+        largestthatyear = largest_i*grow(largest_e, thisyear[key]-startyear)
+        par.i[key] = largest_i*thispopsize[key]/largestthatyear # Scale population size
+        par.e[key] = largest_e[1] # Copy exponent
     par.i = par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
     par.e = par.e.sort(keys)
     
@@ -860,6 +861,20 @@ class Par(object):
             errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
             raise OptimaException(errormsg)
         return None
+        
+    def choosemeta(self, ind=None, die=False):
+        ''' Decide whether to use metaparameter or a sample from the posterior '''
+        if ind is None: 
+            meta = self.m
+        else:
+            try: meta = self.posterior[ind] # Pull a sample from the posterior
+            except: 
+                if die:
+                    errormsg ='Index %i not allowed; length of posterior is %i' % (ind, len(self.posterior))
+                    raise OptimaException(errormsg)
+                else: # Couldn't find the index, but no matter: just generate a new sample
+                    meta = self.sample(n=1, randseed=None)
+        return meta
 
 
 
@@ -874,18 +889,15 @@ class Constant(Par):
         ''' Constants don't have any keys '''
         return None 
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        meta = self.m if usemeta else 1.0
-        yinterp = applylimits(par=self, y=self.y*meta, limits=self.limits, dt=dt)
+        if ind is None: y = self.y*self.m # If no uncertainty, just multiply the two values
+        else:           y = self.choosemeta(ind) # Otherwise, just choose something from the posterior (or prior)
+        yinterp = applylimits(par=self, y=y, limits=self.limits, dt=dt)
         if asarray: output = yinterp
         else: output = odict([('tot',yinterp)])
         return output
-    
-    def sample(self, n=1, randseed=None):
-        ''' Replace the current value of the value y (not the metaparameter!) with a sample from the prior '''
-        self.posterior = self.prior.sample(n=n, randseed=randseed)
 
 
 
@@ -911,31 +923,30 @@ class Metapar(Par):
         else: return self.y.keys()
         return self.y.keys()
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        meta = self.m if usemeta else 1.0
         
-        if self.keys() is None: # Just a simple constant
-            yinterp = applylimits(par=self, y=self.y*meta, limits=self.limits, dt=dt)
-            if asarray: output = yinterp
-            else: output = odict([('tot',yinterp)])
-        else: # No, it has keys, return as an array
-            keys = self.keys()
-            npops = len(keys)
-            if asarray: output = zeros(npops)
-            else: output = odict()
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = applylimits(par=self, y=self.y[key]*meta, limits=self.limits, dt=dt)
-                if asarray: output[pop] = yinterp
-                else: output[key] = yinterp
+        if asarray: output = zeros(len(self.keys()))
+        else: output = odict()
+        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
+            if ind is None: # Handle metaparameter and uncertainty -- has to be in the loop since depends on the key -- WARNING, KLUDGY
+                meta = self.m
+            else:
+                try: meta = self.posterior[key][ind] # Pull a sample from the posterior
+                except: 
+                    errormsg ='Index %i not allowed; length of posterior is %i' % (ind, len(self.posterior))
+                    raise OptimaException(errormsg)
+            yinterp = applylimits(par=self, y=self.y[key]*meta[key], limits=self.limits, dt=dt)
+            if asarray: output[pop] = yinterp
+            else: output[key] = yinterp
         return output
     
-    def sample(self):
+    def sample(self, n=1, randseed=None):
         ''' Replace the current value of the value y (not the metaparameter!) with a sample from the prior '''
         for key in self.keys():
-            self.y[key] = self.prior[key].sample() # Unlike other types of parameters, here we need to draw for each key
+            self.posterior[key] = self.prior[key].sample(n=n, randseed=randseed) # Unlike other types of parameters, here we need to draw for each key
 
 
 
@@ -943,22 +954,19 @@ class Metapar(Par):
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, t=None, y=None, m=1, mrange=None, **defaultargs):
+    def __init__(self, t=None, y=None, m=1., **defaultargs):
         Par.__init__(self, **defaultargs)
         if t is None: t = odict()
         if y is None: y = odict()
-        if mrange is None: mrange = (1., 1.) # Lower and upper limits on the metaparameter, for uncertainty analysis
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.mrange = mrange # Range for multiplicative metaparameter, e.g. [0.8, 1.2]
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
     
-    
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -966,7 +974,8 @@ class Timepar(Par):
             errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
-        if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # Handle smoothness
+        meta = self.choosemeta(self, ind)
         
         # Set things up and do the interpolation
         keys = self.keys()
@@ -974,7 +983,6 @@ class Timepar(Par):
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
-        meta = self.m if usemeta else 1.0
         for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
             yinterp = meta * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
@@ -1004,7 +1012,7 @@ class Popsizepar(Par):
         ''' Return the valid keys for using with this parameter '''
         return self.i.keys()
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -1018,9 +1026,9 @@ class Popsizepar(Par):
         npops = len(keys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
-        meta = self.m if usemeta else 1.0
+        meta = self.choosemeta(self, ind)
         for pop,key in enumerate(keys):
-            yinterp = meta * popgrow([self.i[key], self.e[key]], array(tvec)-self.start)
+            yinterp = meta * self.i * grow(self.e[key], array(tvec)-self.start)
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
