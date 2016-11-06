@@ -845,13 +845,13 @@ class Par(object):
         return output
     
     def sample(self, n=1, randseed=None):
-        ''' Repopulate the list of "posteriors" with a sample from the prior '''
+        ''' Recalculate msample (if n=1), or return a list of samples from the prior (if n>1) '''
         msample = self.prior.sample(n=n, randseed=randseed)
-        if n==1:  self.msample = msample
-        elif n>1 and update: self.msample = msample[0] # 
-        else: raise OptimaException('Could not figure out what to do with supplied n and update')
-        if returnval: return msample
-        else:         return None
+        if n==1:
+            self.msample = msample[0]
+            return None
+        else:
+            return msample
     
     def updateprior(self):
         ''' Update the prior to match the metaparameter '''
@@ -863,18 +863,10 @@ class Par(object):
             raise OptimaException(errormsg)
         return None
         
-    def choosemeta(self, sample=None, die=False):
+    def choosemeta(self, sample=False):
         ''' Decide whether to use metaparameter or a sample from the posterior '''
-        if sample is None: 
-            meta = self.m
-        else:
-            try: meta = self.posterior[sample] # Pull a sample from the posterior
-            except: 
-                if die:
-                    errormsg ='Sample %i not allowed; length of posterior is %i' % (sample, len(self.posterior))
-                    raise OptimaException(errormsg)
-                else: # Couldn't find the index, but no matter: just generate a new sample
-                    meta = self.sample(n=1, randseed=None)
+        if sample: meta = self.msample
+        else:      meta = self.m
         return meta
 
 
@@ -1055,6 +1047,7 @@ class Parameterset(object):
         self.modified = today() # Date modified
         self.pars = None
         self.popkeys = [] # List of populations
+        self.posterior = odict() # an odict, comparable to pars, for storing posterior values of m -- WARNING, not used yet
         self.resultsref = None # Store pointer to results
         self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
         self.budget = budget # Store the budget that generated the parset, if any
