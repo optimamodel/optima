@@ -815,13 +815,14 @@ class Dist(object):
 
 class Par(object):
     ''' The base class for epidemiological model parameters '''
-    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, posterior=None, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
         self.datashort = datashort # The short name used for the data, e.g. "numactsreg" (which may be different to the paramter name, e.g. "actsreg")
         self.m = m # Multiplicative metaparameter, e.g. 1
+        self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
@@ -831,13 +832,12 @@ class Par(object):
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
         self.fromdata = fromdata # Whether or not the parameter is made from data
-        if prior is None:             self.prior = Dist()
-        elif isinstance(prior, Dist): self.prior = prior
-        elif isinstance(prior, dict): self.prior = Dist(**prior)
+        if prior is None:             self.prior = Dist() # Not supplied, create default distribution
+        elif isinstance(prior, dict): self.prior = Dist(**prior) # Supplied as a dict, use it to create a distribution
+        elif isinstance(prior, Dist): self.prior = prior # Supplied as a distribution, use directly
         else:
             errormsg = 'Prior must either be None, a Dist, or a dict with keys "dist" and "pars", not %s' % type(prior)
             raise OptimaException(errormsg)
-        self.posterior = posterior if posterior is not None else [] # Only supplied after uncertainty has been run: a list of m values
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -846,8 +846,12 @@ class Par(object):
     
     def sample(self, n=1, randseed=None):
         ''' Repopulate the list of "posteriors" with a sample from the prior '''
-        self.posterior = self.prior.sample(n=n, randseed=randseed)
-        return None
+        msample = self.prior.sample(n=n, randseed=randseed)
+        if n==1:  self.msample = msample
+        elif n>1 and update: self.msample = msample[0] # 
+        else: raise OptimaException('Could not figure out what to do with supplied n and update')
+        if returnval: return msample
+        else:         return None
     
     def updateprior(self):
         ''' Update the prior to match the metaparameter '''
@@ -1076,6 +1080,15 @@ class Parameterset(object):
             raise OptimaException('No results associated with this parameter set')
     
     
+    def parkeys(self):
+        ''' Return a list of the keys in pars that are actually parameter objects '''
+        parslist = []
+        for par,key in self.pars.items():
+            if issubclass(type(par), Par):
+                parslist.append(key)
+        return parslist
+    
+    
     def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
         ''' Method for getting proportions'''
 
@@ -1183,12 +1196,11 @@ class Parameterset(object):
         print('\n\n\n')
         print('ATTRIBUTES:')
         attributes = {}
-        for key in pars:
-            if issubclass(type(pars[key]), Par):
-                theseattr = pars[key].__dict__.keys()
-                for attr in theseattr:
-                    if attr not in attributes.keys(): attributes[attr] = []
-                    attributes[attr].append(getattr(pars[key], attr))
+        for key in self.parkeys():
+            theseattr = pars[key].__dict__.keys()
+            for attr in theseattr:
+                if attr not in attributes.keys(): attributes[attr] = []
+                attributes[attr].append(getattr(pars[key], attr))
         for key in attributes:
             print('  ..%s' % key)
         print('\n\n')
