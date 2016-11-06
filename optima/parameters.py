@@ -8,7 +8,7 @@ Version: 2.0 (2016nov05)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 from numpy.random import random, seed
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds, getvaliddata # Utilities 
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -443,7 +443,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data, label=None, verbose=2):
+def makepars(data=None, label=None, verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -610,7 +610,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, onlyvisible=False, verbose=2, name=None, uid=None):
+def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, onlyvisible=False, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -643,7 +643,7 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray)
+            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=sample)
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
                     simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
@@ -714,13 +714,13 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
 
 
 
-def comparepars(pars1=None, pars2=None, ind=0):
+def comparepars(pars1=None, pars2=None):
     ''' 
     Function to compare two sets of pars. Example usage:
     comparepars(P.parsets[0], P.parsets[1])
     '''
-    if type(pars1)==Parameterset: pars1 = pars1.pars[ind] # If parset is supplied instead of pars, use that instead
-    if type(pars2)==Parameterset: pars2 = pars2.pars[ind]
+    if type(pars1)==Parameterset: pars1 = pars1.pars # If parset is supplied instead of pars, use that instead
+    if type(pars2)==Parameterset: pars2 = pars2.pars
     keys = pars1.keys()
     nkeys = 0
     count = 0
@@ -859,15 +859,15 @@ class Par(object):
             raise OptimaException(errormsg)
         return None
         
-    def choosemeta(self, ind=None, die=False):
+    def choosemeta(self, sample=None, die=False):
         ''' Decide whether to use metaparameter or a sample from the posterior '''
-        if ind is None: 
+        if sample is None: 
             meta = self.m
         else:
-            try: meta = self.posterior[ind] # Pull a sample from the posterior
+            try: meta = self.posterior[sample] # Pull a sample from the posterior
             except: 
                 if die:
-                    errormsg ='Index %i not allowed; length of posterior is %i' % (ind, len(self.posterior))
+                    errormsg ='Sample %i not allowed; length of posterior is %i' % (sample, len(self.posterior))
                     raise OptimaException(errormsg)
                 else: # Couldn't find the index, but no matter: just generate a new sample
                     meta = self.sample(n=1, randseed=None)
@@ -886,11 +886,11 @@ class Constant(Par):
         ''' Constants don't have any keys '''
         return None 
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        if ind is None: y = self.y*self.m # If no uncertainty, just multiply the two values
-        else:           y = self.choosemeta(ind) # Otherwise, just choose something from the posterior (or prior)
+        if sample is None: y = self.y*self.m # If no uncertainty, just multiply the two values
+        else:              y = self.choosemeta(sample) # Otherwise, just choose something from the posterior (or prior)
         yinterp = applylimits(par=self, y=y, limits=self.limits, dt=dt)
         if asarray: output = yinterp
         else: output = odict([('tot',yinterp)])
@@ -918,7 +918,7 @@ class Metapar(Par):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
@@ -926,12 +926,12 @@ class Metapar(Par):
         if asarray: output = zeros(len(self.keys()))
         else: output = odict()
         for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
-            if ind is None: # Handle metaparameter and uncertainty -- has to be in the loop since depends on the key -- WARNING, KLUDGY
+            if sample is None: # Handle metaparameter and uncertainty -- has to be in the loop since depends on the key -- WARNING, KLUDGY
                 meta = self.m
             else:
-                try: meta = self.posterior[key][ind] # Pull a sample from the posterior
+                try: meta = self.posterior[key][sample] # Pull a sample from the posterior
                 except: 
-                    errormsg ='Index %i not allowed; length of posterior is %i' % (ind, len(self.posterior))
+                    errormsg ='Sample %i not allowed; length of posterior is %i' % (sample, len(self.posterior))
                     raise OptimaException(errormsg)
             yinterp = applylimits(par=self, y=self.y[key]*meta[key], limits=self.limits, dt=dt)
             if asarray: output[pop] = yinterp
@@ -961,7 +961,7 @@ class Timepar(Par):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -970,7 +970,7 @@ class Timepar(Par):
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
         if smoothness is None: smoothness = int(defaultsmoothness/dt) # Handle smoothness
-        meta = self.choosemeta(self, ind)
+        meta = self.choosemeta(self, sample)
         
         # Set things up and do the interpolation
         keys = self.keys()
@@ -1007,7 +1007,7 @@ class Popsizepar(Par):
         ''' Return the valid keys for using with this parameter '''
         return self.i.keys()
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, ind=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -1021,7 +1021,7 @@ class Popsizepar(Par):
         npops = len(keys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
-        meta = self.choosemeta(self, ind)
+        meta = self.choosemeta(self, sample)
         for pop,key in enumerate(keys):
             yinterp = meta * self.i * grow(self.e[key], array(tvec)-self.start)
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
@@ -1049,7 +1049,7 @@ class Parameterset(object):
         self.project = project # Store pointer for the project, if available
         self.created = today() # Date created
         self.modified = today() # Date modified
-        self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
+        self.pars = None
         self.popkeys = [] # List of populations
         self.resultsref = None # Store pointer to results
         self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
@@ -1058,9 +1058,8 @@ class Parameterset(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output  = objrepr(self)
+        output  = defaultrepr(self)
         output += 'Parameter set name: %s\n'    % self.name
-        output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
@@ -1114,32 +1113,30 @@ class Parameterset(object):
             raise OptimaException('No results associated with this parameter set')
     
     
-    def makepars(self, data, verbose=2):
-        self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
-        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys more accessibly
+    def makepars(self, data=None, verbose=2):
+        self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
+        self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         return None
 
 
-    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, onlyvisible=False, verbose=2):
+    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, onlyvisible=False, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
 
         simparslist = []
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
-        if isnumber(inds): inds = [inds]
-        if inds is None:inds = range(len(self.pars))
-        for ind in inds:
-            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
+        if samples is None: sample = [None]
+        for sample in samples:
+            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
         return simparslist
     
     
-    def printpars(self, ind=None, output=False):
-        if ind is None: ind = 0
+    def printpars(self, output=False):
         outstr = ''
         count = 0
-        for par in self.pars[ind].values():
+        for par in self.pars.values():
             if hasattr(par,'p'): print('WARNING, population size not implemented!')
             if hasattr(par,'y'):
                 if hasattr(par.y, 'keys'):
@@ -1213,24 +1210,22 @@ class Parameterset(object):
         return None
 
 
-    def manualfitlists(self, parsubset=None, ind=0):
+    def manualfitlists(self, parsubset=None):
         ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
             raise OptimaException("No parameters available!")
-        elif len(self.pars) <= ind:
-            raise OptimaException("Parameter with index {} not found!".format(ind))
     
         # Check parname subset is valid
         if parsubset is None:
-            tmppars = self.pars[ind]
+            tmppars = self.pars
         else:
             if type(parsubset)==str: parsubset=[parsubset]
             if parsubset and type(parsubset) not in (list, str):
                 raise OptimaException("Expecting parsubset to be a list or a string!")
             for item in parsubset:
-                if item not in [par.short for par in self.pars[ind].values() if hasattr(par,'fittable') and par.fittable!='no']:
+                if item not in [par.short for par in self.pars.values() if hasattr(par,'fittable') and par.fittable!='no']:
                     raise OptimaException("Parameter %s is not a fittable parameter.")
-            tmppars = {par.short:par for par in self.pars[ind].values() if hasattr(par,'fittable') and par.fittable!='no' and par.short in parsubset}
+            tmppars = {par.short:par for par in self.pars.values() if hasattr(par,'fittable') and par.fittable!='no' and par.short in parsubset}
             
         mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
         keylist = mflists['keys']
@@ -1276,14 +1271,12 @@ class Parameterset(object):
     
     
     ## Define update step
-    def update(self, mflists, ind=0):
+    def update(self, mflists):
         ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
         if not self.pars:
             raise OptimaException("No parameters available!")
-        elif len(self.pars) <= ind:
-            raise OptimaException("Parameter with index {} not found!".format(ind))
     
-        tmppars = self.pars[ind]
+        tmppars = self.pars
     
         keylist = mflists['keys']
         subkeylist = mflists['subkeys']
@@ -1314,7 +1307,7 @@ class Parameterset(object):
     
                 # parset.interp() and calculate results are supposed to be called from the outside
     
-    def export(self, filename=None, compare=None, ind=0):
+    def export(self, filename=None, compare=None):
         '''
         Little function to export code for the current parameter set. To use, do something like:
         
@@ -1326,11 +1319,10 @@ class Parameterset(object):
         comparing to default, e.g.
         P.parsets[-1].export(compare='default')
         '''
-        pars = self.pars[ind]
         cpars, cvalues = None, None
         if compare is not None:
             try: 
-                cpars = self.project.parsets[compare].pars[ind]
+                cpars = self.project.parsets[compare].pars
             except: 
                 print('Could not compare parset %s to parset %s; printing all parameters' % (self.name, compare))
                 compare = None
@@ -1338,7 +1330,7 @@ class Parameterset(object):
         def oneline(values): return str(values).replace('\n',' ') 
         
         output = ''
-        for parname,par in pars.items():
+        for parname,par in self.pars.items():
             if hasattr(par,'fittable'):
                 if par.fittable=='pop': 
                     values = par.y[:].tolist()
