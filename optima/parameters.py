@@ -882,11 +882,11 @@ class Constant(Par):
         ''' Constants don't have any keys '''
         return None 
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        if sample is None: y = self.y*self.m # If no uncertainty, just multiply the two values
-        else:              y = self.choosemeta(sample) # Otherwise, just choose something from the posterior (or prior)
+        if sample: y = self.ysample
+        else:      y = self.y
         yinterp = applylimits(par=self, y=y, limits=self.limits, dt=dt)
         if asarray: output = yinterp
         else: output = odict([('tot',yinterp)])
