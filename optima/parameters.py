@@ -1036,7 +1036,7 @@ class Timepar(Par):
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
-        for pop,key in enumerate(self.keys): # Loop over each population, always returning an [npops x npts] array
+        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
             yinterp = m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
@@ -1102,7 +1102,7 @@ class Popsizepar(Par):
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
         for pop,key in enumerate(keys):
-            yinterp = m * self.i * grow(self.e[key], array(tvec)-self.start)
+            yinterp = m * self.i[key] * grow(self.e[key], array(tvec)-self.start)
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
