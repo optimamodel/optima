@@ -81,6 +81,7 @@ class Resultset(object):
         
         self.main['numplhiv']           = Result('Number of PLHIV')
         self.main['numdiag']            = Result('Number of diagnosed PLHIV')
+        self.main['numnewdiag']         = Result('Number of new diagnoses')
         self.main['numevercare']        = Result('Number of PLHIV initially linked to care')
         self.main['numincare']          = Result('Number of PLHIV in care')
         self.main['numtreat']           = Result('Number of PLHIV on treatment')
@@ -94,7 +95,6 @@ class Resultset(object):
         
         self.main['prev']               = Result('HIV prevalence (%)', ispercentage=True)
         self.main['force']              = Result('Incidence (per 100 p.y.)', ispercentage=True)
-        self.main['numnewdiag']         = Result('Number of new diagnoses')
         self.main['nummtct']            = Result('Number of HIV+ births')
         self.main['numhivbirths']       = Result('Number of births to HIV+ women')
         self.main['numpmtct']           = Result('Number of HIV+ women receiving PMTCT')
