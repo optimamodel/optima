@@ -1252,7 +1252,7 @@ class Parameterset(object):
         ''' Go through all the parameters and make a list of their possible attributes '''
         
         maxlen = 20
-        pars = self.pars[0]
+        pars = self.pars
         
         print('\n\n\n')
         print('CONTENTS OF PARS, BY TYPE:')
@@ -1399,7 +1399,7 @@ class Parameterset(object):
         '''
         Little function to export code for the current parameter set. To use, do something like:
         
-        pars = P.parsets[0].pars[0]
+        pars = P.pars()
         
         and then paste in the output of this function.
         
