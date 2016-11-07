@@ -26,8 +26,8 @@ class Optim(object):
         if project is None:     raise OptimaException('To create an optimization, you must supply a project')
         if parsetname is None:  parsetname = -1 # If none supplied, assume defaults
         if progsetname is None: progsetname = -1
-        if objectives is None:  objectives = defaultobjectives(project=self, progset=progsetname, verbose=0)
-        if constraints is None: constraints = defaultconstraints(project=self, progset=progsetname, verbose=0)
+        if objectives is None:  objectives = defaultobjectives(project=project, progset=progsetname, verbose=0)
+        if constraints is None: constraints = defaultconstraints(project=project, progset=progsetname, verbose=0)
         self.name         = name # Name of the parameter set, e.g. 'default'
         self.uid          = uuid() # ID
         self.project      = project # Store pointer for the project, if available

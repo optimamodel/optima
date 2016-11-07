@@ -976,7 +976,7 @@ class Metapar(Par):
         if asarray: output = zeros(len(self.keys()))
         else: output = odict()
         for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
-            yinterp = applylimits(par=self, y=y*self.m, limits=self.limits, dt=dt)
+            yinterp = applylimits(par=self, y=y[key]*self.m, limits=self.limits, dt=dt)
             if asarray: output[pop] = yinterp
             else: output[key] = yinterp
         return output

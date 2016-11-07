@@ -92,7 +92,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False):
         progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug)
+        result = runmodel(pars=scenparset.pars, parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
@@ -245,8 +245,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             # Create parameter dictionary
             thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
             scen.pars = thisparsdict
-            for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
-                thisparset.pars[pardictno] = thisparsdict
+            thisparset.pars = thisparsdict
             
         else: 
             errormsg = 'Unrecognized program scenario type.'
@@ -277,16 +276,16 @@ def defaultscenarios(parset=None, verbose=2):
 
 
 
-def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ind=0, verbose=2):
+def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, verbose=2):
     """ Define a list of default scenarios -- only "Current conditions" by default """
     if parset is None: raise OptimaException('You need to supply a parset to generate default scenarios')
     
     if parname is None: raise OptimaException('Please supply a parameter')
     
     ## Generate dictionary
-    if parset.pars[ind][parname].fromdata: # If it's a regular parameter made from data, we get the default start value from the data
-        if startyear is None: startyear = parset.pars[ind][parname].t[forwhom][-1]
-        startval = parset.pars[ind][parname].interp(startyear,asarray=False)[forwhom][0]
+    if parset.pars[parname].fromdata: # If it's a regular parameter made from data, we get the default start value from the data
+        if startyear is None: startyear = parset.pars[parname].t[forwhom][-1]
+        startval = parset.pars[parname].interp(startyear,asarray=False)[forwhom][0]
     else:
         if startyear is None: startyear = parset.project.settings.now
         startval = parset.getprop(proptype=parname,year=startyear)[0]

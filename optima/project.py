@@ -434,11 +434,10 @@ class Project(object):
         origpars = self.parsets[orig].pars # "Original" parameters to copy from (based on data)
         for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
             keys = parset.pars.keys() # Assume all pars structures have the same keys
-            for i in range(len(parset.pars)): # Loop over each set of pars
-                newpars = parset.pars[i]
-                for key in keys:
-                    if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
-                    if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
+            newpars = parset.pars
+            for key in keys:
+                if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
+                if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
         
         self.modified = today()
         return None
@@ -466,7 +465,7 @@ class Project(object):
 
 
     def pars(self, key=-1):
-        ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
+        ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars '''
         return self.parsets[key].pars
     
     def progs(self, key=-1):
@@ -474,7 +473,7 @@ class Project(object):
         return self.progsets[key].programs
     
     def parset(self, key=-1):
-        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
+        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1] '''
         return self.parsets[key]
     
     def programs(self, key=-1):
@@ -482,7 +481,7 @@ class Project(object):
         return self.progsets[key].programs
 
     def progset(self, key=-1):
-        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
+        ''' Shortcut for getting the latest active program set, i.e. self.progsets[-1] '''
         return self.progsets[key]
 
 
