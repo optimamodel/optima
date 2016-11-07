@@ -1168,39 +1168,38 @@ class Parameterset(object):
     def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
         ''' Method for getting proportions'''
 
+        # Get results
         try:
-            # Get results
             results = getresults(project=self.project, pointer=self.resultsref, die=die)
-            if results is None: # Generate results if there aren't any and die is False (if die is true, it will've already died on the previous step)
-                self.project.runsim(name=self.name)
-                results = self.project.results[-1]
-
-            # Interpret inputs
-            if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
-            elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
-            elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
-            elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
-            elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
-            else:
-                raise OptimaException('Unknown proportion type %s' % proptype)
-        
-            if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
-            elif ind in ['lower','l','low',1]: ind=1
-            elif ind in ['upper','u','up','high','h',2]: ind=2
-            else: ind=0 # Return best estimate if can't understand whichone was requested
-            
-            timeindex = findinds(results.tvec,year) if year else Ellipsis
-
-            if bypop:
-                return results.main[proptype].pops[ind][:][timeindex]
-            else:
-                return results.main[proptype].tot[ind][timeindex]
-                
+            assert(results is not None) # Might return something empty
         except:
-            if die:
+            if die: # Give up
                 raise OptimaException('No results associated with this parameter set')
-            else:
-                return self.getprop(proptype=proptype, year=year, bypop=bypop, ind=ind, die=False) # If it die
+            else: # Or, just rerun
+                results = self.project.runsim(name=self.name)
+
+        # Interpret inputs
+        if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
+        elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
+        elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
+        elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
+        elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
+        else:
+            raise OptimaException('Unknown proportion type %s' % proptype)
+    
+        if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
+        elif ind in ['lower','l','low',1]: ind=1
+        elif ind in ['upper','u','up','high','h',2]: ind=2
+        else: ind=0 # Return best estimate if can't understand whichone was requested
+        
+        timeindex = findinds(results.tvec,year) if year else Ellipsis
+
+        if bypop:
+            return results.main[proptype].pops[ind][:][timeindex]
+        else:
+            return results.main[proptype].tot[ind][timeindex]
+                
+            
     
     
     def makepars(self, data=None, verbose=2):
