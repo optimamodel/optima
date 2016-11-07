@@ -359,7 +359,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
-    tmppars = parset.pars[0]
+    tmppars = parset.pars
     origpars = dcp(tmppars)
     
     mflists = parset.manualfitlists(parsubset=parsubset)
@@ -419,8 +419,8 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
         ''' Little function to reset origpars and update the project '''
         global origpars, tmppars, parset
         origpars = dcp(tmppars)
-        parset.pars[0] = tmppars
-        project.parsets[name].pars[0] = tmppars
+        parset.pars = tmppars
+        project.parsets[name].pars = tmppars
         print('Parameters kept')
         return None
     
@@ -605,14 +605,14 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     
     # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
     tmp = parslist
-    try:  parslist = tmp.parsets[-1].pars[0] # If it's a project
+    try:  parslist = tmp.parsets[-1].pars # If it's a project
     except:
-        try: parslist = tmp.pars[0] # If it's a parset
+        try: parslist = tmp.pars # If it's a parset
         except: pass
     if type(parslist)!=list: parslist = [parslist] # Convert to list
     try:
-        for i in range(len(parslist)): parslist[i] = parslist[i].pars[0]
-    except: pass # Assume it's in the correct form -- a list of pars[0] odicts
+        for i in range(len(parslist)): parslist[i] = parslist[i].pars
+    except: pass # Assume it's in the correct form -- a list of pars odicts
     
     allplotdata = []
     for pars in parslist:

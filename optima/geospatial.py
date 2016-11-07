@@ -256,8 +256,6 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
     ''' checkplots - To check if calibrations are rescaled nicely. '''
     
-    bestindex = 0   # This could be a problem down the road...
-    
     ## 1. Load a project file -- WARNING, could be combined with the above!
     project = _loadproj(projectpath, usegui)
     if project == None:
@@ -390,12 +388,12 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         # Scale calibration.
         for popid in xrange(npops):
             popname = poplist[popid]
-            newproject.parsets[-1].pars[bestindex]['popsize'].i[popname] *= popratio[popname][c]
-            newproject.parsets[-1].pars[bestindex]['initprev'].y[popname] *= prevfactors[popname][c]
-            newproject.parsets[-1].pars[bestindex]['numcirc'].y[popname] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars[bestindex]['numtx'].y['tot'] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars[bestindex]['numpmtct'].y['tot'] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars[bestindex]['numost'].y['tot'] *= plhivratio['tot'][c]
+            newproject.parsets[-1].pars['popsize'].i[popname] *= popratio[popname][c]
+            newproject.parsets[-1].pars['initprev'].y[popname] *= prevfactors[popname][c]
+            newproject.parsets[-1].pars['numcirc'].y[popname] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numtx'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numpmtct'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numost'].y['tot'] *= plhivratio['tot'][c]
         
         # Scale programs.
         if len(project.progsets) > 0:

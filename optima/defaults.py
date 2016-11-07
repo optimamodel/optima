@@ -343,7 +343,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
         
         # "Calibrate"
-        P.parsets[0].pars[0]['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
+        P.pars()['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
         if dorun: P.runsim() # Run after calibration
     
         # Get a default progset 
@@ -510,7 +510,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         
         # Do a super-manual calibration
-        P.parsets[0].pars[0]['inhomo'].y[:] = 0.2
+        P.pars()['inhomo'].y[:] = 0.2
     
     
     
@@ -548,7 +548,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
         currnumtx =    res.main['numtreat'].tot[0][curryearind]
         currpropdx = currnumdx/currnumplhiv
         currproptx = currnumtx/currnumdx
-        currvs = project.parsets['default'].pars[0]['treatvs'].interp(startyear)
+        currvs = project.pars()['treatvs'].interp(startyear)
         
         scenlist = [
             Parscen(name='Current conditions', parsetname='default', pars=[]),

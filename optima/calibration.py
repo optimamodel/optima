@@ -145,7 +145,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     def convert(pars, parlist, parvec=None):
         ''' 
         If parvec is not supplied:
-            Take a parameter set (e.g. P.parsets[0].pars[0]), a list of "types" 
+            Take a parameter set (e.g. P.parsets[0].pars), a list of "types" 
             (e.g. 'force'), and a list of keys (e.g. 'hivtest'), and return a
             vector of values, e.g. "dehydrate" them.
         
