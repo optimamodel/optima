@@ -798,7 +798,7 @@ class Dist(object):
     ''' Define a distribution object for drawing samples from, usually to create a prior '''
     def __init__(self, dist=None, pars=None):
         defaultdist = 'uniform'
-        defaultpars = (0.99, 1.01)
+        defaultpars = (0.9, 1.1) # This is arbitrary, of course
         self.dist = dist if dist is not None else defaultdist
         self.pars = pars if pars is not None else defaultpars
     
