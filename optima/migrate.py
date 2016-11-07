@@ -298,11 +298,18 @@ def redoparameters(project, **kwargs):
     """
     Migration between Optima 2.1.7 and 2.1.8 -- update fields of parameters.
     """
-    # Change pars
-    for ps in project.parsets.values:
-        ps.pars = ps.pars[0]
     
-        # Define new parameter objects -- Metapar, 
+    raise Exception('Parameters migration not fully implemented yet')
+    
+#    newproj = op.defaultproject() # Create a new project 
+    
+    # Loop over all parsets
+    for ps in project.parsets.values():
+        ps.pars = ps.pars[0] # Change pars
+    
+        # Define new Metapar parameter objects
+    
+        # Fix Popsizepar objects
         
         # Create new prior distributions
         
