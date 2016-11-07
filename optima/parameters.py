@@ -829,7 +829,7 @@ class Par(object):
         * Timepars    have y[], m, msample
         * Popsizepars have i[], e[], m, msample
     
-    Consequently, some of them have different sample(), choosemeta(), and interp() methods; in brief:
+    Consequently, some of them have different sample() and interp() methods; in brief:
         * Constants have sample() = ysample, interp() = y
         * Metapars have sample() = ysample[] & msample, interp() = m*y[]
         * Timepars have sample() = msample, interp() = m*y[]
@@ -966,7 +966,7 @@ class Metapar(Par):
     def sample(self, n=1, randseed=None):
         ''' Replace the current value of the value y (not the metaparameter!) with a sample from the prior '''
         for key in self.keys():
-            self.posterior[key] = self.prior[key].sample(n=n, randseed=randseed) # Unlike other types of parameters, here we need to draw for each key
+            self.ysample[key] = self.prior[key].sample(n=n, randseed=randseed) # Unlike other types of parameters, here we need to draw for each key
 
 
 
