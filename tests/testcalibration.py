@@ -71,10 +71,11 @@ if 'sensitivity' in tests:
     t = tic()
 
     print('Running sensitivity test...')
-    from optima import Project
+    from optima import demo
     
-    P = Project(spreadsheet='generalized.xlsx')
-    results = P.sensitivity(orig='default', name='sensitivity', n=10)
+    P = demo(doplot=False)
+    P.parset().updateprior() # Make sure it's up to date with the calibration
+    results = P.sensitivity(orig='default', name='sensitivity', tosample='force', n=10)
     
     if doplot:
         from optima import pygui

@@ -512,8 +512,7 @@ def makepars(data=None, label=None, verbose=2):
             best = data['const'][parname][0] 
             low = data['const'][parname][1] 
             high = data['const'][parname][2]
-            prior = Dist({'dist':'uniform', 'pars':(low, high)}) # Convert to fractional limits
-            pars[parname] = Constant(y=best, prior=prior, **rawpar)
+            pars[parname] = Constant(y=best, prior={'dist':'uniform', 'pars':(low, high)}, **rawpar)
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Metapar(y=odict({key:None for key in keys}), **rawpar)
@@ -645,7 +644,6 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample is not None and pars[key].auto not in list(tosample): thissample = False # Don't sample from unselected parameters
-            print key, sample, thissample
             simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
@@ -800,7 +798,7 @@ class Dist(object):
     ''' Define a distribution object for drawing samples from, usually to create a prior '''
     def __init__(self, dist=None, pars=None):
         defaultdist = 'uniform'
-        defaultpars = (0.9, 1.1)
+        defaultpars = (0.99, 1.01)
         self.dist = dist if dist is not None else defaultdist
         self.pars = pars if pars is not None else defaultpars
     
@@ -1224,6 +1222,13 @@ class Parameterset(object):
         
         return simparslist
     
+    
+    def updateprior(self):
+        ''' Update the prior for all of the variables '''
+        for key in self.parkeys():
+            self.pars[key].updateprior()
+        return None
+        
     
     def printpars(self, output=False):
         outstr = ''
