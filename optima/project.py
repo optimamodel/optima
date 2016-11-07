@@ -451,6 +451,7 @@ class Project(object):
         
         Version: 2016nov07
         '''
+        print 'really hi', sample, n
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
@@ -462,6 +463,7 @@ class Project(object):
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
             for i in range(n):
+                print 'hi', sample, tosample
                 simparslist.append(makesimpars(self.parsets[name].pars, settings=self.settings, name=name, sample=sample, tosample=tosample))
         else:
             if type(simpars)==list: simparslist = simpars

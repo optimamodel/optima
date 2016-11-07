@@ -252,7 +252,7 @@ def getvalidyears(years, validdata, defaultind=0):
 
 def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Metapar(y=odict(), **defaultargs) # Create structure
+    par = Metapar(y=odict({key:None for key in keys}), **defaultargs) # Create structure -- need key:None for prior
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -516,7 +516,7 @@ def makepars(data=None, label=None, verbose=2):
             pars[parname] = Constant(y=best, prior=prior, **rawpar)
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
-            pars[parname] = Metapar(y=odict(), **rawpar)
+            pars[parname] = Metapar(y=odict({key:None for key in keys}), **rawpar)
             
     
     ###############################################################################
@@ -645,7 +645,7 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample is not None and pars[key].auto not in list(tosample): thissample = False # Don't sample from unselected parameters
-            print key, sample, tosample
+            print key, sample, thissample
             simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
