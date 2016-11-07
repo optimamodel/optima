@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
+from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
@@ -27,7 +27,6 @@ class Project(object):
         1. data -- loaded from the spreadsheet
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
-        4. econ -- data and time series loaded from the economics spreadsheet
 
 
     Methods for structure lists:
@@ -42,7 +41,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Built-in methods -- initialization, and the thing to print if you call a project
+    ### Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
     def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2):
@@ -100,7 +99,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Methods for I/O and spreadsheet loading
+    ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
 
@@ -187,7 +186,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Methods to handle common tasks with structure lists
+    ### Methods to handle common tasks with structure lists
     #######################################################################################################
 
 
@@ -291,7 +290,7 @@ class Project(object):
         
 
     #######################################################################################################
-    ## Convenience functions -- NOTE, do we need these...?
+    ### Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
 
     def addparset(self,   name=None, parset=None,   overwrite=True): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
@@ -370,53 +369,9 @@ class Project(object):
         return None
 
 
-
-
     #######################################################################################################
-    ## Methods to perform major tasks
+    ### Utilities
     #######################################################################################################
-
-
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
-        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
-        
-        WARNING, do we need this? What's it for? Why not use runmodel()?
-        '''
-        if start is None: start=self.settings.start # Specify the start year
-        if end is None: end=self.settings.end # Specify the end year
-        if dt is None: dt=self.settings.dt # Specify the timestep
-        if name is None and simpars is None: name = -1 # Set default name
-        if verbose is None: verbose = self.settings.verbose
-        
-        # Get the parameters sorted
-        if simpars is None: # Optionally run with a precreated simpars instead
-            simparslist = [makesimpars(self.parsets[name].pars, settings=self.settings, name=name)] # Needs to be a list
-        else:
-            if type(simpars)==list: simparslist = simpars
-            else: simparslist = [simpars]
-
-        # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
-        rawlist = []
-        for ind,simpars in enumerate(simparslist):
-            if debug: # Should this be die?
-                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-            else:
-                try:
-                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose)
-                except:
-                    printv('Running model failed; running again with debugging...', 1, verbose)
-                    raw = model(simpars, self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
-            rawlist.append(raw)
-
-        # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
-        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
-        if addresult:
-            keyname = self.addresult(result=results, overwrite=overwrite)
-            if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
-
-        self.modified = today()
-        return results
 
 
     def refreshparset(self, name=None, orig='default'):
@@ -485,10 +440,61 @@ class Project(object):
         return self.progsets[key]
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
+    #######################################################################################################
+    ### Methods to perform major tasks
+    #######################################################################################################
+
+
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, verbose=None):
+        ''' 
+        This function runs a single simulation, or multiple simulations if n>1.
+        
+        Version: 2016nov07
+        '''
+        if start is None: start=self.settings.start # Specify the start year
+        if end is None: end=self.settings.end # Specify the end year
+        if dt is None: dt=self.settings.dt # Specify the timestep
+        if name is None and simpars is None: name = -1 # Set default name
+        if verbose is None: verbose = self.settings.verbose
+        
+        # Get the parameters sorted
+        if simpars is None: # Optionally run with a precreated simpars instead
+            simparslist = [] # Needs to be a list
+            if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
+            for i in range(n):
+                simparslist.append(makesimpars(self.parsets[name].pars, settings=self.settings, name=name, sample=sample, tosample=tosample))
+        else:
+            if type(simpars)==list: simparslist = simpars
+            else: simparslist = [simpars]
+
+        # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
+        rawlist = []
+        for ind,simpars in enumerate(simparslist):
+            if debug: # Should this be die?
+                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+            else:
+                try:
+                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose)
+                except:
+                    printv('Running model failed; running again with debugging...', 1, verbose)
+                    raw = model(simpars, self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+            rawlist.append(raw)
+
+        # Store results -- WARNING, is this correct in all cases?
+        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
+        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+        if addresult:
+            keyname = self.addresult(result=results, overwrite=overwrite)
+            if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
+
+        self.modified = today()
+        return results
+
+
+    def sensitivity(self, name='perturb', orig='default', n=5, tosample='all', **kwargs): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
+        self.runsim(name=name, n=n, tosample=tosample, **kwargs)
         self.modified = today()
         return None
 
@@ -616,7 +622,6 @@ class Project(object):
                 for y in boc.objectives:
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
-#                    print('BOC located in project: %s' % self.name)
                     return boc
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None

@@ -113,7 +113,7 @@ from .programs import Program, Programset
 
 ## Automatic calibration and sensitivity
 from . import calibration as _calibration
-from .calibration import sensitivity, autofit 
+from .calibration import autofit 
 
 ## Scenario analyses
 from . import scenarios as _scenarios 

@@ -1,73 +1,11 @@
 """
 CALIBRATION
 
-Functions to perform calibration.
+Function(s) to perform calibration.
 """
 
-from optima import OptimaException, Parameterset, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
-from numpy import median, zeros, array, mean
-
-
-
-def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=0, randseed=None, verbose=2):
-    ''' 
-    Function to perturb the parameters to get "uncertainties".
-    
-    Inputs:
-        orig = parset to perturb
-        ncopies = number of perturbed copies of pars to produce
-        what = which parameters to perturb
-        span = how much to perturb
-        ind = index of pars to start from
-    Outputs:
-        parset = perturbed parameter set with ncopies sets of pars
-    
-    Version: 2016jan19 by cliffk
-    '''
-    
-    printv('Performing sensitivity analysis...', 1, verbose)
-    
-    # Validate input
-    if type(orig)!=Parameterset:
-        raise OptimaException('First argument to sensitivity() must be a parameter set')
-    if span>1 or span<0:
-        print('WARNING: span argument must be a scalar in the interval [0,1], resetting...')
-        span = median([0,1,span])
-    
-    # Copy things
-    parset = dcp(orig) # Copy the original parameter set
-    parset.project = project # Keep original project information
-    
-    if type(what)!=list: what = [what] # Ensure it's a list
-    for n in range(ncopies):
-        for wh in what:
-            parset.pars[wh].sample(n=ncopies, randseed=randseed, span=span)
-    else:
-        raise OptimaException('Sorry, only "force" is implemented currently')
-    
-    return parset
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+from optima import OptimaException, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
+from numpy import zeros, array, mean
 
 
 def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
