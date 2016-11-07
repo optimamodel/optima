@@ -314,7 +314,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         thispopsize[key] = sanitizedy[key][0]
         largestthatyear = largest_i*grow(largest_e, thisyear[key]-startyear)
         par.i[key] = largest_i*thispopsize[key]/largestthatyear # Scale population size
-        par.e[key] = largest_e[1] # Copy exponent
+        par.e[key] = largest_e # Copy exponent
     par.i = par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
     par.e = par.e.sort(keys)
     
