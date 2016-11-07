@@ -24,8 +24,8 @@ epiformatslist = [ # WARNING, definition requires each of these to start with th
                  ]
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = 'none' # Color of estimates rather than real data
-defaultplots = ['cascade', 'budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
-defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
+defaultplots = ['cascade', 'budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numnewdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
+defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numnewdiag-tot', 'prev-tot'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
