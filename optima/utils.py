@@ -804,14 +804,27 @@ from numbers import Number
 
 class odict(OrderedDict):
     '''
-    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing, slicing, and appending.
-    Version: 2016sep14 (cliffk)
+    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer 
+    referencing, slicing, and appending.
+    
+    Valid ways of creating an odict:
+        odict()
+        odict(None)
+        odict(['a','b']) # Creates with None values
+        odict([('a',0), ('b',1)])
+        odict({'a':0, 'b':1}) # Does not preserve order
+    
+    Version: 2016nov07 (cliffk)
     '''
     
     def __init__(self, *args, **kwargs):
         ''' See collections.py '''
-        if len(args)==1 and args[0] is None: args = [] # Remove a None argument
-        OrderedDict.__init__(self, *args, **kwargs) # Standard init
+        if args[0] is None: 
+            OrderedDict.__init__(self, [], **kwargs) # Remove a None argument
+        elif len(args[0])==1 and type(args[0][0])==list:
+            OrderedDict.__init__(self, [(arg,None) for arg in args[0]], **kwargs) # Allow for list of dict keys
+        else:
+            OrderedDict.__init__(self, *args, **kwargs) # Standard init
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')

@@ -252,7 +252,7 @@ def getvalidyears(years, validdata, defaultind=0):
 
 def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Metapar(y=odict({key:None for key in keys}), **defaultargs) # Create structure -- need key:None for prior
+    par = Metapar(y=odict(keys), **defaultargs) # Create structure -- need for prior
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -354,7 +354,7 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
         errormsg = 'Cannot create a time parameter without keyword arguments "name" and "short"! \n\nArguments:\n %s' % defaultargs.items()
         raise OptimaException(errormsg)
         
-    par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
+    par = Timepar(m=1, y=odict(keys), t=odict(keys), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
             validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
@@ -506,7 +506,7 @@ def makepars(data=None, label=None, verbose=2):
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
             if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-            else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
+            else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] 
@@ -515,7 +515,7 @@ def makepars(data=None, label=None, verbose=2):
             pars[parname] = Constant(y=best, prior={'dist':'uniform', 'pars':(low, high)}, **rawpar)
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
-            pars[parname] = Metapar(y=odict({key:None for key in keys}), **rawpar)
+            pars[parname] = Metapar(y=odict(keys), **rawpar)
             
     
     ###############################################################################
