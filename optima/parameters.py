@@ -866,33 +866,7 @@ class Par(object):
         output = defaultrepr(self)
         return output
     
-    def sample(self, n=1, randseed=None):
-        ''' Recalculate msample (if n=1), or return a list of samples from the prior (if n>1) -- not used for Constants '''
-        msample = self.prior.sample(n=n, randseed=randseed)
-        if n==1:
-            self.msample = msample[0] # Want a scalar, not an array (even though it shouldn't matter)
-            return None
-        else:
-            return msample
-    
-    def updateprior(self):
-        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
-        if self.prior.dist=='uniform':
-            tmppars = array(self.prior.pars) # Convert to array for numerical magic
-            self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
-        else:
-            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
-            raise OptimaException(errormsg)
-        return None
-        
-    def choosemeta(self, sample=False, randseed=None):
-        ''' Decide whether to use metaparameter or a sample from the posterior -- used for Timepar and Popsize par only! '''
-        if not sample:  # Not a sample, use main m
-            meta = self.m
-        else: # Is a sample, use msample
-            if self.msample is None: self.sample(n=1,randseed=randseed) # msample doesn't exist, make it
-            meta = self.msample # Choose it
-        return meta # Either way, return meta
+
 
 
 
@@ -910,14 +884,34 @@ class Constant(Par):
         ''' Constants don't have any keys '''
         return None 
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False): # Keyword arguments are for consistency but not actually used
+    def sample(self, n=1, randseed=None, overwrite=False, output=False):
+        ''' Recalculate msample (if n=1), or return a list of samples from the prior (if n>1) -- not used for Constants '''
+        if overwrite or self.ysample is None:
+            ysample = self.prior.sample(n=n, randseed=randseed)
+            self.ysample = self.ysample[0] # Want a scalar, not an array (even though it shouldn't matter for n=1)
+        if output: return ysample
+        else:      return None
+    
+    def updateprior(self):
+        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
+        if self.prior.dist=='uniform':
+            tmppars = array(self.prior.pars) # Convert to array for numerical magic
+            self.prior.pars = tuple(self.y*tmppars/tmppars.mean()) # Recenter the limits around the mean
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+        return None
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        if sample: y = self.ysample
-        else:      y = self.y
-        yinterp = applylimits(par=self, y=y, limits=self.limits, dt=dt)
-        if asarray: output = yinterp
-        else: output = odict([('tot',yinterp)])
+        if sample: 
+            if self.ysample is None: self.sample(n=1,randseed=randseed) # msample doesn't exist, make it
+            y = self.ysample
+        else:
+            y = self.y
+        output = applylimits(par=self, y=y, limits=self.limits, dt=dt)
+        if not asarray: output = odict([('tot',output)])
         return output
 
 
@@ -943,7 +937,13 @@ class Metapar(Par):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None): # Keyword arguments are for consistency but not actually used
+    def sample(self, n=1, randseed=None):
+        ''' Replace the current value of the value y (not the metaparameter!) with a sample from the prior '''
+        for key in self.keys():
+            self.ysample[key] = self.prior[key].sample(n=n, randseed=randseed) # Unlike other types of parameters, here we need to draw for each key
+
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
@@ -963,10 +963,6 @@ class Metapar(Par):
             else: output[key] = yinterp
         return output
     
-    def sample(self, n=1, randseed=None):
-        ''' Replace the current value of the value y (not the metaparameter!) with a sample from the prior '''
-        for key in self.keys():
-            self.ysample[key] = self.prior[key].sample(n=n, randseed=randseed) # Unlike other types of parameters, here we need to draw for each key
 
 
 
