@@ -21,7 +21,7 @@ defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 #############################################################################################################################
 partable = '''
 name	dataname	short	datashort	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract	fromdata
-Initial HIV prevalence	None	initprev	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None	1
+Initial HIV prevalence	None	initprev	initprev	(0, 1)	pop	meta	pop	init	0	None	0	None	1
 Population size	Population size	popsize	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None	1
 Force-of-infection (unitless)	None	force	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None	0
 Inhomogeneity (unitless)	None	inhomo	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	0	None	0	None	0
