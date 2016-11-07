@@ -814,7 +814,29 @@ class Dist(object):
 
 
 class Par(object):
-    ''' The base class for epidemiological model parameters '''
+    '''
+    The base class for epidemiological model parameters.
+    
+    There are four subclasses:
+        * Constant objects store a single scalar value in y and an uncertainty sample in ysample -- e.g., transmfi
+        * Metapar objects store an odict of y values, have a single metaparameter m, and an odict of ysample -- e.g., force
+        * Timepar objects store an odict of y values, have a single metaparameter m, and uncertainty scalar msample -- e.g., condcas
+        * Popsizepar objects are like Timepar objects except have odicts of i (intercept) and e (exponent) values
+    
+    These four thus have different structures (where [] denotes dict):
+        * Constants   have y, ysample
+        * Metapars    have y[], ysample[], m, msample
+        * Timepars    have y[], m, msample
+        * Popsizepars have i[], e[], m, msample
+    
+    Consequently, some of them have different sample(), choosemeta(), and interp() methods; in brief:
+        * Constants have sample() = ysample, interp() = y
+        * Metapars have sample() = ysample[] & msample, interp() = m*y[]
+        * Timepars have sample() = msample, interp() = m*y[]
+        * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[])
+    
+    Version: 2016nov06 by cliffk    
+    '''
     def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.name = name # The full name, e.g. "HIV testing rate"
@@ -845,16 +867,16 @@ class Par(object):
         return output
     
     def sample(self, n=1, randseed=None):
-        ''' Recalculate msample (if n=1), or return a list of samples from the prior (if n>1) '''
+        ''' Recalculate msample (if n=1), or return a list of samples from the prior (if n>1) -- not used for Constants '''
         msample = self.prior.sample(n=n, randseed=randseed)
         if n==1:
-            self.msample = msample[0]
+            self.msample = msample[0] # Want a scalar, not an array (even though it shouldn't matter)
             return None
         else:
             return msample
     
     def updateprior(self):
-        ''' Update the prior to match the metaparameter '''
+        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
         if self.prior.dist=='uniform':
             tmppars = array(self.prior.pars) # Convert to array for numerical magic
             self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
@@ -863,11 +885,14 @@ class Par(object):
             raise OptimaException(errormsg)
         return None
         
-    def choosemeta(self, sample=False):
-        ''' Decide whether to use metaparameter or a sample from the posterior '''
-        if sample: meta = self.msample
-        else:      meta = self.m
-        return meta
+    def choosemeta(self, sample=False, randseed=None):
+        ''' Decide whether to use metaparameter or a sample from the posterior -- used for Timepar and Popsize par only! '''
+        if not sample:  # Not a sample, use main m
+            meta = self.m
+        else: # Is a sample, use msample
+            if self.msample is None: self.sample(n=1,randseed=randseed) # msample doesn't exist, make it
+            meta = self.msample # Choose it
+        return meta # Either way, return meta
 
 
 
@@ -876,7 +901,10 @@ class Constant(Par):
     
     def __init__(self, y=None, **defaultargs):
         Par.__init__(self, **defaultargs)
+        del self.m # These don't exist for the Constant class
+        del self.msample 
         self.y = y # y-value data, e.g. 0.3
+        self.ysample = None
     
     def keys(self):
         ''' Constants don't have any keys '''
@@ -900,6 +928,7 @@ class Metapar(Par):
     def __init__(self, y=None, prior=None, **defaultargs):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. {'FSW:'0.3, 'MSM':0.7}
+        self.ysample = None
         if type(prior)==odict:
             self.prior = prior
         elif prior is None:
