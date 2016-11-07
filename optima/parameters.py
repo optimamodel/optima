@@ -808,6 +808,7 @@ class Dist(object):
         if self.dist=='uniform':
             samples = random(n)
             samples = samples * (self.pars[1] - self.pars[0])  + self.pars[0] # Scale to correct range
+            print 'HI', samples
             return samples
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
