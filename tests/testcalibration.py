@@ -12,7 +12,7 @@ Version: 2016feb06 by cliffk
 tests = [
 #'attributes',
 'sensitivity',
-'manualfit',
+#'manualfit',
 #'autofit',
 #'autofitmulti',
 # 'longfit',
