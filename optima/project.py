@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, defaultconstraints, runmodel # Import functions
+from optima import defaultobjectives, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
 import os
@@ -177,7 +177,7 @@ class Project(object):
             progset = Programset(name=name, project=self)
             self.addprogset(progset)
         if overwrite or scenname not in self.scens:
-            scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
+            scen = Parscen(name=scenname)
             self.addscen(scen)
         if overwrite or name not in self.optims:
             optim = Optim(project=self, name=name)
@@ -390,24 +390,22 @@ class Project(object):
         
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
-            simparslist = []
-            for pardict in self.parsets[name].pars:
-                simparslist.append(makesimpars(pardict, settings=self.settings, name=name))
+            simparslist = [makesimpars(self.parsets[name].pars, settings=self.settings, name=name)] # Needs to be a list
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
 
-        # Run the model! -- wARNING, the logic of this could be cleaned up a lot!
+        # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
         rawlist = []
-        for ind in range(len(simparslist)):
+        for ind,simpars in enumerate(simparslist):
             if debug: # Should this be die?
-                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             else:
                 try:
-                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose)
+                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose)
                 except:
                     printv('Running model failed; running again with debugging...', 1, verbose)
-                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    raw = model(simpars, self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
@@ -433,9 +431,9 @@ class Project(object):
         
         if name is None: name = self.parsets.keys() # If none is given, use all
         if type(name)!=list: name = [name] # Make sure it's a list
-        origpars = self.parsets[orig].pars[0] # "Original" parameters to copy from (based on data)
+        origpars = self.parsets[orig].pars # "Original" parameters to copy from (based on data)
         for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
-            keys = parset.pars[0].keys() # Assume all pars structures have the same keys
+            keys = parset.pars.keys() # Assume all pars structures have the same keys
             for i in range(len(parset.pars)): # Loop over each set of pars
                 newpars = parset.pars[i]
                 for key in keys:
@@ -467,11 +465,11 @@ class Project(object):
         return name, orig
 
 
-    def pars(self, key=-1, ind=0):
+    def pars(self, key=-1):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
-        return self.parsets[key].pars[ind]
+        return self.parsets[key].pars
     
-    def progs(self, key=-1, ind=0):
+    def progs(self, key=-1):
         ''' Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs '''
         return self.progsets[key].programs
     
@@ -496,19 +494,18 @@ class Project(object):
         return None
 
 
-    def manualfit(self, orig=None, parsubset=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
+    def manualfit(self, orig=None, parsubset=None, name=None, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(project=self, name=name, parsubset=parsubset, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
+        manualfit(project=self, name=name, parsubset=parsubset, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
         return None
 
 
-    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
         keyname = self.addresult(result=results)
@@ -544,10 +541,10 @@ class Project(object):
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
+        multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)

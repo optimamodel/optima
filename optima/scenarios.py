@@ -33,6 +33,7 @@ class Parscen(Scen):
     ''' An object for storing a single parameter scenario '''
     def __init__(self, pars=None, **defaultargs):
         Scen.__init__(self, **defaultargs)
+        if pars is None: pars = []
         self.pars = pars
 
 
