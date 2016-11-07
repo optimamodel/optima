@@ -501,7 +501,7 @@ class Project(object):
         P.sensitivity(n=5, tosample='force')
         '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        results = self.runsim(name=name, n=n, tosample=tosample, **kwargs)
+        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, **kwargs)
         self.modified = today()
         return results
 

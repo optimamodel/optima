@@ -645,6 +645,7 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample is not None and pars[key].auto not in list(tosample): thissample = False # Don't sample from unselected parameters
+            print key, sample, tosample
             simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
@@ -914,7 +915,7 @@ class Constant(Par):
         if not sample: 
             y = self.y
         else:
-            if sample=='new' or self.ysample is None: self.sample(n=1,randseed=randseed) # msample doesn't exist, make it
+            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
             y = self.ysample
             
         # Do interpolation
@@ -950,7 +951,7 @@ class Metapar(Par):
         ''' Recalculate ysample '''
         self.ysample = odict()
         for key in self.keys():
-            self.ysample[key] = self.prior[key].sample(n=1, randseed=randseed)[0]
+            self.ysample[key] = self.prior[key].sample(randseed=randseed)[0]
         return None
     
     def updateprior(self):
@@ -971,7 +972,7 @@ class Metapar(Par):
         if not sample: 
             y = self.y
         else:
-            if sample=='new' or self.ysample is None: self.sample(n=1,randseed=randseed) # msample doesn't exist, make it
+            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
             y = self.ysample
                 
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
@@ -1030,7 +1031,7 @@ class Timepar(Par):
         if not sample:
             m = self.m
         else:
-            if sample=='new' or self.msample is None: self.sample(n=1,randseed=randseed) # msample doesn't exist, make it
+            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
             m = self.msample
         
         # Set things up and do the interpolation
@@ -1095,7 +1096,7 @@ class Popsizepar(Par):
         if not sample:
             m = self.m
         else:
-            if sample=='new' or self.msample is None: self.sample(n=1,randseed=randseed) # msample doesn't exist, make it
+            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
             m = self.msample
         
         # Do interpolation
