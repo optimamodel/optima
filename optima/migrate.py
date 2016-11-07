@@ -279,11 +279,19 @@ def adddataend(project, **kwargs):
 
 
 
+def redoparameters(project, **kwargs):
+    """
+    Migration between Optima 2.1.7 and 2.1.8 -- update fields of parameters.
+    """
+    project.version = "2.1.8"
+    print('NOT IMPLEMENTED')
+    return None
+
 
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.7 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.8 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -306,6 +314,7 @@ migrations = {
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
+'2.1.7': redoprograms,
 #'2.1.7': redoprograms,
 }
 
