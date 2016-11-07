@@ -1168,14 +1168,12 @@ class Parameterset(object):
     def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
         ''' Method for getting proportions'''
 
-        if self.resultsref is not None and self.project is not None:
-
+        try:
             # Get results
             results = getresults(project=self.project, pointer=self.resultsref, die=die)
             if results is None: # Generate results if there aren't any and die is False (if die is true, it will've already died on the previous step)
                 self.project.runsim(name=self.name)
                 results = self.project.results[-1]
-                
 
             # Interpret inputs
             if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
@@ -1198,8 +1196,11 @@ class Parameterset(object):
             else:
                 return results.main[proptype].tot[ind][timeindex]
                 
-        else:
-            raise OptimaException('No results associated with this parameter set')
+        except:
+            if die:
+                raise OptimaException('No results associated with this parameter set')
+            else:
+                return self.getprop(proptype=proptype, year=year, bypop=bypop, ind=ind, die=False) # If it die
     
     
     def makepars(self, data=None, verbose=2):

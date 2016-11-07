@@ -76,7 +76,7 @@ if 'parametercheck' in tests:
     datakeys = P.data.keys()
     datakeys += P.data['const'].keys()
     
-    parkeys = P.parsets[0].pars[0].keys()
+    parkeys = P.pars().keys()
     
     dataonly = set([
     'condomcas', 'condomcom', 'condomreg', 
