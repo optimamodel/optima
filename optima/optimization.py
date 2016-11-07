@@ -24,8 +24,10 @@ class Optim(object):
 
     def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
         if project is None:     raise OptimaException('To create an optimization, you must supply a project')
-        if parsetname is None:  parsetname = 0 # If none supplied, assume defaults
-        if progsetname is None: progsetname = 0
+        if parsetname is None:  parsetname = -1 # If none supplied, assume defaults
+        if progsetname is None: progsetname = -1
+        if objectives is None:  objectives = defaultobjectives(project=self, progset=progsetname, verbose=0)
+        if constraints is None: constraints = defaultconstraints(project=self, progset=progsetname, verbose=0)
         self.name         = name # Name of the parameter set, e.g. 'default'
         self.uid          = uuid() # ID
         self.project      = project # Store pointer for the project, if available
@@ -35,9 +37,7 @@ class Optim(object):
         self.progsetname  = progsetname # Program set name
         self.objectives   = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
         self.constraints  = constraints # List of populations
-        if objectives is None: self.objectives = defaultobjectives(progset=project.progsets[progsetname])
-        if constraints is None: self.constraints = defaultconstraints(progset=project.progsets[progsetname])
-        self.resultsref = None # Store pointer to results
+        self.resultsref   = None # Store pointer to results
 
 
     def __repr__(self):

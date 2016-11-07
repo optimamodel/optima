@@ -180,7 +180,7 @@ class Project(object):
             scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
             self.addscen(scen)
         if overwrite or name not in self.optims:
-            optim = Optim(project=self, name=name, objectives=defaultobjectives(project=self, progset=0, verbose=0), constraints=defaultconstraints(project=self, progset=0, verbose=0), parsetname=self.parsets.keys()[0], progsetname=self.progsets.keys()[0])
+            optim = Optim(project=self, name=name)
             self.addoptim(optim)
         return None
 

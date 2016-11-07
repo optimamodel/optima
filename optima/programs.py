@@ -937,7 +937,7 @@ class Program(object):
                     for yr in t:
                         initpopsizes = parset.pars['popsize'].interp(tvec=[yr])*parset.pars['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
-        for popno, pop in enumerate(parset.pars[0]['popkeys']):
+        for popno, pop in enumerate(parset.pars['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
         for targetpop in self.targetpops:
             if targetpop.lower() in ['total','tot','all']:
