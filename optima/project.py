@@ -491,12 +491,19 @@ class Project(object):
         return results
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, tosample='all', **kwargs): # orig=default or orig=0?
-        ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
+    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, **kwargs): # orig=default or orig=0?
+        '''
+        Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
+        
+        Specify tosample as a string or list of par.auto types to only look at sensitivity in a subset
+        of parameters. Set to None for all. For example:
+        
+        P.sensitivity(n=5, tosample='force')
+        '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.runsim(name=name, n=n, tosample=tosample, **kwargs)
+        results = self.runsim(name=name, n=n, tosample=tosample, **kwargs)
         self.modified = today()
-        return None
+        return results
 
 
     def manualfit(self, orig=None, parsubset=None, name=None, verbose=2, **kwargs): # orig=default or orig=0?

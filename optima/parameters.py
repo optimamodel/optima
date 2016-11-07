@@ -16,7 +16,7 @@ defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 
 #############################################################################################################################
 ### Define the parameters!
-##  NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters
+##  NOTE, this should be consistent with the spreadsheet http://optimamodel.com/parameters
 ##  Edit there, then copy and paste from there into here; be sure to include header row
 #############################################################################################################################
 partable = '''
@@ -643,10 +643,12 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=sample, randseed=randseed)
+            thissample = sample # Make a copy of it to check it against the list of things we are sampling
+            if tosample is not None and pars[key].auto not in list(tosample): thissample = False # Don't sample from unselected parameters
+            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
-                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=sample, randseed=randseed) # WARNING, want different smoothness for ART
+                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed) # WARNING, want different smoothness for ART
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -1346,7 +1348,7 @@ class Parameterset(object):
                         valuelist.append(par.y[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
                 elif par.fittable == 'exp':
-                    for subkey in par.p.keys():
+                    for subkey in par.i.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.fittable)
