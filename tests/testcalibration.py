@@ -75,7 +75,7 @@ if 'sensitivity' in tests:
     
     P = demo(doplot=False)
     P.parset().updateprior() # Make sure it's up to date with the calibration
-    results = P.sensitivity(orig='default', name='sensitivity', tosample='force', n=10)
+    results = P.sensitivity(orig='default', name='sensitivity', tosample=None, n=10) # tosample=['initprev','force']
     
     if doplot:
         from optima import pygui

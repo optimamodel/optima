@@ -21,7 +21,7 @@ defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 #############################################################################################################################
 partable = '''
 name	dataname	short	datashort	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract	fromdata
-Initial HIV prevalence	None	initprev	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None	1
+Initial HIV prevalence	None	initprev	initprev	(0, 1)	pop	initprev	pop	initprev	0	None	0	None	1
 Population size	Population size	popsize	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None	1
 Force-of-infection (unitless)	None	force	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None	0
 Inhomogeneity (unitless)	None	inhomo	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	0	None	0	None	0
@@ -634,6 +634,7 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
     if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
+    if isinstance(tosample, (str, unicode)): tosample = [tosample] # Convert to list
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
@@ -802,13 +803,17 @@ class Dist(object):
         self.dist = dist if dist is not None else defaultdist
         self.pars = pars if pars is not None else defaultpars
     
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = defaultrepr(self)
+        return output
+    
     def sample(self, n=1, randseed=None):
         ''' Draw random samples from the specified distribution '''
         if randseed is not None: seed(randseed) # Reset the random seed, if specified
         if self.dist=='uniform':
             samples = random(n)
             samples = samples * (self.pars[1] - self.pars[0])  + self.pars[0] # Scale to correct range
-            print 'HI', samples
             return samples
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
@@ -891,11 +896,12 @@ class Constant(Par):
         self.ysample = self.prior.sample(n=1, randseed=randseed)[0]
         return None
     
-    def updateprior(self):
+    def updateprior(self, verbose=2):
         ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
         if self.prior.dist=='uniform':
             tmppars = array(self.prior.pars) # Convert to array for numerical magic
             self.prior.pars = tuple(self.y*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
             raise OptimaException(errormsg)
@@ -953,15 +959,16 @@ class Metapar(Par):
             self.ysample[key] = self.prior[key].sample(randseed=randseed)[0]
         return None
     
-    def updateprior(self):
+    def updateprior(self, verbose=2):
         ''' Update the prior parameters to match the y values, so e.g. can recalibrate and then do uncertainty '''
-        if self.prior.dist=='uniform':
-            for key in self.keys():
-                tmppars = array(self.prior.pars[key]) # Convert to array for numerical magic
+        for key in self.keys():
+            if self.prior[key].dist=='uniform':
+                tmppars = array(self.prior[key].pars) # Convert to array for numerical magic
                 self.prior[key].pars = tuple(self.y[key]*tmppars/tmppars.mean()) # Recenter the limits around the mean
-        else:
-            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
-            raise OptimaException(errormsg)
+                printv('Priors updated for %s' % self.short, 3, verbose)
+            else:
+                errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+                raise OptimaException(errormsg)
         return None
     
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # Keyword arguments are for consistency but not actually used
@@ -1006,11 +1013,12 @@ class Timepar(Par):
         self.msample = self.prior.sample(n=1, randseed=randseed)[0]
         return None
     
-    def updateprior(self):
+    def updateprior(self, verbose=2):
         ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
         if self.prior.dist=='uniform':
             tmppars = array(self.prior.pars) # Convert to array for numerical magic
             self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
             raise OptimaException(errormsg)
@@ -1072,11 +1080,12 @@ class Popsizepar(Par):
         self.msample = self.prior.sample(n=1, randseed=randseed)[0]
         return None
     
-    def updateprior(self):
+    def updateprior(self, verbose=2):
         ''' Update the prior parameters to match the metaparameter -- same as Timepar '''
         if self.prior.dist=='uniform':
             tmppars = array(self.prior.pars) # Convert to array for numerical magic
             self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
             raise OptimaException(errormsg)
@@ -1161,7 +1170,7 @@ class Parameterset(object):
     def parkeys(self):
         ''' Return a list of the keys in pars that are actually parameter objects '''
         parslist = []
-        for par,key in self.pars.items():
+        for key,par in self.pars.items():
             if issubclass(type(par), Par):
                 parslist.append(key)
         return parslist
