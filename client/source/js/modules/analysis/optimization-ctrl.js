@@ -407,6 +407,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function (response) {
           if (response.graphs) {
             toastr.success('Graphs loaded');
+            console.log('graphs', response.graphs);
             $scope.graphs = response.graphs;
           }
           $scope.state.isRunnable = true;

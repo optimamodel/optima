@@ -1246,7 +1246,7 @@ def resolve_project(project):
 
     # check optimizations are good
     del_optim_keys = []
-    for optim_key, optim in project.scens.items():
+    for optim_key, optim in project.optims.items():
         if type(optim.parsetname) is int:
             i = optim.parsetname
             try:
