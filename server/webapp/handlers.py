@@ -1030,10 +1030,9 @@ def output_json(data, code, headers=None):
 
 @api_blueprint.before_request
 def before_request():
-    from server.webapp.dbmodels import UserDb
     db.engine.dispose()
     g.user = None
     if 'user_id' in session:
-        g.user = UserDb.query.filter_by(id=session['user_id']).first()
+        g.user = dataio.get_user_from_id(session['user_id'])
 
 

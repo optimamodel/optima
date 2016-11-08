@@ -84,6 +84,10 @@ def get_users():
     return marshal_user(UserDb.query.all())
 
 
+def get_user_from_id(user_id):
+    return UserDb.query.filter_by(id=user_id).first()
+
+
 def parse_user_args(args):
     return {
         'email': nullable_email(args.get('email', None)),
