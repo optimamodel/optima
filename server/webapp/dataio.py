@@ -35,6 +35,7 @@ from flask.ext.restful import marshal
 from optima.dataio import loadobj as loaddbobj
 import optima as op
 import optima
+import optima.geospatial
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
@@ -702,10 +703,13 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     district_prj_basenames = os.listdir(spawn_dir)
     prj_names = []
     for prj_basename in district_prj_basenames:
-        prj_name = prj_basename.replace('.prj', '')
+        first_prj_name = prj_basename.replace('.prj', '')
         print("> Slurping project %s" % prj_name, existing_prj_names, prj_name in existing_prj_names)
-        if prj_name in existing_prj_names:
-            prj_name = prj_name + ' (1)'
+        prj_name = first_prj_name
+        i = 1
+        while prj_name in existing_prj_names:
+            prj_name = first_prj_name + ' (%d)' % i
+            i += 1
         create_project_from_prj(prj_fname, prj_name, current_user.id)
         prj_names.append(prj_name)
 
