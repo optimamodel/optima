@@ -1,5 +1,3 @@
-import optima
-
 __doc__ = """
 parse.py
 ========
@@ -14,13 +12,12 @@ There should be no references to the database or web-handlers.
 """
 
 from collections import defaultdict
-from functools import partial
 from pprint import pprint, pformat
 from uuid import UUID
 
-from flask.ext.restful import fields, marshal
 from numpy import nan, array, isnan
 
+import optima
 import optima as op
 from optima import loadpartable, partable, Par
 from optima.defaults import defaultprograms
@@ -1316,7 +1313,7 @@ def get_parset_from_project_by_id(project, parset_id):
 # PORTFOLIOS
 
 
-def parse_portfolio_summary(portfolio):
+def get_portfolio_summary(portfolio):
     gaoptim_summaries = []
     objectivesList = []
     for gaoptim_key, gaoptim in portfolio.gaoptims.items():
@@ -1373,6 +1370,5 @@ def parse_portfolio_summary(portfolio):
         result["outputstring"] = portfolio.outputstring.replace('\t', ',')
 
     return result
-
 
 
