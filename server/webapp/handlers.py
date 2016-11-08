@@ -58,7 +58,7 @@ def get_upload_file(dirname):
     handled by the current flask request
 
     Args:
-        dirname: directory on server to store the filen
+        dirname: directory on server to store the file
     """
     file = request.files['file']
     filename = secure_filename(file.filename)

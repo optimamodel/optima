@@ -16,11 +16,7 @@ from pprint import pprint, pformat
 from uuid import UUID
 
 from numpy import nan, array, isnan
-
-import optima
 import optima as op
-from optima import loadpartable, partable, Par
-from optima.defaults import defaultprograms
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 from .utils import normalize_obj
@@ -28,11 +24,11 @@ from .utils import normalize_obj
 
 
 def print_odict(name, an_odict):
-    print ">> %s = <odict>" % name
+    print(">> %s = <odict>" % name)
     obj = normalize_obj(an_odict)
     s = pformat(obj, indent=2)
     for line in s.splitlines():
-        print ">> " + line
+        print(">> " + line)
 
 
 # PROJECTS
@@ -368,7 +364,7 @@ def get_parameters_for_scenarios(project, start_year=None):
                 y_keys_of_parset[par.short] = []
                 for pop in par.y.keys():
                     try:
-                        par_defaults = optima.setparscenvalues(
+                        par_defaults = op.setparscenvalues(
                             parset, par.short, pop, year)
                         startval = par_defaults['startval']
                         if isnan(startval):
@@ -387,14 +383,14 @@ def get_parameters_for_scenarios(project, start_year=None):
 def get_parameters_for_edit_program(project):
     parameters = []
     added_par_keys = set()
-    default_par_keys = [par['short'] for par in loadpartable(partable)]
+    default_par_keys = [par['short'] for par in op.loadpartable(op.partable)]
     for parset in project.parsets.values():
         for pars in parset.pars:
             for par_key in default_par_keys:
                 if par_key in added_par_keys or par_key not in pars:
                     continue
                 par = pars[par_key]
-                if not isinstance(pars[par_key], Par):
+                if not isinstance(pars[par_key], op.Par):
                     continue
                 if not par.visible == 1 or not par.y.keys():
                     continue
@@ -659,7 +655,7 @@ def get_program_summary(program, progset, active):
 
 
 def get_default_program_summaries(project):
-    return [get_program_summary(p, None, False) for p in defaultprograms(project)]
+    return [get_program_summary(p, None, False) for p in op.defaults.defaultprograms(project)]
 
 
 # PROGSET OUTCOMES
