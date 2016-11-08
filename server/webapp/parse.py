@@ -1234,32 +1234,49 @@ def get_optimization_from_project(project, optim_id):
 
 def get_optimization_summaries(project):
 
-    optimizations = []
+    optim_summaries = []
 
-    for o in project.optims.values():
+    for optim in project.optims.values():
 
-        optim = {
-            "id": o.uid,
-            "name": o.name,
-            "objectives": o.objectives,
-            "constraints": o.constraints,
+        optim_summary = {
+            "id": optim.uid,
+            "name": optim.name,
+            "objectives": optim.objectives,
+            "constraints": optim.constraints,
         }
 
-        optim["which"] = o.objectives["which"]
+        optim_summary["which"] = optim.objectives["which"]
 
-        if o.parsetname:
-            optim["parset_id"] = project.parsets[o.parsetname].uid
+        if optim.parsetname:
+            optim_summary["parset_id"] = project.parsets[optim.parsetname].uid
         else:
-            optim["parset_id"] = None
+            optim_summary["parset_id"] = None
 
-        if o.progsetname:
-            optim["progset_id"] = project.progsets[o.progsetname].uid
+        if optim.progsetname:
+            progset = project.progsets[optim.progsetname]
+            optim_summary["progset_id"] = progset.uid
         else:
-            optim["progset_id"] = None
+            progset = project.progsets[0]
+            optim_summary["progset_id"] = progset.uid
 
-        optimizations.append(optim)
+        default_constraints = op.defaultconstraints(project=project, progset=progset)
+        constraints = optim_summary["constraints"]
 
-    return optimizations
+        default_prog_keys = default_constraints["name"].keys()
+        for prog_key in default_prog_keys:
+            if prog_key not in constraints["name"]:
+                for attr in ["name", "max", "min"]:
+                    constraints[attr][prog_key] = default_constraints[attr][prog_key]
+
+        for prog_key in constraints["name"].keys():
+            if prog_key not in default_prog_keys:
+                for attr in ["name", "max", "min"]:
+                    del constraints[attr][prog_key]
+
+        print(">> Optim constraints", optim.constraints)
+        optim_summaries.append(optim_summary)
+
+    return optim_summaries
 
 
 def set_optimization_summaries_on_project(project, optimization_summaries):
