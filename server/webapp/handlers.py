@@ -32,6 +32,22 @@ api_blueprint = Blueprint('api', __name__, static_folder='static')
 api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
 
+@api.representation('application/json')
+def output_json(data, code, headers=None):
+    inner = json.dumps(data, cls=OptimaJSONEncoder)
+    resp = make_response(inner, code)
+    resp.headers.extend(headers or {})
+    return resp
+
+
+@api_blueprint.before_request
+def before_request():
+    dbconn.db.engine.dispose()
+    g.user = None
+    if 'user_id' in session:
+        g.user = dataio.get_user_from_id(session['user_id'])
+
+
 def get_post_data_json():
     return normalize_obj(json.loads(request.data))
 
@@ -915,21 +931,5 @@ class UserLogout(Resource):
 
 api.add_resource(UserLogout, '/api/user/logout')
 
-
-
-@api.representation('application/json')
-def output_json(data, code, headers=None):
-    inner = json.dumps(data, cls=OptimaJSONEncoder)
-    resp = make_response(inner, code)
-    resp.headers.extend(headers or {})
-    return resp
-
-
-@api_blueprint.before_request
-def before_request():
-    dbconn.db.engine.dispose()
-    g.user = None
-    if 'user_id' in session:
-        g.user = dataio.get_user_from_id(session['user_id'])
 
 
