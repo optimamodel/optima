@@ -712,7 +712,7 @@ class Progset(Resource):
         POST /api/project/<uuid:project_id>/progset/<uuid:progset_id>
         data-json: name:
         """
-        # new_name = get_post_data_json()['name']
+        new_name = get_post_data_json()['name']
         return copy_progset(project_id, progset_id, new_name)
 
 
