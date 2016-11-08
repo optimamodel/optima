@@ -33,10 +33,7 @@ from flask.ext.login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from flask.ext.restful import marshal
 
-from optima.dataio import loadobj as loaddbobj
 import optima as op
-import optima
-import optima.geospatial
 
 from .dbconn import db
 from .exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
@@ -459,7 +456,7 @@ def copy_project(project_id, new_project_name):
 
 
 def create_project_from_prj(prj_filename, project_name, user_id):
-    project = loaddbobj(prj_filename)
+    project = op.dataio.loadobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)
     project = op.migrate(project)
     print('>> ...to version %s' % project.version)
@@ -488,7 +485,7 @@ def download_project(project_id):
 
 
 def update_project_from_prj(project_id, prj_filename):
-    project = loaddbobj(prj_filename)
+    project = op.dataio.loadobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)
     project = op.migrate(project)
     print('>> ...to version %s' % project.version)
@@ -522,12 +519,12 @@ def load_portfolio_summary_on_portfolio(portfolio, summary):
     gaoptims = portfolio.gaoptims
     for gaoptim_summary in gaoptim_summaries:
         gaoptim_id = str(gaoptim_summary['id'])
-        objectives = optima.odict(gaoptim_summary["objectives"])
+        objectives = op.odict(gaoptim_summary["objectives"])
         if gaoptim_id in gaoptims:
             gaoptim = gaoptims[gaoptim_id]
             gaoptim.objectives = objectives
         else:
-            gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+            gaoptim = op.portfolio.GAOptim(objectives=objectives)
             gaoptims[gaoptim_id] = gaoptim
     old_project_ids = portfolio.projects.keys()
     print("> old project ids %s" % old_project_ids)
@@ -547,8 +544,8 @@ def create_portfolio(name, db_session=None):
     print("> Create portfolio %s" % name)
     portfolio = op.Portfolio()
     portfolio.name = name
-    objectives = optima.portfolio.defaultobjectives(verbose=0)
-    gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+    objectives = op.portfolio.defaultobjectives(verbose=0)
+    gaoptim = op.portfolio.GAOptim(objectives=objectives)
     portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
     record = PyObjectDb(
         user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
@@ -578,17 +575,16 @@ def load_portfolio(portfolio_id, db_session=None):
     if record:
         print("> load portfolio %s" % portfolio_id)
         return record.load()
-    return optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+    return op.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
 
 
 def load_portfolio_summaries(db_session=None):
-    import optima.portfolio
     if db_session is None:
         db_session = db.session
 
     query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
     if query is None:
-        portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+        portfolio = op.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
         record = PyObjectDb(
             user_id=current_user.id, type="portfolio", name=portfolio.name, id=portfolio.uid)
         record.save_obj(portfolio)
@@ -602,8 +598,8 @@ def load_portfolio_summaries(db_session=None):
             print(">> Portfolio id %s" % record.id)
             portfolio = record.load()
             if len(portfolio.gaoptims) == 0:
-                objectives = optima.portfolio.defaultobjectives(verbose=0)
-                gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+                objectives = op.portfolio.defaultobjectives(verbose=0)
+                gaoptim = op.portfolio.GAOptim(objectives=objectives)
                 portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
                 record.save_obj(portfolio)
             portfolios.append(portfolio)
@@ -644,7 +640,7 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
         portfolio = record.load()
     else:
         print("> Create portfolio %s" % portfolio_id)
-        portfolio = optima.Portfolio()
+        portfolio = op.Portfolio()
         portfolio.uid = UUID(portfolio_id)
     return portfolio
 
@@ -671,7 +667,7 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     prj_basename = load_project_record(project_id).as_file(dirname)
     prj_fname = os.path.join(dirname, prj_basename)
     xlsx_fname = prj_fname.replace('.prj', '.xlsx')
-    optima.geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
+    op.geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
     return os.path.split(xlsx_fname)
 
 
@@ -686,7 +682,7 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     if os.path.isdir(spawn_dir):
         shutil.rmtree(spawn_dir)
 
-    optima.geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
+    op.geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
 
     district_prj_basenames = os.listdir(spawn_dir)
     prj_names = []
