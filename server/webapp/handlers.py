@@ -14,6 +14,7 @@ import json
 import os
 import pprint
 
+import flask.json
 from flask import helpers, current_app, request, Response, flash, \
     url_for, redirect, Blueprint, g, session, make_response
 from flask.ext.login import login_required, current_user
@@ -24,7 +25,7 @@ from werkzeug.utils import secure_filename
 
 from . import parse, dataio, dbconn
 from .dataio import report_exception_decorator, verify_admin_request_decorator
-from .utils import normalize_obj, OptimaJSONEncoder
+from .utils import normalize_obj
 
 # there's a circular import when celery is loaded so must use absolute import
 import server.webapp.tasks
@@ -36,7 +37,7 @@ api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
-    inner = json.dumps(data, cls=OptimaJSONEncoder)
+    inner = json.dumps(data, cls=flask.json.JSONEncoder)
     resp = make_response(inner, code)
     resp.headers.extend(headers or {})
     return resp
@@ -932,6 +933,5 @@ class UserLogout(Resource):
         return redirect(url_for("site"))
 
 api.add_resource(UserLogout, '/api/user/logout')
-
 
 

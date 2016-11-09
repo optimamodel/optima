@@ -300,6 +300,7 @@ def get_parameters_from_parset(parset, ind=0):
                     })
             else:
                 print('>> Parameter type "%s" not implemented!' % par.fittable)
+
     return parameters
 
 
@@ -318,7 +319,6 @@ def get_parset_summaries(project):
         parset_summaries.append({
             "id": parset.uid,
             "project_id": project.uid,
-            "pars": parset.pars,
             "updated": parset.modified,
             "created": parset.created,
             "name": parset.name

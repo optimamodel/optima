@@ -36,13 +36,13 @@ import optima as op
 import optima.geospatial as geospatial
 
 from .dbconn import db
+from . import parse
 from .exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
 from .utils import nullable_email, hashed_password
 from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
 from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
-from . import parse
 
 
 # USERS
@@ -1166,10 +1166,9 @@ def get_odict_item(odict, key):
 
 def resolve_project(project):
     """
-    This function does some checks on the project to ensure that all the cross-reference
-    fields are properly specified and that defaults are sensibly populated.
-
-    Returns: boolean to whether any changes needed to be made to the project
+    Checks  project to ensure that all the cross-reference fields are
+    properly specified and that defaults are sensibly populated.
+    Returns boolean to whether any changes needed to be made to the project
     """
     print(">> Resolve project")
     is_change = False

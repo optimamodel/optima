@@ -139,7 +139,6 @@ def delete_task(pyobject_id, work_type):
     return "Deleted job"
 
 
-
 def start_or_report_project_calculation(project_id, work_type):
     project = dataio.load_project(project_id)
     return setup_work_log(project_id, work_type, project)

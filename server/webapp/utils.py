@@ -1,7 +1,6 @@
 import os
 from collections import OrderedDict
 
-import flask.json
 import numpy as np
 import optima as op
 from flask import current_app
@@ -106,7 +105,7 @@ def normalize_obj(obj):
     """
 
     if isinstance(obj, list) or isinstance(obj, np.ndarray) or isinstance(obj, tuple):
-        return [normalize_obj(p) for p in obj]
+        return [normalize_obj(p) for p in list(obj)]
 
     if isinstance(obj, dict):
         return {str(k): normalize_obj(v) for k, v in obj.items()}
@@ -133,44 +132,9 @@ def normalize_obj(obj):
     if isinstance(obj, unicode):
         return str(obj)
 
+    if isinstance(obj, set):
+        return list(obj)
+
     return obj
-
-
-class OptimaJSONEncoder(flask.json.JSONEncoder):
-    """
-    Custom JSON encoder, supporting optima-specific objects.
-    """
-    def default(self, obj):
-        # TODO preserve order of keys
-        if isinstance(obj, op.parameters.Parameterset):
-            return OrderedDict([(k, normalize_obj(v)) for (k, v) in obj.__dict__.iteritems()])
-
-        if isinstance(obj, op.parameters.Par):
-            return OrderedDict([(k, normalize_obj(v)) for (k, v) in obj.__dict__.iteritems()])
-
-        if isinstance(obj, np.float64):
-            return normalize_obj(obj)
-
-        if isinstance(obj, np.ndarray):
-            return [normalize_obj(p) for p in list(obj)]
-
-        if isinstance(obj, np.bool_):
-            return bool(obj)
-
-        if isinstance(obj, set):
-            return list(obj)
-
-        if isinstance(obj, op.utils.odict):  # never seems to get there
-            return normalize_obj(obj)
-
-        if isinstance(obj, op.project.Project):
-            return None
-
-        if isinstance(obj, op.results.Resultset):
-            return None
-
-        obj = normalize_obj(obj)
-
-        return flask.json.JSONEncoder.default(self, obj)
 
 
