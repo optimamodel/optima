@@ -1,4 +1,4 @@
-__doc__ = """
+"""
 parse.py
 ========
 
@@ -20,7 +20,6 @@ import optima as op
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 from .utils import normalize_obj
-
 
 
 def print_odict(name, an_odict):
@@ -117,11 +116,29 @@ def revert_populations_to_pop(populations):
     Reverts the population dictionary from `get_populations_from_project`
     to the structure expected for `project.data['pops']` in a project:
          <odict>
-             - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
-             - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
+             - short:
+                - 'FSW'
+                - 'Clients'
+                - 'MSM'
+                - 'PWID'
+                - 'M 15+'
+                - 'F 15+'
+             - long:
+                - 'Female sex workers'
+                - 'Clients of sex workers'
+                - 'Men who have sex with men'
+                - 'People who inject drugs'
+                - 'Males 15+'
+                - 'Females 15+'
              - male: [0, 1, 1, 1, 1, 0]
              - female: [1, 0, 0, 0, 0, 1]
-             - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
+             - age:
+                - [15, 49]
+                - [15, 49]
+                - [15, 49]
+                - [15, 49]
+                - [15, 49]
+                - [15, 49]
     """
     data_pops = op.odict()
 
@@ -230,23 +247,19 @@ def get_parameters_from_parset(parset, ind=0):
     page from an optima parameter set object. Extracts subkey's
     for sub-population parameter values, and constructs a unique
     label for each parameter. The structure is:
-        [
-          {
-            "value": 13044975.57899749,
-            "type": "exp",
-            "subkey": "Males 15-49",
-            "key": "popsize",
-            "label": "Population size -- Males 15-49"
-          },
-          {
-            "value": 0.7,
-            "type": "const",
-            "subkey": null,
-            "key": "recovgt350",
-            "label": "Treatment recovery rate into CD4>350 (%/year)"
-          },
-          ...
-        ]
+        -
+            value: 13044975.57899749,
+            type: exp,
+            subkey: Males 15-49,
+            key: popsize,
+            label: Population size -- Males 15-49
+        -
+            value: 0.7,
+            type: const,
+            subkey: null,
+            key: recovgt350,
+            label: Treatment recovery rate into CD4>350 (%/year)
+        - ...
     """
     parameters = []
     for key, par in parset.pars[ind].items():
@@ -339,15 +352,13 @@ def make_pop_label(pop):
 
 def get_par_limits(project, par):
     """
-    Returns [lower, upper] for a par
+    Returns limits of a par [lower, upper]
     """
-
     def convert(limit):
         if isinstance(limit, str):
             return project.settings.convertlimits(limits=limit)
         else:
             return limit
-
     return map(convert, par.limits)
 
 
@@ -494,9 +505,6 @@ def get_coverages_for_scenarios(project, year=None):
             <progset_id>:
                 <year>:
                     <program_short>: coverage (float)
-                ...
-            ...
-        ...
     """
     result = {}
     start = project.settings.start
@@ -599,45 +607,59 @@ def revert_program_ccopars(ccopars):
 
 def get_program_summary(program, progset, active):
     """
-    Returns a dictionary for a program, an example:
-        {
-          'name': 'HIV testing and counseling',
-          'short': 'HTC',
-          'active': True,
-          'id': '9b5db736-1026-11e6-8ffc-f36c0fc28d89',
-          'category': 'Care and treatment',
-          'progset_id': '9b55945c-1026-11e6-8ffc-130aba4858d2',
-          'project_id': '9b118ef6-1026-11e6-8ffc-571b10a45a1c',
-          'ccopars': { 'saturation': [[0.9, 0.9]],
-                       't': [2016],
-                       'unitcost': [[1.136849845773715, 1.136849845773715]]},
-          'costcov': [ { 'cost': 16616289, 'coverage': 8173260, 'year': 2012},
-                       { 'cost': 234234, 'coverage': 324234, 'year': 2013}],
-          'created': 'Mon, 02 May 2016 05:27:48 -0000',
-          'criteria': { 'hivstatus': 'allstates', 'pregnant': False},
-          'optimizable': True,
-          'populations': [ 'FSW',
-                           'Clients',
-                           'Male Children 0-14',
-                           'Female Children 0-14',
-                           'Males 15-49',
-                           'Females 15-49',
-                           'Males 50+',
-                           'Females 50+'],
-          'targetpars': [ { 'active': True,
-                            'param': 'hivtest',
-                            'pops': [ 'FSW',
-                                      'Clients',
-                                      'Male Children 0-14',
-                                      'Female Children 0-14',
-                                      'Males 15-49',
-                                      'Females 15-49',
-                                      'Males 50+',
-                                      'Females 50+']}],
-          'updated': 'Mon, 02 May 2016 06:22:29 -0000'
-          'attr': { /* dictionary to hold CostCovGraph parameters */ }
-        }
-    """
+    Returns a dictionary for a program:
+        name: HIV testing and counseling,
+        short: HTC,
+        active: True,
+        id: 9b5db736-1026-11e6-8ffc-f36c0fc28d89,
+        category: Care and treatment,
+        progset_id: 9b55945c-1026-11e6-8ffc-130aba4858d2,
+        project_id: 9b118ef6-1026-11e6-8ffc-571b10a45a1c,
+        created: Mon, 02 May 2016 05:27:48 -0000,
+        updated: Mon, 02 May 2016 06:22:29 -0000
+        attr: { dictionary to hold CostCovGraph parameters }
+        optimizable: True,
+        ccopars:
+            saturation:
+                - [0.9, 0.9],
+            t: [2016],
+            unitcost:
+                - [1.136849845773715, 1.136849845773715],
+        costcov:
+            -
+                cost: 16616289
+                coverage: 8173260
+                year: 2012},
+            -
+                cost: 234234
+                coverage: 324234
+                year: 2013,
+        criteria:
+            hivstatus: allstates
+            pregnant: False
+        populations:
+            - FSW,
+            - Clients,
+            - Male Children 0-14,
+            - Female Children 0-14,
+            - Males 15-49,
+            - Females 15-49,
+            - Males 50+,
+            - Females 50+],
+        targetpars:
+            -
+                active: True,
+                param: hivtest,
+                pops:
+                    - FSW,
+                    - Clients,
+                    - Male Children 0-14,
+                    - Female Children 0-14,
+                    - Males 15-49,
+                    - Females 15-49,
+                    - Males 50+,
+                    - Females 50+
+            """
     result = {
         'id': program.uid,
         'progset_id': progset.uid if progset is not None else None,
@@ -767,6 +789,16 @@ def set_outcome_summaries_on_progset(outcomes, progset):
 
 
 def get_progset_summary(project, progset_name):
+    """
+    Returns a summary of a progset:
+        id: uid
+        name: string
+        created: datetime
+        updated: datetime
+        programs: <program_summaries>
+        isOptimizable: boolean
+
+    """
     progset = project.progsets[progset_name]
 
     active_program_summaries = [
@@ -1025,7 +1057,7 @@ def get_scenario_summary(project, scenario):
         active: boolean
         years: list of number
         scenario_type: "parameter", "coverage" or "budget"
-        ---
+         -either-
         pars:
             - name: string
               for: string -or- [1 string] -or- [2 strings]
@@ -1189,41 +1221,45 @@ def get_optimization_summaries(project):
     '''
     Returns a list of dictionaries:
         -
-            'name': 'Optimization 1',
-            'which': 'outcomes'
-            'parset_id': 'af6847d6-466b-4fc7-9e41-1347c053a0c2',
-            'progset_id': 'cfa49dcc-2b8b-11e6-8a08-57d606501764',
-            'constraints':
-                'max':
-                    'ART': None,
-                    'Condoms': None,
-                    'FSW programs': None,
-                    'HTC': None,
-                    'Other': 1,
-                'min':
-                    'ART': 1,
-                    'Condoms': 0,
-                    'FSW programs': 0,
-                    'HTC': 0,
-                    'Other': 1,
-                'name':
-                    'ART': 'Antiretroviral therapy',
-                    'Condoms': 'Condom promotion and distribution',
-                    'FSW programs': 'Programs for female sex workers and clients',
-                    'HTC': 'HIV testing and counseling',
-                    'Other': 'Other',
-            'objectives':
-                'base': None,
-                'budget': 60500000,
-                'deathfrac': None,
-                'deathweight': 5,
-                'end': 2030,
-                'incifrac': None,
-                'inciweight': 1,
-                'keylabels': {'death': 'Deaths', 'inci': 'New infections'},
-                'keys': ['death', 'inci'],
-                'start': 2017,
-                'which': 'outcomes',
+            name: Optimization 1,
+            which: outcomes
+            parset_id: af6847d6-466b-4fc7-9e41-1347c053a0c2,
+            progset_id: cfa49dcc-2b8b-11e6-8a08-57d606501764,
+            constraints:
+                max:
+                    ART: None,
+                    Condoms: None,
+                    FSW programs: None,
+                    HTC: None,
+                    Other: 1,
+                min:
+                    ART: 1,
+                    Condoms: 0,
+                    FSW programs: 0,
+                    HTC: 0,
+                    Other: 1,
+                name:
+                    ART: Antiretroviral therapy,
+                    Condoms: Condom promotion and distribution,
+                    FSW programs: Programs for female sex workers and clients,
+                    HTC: HIV testing and counseling,
+                    Other: Other,
+            objectives:
+                base: None,
+                budget: 60500000,
+                deathfrac: None,
+                deathweight: 5,
+                end: 2030,
+                incifrac: None,
+                inciweight: 1,
+                keylabels:
+                    death: Deaths
+                    inci: New infections,
+                keys:
+                    - death
+                    - inci
+                start: 2017,
+                which: outcomes,
         -...
      '''
     optim_summaries = []
@@ -1367,3 +1403,33 @@ def get_portfolio_summary(portfolio):
     return result
 
 
+def set_portfolio_summary_on_portfolio(portfolio, summary):
+    """
+    Saves the summary result onto the portfolio and returns
+    a list of project_ids of projects that are not in the portfolio
+    """
+    gaoptim_summaries = summary['gaoptims']
+    gaoptims = portfolio.gaoptims
+    for gaoptim_summary in gaoptim_summaries:
+        gaoptim_id = str(gaoptim_summary['id'])
+        objectives = op.odict(gaoptim_summary["objectives"])
+        if gaoptim_id in gaoptims:
+            gaoptim = gaoptims[gaoptim_id]
+            gaoptim.objectives = objectives
+        else:
+            gaoptim = op.portfolio.GAOptim(objectives=objectives)
+            gaoptims[gaoptim_id] = gaoptim
+    old_project_ids = portfolio.projects.keys()
+    print("> old project ids %s" % old_project_ids)
+    project_ids = [s["id"] for s in summary["projects"]]
+    print("> new project ids %s" % project_ids)
+    for old_project_id in old_project_ids:
+        if old_project_id not in project_ids:
+            portfolio.projects.pop(old_project_id)
+
+    new_project_ids = []
+    for project_id in project_ids:
+        if project_id not in portfolio.projects:
+            new_project_ids.append(project_id)
+
+    return new_project_ids

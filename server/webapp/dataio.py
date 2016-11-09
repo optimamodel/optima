@@ -1,5 +1,4 @@
-
-__doc__ = """
+"""
 
 dataio.py
 =========
@@ -34,6 +33,7 @@ from werkzeug.utils import secure_filename
 from flask.ext.restful import marshal
 
 import optima as op
+import optima.geospatial as geospatial
 
 from .dbconn import db
 from .exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
@@ -514,30 +514,6 @@ def load_zip_of_prj_files(project_ids):
 ## PORTFOLIO
 
 
-def load_portfolio_summary_on_portfolio(portfolio, summary):
-    gaoptim_summaries = summary['gaoptims']
-    gaoptims = portfolio.gaoptims
-    for gaoptim_summary in gaoptim_summaries:
-        gaoptim_id = str(gaoptim_summary['id'])
-        objectives = op.odict(gaoptim_summary["objectives"])
-        if gaoptim_id in gaoptims:
-            gaoptim = gaoptims[gaoptim_id]
-            gaoptim.objectives = objectives
-        else:
-            gaoptim = op.portfolio.GAOptim(objectives=objectives)
-            gaoptims[gaoptim_id] = gaoptim
-    old_project_ids = portfolio.projects.keys()
-    print("> old project ids %s" % old_project_ids)
-    new_project_ids = [s["id"] for s in summary["projects"]]
-    print("> new project ids %s" % new_project_ids)
-    for old_project_id in old_project_ids:
-        if old_project_id not in new_project_ids:
-            portfolio.projects.pop(old_project_id)
-    for new_project_id in new_project_ids:
-        if new_project_id not in portfolio.projects:
-            project = load_project(new_project_id)
-            portfolio.projects[new_project_id] = project
-
 def create_portfolio(name, db_session=None):
     if db_session is None:
         db_session = db.session
@@ -647,7 +623,10 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
 
 def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     portfolio = load_or_create_portfolio(portfolio_id)
-    load_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
+    new_project_ids = parse.set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
+    for project_id in new_project_ids:
+        project = load_project(project_id)
+        portfolio.projects[project_id] = project
     save_portfolio(portfolio, db_session)
     return load_portfolio_summaries()
 
@@ -667,7 +646,7 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     prj_basename = load_project_record(project_id).as_file(dirname)
     prj_fname = os.path.join(dirname, prj_basename)
     xlsx_fname = prj_fname.replace('.prj', '.xlsx')
-    op.geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
+    geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
     return os.path.split(xlsx_fname)
 
 
@@ -682,7 +661,7 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     if os.path.isdir(spawn_dir):
         shutil.rmtree(spawn_dir)
 
-    op.geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
+    geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
 
     district_prj_basenames = os.listdir(spawn_dir)
     prj_names = []
