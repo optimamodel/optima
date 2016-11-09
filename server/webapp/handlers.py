@@ -24,8 +24,10 @@ from werkzeug.utils import secure_filename
 
 from . import parse, dataio, dbconn
 from .dataio import report_exception_decorator, verify_admin_request_decorator
-import server.webapp.tasks
 from .utils import normalize_obj, OptimaJSONEncoder
+
+# there's a circular import when celery is loaded so must use absolute import
+import server.webapp.tasks
 
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')
