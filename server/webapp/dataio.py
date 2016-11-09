@@ -42,7 +42,8 @@ from .utils import nullable_email, hashed_password
 from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
 from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
-from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
+from .utils import TEMPLATEDIR, templatepath, upload_dir_user
+from .parse import normalize_obj
 
 
 # USERS

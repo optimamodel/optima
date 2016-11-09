@@ -2,6 +2,7 @@ import traceback
 from pprint import pformat
 import datetime
 import dateutil.tz
+import server.webapp.parse
 
 from celery import Celery
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -348,8 +349,8 @@ def run_optimization(self, project_id, optimization_id, maxtime):
         result = None
         try:
             print ">> Start optimization '%s'" % optim.name
-            objectives = utils.normalize_obj(optim.objectives)
-            constraints = utils.normalize_obj(optim.constraints)
+            objectives = server.webapp.parse.normalize_obj(optim.objectives)
+            constraints = server.webapp.parse.normalize_obj(optim.constraints)
             constraints["max"] = optima.odict(constraints["max"])
             constraints["min"] = optima.odict(constraints["min"])
             constraints["name"] = optima.odict(constraints["name"])

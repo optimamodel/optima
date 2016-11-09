@@ -1,8 +1,5 @@
 import os
-from collections import OrderedDict
 
-import numpy as np
-import optima as op
 from flask import current_app
 from validate_email import validate_email
 from werkzeug.utils import secure_filename
@@ -87,54 +84,5 @@ def upload_dir_user(dirpath, user_id = None):
         return dirpath
 
     return dirpath
-
-
-def normalize_obj(obj):
-    """
-    This is the main conversion function for Python data-structures into
-    JSON-compatible data structures.
-
-    Use this as much as possible to guard against data corruption!
-
-    Args:
-        obj: almost any kind of data structure that is a combination
-            of list, numpy.ndarray, odicts etc
-
-    Returns:
-        A converted dict/list/value that should be JSON compatible
-    """
-
-    if isinstance(obj, list) or isinstance(obj, np.ndarray) or isinstance(obj, tuple):
-        return [normalize_obj(p) for p in list(obj)]
-
-    if isinstance(obj, dict):
-        return {str(k): normalize_obj(v) for k, v in obj.items()}
-
-    if isinstance(obj, op.utils.odict):
-        result = OrderedDict()
-        for k, v in obj.items():
-            result[str(k)] = normalize_obj(v)
-        return result
-
-    if isinstance(obj, np.bool_):
-        return bool(obj)
-
-    if isinstance(obj, float):
-        if np.isnan(obj):
-            return None
-
-    if isinstance(obj, np.float64):
-        if np.isnan(obj):
-            return None
-        else:
-            return float(obj)
-
-    if isinstance(obj, unicode):
-        return str(obj)
-
-    if isinstance(obj, set):
-        return list(obj)
-
-    return obj
 
 

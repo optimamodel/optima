@@ -11,15 +11,14 @@ Nomenclature:
 There should be no references to the database or web-handlers.
 """
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from pprint import pprint, pformat
 from uuid import UUID
 
-from numpy import nan, array, isnan
+import numpy as np
 import optima as op
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
-from .utils import normalize_obj
 
 
 def print_odict(name, an_odict):
@@ -31,6 +30,56 @@ def print_odict(name, an_odict):
     s = pformat(obj, indent=2)
     for line in s.splitlines():
         print(">> " + line)
+
+
+def normalize_obj(obj):
+    """
+    This is the main conversion function for Python data-structures into
+    JSON-compatible data structures.
+
+    Use this as much as possible to guard against data corruption!
+
+    Args:
+        obj: almost any kind of data structure that is a combination
+            of list, numpy.ndarray, odicts etc
+
+    Returns:
+        A converted dict/list/value that should be JSON compatible
+    """
+
+    if isinstance(obj, list) or isinstance(obj, np.ndarray) or isinstance(obj, tuple):
+        return [normalize_obj(p) for p in list(obj)]
+
+    if isinstance(obj, dict):
+        return {str(k): normalize_obj(v) for k, v in obj.items()}
+
+    if isinstance(obj, op.utils.odict):
+        result = OrderedDict()
+        for k, v in obj.items():
+            result[str(k)] = normalize_obj(v)
+        return result
+
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+
+    if isinstance(obj, float):
+        if np.isnan(obj):
+            return None
+
+    if isinstance(obj, np.float64):
+        if np.isnan(obj):
+            return None
+        else:
+            return float(obj)
+
+    if isinstance(obj, unicode):
+        return str(obj)
+
+    if isinstance(obj, set):
+        return list(obj)
+
+    return obj
+
 
 
 # PROJECTS
@@ -391,7 +440,7 @@ def get_parameters_for_scenarios(project, start_year=None):
                         par_defaults = op.setparscenvalues(
                             parset, par.short, pop, year)
                         startval = par_defaults['startval']
-                        if isnan(startval):
+                        if np.isnan(startval):
                             startval = None
                     except:
                         startval = None
@@ -579,7 +628,7 @@ def convert_program_costcovdata(costcovdata):
 
 
 pluck = lambda l, k: [e[k] for e in l]
-to_nan = lambda v: v if v is not None and v != "" else nan
+to_nan = lambda v: v if v is not None and v != "" else np.nan
 
 
 def revert_program_costcovdata(costcov):
@@ -1042,7 +1091,7 @@ def revert_program_list(program_list):
         if all(v is None for v in vals):
             continue
         vals = [v if v is not None else 0 for v in vals]
-        result[key] = array(vals)
+        result[key] = np.array(vals)
     return result
 
 
@@ -1433,3 +1482,5 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
             new_project_ids.append(project_id)
 
     return new_project_ids
+
+

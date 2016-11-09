@@ -25,7 +25,7 @@ from werkzeug.utils import secure_filename
 
 from . import parse, dataio, dbconn
 from .dataio import report_exception_decorator, verify_admin_request_decorator
-from .utils import normalize_obj
+from .parse import normalize_obj
 
 # there's a circular import when celery is loaded so must use absolute import
 import server.webapp.tasks
