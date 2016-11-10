@@ -1,27 +1,32 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+
   'use strict';
 
-
+  function consoleLogJson(name, val) {
+    console.log(name + ' = ');
+    console.log(JSON.stringify(val, null, 2));
+  }
 
   module.controller('ModelCalibrationController', function (
       $scope, $http, info, modalService, $upload,
       $modal, $timeout, toastr, globalPoller) {
-
-    function consoleLogJson(name, val) {
-      console.log(name + ' = ');
-      console.log(JSON.stringify(val, null, 2));
-    }
 
     var project = info.data;
 
     function initialize() {
 
       $scope.parsets = [];
+      $scope.years = _.range(project.dataStart, project.dataEnd+1);
+      var iLast = $scope.years.length - 1;
       $scope.state = {
         maxtime: '10',
         isRunnable: false,
-        parset: undefined
+        parset: undefined,
+        startYear: $scope.years[0],
+        endYear: $scope.years[iLast]
       };
+
+      console.log("project", project);
 
       // Check if project has spreadsheet uploaded
       $scope.isMissingData = !project.hasParset;
@@ -82,18 +87,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
       $http
-        .get(
+        .post(
           '/api/project/' + project.id
           + '/parsets/' + $scope.state.parset.id
           + '/calibration',
-          {which: getSelectors()})
+          {
+            which: getSelectors(),
+          })
         .success(function(response) {
           loadParametersAndGraphs(response);
           toastr.success('Loaded graphs');
           $scope.statusMessage = '';
           $scope.state.isRunnable = true;
         })
-        .error(function(response) {
+        .error(function() {
           $scope.state.isRunnable = false;
           toastr.error('Error in loading graphs');
         });
@@ -107,10 +114,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .post(
           '/api/project/' + project.id
           + '/parsets/' + $scope.state.parset.id
-          + '/calibration?doSave=true',
+          + '/calibration',
           {
             parameters: fetchParameters(),
-            which: getSelectors()
+            which: getSelectors(),
+            startYear: $scope.state.startYear,
+            endYear: $scope.state.endYear
           })
         .success(function(response) {
           toastr.success('Updated parameters and loaded graphs');
@@ -354,8 +363,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http
         .post(
           '/api/project/' + project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/automatic_calibration',
+            + '/parsets/' + $scope.state.parset.id
+            + '/automatic_calibration',
           data)
         .success(function(response) {
           if (response.status === 'started') {

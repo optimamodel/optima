@@ -79,7 +79,25 @@
       </button>
 
       &nbsp;
+      From
+      &nbsp;
 
+      <select
+        ng-model="state.startYear"
+        ng-options="year for year in years"></select>
+
+      &nbsp;
+      to
+      &nbsp;
+
+      <select
+        ng-model="state.endYear"
+        ng-options="year for year in years"></select>
+
+      &nbsp;
+
+      &#183;
+      &nbsp;
       Run auto-fit for about
       &nbsp;
       <select ng-init="state.maxtime=10" ng-model="state.maxtime">
