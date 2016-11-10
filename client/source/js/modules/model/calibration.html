@@ -75,31 +75,30 @@
         padding-bottom: 15px;">
 
       <button class="btn __m" ng-click="saveAndUpdateGraphs()">
-        Save parameters
+        Save parameters & graph
       </button>
 
-      &nbsp;
-      From
-      &nbsp;
+      &nbsp; from &nbsp;
 
       <select
         ng-model="state.startYear"
         ng-options="year for year in years"></select>
 
-      &nbsp;
-      to
-      &nbsp;
+      &nbsp; to &nbsp;
 
       <select
         ng-model="state.endYear"
         ng-options="year for year in years"></select>
 
-      &nbsp;
+      &nbsp; &#183; &nbsp;
 
-      &#183;
-      &nbsp;
-      Run auto-fit for about
-      &nbsp;
+      <button
+          class="btn       &nbsp;"
+          ng-click="startAutoCalibration()"
+          ng-disabled="checkNotRunnable()">Run autofit</button>
+
+      &nbsp; for about &nbsp;
+
       <select ng-init="state.maxtime=10" ng-model="state.maxtime">
         <option value="10">10 seconds</option>
         <option value="30">30 seconds</option>
@@ -109,19 +108,8 @@
         <option value="1800">30 minutes</option>
       </select>
 
-      &nbsp;
-      &nbsp;
+      &nbsp; &nbsp;
 
-      <button
-          class="btn       &nbsp;"
-          ng-click="startAutoCalibration()"
-          ng-disabled="checkNotRunnable()">
-        Autofit
-      </button>
-
-      &nbsp;
-
-      &nbsp;
       <span style="color: #00aeef;"> {{ statusMessage }} </span>
 
     </div>
