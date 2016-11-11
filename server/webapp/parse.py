@@ -596,6 +596,18 @@ def revert_program_targetpars(pars):
     return targetpars
 
 
+def extract_key_i(data, key, i):
+    """
+    Safely extracts from (key, i) from a data structure
+      data = { <key>: [list of values] }
+    and returns None if unable to
+    """
+    try:
+        return data[key][i]
+    except:
+        return None
+
+
 def convert_program_costcovdata(costcovdata):
     if costcovdata is None:
         return None
@@ -603,11 +615,10 @@ def convert_program_costcovdata(costcovdata):
     costcovdata = normalize_obj(costcovdata)
     n_year = len(costcovdata['t'])
     for i_year in range(n_year):
-        entry = {
-            'year': costcovdata['t'][i_year],
-            'cost': costcovdata['cost'][i_year],
-            'coverage': costcovdata['coverage'][i_year]
-        }
+        entry = {}
+        for source_key, target_key in [
+               ('t', 'year'), ('cost', 'cost'), ('coverage', 'coverage')]:
+            entry[target_key] = extract_key_i(costcovdata, source_key, i_year)
         if entry["cost"] is None and entry["coverage"] is None:
             continue
         result.append(entry)
@@ -641,7 +652,25 @@ def revert_program_ccopars(ccopars):
     return result
 
 
+def split_pair(val):
+    if val is None:
+        return (None, None)
+    if isinstance(val, float) or isinstance(val, int):
+        return (val, val)
+    else:
+        return val
+
+
 def get_program_summary(program, progset, active):
+    ccopars_dict = normalize_obj(program.costcovfn.ccopars)
+    for key in ['saturation', 'unitcost']:
+        if key not in ccopars_dict:
+            continue
+        a_list = ccopars_dict[key]
+        n = len(a_list)
+        for i in range(n):
+            a_list[i] = split_pair(a_list[i])
+    pprint(ccopars_dict, indent=2)
     result = {
         'id': program.uid,
         'progset_id': progset.uid if progset else None,
@@ -651,7 +680,7 @@ def get_program_summary(program, progset, active):
         'populations': normalize_obj(program.targetpops),
         'criteria': program.criteria,
         'targetpars': convert_program_targetpars(program.targetpars),
-        'ccopars': normalize_obj(program.costcovfn.ccopars),
+        'ccopars': ccopars_dict,
         'category': program.category,
         'costcov': convert_program_costcovdata(program.costcovdata),
         'optimizable': program.optimizable()
@@ -705,26 +734,25 @@ def get_outcome_summaries_from_progset(progset):
             }
             n_year = len(covout.ccopars.get('t', []))
             for i_year in range(n_year):
+                intercept = extract_key_i(covout.ccopars, 'intercept', i_year)
+                intercept = split_pair(intercept)
                 year = {
-                    'intercept_upper': covout.ccopars['intercept'][i_year][1],
-                    'intercept_lower': covout.ccopars['intercept'][i_year][0],
-                    'year': covout.ccopars['t'][i_year],
+                    'intercept_upper': intercept[1],
+                    'intercept_lower': intercept[0],
+                    'year': extract_key_i(covout.ccopars, 't', i_year),
                     'programs': []
                 }
                 for program_name, program_intercepts in covout.ccopars.items():
                     if program_name in ['intercept', 't', 'interact']:
                         continue
-                    lower = None
-                    upper = None
                     if len(program_intercepts) > i_year:
-                        pair = program_intercepts[i_year]
-                        if pair is not None:
-                            lower = program_intercepts[i_year][0]
-                            upper = program_intercepts[i_year][1]
+                        pair = split_pair(program_intercepts[i_year])
+                    else:
+                        pair = (None, None)
                     program = {
                         'name': program_name,
-                        'intercept_lower': lower,
-                        'intercept_upper': upper,
+                        'intercept_lower': pair[0],
+                        'intercept_upper': pair[1],
                     }
                     year['programs'].append(program)
 
