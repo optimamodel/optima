@@ -880,6 +880,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Reconcile things
             ###############################################################################
             
+            # Handle circumcision
+#            if numcirc[:,t+1].sum()>0: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            circppl = maximum(0, minimum(numcirc[:,t], safetymargin*people[susreg,:,t+1])) # Don't circumcise more people than are available
+            people[susreg,:,t+1]   -= circppl
+            people[progcirc,:,t+1] += circppl # And add these people into the circumcised compartment
+            
             # Reconcile population sizes for populations with no inflows
             thissusreg = people[susreg,noinflows,t+1] # WARNING, will break if susreg is not a scalar index!
             thisprogcirc = people[progcirc,noinflows,t+1]
@@ -887,11 +893,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
             people[progcirc,noinflows,t+1] += newpeople*thisprogcirc/allsus # Add new people
-            
-            # Handle circumcision
-            circppl = maximum(0, minimum(numcirc[noinflows,t], safetymargin*people[susreg,noinflows,t+1])) # Don't circumcise more people than are available
-            people[susreg,noinflows,t+1]   -= circppl
-            people[progcirc,noinflows,t+1] += circppl # And add these people into the circumcised compartment
             
             # Check population sizes are correct
             actualpeople = people[:,:,t+1][:,noinflows].sum()
