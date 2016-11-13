@@ -657,7 +657,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raw_receivepmtct[p1, t] += thisreceivepmtct/dt 
             raw_mtct[p2, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
-            raw_hivbirths[p1, t] += thiseligbirths/dt
+            raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update incidence based on PMTCT calculation
 
