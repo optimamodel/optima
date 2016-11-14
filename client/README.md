@@ -5,11 +5,10 @@
 ## Notes
 
 - bower to track client dependencies in vendor
-- npm to track devDependencies
-- nginx to serve the client to the browser
-- p.conf.js - protractor - is this used?
+- npm to track modules in `package.json` to be used in the gulp task runner
 - written in Javascript 5
-- angular single-page-app -> uses `#` to simulate URL directory system
+- angular 1.0 framework
+    - angular url router -> uses `#` to simulate relative URL
 
 
 ## Scripts
@@ -24,19 +23,9 @@
 
 - `gulp` builds project into `build` directory.
 - `gulp watch` listens to changes to stylesheets and scripts and reloads browser page during development.
-- `gulp karma-ci` runs tests against the build (which should be run first) and quits, is good to use in CI scenarios.
 - `gulp bump-version` works with gitflow releases.
-- `gulp karma` starts Karma server watching scripts updates.
-- `gulp sass` compiles Sass project.
+- `gulp compile-sass` compiles Sass project.
+- `gulp compile-build-js-client` compiles a single-file version of client in `build`
 
-
-## Tests
-
-- karma to run tests includes tests-main.js etc.
-- karma-ci to run tests on compiled build
-- Tests use Jasmin for assertions.
-- You can write tests in both Coffee and JS
-  (see `/source/js/modules/home/home-ctrl.spec.js`
-   and `/source/js/modules/home/home-ctrl.spec.coffee`).
 
 

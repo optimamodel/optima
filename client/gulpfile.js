@@ -1,9 +1,7 @@
 var _ = require('underscore');
-var assets  = require('postcss-assets');
 var autoprefixer = require('autoprefixer');
 var es = require('event-stream');
 var gulp = require('gulp');
-var karma = require('gulp-karma');
 var livereload = require('gulp-livereload');
 var ngAnnotate = require('gulp-ng-annotate');
 var postcss = require('gulp-postcss');
@@ -13,6 +11,7 @@ var sass = require('gulp-sass');
 var spawn = require('child_process').spawn;
 var uglify = require('gulp-uglify');
 var plumber = require('gulp-plumber');
+var fs = require('fs');
 
 var handleError = function (err) {
   console.log(err.name, ' in ', err.plugin, ': ', err.message);
@@ -48,6 +47,18 @@ gulp.task('bump-version', function () {
     } else {
       console.error('This task should be executed on a release branch!');
     }
+
+  });
+});
+
+// Write version.js
+gulp.task('write-version-js', function() {
+  spawn('git', ['rev-parse', '--short', 'HEAD']).stdout.on('data', function (data) {
+    fs.writeFileSync(
+      'source/js/version.js',
+      "define([], function () { return '" + data.toString().trim() + "'; });");
+
+    console.log('updated version string');
   });
 });
 
@@ -139,17 +150,25 @@ gulp.task('compile-sass', ['copy-font-awesome-icons'], function () {
 gulp.task('watch', ['compile-sass'], function () {
   gulp.watch('source/sass/**/*.scss', ['sass']);
 
-  // enable Livereload
+  // enable livereload
   livereload.listen();
-  gulp.watch([
-    'source/assets/*.css',
-    'source/index.html',
-    'source/js/**/*',
-    '!source/js/**/*.spec.js'
-  ]).on('change', livereload.changed);
+
+  gulp
+    .watch([
+      'source/assets/*.css',
+      'source/index.html',
+      'source/js/**/*',
+    ])
+    .on(
+      'change', livereload.changed);
 });
 
+// Defaults
 gulp.task(
   'default',
-  ['compile-build-js-client', 'copy-assets-and-vendor-js']);
+  [
+    'compile-build-js-client',
+    'copy-assets-and-vendor-js',
+    'write-version-js'
+  ]);
 

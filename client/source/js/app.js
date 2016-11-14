@@ -45,7 +45,6 @@ define([
     'app.common.form-input-validate',
     'app.common.file-upload',
     'app.global-poller',
-    'app.constants',
     'app.rename-modal',
     'app.mpld3-charts',
     'app.home',

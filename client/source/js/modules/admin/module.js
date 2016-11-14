@@ -6,7 +6,6 @@ define([
     'use strict';
 
     return angular.module('app.admin', [
-        'app.constants',
         'ui.router'
     ]).config(function ($stateProvider) {
         $stateProvider
