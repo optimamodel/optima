@@ -1,5 +1,9 @@
 #!/bin/bash
+# Setup a virtualenv environment for the server 
 
+cd `dirname $0`/../server # Make sure we're in the server folder
+
+echo $(pwd)
 # Setup a virtualenv sandbox if not already
 if [ ! -d "./p-env/" ]; then
   if [ "$1" == "--system" ]; then
@@ -13,16 +17,16 @@ fi
 source ./p-env/bin/activate
 
 # Create a sorted list of existing dependencies
-# against requirements.txt and compare that
-# to a sorted version of requirements.txt
+# against venvrequirements.txt and compare that
+# to a sorted version of venvrequirements.txt
 TMP_DEPS=/tmp/temp_deps_${RANDOM}
-pip freeze -l | grep -f requirements.txt | sort > ${TMP_DEPS}
-sort ./requirements.txt > ${TMP_DEPS}.requirements.txt
-if ! cmp ${TMP_DEPS}.requirements.txt ${TMP_DEPS} > /dev/null 2>&1
+pip freeze -l | grep -f venvrequirements.txt | sort > ${TMP_DEPS}
+sort ./venvrequirements.txt > ${TMP_DEPS}.venvrequirements.txt
+if ! cmp ${TMP_DEPS}.venvrequirements.txt ${TMP_DEPS} > /dev/null 2>&1
 then
   echo "Installing Python dependencies ..."
   cat ${TMP_DEPS}
-  pip install -r ./requirements.txt
+  pip install -r ./venvrequirements.txt
 fi
 
 # Ensure that the optima modelling module is available from the sandbox

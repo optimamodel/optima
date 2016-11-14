@@ -12,7 +12,6 @@
     "gulp": "=3.9.0",
     "gulp-concat": "=2.6.0",
     "gulp-css-globbing": "=0.1.8",
-    "gulp-karma": "=0.0.5",
     "gulp-livereload": "=3.8.1",
     "gulp-ng-annotate": "=1.1.0",
     "gulp-plumber": "=1.0.1",

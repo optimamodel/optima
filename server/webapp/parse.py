@@ -670,10 +670,11 @@ def get_program_summary(program, progset, active):
         optimizable: True,
         ccopars:
             saturation:
-                - [0.9, 0.9],
-            t: [2016],
+                - [0.9, 0.9]
+            t:
+                - 2016
             unitcost:
-                - [1.136849845773715, 1.136849845773715],
+                - [1.136849845773715, 1.136849845773715]
         costcov:
             -
                 cost: 16616289
@@ -1106,7 +1107,7 @@ def get_scenario_summary(project, scenario):
         active: boolean
         years: list of number
         scenario_type: "parameter", "coverage" or "budget"
-         -either-
+         -EITHER-
         pars:
             - name: string
               for: string -or- [1 string] -or- [2 strings]
@@ -1115,12 +1116,12 @@ def get_scenario_summary(project, scenario):
               startval: number
               endval: number
             - ...
-         -or-
+         -OR-
         budget:
             - program: string
               values: [number -or- null] # same length as years
             - ...
-         -or-
+         -OR-
         coverage:
             - program: string
               values: [number -or- null] # same length as years

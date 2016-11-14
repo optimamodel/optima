@@ -64,9 +64,7 @@ gulp.task('write-version-js', function() {
       var versionStr = version + " from " + date;
       fs.writeFileSync(
         'source/js/version.js',
-        "define([], function () { return '"
-          + versionStr
-          + "'; });");
+        "define([], function () { return '" + versionStr + "'; });");
 
       console.log('Updated version.js to ' + versionStr);
     });
@@ -165,12 +163,10 @@ gulp.task('watch', ['compile-sass'], function () {
   // enable livereload
   livereload.listen();
 
-  gulp
-    .watch([
+  gulp.watch([
       'source/assets/*.css',
       'source/index.html',
-      'source/js/**/*',
-    ])
+      'source/js/**/*'])
     .on(
       'change', livereload.changed);
 });
