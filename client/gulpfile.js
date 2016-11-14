@@ -51,8 +51,8 @@ gulp.task('bump-version', function () {
   });
 });
 
-// Copy
-gulp.task('copy', ['sass'], function () {
+// Copy assets, and vendor js files to the build directory
+gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
   return es.concat(
     // update index.html to work when built
     gulp.src(['source/index.html'])
@@ -80,50 +80,34 @@ gulp.task('copy', ['sass'], function () {
   );
 });
 
-// JavaScript
-gulp.task('js', function () {
+// Optimize the app into the build/js directory
+gulp.task('compile-build-js-client', function () {
   var configRequire = require('./source/js/config-require.js');
   var configBuild = {
     baseUrl: 'source',
     insertRequire: ['js/main'],
     name: 'js/main',
-    optimize: 'none',
+    out: 'main.js',
+    optimize: 'uglify',
     wrap: true,
     excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
   };
   var config = _(configBuild).extend(configRequire);
 
-  return gulp.src(['source/js/main.js'])
-    .pipe(rjs(config).on('error', handleError))
+  return rjs(config)
+    .on('error', handleError)
     .pipe(ngAnnotate())
-    .pipe(uglify().on('error', handleError))
     .pipe(gulp.dest('build/js/'));
 });
 
-// Karma
-gulp.task('karma', function () {
-  return gulp.src(['no need to supply files because everything is in config file'])
-    .pipe(karma({
-      configFile: 'karma.conf.js',
-      action: 'watch'
-    }).on('error', handleError));
-});
-
-gulp.task('karma-ci', function () {
-  return gulp.src(['no need to supply files because everything is in config file'])
-    .pipe(karma({
-      configFile: 'karma-compiled.conf.js',
-      action: 'run'
-    }).on('error', handleError));
-});
-
-gulp.task('font-awesome', function() {
+// Copy font-awesome files for icons
+gulp.task('copy-font-awesome-icons', function() {
   return gulp.src('source/vendor/font-awesome/fonts/*')
     .pipe(gulp.dest('source/assets/fonts'))
-})
+});
 
-// Sass
-gulp.task('sass', ['font-awesome'], function () {
+// Process SASS to generate the CSS files
+gulp.task('compile-sass', ['copy-font-awesome-icons'], function () {
   var cssGlobbing = require('gulp-css-globbing');
   var postcss = require('gulp-postcss');
   var sass = require('gulp-sass');
@@ -152,7 +136,7 @@ gulp.task('sass', ['font-awesome'], function () {
 });
 
 // Watch
-gulp.task('watch', ['sass'], function () {
+gulp.task('watch', ['compile-sass'], function () {
   gulp.watch('source/sass/**/*.scss', ['sass']);
 
   // enable Livereload
@@ -165,10 +149,7 @@ gulp.task('watch', ['sass'], function () {
   ]).on('change', livereload.changed);
 });
 
-gulp.task('default', ['js', 'copy'], function () {
-  try {
-    gulp.run('karma-ci'); // CK: Put in a try-catch block because sometimes fails
-  }
-  catch(err) {
-  }
-});
+gulp.task(
+  'default',
+  ['compile-build-js-client', 'copy-assets-and-vendor-js']);
+

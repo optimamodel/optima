@@ -6,7 +6,6 @@ define([
   'angular',
   'ui.router',
   '../common/active-project-service',
-  '../../config'
 ], function (angular) {
   'use strict';
 
@@ -26,16 +25,6 @@ define([
           },
         }
       });
-      // .state('home', {
-      //   url: '/',
-      //   templateUrl: './js/modules/home/home.html',
-      //   controller: 'HomeController',
-      //   resolve: {
-      //     project: function (projectApiService) {
-      //       return projectApiService.getActiveProject();
-      //     }
-      //   }
-      // });
   });
 
 });

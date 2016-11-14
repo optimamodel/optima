@@ -7,7 +7,6 @@ define([
   'ui.router',
   'tooltip',
   'rzModule',
-  './config',
   './modules/contact/index',
   './modules/help/index',
   './modules/auth/index',
