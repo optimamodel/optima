@@ -27,8 +27,8 @@ osascript 2>/dev/null <<EOF
     end
     tell application "Terminal"
         activate
-        do script with command "cd \"$DIR/\"; $*" in window 0
-        do script with command "python run_server.py" in window 0
+        do script with command "cd \"$DIR/..\"; $*" in window 0
+        do script with command "python bin/run_server.py" in window 0
     end
     tell application "System Events"
         tell process "Terminal" to keystroke "t" using command down
