@@ -54,11 +54,23 @@ gulp.task('bump-version', function () {
 // Write version.js
 gulp.task('write-version-js', function() {
   spawn('git', ['rev-parse', '--short', 'HEAD']).stdout.on('data', function (data) {
-    fs.writeFileSync(
-      'source/js/version.js',
-      "define([], function () { return '" + data.toString().trim() + "'; });");
 
-    console.log('updated version string');
+    var version = data.toString().trim();
+
+    spawn('git', ['show', '-s', '--format=%ci', 'HEAD']).stdout.on('data', function (data2) {
+
+      var date = data2.toString().split(' ')[0].trim();
+
+      var versionStr = version + " from " + date;
+      fs.writeFileSync(
+        'source/js/version.js',
+        "define([], function () { return '"
+          + versionStr
+          + "'; });");
+
+      console.log('Updated version.js to ' + versionStr);
+    });
+
   });
 });
 

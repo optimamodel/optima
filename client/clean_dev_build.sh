@@ -14,4 +14,4 @@ fi
 npm install --skip-installed
 
 # compile sass scripts
-node_modules/gulp/bin/gulp.js sass
+node_modules/gulp/bin/gulp.js write-version-js compile-sass

@@ -1,8 +1,8 @@
 {
-  "name": "ngseed",
+  "name": "optima-client",
   "description": "Neat combination of Angular & Require intended for bulding complex frontend applications",
   "repository": "http://git@github.com:StarterSquad/angularjs-requirejs-seed.git",
-  "version": "0.0.3",
+  "version": "2.0.0alpha",
   "devDependencies": {
     "amdefine": "=1.0.0",
     "autoprefixer": "=6.0.3",
