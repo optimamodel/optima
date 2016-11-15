@@ -1,17 +1,10 @@
 define(
-    ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF',
-      './svg-to-png', './export-helpers-service'],
-    function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
+  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
+  function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
 
   'use strict';
 
   var moduleAllCharts, moduleScrollTop;
-
-  function consoleLogJson(name, val) {
-    console.log(name + ' = ');
-    console.log(JSON.stringify(val, null, 2));
-  }
-
 
   function val2str(val, limit, suffix) {
     var reducedVal = val / limit;
@@ -22,7 +15,6 @@ define(
     }
     return "" + reducedVal.toFixed(nDecimal) + suffix;
   }
-
 
   function reformatXTickStr(text) {
     var val = parseFloat(text);
@@ -36,7 +28,6 @@ define(
     return text;
   }
 
-
   function reformatYTickStr(text) {
     var val = parseFloat(text);
     if (val >= 1E9) {
@@ -49,10 +40,9 @@ define(
     return text;
   }
 
-
   function addLineToLegendLabel($svgFigure, nLegend) {
-      // add lines in legend labels
       var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
+
       if ($textLabels) {
         // the legend path is stored under .mpd3-axes, and needs
         // to be moved into the .mpld3-baseaxes, it's presumably
@@ -128,9 +118,7 @@ define(
   }
 
 
-  module.directive(
-      'mpld3Chart',
-      function ($http, modalService, exportHelpers, projectApiService) {
+  module.directive('mpld3Chart', function ($http, modalService, exportHelpers) {
 
     return {
       scope: { chart: '=mpld3Chart' },
@@ -148,52 +136,13 @@ define(
           return _(mpld3.figures).findWhere({ figid: id })
         }
 
-        // scope.exportFigure = function (params) {
-        //   params.$event.preventDefault();
-        //
-        //   modalService.choice(
-        //     exportGraphAsSvg, // first button callback
-        //     exportGraphAsPng, // second button callback
-        //     'Download as SVG', // first button text
-        //     'Download as PNG', // second button text
-        //     'Please choose your preferred format', // modal message
-        //     'Export figure' // modal title
-        //   );
-        // };
-
-        // /**
-        //  * Exports the data of this chart as xls file format and triggers the
-        //  * download.
-        //  */
-        // scope.exportData = function (params) {
-        //   params.$event.preventDefault();
-        //
-        //   if (scope.chart) {
-        //     scope.exportMpld3From(scope.chart);
-        //   } else {
-        //     var chartAccessor = attrs.d3ChartData.replace(new RegExp('.data$'), '');
-        //     var chart = scope.$eval(chartAccessor);
-        //     scope.exportFrom(chart);
-        //   }
-        // };
-        //
-
-        /**
-         * Returns the mpld3 figure of this chart.
-         */
-        /**
-         * Returns the zoomPlugin of the mpdl3 figure of this chart.
-         */
         function getZoomPlugin () {
           return _(getFigure().plugins).find(function(plugin) {
             return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
           });
         }
 
-        /**
-         * Disable both the zoom and the pan button.
-         */
-        function resetButtons () {
+        function disableZoomAndPan () {
           // disable zoom
           getZoomPlugin().deactivate();
           scope.zoomEnabled = false;
@@ -203,26 +152,16 @@ define(
           scope.panEnabled = false;
         }
 
-        /**
-         * Resets zoom & pan to its initial state.
-         */
-        scope.resetChart = function (params) {
+        scope.resetZoomAndPanInChart = function (params) {
           params.$event.preventDefault();
-
           getFigure().toolbar.fig.reset();
         };
 
-        /**
-         * Toggle the zoom functionality on the chart.
-         *
-         * Reseting all the other buttons as well to ensure that none of them
-         * are enabled at the same time.
-         */
-        scope.zoomChart = function (params) {
+        scope.toggleZoomInChart = function (params) {
           params.$event.preventDefault();
 
           var zoomWasEnabled = getZoomPlugin().enabled;
-          resetButtons();
+          disableZoomAndPan();
 
           if (!zoomWasEnabled) {
             scope.zoomEnabled = true;
@@ -230,18 +169,12 @@ define(
           }
         };
 
-        /**
-         * Toggle the pan functionality on the chart.
-         *
-         * Reseting all the other buttons as well to ensure that none of them
-         * are enabled at the same time.
-         */
-        scope.panChart = function (params) {
+        scope.togglePanInChart = function (params) {
           params.$event.preventDefault();
 
           var panWasEnabled = getFigure().toolbar.fig.zoom_on;
 
-          resetButtons();
+          disableZoomAndPan();
 
           if (!panWasEnabled) {
             getFigure().toolbar.fig.enable_zoom();
@@ -249,21 +182,14 @@ define(
           }
         };
 
-        /**
-         * Initialize a download of the graph as SVG
-         *
-         * In this function the original SVG is enhanced by injecting styling.
-         */
         scope.exportGraphAsSvg = function() {
           var originalStyle;
           var elementId = elem.attr('id');
-          var isMpld3 = elementId && elementId.indexOf('mpld3') != -1;
 
           var $originalSvg = elem.parent().find('svg');
           var viewBox = $originalSvg[0].getAttribute('viewBox');
           var orginalWidth, orginalHeight;
           if (viewBox) {
-            // console.log('viewbox', viewBox);
             var tokens = viewBox.split(" ");
             orginalWidth = parseFloat(tokens[2]);
             orginalHeight = parseFloat(tokens[3]);
@@ -273,11 +199,6 @@ define(
           }
 
           originalStyle = 'padding: ' + $originalSvg.css('padding');
-          // if (scope.chartType === 'mpld3') {
-          //   originalStyle = 'padding: ' + $originalSvg.css('padding');
-          // } else {
-          //   originalStyle = $originalSvg.attr('style');
-          // }
           var scalingFactor = 1;
 
           // In order to have styled graphs the css content used to render
@@ -315,9 +236,6 @@ define(
             });
         };
 
-        /**
-         * Initializes a download of the graph as PNG
-         */
         scope.exportGraphAsPng = function() {
           exportHelpers.generateGraphAsPngOrJpeg(
               elem.parent(),
@@ -433,7 +351,6 @@ define(
             var selectors = scope.graphs.selectors;
             if (selectors) {
               var which = _.filter(selectors, getChecked).map(getKey);
-              console.log('which', which);
               if (which.length > 0) {
                 return which;
               }

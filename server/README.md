@@ -84,19 +84,26 @@ __!__ Note: whenever you make a change that could affect a celery task, you need
 - `venvrequirements.txt` - another version of `localrequirements.txt` but for use with virtualenv
 
 In `server/webapp`:
-- `dataio.py`
-- `dbconn.py`
-- `dbmodels.py`
-- `exceptions.py`
-- `handlers.py`
-- `parse.py`
-- `plot.py`
-- `tasks.py`
-- `utils.py`
+
+- `handlers.py` - the URL handlers are defined here. The handlers only deal with JSON-data structures,
+  UIDs, and upload/download files
+- `parse.py` - routines defined here parse all the PyOptima objects into JSON-data structures. This is
+   to separate the parsing from storing/running PyOptima objects
+- `dataio.py` - the routines defined here, take JSON-data structures and pass them to the database, and
+  run the simulations. PyOptima objects are converted with calls to `parse.py`
+- `dbconn.py` - this is a central place to store references to the postgres and redis database
+- `dbmodels.py` - the adaptor to the Postgres database with objects that map onto the database tables
+- `exceptions.py` - common exceptions stored here
+- `plot.py` - some specialist graph-mangling routines to work with the mpld3 library that generates graphs
+- `tasks.py` - this is a conceptually difficult file - it defines both the daemons
+   and the tasks run by the daemon. This file is called by `api.py` as entry point to talk to `celery`,
+   and is run separately as the `celery` task-manager daemon.
 
 ## API documentation
 
-Once you have configured the `api.py` server, you can browse api endpoints at <http://localhost:8080/api/spec.html#!/spec> on your local machine, or <http://sandbox.optimamodel.com/api/spec.html#!/spec>
+Once you have configured the `api.py` server, you can browse api endpoints at
+ <http://localhost:8080/api/spec.html#!/spec> on your local machine, 
+ or <http://sandbox.optimamodel.com/api/spec.html#!/spec>
 
 The webserver API reads PyOptima objects and converts it to JSON dictionary structures that can be read by the web-client
 

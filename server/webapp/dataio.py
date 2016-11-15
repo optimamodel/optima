@@ -38,42 +38,13 @@ import optima.geospatial as geospatial
 
 from .dbconn import db
 from . import parse
-from .exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
+from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
+    UserAlreadyExists, UserDoesNotExist, InvalidCredentials
 from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
-from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
-from .parse import normalize_obj
 
 
 TEMPLATEDIR = "/tmp"  # CK: hotfix to prevent ownership issues
-
-
-def nullable_email(email_str):
-    if not email_str:
-        return email_str
-    else:
-        return email(email_str)
-
-
-def email(email_str):
-    if validate_email(email_str):
-        return email_str
-
-    raise ValueError('{} is not a valid email'.format(email_str))
-
-
-def hashed_password(password_str):
-    if isinstance(password_str, basestring) and len(password_str) == 56:
-        return password_str
-
-    raise ValueError('Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(
-        password_str, len(password_str), type(password_str)))
-
-
-def secure_filename_input(orig_name):
-    return secure_filename(orig_name)
-
-
 
 
 def fullpath(filename, datadir=None):
@@ -154,6 +125,27 @@ def get_user_from_id(user_id):
     return UserDb.query.filter_by(id=user_id).first()
 
 
+def email(email_str):
+    if validate_email(email_str):
+        return email_str
+    raise ValueError('{} is not a valid email'.format(email_str))
+
+
+def nullable_email(email_str):
+    if not email_str:
+        return email_str
+    else:
+        return email(email_str)
+
+
+def hashed_password(password_str):
+    if isinstance(password_str, basestring) and len(password_str) == 56:
+        return password_str
+
+    raise ValueError('Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(
+        password_str, len(password_str), type(password_str)))
+
+
 def parse_user_args(args):
     return {
         'email': nullable_email(args.get('email', None)),
@@ -205,7 +197,6 @@ def do_login_user(args):
         userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
     except:
         userisanonymous = current_user.is_anonymous
-
 
     if userisanonymous:
         current_app.logger.debug("current user anonymous, proceed with logging in")
@@ -1358,7 +1349,7 @@ def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     program = parse.get_program_from_progset(progset, program_id)
     years = parse.get_project_years(project)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
-    return normalize_obj(dict(zip(years, popsizes)))
+    return parse.normalize_obj(dict(zip(years, popsizes)))
 
 
 def load_project_program_summaries(project_id):
