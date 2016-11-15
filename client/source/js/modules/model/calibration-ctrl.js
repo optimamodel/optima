@@ -1,27 +1,27 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+
   'use strict';
-
-
 
   module.controller('ModelCalibrationController', function (
       $scope, $http, info, modalService, $upload,
       $modal, $timeout, toastr, globalPoller) {
-
-    function consoleLogJson(name, val) {
-      console.log(name + ' = ');
-      console.log(JSON.stringify(val, null, 2));
-    }
 
     var project = info.data;
 
     function initialize() {
 
       $scope.parsets = [];
+      $scope.years = _.range(project.dataStart, project.dataEnd+1);
+      var iLast = $scope.years.length - 1;
       $scope.state = {
         maxtime: '10',
         isRunnable: false,
-        parset: undefined
+        parset: undefined,
+        startYear: $scope.years[0],
+        endYear: $scope.years[iLast]
       };
+
+      console.log("project", project);
 
       // Check if project has spreadsheet uploaded
       $scope.isMissingData = !project.hasParset;
@@ -82,18 +82,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
       $http
-        .get(
+        .post(
           '/api/project/' + project.id
           + '/parsets/' + $scope.state.parset.id
           + '/calibration',
-          {which: getSelectors()})
+          {
+            which: getSelectors(),
+          })
         .success(function(response) {
           loadParametersAndGraphs(response);
           toastr.success('Loaded graphs');
           $scope.statusMessage = '';
           $scope.state.isRunnable = true;
         })
-        .error(function(response) {
+        .error(function() {
           $scope.state.isRunnable = false;
           toastr.error('Error in loading graphs');
         });
@@ -107,10 +109,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .post(
           '/api/project/' + project.id
           + '/parsets/' + $scope.state.parset.id
-          + '/calibration?doSave=true',
+          + '/calibration',
           {
             parameters: fetchParameters(),
-            which: getSelectors()
+            which: getSelectors(),
+            startYear: $scope.state.startYear,
+            endYear: $scope.state.endYear
           })
         .success(function(response) {
           toastr.success('Updated parameters and loaded graphs');
@@ -132,8 +136,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       }
 
-      openParameterSetModal(
-        add, 'Add parameter set', $scope.parsets, null, 'Add');
+      renameModalService.openEditNameModal(
+        add, 'Add parameter set', 'Enter name', '',
+        'Name already exists',
+        _.pluck($scope.parsets, 'name'));
     };
 
     $scope.copyParameterSet = function() {
@@ -141,7 +147,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError(
           [{message: 'No parameter set selected.'}]);
       } else {
-        function rename(name) {
+        function copy(name) {
           $http
             .post(
               '/api/project/' + project.id + '/parsets',
@@ -156,9 +162,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
         }
 
-        openParameterSetModal(
-          rename, 'Copy parameter set', $scope.parsets,
-          $scope.state.parset.name + ' copy', 'Copy');
+        var names = _.pluck($scope.parsets, 'name');
+        var name = $scope.state.parset.name;
+        modalService.rename(
+          copy, 'Copy parameter set', 'Enter name',
+          modalService.getUniqueName(name, names),
+          'Name already exists',
+          names);
       }
     };
 
@@ -187,9 +197,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       }
 
-      openParameterSetModal(
-        rename, 'Rename parameter set', $scope.parsets,
-        $scope.state.parset.name, 'Rename', true);
+      modalService.rename(
+        rename, 'Rename parameter set', 'Enter name',
+        $scope.state.parset.name,
+        'Name already exists',
+        _.without(_.pluck($scope.parsets, 'name'), $scope.state.parset.name));
     };
 
     $scope.deleteParameterSet = function() {
@@ -269,53 +281,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).click();
     };
 
-    function openParameterSetModal(
-        callback, title, parameterSetList, parameterSetName,
-        operation, isRename) {
-
-      var onModalKeyDown = function(event) {
-        if (event.keyCode == 27) {
-          return modalInstance.dismiss('ESC');
-        }
-      };
-      var modalInstance = $modal.open({
-        templateUrl: 'js/modules/model/parameter-set-modal.html',
-        controller: ['$scope', '$document', function($scope, $document) {
-          $scope.title = title;
-          $scope.name = parameterSetName;
-          $scope.operation = operation;
-          $scope.updateParameterSet = function() {
-            $scope.newParameterSetName = $scope.name;
-            callback($scope.name);
-            modalInstance.close();
-          };
-          $scope.isUniqueName = function(parameterSetForm) {
-            function isSameName(item) {
-              return item.name == $scope.name;
-            }
-
-            var exists = _(parameterSetList).some(isSameName)
-              && $scope.name !== parameterSetName
-              && $scope.name !== $scope.newParameterSetName;
-            if (isRename) {
-              parameterSetForm.parameterSetName.$setValidity(
-                "parameterSetUpdated", $scope.name !== parameterSetName);
-            }
-            parameterSetForm.parameterSetName.$setValidity(
-              "parameterSetExists", !exists);
-            return exists;
-          };
-          $document.on('keydown', onModalKeyDown); // observe
-          $scope.$on(
-            '$destroy',
-            function() {
-              $document.off('keydown', onModalKeyDown);
-            });  // unobserve
-        }]
-      });
-      return modalInstance;
-    }
-
     // autofit routines
 
     $scope.checkNotRunnable = function() {
@@ -354,8 +319,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http
         .post(
           '/api/project/' + project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/automatic_calibration',
+            + '/parsets/' + $scope.state.parset.id
+            + '/automatic_calibration',
           data)
         .success(function(response) {
           if (response.status === 'started') {

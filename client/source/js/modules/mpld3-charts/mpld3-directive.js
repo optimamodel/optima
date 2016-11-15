@@ -51,8 +51,6 @@ define(
 
 
   function addLineToLegendLabel($svgFigure, nLegend) {
-      console.log('addLineToLegendLabel', nLegend, $svgFigure);
-
       // add lines in legend labels
       var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
       if ($textLabels) {
