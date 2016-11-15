@@ -11,9 +11,7 @@ define([
 ], function (angular) {
   'use strict';
 
-  return angular.module('app.active-project', [
-    'app.local-storage'
-    ])
+  return angular.module('app.active-project', ['app.local-storage'])
     .factory('activeProject', [ 
       '$http', 'localStorage', 'UserManager',
       function ($http, localStorage, UserManager) {

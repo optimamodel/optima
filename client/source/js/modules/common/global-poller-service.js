@@ -7,9 +7,8 @@ define(['angular' ], function (angular) {
   'use strict';
 
   return angular
-    .module('app.global-poller', [])
-    .factory(
-      'globalPoller', ['$http', '$timeout', function($http, $timeout) {
+    .module('app.common.global-poller-service', [])
+    .factory('globalPoller', ['$http', '$timeout', function($http, $timeout) {
 
       var polls = {};
 

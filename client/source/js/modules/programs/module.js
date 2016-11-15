@@ -6,10 +6,6 @@ define([
   '../resources/model',
   '../mpld3-charts/export-all-charts',
   '../mpld3-charts/export-all-data',
-  '../validations/more-than-directive',
-  '../validations/less-than-directive',
-  '../validations/year-directive',
-  '../validations/range-limit',
 ], function (angular) {
   'use strict';
 
@@ -18,10 +14,6 @@ define([
     'app.export-all-data',
     'app.resources.model',
     'ui.router',
-    'app.validations.more-than',
-    'app.validations.less-than',
-    'app.validations.year',
-    'app.validations.range-limit',
     'toastr'
   ])
     .config(function ($stateProvider) {

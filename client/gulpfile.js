@@ -79,7 +79,7 @@ gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
     gulp.src(['source/index.html'])
       .pipe(gulp.dest('build')),
     // copy config-require
-    gulp.src(['source/js/config-require.js'])
+    gulp.src(['source/js/config.js'])
       .pipe(uglify().on('error', handleError))
       .pipe(gulp.dest('build/js')),
     // copy template files
@@ -103,7 +103,7 @@ gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
 
 // Optimize the app into the build/js directory
 gulp.task('compile-build-js-client', function () {
-  var configRequire = require('./source/js/config-require.js');
+  var configRequire = require('./source/js/config.js');
   var configBuild = {
     baseUrl: 'source',
     insertRequire: ['js/main'],

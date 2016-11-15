@@ -163,11 +163,11 @@ define([
         },
 
         /**
-        * Asks the user to choose between two choices.
-        *
-        * Uses the custom message and title (if present) and executes the right
-        * callback depending on the user's choice.
-        */
+         * Asks the user to choose between two choices.
+         *
+         * Uses the custom message and title (if present) and executes the right
+         * callback depending on the user's choice.
+         */
         choice: function (onChoiceA, onChoiceB, choiceAButton, choiceBButton, message, title) {
           var onModalKeyDown = function (event) {
             if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
@@ -195,6 +195,54 @@ define([
 
             }]
           });
+          return modalInstance;
+        },
+
+        /**
+         * Asks the user to create/edit a name for
+         *
+         * Uses the custom message and title (if present) and invalidates the input
+         *  if it matches any of the invalidNames.
+         */
+        rename: function(acceptName, title, message, name, errorMessage, invalidNames) {
+
+          var modalInstance = $modal.open({
+            templateUrl: 'js/modules/ui/modal/modal-rename.html',
+            controller: ['$scope', '$document', function($scope, $document) {
+
+                $scope.name = name;
+                $scope.title = title;
+                $scope.message = message;
+                $scope.errorMessage = errorMessage;
+
+                $scope.checkBadForm = function(form) {
+                  var isGoodName = !_.contains(invalidNames, $scope.name);
+                  form.$setValidity("name", isGoodName);
+                  return !isGoodName;
+                };
+
+                $scope.submit = function() {
+                  acceptName($scope.name);
+                  modalInstance.close();
+                };
+
+                function onKey(event) {
+                  if (event.keyCode == 27) {
+                    return modalInstance.dismiss('ESC');
+                  }
+                }
+
+                $document.on('keydown', onKey);
+                $scope.$on(
+                  '$destroy',
+                  function() {
+                    $document.off('keydown', onKey);
+                  });
+
+              }
+            ]
+          });
+
           return modalInstance;
         }
 

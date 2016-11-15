@@ -6,7 +6,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'ProjectOpenController',
     function ($scope, $http, activeProject, projects, modalService,
         fileUpload, UserManager, projectApiService, $state, $upload,
-              renameModalService,
         $modal, toastr) {
 
       function initialize() {
@@ -215,7 +214,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.editProjectName = function(project) {
         var otherNames = _.pluck($scope.projects, 'name');
         otherNames = _.without(otherNames, project.name)
-        renameModalService.openEditNameModal(
+        modalService.rename(
           function(name) {
             project.name = name;
             projectApiService

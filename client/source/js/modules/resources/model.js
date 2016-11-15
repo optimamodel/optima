@@ -1,6 +1,6 @@
 define([
   'angular',
-  'angular-resource'
+  'ng-resource'
 ], function (angular) {
 
   angular.module('app.resources.model', [

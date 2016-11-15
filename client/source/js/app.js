@@ -1,27 +1,22 @@
 define([
   'angular',
-  'angular-loading-bar',
-  'angular-messages',
+  'ng-loading-bar',
   'ng-file-upload',
   'ui.bootstrap',
   'ui.router',
   'tooltip',
   'rzModule',
+  './modules/mpld3-charts/index',
   './modules/contact/index',
   './modules/help/index',
   './modules/auth/index',
   './modules/analysis/index',
   './modules/admin/index',
-  './modules/common/rename-modal-service.js',
-  './modules/common/global-poller.js',
+  './modules/common/global-poller-service.js',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
   './modules/common/file-upload-service',
-  './modules/validations/less-than-directive',
   './modules/common/local-storage-service',
-  './modules/validations/more-than-directive',
-  './modules/validations/file-required-directive',
-  './modules/mpld3-charts/index',
   './modules/home/index',
   './modules/model/index',
   './modules/project/index',
@@ -29,43 +24,42 @@ define([
   './modules/programs/index',
   './modules/user-manager/index',
   './modules/ui/modal/modal-service',
-  './modules/ui/index',
+  './modules/ui/index'
 ], function (angular) {
+
   'use strict';
 
-  return angular.module('app', [
-    'angularFileUpload',
-    'angular-loading-bar',
-    'app.contact',
-    'app.help',
-    'app.auth',
-    'app.active-project',
-    'app.analysis',
-    'app.admin',
-    'app.common.form-input-validate',
-    'app.common.file-upload',
-    'app.global-poller',
-    'app.rename-modal',
-    'app.mpld3-charts',
-    'app.home',
-    'app.validations.less-than',
-    'app.local-storage',
-    'app.model',
-    'app.programs',
-    'app.validations.more-than',
-    'app.validations.file-required',
-    'app.project',
-    'app.portfolio',
-    'app.ui',
-    'app.ui.modal',
-    'app.ui.spreadsheet-upload-hint',
-    'app.user-manager',
-    'ngMessages',
-    'ui.bootstrap',
-    'ui.router',
-    'tooltip.module',
-    'rzModule',
-  ])
+  return angular
+
+    .module(
+      'app',
+      [
+        'angularFileUpload',
+        'angular-loading-bar',
+        'app.contact',
+        'app.help',
+        'app.auth',
+        'app.active-project',
+        'app.analysis',
+        'app.admin',
+        'app.common.form-input-validate',
+        'app.common.file-upload',
+        'app.common.global-poller-service',
+        'app.mpld3-charts',
+        'app.home',
+        'app.local-storage',
+        'app.model',
+        'app.programs',
+        'app.project',
+        'app.portfolio',
+        'app.ui',
+        'app.ui.modal',
+        'app.user-manager',
+        'ui.bootstrap',
+        'ui.router',
+        'tooltip.module',
+        'rzModule',
+      ])
 
     .config(function ($httpProvider) {
       $httpProvider.interceptors.push(function ($q, $injector) {
@@ -98,16 +92,7 @@ define([
       $urlRouterProvider.otherwise('/');
     })
 
-    .run(function ($rootScope, $state, UserManager, activeProject, modalService) {
-
-      // if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') !== -1) {
-      //   modalService.inform(
-      //     function () {
-      //       window.location.href = 'https://www.google.com/chrome/browser/desktop/';
-      //     },
-      //     'Download Google Chrome',
-      //     'Internet Explorer is not supported. Please use Firefox or Chrome instead.', 'Your browser is not supported!');
-      // }
+    .run(function ($rootScope, $state, UserManager, activeProject) {
 
       if (window.user) {
         UserManager.set(window.user);

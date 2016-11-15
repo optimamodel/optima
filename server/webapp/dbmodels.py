@@ -83,11 +83,6 @@ class ProjectDb(db.Model):
 
     __tablename__ = 'projects'
 
-    resource_fields = {
-        'id': fields.String,
-        'user_id': fields.String,
-    }
-
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
     results = db.relationship('ResultsDb', backref='project')
