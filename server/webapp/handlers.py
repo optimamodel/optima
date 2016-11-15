@@ -75,7 +75,6 @@ def get_upload_file(dirname):
     return full_filename
 
 
-
 # PROJECTS
 
 class ProjectsAll(Resource):
@@ -379,10 +378,12 @@ api.add_resource(ManagePortfolio, '/api/portfolio')
 class SavePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
+    @swagger.operation(summary="Update portfolio")
     def post(self, portfolio_id):
         portfolio_summary = get_post_data_json()
         return dataio.save_portfolio_by_summary(portfolio_id, portfolio_summary)
 
+    @swagger.operation(summary="Delete portfolio")
     def delete(self, portfolio_id):
         return dataio.delete_portfolio(portfolio_id)
 
@@ -392,6 +393,7 @@ api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
 class DeletePortfolioProject(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
+    @swagger.operation(summary="Delete project in a portfolio")
     def delete(self, portfolio_id, project_id):
         return dataio.delete_portfolio_project(portfolio_id, project_id)
 
