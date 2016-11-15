@@ -171,9 +171,9 @@ Parameterset (Parset):
         - ...
 
 Program:
-    self.short = str
-    self.name = str
-    self.uid = uuid
+    self.short:  str
+    self.name:  str
+    self.uid:  uuid
     self.targetpars:
         - param: string
           pop: string or 2-tuple(string)
@@ -201,11 +201,11 @@ Program:
 Programset (Progset):
     self.name: string
     self.uid: uuid
-    self.default_interaction = default_interaction ??
-    self.programs = odict() ?? 
-    self.defaultbudget = odict() ??
-    self.created = Datetime
-    self.modified = Datetime
+    self.default_interaction:  default_interaction ??
+    self.programs:  odict() ?? 
+    self.defaultbudget:  odict() ??
+    self.created:  Datetime
+    self.modified:  Datetime
     self.covout: 
         <odict>
            - <target_par_short>:
@@ -239,8 +239,8 @@ Budgetscen
     self.parsetname: string
     self.t: int -or- list of int
     self.active: boolean
-    self.resultsref = None -or- string # name of Results or Multires
-    self.scenparset = None -or- string
+    self.resultsref:  None -or- string # name of Results or Multires
+    self.scenparset:  None -or- string
     self.progsetname: string
     self.budget:
         <program_short>: array(list of floats)
@@ -251,8 +251,8 @@ Coveragescen
     self.parsetname: string
     self.t: int -or- list of int
     self.active: boolean
-    self.resultsref = None -or- string # name of Results or Multires
-    self.scenparset = None -or- string
+    self.resultsref:  None -or- string # name of Results or Multires
+    self.scenparset:  None -or- string
     self.progsetname: string
     self.coverage:
         <program_short>: array(list of floats)
@@ -266,7 +266,7 @@ Optimizations:
     self.modified: Datetime
     self.parsetname: string
     self.progsetname: string
-    self.resultsref = None # Store pointer to results
+    self.resultsref:  None # Store pointer to results
     self.objectives: 
        base:
        budget: int
@@ -295,10 +295,10 @@ Optimizations:
 
 Result
     self.name: string # Name of this parameter
-    self.isnumber = isnumber # Whether or not the result is a number (instead of a percentage)
-    self.pops = pops # The model result by population, if available
-    self.tot = tot # The model result total, if available
-    self.datapops = datapops # The input data by population, if available
+    self.isnumber:  isnumber # Whether or not the result is a number (instead of a percentage)
+    self.pops:  pops # The model result by population, if available
+    self.tot:  tot # The model result total, if available
+    self.datapops:  datapops # The input data by population, if available
     ...?
     
 Resultset
@@ -311,48 +311,48 @@ Settings
     self.dt: float # Timestep
     self.start: float # implied int, Default start year
     self.end: float # implied int # Default end year
-    self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
-    self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
+    self.hivstates:  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
+    self.healthstates:  ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
     self.ncd4: int # number of hivstates
     self.nhealth: int # number of healthstates
     # Health states by diagnosis
-    self.susreg   = arange(0,1) # Regular uninfected, may be uncircumcised
-    self.progcirc = arange(1,2) # Uninfected, programatically circumcised
-    self.undx     = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
-    self.dx       = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
-    self.care     = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
-    self.usvl     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
-    self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
-    self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
-    self.off      = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
-    self.nsus     = len(self.susreg) + len(self.progcirc)
-    self.ninf     = self.nhealth - self.nsus
+    self.susreg  :  arange(0,1) # Regular uninfected, may be uncircumcised
+    self.progcirc:  arange(1,2) # Uninfected, programatically circumcised
+    self.undx    :  arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
+    self.dx      :  arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
+    self.care    :  arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
+    self.usvl    :  arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
+    self.svl     :  arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
+    self.lost    :  arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
+    self.off     :  arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
+    self.nsus    :  len(self.susreg) + len(self.progcirc)
+    self.ninf    :  self.nhealth - self.nsus
     # Health states by CD4 count
-    spacing = arange(self.ninf)*self.ncd4 
-    self.acute = 2 + spacing
-    self.gt500 = 3 + spacing
-    self.gt350 = 4 + spacing
-    self.gt200 = 5 + spacing
-    self.gt50  = 6 + spacing
-    self.lt50  = 7 + spacing
-    self.aidsind = self.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
+    spacing:  arange(self.ninf)*self.ncd4 
+    self.acute:  2 + spacing
+    self.gt500:  3 + spacing
+    self.gt350:  4 + spacing
+    self.gt200:  5 + spacing
+    self.gt50 :  6 + spacing
+    self.lt50 :  7 + spacing
+    self.aidsind:  self.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
     # Combined states
-    self.sus       = cat([self.susreg, self.progcirc]) # All uninfected
-    self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
-    self.allcare   = cat([         self.care, self.usvl, self.svl,            self.off]) # All people in care
-    self.alltx     = cat([                    self.usvl, self.svl]) # All people on treatment
-    self.allplhiv  = cat([self.undx, self.alldx]) # All PLHIV
-    self.allstates = cat([self.sus, self.allplhiv]) # All states
-    self.nstates   = len(self.allstates) # Total number of states
+    self.sus      :  cat([self.susreg, self.progcirc]) # All uninfected
+    self.alldx    :  cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
+    self.allcare  :  cat([         self.care, self.usvl, self.svl,            self.off]) # All people in care
+    self.alltx    :  cat([                    self.usvl, self.svl]) # All people on treatment
+    self.allplhiv :  cat([self.undx, self.alldx]) # All PLHIV
+    self.allstates:  cat([self.sus, self.allplhiv]) # All states
+    self.nstates  :  len(self.allstates) # Total number of states
     self.statelabels: list of str # same number as self.healthstates
     # Non-cascade settings/states
-    self.usecascade = False # Whether or not to actually use the cascade
-    self.tx  = self.svl # Infected, on treatment -- not used with the cascade
+    self.usecascade:  False # Whether or not to actually use the cascade
+    self.tx :  self.svl # Infected, on treatment -- not used with the cascade
     # Other
-    self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
-    self.verbose = verbose # Default verbosity for how much to print out -- see definitions in utils.py:printv()
-    self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
-    self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
+    self.optimablue:  (0.16, 0.67, 0.94) # The color of Optima
+    self.verbose:  verbose # Default verbosity for how much to print out -- see definitions in utils.py:printv()
+    self.safetymargin:  0.5 # Do not move more than this fraction of people on a single timestep
+    self.eps:  1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
     
 Project
     self.uid: uuid
@@ -364,9 +364,9 @@ Project
     self.gitbranch: ?
     self.gitversion: ?
     self.filename: None or string
-    self.name = string
-    self.settings = Settings(verbose=verbose) # Global settings
-    self.data = {} # Data from the spreadsheet
+    self.name:  string
+    self.settings:  Settings(verbose=verbose) # Global settings
+    self.data:  {} # Data from the spreadsheet
     self.parsets: 
       <odict>
         - <parset_name>: Parameterset
