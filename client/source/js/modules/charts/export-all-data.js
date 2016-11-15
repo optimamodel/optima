@@ -2,7 +2,7 @@ define(['underscore', './export-helpers-service'],
 function (_) {
   'use strict';
 
-  return angular.module('app.export-all-data', ['app.mpld3-charts.export-helpers'])
+  return angular.module('app.export-all-data', ['app.charts.export-helpers'])
   .directive('exportAllData', function ($http, exportHelpers, modalService, projectApiService) {
     return {
       restrict: 'E',

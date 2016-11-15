@@ -2,7 +2,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
   'use strict';
 
   return angular
-      .module('app.mpld3-charts.export-helpers',[])
+      .module('app.charts.export-helpers',[])
       .factory('exportHelpers', ['$http', function ($http) {
 
     var chartCssUrl = '/assets/css/chart.css';

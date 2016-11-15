@@ -3,8 +3,8 @@ define([
   'ui.router',
   '../project/project-api-service',
   '../resources/model',
-  '../mpld3-charts/export-all-charts',
-  '../mpld3-charts/export-all-data',
+  '../charts/export-all-charts',
+  '../charts/export-all-data',
 ], function (angular) {
   'use strict';
 

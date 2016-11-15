@@ -134,7 +134,7 @@ define(
 
     return {
       scope: { chart: '=mpld3Chart' },
-      templateUrl: './js/modules/mpld3-charts/mpld3-chart.html',
+      templateUrl: './js/modules/charts/mpld3-chart.html',
       link: function (scope, elem, attrs) {
 
         var chartStylesheetUrl = './assets/css/chart.css';
@@ -440,7 +440,7 @@ define(
   module.directive('optimaGraphs', function ($http, toastr) {
     return {
       scope: { 'graphs':'=' },
-      templateUrl: './js/modules/mpld3-charts/optima-graphs.html',
+      templateUrl: './js/modules/charts/optima-graphs.html',
       link: function (scope, elem, attrs) {
 
         function initialize() {
