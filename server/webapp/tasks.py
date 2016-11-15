@@ -20,7 +20,7 @@ optima.portfolio.Queue = Queue
 # must import api first
 from ..api import app
 from .dbconn import db
-from . import dbmodels, parse, utils, dataio
+from . import dbmodels, parse, dataio
 
 
 db = SQLAlchemy(app)

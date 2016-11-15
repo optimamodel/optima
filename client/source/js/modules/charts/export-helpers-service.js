@@ -93,7 +93,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
         alert("Please releod and try again, something went wrong while generating the graph.");
       });
     };
-        
+
     return {
       generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
     };

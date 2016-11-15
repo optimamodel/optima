@@ -74,6 +74,26 @@ Then, from the `<root>/bin` directory:
 __!__ Note: whenever you make a change that could affect a celery task, you need to restart it manually.
 
 
+## Files
+
+- `api.py` - the webserver
+- `export.py` - command-line to extract saved projects from the postgres database
+- `import.py` - command-line to push projects into the database
+- `config.py` - the configuration of the postgres/redis databases and ports for the webserver
+- `localrequirements.txt` - python modules to be installed
+- `venvrequirements.txt` - another version of `localrequirements.txt` but for use with virtualenv
+
+In `server/webapp`:
+- `dataio.py`
+- `dbconn.py`
+- `dbmodels.py`
+- `exceptions.py`
+- `handlers.py`
+- `parse.py`
+- `plot.py`
+- `tasks.py`
+- `utils.py`
+
 ## API documentation
 
 Once you have configured the `api.py` server, you can browse api endpoints at <http://localhost:8080/api/spec.html#!/spec> on your local machine, or <http://sandbox.optimamodel.com/api/spec.html#!/spec>
