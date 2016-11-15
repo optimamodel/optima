@@ -325,60 +325,6 @@ define(
               'blob');
         };
 
-        /**
-         * Requesting a Spreadsheet from the prepared dataset.
-         */
-        var exportApiRequest = function(title, exportableData) {
-          projectApiService.exportProject(exportableData)
-            .success(function (response, status, headers, config) {
-                var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                // The saveAs function must be wrapped in a setTimeout with 0 ms because Angular has a problem with fileSaver.js on FF 34.0 and the download doesn't start
-                setTimeout(function() {
-                  saveAs(blob, (title+'.xlsx'));
-                }, 0);
-            });
-        };
-
-        /**
-         * Exports the data of a mpld3 graph.
-         */
-        scope.exportMpld3From = function (chart){
-          if(!chart) {
-            modalService.inform(undefined, undefined, "Sorry, this chart cannot be exported");
-            return;
-          }
-
-          var exportable = exportHelpers.getMpld3ExportableFrom(chart);
-
-          if(exportable === null) {
-            modalService.inform(undefined, undefined, "Sorry, this chart cannot be exported");
-            return;
-          }
-
-          var title = chart.title || 'Data';
-          exportApiRequest(title, exportable);
-        };
-
-        /**
-         * Exports the data of the graph in the format returned by the API
-         */
-        scope.exportFrom = function (graphOrUndefined){
-          if(!graphOrUndefined) {
-            modalService.inform(undefined, undefined, "Sorry, this chart cannot be exported");
-            return;
-          }
-
-          var exportable = exportHelpers.getExportableFrom(graphOrUndefined);
-
-          if(exportable === null) {
-            modalService.inform(undefined, undefined, "Sorry, this chart cannot be exported");
-            return;
-          }
-
-          var title = graphOrUndefined.options.title || 'Data';
-          exportApiRequest(title, exportable);
-        };
-
         scope.$watch(
           'chart',
           function () {

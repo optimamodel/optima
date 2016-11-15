@@ -4,8 +4,7 @@ define([
   '../project/project-api-service',
   '../resources/model',
   '../charts/export-all-charts',
-  '../charts/export-all-data',
-  '../analysis/parameter-scenarios-modal',
+    '../analysis/parameter-scenarios-modal',
   '../analysis/program-scenarios-modal',
 ], function (angular) {
   'use strict';
@@ -14,7 +13,6 @@ define([
     'app.analysis',
     [
       'app.export-all-charts',
-      'app.export-all-data',
       'app.resources.model',
       'ui.router',
       'app.parameter-scenarios-modal',

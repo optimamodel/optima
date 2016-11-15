@@ -4,13 +4,11 @@ define([
   '../project/project-api-service',
   '../resources/model',
   '../charts/export-all-charts',
-  '../charts/export-all-data',
 ], function (angular) {
   'use strict';
 
   return angular.module('app.portfolio', [
     'app.export-all-charts',
-    'app.export-all-data',
     'app.resources.model',
     'ui.router',
   ])

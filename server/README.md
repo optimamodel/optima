@@ -1,15 +1,18 @@
 # Introduction to the Optima webserver
 
-- is `api.py`, a `python` application, written in the `flask` framework.
+- the main webserver is `api.py`, a `python` application, written in the `flask` framework.
  `api.py` defines the way URL requests are converted into HTTP responses to the
-  webclient
-- `flask` is a micro-framework to provide libraries to build `api.py`, it's 
-    considered a light-weight framework
-- `api.py` uses `postgres` as the database. It uses the `sqlalchemy` python
-  library to interface with the database, the schema, tables and entries
-- `bin/run_server.py` uses `twisted` to bridge `api.py` to the outgoing port through the 
-  `wsgi` specification, and also serves the client js files from the `client` folder 
-- to carry out parallel simulations, `webapp/tasks.py` is a  `celery` daemon that listens for jobs
+  webclient, you can see a list of available API calls at <http://sandbox.optimamodel.com/api/spec.html#!/spec>,
+  or locally, once the webserver is running <http://localhost:8080/api/spec.html>
+- `flask` is a micro-framework to provide libraries to build `api.py`
+- `api.py` stores projects in a `postgres` database, a robust high-performant database. 
+  It uses the `sqlalchemy` python library to interface with the database, 
+  the database schema, tables and entries. You can directly interrogate the `postgres` 
+  database using the standard `postgres` command-line tools, such as `psql`. The
+  database schema is stored in `server/webapp/dbmodels.py`.
+- `bin/run_server.py` uses `twisted` to bridge `api.py` to the outgoing port of your computer using the 
+  `wsgi` specification. `run_server.py` also serves the client js files from the `client` folder 
+- to carry out parallel simulations, `server/webapp/tasks.py` is a  `celery` daemon that listens for jobs
   from `api.py`, which is communicated through an in-memory/intermittent-disk-based `redis`
   database.
 
@@ -38,7 +41,7 @@ _On Ubuntu:_
 
 ## Configuring the webserver
 
-Next, we have to set the `config.py` file in the `<root>/server` folder. Here's an example of a `config.py` file:
+Next, we set up the databases, brokers, url's that `api.py` will we use. We do this through the `config.py` file in the `<root>/server` folder. Here's an example of a `config.py` file:
 
 ```
 SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
@@ -50,6 +53,12 @@ REDIS_URL = CELERY_BROKER_URL
 MATPLOTLIB_BACKEND = "agg"
 ```
 
+You can choose which ports to use, the name of the databases. Matplotlib is the key python library 
+that generates the graphs, it must be set to the "agg" backend, otherwise it can cause GUI crashes with
+the windowing system of your computer.
+
+The port that `api.py` is run on, is set in `<root>/server/_twisted_wsgi.py`, which by default is 8080.
+
 
 ## Running the webserver
 
@@ -60,7 +69,7 @@ If you haven't already launched `redis` and `postgres`, launch them:
 Then, from the `<root>/bin` directory:
 
 - launch the webserver `./start_server.sh` 
-- launch parallel-job daemon `./start_celery.sh`
+- launch the parallel-processing daemon `./start_celery.sh`
 
 __!__ Note: whenever you make a change that could affect a celery task, you need to restart it manually.
 

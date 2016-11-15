@@ -5,14 +5,12 @@ define([
   '../project/project-api-service',
   '../resources/model',
   '../charts/export-all-charts',
-  '../charts/export-all-data',
-], function (angular) {
+  ], function (angular) {
   'use strict';
 
   return angular.module('app.programs', [
     'app.export-all-charts',
-    'app.export-all-data',
-    'app.resources.model',
+      'app.resources.model',
     'ui.router',
     'toastr'
   ])
