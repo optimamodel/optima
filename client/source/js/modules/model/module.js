@@ -3,7 +3,7 @@ define([
   'ui.router',
   '../project/project-api-service',
   '../resources/model',
-  '../charts/export-all-charts',
+  '../charts/export-all-charts-directive',
 ], function (angular) {
   'use strict';
 
