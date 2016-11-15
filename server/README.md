@@ -1,46 +1,44 @@
-Introduction
-====
+# Introduction to the Optima webserver
 
-This describes the server API. For installation instructions, see the README file at the root directory level.
+- is `api.py`, a `python` application, written in the `flask` framework.
+ `api.py` defines the way URL requests are converted into HTTP responses to the
+  webclient
+- `flask` is a micro-framework to provide libraries to build `api.py`, it's 
+    considered a light-weight framework
+- `api.py` uses `postgres` as the database. It uses the `sqlalchemy` python
+  library to interface with the database, the schema, tables and entries
+- `bin/run_server.py` uses `twisted` to bridge `api.py` to the outgoing port through the 
+  `wsgi` specification, and also serves the client js files from the `client` folder 
+- to carry out parallel simulations, `webapp/tasks.py` is a  `celery` daemon that listens for jobs
+  from `api.py`, which is communicated through an in-memory/intermittent-disk-based `redis`
+  database.
 
-API documentation
-===
+## Installing the server
 
-Once you have configured the api server and nginx, you can browse api endpoints at http://optima.dev/api/spec.html (click show/hide)
+_On Mac_
 
-These APIs allow front-end to get current user or login a user
+1. install `brew` as it is the best package-manager for Mac OSX:
+    - `ruby -e “$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)”`
+2. install `python` and all the required third-party `python` modules:
+    - `brew install python`
+    - to make sure `python` can find the Optima `<root>` directory, in the top `<root>` folder, run: 
+        `python setup.py develop` 
+    - to load all the `python` modules needed (such as `celery`, `flask`, `twisted` etc), in the `<root>/server` folder, run:
+        `pip install -r localrequirements`
+3. install the ruby `lunchy` controller for MacOSX daemons
+    - `brew install ruby`
+    - `sudo gem install lunchy`
+4. install the `redis` and `postgres` database daemons:
+    - `brew install postgres redis`
+    - launch them: `lunchy start redis postgres`
 
-Celery
-===
+_On Ubuntu:_
 
-In order to run celery on your local machine, you need to have redis installed.
+1. `sudo apt-get install redis-server`
 
-On Ubuntu:
----
+## Configuring the webserver
 
-`sudo apt-get install redis-server`
-
-On MacOS X:
----
-
-`brew install redis`
-
-then check
-
-`brew info redis`
-
-for the information how to start Redis on your system.
-
-Or (if no brew) follow [these instructions](http://jasdeep.ca/2012/05/installing-redis-on-mac-os-x/)
-
-Ensure that your server/config.py file has settings for Redis (provided in server/config.example.py)
-
-Then, from the <root>/server optima directory, launch `./celery.sh`
-
-/!\ Note: whenever you make a change that could affect a celery task, you need to restart it manually.
-
-
-# Example `config.py`
+Next, we have to set the `config.py` file in the `<root>/server` folder. Here's an example of a `config.py` file:
 
 ```
 SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
@@ -52,20 +50,32 @@ REDIS_URL = CELERY_BROKER_URL
 MATPLOTLIB_BACKEND = "agg"
 ```
 
-# Installing the server
-```
-pip install -r localrequirements
-```
+
+## Running the webserver
+
+If you haven't already launched `redis` and `postgres`, launch them:  
+
+`lunchy start redis postgres`
+
+Then, from the `<root>/bin` directory:
+
+- launch the webserver `./start_server.sh` 
+- launch parallel-job daemon `./start_celery.sh`
+
+__!__ Note: whenever you make a change that could affect a celery task, you need to restart it manually.
 
 
+## API documentation
 
+Once you have configured the `api.py` server, you can browse api endpoints at <http://localhost:8080/api/spec.html#!/spec> on your local machine, or <http://sandbox.optimamodel.com/api/spec.html#!/spec>
 
-# Optima API DOC
+The webserver API reads PyOptima objects and converts it to JSON dictionary structures that can be read by the web-client
 
-in YAML-like format
+### PyOptima API
 
-## Back-End documentation
+PyOptima does not provide any formal documentation. The following is a working model of the PyOptima python objects, dervied from debugging working examples of PyOptima. It is described in a quasi-YAML format
 
+```yaml
 Parameterset (Parset):
     self.name: string # "default"
     self.uid: uuid
@@ -341,21 +351,15 @@ Project
       <odict>
         - <progset_name>: Programset
         - ...
+```
 
+### Webserver API structures
 
-## Simultion workflows
+The API calls deal with an intermediate data structures which is JSON-compatible, in other words data-structrues that are used in PyOptima - such as odicts and numpy arrays - must be converted to lists, dictionaries, strings, booleans, null or float.
 
+The current JSON representations of the PyOptima objects are:
 
-## JSON delivery structures
-
-Must be dictionaries (no odicts) or lists (no odicts or numpy arrays) of strings or floats
-
-JSON has no integers. In the current SQL library, any such structures stored as JSON fields are returned with strings as unicode.
-
-These structures are my cleanup of structures designed by SSQ. I've tried to match, where possible, the naming conventions of the optima objects.
-
-At the moment, it's an awkward mixture of camelCase and snake_case. Eventually all should be camelCase to fit JSON naming conventions.
-
+```yaml
 program:
     active: boolean
     name: string
@@ -525,4 +529,4 @@ optimizations:
       progset_id: uuid_string
       which: "outcomes", "outcome" "money"
     - ...
-
+```
