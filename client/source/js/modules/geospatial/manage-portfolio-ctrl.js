@@ -80,7 +80,7 @@ define(
            acceptName, title, message, name, errorMessage, invalidNames) {
 
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/portfolio/portfolio-modal.html',
+            templateUrl: 'js/modules/geospatial/portfolio-modal.html',
             controller: [
               '$scope', '$document',
               function($scope, $document) {

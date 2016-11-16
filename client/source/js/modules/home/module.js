@@ -17,7 +17,7 @@ define(['angular', 'ui.router', '../common/active-project-service'], function (a
           resolve: {
             projects: function (projectApiService) {
               return projectApiService.getProjectList();
-            },
+            }
           }
         });
     });

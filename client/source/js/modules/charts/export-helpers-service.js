@@ -95,7 +95,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     };
 
     return {
-      generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
+      generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg
     };
   }]);
 });

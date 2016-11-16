@@ -1,7 +1,7 @@
 define(['angular'], function (angular) {
   'use strict';
 
-  return angular.module('app.auth', ['app.active-project'])
+  return angular.module('app.user', ['app.active-project'])
     .config(function ($stateProvider) {
       $stateProvider
         .state('login', {
@@ -11,7 +11,7 @@ define(['angular'], function (angular) {
               $state.go('home');
             }
           },
-          templateUrl: 'js/modules/auth/login.html' ,
+          templateUrl: 'js/modules/user/login.html' ,
           controller: 'LoginController'
         })
         .state('register', {
@@ -21,12 +21,12 @@ define(['angular'], function (angular) {
               $state.go('home');
             }
           },
-          templateUrl: 'js/modules/auth/register.html' ,
+          templateUrl: 'js/modules/user/register.html' ,
           controller: 'RegisterController'
         })
         .state('edit', {
           url: '/edit',
-          templateUrl: 'js/modules/auth/edit.html' ,
+          templateUrl: 'js/modules/user/edit.html' ,
           controller: 'EditController'
         });
     });

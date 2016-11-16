@@ -1,61 +1,62 @@
-define(['./module'], function (module) {
+define(['angular'], function (angular) {
+  'use strict';
+  return angular
+    .module('app.ui.menu', ['app.user-manager'])
+    .directive(
+      'menu',
+      function($state, UserManager, fileUpload, activeProject,
+        modalService, $http) {
 
-  module.directive(
-    'menu',
-    function(
-      $state, UserManager, fileUpload, activeProject,
-      modalService, $http) {
+          return {
 
-        return {
+            restrict: 'A',
 
-          restrict: 'A',
+            scope: {settings: '= menu'},
 
-          scope: {settings: '= menu'},
+            templateUrl: function() {
+              return 'js/modules/ui/menu/menu.html';
+            },
 
-          templateUrl: function() {
-            return 'js/modules/ui/menu/menu.html';
-          },
+            controller: [
+              '$scope',
+              function ($scope) {
 
-          controller: [
-            '$scope',
-            function ($scope) {
+                $scope.state = $state.current;
+                console.log('$state', $state);
 
-              $scope.state = $state.current;
-              console.log('$state', $state);
+                $scope.isAdmin = UserManager.isAdmin;
 
-              $scope.isAdmin = UserManager.isAdmin;
+                $scope.getState = function() {
+                  return $state.current.name;
+                };
 
-              $scope.getState = function() {
-                return $state.current.name;
-              };
+                $scope.isState = function(testName) {
+                  return $scope.getState().indexOf(testName) !== -1;
+                };
 
-              $scope.isState = function(testName) {
-                return $scope.getState().indexOf(testName) !== -1;
-              };
+                $scope.goIfProjectActive = function(stateName) {
+                  if(activeProject.isSet()){
+                    console.log('current state', $state.current.name, '->', stateName);
+                    $state.go(stateName);
+                  } else {
+                    modalService.inform(
+                      function () {},
+                      'Okay',
+                      'Create or open a project first.',
+                      'Cannot proceed'
+                    );
+                  }
+                };
 
-              $scope.goIfProjectActive = function(stateName) {
-                if(activeProject.isSet()){
-                  console.log('current state', $state.current.name, '->', stateName);
-                  $state.go(stateName);
-                } else {
-                  modalService.inform(
-                    function () {},
-                    'Okay',
-                    'Create or open a project first.',
-                    'Cannot proceed'
-                  );
-                }
-              };
+                $scope.logout = function() {
+                  $http.get('/api/user/logout').
+                    success(function() {
+                      window.location.reload();
+                    });
+                };
 
-              $scope.logout = function() {
-                $http.get('/api/user/logout').
-                  success(function() {
-                    window.location.reload();
-                  });
-              };
-
-            }
-          ]
-        };
-  });
+              }
+            ]
+          };
+      });
 });

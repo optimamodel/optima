@@ -73,7 +73,6 @@ In the `source/js` folder:
 - the `modules` folder:
     - `admin` handles administrator user and projects views
     - `analysis` scenario and optimization pages
-    - `auth` login, register, and user-edit pages
     - `chart` directives, services and libraries to render graphs
     - `common` utility functions and directives
     - `contact` feedback/contact page
@@ -83,10 +82,9 @@ In the `source/js` folder:
     - `portfolio` the geospatial analysis
     - `program` program set and cost functions page
     - `project` project edit/populations, and population modal dialog, and some services
-    - `resources` angular hooks to call the webserver for user and model
     - `sha224` stripped down SHA224 module to hash passwords
     - `ui` menu items and common modal dialogs
-    - `user-manager` user manager service
+    - `user` user manager and user-api services, login, register, and user-edit pages
 - services and directives
     - `active-project` stores/extracts active project from local storage
     - `project-api-service` sores/extracts projects from webserver

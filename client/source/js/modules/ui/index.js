@@ -1,6 +1,6 @@
 define([
     'angular',
-    './menu/index',
+    './menu/menu-directive',
     './modal/modal-service',
     '../common/file-upload-service',
     '../common/active-project-service',

@@ -16,7 +16,7 @@ define([
         })
         .state('model.manual', {
           url: '/manual',
-          templateUrl: 'js/modules/model/calibration.html',
+          templateUrl: 'js/modules/calibration/calibration.html',
           controller: 'ModelCalibrationController',
           resolve: {
             info: function (projectApiService) {
