@@ -218,7 +218,7 @@ Programset (Progset):
                         self.interaction: "additive", "nested", "random"
            - ...
 
-Parscen
+Parscen:
     self.name: str
     self.parsetname: str
     self.t: None
@@ -234,7 +234,7 @@ Parscen
           startyear: int
         - ...
   
-Budgetscen
+Budgetscen:
     self.name: string
     self.parsetname: string
     self.t: int -or- list of int
@@ -246,7 +246,7 @@ Budgetscen
         <program_short>: array(list of floats)
         ....
 
-Coveragescen
+Coveragescen:
     self.name: string
     self.parsetname: string
     self.t: int -or- list of int
@@ -293,7 +293,7 @@ Optimizations:
                - <program_short>: str
                - ...
 
-Result
+Result:
     self.name: string # Name of this parameter
     self.isnumber:  isnumber # Whether or not the result is a number (instead of a percentage)
     self.pops:  pops # The model result by population, if available
@@ -301,13 +301,13 @@ Result
     self.datapops:  datapops # The input data by population, if available
     ...?
     
-Resultset
+Resultset:
     self.uid: uuid
     self.created: Datetime
     self.name: string
     ...?
     
-Settings
+Settings:
     self.dt: float # Timestep
     self.start: float # implied int, Default start year
     self.end: float # implied int # Default end year
@@ -354,7 +354,7 @@ Settings
     self.safetymargin:  0.5 # Do not move more than this fraction of people on a single timestep
     self.eps:  1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
     
-Project
+Project:
     self.uid: uuid
     self.created: Datetime
     self.modified: Datetime
