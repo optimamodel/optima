@@ -11,17 +11,16 @@ define(['angular', './app' ], function (angular) {
      */
 
     angular
-        .injector(['ng', 'app.resources.user'])
-        .invoke(['User', function (User) {
+        .injector(['ng', 'app.user-api'])
+        .invoke(['UserApi', function (UserApi) {
             var bootstrap = function () { angular.bootstrap(document, ['app']); };
 
-            User
-                .getCurrent(function(user) {
-                   // no-no flag, we should be using the UserManager here, not a global
-                   window.user = user;
-                })
-                .$promise
-                .then(bootstrap, bootstrap);
+            UserApi.getCurrent(
+              function(user) {
+                 // no-no flag, we should be using the UserManager here, not a global
+                 window.user = user;
+              })
+              .$promise.then(bootstrap, bootstrap);
         }]);
 
 });

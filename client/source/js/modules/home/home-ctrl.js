@@ -68,7 +68,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               return !project.selected;
             });
             _.each(selectedProjectIds, function(projectId) {
-              activeProject.ifActiveResetFor(projectId, UserManager.data);
+              activeProject.ifActiveResetFor(projectId, UserManager.currentUser);
             });
           });
       };
@@ -88,7 +88,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.open = function (name, id) {
         $scope.activeProjectId = id;
         setActiveProject();
-        activeProject.setActiveProjectFor(name, id, UserManager.data);
+        activeProject.setActiveProjectFor(name, id, UserManager.currentUser);
       };
 
       function getUniqueName(name, otherNames) {
@@ -117,7 +117,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
        * Opens to edit an existing project using name and id in /project/create screen.
        */
       $scope.edit = function (name, id) {
-        activeProject.setActiveProjectFor(name, id, UserManager.data);
+        activeProject.setActiveProjectFor(name, id, UserManager.currentUser);
         $state.go('project.edit');
       };
 
@@ -163,7 +163,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 var projectId = data['id'];
                 toastr.success('Project uploaded');
                 activeProject.setActiveProjectFor(
-                  name, projectId, UserManager.data);
+                  name, projectId, UserManager.currentUser);
                 $state.reload();
               });
           })
@@ -185,7 +185,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 var name = data['name'];
                 var projectId = data['id'];
                 activeProject.setActiveProjectFor(
-                  name, projectId, UserManager.data);
+                  name, projectId, UserManager.currentUser);
                 toastr.success('Project created from spreadsheet');
                 $state.reload();
               });
@@ -283,7 +283,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.projects = _($scope.projects).filter(function (item) {
             return item.id != id;
           });
-          activeProject.ifActiveResetFor(id, UserManager.data);
+          activeProject.ifActiveResetFor(id, UserManager.currentUser);
         });
       };
 

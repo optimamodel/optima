@@ -1,11 +1,11 @@
 define(['./module', '../sha224/sha224'], function (module, SHA224) {
   'use strict';
 
-  return module.controller('EditController', function ($scope, $window, User, UserManager, $timeout) {
+  return module.controller('EditController', function ($scope, $window, UserApi, UserManager, $timeout) {
 
     $scope.error = false;
 
-    const user = UserManager.data;
+    const user = UserManager.currentUser;
     $scope.username = user.username;
     $scope.displayName = user.displayName;
     $scope.email = user.email;
@@ -22,7 +22,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
 
       var hashed_password = SHA224($scope.password).toString();
 
-      User.update({
+      UserApi.update({
           username: $scope.username,
           password: hashed_password,
           displayName: $scope.displayName,

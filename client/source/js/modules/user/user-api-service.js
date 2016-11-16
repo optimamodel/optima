@@ -1,12 +1,7 @@
-define([
-  'angular',
-  'ng-resource'
-], function (angular) {
-
-  angular.module('app.resources.user', [
-    'ngResource'
-  ])
-    .service('User', function ($resource) {
+define(['angular', 'ng-resource'], function (angular) {
+  angular
+    .module('app.user-api', ['ngResource'])
+    .service('UserApi', function ($resource) {
       return $resource('/api/user/:path',
         { path: '@path' },
         {

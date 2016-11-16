@@ -45,7 +45,7 @@ described in `gulpfile.js`. The different tasks that can be carried out are:
 
 ## Layout of the webclient
 
-- uses the `requirejs` module specification
+- uses the AMD method for loading modules
 - uses `angular.bootstrap` for modal dialogs
 - uses `toastr` for the notifications
 - uses `mpld3` and `d3` to display the graphs exported from matplotlib
@@ -87,7 +87,11 @@ In the `source/js` folder:
     - `sha224` stripped down SHA224 module to hash passwords
     - `ui` menu items and common modal dialogs
     - `user-manager` user manager service
-
+- services and directives
+    - `active-project` stores/extracts active project from local storage
+    - `project-api-service` sores/extracts projects from webserver
+    - `resources-user` sores/extracts users from webserver
+    - `user-manager` stores/extracts current user
 
 
 

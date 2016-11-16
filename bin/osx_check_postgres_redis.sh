@@ -3,14 +3,14 @@
 # Version: 2016nov15
 
 if [[ $(lunchy status postgres | grep postgres) ]]; then
-    echo "Postgres running..."
+    echo "Postgres already running..."
 else
     echo "Start postgres"
     lunchy start postgres
 fi
 
 if [[ $(lunchy status redis | grep redis) ]]; then
-    echo "Redis running..."
+    echo "Redis already running..."
 else
     echo "Start redis"
     lunchy start redis

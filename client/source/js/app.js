@@ -12,7 +12,7 @@ define([
   './modules/auth/index',
   './modules/analysis/index',
   './modules/admin/index',
-  './modules/common/global-poller-service.js',
+  './modules/common/global-poller-service',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
   './modules/common/file-upload-service',
@@ -22,7 +22,7 @@ define([
   './modules/project/index',
   './modules/portfolio/index',
   './modules/programs/index',
-  './modules/user-manager/index',
+  './modules/user/index',
   './modules/ui/modal/modal-service',
   './modules/ui/index'
 ], function (angular) {
@@ -36,6 +36,10 @@ define([
       [
         'angularFileUpload',
         'angular-loading-bar',
+        'ui.bootstrap',
+        'ui.router',
+        'tooltip.module',
+        'rzModule',
         'app.contact',
         'app.help',
         'app.auth',
@@ -44,7 +48,7 @@ define([
         'app.admin',
         'app.common.form-input-validate',
         'app.common.file-upload',
-        'app.common.global-poller-service',
+        'app.common.global-poller',
         'app.charts',
         'app.home',
         'app.local-storage',
@@ -54,11 +58,7 @@ define([
         'app.portfolio',
         'app.ui',
         'app.ui.modal',
-        'app.user-manager',
-        'ui.bootstrap',
-        'ui.router',
-        'tooltip.module',
-        'rzModule',
+        'app.user-manager'
       ])
 
     .config(function ($httpProvider) {
@@ -95,12 +95,12 @@ define([
     .run(function ($rootScope, $state, UserManager, activeProject) {
 
       if (window.user) {
-        UserManager.set(window.user);
+        UserManager.setUser(window.user);
         delete window.user;
       }
 
       // Set the active project if any
-      activeProject.loadProjectFor(UserManager.data);
+      activeProject.loadProjectFor(UserManager.currentUser);
 
       var isStatePublic = function (stateName) {
         var publicStates = ['contact', 'login', 'register'];

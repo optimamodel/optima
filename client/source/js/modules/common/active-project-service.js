@@ -26,7 +26,7 @@ define([
           },
           loadProjectFor: function (user) { 
             // Load the active project for the given user.
-            // Do nothing if no project found for that user.
+            // Do nothing if no project found for that user.`
             if(!project.hasProjectFor(user)) { return; }
             var loaded_project = JSON.parse(project.getProjectFor(user));
             project.name = loaded_project.name;
@@ -42,11 +42,11 @@ define([
             return localStorage[project.getProjectKeyFor(user)];
           },
           getProjectForCurrentUser: function (user) {
-            var openProjectStr = this.getProjectFor(UserManager.data);
+            var openProjectStr = this.getProjectFor(UserManager.currentUser);
             return openProjectStr ? JSON.parse(openProjectStr) : void 0;
           },
           getProjectIdForCurrentUser: function (user) {
-            var openProjectStr = this.getProjectFor(UserManager.data);
+            var openProjectStr = this.getProjectFor(UserManager.currentUser);
             var openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
             return openProject ? openProject.id : void 0;
           },

@@ -4,7 +4,7 @@ define([
     './modal/modal-service',
     '../common/file-upload-service',
     '../common/active-project-service',
-    '../user-manager/index'
+    '../user/index'
   ],
   function (angular) {
     'use strict';
@@ -19,7 +19,7 @@ define([
       .controller(
         'MainCtrl',
         function ($scope, $state, activeProject, UserManager) {
-          $scope.user = UserManager.data;
+          $scope.user = UserManager.currentUser;
           $scope.state = $state;
           $scope.userLogged = function () { return UserManager.isLoggedIn; };
           $scope.activeProject = activeProject;

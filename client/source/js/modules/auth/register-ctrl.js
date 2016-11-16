@@ -1,7 +1,7 @@
 define(['./module', '../sha224/sha224'], function (module, SHA224) {
   'use strict';
 
-  return module.controller('RegisterController', function ($scope, $window, User) {
+  return module.controller('RegisterController', function ($scope, $window, UserApi) {
 
     $scope.error = false;
 
@@ -16,7 +16,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
 
       var hashed_password = SHA224($scope.password).toString();
 
-      User.create({
+      UserApi.create({
         username: $scope.username,
         password: hashed_password,
         displayName: $scope.displayName,
