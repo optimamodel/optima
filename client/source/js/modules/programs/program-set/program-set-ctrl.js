@@ -1,8 +1,9 @@
 define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    modalService, toastr, currentProject, projectApiService, $upload, $state) {
+  module.controller('ProgramSetController', function (
+      $scope, $http, $modal, modalService, toastr,
+      currentProject, projectApiService, $upload, $state) {
 
     var project = currentProject.data;
     var defaultPrograms;
@@ -54,6 +55,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       return JSON.parse(JSON.stringify(jsonObject));
     }
 
+    /* Program set functions */
+
     $scope.getCategories = function() {
       $scope.state.activeProgramSet.programs.sort();
       var categories = _.uniq(_.pluck($scope.state.activeProgramSet.programs, "category"));
@@ -72,7 +75,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.state.activeProgramSet = newProgramSet;
         $scope.saveActiveProgramSet('Progset added');
       };
-      programSetModalService.openProgramSetModal(add, 'Add program set', $scope.programSetList, null, 'Add');
+      modalService.rename(
+        add,
+        'Add program set',
+        'Enter name',
+        '',
+        'Name already exists',
+        _.pluck($scope.programSetList, 'name'));
     };
 
     // Open pop-up to re-name programSet
@@ -80,11 +89,20 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.state.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
-        var rename = function (name) {
+        function rename(name) {
           $scope.state.activeProgramSet.name = name;
           $scope.saveActiveProgramSet('Progset renamed');
-        };
-        programSetModalService.openProgramSetModal(rename, 'Rename program set', $scope.programSetList, $scope.state.activeProgramSet.name, 'Update', true);
+        }
+        var name = $scope.state.activeProgramSet.name;
+        var otherNames = _.pluck($scope.programSetList, 'name');
+        modalService.rename(
+          rename,
+          'Rename program set',
+          'Enter name',
+          name,
+          'Name already exists',
+          _.without(otherNames, name)
+        );
       }
     };
 
@@ -155,21 +173,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       $state.reload();
     }
 
-    function getUniqueName(name, otherNames) {
-      var i = 0;
-      var uniqueName = name;
-      while (_.indexOf(otherNames, uniqueName) >= 0) {
-        i += 1;
-        uniqueName = name + ' (' + i + ')';
-      }
-      return uniqueName;
-    }
-
     $scope.copyProgramSet = function () {
       if (!$scope.state.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
-        var copy = function (name) {
+        function copy(name) {
           $http
             .post(
               '/api/project/' + project.id
@@ -181,13 +189,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
               $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
             });
         };
-        var usedNames = _.pluck($scope.programSetList, 'name');
-        programSetModalService.openProgramSetModal(
-            copy,
-            'Copy program set',
-            $scope.programSetList,
-            getUniqueName($scope.state.activeProgramSet.name, usedNames),
-            'Copy');
+        var names = _.pluck($scope.programSetList, 'name');
+        var name = $scope.state.activeProgramSet.name;
+        modalService.rename(
+          copy,
+          'Copy program set',
+          'Copy',
+          modalService.getUniqueName(name, names),
+          'Name already exists',
+          names);
       }
     };
 
@@ -224,17 +234,35 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
+
+    /* Program functions */
+
+    function openProgramModal(program, openProject, programList, parameters, categories) {
+      return $modal.open({
+        templateUrl: 'js/modules/programs/program-set/program-modal.html',
+        controller: 'ProgramModalController',
+        size: 'lg',
+        resolve: {
+          program: function () { return program; },
+          programList: function () { return programList; },
+          openProject: function(){ return openProject; },
+          populations: function () { return openProject.populations; },
+          parameters: function() { return parameters; },
+          categories: function() { return categories; }
+        }
+      });
+    }
+
     $scope.openEditProgramModal = function ($event, program) {
       var editProgram = angular.copy(program);
       editProgram.short = editProgram.short || editProgram.short;
-      return programSetModalService
-        .openProgramModal(
-          editProgram, project, $scope.state.activeProgramSet.programs, parameters, $scope.getCategories())
-        .result
-        .then(function (newProgram) {
-          $scope.state.activeProgramSet.programs[$scope.state.activeProgramSet.programs.indexOf(program)] = newProgram;
-          $scope.saveActiveProgramSet("Changes saved");
-        });
+      return openProgramModal(
+            editProgram, project, $scope.state.activeProgramSet.programs, parameters, $scope.getCategories())
+          .result
+          .then(function (newProgram) {
+            $scope.state.activeProgramSet.programs[$scope.state.activeProgramSet.programs.indexOf(program)] = newProgram;
+            $scope.saveActiveProgramSet("Changes saved");
+          });
     };
 
     // Creates a new program and opens a modal for editing.
@@ -244,8 +272,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService
-        .openProgramModal(
+      return openProgramModal(
             program, project, $scope.state.activeProgramSet.programs, parameters, $scope.getCategories())
         .result
         .then(function (newProgram) {
@@ -263,8 +290,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       program.short = (program.short || program.short ) + ' copy';
       program.short = undefined;
 
-      return programSetModalService
-        .openProgramModal(
+      return openProgramModal(
           program, project, $scope.state.activeProgramSet.programs, parameters, $scope.getCategories())
         .result
         .then(function (newProgram) {

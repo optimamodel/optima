@@ -186,18 +186,19 @@ define(
       if (!$scope.state.optimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
+        function rename(name) {
+          $scope.state.optimization.name = name;
+          saveOptimizations();
+        }
+        var name = $scope.state.optimization.name;
+        var otherNames = _.pluck($scope.state.optimizations, 'name');
         modalService.rename(
-          function(name) {
-            $scope.state.optimization.name = name;
-            saveOptimizations();
-          },
+          rename,
           'Rename parameter set',
           'Enter name',
-          $scope.state.optimization.name,
+          name,
           'Name already exists',
-          _.without(
-            _.pluck($scope.state.optimizations, 'name'),
-            $scope.state.optimization.name)
+          _.without(otherNames, name)
         );
       }
     };
@@ -210,17 +211,18 @@ define(
       if (!$scope.state.optimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
+        function copy(name) {
+          var copyOptimization = deepCopyJson($scope.state.optimization);
+          copyOptimization.name = name;
+          delete copyOptimization.id;
+          $scope.setActiveOptimization(copyOptimization);
+          $scope.state.optimizations.push($scope.state.optimization);
+          saveOptimizations();
+        }
         var names = _.pluck($scope.state.optimizations, 'name');
         var name = $scope.state.optimization.name;
         modalService.rename(
-          function (name) {
-            var copyOptimization = deepCopyJson($scope.state.optimization);
-            copyOptimization.name = name;
-            delete copyOptimization.id;
-            $scope.setActiveOptimization(copyOptimization);
-            $scope.state.optimizations.push($scope.state.optimization);
-            saveOptimizations();
-          },
+          copy,
           'Copy optimization',
           'Copy',
           modalService.getUniqueName(name, names),
