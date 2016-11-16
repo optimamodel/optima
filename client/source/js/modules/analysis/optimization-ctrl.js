@@ -1,6 +1,7 @@
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
-  'use strict';
+define(
+  ['./module', 'angular', 'underscore'], function (module, angular, _) {
 
+  'use strict';
 
   module.controller('AnalysisOptimizationController', function (
       $scope, $http, $upload, $modal, toastr, modalService,
