@@ -1,22 +1,21 @@
 define(['angular'], function (angular) {
+
   'use strict';
+
   return angular
     .module('app.ui.menu', ['app.user-manager'])
     .directive(
       'menu',
-      function($state, UserManager, fileUpload, activeProject,
+      function(
+        $state, UserManager, fileUpload, activeProject,
         modalService, $http) {
 
           return {
-
             restrict: 'A',
-
             scope: {settings: '= menu'},
-
             templateUrl: function() {
               return 'js/modules/ui/menu/menu.html';
             },
-
             controller: [
               '$scope',
               function ($scope) {
