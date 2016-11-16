@@ -58,7 +58,7 @@ define(['angular' ], function (angular) {
           console.log('Stop polling for', poll.id);
           poll.isRunning = false;
           $timeout.cancel(poll.timer);
-        };
+        }
       }
 
       function stopPolls() {

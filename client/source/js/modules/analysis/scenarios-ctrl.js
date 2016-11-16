@@ -140,7 +140,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       } else if (action === 'copy') {
 
         var newScenario = deepCopyJson(scenario);
-        newScenario.name = scenario.name + ' Copy';
+        var otherNames = _.pluck($scope.scenarios, 'name');
+        newScenario.name = modalService.getUniqueName(
+          scenario.name, otherNames);
         newScenario.id = null;
         newScenarios.push(newScenario);
         $scope.saveScenarios(newScenarios, "Copied scenario");

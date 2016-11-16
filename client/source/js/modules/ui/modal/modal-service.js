@@ -2,24 +2,16 @@
  * modalService provides controllers of a set of reusable modals.
  * They can display custom messages and title and action callbacks.
  */
-define([
-  'angular',
-  'ui.bootstrap'
-], function (angular) {
+define(['angular', 'ui.bootstrap' ], function (angular) {
+
   'use strict';
 
-  return angular.module('app.ui.modal', [
-    'ui.bootstrap'
-  ])
+  return angular
+    .module('app.ui.modal', ['ui.bootstrap'])
     .factory('modalService', ['$modal', function ($modal) {
+
       return {
 
-        /**
-         * Asks the user for confirmation.
-         *
-         * Uses the custom message and title (if present) and
-         * executes the right callback depending on the user's choice.
-         */
         confirm: function (onAccepted, onRejected, acceptButton, rejectButton, message, title) {
 
           var onModalKeyDown = function (event) {
@@ -42,8 +34,6 @@ define([
         },
 
         /**
-         * Displays the given message
-         *
          * @param {function} onAccepted - callback for the acceptButton.
          * @param {string} onAccepted - text for the acceptButton.
          * @param {string} message - text for the description.
