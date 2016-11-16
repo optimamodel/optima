@@ -1,7 +1,6 @@
 define([
     'angular',
     'ui.router',
-    '../resources/model',
 ], function (angular) {
     'use strict';
 

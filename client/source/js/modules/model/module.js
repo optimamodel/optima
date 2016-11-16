@@ -2,16 +2,11 @@ define([
   'angular',
   'ui.router',
   '../project/project-api-service',
-  '../resources/model',
   '../charts/export-all-charts-directive',
 ], function (angular) {
   'use strict';
 
-  return angular.module('app.model', [
-    'app.export-all-charts',
-    'app.resources.model',
-    'ui.router',
-  ])
+  return angular.module('app.model', ['app.export-all-charts', 'ui.router'])
     .config(function ($stateProvider) {
       $stateProvider
         .state('model', {
@@ -24,12 +19,6 @@ define([
           templateUrl: 'js/modules/model/calibration.html',
           controller: 'ModelCalibrationController',
           resolve: {
-            parameters: function (Model) {
-              //return Model.getCalibrateParameters().$promise;
-            },
-            meta: function (Model) {
-              // return Model.getKeyDataMeta().$promise;
-            },
             info: function (projectApiService) {
               return projectApiService.getActiveProject();
             }

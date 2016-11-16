@@ -3,14 +3,12 @@ define([
   'ui.router',
   'toastr',
   '../project/project-api-service',
-  '../resources/model',
   '../charts/export-all-charts-directive',
   ], function (angular) {
   'use strict';
 
   return angular.module('app.programs', [
     'app.export-all-charts',
-      'app.resources.model',
     'ui.router',
     'toastr'
   ])

@@ -2,7 +2,6 @@ define([
   'angular',
   'ui.router',
   '../project/project-api-service',
-  '../resources/model',
   '../charts/export-all-charts-directive',
     '../analysis/parameter-scenarios-modal',
   '../analysis/program-scenarios-modal',
@@ -13,7 +12,6 @@ define([
     'app.analysis',
     [
       'app.export-all-charts',
-      'app.resources.model',
       'ui.router',
       'app.parameter-scenarios-modal',
       'app.program-scenarios-modal',
@@ -27,9 +25,6 @@ define([
           resolve: {
             info: function (projectApiService) {
               return projectApiService.getActiveProject();
-            },
-            meta: function (Model) {
-              //return Model.getKeyDataMeta().$promise;
             }
           }
         })
