@@ -214,7 +214,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             saveAs(blob, ($scope.projectParams.name + '.xlsx'));
             var newProjectId = headers()['x-project-id'];
             activeProject.setActiveProjectFor(
-                $scope.projectParams.name, newProjectId, UserManager.currentUser);
+                $scope.projectParams.name, newProjectId, UserManager.user);
           }
           $state.go('home');
         });

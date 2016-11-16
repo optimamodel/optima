@@ -42,11 +42,11 @@ define([
             return localStorage[project.getProjectKeyFor(user)];
           },
           getProjectForCurrentUser: function (user) {
-            var openProjectStr = this.getProjectFor(UserManager.currentUser);
+            var openProjectStr = this.getProjectFor(UserManager.user);
             return openProjectStr ? JSON.parse(openProjectStr) : void 0;
           },
           getProjectIdForCurrentUser: function (user) {
-            var openProjectStr = this.getProjectFor(UserManager.currentUser);
+            var openProjectStr = this.getProjectFor(UserManager.user);
             var openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
             return openProject ? openProject.id : void 0;
           },

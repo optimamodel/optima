@@ -5,7 +5,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
 
     $scope.error = false;
 
-    const user = UserManager.currentUser;
+    const user = UserManager.user;
     $scope.username = user.username;
     $scope.displayName = user.displayName;
     $scope.email = user.email;

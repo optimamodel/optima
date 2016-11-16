@@ -7,11 +7,11 @@ define(['angular', './user-api-service' ], function (angular) {
       var userManager = {
         isLoggedIn: false,
         isAdmin: false,
-        currentUser: {},
+        user: {},
         setUser: function (user) {
           userManager.isLoggedIn = true;
           userManager.isAdmin = user.is_admin;
-          angular.extend(userManager.currentUser, user);
+          angular.extend(userManager.user, user);
         }
       };
       return userManager;

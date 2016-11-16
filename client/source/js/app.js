@@ -22,7 +22,7 @@ define([
   './modules/project/index',
   './modules/portfolio/index',
   './modules/programs/index',
-  './modules/user/index',
+  './modules/user/user-manager-service',
   './modules/ui/modal/modal-service',
   './modules/ui/index'
 ], function (angular) {
@@ -94,13 +94,18 @@ define([
 
     .run(function ($rootScope, $state, UserManager, activeProject) {
 
+      /**
+       * an injector has been run in main.js before app.js to fetch
+       * the current user and stored in window.user, this will be
+       * used to build the app in the first run
+       */
       if (window.user) {
         UserManager.setUser(window.user);
         delete window.user;
       }
 
       // Set the active project if any
-      activeProject.loadProjectFor(UserManager.currentUser);
+      activeProject.loadProjectFor(UserManager.user);
 
       var isStatePublic = function (stateName) {
         var publicStates = ['contact', 'login', 'register'];
