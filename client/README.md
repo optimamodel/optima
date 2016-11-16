@@ -77,11 +77,10 @@ In the `source/js` folder:
     - `common` utility functions and directives
     - `contact` feedback/contact page
     - `help` help page, loads `version.js`
-    - `home` the main home page, also the project management page
     - `model` the calibration page
     - `portfolio` the geospatial analysis
     - `program` program set and cost functions page
-    - `project` project edit/populations, and population modal dialog, and some services
+    - `project` project management (home), project edit/populations, and population modal dialog, and some services
     - `sha224` stripped down SHA224 module to hash passwords
     - `ui` menu items and common modal dialogs
     - `user` user manager and user-api services, login, register, and user-edit pages

@@ -34,7 +34,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .get('/api/project/' + project.id + '/parsets')
         .success(function(response) {
           var parsets = response.parsets;
-          console.log('parsets', parsets);
           if (parsets) {
             $scope.parsets = parsets;
             $scope.state.parset = getMostRecentItem(parsets, 'updated');
@@ -136,7 +135,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       }
 
-      renameModalService.openEditNameModal(
+      modalService.rename(
         add, 'Add parameter set', 'Enter name', '',
         'Name already exists',
         _.pluck($scope.parsets, 'name'));

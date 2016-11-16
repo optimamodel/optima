@@ -5,7 +5,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('AnalysisScenariosController', function (
       $scope, $http, $modal, info, progsetsResponse, parsetResponse,
-      scenariosResponse, toastr) {
+      scenariosResponse, modalService, toastr) {
 
     function initialize() {
       $scope.project = info.data;

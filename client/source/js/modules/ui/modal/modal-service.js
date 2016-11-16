@@ -127,42 +127,6 @@ define([
         },
 
         /**
-         * This function opens a modal that will ask the user to provide a name
-         * for a new optimization.
-         */
-        addOptimization: function (callback, optimizations) {
-
-          var onModalKeyDown = function (event) {
-            if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
-          };
-
-          var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-add-optimization.html',
-            controller: ['$scope', '$document', function ($scope, $document) {
-
-              $scope.createOptimization = function (name) {
-                callback(name);
-                modalInstance.close();
-              };
-
-              $scope.isUniqueName = function (name, addOptimizationForm) {
-                var exists = _(optimizations).some(function(item) {
-                  return item.name == name;
-                });
-                addOptimizationForm.organizationName.$setValidity("organizationExists", !exists);
-                return exists;
-              };
-
-              $document.on('keydown', onModalKeyDown); // observe
-              $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
-
-            }]
-          });
-
-          return modalInstance;
-        },
-
-        /**
          * Asks the user to choose between two choices.
          *
          * Uses the custom message and title (if present) and executes the right
