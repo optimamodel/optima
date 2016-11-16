@@ -107,11 +107,10 @@ define([
       // Set the active project if any
       activeProject.loadProjectFor(UserManager.user);
 
-      var isStatePublic = function (stateName) {
+      function isStatePublic(stateName) {
         var publicStates = ['contact', 'login', 'register'];
-
         return publicStates.indexOf(stateName) !== -1;
-      };
+      }
 
       $rootScope.$on('$stateChangeStart', function (event, to) {
         if (!UserManager.isLoggedIn && !isStatePublic(to.name)) {
