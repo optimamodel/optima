@@ -3,7 +3,7 @@ define([
   'ui.router',
   '../project/project-api-service',
   '../charts/export-all-charts-directive',
-    '../analysis/parameter-scenarios-modal',
+  '../analysis/parameter-scenarios-modal',
   '../analysis/program-scenarios-modal',
 ], function (angular) {
   'use strict';

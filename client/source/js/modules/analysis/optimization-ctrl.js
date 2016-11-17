@@ -221,13 +221,7 @@ define(
         }
         var names = _.pluck($scope.state.optimizations, 'name');
         var name = $scope.state.optimization.name;
-        modalService.rename(
-          copy,
-          'Copy optimization',
-          'Copy',
-          modalService.getUniqueName(name, names),
-          'Name already exists',
-          names);
+        copy(modalService.getUniqueName(name, names));
       }
     };
 

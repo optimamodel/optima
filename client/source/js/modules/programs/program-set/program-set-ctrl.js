@@ -191,13 +191,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         };
         var names = _.pluck($scope.programSetList, 'name');
         var name = $scope.state.activeProgramSet.name;
-        modalService.rename(
-          copy,
-          'Copy program set',
-          'Copy',
-          modalService.getUniqueName(name, names),
-          'Name already exists',
-          names);
+        copy(modalService.getUniqueName(name, names));
       }
     };
 

@@ -160,14 +160,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               toastr.success('Copied parset');
             });
         }
-
         var names = _.pluck($scope.parsets, 'name');
         var name = $scope.state.parset.name;
-        modalService.rename(
-          copy, 'Copy parameter set', 'Enter name',
-          modalService.getUniqueName(name, names),
-          'Name already exists',
-          names);
+        copy(modalService.getUniqueName(name, names));
       }
     };
 
