@@ -1088,12 +1088,13 @@ def force_tuple_list(item):
 def convert_scenario_pars(pars):
     result = []
     for par in pars:
+        pprint(normalize_obj(par), indent=2)
         result.append({
-            'name': par['name'],
-            'startyear': par['startyear'],
-            'endval': par['endval'],
-            'endyear': par['endyear'],
-            'startval': par['startval'],
+            'name': par.get('name', ''),
+            'startyear': par.get('startyear', None),
+            'endval': par.get('endval', None),
+            'endyear': par.get('endyear', None),
+            'startval': par.get('startval', None),
             'for': par['for'][0] if len(par['for']) == 1 else par['for']
         })
     return result
@@ -1161,18 +1162,18 @@ def get_scenario_summary(project, scenario):
               values: [number -or- null] # same length as years
             - ...
     """
-    extra_data = {}
+    variant_data = {}
 
     # budget, coverage, parameter, any others?
     if isinstance(scenario, op.Parscen):
         scenario_type = "parameter"
-        extra_data["pars"] = convert_scenario_pars(scenario.pars)
+        variant_data["pars"] = convert_scenario_pars(scenario.pars)
     elif isinstance(scenario, op.Coveragescen):
         scenario_type = "coverage"
-        extra_data["coverage"] = convert_program_list(scenario.coverage)
+        variant_data["coverage"] = convert_program_list(scenario.coverage)
     elif isinstance(scenario, op.Budgetscen):
         scenario_type = "budget"
-        extra_data["budget"] = convert_program_list(scenario.budget)
+        variant_data["budget"] = convert_program_list(scenario.budget)
 
     if hasattr(scenario, "progsetname"):
         progset_id = project.progsets[scenario.progsetname].uid
@@ -1195,7 +1196,7 @@ def get_scenario_summary(project, scenario):
         'years': scenario.t,
         'parset_id': project.parsets[scenario.parsetname].uid,
     }
-    result.update(extra_data)
+    result.update(variant_data)
     return result
 
 
