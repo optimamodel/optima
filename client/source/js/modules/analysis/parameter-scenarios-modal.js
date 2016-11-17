@@ -14,9 +14,6 @@ define(['angular'], function (module) {
         $scope.years = years;
         $scope.parsByIdAndYear = parsByIdAndYear;
 
-        console.log('scenario', scenario);
-        console.log('parsByIdAndYear', $scope.parsByIdAndYear);
-
         $scope.state = {};
 
         if (_.isUndefined($scope.scenario.name)) {
@@ -78,10 +75,6 @@ define(['angular'], function (module) {
           $scope.popsOfPar.push(popsOfPar);
 
         });
-
-        console.log('$scope.scenario.pars', $scope.scenario.pars);
-        console.log('$scope.popsOfPar', $scope.popsOfPar);
-        console.log('$scope.parSelectors', $scope.parSelectors);
       }
 
       $scope.selectNewPar = function (iPar) {
@@ -111,7 +104,7 @@ define(['angular'], function (module) {
       };
 
       $scope.addPar = function () {
-        var newScenPar = {}
+        var newScenPar = {};
         newScenPar.endval = null;
         newScenPar.startyear = new Date().getFullYear();
         newScenPar.endyear = null;

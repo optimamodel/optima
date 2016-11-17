@@ -801,8 +801,9 @@ class ScenarioSimulationGraphs(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Run scenarios and returns the graphs')
-    def get(self, project_id):
-        return dataio.make_scenarios_graphs(project_id)
+    def post(self, project_id):
+        is_run = get_post_data_json().get('isRun', False)
+        return dataio.make_scenarios_graphs(project_id, is_run)
 
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
 
