@@ -999,7 +999,8 @@ def make_scenarios_graphs(project_id, is_run=False):
     result = load_result(project_id, None, "scenarios")
     if result is None:
         if not is_run:
-            return None
+            print(">> No pre-calculated scenarios results found")
+            return {}
         project = load_project(project_id)
         if len(project.scens) == 0:
             print(">> No scenarios in project")
