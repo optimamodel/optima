@@ -89,7 +89,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           scenario: function () { return angular.copy(scenario); },
           parsets: function () { return $scope.parsets; },
           progsets: function () { return $scope.progsets; },
-          ykeys: function () { return $scope.parametersByParsetId; },
+          parsByIdAndYear: function () { return $scope.parametersByParsetId; },
           budgetsByProgsetId: function() { return $scope.budgetsByProgsetId; },
           coveragesByParsetIdyProgsetId: function() { return $scope.defaultCoveragesByParsetIdyProgsetId; },
           years: function() { return $scope.years }

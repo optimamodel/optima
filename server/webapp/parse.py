@@ -416,9 +416,12 @@ def get_parameters_for_scenarios(project, start_year=None):
     Returns parameters that can be modified in a scenario:
         <parsetID>:
             <year>:
-                <parameterShort>:
-                    - val: string -or- list of two string
-                    - label: string
+                - short: string
+                - name: string
+                - pop: string -or- list of two string
+                - popLabel: string
+                - limits: [number, number]
+                - startVal: number
     """
     if start_year is None:
         start_year = project.settings.start
@@ -429,12 +432,11 @@ def get_parameters_for_scenarios(project, start_year=None):
         parset_id = str(parset.uid)
         result[parset_id] = {}
         for year in years:
-            y_keys_of_parset = {}
-            result[parset_id][year] = y_keys_of_parset
+            pars = []
+            result[parset_id][year] = pars
             for par in parset.pars[0].values():
                 if not hasattr(par, 'y') or not par.visible:
                     continue
-                y_keys_of_parset[par.short] = []
                 for pop in par.y.keys():
                     try:
                         par_defaults = op.setparscenvalues(
@@ -444,9 +446,11 @@ def get_parameters_for_scenarios(project, start_year=None):
                             startval = None
                     except:
                         startval = None
-                    y_keys_of_parset[par.short].append({
-                        'val': pop,
-                        'label': make_pop_label(pop),
+                    pars.append({
+                        'name': par.name,
+                        'short': par.short,
+                        'pop': pop,
+                        'popLabel': make_pop_label(pop),
                         'limits': get_par_limits(project, par),
                         'startval': startval
                     })
