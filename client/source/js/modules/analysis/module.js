@@ -2,11 +2,7 @@ define([
   'angular',
   'ui.router',
   '../project/project-api-service',
-  '../resources/model',
-  '../mpld3-charts/export-all-charts',
-  '../mpld3-charts/export-all-data',
-  '../validations/more-than-directive',
-  '../validations/less-than-directive',
+  '../charts/export-all-charts-directive',
   '../analysis/parameter-scenarios-modal',
   '../analysis/program-scenarios-modal',
 ], function (angular) {
@@ -16,11 +12,7 @@ define([
     'app.analysis',
     [
       'app.export-all-charts',
-      'app.export-all-data',
-      'app.resources.model',
       'ui.router',
-      'app.validations.more-than',
-      'app.validations.less-than',
       'app.parameter-scenarios-modal',
       'app.program-scenarios-modal',
     ])
@@ -33,9 +25,6 @@ define([
           resolve: {
             info: function (projectApiService) {
               return projectApiService.getActiveProject();
-            },
-            meta: function (Model) {
-              //return Model.getKeyDataMeta().$promise;
             }
           }
         })

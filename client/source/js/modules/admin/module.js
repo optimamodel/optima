@@ -1,13 +1,10 @@
 define([
     'angular',
     'ui.router',
-    '../../config',
-    '../resources/model',
 ], function (angular) {
     'use strict';
 
     return angular.module('app.admin', [
-        'app.constants',
         'ui.router'
     ]).config(function ($stateProvider) {
         $stateProvider

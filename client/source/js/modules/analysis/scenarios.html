@@ -44,15 +44,21 @@
             <td>{{ scenario.scenario_type }}</td>
 
             <td style="white-space: nowrap; width:200px; max-width:200px">
-                <a class="fa fa-pencil"
-                   ng-click="openModal(scenario, 'edit', $event)">
-                </a>
-                <i class="fa fa-copy"
-                   ng-click="openModal(scenario, 'copy', $event)">
-                </i>
-                <i class="fa fa-trash-o"
-                   ng-click="openModal(scenario, 'delete', $event)">
-                </i>
+              <i class="fa fa-pencil"
+                 tp-text="Edit" tooltip tp-class="tooltip"
+                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                 ng-click="openModal(scenario, 'edit', $event)">
+              </i>
+              <i class="fa fa-copy"
+                 tp-text="Copy" tooltip tp-class="tooltip"
+                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                 ng-click="openModal(scenario, 'copy', $event)">
+              </i>
+              <i class="fa fa-trash-o"
+                 tp-text="Delete" tooltip tp-class="tooltip"
+                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                 ng-click="openModal(scenario, 'delete', $event)">
+              </i>
             </td>
           </tr>
 
@@ -61,7 +67,7 @@
               <div style="float: left">
                 <button
                     class="btn"
-                    ng-click="runScenarios()"
+                    ng-click="graphScenarios(true)"
                     ng-disabled="!isRunnable()">
                   Run scenarios
                 </button>

@@ -1,11 +1,10 @@
 define([
     'angular',
-    './menu/index',
-    './spreadsheet-upload-hint/index',
+    './menu/menu-directive',
     './modal/modal-service',
     '../common/file-upload-service',
     '../common/active-project-service',
-    '../user-manager/index'
+    '../user/user-manager-service'
   ],
   function (angular) {
     'use strict';
@@ -20,7 +19,7 @@ define([
       .controller(
         'MainCtrl',
         function ($scope, $state, activeProject, UserManager) {
-          $scope.user = UserManager.data;
+          $scope.user = UserManager.user;
           $scope.state = $state;
           $scope.userLogged = function () { return UserManager.isLoggedIn; };
           $scope.activeProject = activeProject;

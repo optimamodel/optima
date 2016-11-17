@@ -43,7 +43,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.edit = function (name, id) {
-      activeProject.setActiveProjectFor(name, id, UserManager.data);
+      activeProject.setActiveProjectFor(name, id, UserManager.user);
       $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
       $state.go('project.edit');
     };
@@ -54,7 +54,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.open = function (name, id) {
-      activeProject.setActiveProjectFor(name, id, UserManager.data);
+      activeProject.setActiveProjectFor(name, id, UserManager.user);
       $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
     };
 
@@ -108,7 +108,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return item.id != id;
           });
 
-          activeProject.ifActiveResetFor(id, UserManager.data);
+          activeProject.ifActiveResetFor(id, UserManager.user);
         });
     };
   });

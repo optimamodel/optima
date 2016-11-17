@@ -28,6 +28,7 @@ from pprint import pprint
 
 from flask import helpers, current_app, abort, request, session, make_response, jsonify
 from flask.ext.login import current_user, login_user, logout_user
+from validate_email import validate_email
 
 from werkzeug.utils import secure_filename
 from flask.ext.restful import marshal
@@ -37,13 +38,65 @@ import optima.geospatial as geospatial
 
 from .dbconn import db
 from . import parse
-from .exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
-from .utils import nullable_email, hashed_password
+from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
+    UserAlreadyExists, UserDoesNotExist, InvalidCredentials
 from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
-from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
-from .utils import TEMPLATEDIR, templatepath, upload_dir_user
-from .parse import normalize_obj
+
+
+TEMPLATEDIR = "/tmp"  # CK: hotfix to prevent ownership issues
+
+
+def fullpath(filename, datadir=None):
+    """
+    "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
+    """
+
+    if datadir == None:
+        datadir = current_app.config['UPLOAD_FOLDER']
+
+    result = filename
+
+    # get user dir path
+    datadir = upload_dir_user(datadir)
+
+    if not (os.path.exists(datadir)):
+        os.makedirs(datadir)
+    if os.path.dirname(filename) == '' and not os.path.exists(filename):
+        result = os.path.join(datadir, filename)
+
+    return result
+
+
+def templatepath(filename):
+    return fullpath(filename, TEMPLATEDIR)
+
+
+def upload_dir_user(dirpath, user_id=None):
+    try:
+        from flask.ext.login import current_user  # pylint: disable=E0611,F0401
+
+        # get current user
+        if current_user.is_anonymous() == False:
+
+            current_user_id = user_id if user_id else current_user.id
+
+            # user_path
+            user_path = os.path.join(dirpath, str(current_user_id))
+
+            # if dir does not exist
+            if not (os.path.exists(dirpath)):
+                os.makedirs(dirpath)
+
+            # if dir with user id does not exist
+            if not (os.path.exists(user_path)):
+                os.makedirs(user_path)
+
+            return user_path
+    except:
+        return dirpath
+
+    return dirpath
 
 
 # USERS
@@ -70,6 +123,27 @@ def get_users():
 
 def get_user_from_id(user_id):
     return UserDb.query.filter_by(id=user_id).first()
+
+
+def email(email_str):
+    if validate_email(email_str):
+        return email_str
+    raise ValueError('{} is not a valid email'.format(email_str))
+
+
+def nullable_email(email_str):
+    if not email_str:
+        return email_str
+    else:
+        return email(email_str)
+
+
+def hashed_password(password_str):
+    if isinstance(password_str, basestring) and len(password_str) == 56:
+        return password_str
+
+    raise ValueError('Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(
+        password_str, len(password_str), type(password_str)))
 
 
 def parse_user_args(args):
@@ -123,7 +197,6 @@ def do_login_user(args):
         userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
     except:
         userisanonymous = current_user.is_anonymous
-
 
     if userisanonymous:
         current_app.logger.debug("current user anonymous, proceed with logging in")
@@ -766,10 +839,12 @@ def save_parameters(project_id, parset_id, parameters):
 
 def load_parset_graphs(
         project_id, parset_id, calculation_type, which=None,
-        parameters=None, start=None, end=None): # Adding hooks for selecting year range
+        parameters=None, startYear=None, endYear=None):
 
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
+
+    print(">> Calibration parameters %s %s %s" % (startYear, endYear, parameters is not None))
 
     if parameters is not None:
         print ">> Updating parset '%s'" % parset.name
@@ -781,8 +856,12 @@ def load_parset_graphs(
     result = load_result(project_id, parset_id, calculation_type)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
-        result = project.runsim(name=parset.name, start=start, end=end) # ACTUALLY RUN THE MODEL
-        result_record = update_or_create_result_record_by_id(result, project_id, parset_id, calculation_type)
+        if startYear is not None and endYear is not None:
+            project.settings.start = startYear
+            project.settings.end = endYear
+        result = project.runsim(name=parset.name)
+        result_record = update_or_create_result_record_by_id(
+            result, project_id, parset_id, calculation_type)
         db.session.add(result_record)
         db.session.commit()
 
@@ -916,9 +995,12 @@ def load_result_mpld3_graphs(result_id, which):
 ## SCENARIOS
 
 
-def make_scenarios_graphs(project_id):
+def make_scenarios_graphs(project_id, is_run=False):
     result = load_result(project_id, None, "scenarios")
     if result is None:
+        if not is_run:
+            print(">> No pre-calculated scenarios results found")
+            return {}
         project = load_project(project_id)
         if len(project.scens) == 0:
             print(">> No scenarios in project")
@@ -1270,7 +1352,7 @@ def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     program = parse.get_program_from_progset(progset, program_id)
     years = parse.get_project_years(project)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
-    return normalize_obj(dict(zip(years, popsizes)))
+    return parse.normalize_obj(dict(zip(years, popsizes)))
 
 
 def load_project_program_summaries(project_id):
