@@ -6,8 +6,8 @@ define(['angular'], function (angular) {
       $stateProvider
         .state('login', {
           url: '/login',
-          onEnter: function ($state, UserManager) {
-            if (UserManager.isLoggedIn) {
+          onEnter: function ($state, userManager) {
+            if (userManager.isLoggedIn) {
               $state.go('home');
             }
           },
@@ -16,8 +16,8 @@ define(['angular'], function (angular) {
         })
         .state('register', {
           url: '/register',
-          onEnter: function ($state, UserManager) {
-            if (UserManager.isLoggedIn) {
+          onEnter: function ($state, userManager) {
+            if (userManager.isLoggedIn) {
               $state.go('home');
             }
           },

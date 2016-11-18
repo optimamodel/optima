@@ -11,8 +11,8 @@ define(['angular', '../common/local-storage-service'], function (angular) {
   return angular.module('app.active-project', ['app.local-storage'])
 
     .factory('activeProject', [
-      '$http', 'localStorage', 'UserManager',
-      function ($http, localStorage, UserManager) {
+      '$http', 'localStorage', 'userManager',
+      function ($http, localStorage, userManager) {
 
         var project = {
           setActiveProjectFor: function (projectName, projectId, user) { 
@@ -41,11 +41,11 @@ define(['angular', '../common/local-storage-service'], function (angular) {
             return localStorage[project.getProjectKeyFor(user)];
           },
           getProjectForCurrentUser: function (user) {
-            var openProjectStr = this.getProjectFor(UserManager.user);
+            var openProjectStr = this.getProjectFor(userManager.user);
             return openProjectStr ? JSON.parse(openProjectStr) : void 0;
           },
           getProjectIdForCurrentUser: function (user) {
-            var openProjectStr = this.getProjectFor(UserManager.user);
+            var openProjectStr = this.getProjectFor(userManager.user);
             var openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
             return openProject ? openProject.id : void 0;
           },

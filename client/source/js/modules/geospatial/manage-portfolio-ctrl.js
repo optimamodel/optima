@@ -7,7 +7,7 @@ define(
       'PortfolioController',
       function (
         $scope, $http, activeProject, modalService, fileUpload,
-        UserManager, $state, toastr, globalPoller, $modal, $upload) {
+        userManager, $state, toastr, globalPoller, $modal, $upload) {
 
         function initialize() {
 

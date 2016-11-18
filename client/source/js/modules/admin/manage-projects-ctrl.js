@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('AdminManageProjectsController', function (
     $scope, $http, projects, users, activeProject,
-    UserManager, modalService, projectApiService, $state, toastr) {
+    userManager, modalService, projectApiService, $state, toastr) {
 
     $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
     $scope.users = _.map(
@@ -43,7 +43,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.edit = function (name, id) {
-      activeProject.setActiveProjectFor(name, id, UserManager.user);
+      activeProject.setActiveProjectFor(name, id, userManager.user);
       $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
       $state.go('project.edit');
     };
@@ -54,7 +54,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.open = function (name, id) {
-      activeProject.setActiveProjectFor(name, id, UserManager.user);
+      activeProject.setActiveProjectFor(name, id, userManager.user);
       $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
     };
 
@@ -108,7 +108,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return item.id != id;
           });
 
-          activeProject.ifActiveResetFor(id, UserManager.user);
+          activeProject.ifActiveResetFor(id, userManager.user);
         });
     };
   });

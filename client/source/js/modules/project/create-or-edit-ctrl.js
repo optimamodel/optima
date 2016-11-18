@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ProjectCreateOrEditController', function (
       $scope, $state, $modal, $timeout, $http, activeProject, populations,
-      UserManager, modalService, projects, projectApiService, info) {
+      userManager, modalService, projects, projectApiService, info) {
 
     function initialize() {
       $scope.allProjects = projects.data.projects;
@@ -214,7 +214,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             saveAs(blob, ($scope.projectParams.name + '.xlsx'));
             var newProjectId = headers()['x-project-id'];
             activeProject.setActiveProjectFor(
-                $scope.projectParams.name, newProjectId, UserManager.user);
+                $scope.projectParams.name, newProjectId, userManager.user);
           }
           $state.go('home');
         });
