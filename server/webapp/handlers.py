@@ -34,7 +34,6 @@ import server.webapp.tasks
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
-
 # add hooks to handle UID's and datetime strings
 @api.representation('application/json')
 def output_json(data, code, headers=None):
@@ -42,14 +41,6 @@ def output_json(data, code, headers=None):
     resp = make_response(inner, code)
     resp.headers.extend(headers or {})
     return resp
-
-
-@api_blueprint.before_request
-def before_request():
-    dbconn.db.engine.dispose()
-    g.user = None
-    if 'user_id' in session:
-        g.user = dataio.get_user_from_id(session['user_id'])
 
 
 def get_post_data_json():
@@ -885,7 +876,7 @@ class User(Resource):
     @swagger.operation(summary='List users')
     @verify_admin_request_decorator
     def get(self):
-        return {'users': dataio.get_users()}
+        return {'users': dataio.get_user_summaries()}
 
     @swagger.operation(summary='Create a user')
     def post(self):
@@ -918,7 +909,7 @@ class CurrentUser(Resource):
 
     @swagger.operation(summary='Return the current user')
     def get(self):
-        return dataio.marshal_user(current_user)
+        return dataio.parse_user_record(current_user)
 
 api.add_resource(CurrentUser, '/api/user/current')
 

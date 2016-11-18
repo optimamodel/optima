@@ -37,3 +37,4 @@ define(['angular'], function (angular) {
 
     });
 });
+

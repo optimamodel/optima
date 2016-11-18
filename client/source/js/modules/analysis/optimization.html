@@ -83,7 +83,15 @@
             ng-click="saveOptimizationForm(optimizationForm)"
             ng-disabled="checkNotSavale()"/>
           &nbsp;
-          Run optimization for about
+
+          <button
+            class="btn"
+            ng-click="startOptimization()"
+            ng-disabled="checkNotRunnable()">
+            Run optimization
+          </button>
+          &nbsp;
+          for about
           &nbsp;
           <select ng-init="state.maxtime=10" ng-model="state.maxtime">
             <option value="10">10 seconds</option>
@@ -93,13 +101,6 @@
             <option value="600">10 minutes</option>
             <option value="1800">30 minutes</option>
           </select>
-          &nbsp;
-          <button
-            class="btn"
-            ng-click="startOptimization()"
-            ng-disabled="checkNotRunnable()">
-            Optimize
-          </button>
           &nbsp;
           <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
             {{ statusMessage }}

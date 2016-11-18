@@ -28,10 +28,8 @@ from pprint import pprint
 
 from flask import helpers, current_app, abort, request, session, make_response, jsonify
 from flask.ext.login import current_user, login_user, logout_user
-from validate_email import validate_email
-
 from werkzeug.utils import secure_filename
-from flask.ext.restful import marshal
+from validate_email import validate_email
 
 import optima as op
 import optima.geospatial as geospatial
@@ -113,16 +111,18 @@ def authenticate_current_user(raise_exception=True):
             return None
 
 
-def marshal_user(query):
-    return marshal(query, UserDb.resource_fields)
+def parse_user_record(user_record):
+    return {
+        'id': user_record.id,
+        'displayName': user_record.name,
+        'username': user_record.username,
+        'email': user_record.email,
+        'is_admin': user_record.is_admin,
+    }
 
 
-def get_users():
-    return marshal_user(UserDb.query.all())
-
-
-def get_user_from_id(user_id):
-    return UserDb.query.filter_by(id=user_id).first()
+def get_user_summaries():
+    return [parse_user_record(q) for q in UserDb.query.all()]
 
 
 def email(email_str):
@@ -164,7 +164,7 @@ def create_user(args):
     db.session.add(user)
     db.session.commit()
 
-    return marshal_user(user)
+    return parse_user_record(user)
 
 
 def update_user(user_id, args):
@@ -189,7 +189,7 @@ def update_user(user_id, args):
 
     db.session.commit()
 
-    return marshal_user(user)
+    return parse_user_record(user)
 
 
 def do_login_user(args):
@@ -210,7 +210,7 @@ def do_login_user(args):
             # Make sure user is valid and password matches
             if user is not None and user.password == args['password']:
                 login_user(user)
-                return marshal_user(user)
+                return parse_user_record(user)
 
         except Exception:
             var = traceback.format_exc()
@@ -219,7 +219,7 @@ def do_login_user(args):
         raise InvalidCredentials
 
     else:
-        return marshal_user(current_user)
+        return parse_user_record(current_user)
 
 
 def delete_user(user_id):
