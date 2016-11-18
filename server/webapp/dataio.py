@@ -125,13 +125,6 @@ def get_user_summaries():
     return [parse_user_record(q) for q in UserDb.query.all()]
 
 
-def get_user_from_id(user_id):
-    """
-    Used by before_request to set request.g.user
-    """
-    return UserDb.query.filter_by(id=user_id).first()
-
-
 def email(email_str):
     if validate_email(email_str):
         return email_str

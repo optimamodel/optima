@@ -34,7 +34,6 @@ import server.webapp.tasks
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
-
 # add hooks to handle UID's and datetime strings
 @api.representation('application/json')
 def output_json(data, code, headers=None):
@@ -42,14 +41,6 @@ def output_json(data, code, headers=None):
     resp = make_response(inner, code)
     resp.headers.extend(headers or {})
     return resp
-
-
-@api_blueprint.before_request
-def before_request():
-    dbconn.db.engine.dispose()
-    g.user = None
-    if 'user_id' in session:
-        g.user = dataio.get_user_from_id(session['user_id'])
 
 
 def get_post_data_json():
