@@ -1,5 +1,4 @@
 import os
-from flask_restful import fields
 from flask_restful_swagger import swagger
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
@@ -15,14 +14,6 @@ from .dbconn import db, redis
 class UserDb(db.Model):
 
     __tablename__ = 'users'
-
-    resource_fields = {
-        'id': fields.String,
-        'displayName': fields.String(attribute='name'),
-        'username': fields.String,
-        'email': fields.String,
-        'is_admin': fields.Boolean,
-    }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     username = db.Column(db.String(255))

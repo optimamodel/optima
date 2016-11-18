@@ -885,7 +885,7 @@ class User(Resource):
     @swagger.operation(summary='List users')
     @verify_admin_request_decorator
     def get(self):
-        return {'users': dataio.get_users()}
+        return {'users': dataio.get_user_summaries()}
 
     @swagger.operation(summary='Create a user')
     def post(self):
@@ -918,7 +918,7 @@ class CurrentUser(Resource):
 
     @swagger.operation(summary='Return the current user')
     def get(self):
-        return dataio.marshal_user(current_user)
+        return dataio.parse_user_record(current_user)
 
 api.add_resource(CurrentUser, '/api/user/current')
 
