@@ -578,6 +578,7 @@ def makepars(data, label=None, verbose=2):
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
         
     # Convert matrices to lists of of population-pair keys
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
         actsname = 'acts'+act
         condname = 'cond'+act
@@ -587,7 +588,7 @@ def makepars(data, label=None, verbose=2):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        if i>=j:
+                        if key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     

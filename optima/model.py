@@ -343,7 +343,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             lossrates[cd4,:] = minimum(simpars['aidsleavecare'][0],simpars['leavecare'][:,0])
         dxfrac = 1.-exp(-averagedurationinfected*testingrates)
         linktocarefrac = linkagerates
-        lostfrac = 1.-exp(-averagedurationinfected*lossrates)
+        lostfrac = lossrates # WARNING, this is not technically correct, but seems to work ok in practice 
         undxdist = 1.-dxfrac
         dxdist = dxfrac*(1.-linktocarefrac)
         incaredist = dxfrac*linktocarefrac*(1.-lostfrac)
@@ -657,7 +657,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raw_receivepmtct[p1, t] += thisreceivepmtct/dt 
             raw_mtct[p2, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
-            raw_hivbirths[p1, t] += thiseligbirths/dt
+            raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update incidence based on PMTCT calculation
 
