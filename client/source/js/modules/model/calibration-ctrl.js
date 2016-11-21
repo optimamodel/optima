@@ -171,7 +171,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       if ($scope.state.parset.name === "default") {
         modalService.informError(
-          [{message: 'Deleting the default parameter set is not permitted.'}]);
+          [{message: 'Renaming the default parameter set is not permitted.'}]);
         return;
       }
 

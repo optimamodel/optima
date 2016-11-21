@@ -1,4 +1,4 @@
-__doc__ = """
+"""
 
 dataio.py
 =========
@@ -32,33 +32,18 @@ from flask.ext.login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from flask.ext.restful import marshal
 
-from optima.dataio import loadobj as loaddbobj
 import optima as op
-import optima
+import optima.geospatial as geospatial
 
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import UserDb
-from server.webapp.exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
-from server.webapp.utils import nullable_email, hashed_password
-from .dbmodels import ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
-from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists
-from .parse import get_default_program_summaries, \
-    get_parameters_for_edit_program, get_parameters_for_outcomes, \
-    get_parameters_from_parset, set_parameters_on_parset, \
-    get_progset_from_project, get_populations_from_project, \
-    set_project_summary_on_project, \
-    get_project_summary_from_project, get_parset_from_project, \
-    get_parset_summaries, set_scenario_summaries_on_project, \
-    get_scenario_summaries, get_parameters_for_scenarios, \
-    get_optimization_summaries, get_default_optimization_summaries, \
-    set_optimization_summaries_on_project, get_optimization_from_project, \
-    get_program_from_progset, get_project_years, get_progset_summaries, \
-    set_progset_summary_on_project, get_progset_summary, \
-    get_outcome_summaries_from_progset, set_outcome_summaries_on_progset, \
-    set_program_summary_on_progset, parse_portfolio_summary
-from .plot import make_mpld3_graph_dict, convert_to_mpld3
-from .utils import TEMPLATEDIR, templatepath, upload_dir_user, normalize_obj
+from .dbconn import db
 from . import parse
+from .exceptions import UserAlreadyExists, UserDoesNotExist, InvalidCredentials
+from .utils import nullable_email, hashed_password
+from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
+from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists
+from .plot import make_mpld3_graph_dict, convert_to_mpld3
+from .utils import TEMPLATEDIR, templatepath, upload_dir_user
+from .parse import normalize_obj
 
 
 # USERS
@@ -81,6 +66,10 @@ def marshal_user(query):
 
 def get_users():
     return marshal_user(UserDb.query.all())
+
+
+def get_user_from_id(user_id):
+    return UserDb.query.filter_by(id=user_id).first()
 
 
 def parse_user_args(args):
@@ -307,7 +296,7 @@ def load_project_summary_from_project_record(project_record):
             'id': project_record.id,
             'name': "Failed loading"
         }
-    project_summary = get_project_summary_from_project(project)
+    project_summary = parse.get_project_summary_from_project(project)
     project_summary['userId'] = project_record.user_id
     return project_summary
 
@@ -376,7 +365,7 @@ def update_project_from_summary(project_id, project_summary, is_delete_data):
     if is_delete_data:
         parse.clear_project_data(project)
 
-    set_project_summary_on_project(project, project_summary)
+    parse.set_project_summary_on_project(project, project_summary)
     project_entry.save_obj(project)
     db.session.add(project_entry)
     db.session.commit()
@@ -468,7 +457,7 @@ def copy_project(project_id, new_project_name):
 
 
 def create_project_from_prj(prj_filename, project_name, user_id):
-    project = loaddbobj(prj_filename)
+    project = op.dataio.loadobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)
     project = op.migrate(project)
     print('>> ...to version %s' % project.version)
@@ -497,7 +486,7 @@ def download_project(project_id):
 
 
 def update_project_from_prj(project_id, prj_filename):
-    project = loaddbobj(prj_filename)
+    project = op.dataio.loadobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)
     project = op.migrate(project)
     print('>> ...to version %s' % project.version)
@@ -526,15 +515,14 @@ def load_zip_of_prj_files(project_ids):
 ## PORTFOLIO
 
 
-
 def create_portfolio(name, db_session=None):
     if db_session is None:
         db_session = db.session
     print("> Create portfolio %s" % name)
     portfolio = op.Portfolio()
     portfolio.name = name
-    objectives = optima.portfolio.defaultobjectives(verbose=0)
-    gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+    objectives = op.portfolio.defaultobjectives(verbose=0)
+    gaoptim = op.portfolio.GAOptim(objectives=objectives)
     portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
     record = PyObjectDb(
         user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
@@ -542,7 +530,7 @@ def create_portfolio(name, db_session=None):
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
-    return parse_portfolio_summary(portfolio)
+    return parse.get_portfolio_summary(portfolio)
 
 
 def delete_portfolio(portfolio_id, db_session=None):
@@ -564,17 +552,16 @@ def load_portfolio(portfolio_id, db_session=None):
     if record:
         print("> load portfolio %s" % portfolio_id)
         return record.load()
-    return optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+    return op.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
 
 
 def load_portfolio_summaries(db_session=None):
-    import optima.portfolio
     if db_session is None:
         db_session = db.session
 
     query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
     if query is None:
-        portfolio = optima.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+        portfolio = op.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
         record = PyObjectDb(
             user_id=current_user.id, type="portfolio", name=portfolio.name, id=portfolio.uid)
         record.save_obj(portfolio)
@@ -588,13 +575,13 @@ def load_portfolio_summaries(db_session=None):
             print(">> Portfolio id %s" % record.id)
             portfolio = record.load()
             if len(portfolio.gaoptims) == 0:
-                objectives = optima.portfolio.defaultobjectives(verbose=0)
-                gaoptim = optima.portfolio.GAOptim(objectives=objectives)
+                objectives = op.portfolio.defaultobjectives(verbose=0)
+                gaoptim = op.portfolio.GAOptim(objectives=objectives)
                 portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
                 record.save_obj(portfolio)
             portfolios.append(portfolio)
 
-    summaries = map(parse_portfolio_summary, portfolios)
+    summaries = map(parse.get_portfolio_summary, portfolios)
     print("> Loading portfolio summaries")
     pprint(summaries, indent=2)
 
@@ -620,31 +607,6 @@ def save_portfolio(portfolio, db_session=None):
     db_session.commit()
 
 
-def set_portfolio_summary_on_portfolio(portfolio, summary):
-    gaoptim_summaries = summary['gaoptims']
-    gaoptims = portfolio.gaoptims
-    for gaoptim_summary in gaoptim_summaries:
-        gaoptim_id = str(gaoptim_summary['id'])
-        objectives = optima.odict(gaoptim_summary["objectives"])
-        if gaoptim_id in gaoptims:
-            gaoptim = gaoptims[gaoptim_id]
-            gaoptim.objectives = objectives
-        else:
-            gaoptim = optima.portfolio.GAOptim(objectives=objectives)
-            gaoptims[gaoptim_id] = gaoptim
-    old_project_ids = portfolio.projects.keys()
-    print("> old project ids %s" % old_project_ids)
-    new_project_ids = [s["id"] for s in summary["projects"]]
-    print("> new project ids %s" % new_project_ids)
-    for old_project_id in old_project_ids:
-        if old_project_id not in new_project_ids:
-            portfolio.projects.pop(old_project_id)
-    for new_project_id in new_project_ids:
-        if new_project_id not in portfolio.projects:
-            project = load_project(new_project_id)
-            portfolio.projects[new_project_id] = project
-
-
 def load_or_create_portfolio(portfolio_id, db_session=None):
     if db_session is None:
         db_session = db.session
@@ -655,14 +617,17 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
         portfolio = record.load()
     else:
         print("> Create portfolio %s" % portfolio_id)
-        portfolio = optima.Portfolio()
+        portfolio = op.Portfolio()
         portfolio.uid = UUID(portfolio_id)
     return portfolio
 
 
 def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     portfolio = load_or_create_portfolio(portfolio_id)
-    set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
+    new_project_ids = parse.set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
+    for project_id in new_project_ids:
+        project = load_project(project_id)
+        portfolio.projects[project_id] = project
     save_portfolio(portfolio, db_session)
     return load_portfolio_summaries()
 
@@ -682,7 +647,7 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     prj_basename = load_project_record(project_id).as_file(dirname)
     prj_fname = os.path.join(dirname, prj_basename)
     xlsx_fname = prj_fname.replace('.prj', '.xlsx')
-    optima.geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
+    geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
     return os.path.split(xlsx_fname)
 
 
@@ -697,15 +662,18 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     if os.path.isdir(spawn_dir):
         shutil.rmtree(spawn_dir)
 
-    optima.geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
+    geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
 
     district_prj_basenames = os.listdir(spawn_dir)
     prj_names = []
     for prj_basename in district_prj_basenames:
-        prj_name = prj_basename.replace('.prj', '')
+        first_prj_name = prj_basename.replace('.prj', '')
         print("> Slurping project %s" % prj_name, existing_prj_names, prj_name in existing_prj_names)
-        if prj_name in existing_prj_names:
-            prj_name = prj_name + ' (1)'
+        prj_name = first_prj_name
+        i = 1
+        while prj_name in existing_prj_names:
+            prj_name = first_prj_name + ' (%d)' % i
+            i += 1
         create_project_from_prj(prj_fname, prj_name, current_user.id)
         prj_names.append(prj_name)
 
@@ -720,7 +688,7 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
 def copy_parset(project_id, parset_id, new_parset_name):
 
     def update_project_fn(project):
-        original_parset = get_parset_from_project(project, parset_id)
+        original_parset = parse.get_parset_from_project(project, parset_id)
         original_parset_name = original_parset.name
         project.copyparset(orig=original_parset_name, new=new_parset_name)
         project.parsets[new_parset_name].uid = op.uuid()
@@ -731,7 +699,7 @@ def copy_parset(project_id, parset_id, new_parset_name):
 def delete_parset(project_id, parset_id):
 
     def update_project_fn(project):
-        parset = get_parset_from_project(project, parset_id)
+        parset = parse.get_parset_from_project(project, parset_id)
         project.parsets.pop(parset.name)
         resolve_project(project)
 
@@ -742,7 +710,7 @@ def delete_parset(project_id, parset_id):
 def rename_parset(project_id, parset_id, new_parset_name):
 
     def update_project_fn(project):
-        parset = get_parset_from_project(project, parset_id)
+        parset = parse.get_parset_from_project(project, parset_id)
         old_parset_name = parset.name
         parset.name = new_parset_name
         print(">> old parsets '%s'" % project.parsets.keys())
@@ -765,31 +733,31 @@ def create_parset(project_id, new_parset_name):
 
 def load_parset_summaries(project_id):
     project = load_project(project_id)
-    return get_parset_summaries(project)
+    return parse.get_parset_summaries(project)
 
 
 def load_project_parameters(project_id):
-    return get_parameters_for_edit_program(load_project(project_id))
+    return parse.get_parameters_for_edit_program(load_project(project_id))
 
 
 def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     project = load_project(project_id)
-    return get_parameters_for_outcomes(project, progset_id, parset_id)
+    return parse.get_parameters_for_outcomes(project, progset_id, parset_id)
 
 
 def load_parameters(project_id, parset_id):
     project = load_project(project_id)
-    parset = get_parset_from_project(project, parset_id)
-    return get_parameters_from_parset(parset)
+    parset = parse.get_parset_from_project(project, parset_id)
+    return parse.get_parameters_from_parset(parset)
 
 
 def save_parameters(project_id, parset_id, parameters):
 
     def update_project_fn(project):
-        parset = get_parset_from_project(project, parset_id)
+        parset = parse.get_parset_from_project(project, parset_id)
         print ">> Updating parset '%s'" % parset.name
         parset.modified = datetime.now(dateutil.tz.tzutc())
-        set_parameters_on_parset(parameters, parset)
+        parse.set_parameters_on_parset(parameters, parset)
 
     update_project_with_fn(project_id, update_project_fn)
 
@@ -801,12 +769,12 @@ def load_parset_graphs(
         parameters=None, start=None, end=None): # Adding hooks for selecting year range
 
     project = load_project(project_id)
-    parset = get_parset_from_project(project, parset_id)
+    parset = parse.get_parset_from_project(project, parset_id)
 
     if parameters is not None:
         print ">> Updating parset '%s'" % parset.name
         parset.modified = datetime.now(dateutil.tz.tzutc())
-        set_parameters_on_parset(parameters, parset)
+        parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
         update_project(project)
 
@@ -824,7 +792,7 @@ def load_parset_graphs(
     graph_dict = make_mpld3_graph_dict(result, which)
 
     return {
-        "parameters": get_parameters_from_parset(parset),
+        "parameters": parse.get_parameters_from_parset(parset),
         "graphs": graph_dict["graphs"]
     }
 
@@ -969,9 +937,9 @@ def save_scenario_summaries(project_id, scenario_summaries):
     delete_result_by_parset_id(project_id, None, "scenarios")
     project_record = load_project_record(project_id)
     project = project_record.load()
-    set_scenario_summaries_on_project(project, scenario_summaries)
+    parse.set_scenario_summaries_on_project(project, scenario_summaries)
     project_record.save_obj(project)
-    return {'scenarios': get_scenario_summaries(project)}
+    return {'scenarios': parse.get_scenario_summaries(project)}
 
 
 def load_and_resolve_project(project_id):
@@ -986,11 +954,11 @@ def load_and_resolve_project(project_id):
 def load_scenario_summaries(project_id):
     project = load_and_resolve_project(project_id)
     return {
-        'scenarios': get_scenario_summaries(project),
-        'ykeysByParsetId': get_parameters_for_scenarios(project),
+        'scenarios': parse.get_scenario_summaries(project),
+        'ykeysByParsetId': parse.get_parameters_for_scenarios(project),
         'defaultBudgetsByProgsetId': parse.get_budgets_for_scenarios(project),
         'defaultCoveragesByParsetIdyProgsetId': parse.get_coverages_for_scenarios(project),
-        'years': get_project_years(project)
+        'years': parse.get_project_years(project)
     }
 
 
@@ -999,8 +967,8 @@ def load_scenario_summaries(project_id):
 def load_optimization_summaries(project_id):
     project = load_and_resolve_project(project_id)
     return {
-        'optimizations': get_optimization_summaries(project),
-        'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project)
+        'optimizations': parse.get_optimization_summaries(project),
+        'defaultOptimizationsByProgsetId': parse.get_default_optimization_summaries(project)
     }
 
 
@@ -1008,30 +976,30 @@ def save_optimization_summaries(project_id, optimization_summaries):
     project_record = load_project_record(project_id)
     project = project_record.load()
     old_names = [o.name for o in project.optims.values()]
-    set_optimization_summaries_on_project(project, optimization_summaries)
+    parse.set_optimization_summaries_on_project(project, optimization_summaries)
     new_names = [o.name for o in project.optims.values()]
     deleted_names = [name for name in old_names if name not in new_names]
     deleted_result_names = ['optim-' + name for name in deleted_names]
     for result_name in deleted_result_names:
         delete_result_by_name(project.uid, result_name)
     project_record.save_obj(project)
-    return {'optimizations': get_optimization_summaries(project)}
+    return {'optimizations': parse.get_optimization_summaries(project)}
 
 
 def upload_optimization_summary(project_id, optimization_id, optimization_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-    old_optim = get_optimization_from_project(project, optimization_id)
+    old_optim = parse.get_optimization_from_project(project, optimization_id)
     optimization_summary['id'] = optimization_id
     optimization_summary['name'] = old_optim.name
-    set_optimization_summaries_on_project(project, [optimization_summary])
+    parse.set_optimization_summaries_on_project(project, [optimization_summary])
     project_record.save_obj(project)
-    return {'optimizations': get_optimization_summaries(project)}
+    return {'optimizations': parse.get_optimization_summaries(project)}
 
 
 def load_optimization_graphs(project_id, optimization_id, which):
     project = load_project(project_id)
-    optimization = get_optimization_from_project(project, optimization_id)
+    optimization = parse.get_optimization_from_project(project, optimization_id)
     result = load_result_by_optimization(project, optimization)
     if result is None:
         return {}
@@ -1078,7 +1046,7 @@ def load_template_data_spreadsheet(project_id):
     server_fname = templatepath(fname)
     op.makespreadsheet(
         server_fname,
-        pops=get_populations_from_project(project),
+        pops=parse.get_populations_from_project(project),
         datastart=int(project.data["years"][0]),
         dataend=int(project.data["years"][-1]))
     return upload_dir_user(TEMPLATEDIR), fname
@@ -1199,10 +1167,9 @@ def get_odict_item(odict, key):
 
 def resolve_project(project):
     """
-    This function does some checks on the project to ensure that all the cross-reference
-    fields are properly specified and that defaults are sensibly populated.
-
-    Returns: boolean to whether any changes needed to be made to the project
+    Checks  project to ensure that all the cross-reference fields are
+    properly specified and that defaults are sensibly populated.
+    Returns boolean to whether any changes needed to be made to the project
     """
     print(">> Resolve project")
     is_change = False
@@ -1242,7 +1209,7 @@ def resolve_project(project):
 
     # check optimizations are good
     del_optim_keys = []
-    for optim_key, optim in project.scens.items():
+    for optim_key, optim in project.optims.items():
         if type(optim.parsetname) is int:
             i = optim.parsetname
             try:
@@ -1298,62 +1265,62 @@ def resolve_project(project):
 
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     project = load_project(project_id)
-    parset = get_parset_from_project(project, parset_id)
-    progset = get_progset_from_project(project, progset_id)
-    program = get_program_from_progset(progset, program_id)
-    years = get_project_years(project)
+    parset = parse.get_parset_from_project(project, parset_id)
+    progset = parse.get_progset_from_project(project, progset_id)
+    program = parse.get_program_from_progset(progset, program_id)
+    years = parse.get_project_years(project)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
     return normalize_obj(dict(zip(years, popsizes)))
 
 
 def load_project_program_summaries(project_id):
     project = load_project(project_id, raise_exception=True)
-    return get_default_program_summaries(project)
+    return parse.get_default_program_summaries(project)
 
 
 def load_progset_summary(project_id, progset_id):
     project = load_project(project_id)
-    progset = get_progset_from_project(project, progset_id)
-    return get_progset_summary(project, progset.name)
+    progset = parse.get_progset_from_project(project, progset_id)
+    return parse.get_progset_summary(project, progset.name)
 
 
 def load_progset_summaries(project_id):
     project = load_project(project_id)
-    return get_progset_summaries(project)
+    return parse.get_progset_summaries(project)
 
 
 def create_progset(project_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-    set_progset_summary_on_project(project, progset_summary)
+    parse.set_progset_summary_on_project(project, progset_summary)
     project_record.save_obj(project)
-    return get_progset_summary(project, progset_summary["name"])
+    return parse.get_progset_summary(project, progset_summary["name"])
 
 
 def save_progset(project_id, progset_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-    set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
+    parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
-    return get_progset_summary(project, progset_summary["name"])
+    return parse.get_progset_summary(project, progset_summary["name"])
 
 
 def upload_progset(project_id, progset_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-    old_progset = get_progset_from_project(project, progset_id)
+    old_progset = parse.get_progset_from_project(project, progset_id)
     print(">> Upload progset '%s' into '%s'" % (progset_summary['name'], old_progset.name))
     progset_summary['id'] = progset_id
     progset_summary['name'] = old_progset.name
-    set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
+    parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
-    return get_progset_summary(project, progset_summary["name"])
+    return parse.get_progset_summary(project, progset_summary["name"])
 
 
 def copy_progset(project_id, progset_id, new_progset_name):
 
     def update_project_fn(project):
-        original_progset = get_progset_from_project(project, progset_id)
+        original_progset = parse.get_progset_from_project(project, progset_id)
         project.copyprogset(orig=original_progset.name, new=new_progset_name)
         project.progsets[new_progset_name].uid = op.uuid()
 
@@ -1365,7 +1332,7 @@ def delete_progset(project_id, progset_id):
     project_record = load_project_record(project_id)
     project = project_record.load()
 
-    progset = get_progset_from_project(project, progset_id)
+    progset = parse.get_progset_from_project(project, progset_id)
 
     progset_name = progset.name
     optims = [o for o in project.optims.values() if o.progsetname == progset_name]
@@ -1382,28 +1349,28 @@ def delete_progset(project_id, progset_id):
 
 def load_progset_outcome_summaries(project_id, progset_id):
     project = load_project(project_id)
-    progset = get_progset_from_project(project, progset_id)
-    outcomes = get_outcome_summaries_from_progset(progset)
+    progset = parse.get_progset_from_project(project, progset_id)
+    outcomes = parse.get_outcome_summaries_from_progset(progset)
     return outcomes
 
 
 def save_outcome_summaries(project_id, progset_id, outcome_summaries):
     project_record = load_project_record(project_id)
     project = project_record.load()
-    progset = get_progset_from_project(project, progset_id)
-    set_outcome_summaries_on_progset(outcome_summaries, progset)
+    progset = parse.get_progset_from_project(project, progset_id)
+    parse.set_outcome_summaries_on_progset(outcome_summaries, progset)
     project_record.save_obj(project)
-    return get_outcome_summaries_from_progset(progset)
+    return parse.get_outcome_summaries_from_progset(progset)
 
 
 def save_program(project_id, progset_id, program_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
 
-    progset = get_progset_from_project(project, progset_id)
+    progset = parse.get_progset_from_project(project, progset_id)
 
     print("> Saving program " + program_summary['name'])
-    set_program_summary_on_progset(progset, program_summary)
+    parse.set_program_summary_on_progset(progset, program_summary)
 
     progset.updateprogset()
 
@@ -1413,15 +1380,16 @@ def save_program(project_id, progset_id, program_summary):
 def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
     project_record = load_project_record(project_id)
     project = project_record.load()
-    progset = get_progset_from_project(project, progset_id)
+    progset = parse.get_progset_from_project(project, progset_id)
 
-    program = get_program_from_progset(progset, program_id)
+    program = parse.get_program_from_progset(progset, program_id)
     plotoptions = None
     if hasattr(program, "attr"):
         plotoptions = program.attr
 
-    parset = get_parset_from_project(project, parset_id)
+    parset = parse.get_parset_from_project(project, parset_id)
     plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
 
     return convert_to_mpld3(plot)
+
 
