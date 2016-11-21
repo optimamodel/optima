@@ -1,6 +1,7 @@
 import optima as op
 from numpy import nan, concatenate as cat, array
 
+### Generic functions
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     ''' 
@@ -14,6 +15,20 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
             for kwargkey,kwargval in kwargs.items():
                 setattr(ps.pars[i][short], kwargkey, kwargval)
     project.data[short] = [[nan]*len(project.data['years'])]
+
+
+#def migrateobject(oldobj, newobj):
+#    ''' Move data from an old object to a new one -- WARNING, not sure if useful '''
+#    oldattrs = oldobj.__dict__.keys()
+#    newattrs = newobj.__dict__.keys()
+#    for attr in oldattrs:
+#        if attr in newattrs:
+#            newobj.__dict__[attr] = oldobj.__dict__[attr]
+#    return newobj
+        
+
+
+### Specific migrations
 
 
 def versiontostr(project, **kwargs):
@@ -279,11 +294,37 @@ def adddataend(project, **kwargs):
 
 
 
+def redoparameters(project, **kwargs):
+    """
+    Migration between Optima 2.1.7 and 2.1.8 -- update fields of parameters.
+    """
+    
+    raise Exception('Parameters migration not fully implemented yet')
+    
+#    newproj = op.defaultproject() # Create a new project 
+    
+    # Loop over all parsets
+    for ps in project.parsets.values():
+        ps.pars = ps.pars[0] # Change pars
+    
+        # Define new Metapar parameter objects
+    
+        # Fix Popsizepar objects
+        
+        # Create new prior distributions
+        
+        
+        # Change initprev name
+        ps.pars['initprev'].auto = 'initprev'
+    
+    project.version = "2.1.8"
+    return None
+
 
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.7 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.8 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -306,6 +347,7 @@ migrations = {
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
+'2.1.7': redoparameters,
 #'2.1.7': redoprograms,
 }
 

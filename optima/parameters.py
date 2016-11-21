@@ -1,14 +1,14 @@
 """
-This module defines the Timepar, Popsizepar, and Constant classes, which are 
+This module defines the Constant, Metapar, Timepar, and Popsizepar classes, which are 
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 1.5 (2016jul06)
+Version: 2.0 (2016nov05)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
-
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds, getvaliddata # Utilities 
+from numpy.random import random, seed
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -16,12 +16,12 @@ defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 
 #############################################################################################################################
 ### Define the parameters!
-##  NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters
+##  NOTE, this should be consistent with the spreadsheet http://optimamodel.com/parameters
 ##  Edit there, then copy and paste from there into here; be sure to include header row
 #############################################################################################################################
 partable = '''
 name	dataname	short	datashort	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract	fromdata
-Initial HIV prevalence	None	initprev	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None	1
+Initial HIV prevalence	None	initprev	initprev	(0, 1)	pop	initprev	pop	initprev	0	None	0	None	1
 Population size	Population size	popsize	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None	1
 Force-of-infection (unitless)	None	force	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None	0
 Inhomogeneity (unitless)	None	inhomo	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	0	None	0	None	0
@@ -232,9 +232,9 @@ def loadtranstable(npops=None,inputtranstable=None):
 
 ### Define the functions for handling the parameters
 
-def popgrow(exppars, tvec):
+def grow(exponent, tvec):
     ''' Return a time vector for a population growth '''
-    return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
+    return exp(tvec*exponent) # Simple exponential growth
 
 
 
@@ -252,7 +252,7 @@ def getvalidyears(years, validdata, defaultind=0):
 
 def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(y=odict(), **defaultargs) # Create structure
+    par = Metapar(y=odict([(key,None) for key in keys]), **defaultargs) # Create structure -- need key:None for prior
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -293,7 +293,8 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         ydata[key] = log(sanitizedy[key])
         try:
             fitpars = polyfit(tdata[key], ydata[key], 1)
-            par.p[key] = array([exp(fitpars[1]), fitpars[0]])
+            par.i[key] = exp(fitpars[1]) # Intercept/initial value
+            par.e[key] = fitpars[0] # Exponent
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
             raise OptimaException(errormsg)
@@ -303,23 +304,26 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     thisyear = odict()
     thispopsize = odict()
     for key in only1datapoint:
-        largestpars = par.p[largestpopkey] # Get the parameters from the largest population
+        largest_i = par.i[largestpopkey] # Get the parameters from the largest population
+        largest_e = par.e[largestpopkey]
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
             errormsg += 'Please ensure at least one time point is entered'
             raise OptimaException(errormsg)
         thisyear[key] = sanitizedt[key][0]
         thispopsize[key] = sanitizedy[key][0]
-        largestthatyear = popgrow(largestpars, thisyear[key]-startyear)
-        par.p[key] = [largestpars[0]*thispopsize[key]/largestthatyear, largestpars[1]]
-    par.p = par.p.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+        largestthatyear = largest_i*grow(largest_e, thisyear[key]-startyear)
+        par.i[key] = largest_i*thispopsize[key]/largestthatyear # Scale population size
+        par.e[key] = largest_e # Copy exponent
+    par.i = par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    par.e = par.e.sort(keys)
     
     if uniformgrowth:
         for key in keys:
-            par.p[key][1] = par.p[largestpopkey][1] # Reset exponent to match the largest population
+            par.e[key] = par.e[largestpopkey] # Reset exponent to match the largest population
             meanpopulationsize = mean(sanitizedy[key]) # Calculate the mean of all the data
             weightedyear = mean(sanitizedy[key][:]*sanitizedt[key][:])/meanpopulationsize # Calculate the "mean year"
-            par.p[key][0] = meanpopulationsize*(1+par.p[key][1])**(startyear-weightedyear) # Project backwards to starting population size
+            par.i[key] = meanpopulationsize*(1+par.e[key])**(startyear-weightedyear) # Project backwards to starting population size
     
     if doplot:
         from pylab import figure, subplot, plot, scatter, arange, show, title
@@ -334,7 +338,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
             else: raise OptimaException('This population is nonexistent')
             plot(tvec, yvec[k])
             title('Pop size: ' + key)
-            print(par.p[key])
+            print([par.i[key], par.e[key]])
             show()
     
     return par
@@ -439,7 +443,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data, label=None, verbose=2):
+def makepars(data=None, label=None, verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -502,14 +506,16 @@ def makepars(data, label=None, verbose=2):
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
             if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-            else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
+            else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
-            pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+            best = data['const'][parname][0] 
+            low = data['const'][parname][1] 
+            high = data['const'][parname][2]
+            pars[parname] = Constant(y=best, prior={'dist':'uniform', 'pars':(low, high)}, **rawpar)
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
-            pars[parname] = Constant(y=odict(), **rawpar)
+            pars[parname] = Metapar(y=odict([(key,None) for key in keys]), **rawpar)
             
     
     ###############################################################################
@@ -604,7 +610,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, onlyvisible=False, verbose=2, name=None, uid=None):
+def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, onlyvisible=False, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -629,6 +635,7 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
+    if isinstance(tosample, (str, unicode)): tosample = [tosample] # Convert to list
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
@@ -637,10 +644,12 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray)
+            thissample = sample # Make a copy of it to check it against the list of things we are sampling
+            if tosample is not None and pars[key].auto not in list(tosample): thissample = False # Don't sample from unselected parameters
+            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
-                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
+                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed) # WARNING, want different smoothness for ART
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -708,13 +717,13 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
 
 
 
-def comparepars(pars1=None, pars2=None, ind=0):
+def comparepars(pars1=None, pars2=None):
     ''' 
     Function to compare two sets of pars. Example usage:
     comparepars(P.parsets[0], P.parsets[1])
     '''
-    if type(pars1)==Parameterset: pars1 = pars1.pars[ind] # If parset is supplied instead of pars, use that instead
-    if type(pars2)==Parameterset: pars2 = pars2.pars[ind]
+    if type(pars1)==Parameterset: pars1 = pars1.pars # If parset is supplied instead of pars, use that instead
+    if type(pars2)==Parameterset: pars2 = pars2.pars
     keys = pars1.keys()
     nkeys = 0
     count = 0
@@ -787,14 +796,63 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 ### Define the classes
 #################################################################################################################################
 
+class Dist(object):
+    ''' Define a distribution object for drawing samples from, usually to create a prior '''
+    def __init__(self, dist=None, pars=None):
+        defaultdist = 'uniform'
+        defaultpars = (0.9, 1.1) # This is arbitrary, of course
+        self.dist = dist if dist is not None else defaultdist
+        self.pars = pars if pars is not None else defaultpars
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = defaultrepr(self)
+        return output
+    
+    def sample(self, n=1, randseed=None):
+        ''' Draw random samples from the specified distribution '''
+        if randseed is not None: seed(randseed) # Reset the random seed, if specified
+        if self.dist=='uniform':
+            samples = random(n)
+            samples = samples * (self.pars[1] - self.pars[0])  + self.pars[0] # Scale to correct range
+            return samples
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+
 
 class Par(object):
-    ''' The base class for parameters '''
-    def __init__(self, name=None, dataname=None, short=None, datashort=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
+    '''
+    The base class for epidemiological model parameters.
+    
+    There are four subclasses:
+        * Constant objects store a single scalar value in y and an uncertainty sample in ysample -- e.g., transmfi
+        * Metapar objects store an odict of y values, have a single metaparameter m, and an odict of ysample -- e.g., force
+        * Timepar objects store an odict of y values, have a single metaparameter m, and uncertainty scalar msample -- e.g., condcas
+        * Popsizepar objects are like Timepar objects except have odicts of i (intercept) and e (exponent) values
+    
+    These four thus have different structures (where [] denotes dict):
+        * Constants   have y, ysample
+        * Metapars    have y[], ysample[], m, msample
+        * Timepars    have y[], m, msample
+        * Popsizepars have i[], e[], m, msample
+    
+    Consequently, some of them have different sample(), updateprior(), and interp() methods; in brief:
+        * Constants have sample() = ysample, interp() = y
+        * Metapars have sample() = ysample[], interp() = m*y[]
+        * Timepars have sample() = msample, interp() = m*y[]
+        * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[])
+    
+    Version: 2016nov06 by cliffk    
+    '''
+    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+        ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
         self.datashort = datashort # The short name used for the data, e.g. "numactsreg" (which may be different to the paramter name, e.g. "actsreg")
+        self.m = m # Multiplicative metaparameter, e.g. 1
+        self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
@@ -804,11 +862,135 @@ class Par(object):
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
         self.fromdata = fromdata # Whether or not the parameter is made from data
+        if prior is None:             self.prior = Dist() # Not supplied, create default distribution
+        elif isinstance(prior, dict): self.prior = Dist(**prior) # Supplied as a dict, use it to create a distribution
+        elif isinstance(prior, Dist): self.prior = prior # Supplied as a distribution, use directly
+        else:
+            errormsg = 'Prior must either be None, a Dist, or a dict with keys "dist" and "pars", not %s' % type(prior)
+            raise OptimaException(errormsg)
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
+    
+
+
+
+
+class Constant(Par):
+    ''' The definition of a single constant parameter, which may or may not vary by population '''
+    
+    def __init__(self, y=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
+        del self.m # These don't exist for the Constant class
+        del self.msample 
+        self.y = y # y-value data, e.g. 0.3
+        self.ysample = None # y-value data generated from the prior, e.g. 0.24353
+    
+    def keys(self):
+        ''' Constants don't have any keys '''
+        return None 
+    
+    def sample(self, randseed=None):
+        ''' Recalculate ysample '''
+        self.ysample = self.prior.sample(n=1, randseed=randseed)[0]
+        return None
+    
+    def updateprior(self, verbose=2):
+        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
+        if self.prior.dist=='uniform':
+            tmppars = array(self.prior.pars) # Convert to array for numerical magic
+            self.prior.pars = tuple(self.y*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+        return None
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None): # Keyword arguments are for consistency but not actually used
+        """
+        Take parameters and turn them into model parameters -- here, just return a constant value at every time point
+        
+        There are however 3 options with the interpolation:
+            * False -- use existing y value
+            * 'old' -- use existing ysample value
+            * 'new' -- recalculate ysample value
+        """
+        # Figure out sample
+        if not sample: 
+            y = self.y
+        else:
+            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            y = self.ysample
+            
+        # Do interpolation
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
+        output = applylimits(par=self, y=y, limits=self.limits, dt=dt)
+        if not asarray: output = odict([('tot',output)])
+        return output
+
+
+
+class Metapar(Par):
+    ''' The definition of a single metaparameter, such as force of infection, which usually does vary by population '''
+    
+    def __init__(self, y=None, prior=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
+        self.y = y # y-value data, e.g. {'FSW:'0.3, 'MSM':0.7}
+        self.ysample = None
+        if type(prior)==odict:
+            self.prior = prior
+        elif prior is None:
+            self.prior = odict()
+            for key in self.keys():
+                self.prior[key] = Dist() # Initialize with defaults
+        else:
+            errormsg = 'Prior for metaparameters must be an odict, not %s' % type(prior)
+            raise OptimaException(errormsg)
+            
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.y.keys()
+    
+    def sample(self, randseed=None):
+        ''' Recalculate ysample '''
+        self.ysample = odict()
+        for key in self.keys():
+            self.ysample[key] = self.prior[key].sample(randseed=randseed)[0]
+        return None
+    
+    def updateprior(self, verbose=2):
+        ''' Update the prior parameters to match the y values, so e.g. can recalibrate and then do uncertainty '''
+        for key in self.keys():
+            if self.prior[key].dist=='uniform':
+                tmppars = array(self.prior[key].pars) # Convert to array for numerical magic
+                self.prior[key].pars = tuple(self.y[key]*tmppars/tmppars.mean()) # Recenter the limits around the mean
+                printv('Priors updated for %s' % self.short, 3, verbose)
+            else:
+                errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+                raise OptimaException(errormsg)
+        return None
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # Keyword arguments are for consistency but not actually used
+        """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        
+        # Figure out sample
+        if not sample: 
+            y = self.y
+        else:
+            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            y = self.ysample
+                
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
+        if asarray: output = zeros(len(self.keys()))
+        else: output = odict()
+        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
+            yinterp = applylimits(par=self, y=y[key]*self.m, limits=self.limits, dt=dt)
+            if asarray: output[pop] = yinterp
+            else: output[key] = yinterp
+        return output
+    
 
 
 
@@ -816,20 +998,34 @@ class Par(object):
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, t=None, y=None, m=1, **defaultargs):
+    def __init__(self, t=None, y=None, **defaultargs):
         Par.__init__(self, **defaultargs)
         if t is None: t = odict()
         if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
-        self.m = m # Multiplicative metaparameter, e.g. 1
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
     
+    def sample(self, randseed=None):
+        ''' Recalculate msample '''
+        self.msample = self.prior.sample(n=1, randseed=randseed)[0]
+        return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True):
+    def updateprior(self, verbose=2):
+        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
+        if self.prior.dist=='uniform':
+            tmppars = array(self.prior.pars) # Convert to array for numerical magic
+            self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+        return None
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -837,17 +1033,22 @@ class Timepar(Par):
             errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
-        if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # Handle smoothness
+        
+        # Figure out sample
+        if not sample:
+            m = self.m
+        else:
+            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            m = self.msample
         
         # Set things up and do the interpolation
-        keys = self.keys()
-        npops = len(keys)
+        npops = len(self.keys())
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
-        meta = self.m if usemeta else 1.0
-        for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-            yinterp = meta * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
+            yinterp = m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
@@ -862,19 +1063,36 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, p=None, m=1, start=2000, **defaultargs):
+    def __init__(self, i=None, e=None, m=1., start=2000., **defaultargs):
         Par.__init__(self, **defaultargs)
-        if p is None: p = odict()
-        self.p = p # Exponential fit parameters
+        if i is None: i = odict()
+        if e is None: e = odict()
+        self.i = i # Exponential fit intercept, e.g. 3.4e6
+        self.e = e # Exponential fit exponent, e.g. 0.03
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
-        return self.p.keys()
+        return self.i.keys()
     
+    def sample(self, randseed=None):
+        ''' Recalculate msample -- same as Timepar'''
+        self.msample = self.prior.sample(n=1, randseed=randseed)[0]
+        return None
+    
+    def updateprior(self, verbose=2):
+        ''' Update the prior parameters to match the metaparameter -- same as Timepar '''
+        if self.prior.dist=='uniform':
+            tmppars = array(self.prior.pars) # Convert to array for numerical magic
+            self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+        return None
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -883,14 +1101,20 @@ class Popsizepar(Par):
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
         
+        # Figure out sample
+        if not sample:
+            m = self.m
+        else:
+            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            m = self.msample
+        
         # Do interpolation
         keys = self.keys()
         npops = len(keys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
-        meta = self.m if usemeta else 1.0
         for pop,key in enumerate(keys):
-            yinterp = meta * popgrow(self.p[key], array(tvec)-self.start)
+            yinterp = m * self.i[key] * grow(self.e[key], array(tvec)-self.start)
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
@@ -900,41 +1124,7 @@ class Popsizepar(Par):
 
 
 
-class Constant(Par):
-    ''' The definition of a single constant parameter, which may or may not vary by population '''
-    
-    def __init__(self, y=None, **defaultargs):
-        Par.__init__(self, **defaultargs)
-        self.y = y # y-value data, e.g. [0.3, 0.7]
-    
-    def keys(self):
-        ''' Return the valid keys for using with this parameter '''
-        if isnumber(self.y):
-            return None
-        else:
-            return self.y.keys()
-        return self.y.keys()
-    
-    
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
-        """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        
-        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
-        
-        if self.keys() is None: # Just a simple constant
-            yinterp = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
-            if asarray: output = yinterp
-            else: output = odict([('tot',yinterp)])
-        else: # No, it has keys, return as an array
-            keys = self.keys()
-            npops = len(keys)
-            if asarray: output = zeros(npops)
-            else: output = odict()
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
-                if asarray: output[pop] = yinterp
-                else: output[key] = yinterp
-        return output
+
 
 
 
@@ -950,8 +1140,9 @@ class Parameterset(object):
         self.project = project # Store pointer for the project, if available
         self.created = today() # Date created
         self.modified = today() # Date modified
-        self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
+        self.pars = None
         self.popkeys = [] # List of populations
+        self.posterior = odict() # an odict, comparable to pars, for storing posterior values of m -- WARNING, not used yet
         self.resultsref = None # Store pointer to results
         self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
         self.budget = budget # Store the budget that generated the parset, if any
@@ -959,9 +1150,8 @@ class Parameterset(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output  = objrepr(self)
+        output  = defaultrepr(self)
         output += 'Parameter set name: %s\n'    % self.name
-        output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
@@ -978,69 +1168,83 @@ class Parameterset(object):
             raise OptimaException('No results associated with this parameter set')
     
     
+    def parkeys(self):
+        ''' Return a list of the keys in pars that are actually parameter objects '''
+        parslist = []
+        for key,par in self.pars.items():
+            if issubclass(type(par), Par):
+                parslist.append(key)
+        return parslist
+    
+    
     def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
         ''' Method for getting proportions'''
 
-        if self.resultsref is not None and self.project is not None:
-
-            # Get results
+        # Get results
+        try:
             results = getresults(project=self.project, pointer=self.resultsref, die=die)
-            if results is None: # Generate results if there aren't any and die is False (if die is true, it will've already died on the previous step)
-                self.project.runsim(name=self.name)
-                results = self.project.results[-1]
-                
+            assert(results is not None) # Might return something empty
+        except:
+            if die: # Give up
+                raise OptimaException('No results associated with this parameter set')
+            else: # Or, just rerun
+                results = self.project.runsim(name=self.name)
 
-            # Interpret inputs
-            if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
-            elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
-            elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
-            elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
-            elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
-            else:
-                raise OptimaException('Unknown proportion type %s' % proptype)
-        
-            if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
-            elif ind in ['lower','l','low',1]: ind=1
-            elif ind in ['upper','u','up','high','h',2]: ind=2
-            else: ind=0 # Return best estimate if can't understand whichone was requested
-            
-            timeindex = findinds(results.tvec,year) if year else Ellipsis
-
-            if bypop:
-                return results.main[proptype].pops[ind][:][timeindex]
-            else:
-                return results.main[proptype].tot[ind][timeindex]
-                
+        # Interpret inputs
+        if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
+        elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
+        elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
+        elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
+        elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
         else:
-            raise OptimaException('No results associated with this parameter set')
+            raise OptimaException('Unknown proportion type %s' % proptype)
+    
+        if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
+        elif ind in ['lower','l','low',1]: ind=1
+        elif ind in ['upper','u','up','high','h',2]: ind=2
+        else: ind=0 # Return best estimate if can't understand whichone was requested
+        
+        timeindex = findinds(results.tvec,year) if year else Ellipsis
+
+        if bypop:
+            return results.main[proptype].pops[ind][:][timeindex]
+        else:
+            return results.main[proptype].tot[ind][timeindex]
+                
+            
     
     
-    def makepars(self, data, verbose=2):
-        self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
-        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys more accessibly
+    def makepars(self, data=None, verbose=2):
+        self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
+        self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         return None
 
 
-    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, onlyvisible=False, verbose=2):
+    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, onlyvisible=False, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
 
         simparslist = []
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
-        if isnumber(inds): inds = [inds]
-        if inds is None:inds = range(len(self.pars))
-        for ind in inds:
-            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
+        if samples is None: sample = [None]
+        for sample in samples:
+            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
         return simparslist
     
     
-    def printpars(self, ind=None, output=False):
-        if ind is None: ind = 0
+    def updateprior(self):
+        ''' Update the prior for all of the variables '''
+        for key in self.parkeys():
+            self.pars[key].updateprior()
+        return None
+        
+    
+    def printpars(self, output=False):
         outstr = ''
         count = 0
-        for par in self.pars[ind].values():
+        for par in self.pars.values():
             if hasattr(par,'p'): print('WARNING, population size not implemented!')
             if hasattr(par,'y'):
                 if hasattr(par.y, 'keys'):
@@ -1067,7 +1271,7 @@ class Parameterset(object):
         ''' Go through all the parameters and make a list of their possible attributes '''
         
         maxlen = 20
-        pars = self.pars[0]
+        pars = self.pars
         
         print('\n\n\n')
         print('CONTENTS OF PARS, BY TYPE:')
@@ -1087,12 +1291,11 @@ class Parameterset(object):
         print('\n\n\n')
         print('ATTRIBUTES:')
         attributes = {}
-        for key in pars:
-            if issubclass(type(pars[key]), Par):
-                theseattr = pars[key].__dict__.keys()
-                for attr in theseattr:
-                    if attr not in attributes.keys(): attributes[attr] = []
-                    attributes[attr].append(getattr(pars[key], attr))
+        for key in self.parkeys():
+            theseattr = pars[key].__dict__.keys()
+            for attr in theseattr:
+                if attr not in attributes.keys(): attributes[attr] = []
+                attributes[attr].append(getattr(pars[key], attr))
         for key in attributes:
             print('  ..%s' % key)
         print('\n\n')
@@ -1114,24 +1317,22 @@ class Parameterset(object):
         return None
 
 
-    def manualfitlists(self, parsubset=None, ind=0):
+    def manualfitlists(self, parsubset=None):
         ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
             raise OptimaException("No parameters available!")
-        elif len(self.pars) <= ind:
-            raise OptimaException("Parameter with index {} not found!".format(ind))
     
         # Check parname subset is valid
         if parsubset is None:
-            tmppars = self.pars[ind]
+            tmppars = self.pars
         else:
             if type(parsubset)==str: parsubset=[parsubset]
             if parsubset and type(parsubset) not in (list, str):
                 raise OptimaException("Expecting parsubset to be a list or a string!")
             for item in parsubset:
-                if item not in [par.short for par in self.pars[ind].values() if hasattr(par,'fittable') and par.fittable!='no']:
+                if item not in [par.short for par in self.pars.values() if hasattr(par,'fittable') and par.fittable!='no']:
                     raise OptimaException("Parameter %s is not a fittable parameter.")
-            tmppars = {par.short:par for par in self.pars[ind].values() if hasattr(par,'fittable') and par.fittable!='no' and par.short in parsubset}
+            tmppars = {par.short:par for par in self.pars.values() if hasattr(par,'fittable') and par.fittable!='no' and par.short in parsubset}
             
         mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
         keylist = mflists['keys']
@@ -1164,11 +1365,11 @@ class Parameterset(object):
                         valuelist.append(par.y[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
                 elif par.fittable == 'exp':
-                    for subkey in par.p.keys():
+                    for subkey in par.i.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.fittable)
-                        valuelist.append(par.p[subkey][0])
+                        valuelist.append(par.i[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
                 else:
                     print('Parameter type "%s" not implemented!' % par.fittable)
@@ -1177,14 +1378,12 @@ class Parameterset(object):
     
     
     ## Define update step
-    def update(self, mflists, ind=0):
+    def update(self, mflists):
         ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
         if not self.pars:
             raise OptimaException("No parameters available!")
-        elif len(self.pars) <= ind:
-            raise OptimaException("Parameter with index {} not found!".format(ind))
     
-        tmppars = self.pars[ind]
+        tmppars = self.pars
     
         keylist = mflists['keys']
         subkeylist = mflists['subkeys']
@@ -1203,9 +1402,9 @@ class Parameterset(object):
                 tmppars[key].y[subkey] = vtype(value)
                 printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype == 'exp':  # Population growth
-                vtype = type(tmppars[key].p[subkey][0])
-                tmppars[key].p[subkey][0] = vtype(value)
-                printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose)
+                vtype = type(tmppars[key].i[subkey])
+                tmppars[key].i[subkey] = vtype(value)
+                printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype == 'const':  # Constants
                 vtype = type(tmppars[key].y)
                 tmppars[key].y = vtype(value)
@@ -1215,11 +1414,11 @@ class Parameterset(object):
     
                 # parset.interp() and calculate results are supposed to be called from the outside
     
-    def export(self, filename=None, compare=None, ind=0):
+    def export(self, filename=None, compare=None):
         '''
         Little function to export code for the current parameter set. To use, do something like:
         
-        pars = P.parsets[0].pars[0]
+        pars = P.pars()
         
         and then paste in the output of this function.
         
@@ -1227,11 +1426,10 @@ class Parameterset(object):
         comparing to default, e.g.
         P.parsets[-1].export(compare='default')
         '''
-        pars = self.pars[ind]
         cpars, cvalues = None, None
         if compare is not None:
             try: 
-                cpars = self.project.parsets[compare].pars[ind]
+                cpars = self.project.parsets[compare].pars
             except: 
                 print('Could not compare parset %s to parset %s; printing all parameters' % (self.name, compare))
                 compare = None
@@ -1239,7 +1437,7 @@ class Parameterset(object):
         def oneline(values): return str(values).replace('\n',' ') 
         
         output = ''
-        for parname,par in pars.items():
+        for parname,par in self.pars.items():
             if hasattr(par,'fittable'):
                 if par.fittable=='pop': 
                     values = par.y[:].tolist()
