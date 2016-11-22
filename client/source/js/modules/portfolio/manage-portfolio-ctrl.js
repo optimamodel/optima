@@ -344,7 +344,7 @@ define(
         $scope.saveTemplateProject = function() {
           $scope.isSelectTemplateProject = false;
           var project = $scope.state.templateProject;
-          $scope.years = _.range(project.dataStart, project.dataEnd+1);
+          $scope.years = _.range(project.startYear, project.endYear+1);
           $scope.state.templateYear = $scope.years[0];
           console.log('template project', $scope.state.templateProject);
           console.log('years', $scope.years);

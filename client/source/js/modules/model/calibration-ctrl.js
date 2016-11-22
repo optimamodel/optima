@@ -11,7 +11,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function initialize() {
 
       $scope.parsets = [];
-      $scope.years = _.range(project.dataStart, project.dataEnd+1);
+      $scope.years = _.range(project.startYear, project.endYear+1);
       var iLast = $scope.years.length - 1;
       $scope.state = {
         maxtime: '10',

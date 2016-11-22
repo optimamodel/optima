@@ -29,7 +29,7 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.parsets = [];
 
         vm.state.yearSelector = _.range(
-          vm.project.dataStart, vm.project.dataEnd+1);
+          vm.project.startYear, vm.project.endYear+1);
 
         // Stop here if spreadsheet has not been uploaded
         vm.isMissingData = !vm.project.hasParset;
@@ -490,8 +490,8 @@ define(['./../module', 'underscore'], function(module, _) {
 
 // var isValidCCDataYear = function() {
 //   if ($scope.state.newCCData.year) {
-//     if ($scope.state.newCCData.year >= $scope.vm.project.dataStart ||
-//       $scope.state.newCCData.year <= $scope.vm.project.dataEnd) {
+//     if ($scope.state.newCCData.year >= $scope.vm.project.startYear ||
+//       $scope.state.newCCData.year <= $scope.vm.project.endYear) {
 //       var recordExisting = _.filter($scope.state.ccData, function(ccData) {
 //         return ccData.year === $scope.state.newCCData.year;
 //       });
@@ -511,8 +511,8 @@ define(['./../module', 'underscore'], function(module, _) {
 
 // var isValidCPDataYear = function() {
 //   if ($scope.state.newCPData.year) {
-//     if ($scope.state.newCPData.year >= $scope.vm.project.dataStart ||
-//       $scope.state.newCPData.year <= $scope.vm.project.dataEnd) {
+//     if ($scope.state.newCPData.year >= $scope.vm.project.startYear ||
+//       $scope.state.newCPData.year <= $scope.vm.project.endYear) {
 //       var recordExisting = _.filter($scope.state.cpData, function(cpData) {
 //         return cpData.year === $scope.state.newCPData.year;
 //       });

@@ -328,11 +328,11 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     project.data["pops"] = data_pops
     project.data["npops"] = len(data_pops)
 
-    dataStart = project_summary['dataStart']
-    dataEnd = project_summary['dataEnd']
-    project.data["years"] = (dataStart, dataEnd)
-    project.settings.start = dataStart
-    project.settings.end = dataEnd
+    startYear = project_summary['startYear']
+    endYear = project_summary['endYear']
+    project.data["years"] = (startYear, endYear)
+    project.settings.start = startYear
+    project.settings.end = endYear
 
     project_entry.save_obj(project)
     db.session.commit()
@@ -343,8 +343,8 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     op.makespreadsheet(
         path,
         pops=project_summary['populations'],
-        datastart=project_summary['dataStart'],
-        dataend=project_summary['dataEnd'])
+        datastart=project_summary['startYear'],
+        dataend=project_summary['endYear'])
 
     print("> Project data template: %s" % new_project_template)
 
@@ -383,8 +383,8 @@ def update_project_followed_by_template_data_spreadsheet(
     op.makespreadsheet(
         path,
         pops=project_summary['populations'],
-        datastart=project_summary["dataStart"],
-        dataend=project_summary["dataEnd"])
+        datastart=project_summary["startYear"],
+        dataend=project_summary["endYear"])
 
     (dirname, basename) = (
         upload_dir_user(TEMPLATEDIR), new_project_template)
