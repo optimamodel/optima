@@ -38,7 +38,7 @@ from .dbconn import db
 from . import parse
 from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
     UserAlreadyExists, UserDoesNotExist, InvalidCredentials
-from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, ProjectEconDb, PyObjectDb
+from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, PyObjectDb
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 
 
@@ -1132,119 +1132,6 @@ def load_template_data_spreadsheet(project_id):
         datastart=int(project.data["years"][0]),
         dataend=int(project.data["years"][-1]))
     return upload_dir_user(TEMPLATEDIR), fname
-
-
-def load_econ_spreadsheet_binary(project_id):
-    econ_record = ProjectEconDb.query.get(project_id)
-    if econ_record is not None:
-        binary = econ_record.meta
-        if len(binary.meta) > 0:
-            project = load_project(project_id)
-            server_fname = secure_filename('{}_economics.xlsx'.format(project.name))
-            return server_fname, binary
-    return None, None
-
-
-def load_template_econ_spreadsheet(project_id):
-    project = load_project(project_id)
-    fname = secure_filename('{}_economics.xlsx'.format(project.name))
-    server_fname = templatepath(fname)
-    op.makeeconspreadsheet(
-        server_fname,
-        datastart=int(project.data["years"][0]),
-        dataend=int(project.data["years"][-1]))
-    return upload_dir_user(TEMPLATEDIR), fname
-
-
-def update_project_from_data_spreadsheet(project_id, full_filename):
-    project_record = load_project_record(project_id, raise_exception=True)
-    project = project_record.load()
-
-    parset_name = "default"
-    parset_names = project.parsets.keys()
-    basename = os.path.basename(full_filename)
-    if parset_name in parset_names:
-        parset_name = "uploaded from " + basename
-        i = 0
-        while parset_name in parset_names:
-            i += 1
-            parset_name = "uploaded_from_%s (%d)" % (basename, i)
-
-    project.loadspreadsheet(full_filename, parset_name, makedefaults=True)
-    project_record.save_obj(project)
-
-    # importing spreadsheet will also runsim to project.results[-1]
-    result = project.results[-1]
-    parset = project.parsets[parset_name]
-    result_record = update_or_create_result_record_by_id(
-        result, project_id, parset.uid, "calibration")
-
-    # save the binary data of spreadsheet for later download
-    with open(full_filename, 'rb') as f:
-        try:
-            data_record = ProjectDataDb.query.get(project_id)
-            data_record.meta = f.read()
-        except:
-            data_record = ProjectDataDb(project_id, f.read())
-
-    db.session.add(data_record)
-    db.session.add(project_record)
-    db.session.add(result_record)
-    db.session.commit()
-
-
-def update_project_from_econ_spreadsheet(project_id, econ_spreadsheet_fname):
-    project_record = load_project_record(project_id, raise_exception=True)
-    project = project_record.load()
-
-    project.loadeconomics(econ_spreadsheet_fname)
-    project_record.save_obj(project)
-    db.session.add(project_record)
-
-    with open(econ_spreadsheet_fname, 'rb') as f:
-        binary = f.read()
-        upload_time = datetime.now(dateutil.tz.tzutc())
-        econ_record = ProjectEconDb.query.get(project.id)
-        if econ_record is not None:
-            econ_record.meta = binary
-            econ_record.updated = upload_time
-        else:
-            econ_record = ProjectEconDb(
-                project_id=project.id,
-                meta=binary,
-                updated=upload_time)
-        db.session.add(econ_record)
-
-    db.session.commit()
-
-    return econ_spreadsheet_fname
-
-
-def delete_econ(project_id):
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-    if 'econ' not in project.data:
-        raise Exception("No economoics data found in project %s" % project_id)
-    del project.data['econ']
-    project_record.save_obj(project)
-    db.session.add(project_record)
-
-    econ_record = ProjectEconDb.query.get(project.id)
-    if econ_record is None or len(econ_record.meta) == 0:
-        db.session.delete(econ_record)
-    else:
-        raise Exception("No economics data has been uploaded")
-
-    db.session.commit()
-
-
-def get_odict_item(odict, key):
-    if type(key) == int:
-        if 0 <= key < len(odict):
-            return odict[key]
-    elif key in odict:
-        return odict[key]
-    return None
 
 
 def resolve_project(project):

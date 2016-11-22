@@ -208,15 +208,3 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
         redis.delete("working-" + self.id.hex)
 
 
-class ProjectEconDb(db.Model):  # pylint: disable=R0903
-
-    __tablename__ = 'project_econ'
-
-    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
-    meta = deferred(db.Column(db.LargeBinary))
-    updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
-
-    def __init__(self, project_id, meta, updated=None):
-        self.id = project_id
-        self.meta = meta
-        self.updated = updated
