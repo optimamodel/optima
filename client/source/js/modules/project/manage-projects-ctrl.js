@@ -104,13 +104,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.copy = function(name, id) {
         var otherNames = _.pluck($scope.projects, 'name');
         var newName = getUniqueName(name, otherNames);
-        projectApi.copyProject(id, newName).success(function (response) {
-          projectApi.getProjectList()
-            .success(function(response) {
-              toastr.success('Copied project ' + newName);
-              loadProjects(response.projects);
-            });
-        });
+        projectApi
+          .copyProject(id, newName)
+          .success(function(response) {
+            projectApi
+              .getProjectList()
+              .success(function(response) {
+                loadProjects(response.projects);
+                var project = _.findWhere($scope.projects, {name: newName});
+                activeProject.setActiveProjectFor(project.name, project.id, userManager.user);
+                $state.reload();
+                toastr.success('Copied project ', $scope.projects, project);
+              });
+          });
       };
 
       /**

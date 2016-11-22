@@ -91,28 +91,43 @@
         <td>
           <button class="btn __green" ng-click="open(project.name, project.id)">Open</button>
         </td>
-        <td>
-          <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
-        </td>
-
-        <td>
-          <button class="btn" ng-click="editProjectName(project)">Rename</button>
-        </td>
-        <td>
+        <td style="white-space: nowrap">
+          <i
+            ng-click="copy(project.name, project.id)"
+            class="fa fa-copy"
+            tp-text="Copy" tooltip tp-class="tooltip"
+            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+            style="margin-left: 0.5em">
+          </i>
+          <i
+            ng-click="editProjectName(project)"
+            class="fa fa-pencil"
+            tp-text="Rename" tooltip tp-class="tooltip"
+            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+            style="margin-left: 0.5em">
+          </i>
+          <i
+            ng-click="getData(project.name, project.id)"
+            class="fa fa-download"
+            tp-text="Download" tooltip tp-class="tooltip"
+            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+            style="margin-left: 0.5em">
+          </i>
+          <i
+            ng-click="remove($event, project.name, project.id, $index)"
+            class="fa fa-trash-o"
+            tp-text="Delete" tooltip tp-class="tooltip"
+            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+            style="margin-left: 0.5em">
+          </i>
+          &nbsp;
           <button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>
-        </td>
-        <td>
-          <button class="btn" ng-click="getData(project.name, project.id)">Download</button>
-        </td>
-        <td>
           <button class="btn" ng-click="workbook(project.name, project.id)">Download template data spreadsheet</button>
-        </td>
-        <td>
           <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload data spreadsheet</button>
         </td>
-        <td>
-          <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete</button>
-        </td>
+        <!--<td>-->
+          <!--<button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete</button>-->
+        <!--</td>-->
       </tr>
       </tbody>
     </table>
