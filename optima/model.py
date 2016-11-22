@@ -343,7 +343,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             lossrates[cd4,:] = minimum(simpars['aidsleavecare'][0],simpars['leavecare'][:,0])
         dxfrac = 1.-exp(-averagedurationinfected*testingrates)
         linktocarefrac = linkagerates
-        lostfrac = 1.-exp(-averagedurationinfected*lossrates)
+        lostfrac = lossrates # WARNING, this is not technically correct, but seems to work ok in practice 
         undxdist = 1.-dxfrac
         dxdist = dxfrac*(1.-linktocarefrac)
         incaredist = dxfrac*linktocarefrac*(1.-lostfrac)
