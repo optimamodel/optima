@@ -477,7 +477,7 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
-    tmpresults = [orig, new]
+    tmpresults = [new, orig]
 
     # Output
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
@@ -628,7 +628,7 @@ def minmoney(project=None, optim=None, name=None, inds=None, tvec=None, verbose=
     new = objectivecalc(constrainedbudgetvec, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
-    tmpresults = [orig, new]
+    tmpresults = [new, orig]
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     optim.resultsref = multires.name # Store the reference for this result

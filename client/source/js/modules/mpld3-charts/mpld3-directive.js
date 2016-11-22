@@ -51,6 +51,8 @@ define(
 
 
   function addLineToLegendLabel($svgFigure, nLegend) {
+      console.log('addLineToLegendLabel', nLegend, $svgFigure);
+
       // add lines in legend labels
       var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
       if ($textLabels) {
@@ -60,10 +62,26 @@ define(
         // so need to work out how many entries in legend
         // it is the the number of textlabels - title and axe labels
         // var nLegend = $textLabels.length - 3;
-        var $paths = $svgFigure.find('.mpld3-axes > path');
-        var $pathsToCopy = $paths.slice($paths.length - nLegend, $paths.length);
-        var $baseAxes = $svgFigure.find('.mpld3-baseaxes');
-        $baseAxes.append($pathsToCopy);
+        var paths = $svgFigure.find('.mpld3-axes > path');
+
+        // it looks like the legend background sneaks in as a path
+        // and is not drawn in the right order
+
+        // we extract the lines of the legend AND the background
+        var pathsToCopy = paths.slice(paths.length - nLegend - 1, paths.length);
+
+        _.each(pathsToCopy, function(path) {
+          var $path = $(path);
+
+          // we look for the background and make it opaque
+          if ($path.css('fill')=="rgb(255, 255, 255)") {
+            $path.css('fill', "rgba(255, 255, 255, 0)");
+            $path.css('stroke', "rgba(255, 255, 255, 0)");
+          }
+        });
+
+        var baseAxes = $svgFigure.find('.mpld3-baseaxes');
+        baseAxes.append(pathsToCopy);
       }
   }
 
