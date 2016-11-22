@@ -118,7 +118,6 @@ class ProjectDb(db.Model):
             work_log.cleanup()
         work_logs.delete(synchronize_session)
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
-        db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.flush()
 

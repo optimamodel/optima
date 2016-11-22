@@ -310,45 +310,6 @@ class ProjectDataSpreadsheet(Resource):
 api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 
 
-class ProjectEcon(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Downloads template/uploaded econ spreadsheet')
-    def get(self, project_id):
-        fname, binary = dataio.load_econ_spreadsheet_binary(project_id)
-        if binary is not None:
-            print("> Download previously-uploaded xls as %s" % fname)
-            return Response(
-                binary,
-                mimetype='application/octet-stream',
-                headers={
-                    'Content-Disposition': 'attachment;filename=' + fname
-                })
-        else:
-            dirname, basename = dataio.load_template_econ_spreadsheet(project_id)
-            print("> Template created: %s" % basename)
-            return helpers.send_from_directory(dirname, basename, as_attachment=True)
-
-    @swagger.operation(summary='Upload the economics data spreadsheet')
-    def post(self, project_id):
-        """
-        file-upload
-        """
-        econ_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        server_fname = dataio.update_project_from_econ_spreadsheet(project_id, econ_fname)
-        reply = {
-            'file': os.path.basename(server_fname),
-            'success': 'Econ spreadsheet uploaded for project %s' % load_project_name(project_id),
-        }
-        return reply
-
-    @swagger.operation(summary='Removes economics data from project')
-    def delete(self, project_id):
-        dataio.delete_econ(project_id)
-
-api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
-
-
 # Portfolios
 
 class ManagePortfolio(Resource):
