@@ -15,8 +15,7 @@ define([
   './modules/common/global-poller-service',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
-  './modules/common/file-upload-service',
-  './modules/common/local-storage-service',
+  './modules/common/local-storage-polyfill',
   './modules/calibration/index',
   './modules/project/index',
   './modules/geospatial/index',
@@ -46,7 +45,6 @@ define([
         'app.analysis',
         'app.admin',
         'app.common.form-input-validate',
-        'app.common.file-upload',
         'app.common.global-poller',
         'app.charts',
         'app.local-storage',
@@ -90,7 +88,7 @@ define([
       $urlRouterProvider.otherwise('/');
     })
 
-    .run(function ($rootScope, $state, UserManager, activeProject) {
+    .run(function ($rootScope, $state, userManager, activeProject) {
 
       /**
        * an injector has been run in main.js before app.js to fetch
@@ -98,12 +96,12 @@ define([
        * used to build the app in the first run
        */
       if (window.user) {
-        UserManager.setUser(window.user);
+        userManager.setUser(window.user);
         delete window.user;
       }
 
       // Set the active project if any
-      activeProject.loadProjectFor(UserManager.user);
+      activeProject.loadProjectFor(userManager.user);
 
       function isStatePublic(stateName) {
         var publicStates = ['contact', 'login', 'register'];
@@ -111,7 +109,7 @@ define([
       }
 
       $rootScope.$on('$stateChangeStart', function (event, to) {
-        if (!UserManager.isLoggedIn && !isStatePublic(to.name)) {
+        if (!userManager.isLoggedIn && !isStatePublic(to.name)) {
           event.preventDefault();
           $state.go('login');
         }

@@ -5,7 +5,7 @@ define(['angular'], function (angular) {
   return angular
     .module('app.ui.menu', ['app.user-manager'])
     .directive('menu', function(
-      $state, UserManager, fileUpload, activeProject, modalService, $http) {
+      $state, userManager, activeProject, modalService, $http) {
 
       return {
         restrict: 'A',
@@ -14,7 +14,7 @@ define(['angular'], function (angular) {
         controller: ['$scope', function($scope) {
 
           $scope.state = $state.current;
-          $scope.isAdmin = UserManager.isAdmin;
+          $scope.isAdmin = userManager.isAdmin;
 
           $scope.getState = function() {
             return $state.current.name;

@@ -2,7 +2,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
 
   'use strict';
 
-  return module.controller('LoginController', function ($scope, $window, UserApi, activeProject) {
+  return module.controller('LoginController', function ($scope, $window, userApi, activeProject) {
 
     $scope.error = '';
 
@@ -16,7 +16,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
       $scope.error = '';
       var hashed_password = SHA224($scope.password).toString();
 
-      UserApi.login({
+      userApi.login({
         username: $scope.username,
         password: hashed_password
       },

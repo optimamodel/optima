@@ -23,8 +23,8 @@ define([
           abstract: true,
           template: '<div ui-view></div>',
           resolve: {
-            info: function (projectApiService) {
-              return projectApiService.getActiveProject();
+            info: function (projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         })
@@ -49,8 +49,8 @@ define([
           templateUrl: 'js/modules/analysis/optimization.html',
           controller: 'AnalysisOptimizationController',
           resolve: {
-            activeProject: function (projectApiService) {
-              return projectApiService.getActiveProject();
+            activeProject: function (projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         });

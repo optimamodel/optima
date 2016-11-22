@@ -3,7 +3,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ProgramSetController', function (
       $scope, $http, $modal, modalService, toastr,
-      currentProject, projectApiService, $upload, $state) {
+      currentProject, projectApi, $upload, $state) {
 
     var project = currentProject.data;
     var defaultPrograms;
@@ -36,7 +36,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         });
 
       // Load a default set of inactive programs for new
-      projectApiService
+      projectApi
         .getDefault(project.id)
         .success(function(response) {
           defaultPrograms = response;

@@ -2,7 +2,6 @@ define([
     'angular',
     './menu/menu-directive',
     './modal/modal-service',
-    '../common/file-upload-service',
     '../common/active-project-service',
     '../user/user-manager-service'
   ],
@@ -13,15 +12,14 @@ define([
         'app.ui', [
           'app.active-project',
           'app.ui.modal',
-          'app.common.file-upload',
           'app.ui.menu'
         ])
       .controller(
         'MainCtrl',
-        function ($scope, $state, activeProject, UserManager) {
-          $scope.user = UserManager.user;
+        function ($scope, $state, activeProject, userManager) {
+          $scope.user = userManager.user;
           $scope.state = $state;
-          $scope.userLogged = function () { return UserManager.isLoggedIn; };
+          $scope.userLogged = function () { return userManager.isLoggedIn; };
           $scope.activeProject = activeProject;
          });
     return module;

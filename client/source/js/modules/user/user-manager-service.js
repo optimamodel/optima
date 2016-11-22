@@ -3,7 +3,7 @@ define(['angular', './user-api-service' ], function (angular) {
 
   return angular
     .module('app.user-manager', ['app.user-api'])
-    .service('UserManager', function() {
+    .service('userManager', function() {
       var userManager = {
         isLoggedIn: false,
         isAdmin: false,

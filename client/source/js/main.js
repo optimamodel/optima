@@ -14,13 +14,13 @@ define(['angular', './app'], function(angular) {
 
   angular
     .injector(['ng', 'app.user-api'])
-    .invoke(['UserApi', function(UserApi) {
+    .invoke(['userApi', function(userApi) {
 
       function bootstrap() {
         angular.bootstrap(document, ['app']);
       }
 
-      UserApi
+      userApi
         .getCurrent(function(user) { window.user = user; })
         .$promise.then(bootstrap, bootstrap);
 
