@@ -113,8 +113,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 loadProjects(response.projects);
                 var project = _.findWhere($scope.projects, {name: newName});
                 activeProject.setActiveProjectFor(project.name, project.id, userManager.user);
+                toastr.success('Copied project ');
                 $state.reload();
-                toastr.success('Copied project ', $scope.projects, project);
               });
           });
       };
