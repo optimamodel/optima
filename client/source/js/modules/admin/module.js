@@ -28,8 +28,8 @@ define([
                 templateUrl: 'js/modules/admin/manage-projects.html' ,
                 controller: 'AdminManageProjectsController',
                 resolve: {
-                  projects: function (projectApiService) {
-                    return projectApiService.getAllProjectList();
+                  projects: function (projectApi) {
+                    return projectApi.getAllProjectList();
                   },
                   users:function($http){
                     return $http.get('/api/user');

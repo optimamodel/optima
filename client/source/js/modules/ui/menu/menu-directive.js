@@ -5,7 +5,7 @@ define(['angular'], function (angular) {
   return angular
     .module('app.ui.menu', ['app.user-manager'])
     .directive('menu', function(
-      $state, userManager, fileUpload, activeProject, modalService, $http) {
+      $state, userManager, activeProject, modalService, $http) {
 
       return {
         restrict: 'A',

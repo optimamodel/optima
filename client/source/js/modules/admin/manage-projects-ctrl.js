@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('AdminManageProjectsController', function (
     $scope, $http, projects, users, activeProject,
-    userManager, modalService, projectApiService, $state, toastr) {
+    userManager, modalService, projectApi, $state, toastr) {
 
     $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
     $scope.users = _.map(
@@ -34,7 +34,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.workbook = function (name, id) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open(projectApiService.getSpreadsheetUrl(id), '_blank', '');
+      window.open(projectApi.getSpreadsheetUrl(id), '_blank', '');
     };
 
     /**
@@ -86,10 +86,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Gets the data for the given project `name` as <name>.json  file
      */
     $scope.getData = function (name, id) {
-      projectApiService.getProjectData(id).success(function (response, status, headers, config) {
-          var blob = new Blob([response], { type: 'application/json' });
-          saveAs(blob, (name + '.json'));
-        });
+      projectApi.getProjectData(id).success(function (response) {
+        var blob = new Blob([response], { type: 'application/json' });
+        saveAs(blob, (name + '.prj'));
+      });
     };
 
     /**
@@ -99,7 +99,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * in case of failure.
      */
     var removeNoQuestionsAsked = function (user, name, id, index) {
-      projectApiService.deleteProject(id)
+      projectApi.deleteProject(id)
         .success(function (response) {
           user.projects = _(user.projects).filter(function (item) {
             return item.id != id;

@@ -5,7 +5,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller(
     'ProjectOpenController',
     function ($scope, $http, activeProject, projects, modalService,
-        fileUpload, userManager, projectApiService, $state, $upload,
+        userManager, projectApi, $state, $upload,
         $modal, toastr) {
 
       function initialize() {
@@ -62,7 +62,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).map(function(project) {
           return project.id;
         });
-        projectApiService.deleteSelectedProjects(selectedProjectIds)
+        projectApi.deleteSelectedProjects(selectedProjectIds)
           .success(function () {
             $scope.projects = _.filter($scope.projects, function(project) {
               return !project.selected;
@@ -79,7 +79,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).map(function(project) {
           return project.id;
         });
-        projectApiService.downloadSelectedProjects(selectedProjectsIds)
+        projectApi.downloadSelectedProjects(selectedProjectsIds)
           .success(function (response) {
             saveAs(new Blob([response], { type: "application/octet-stream", responseType: 'arraybuffer' }), 'portfolio.zip');
           });
@@ -104,8 +104,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.copy = function(name, id) {
         var otherNames = _.pluck($scope.projects, 'name');
         var newName = getUniqueName(name, otherNames);
-        projectApiService.copyProject(id, newName).success(function (response) {
-          projectApiService.getProjectList()
+        projectApi.copyProject(id, newName).success(function (response) {
+          projectApi.getProjectList()
             .success(function(response) {
               toastr.success('Copied project ' + newName);
               loadProjects(response.projects);
@@ -127,7 +127,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.workbook = function (name, id) {
         // read that this is the universal method which should work everywhere in
         // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-        window.open(projectApiService.getSpreadsheetUrl(id), '_blank', '');
+        window.open(projectApi.getSpreadsheetUrl(id), '_blank', '');
       };
 
       function isExistingProjectName(projectName) {
@@ -217,7 +217,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.rename(
           function(name) {
             project.name = name;
-            projectApiService
+            projectApi
               .updateProject(
                 project.id,
                 {
@@ -242,7 +242,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
        * Gets the data for the given project `name` as <name>.json  file.
        */
       $scope.getData = function (name, id) {
-        projectApiService.getProjectData(id)
+        projectApi.getProjectData(id)
           .success(function (response, status, headers, config) {
             var blob = new Blob([response], { type: 'application/octet-stream' });
             saveAs(blob, (name + '.prj'));
@@ -250,36 +250,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       /**
-       * Upload data spreadsheet for a project.
-       */
-      $scope.setData = function (name, id, file) {
-        var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
-        modalService.confirm(
-          function (){ fileUpload.uploadDataSpreadsheet($scope, file, projectApiService.getDataUploadUrl(id), false); },
-          function (){},
-          'Yes, overwrite data',
-          'No',
-          message,
-          'Upload data'
-        );
-      };
-
-      /**
-       * Upload project data.
-       */
-      $scope.preSetData = function(name, id) {
-        angular
-          .element('<input type=\'file\'>')
-          .change(function(event){
-          $scope.setData(name, id, event.target.files[0]);
-        }).click();
-      };
-
-      /**
        * Removes the project.
        */
       var removeProject = function (name, id, index) {
-        projectApiService.deleteProject(id).success(function (response) {
+        projectApi.deleteProject(id).success(function (response) {
           $scope.projects = _($scope.projects).filter(function (item) {
             return item.id != id;
           });

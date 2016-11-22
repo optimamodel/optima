@@ -24,8 +24,8 @@ define([
           templateUrl: 'js/modules/programs/program-set/program-set.html',
           controller: 'ProgramSetController',
           resolve: {
-            currentProject: function(projectApiService) {
-              return projectApiService.getActiveProject();
+            currentProject: function(projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         })
@@ -35,8 +35,8 @@ define([
           templateUrl: 'js/modules/programs/cost-coverage/cost-coverage.html',
           bindToController: true,
           resolve: {
-            activeProject: function (projectApiService) {
-              return projectApiService.getActiveProject();
+            activeProject: function (projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         });

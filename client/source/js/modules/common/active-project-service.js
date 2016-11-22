@@ -5,7 +5,7 @@
 
 // todo: since now we do not keep project open after user session is complete, it makes sense to remove it from local-storage to cookie-storage
 
-define(['angular', '../common/local-storage-service'], function (angular) {
+define(['angular', '../common/local-storage-polyfill'], function (angular) {
   'use strict';
 
   return angular.module('app.active-project', ['app.local-storage'])

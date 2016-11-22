@@ -1,7 +1,7 @@
 define(['./module'], function (module) {
   'use strict';
 
-  module.factory('projectApiService', [ '$http', 'activeProject',
+  module.factory('projectApi', [ '$http', 'activeProject',
 
     function ($http, activeProject) {
 
@@ -13,12 +13,12 @@ define(['./module'], function (module) {
           }
         },
         createProject: function(data) {
-          return $http.post('/api/project', data, {
-          responseType:'blob'});
+          return $http.post(
+            '/api/project', data, {responseType:'blob'});
         },
         updateProject: function(id, data) {
-          return $http.put('/api/project/' + id, data, {
-          responseType:'blob'});
+          return $http.put(
+            '/api/project/' + id, data, {responseType:'blob'});
         },
         deleteProject: function(id) {
           return $http.delete('/api/project/' + id);
@@ -48,9 +48,13 @@ define(['./module'], function (module) {
           responseType:'blob'});
         },
         getEconomicsData: function(id) {
-          return $http.get('/api/project/'+ id + '/economics',
-            {headers: {'Content-type': 'application/octet-stream'},
-          responseType:'blob'});
+          return $http.get(
+            '/api/project/'+ id + '/economics',
+            {
+              headers: {
+                'Content-type': 'application/octet-stream'},
+                responseType:'blob'
+            });
         },
         deteleEconomicsData: function(id) {
           return $http.delete('/api/project/' + id + '/economics');
@@ -69,9 +73,6 @@ define(['./module'], function (module) {
         },
         getSpreadsheetUrl: function(id) {
           return '/api/project/' + id + '/spreadsheet';
-        },
-        getEconomicsUrl: function(id) {
-          return '/api/project/' + id + '/economics';
         },
         getDataUploadUrl: function(id) {
           return '/api/project/' + id + '/data';

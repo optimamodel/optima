@@ -8,14 +8,12 @@ define(
     'angular',
     'ui.router',
     '../common/active-project-service',
-    '../common/file-upload-service'
   ],
   function (angular) {
     'use strict';
 
     return angular.module('app.project', [
       'app.active-project',
-      'app.common.file-upload',
       'ui.router'
     ])
       .config(function ($stateProvider) {
@@ -25,8 +23,8 @@ define(
             templateUrl: 'js/modules/project/manage-projects.html',
             controller: 'ProjectOpenController',
             resolve: {
-              projects: function (projectApiService) {
-                return projectApiService.getProjectList();
+              projects: function (projectApi) {
+                return projectApi.getProjectList();
               }
             }
           })
@@ -40,14 +38,14 @@ define(
             templateUrl: 'js/modules/project/create-or-edit.html',
             controller: 'ProjectCreateOrEditController',
             resolve: {
-              populations: function(projectApiService) {
-                return projectApiService.getPopulations();
+              populations: function(projectApi) {
+                return projectApi.getPopulations();
               },
               info: function() {
                 return undefined;
               },
-              projects: function (projectApiService) {
-                return projectApiService.getProjectList();
+              projects: function (projectApi) {
+                return projectApi.getProjectList();
               }
             }
           })
@@ -56,14 +54,14 @@ define(
             templateUrl: 'js/modules/project/create-or-edit.html',
             controller: 'ProjectCreateOrEditController',
             resolve: {
-              populations: function(projectApiService) {
-                return projectApiService.getPopulations();
+              populations: function(projectApi) {
+                return projectApi.getPopulations();
               },
-              info: function (projectApiService) {
-                return projectApiService.getActiveProject();
+              info: function (projectApi) {
+                return projectApi.getActiveProject();
               },
-              projects: function (projectApiService) {
-                return projectApiService.getProjectList();
+              projects: function (projectApi) {
+                return projectApi.getProjectList();
               }
             }
           })
@@ -72,8 +70,8 @@ define(
             templateUrl: 'js/modules/project/upload.html',
             controller: 'ProjectUploadController',
             resolve: {
-              projects: function (projectApiService) {
-                return projectApiService.getProjectList();
+              projects: function (projectApi) {
+                return projectApi.getProjectList();
               }
             }
           })
@@ -82,11 +80,11 @@ define(
             templateUrl: 'js/modules/project/economic-data.html',
             controller: 'ProjectEconomicDataController',
             resolve: {
-              info: function (projectApiService) {
-                return projectApiService.getActiveProject();
+              info: function (projectApi) {
+                return projectApi.getActiveProject();
               },
-              projects: function (projectApiService) {
-                return projectApiService.getProjectList();
+              projects: function (projectApi) {
+                return projectApi.getProjectList();
               }
             }
           });

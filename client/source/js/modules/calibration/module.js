@@ -19,8 +19,8 @@ define([
           templateUrl: 'js/modules/calibration/calibration.html',
           controller: 'ModelCalibrationController',
           resolve: {
-            info: function (projectApiService) {
-              return projectApiService.getActiveProject();
+            info: function (projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         })

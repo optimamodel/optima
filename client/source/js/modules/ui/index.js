@@ -2,7 +2,6 @@ define([
     'angular',
     './menu/menu-directive',
     './modal/modal-service',
-    '../common/file-upload-service',
     '../common/active-project-service',
     '../user/user-manager-service'
   ],
@@ -13,7 +12,6 @@ define([
         'app.ui', [
           'app.active-project',
           'app.ui.modal',
-          'app.common.file-upload',
           'app.ui.menu'
         ])
       .controller(
