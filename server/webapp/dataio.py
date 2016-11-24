@@ -151,6 +151,9 @@ def parse_user_args(args):
 
 
 def create_user(args):
+    """
+    Creates a user and returns a user summary.
+    """
     n_user = UserDb.query.filter_by(username=args['username']).count()
     if n_user > 0:
         raise UserAlreadyExists(args['username'])
@@ -163,6 +166,9 @@ def create_user(args):
 
 
 def update_user(user_id, args):
+    """
+    Updates user by args and returns a user summary
+    """
     user = UserDb.query.get(user_id)
     if user is None:
         raise UserDoesNotExist(user_id)
@@ -383,6 +389,12 @@ def load_project_summaries(user_id=None):
 
 
 def create_project_with_spreadsheet_download(user_id, project_summary):
+    """
+    Creates a project from project_summary and returns
+    - project_id
+    - directory_of_template_spreadsheet
+    - template_spreadsheet_filename)
+    """
     project_entry = ProjectDb(user_id=user_id)
     db.session.add(project_entry)
     db.session.flush()
@@ -427,6 +439,10 @@ def delete_projects(project_ids):
 
 
 def update_project_from_summary(project_id, project_summary, is_delete_data):
+    """
+    Updates a project from project summary and returns an instance of that
+    project
+    """
     project_entry = load_project_record(project_id)
     project = project_entry.load()
 
@@ -443,6 +459,9 @@ def update_project_from_summary(project_id, project_summary, is_delete_data):
 
 def update_project_followed_by_template_data_spreadsheet(
         project_id, project_summary, is_delete_data):
+    """
+    Returns (dirname, basename) of template data spreadsheet on the server
+    """
     project = update_project_from_summary(project_id, project_summary, is_delete_data)
 
     secure_project_name = secure_filename(project.name)
@@ -483,7 +502,9 @@ def save_project_as_new(project, user_id):
 
 
 def copy_project(project_id, new_project_name):
-    # Get project row for current user with project name
+    """
+    Returns the project_id of the copied project
+    """
     project_record = load_project_record(
         project_id, raise_exception=True)
     user_id = project_record.user_id
@@ -525,6 +546,9 @@ def copy_project(project_id, new_project_name):
 
 
 def create_project_from_prj(prj_filename, project_name, user_id):
+    """
+    Returns the project id of the new project.
+    """
     project = op.dataio.loadobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)
     project = op.migrate(project)
@@ -536,6 +560,9 @@ def create_project_from_prj(prj_filename, project_name, user_id):
 
 
 def create_project_from_spreadsheet(prj_filename, project_name, user_id):
+    """
+    Returns the project id of the new project.
+    """
     project = op.Project(spreadsheet=prj_filename)
     project = op.migrate(project)
     project.name = project_name
@@ -545,6 +572,9 @@ def create_project_from_spreadsheet(prj_filename, project_name, user_id):
 
 
 def download_project(project_id):
+    """
+    Returns the (dirname, filename) of the .prj binary of the project on the server
+    """
     project_record = load_project_record(project_id, raise_exception=True)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
@@ -565,6 +595,9 @@ def update_project_from_prj(project_id, prj_filename):
 
 
 def load_zip_of_prj_files(project_ids):
+    """
+    Returns the (dirname, filename) of the .zip of the selected projects on the server
+    """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
@@ -584,6 +617,9 @@ def load_zip_of_prj_files(project_ids):
 
 
 def create_portfolio(name, db_session=None):
+    """
+    Returns the portfolio summary of the portfolio
+    """
     if db_session is None:
         db_session = db.session
     print("> Create portfolio %s" % name)
@@ -594,7 +630,7 @@ def create_portfolio(name, db_session=None):
     portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
     record = PyObjectDb(
         user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
-    # something about dates
+    # TODO: something about dates
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
@@ -602,6 +638,9 @@ def create_portfolio(name, db_session=None):
 
 
 def delete_portfolio(portfolio_id, db_session=None):
+    """
+    Returns all the portfolio summaries (excluding the deleted one)
+    """
     if db_session is None:
         db_session = db.session
     print("> Delete portfolio %s" % portfolio_id)
@@ -620,7 +659,7 @@ def load_portfolio(portfolio_id, db_session=None):
     if record:
         print("> load portfolio %s" % portfolio_id)
         return record.load()
-    return op.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
+    raise ValueError("Couldn't find portfolio %s" % portfolio_id)
 
 
 def load_portfolio_summaries(db_session=None):
@@ -691,6 +730,9 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
 
 
 def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
+    """
+    Return updated portfolio summaries
+    """
     portfolio = load_or_create_portfolio(portfolio_id)
     new_project_ids = parse.set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
     for project_id in new_project_ids:
@@ -701,6 +743,9 @@ def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
 
 
 def delete_portfolio_project(portfolio_id, project_id):
+    """
+    Return remaining portfolio summaries
+    """
     portfolio = load_portfolio(portfolio_id)
     portfolio.projects.pop(str(project_id))
     print ">> Deleted project %s from portfolio %s" % (project_id, portfolio_id)
@@ -709,6 +754,9 @@ def delete_portfolio_project(portfolio_id, project_id):
 
 
 def make_region_template_spreadsheet(project_id, n_region, year):
+    """
+    Return (dirname, basename) of the region template spreadsheet on the server
+    """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
@@ -720,6 +768,10 @@ def make_region_template_spreadsheet(project_id, n_region, year):
 
 
 def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
+    """
+    Return (dirname, basename) of the region template spreadsheet on the server
+    """
+
     print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
     dirname = upload_dir_user(TEMPLATEDIR)
 
@@ -949,6 +1001,9 @@ def delete_result_by_name(
 
 
 def load_result_csv(result_id):
+    """
+    Returns (dirname, basename) of the the result.csv on the server
+    """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
@@ -1011,6 +1066,9 @@ def make_scenarios_graphs(project_id, is_run=False):
 
 
 def save_scenario_summaries(project_id, scenario_summaries):
+    """
+    Returns scenario summaries of the projects
+    """
     delete_result_by_parset_id(project_id, None, "scenarios")
     project_record = load_project_record(project_id)
     project = project_record.load()
@@ -1050,6 +1108,9 @@ def load_optimization_summaries(project_id):
 
 
 def save_optimization_summaries(project_id, optimization_summaries):
+    """
+    Returns all optimization summaries
+    """
     project_record = load_project_record(project_id)
     project = project_record.load()
     old_names = [o.name for o in project.optims.values()]
@@ -1064,6 +1125,9 @@ def save_optimization_summaries(project_id, optimization_summaries):
 
 
 def upload_optimization_summary(project_id, optimization_id, optimization_summary):
+    """
+    Returns all optimization summaries
+    """
     project_record = load_project_record(project_id)
     project = project_record.load()
     old_optim = parse.get_optimization_from_project(project, optimization_id)
@@ -1087,26 +1151,11 @@ def load_optimization_graphs(project_id, optimization_id, which):
 
 ## SPREADSHEETS
 
-def save_data_spreadsheet(name, folder=None):
-    if folder is None:
-        folder = current_app.config['UPLOAD_FOLDER']
-    spreadsheet_file = name
-    user_dir = upload_dir_user(folder)
-    if not spreadsheet_file.startswith(user_dir):
-        spreadsheet_file = helpers.safe_join(user_dir, name + '.xlsx')
-
-
-def delete_spreadsheet(name, user_id=None):
-    spreadsheet_file = name
-    for parent_dir in [TEMPLATEDIR, current_app.config['UPLOAD_FOLDER']]:
-        user_dir = upload_dir_user(parent_dir, user_id)
-        if not spreadsheet_file.startswith(user_dir):
-            spreadsheet_file = helpers.safe_join(user_dir, name + '.xlsx')
-        if os.path.exists(spreadsheet_file):
-            os.remove(spreadsheet_file)
-
 
 def load_data_spreadsheet_binary(project_id):
+    """
+    Returns (full_filename, binary_string) of the previously downloaded spreadhseet
+    """
     data_record = ProjectDataDb.query.get(project_id)
     if data_record is not None:
         binary = data_record.meta
@@ -1118,6 +1167,9 @@ def load_data_spreadsheet_binary(project_id):
 
 
 def load_template_data_spreadsheet(project_id):
+    """
+    Returns (dirname, basename) of the the template data spreadsheet
+    """
     project = load_project(project_id)
     fname = secure_filename('{}.xlsx'.format(project.name))
     server_fname = templatepath(fname)
@@ -1131,9 +1183,9 @@ def load_template_data_spreadsheet(project_id):
 
 def resolve_project(project):
     """
-    Checks  project to ensure that all the cross-reference fields are
+    Returns boolean to whether any changes needed to be made to the project.
+    Checks project to ensure that all the cross-reference fields are
     properly specified and that defaults are sensibly populated.
-    Returns boolean to whether any changes needed to be made to the project
     """
     print(">> Resolve project")
     is_change = False
@@ -1228,6 +1280,11 @@ def resolve_project(project):
 
 
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
+    """
+    Returns a dictionary containing
+      <year>: float(popsize)
+      ...
+    """
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
     progset = parse.get_progset_from_project(project, progset_id)
@@ -1254,6 +1311,9 @@ def load_progset_summaries(project_id):
 
 
 def create_progset(project_id, progset_summary):
+    """
+    Returns progset summary
+    """
     project_record = load_project_record(project_id)
     project = project_record.load()
     parse.set_progset_summary_on_project(project, progset_summary)
@@ -1262,6 +1322,9 @@ def create_progset(project_id, progset_summary):
 
 
 def save_progset(project_id, progset_id, progset_summary):
+    """
+    Returns progset summary
+    """
     project_record = load_project_record(project_id)
     project = project_record.load()
     parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
@@ -1270,6 +1333,9 @@ def save_progset(project_id, progset_id, progset_summary):
 
 
 def upload_progset(project_id, progset_id, progset_summary):
+    """
+    Returns progset summary
+    """
     project_record = load_project_record(project_id)
     project = project_record.load()
     old_progset = parse.get_progset_from_project(project, progset_id)
@@ -1319,6 +1385,9 @@ def load_progset_outcome_summaries(project_id, progset_id):
 
 
 def save_outcome_summaries(project_id, progset_id, outcome_summaries):
+    """
+    Returns all outcome summarries
+    """
     project_record = load_project_record(project_id)
     project = project_record.load()
     progset = parse.get_progset_from_project(project, progset_id)
