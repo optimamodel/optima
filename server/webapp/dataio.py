@@ -45,11 +45,12 @@ from .plot import make_mpld3_graph_dict, convert_to_mpld3
 TEMPLATEDIR = "/tmp"  # CK: hotfix to prevent ownership issues
 
 
-def fullpath(filename, datadir=None):
+def templatepath(filename):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """
 
+    datadir = TEMPLATEDIR
     if datadir == None:
         datadir = current_app.config['UPLOAD_FOLDER']
 
@@ -64,10 +65,6 @@ def fullpath(filename, datadir=None):
         result = os.path.join(datadir, filename)
 
     return result
-
-
-def templatepath(filename):
-    return fullpath(filename, TEMPLATEDIR)
 
 
 def upload_dir_user(dirpath, user_id=None):
