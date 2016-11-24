@@ -191,7 +191,6 @@ def revert_populations_to_pop(populations):
     """
     data_pops = op.odict()
 
-    pprint(populations, indent=2)
     for key in ['short', 'long', 'male', 'female', 'age']:
         data_pops[key] = []
 
@@ -423,6 +422,7 @@ def get_parameters_for_scenarios(project, start_year=None):
                 - limits: [number, number]
                 - startVal: number
     """
+    print(">> Get parameters for scenarios")
     if start_year is None:
         start_year = project.settings.start
         end_year = project.settings.end
@@ -454,6 +454,7 @@ def get_parameters_for_scenarios(project, start_year=None):
                         'limits': get_par_limits(project, par),
                         'startval': startval
                     })
+    print(">> Finished calculating startvals for parameters")
     return result
 
 
@@ -520,30 +521,11 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
     return parameters
 
 
-def print_parset(parset):
-    result = {
-        'popkeys': normalize_obj(parset.popkeys),
-        'uid': str(parset.uid),
-        'name': parset.name,
-        'project_id': parset.project.id if parset.project else '',
-    }
-    s = pformat(result, indent=1) + "\n"
-    for pars in parset.pars:
-        for key, par in pars.items():
-            if hasattr(par, 'y'):
-                par = normalize_obj(par.y)
-            elif hasattr(par, 'p'):
-                par = normalize_obj(par.p)
-            else:
-                par = normalize_obj(par)
-            s += pformat({key: par}) + "\n"
-    return s
-
-
 # PROGRAMS
 
 
 def get_budgets_for_scenarios(project):
+    print(">> Get default budges for scenarios")
     result = {
         str(progset.uid): normalize_obj(progset.getdefaultbudget())
         for progset in project.progsets.values()}
@@ -559,6 +541,7 @@ def get_coverages_for_scenarios(project, year=None):
                 <year>:
                     <program_short>: coverage (float)
     """
+    print(">> Get default coverages for scenarios")
     result = {}
     start = project.settings.start
     end = project.settings.end
@@ -743,7 +726,6 @@ def get_program_summary(program, progset, active):
         n = len(a_list)
         for i in range(n):
             a_list[i] = split_pair(a_list[i])
-    pprint(ccopars_dict, indent=2)
 
     result = {
         'id': program.uid,
@@ -931,6 +913,7 @@ def get_progset_summary(project, progset_name):
 
 
 def get_progset_summaries(project):
+    print(">> Get progset summaries")
     progset_summaries = [
         get_progset_summary(project, name) for name in project.progsets]
     return {'progsets': normalize_obj(progset_summaries)}
@@ -1088,7 +1071,6 @@ def force_tuple_list(item):
 def convert_scenario_pars(pars):
     result = []
     for par in pars:
-        pprint(normalize_obj(par), indent=2)
         result.append({
             'name': par.get('name', ''),
             'startyear': par.get('startyear', None),
@@ -1201,6 +1183,7 @@ def get_scenario_summary(project, scenario):
 
 
 def get_scenario_summaries(project):
+    print(">> Get scenario summaries")
     scenario_summaries = []
     for scen in project.scens.values():
         summary = get_scenario_summary(project, scen)
@@ -1261,10 +1244,6 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
             scen.uid = UUID(summary["id"])
 
         scen.active = summary["active"]
-        print("save summary")
-        pprint(summary, indent=2)
-        print("save scen kwargs")
-        pprint(kwargs, indent=2)
         project.scens[scen.name] = scen
 
 

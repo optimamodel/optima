@@ -805,6 +805,7 @@ def create_parset(project_id, new_parset_name):
 
 
 def load_parset_summaries(project_id):
+    print(">> Get parset summaries")
     project = load_project(project_id)
     return parse.get_parset_summaries(project)
 
@@ -1164,7 +1165,7 @@ def resolve_project(project):
                     del_scenario_keys.append(scenario_key)
             if scenario.progsetname not in project.progsets:
                 del_scenario_keys.append(scenario_key)
-    print(">> Delete deprecated scenarios", del_scenario_keys)
+    print(">>> Delete deprecated scenarios %s" % del_scenario_keys)
     for scenario_key in del_scenario_keys:
         del project.scens[scenario_key]
 
@@ -1198,7 +1199,7 @@ def resolve_project(project):
                     del_optim_keys.append(optim_key)
             if optim.progsetname not in project.progsets:
                 del_optim_keys.append(optim_key)
-    print(">> Delete deprecated optims %s" % del_optim_keys)
+    print(">>> Delete deprecated optims %s" % del_optim_keys)
     for optim_key in del_optim_keys:
         del project.optimis[optim_key]
 
@@ -1209,7 +1210,7 @@ def resolve_project(project):
         progset_name = optim.progsetname
         progset = project.progsets[progset_name]
         if optim.constraints is None:
-            print(">> Fill out default constraints for constraints = None")
+            print(">>> Fill out default constraints for constraints = None")
             optim.constraints = op.defaultconstraints(project=project, progset=progset)
             is_change = True
 
@@ -1218,7 +1219,7 @@ def resolve_project(project):
     is_delete_result = False
     for result in results:
         if result.parset_id is not None and result.parset_id not in parset_ids:
-            print(">> Delete deprecated result %s" % result.parset_id)
+            print(">>> Delete deprecated result %s" % result.parset_id)
             db.session.delete(result)
             is_delete_result = True
     db.session.commit()
