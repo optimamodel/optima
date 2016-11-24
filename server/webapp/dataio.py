@@ -68,6 +68,9 @@ def templatepath(filename):
 
 
 def upload_dir_user(dirpath, user_id=None):
+    """
+    Returns a unique directory on the server for the user's files
+    """
     try:
         from flask.ext.login import current_user  # pylint: disable=E0611,F0401
 
@@ -122,25 +125,20 @@ def get_user_summaries():
     return [parse_user_record(q) for q in UserDb.query.all()]
 
 
-def email(email_str):
+def nullable_email(email_str):
+    if not email_str:
+        return email_str
     if validate_email(email_str):
         return email_str
     raise ValueError('{} is not a valid email'.format(email_str))
 
 
-def nullable_email(email_str):
-    if not email_str:
-        return email_str
-    else:
-        return email(email_str)
-
-
 def hashed_password(password_str):
     if isinstance(password_str, basestring) and len(password_str) == 56:
         return password_str
-
-    raise ValueError('Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(
-        password_str, len(password_str), type(password_str)))
+    raise ValueError(
+        'Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(
+            password_str, len(password_str), type(password_str)))
 
 
 def parse_user_args(args):
