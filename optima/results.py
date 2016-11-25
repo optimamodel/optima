@@ -78,6 +78,7 @@ class Resultset(object):
         self.main = odict() # For storing main results
         self.main['numinci']            = Result('Number of new infections')
         self.main['numdeath']           = Result('Number of HIV-related deaths')
+        self.main['numdaly']            = Result('Number of HIV-related DALYs')
         
         self.main['numplhiv']           = Result('Number of PLHIV')
         self.main['numdiag']            = Result('Number of diagnosed PLHIV')
@@ -296,17 +297,22 @@ class Resultset(object):
         if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         
-
-# WARNING, need to implement
-#        disutils = [D[self.pars['const']['disutil'][key] for key in D['G['healthstates']]
-#        tmpdalypops = allpeople[:,concatenate([D['G['tx1'], D['G['tx2']]),:,:].sum(axis=1) * D['P['const['disutil['tx']
-#        tmpdalytot = allpeople[:,concatenate([D['G['tx1'], D['G['tx2']]),:,:].sum(axis=(1,2)) * D['P['const['disutil['tx']
-#        for h in xrange(len(disutils)): # Loop over health states
-#            healthstates = array([D['G['undx'][h], D['G['dx'][h], D['G['fail'][h]])
-#            tmpdalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-#            tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-#        self.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
-#        self.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
+        # Calculate DALYs
+        yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
+        disutiltx = data['const']['disutiltx'][0]
+        disutils = [data['const']['disutil'+key][0] for key in self.settings.hivstates]
+        dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
+        dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
+        dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
+        dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
+        notonart = set(self.settings.notonart)
+        for h,key in enumerate(self.settings.hivstates): # Loop over health states
+            hivstateindices = set(getattr(self.settings,key))
+            healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
+            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+        self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles)
+        self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles)
         
         return None # make()
         
