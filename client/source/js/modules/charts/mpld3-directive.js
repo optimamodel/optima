@@ -74,6 +74,7 @@ define(
   }
 
   function reformatMpld3FigsInElement($element, nLegend) {
+
     $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
       var width = $svgFigure.attr('width');
@@ -301,19 +302,22 @@ define(
     };
   });
 
-  module.directive('optimaGraphs', function ($http, toastr) {
+  module.directive('optimaGraphs', function ($http, toastr, RzSliderOptions) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/charts/optima-graphs.html',
       link: function (scope, elem, attrs) {
 
         function initialize() {
+          var allCharts = elem.find('.allcharts');
+          console.log('allCharts', allCharts);
+          console.log('allCharts', allCharts.width());
           scope.state = {
             slider: {
               value: 400,
               options: {
                 floor: 200,
-                ceil: 1300,
+                ceil: 1200,
                 onChange: scope.changeFigWidth
               }
             }
@@ -385,9 +389,13 @@ define(
             if (_.isUndefined(scope.graphs)) {
               return;
             }
-            _.each(scope.graphs.mpld3_graphs, function (g, i) {
-              g.isChecked = function () { return isChecked(i); };
-            });
+            if (scope.graphs) {
+              _.each(scope.graphs.mpld3_graphs, function(g, i) {
+                g.isChecked = function() {
+                  return isChecked(i);
+                };
+              });
+            }
           }
         );
 
@@ -398,12 +406,22 @@ define(
         };
 
         scope.changeFigWidth = function() {
+          var width = scope.state.slider.value;
+          var allCharts = elem.find('.allcharts');
+          console.log('allCharts', allCharts);
+          console.log('allCharts', allCharts.width());
+          var allChartsWidth = parseInt(allCharts.width());
+          if (width > allChartsWidth) {
+            width = allChartsWidth;
+            scope.state.slider.value = width;
+          }
+          console.log(width);
+
           function setAllFiguresToWidth($element) {
             var $figures = $element.find('svg.mpld3-figure');
             $figures.each(function() {
               var $svgFigure = $(this);
               var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
-              var width = scope.state.slider.value;
               var height = width / ratio;
               $svgFigure.attr('width', width);
               $svgFigure.attr('height', height);
