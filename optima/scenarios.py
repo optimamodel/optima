@@ -58,7 +58,7 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, defaultparset=0, debug=False):
+def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs):
     """
     Run all the scenarios.
     Version: 2016jan22 by cliffk
@@ -91,7 +91,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False):
         progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug)
+        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, **kwargs)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
