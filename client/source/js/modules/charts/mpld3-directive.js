@@ -41,36 +41,36 @@ define(
   }
 
   function addLineToLegendLabel($svgFigure, nLegend) {
-      var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
+    var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
 
-      if ($textLabels) {
-        // the legend path is stored under .mpd3-axes, and needs
-        // to be moved into the .mpld3-baseaxes, it's presumably
-        // the last path under .mpld3-axes
-        // so need to work out how many entries in legend
-        // it is the the number of textlabels - title and axe labels
-        // var nLegend = $textLabels.length - 3;
-        var paths = $svgFigure.find('.mpld3-axes > path');
+    if ($textLabels) {
+      // the legend path is stored under .mpd3-axes, and needs
+      // to be moved into the .mpld3-baseaxes, it's presumably
+      // the last path under .mpld3-axes
+      // so need to work out how many entries in legend
+      // it is the the number of textlabels - title and axe labels
+      // var nLegend = $textLabels.length - 3;
+      var paths = $svgFigure.find('.mpld3-axes > path');
 
-        // it looks like the legend background sneaks in as a path
-        // and is not drawn in the right order
+      // it looks like the legend background sneaks in as a path
+      // and is not drawn in the right order
 
-        // we extract the lines of the legend AND the background
-        var pathsToCopy = paths.slice(paths.length - nLegend - 1, paths.length);
+      // we extract the lines of the legend AND the background
+      var pathsToCopy = paths.slice(paths.length - nLegend - 1, paths.length);
 
-        _.each(pathsToCopy, function(path) {
-          var $path = $(path);
+      _.each(pathsToCopy, function(path) {
+        var $path = $(path);
 
-          // we look for the background and make it opaque
-          if ($path.css('fill')=="rgb(255, 255, 255)") {
-            $path.css('fill', "rgba(255, 255, 255, 0)");
-            $path.css('stroke', "rgba(255, 255, 255, 0)");
-          }
-        });
+        // we look for the background and make it opaque
+        if ($path.css('fill')=="rgb(255, 255, 255)") {
+          $path.css('fill', "rgba(255, 255, 255, 0)");
+          $path.css('stroke', "rgba(255, 255, 255, 0)");
+        }
+      });
 
-        var baseAxes = $svgFigure.find('.mpld3-baseaxes');
-        baseAxes.append(pathsToCopy);
-      }
+      var baseAxes = $svgFigure.find('.mpld3-baseaxes');
+      baseAxes.append(pathsToCopy);
+    }
   }
 
   function reformatMpld3FigsInElement($element, nLegend) {
@@ -314,10 +314,11 @@ define(
           console.log('allCharts', allCharts.width());
           scope.state = {
             slider: {
-              value: 400,
+              value: 30,
+              min: 0,
               options: {
-                floor: 200,
-                ceil: 1200,
+                floor: 5,
+                ceil: 100,
                 onChange: scope.changeFigWidth
               }
             }
@@ -406,16 +407,10 @@ define(
         };
 
         scope.changeFigWidth = function() {
-          var width = scope.state.slider.value;
+          var percentage = scope.state.slider.value;
           var allCharts = elem.find('.allcharts');
-          console.log('allCharts', allCharts);
-          console.log('allCharts', allCharts.width());
           var allChartsWidth = parseInt(allCharts.width());
-          if (width > allChartsWidth) {
-            width = allChartsWidth;
-            scope.state.slider.value = width;
-          }
-          console.log(width);
+          var width = allChartsWidth * percentage / 100.;
 
           function setAllFiguresToWidth($element) {
             var $figures = $element.find('svg.mpld3-figure');
