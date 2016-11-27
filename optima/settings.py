@@ -64,6 +64,7 @@ class Settings(object):
         self.allevercare    = cat([         self.care, self.usvl, self.svl, self.lost]) # All people EVER in care
         self.alltx          = cat([                    self.usvl, self.svl]) # All people on treatment
         self.allplhiv       = cat([self.undx, self.alldx]) # All PLHIV
+        self.allaids        = cat([self.lt50, self.gt50]) # All people with AIDS
         self.allstates      = cat([self.sus, self.allplhiv]) # All states
         self.nstates        = len(self.allstates) # Total number of states
         
