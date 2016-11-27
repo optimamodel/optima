@@ -80,6 +80,7 @@ class Resultset(object):
         self.main['numdeath']           = Result('Number of HIV-related deaths')
         
         self.main['numplhiv']           = Result('Number of PLHIV')
+        self.main['numaids']            = Result('Number of people with AIDS')
         self.main['numdiag']            = Result('Number of diagnosed PLHIV')
         self.main['numevercare']        = Result('Number of PLHIV initially linked to care')
         self.main['numincare']          = Result('Number of PLHIV in care')
@@ -201,6 +202,7 @@ class Resultset(object):
         allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(len(self.raw))]))
         allreceivepmtct = dcp(array([self.raw[i]['receivepmtct'] for i in range(len(self.raw))]))
         allplhiv = self.settings.allplhiv
+        allaids = self.settings.allaids
         alldx = self.settings.alldx
         allevercare = self.settings.allevercare
         allcare = self.settings.allcare
@@ -250,6 +252,9 @@ class Resultset(object):
             self.main['numplhiv'].datatot = processdata(data['optplhiv'])
             self.main['numplhiv'].estimate = True # It's not real data, just an estimate
         
+        self.main['numaids'].pops = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numaids'].tot = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+
         self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         
