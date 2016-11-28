@@ -186,16 +186,6 @@ define(['./../module', 'underscore'], function(module, _) {
           );
       };
 
-      function toNullIfEmpty(val) {
-        if (_.isUndefined(val)) {
-          return null;
-        }
-        if (val == "") {
-          return null;
-        }
-        return val;
-      }
-
       function revertCcoparsTable() {
         var table = vm.state.ccoparsTable;
         var ccopars = {t: [], saturation: [], unitcost: []};
