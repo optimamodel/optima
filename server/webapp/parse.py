@@ -267,9 +267,7 @@ def get_project_summary_from_project(project):
     n_program = 0
     for progset in project.progsets.values():
         n_program_in_progset = 0
-        for program in progset.programs:
-            if program.active:
-                n_program_in_progset
+        n_program_in_progset = len(progset.programs)
         if not is_progset_optimizable(progset):
             is_ready_to_optimize = False
         if n_program_in_progset > n_program:
