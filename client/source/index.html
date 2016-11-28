@@ -40,46 +40,39 @@
 
 <body ng-controller="MainCtrl">
 
-  <div style="
-      height: 100%;
-      width: 100%;
-      display: flex;
-      flex-direction: column;">
-
-    <div class="actionbar">
-      <div class="elastic header">
-        <div style="margin-left: 2em; margin-right: 1em">
-          <img src="assets/images/project/logo/optima-hiv-logo.png">
-        </div>
-        <div
-            data-menu
-            ng-if="userLogged()">
-        </div>
-        <div
-            style="
-              flex: 1 1;
-              text-align: right;"
-            ng-cloak
-            ng-if="userLogged()"
-            class="logged-in">
-          user:
-          <span ng-show="user.displayName">{{ user.displayName }}</span>
-          <span ng-show="!user.displayName">{{ user.username }}</span>
-          <br>
-          project:
-          <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
-          <span ng-show="!activeProject.isSet()">[none]</span>
-        </div>
+  <div class="actionbar">
+    <div class="elastic header">
+      <div style="margin-left: 2em; margin-right: 1em">
+        <img src="assets/images/project/logo/optima-hiv-logo.png">
+      </div>
+      <div
+          data-menu
+          ng-if="userLogged()">
+      </div>
+      <div
+          style="
+            flex: 1 1;
+            text-align: right;"
+          ng-cloak
+          ng-if="userLogged()"
+          class="logged-in">
+        user:
+        <span ng-show="user.displayName">{{ user.displayName }}</span>
+        <span ng-show="!user.displayName">{{ user.username }}</span>
+        <br>
+        project:
+        <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
+        <span ng-show="!activeProject.isSet()">[none]</span>
       </div>
     </div>
-
-    <div
-        style="flex: 1 1;"
-        class="layout_cnt">
-      <div ui-view></div>
-    </div>
-
   </div>
+
+  <div
+      style="flex: 1 1;"
+      class="layout_cnt">
+    <div ui-view></div>
+  </div>
+
 
   <!-- Scripts -->
   <script src="vendor/requirejs/require.js"></script>
