@@ -23,7 +23,7 @@ define({
     'canvas2blob': './vendor/canvas-toBlob.js/canvas-toBlob',
     'saveAs': './vendor/FileSaver/FileSaver',
     'jsPDF': './vendor/jspdf/dist/jspdf.min',
-    'sha224': './vendor/crypto-js/sha224'
+    'sha224': './vendor/crypto-js/sha224',
   },
 
   shim: {

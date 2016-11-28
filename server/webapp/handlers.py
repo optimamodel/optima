@@ -14,6 +14,8 @@ import json
 import os
 import pprint
 
+import yaml
+
 import flask.json
 from flask import helpers, current_app, request, Response, flash, \
     url_for, redirect, Blueprint, g, session, make_response
@@ -66,6 +68,13 @@ def get_upload_file(dirname):
     return full_filename
 
 
+def log_yaml(summary, title=None):
+    if title:
+        print(">> " + title)
+    print(yaml.dump(summary))
+    return summary
+
+
 # PROJECTS
 
 class ProjectsAll(Resource):
@@ -73,6 +82,25 @@ class ProjectsAll(Resource):
 
     @swagger.operation(summary="Returns list of project sumamaries (for admins)")
     def get(self):
+        """
+        Returns a list of:
+            - creationTime: 2016-11-24 02:59:49.778765+00:00
+              dataEnd: 2020.0
+              dataStart: 2000.0
+              dataUploadTime: 2016-11-24 13:59:48.899000
+              hasEcon: false
+              hasParset: true
+              id: !!python/object:uuid.UUID {int: 21882366148703344914572624594908261043}
+              isOptimizable: false
+              name: !!python/unicode 'concentrated'
+              populations:
+                  - {age_from: 15, age_to: 49, female: true, male: false, name: Female sex workers,
+                     short: FSW}
+                  - ...
+              updatedTime: 2016-11-24 02:59:49.778779+00:00
+              userId: !!python/object:uuid.UUID {int: 296644019381267506816166667285382118442}
+              version: 2.1.7
+        """
         return {'projects': dataio.load_project_summaries()}
 
 api.add_resource(ProjectsAll, '/api/project/all')
@@ -83,7 +111,7 @@ class Projects(Resource):
 
     @swagger.operation(summary="Returns list project summaries for current user")
     def get(self):
-        return {'projects': dataio.load_project_summaries(current_user.id)}
+        return log_yaml({'projects': dataio.load_project_summaries(current_user.id)})
 
     @swagger.operation(summary="Create new project")
     def post(self):
