@@ -369,6 +369,7 @@ define(
           if (_.isUndefined(resultId)) {
             return;
           }
+          console.log('fetching graphs reusltId', scope.graphs.resultId);
           $http.post(
             '/api/results/' + resultId,
             {which: getSelectors()})

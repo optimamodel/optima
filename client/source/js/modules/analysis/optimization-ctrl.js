@@ -23,6 +23,7 @@ define(
         project: activeProject.data,
         maxtime: 10,
         isRunnable: false,
+        graphs: undefined,
         optimizations: []
       };
 
@@ -107,7 +108,7 @@ define(
       // clear screen
       $scope.optimizationCharts = [];
       $scope.selectors = [];
-      $scope.graphs = {};
+      $scope.state.graphs = {};
       $scope.statusMessage = '';
 
       // not a new optimization
@@ -344,8 +345,8 @@ define(
     }
 
     function getSelectors() {
-      if ($scope.graphs) {
-        var selectors = $scope.graphs.selectors;
+      if ($scope.state.graphs) {
+        var selectors = $scope.state.graphs.selectors;
         if (selectors) {
           var which = _.filter(selectors, function(selector) {
             return selector.checked;
@@ -374,8 +375,7 @@ define(
         .success(function (response) {
           if (response.graphs) {
             toastr.success('Graphs loaded');
-            console.log('graphs', response.graphs);
-            $scope.graphs = response.graphs;
+            $scope.state.graphs = response.graphs;
           }
           $scope.state.isRunnable = true;
           $scope.statusMessage = '';

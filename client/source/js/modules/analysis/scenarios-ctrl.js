@@ -18,6 +18,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.isOptimizable = $scope.project.isOptimizable;
       $scope.isMissingProgramSet = $scope.project.nProgram == 0;
+      $scope.state.graphs = {};
       loadScenarios(scenariosResponse.data.scenarios);
       $scope.graphScenarios(false);
     }
@@ -30,6 +31,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     $scope.saveScenarios = function(scenarios, successMsg) {
+      delete $scope.state.graphs;
       console.log("saving scenarios", scenarios);
       $http
         .put(
@@ -53,7 +55,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           '/api/project/' + $scope.project.id + '/scenarios/results',
           {isRun: isRun})
         .success(function (data) {
-          $scope.graphs = data.graphs;
+          $scope.state.graphs = data.graphs;
         });
     };
 
