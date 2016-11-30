@@ -51,7 +51,6 @@ define(
 
 
   function addLineToLegendLabel($svgFigure, nLegend) {
-      console.log('addLineToLegendLabel', nLegend, $svgFigure);
 
       // add lines in legend labels
       var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
@@ -503,6 +502,7 @@ define(
           if (_.isUndefined(resultId)) {
             return;
           }
+          console.log('fetching graphs reusltId', scope.graphs.resultId);
           $http.post(
             '/api/results/' + resultId,
             {which: getSelectors()})

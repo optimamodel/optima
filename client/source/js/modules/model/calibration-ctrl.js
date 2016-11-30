@@ -20,7 +20,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.state = {
         maxtime: '10',
         isRunnable: false,
-        parset: undefined
+        parset: undefined,
+        graphs: undefined,
       };
 
       // Check if project has spreadsheet uploaded
@@ -52,8 +53,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function getSelectors() {
-      if ($scope.graphs) {
-        var selectors = $scope.graphs.selectors;
+      if ($scope.state.graphs) {
+        var selectors = $scope.state.graphs.selectors;
         if (selectors) {
           var which = _.filter(selectors, function(selector) {
             return selector.checked;
@@ -70,8 +71,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function loadParametersAndGraphs(response) {
-      console.log("loaded response", response);
-      $scope.graphs = response.graphs;
+      $scope.state.graphs = response.graphs;
       $scope.parameters = angular.copy(response.parameters);
     }
 

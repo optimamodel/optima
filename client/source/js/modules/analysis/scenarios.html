@@ -97,7 +97,7 @@
       </div>
 
       <div
-        ng-if="graphs"
+        ng-if="state.graphs"
         style="
           flex: 1 1 auto;
           border: 1px solid #DDD;
@@ -105,7 +105,7 @@
           width: 100%;
           overflow:auto">
 
-        <optima-graphs graphs="graphs"/>
+        <optima-graphs graphs="state.graphs"/>
 
       </div>
 

@@ -22,6 +22,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         project: activeProject.data,
         maxtime: 10,
         isRunnable: false,
+        graphs: undefined,
         optimizations: []
       };
 
@@ -106,7 +107,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // clear screen
       $scope.optimizationCharts = [];
       $scope.selectors = [];
-      $scope.graphs = {};
+      $scope.state.graphs = {};
       $scope.statusMessage = '';
 
       // not a new optimization
@@ -377,8 +378,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function getSelectors() {
-      if ($scope.graphs) {
-        var selectors = $scope.graphs.selectors;
+      if ($scope.state.graphs) {
+        var selectors = $scope.state.graphs.selectors;
         if (selectors) {
           var which = _.filter(selectors, function(selector) {
             return selector.checked;
@@ -407,7 +408,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function (response) {
           if (response.graphs) {
             toastr.success('Graphs loaded');
-            $scope.graphs = response.graphs;
+            $scope.state.graphs = response.graphs;
           }
           $scope.state.isRunnable = true;
           $scope.statusMessage = '';
