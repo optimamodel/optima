@@ -1,6 +1,4 @@
-import optima
-
-__doc__ = """
+"""
 parse.py
 ========
 
@@ -13,29 +11,75 @@ Nomenclature:
 There should be no references to the database or web-handlers.
 """
 
-from collections import defaultdict
-from functools import partial
+from collections import defaultdict, OrderedDict
 from pprint import pprint, pformat
 from uuid import UUID
 
-from flask.ext.restful import fields, marshal
-from numpy import nan, array, isnan
-
+import numpy as np
 import optima as op
-from optima import loadpartable, partable, Par
-from optima.defaults import defaultprograms
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
-from .utils import normalize_obj
-
 
 
 def print_odict(name, an_odict):
-    print ">> %s = <odict>" % name
+    """
+    Helper function to print an odict to the console
+    """
+    print(">> %s = <odict>" % name)
     obj = normalize_obj(an_odict)
     s = pformat(obj, indent=2)
     for line in s.splitlines():
-        print ">> " + line
+        print(">> " + line)
+
+
+def normalize_obj(obj):
+    """
+    This is the main conversion function for Python data-structures into
+    JSON-compatible data structures.
+
+    Use this as much as possible to guard against data corruption!
+
+    Args:
+        obj: almost any kind of data structure that is a combination
+            of list, numpy.ndarray, odicts etc
+
+    Returns:
+        A converted dict/list/value that should be JSON compatible
+    """
+
+    if isinstance(obj, list) or isinstance(obj, np.ndarray) or isinstance(obj, tuple):
+        return [normalize_obj(p) for p in list(obj)]
+
+    if isinstance(obj, dict):
+        return {str(k): normalize_obj(v) for k, v in obj.items()}
+
+    if isinstance(obj, op.utils.odict):
+        result = OrderedDict()
+        for k, v in obj.items():
+            result[str(k)] = normalize_obj(v)
+        return result
+
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+
+    if isinstance(obj, float):
+        if np.isnan(obj):
+            return None
+
+    if isinstance(obj, np.float64):
+        if np.isnan(obj):
+            return None
+        else:
+            return float(obj)
+
+    if isinstance(obj, unicode):
+        return str(obj)
+
+    if isinstance(obj, set):
+        return list(obj)
+
+    return obj
+
 
 
 # PROJECTS
@@ -66,6 +110,10 @@ keys = "short name male female age_from age_to".split()
 
 
 def get_default_populations():
+    """
+    Returns a dictionary of populations with format
+    described in `get_populations_from_project`
+    """
     result = []
     lines = [l.strip() for l in ALL_POPULATIONS_SOURCE.split('\n')][2:-1]
     for line in lines:
@@ -79,28 +127,20 @@ def get_default_populations():
     return result
 
 
-"""
-PyOptima Population project.data['pops'] structure;
-<odist>
- - short: ['FSW', 'Clients', 'MSM', 'PWID', 'M 15+', 'F 15+']
- - long: ['Female sex workers', 'Clients of sex workers', 'Men who have sex with men', 'People who inject drugs', 'Males 15+', 'Females 15+']
- - male: [0, 1, 1, 1, 1, 0]
- - female: [1, 0, 0, 0, 0, 1]
- - age: [[15, 49], [15, 49], [15, 49], [15, 49], [15, 49], [15, 49]]
-
-populations data structure (based on the pops parameter in makespreadsheets):
--
-  short: string
-  name: string
-  male: bool
-  female: bool
-  age_from: int
-  age_to: int
-- ...
-"""
-
-
 def get_populations_from_project(project):
+    """
+    Returns a dictionary for the project populations, with
+    structure modeled after the `pops` parameter
+    in `optima.makespreadsheets`:
+        -
+            short: string
+            name: string
+            male: bool
+            female: bool
+            age_from: int
+            age_to: int
+        - ...
+    """
     data_pops = normalize_obj(project.data.get("pops"))
     populations = []
     for i in range(len(data_pops['short'])):
@@ -121,6 +161,34 @@ def get_populations_from_project(project):
 
 
 def revert_populations_to_pop(populations):
+    """
+    Reverts the population dictionary from `get_populations_from_project`
+    to the structure expected for `project.data['pops']` in a project:
+         <odict>
+             - short:
+                - 'FSW'
+                - 'Clients'
+                - 'MSM'
+                - 'PWID'
+                - 'M 15+'
+                - 'F 15+'
+             - long:
+                - 'Female sex workers'
+                - 'Clients of sex workers'
+                - 'Men who have sex with men'
+                - 'People who inject drugs'
+                - 'Males 15+'
+                - 'Females 15+'
+             - male: [0, 1, 1, 1, 1, 0]
+             - female: [1, 0, 0, 0, 0, 1]
+             - age:
+                - [15, 49]
+                - [15, 49]
+                - [15, 49]
+                - [15, 49]
+                - [15, 49]
+                - [15, 49]
+    """
     data_pops = op.odict()
 
     pprint(populations, indent=2)
@@ -168,6 +236,11 @@ def set_project_summary_on_project(project, summary):
 
 
 def is_progset_optimizable(progset):
+    """
+    Returns whether the progset has enough parameters to
+    carry out an optimization, or budget/coverage scenario
+    analysis.
+    """
     n_program = len(progset.programs.values())
     has_ccopars = progset.hasallcostcovpars()
     has_covout = progset.hasallcovoutpars()
@@ -211,58 +284,32 @@ def get_project_summary_from_project(project):
         'isOptimizable': is_ready_to_optimize,
         'hasEcon': "econ" in project.data
     }
-    return project_summary
 
+    return project_summary
 
 
 # PARSETS
 
-def get_parset_from_project(project, parset_id):
-    if not isinstance(parset_id, UUID):
-        parset_id = UUID(parset_id)
-    for parset in project.parsets.values():
-        if parset.uid == parset_id:
-            return parset
-    raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
-
-
-def get_parset_summaries(project):
-    parset_summaries = []
-
-    for parset in project.parsets.values():
-
-        parset_summaries.append({
-            "id": parset.uid,
-            "project_id": project.uid,
-            "pars": parset.pars,
-            "updated": parset.modified,
-            "created": parset.created,
-            "name": parset.name
-        })
-
-    return parset_summaries
-
-"""
-Parameters data structure:
-[
-  {
-    "value": 13044975.57899749,
-    "type": "exp",
-    "subkey": "Males 15-49",
-    "key": "popsize",
-    "label": "Population size -- Males 15-49"
-  },
-  {
-    "value": 0.7,
-    "type": "const",
-    "subkey": null,
-    "key": "recovgt350",
-    "label": "Treatment recovery rate into CD4>350 (%/year)"
-  },
-]
-"""
-
 def get_parameters_from_parset(parset, ind=0):
+    """
+    Returns a flat dictionary of parameters for the calibration
+    page from an optima parameter set object. Extracts subkey's
+    for sub-population parameter values, and constructs a unique
+    label for each parameter. The structure is:
+        -
+            value: 13044975.57899749,
+            type: exp,
+            subkey: Males 15-49,
+            key: popsize,
+            label: Population size -- Males 15-49
+        -
+            value: 0.7,
+            type: const,
+            subkey: null,
+            key: recovgt350,
+            label: Treatment recovery rate into CD4>350 (%/year)
+        - ...
+    """
     parameters = []
     for key, par in parset.pars[ind].items():
         if hasattr(par, 'fittable') and par.fittable != 'no':
@@ -302,7 +349,30 @@ def get_parameters_from_parset(parset, ind=0):
                     })
             else:
                 print('>> Parameter type "%s" not implemented!' % par.fittable)
+
     return parameters
+
+
+def get_parset_from_project(project, parset_id):
+    if not isinstance(parset_id, UUID):
+        parset_id = UUID(parset_id)
+    for parset in project.parsets.values():
+        if parset.uid == parset_id:
+            return parset
+    raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
+
+
+def get_parset_summaries(project):
+    parset_summaries = []
+    for parset in project.parsets.values():
+        parset_summaries.append({
+            "id": parset.uid,
+            "project_id": project.uid,
+            "updated": parset.modified,
+            "created": parset.created,
+            "name": parset.name
+        })
+    return parset_summaries
 
 
 def set_parameters_on_parset(parameters, parset, i_set=0):
@@ -331,18 +401,14 @@ def make_pop_label(pop):
 
 def get_par_limits(project, par):
     """
-    Returns:
-        a list of [lower, upper]
+    Returns limits of a par [lower, upper]
     """
-
     def convert(limit):
         if isinstance(limit, str):
             return project.settings.convertlimits(limits=limit)
         else:
             return limit
-
     return map(convert, par.limits)
-
 
 
 def get_parameters_for_scenarios(project, start_year=None):
@@ -371,10 +437,10 @@ def get_parameters_for_scenarios(project, start_year=None):
                 y_keys_of_parset[par.short] = []
                 for pop in par.y.keys():
                     try:
-                        par_defaults = optima.setparscenvalues(
+                        par_defaults = op.setparscenvalues(
                             parset, par.short, pop, year)
                         startval = par_defaults['startval']
-                        if isnan(startval):
+                        if np.isnan(startval):
                             startval = None
                     except:
                         startval = None
@@ -390,14 +456,14 @@ def get_parameters_for_scenarios(project, start_year=None):
 def get_parameters_for_edit_program(project):
     parameters = []
     added_par_keys = set()
-    default_par_keys = [par['short'] for par in loadpartable(partable)]
+    default_par_keys = [par['short'] for par in op.loadpartable(op.partable)]
     for parset in project.parsets.values():
         for pars in parset.pars:
             for par_key in default_par_keys:
                 if par_key in added_par_keys or par_key not in pars:
                     continue
                 par = pars[par_key]
-                if not isinstance(pars[par_key], Par):
+                if not isinstance(pars[par_key], op.Par):
                     continue
                 if not par.visible == 1 or not par.y.keys():
                     continue
@@ -412,18 +478,6 @@ def get_parameters_for_edit_program(project):
 
 
 def get_parameters_for_outcomes(project, progset_id, parset_id):
-    """
-    For program outcome page
-
-    Args:
-        settings:
-        progset:
-        parset:
-
-    Returns:
-
-    """
-
     progset = get_progset_from_project(project, progset_id)
     parset = get_parset_from_project(project, parset_id)
 
@@ -457,7 +511,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
                 ],
         }
         for par_short in target_par_shorts
-        ]
+    ]
 
     return parameters
 
@@ -484,46 +538,6 @@ def print_parset(parset):
 
 # PROGRAMS
 
-"""
-program_summary
-{
-  'active': True,
-  'category': 'Care and treatment',
-  'ccopars': { 'saturation': [[0.9, 0.9]],
-               't': [2016],
-               'unitcost': [[1.136849845773715, 1.136849845773715]]},
-  'costcov': [ { 'cost': 16616289, 'coverage': 8173260, 'year': 2012},
-               { 'cost': 234234, 'coverage': 324234, 'year': 2013}],
-  'created': 'Mon, 02 May 2016 05:27:48 -0000',
-  'criteria': { 'hivstatus': 'allstates', 'pregnant': False},
-  'id': '9b5db736-1026-11e6-8ffc-f36c0fc28d89',
-  'name': 'HIV testing and counseling',
-  'optimizable': True,
-  'populations': [ 'FSW',
-                   'Clients',
-                   'Male Children 0-14',
-                   'Female Children 0-14',
-                   'Males 15-49',
-                   'Females 15-49',
-                   'Males 50+',
-                   'Females 50+'],
-  'progset_id': '9b55945c-1026-11e6-8ffc-130aba4858d2',
-  'project_id': '9b118ef6-1026-11e6-8ffc-571b10a45a1c',
-  'short': 'HTC',
-  'targetpars': [ { 'active': True,
-                    'param': 'hivtest',
-                    'pops': [ 'FSW',
-                              'Clients',
-                              'Male Children 0-14',
-                              'Female Children 0-14',
-                              'Males 15-49',
-                              'Females 15-49',
-                              'Males 50+',
-                              'Females 50+']}],
-  'updated': 'Mon, 02 May 2016 06:22:29 -0000'
-}
-"""
-
 
 def get_budgets_for_scenarios(project):
     result = {
@@ -534,13 +548,12 @@ def get_budgets_for_scenarios(project):
 
 def get_coverages_for_scenarios(project, year=None):
     """
-
-    Returns:
-        { <parset_id>:
-            { <progset_id>:
-                { <year>:
-                    { <program_short>: coverage (float) }}}
-
+    Returns a dictionary for default coverages for each
+    progset and parset:
+        <parset_id>:
+            <progset_id>:
+                <year>:
+                    <program_short>: coverage (float)
     """
     result = {}
     start = project.settings.start
@@ -615,7 +628,7 @@ def convert_program_costcovdata(costcovdata):
 
 
 pluck = lambda l, k: [e[k] for e in l]
-to_nan = lambda v: v if v is not None and v != "" else nan
+to_nan = lambda v: v if v is not None and v != "" else np.nan
 
 
 def revert_program_costcovdata(costcov):
@@ -642,9 +655,63 @@ def revert_program_ccopars(ccopars):
 
 
 def get_program_summary(program, progset, active):
+    """
+    Returns a dictionary for a program:
+        name: HIV testing and counseling,
+        short: HTC,
+        active: True,
+        id: 9b5db736-1026-11e6-8ffc-f36c0fc28d89,
+        category: Care and treatment,
+        progset_id: 9b55945c-1026-11e6-8ffc-130aba4858d2,
+        project_id: 9b118ef6-1026-11e6-8ffc-571b10a45a1c,
+        created: Mon, 02 May 2016 05:27:48 -0000,
+        updated: Mon, 02 May 2016 06:22:29 -0000
+        attr: { dictionary to hold CostCovGraph parameters }
+        optimizable: True,
+        ccopars:
+            saturation:
+                - [0.9, 0.9],
+            t: [2016],
+            unitcost:
+                - [1.136849845773715, 1.136849845773715],
+        costcov:
+            -
+                cost: 16616289
+                coverage: 8173260
+                year: 2012},
+            -
+                cost: 234234
+                coverage: 324234
+                year: 2013,
+        criteria:
+            hivstatus: allstates
+            pregnant: False
+        populations:
+            - FSW,
+            - Clients,
+            - Male Children 0-14,
+            - Female Children 0-14,
+            - Males 15-49,
+            - Females 15-49,
+            - Males 50+,
+            - Females 50+],
+        targetpars:
+            -
+                active: True,
+                param: hivtest,
+                pops:
+                    - FSW,
+                    - Clients,
+                    - Male Children 0-14,
+                    - Female Children 0-14,
+                    - Males 15-49,
+                    - Females 15-49,
+                    - Males 50+,
+                    - Females 50+
+            """
     result = {
         'id': program.uid,
-        'progset_id': progset.uid if progset else None,
+        'progset_id': progset.uid if progset is not None else None,
         'active': active,
         'name': program.name,
         'short': program.short,
@@ -662,36 +729,37 @@ def get_program_summary(program, progset, active):
 
 
 def get_default_program_summaries(project):
-    return [get_program_summary(p, None, False) for p in defaultprograms(project)]
+    return [
+        get_program_summary(p, None, False)
+        for p in op.defaults.defaultprograms(project)]
 
 
 # PROGSET OUTCOMES
 
-'''
-Progset outcome data structure:
-[ { 'name': 'numcirc',
-    'pop': 'tot',
-    'years': [ { 'interact': 'random',
-                 'intercept_lower': 0.0,
-                 'intercept_upper': 0.0,
-                 'programs': [ { 'intercept_lower': None,
-                                 'intercept_upper': None,
-                                 'name': u'VMMC'}],
-                 'year': 2016.0}]},
-  { 'name': u'condcom',
-    'pop': (u'Clients', u'FSW'),
-    'years': [ { 'interact': 'random',
-                 'intercept_lower': 0.3,
-                 'intercept_upper': 0.6,
-                 'programs': [ { 'intercept_lower': 0.9,
-                                 'intercept_upper': 0.95,
-                                 'name': u'FSW programs'}],
-                 'year': 2016.0}]},
-]
-'''
-
-
 def get_outcome_summaries_from_progset(progset):
+    """
+    Returns a list of dictionaries for progset outcomes:
+        [ { 'name': 'numcirc',
+            'pop': 'tot',
+            'years': [ { 'interact': 'random',
+                         'intercept_lower': 0.0,
+                         'intercept_upper': 0.0,
+                         'programs': [ { 'intercept_lower': None,
+                                         'intercept_upper': None,
+                                         'name': u'VMMC'}],
+                         'year': 2016.0}]},
+          { 'name': u'condcom',
+            'pop': (u'Clients', u'FSW'),
+            'years': [ { 'interact': 'random',
+                         'intercept_lower': 0.3,
+                         'intercept_upper': 0.6,
+                         'programs': [ { 'intercept_lower': 0.9,
+                                         'intercept_upper': 0.95,
+                                         'name': u'FSW programs'}],
+                         'year': 2016.0}]},
+          ...
+        ]
+    """
     outcomes = []
     for par_short in progset.targetpartypes:
         pop_keys = progset.progs_by_targetpar(par_short).keys()
@@ -771,9 +839,15 @@ def set_outcome_summaries_on_progset(outcomes, progset):
 
 def get_progset_summary(project, progset_name):
     """
-    @TODO: targetpartypes and readytooptimize fields needs to be made consistent within ProgsetDb
-    """
+    Returns a summary of a progset:
+        id: uid
+        name: string
+        created: datetime
+        updated: datetime
+        programs: <program_summaries>
+        isOptimizable: boolean
 
+    """
     progset = project.progsets[progset_name]
 
     active_program_summaries = [
@@ -944,9 +1018,8 @@ def set_progset_summary_on_progset(progset, progset_summary):
     # Clear the current programs...
     progset.programs = op.odict()
     progset.inactive_programs = op.odict()
-    progset_programs = progset_summary['programs']
-    print(">> Setting %d programs on progset" % len(progset_programs))
-    for p in progset_programs:
+    print(">> Setting %d programs on progset" % len(progset_summary['programs']))
+    for p in progset_summary['programs']:
         set_program_summary_on_progset(progset, p)
     progset.updateprogset()
 
@@ -962,36 +1035,6 @@ def set_progset_summary_on_project(project, progset_summary, progset_id=None):
 
 
 # SCENARIOS
-
-'''
-Data structure of a scenario_summary:
-    id: uuid_string
-    progset_id: uuid_string -or- null # since parameter scenarios don't have progsets
-    parset_id: uuid_string
-    name: string
-    active: boolean
-    years: list of number
-    scenario_type: "parameter", "coverage" or "budget"
-    ---
-    pars:
-        - name: string
-          for: string -or- [1 string] -or- [2 strings]
-          startyear: number
-          endyear: number
-          startval: number
-          endval: number
-        - ...
-     -or-
-    budget:
-        - program: string
-          values: [number -or- null] # same length as years
-        - ...
-     -or-
-    coverage:
-        - program: string
-          values: [number -or- null] # same length as years
-        - ...
-'''
 
 
 def force_tuple_list(item):
@@ -1048,14 +1091,40 @@ def revert_program_list(program_list):
         if all(v is None for v in vals):
             continue
         vals = [v if v is not None else 0 for v in vals]
-        result[key] = array(vals)
+        result[key] = np.array(vals)
     return result
 
 
 
 def get_scenario_summary(project, scenario):
     """
-    Returns scenario_summary as defined above
+    Returns dictionary for scenario:
+        id: uuid_string
+        progset_id: uuid_string -or- null # since parameter scenarios don't have progsets
+        parset_id: uuid_string
+        name: string
+        active: boolean
+        years: list of number
+        scenario_type: "parameter", "coverage" or "budget"
+         -either-
+        pars:
+            - name: string
+              for: string -or- [1 string] -or- [2 strings]
+              startyear: number
+              endyear: number
+              startval: number
+              endval: number
+            - ...
+         -or-
+        budget:
+            - program: string
+              values: [number -or- null] # same length as years
+            - ...
+         -or-
+        coverage:
+            - program: string
+              values: [number -or- null] # same length as years
+            - ...
     """
     extra_data = {}
 
@@ -1166,41 +1235,6 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 
 # OPTIMIZATIONS
 
-'''
-Optimization summary data structure:
-
-{'constraints': {'max': {'ART': None,
-                         'Condoms': None,
-                         'FSW programs': None,
-                         'HTC': None,
-                         'Other': 1},
-                 'min': {'ART': 1,
-                         'Condoms': 0,
-                         'FSW programs': 0,
-                         'HTC': 0,
-                         'Other': 1},
-                 'name': {'ART': 'Antiretroviral therapy',
-                          'Condoms': 'Condom promotion and distribution',
-                          'FSW programs': 'Programs for female sex workers and clients',
-                          'HTC': 'HIV testing and counseling',
-                          'Other': 'Other'}},
- 'name': 'Optimization 1',
- 'objectives': {'base': None,
-                'budget': 60500000,
-                'deathfrac': None,
-                'deathweight': 5,
-                'end': 2030,
-                'incifrac': None,
-                'inciweight': 1,
-                'keylabels': {'death': 'Deaths', 'inci': 'New infections'},
-                'keys': ['death', 'inci'],
-                'start': 2017,
-                'which': 'outcomes'},
- 'parset_id': 'af6847d6-466b-4fc7-9e41-1347c053a0c2',
- 'progset_id': 'cfa49dcc-2b8b-11e6-8a08-57d606501764',
- 'which': 'outcomes'}
- '''
-
 
 def get_default_optimization_summaries(project):
     defaults_by_progset_id = {}
@@ -1233,33 +1267,93 @@ def get_optimization_from_project(project, optim_id):
 
 
 def get_optimization_summaries(project):
+    '''
+    Returns a list of dictionaries:
+        -
+            name: Optimization 1,
+            which: outcomes
+            parset_id: af6847d6-466b-4fc7-9e41-1347c053a0c2,
+            progset_id: cfa49dcc-2b8b-11e6-8a08-57d606501764,
+            constraints:
+                max:
+                    ART: None,
+                    Condoms: None,
+                    FSW programs: None,
+                    HTC: None,
+                    Other: 1,
+                min:
+                    ART: 1,
+                    Condoms: 0,
+                    FSW programs: 0,
+                    HTC: 0,
+                    Other: 1,
+                name:
+                    ART: Antiretroviral therapy,
+                    Condoms: Condom promotion and distribution,
+                    FSW programs: Programs for female sex workers and clients,
+                    HTC: HIV testing and counseling,
+                    Other: Other,
+            objectives:
+                base: None,
+                budget: 60500000,
+                deathfrac: None,
+                deathweight: 5,
+                end: 2030,
+                incifrac: None,
+                inciweight: 1,
+                keylabels:
+                    death: Deaths
+                    inci: New infections,
+                keys:
+                    - death
+                    - inci
+                start: 2017,
+                which: outcomes,
+        -...
+     '''
+    optim_summaries = []
 
-    optimizations = []
+    for optim in project.optims.values():
 
-    for o in project.optims.values():
-
-        optim = {
-            "id": o.uid,
-            "name": o.name,
-            "objectives": o.objectives,
-            "constraints": o.constraints,
+        optim_summary = {
+            "id": optim.uid,
+            "name": optim.name,
+            "objectives": optim.objectives,
+            "constraints": optim.constraints,
         }
 
-        optim["which"] = o.objectives["which"]
+        optim_summary["which"] = optim.objectives["which"]
 
-        if o.parsetname:
-            optim["parset_id"] = project.parsets[o.parsetname].uid
+        if optim.parsetname:
+            optim_summary["parset_id"] = project.parsets[optim.parsetname].uid
         else:
-            optim["parset_id"] = None
+            optim_summary["parset_id"] = None
 
-        if o.progsetname:
-            optim["progset_id"] = project.progsets[o.progsetname].uid
+        if optim.progsetname:
+            progset = project.progsets[optim.progsetname]
+            optim_summary["progset_id"] = progset.uid
         else:
-            optim["progset_id"] = None
+            progset = project.progsets[0]
+            optim_summary["progset_id"] = progset.uid
 
-        optimizations.append(optim)
+        default_constraints = op.defaultconstraints(project=project, progset=progset)
+        constraints = optim_summary["constraints"]
 
-    return optimizations
+        default_prog_keys = default_constraints["name"].keys()
+        for prog_key in default_prog_keys:
+            if prog_key not in constraints["name"]:
+                for attr in ["name", "max", "min"]:
+                    constraints[attr][prog_key] = default_constraints[attr][prog_key]
+
+        for prog_key in constraints["name"].keys():
+            if prog_key not in default_prog_keys:
+                for attr in ["name", "max", "min"]:
+                    del constraints[attr][prog_key]
+
+        print(">> Optim constraints", optim.constraints)
+        optim_summaries.append(optim_summary)
+
+    return optim_summaries
 
 
 def set_optimization_summaries_on_project(project, optimization_summaries):
@@ -1299,7 +1393,7 @@ def get_parset_from_project_by_id(project, parset_id):
 # PORTFOLIOS
 
 
-def parse_portfolio_summary(portfolio):
+def get_portfolio_summary(portfolio):
     gaoptim_summaries = []
     objectivesList = []
     for gaoptim_key, gaoptim in portfolio.gaoptims.items():
@@ -1357,5 +1451,36 @@ def parse_portfolio_summary(portfolio):
 
     return result
 
+
+def set_portfolio_summary_on_portfolio(portfolio, summary):
+    """
+    Saves the summary result onto the portfolio and returns
+    a list of project_ids of projects that are not in the portfolio
+    """
+    gaoptim_summaries = summary['gaoptims']
+    gaoptims = portfolio.gaoptims
+    for gaoptim_summary in gaoptim_summaries:
+        gaoptim_id = str(gaoptim_summary['id'])
+        objectives = op.odict(gaoptim_summary["objectives"])
+        if gaoptim_id in gaoptims:
+            gaoptim = gaoptims[gaoptim_id]
+            gaoptim.objectives = objectives
+        else:
+            gaoptim = op.portfolio.GAOptim(objectives=objectives)
+            gaoptims[gaoptim_id] = gaoptim
+    old_project_ids = portfolio.projects.keys()
+    print("> old project ids %s" % old_project_ids)
+    project_ids = [s["id"] for s in summary["projects"]]
+    print("> new project ids %s" % project_ids)
+    for old_project_id in old_project_ids:
+        if old_project_id not in project_ids:
+            portfolio.projects.pop(old_project_id)
+
+    new_project_ids = []
+    for project_id in project_ids:
+        if project_id not in portfolio.projects:
+            new_project_ids.append(project_id)
+
+    return new_project_ids
 
 

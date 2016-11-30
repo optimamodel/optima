@@ -7,7 +7,7 @@ from numpy import array
 
 import optima as op
 
-from .utils import normalize_obj
+from .parse import normalize_obj
 
 
 def extract_graph_selector(graph_key):

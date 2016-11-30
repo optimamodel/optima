@@ -10,7 +10,7 @@
          overflow: auto;
          padding: 0;">
 
-    <div ng-if="graphs"
+    <div ng-hide="!(graphs.mpld3_graphs.length > 0)"
          style="width:100%;
          border-bottom: 1px solid #EEE">
       <export-all-charts
