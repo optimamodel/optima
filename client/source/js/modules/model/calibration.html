@@ -4,7 +4,9 @@
   <h1>Calibration</h1>
 
   <div class="error-hint" ng-show="isMissingData">
-    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
+    No parameter sets, you need to
+    <a ui-sref="home">upload a data spreadsheet</a>
+    for this project.
   </div>
 
   <div ng-if="!isMissingData">
@@ -75,13 +77,30 @@
         padding-bottom: 15px;">
 
       <button class="btn __m" ng-click="saveAndUpdateGraphs()">
-        Save parameters
+        Save parameters & graph
       </button>
 
-      &nbsp;
+      &nbsp; from &nbsp;
 
-      Run auto-fit for about
-      &nbsp;
+      <select
+        ng-model="state.startYear"
+        ng-options="year for year in years"></select>
+
+      &nbsp; to &nbsp;
+
+      <select
+        ng-model="state.endYear"
+        ng-options="year for year in years"></select>
+
+      &nbsp; &#183; &nbsp;
+
+      <button
+          class="btn       &nbsp;"
+          ng-click="startAutoCalibration()"
+          ng-disabled="checkNotRunnable()">Run autofit</button>
+
+      &nbsp; for about &nbsp;
+
       <select ng-init="state.maxtime=10" ng-model="state.maxtime">
         <option value="10">10 seconds</option>
         <option value="30">30 seconds</option>
@@ -91,19 +110,8 @@
         <option value="1800">30 minutes</option>
       </select>
 
-      &nbsp;
-      &nbsp;
+      &nbsp; &nbsp;
 
-      <button
-          class="btn       &nbsp;"
-          ng-click="startAutoCalibration()"
-          ng-disabled="checkNotRunnable()">
-        Autofit
-      </button>
-
-      &nbsp;
-
-      &nbsp;
       <span style="color: #00aeef;"> {{ statusMessage }} </span>
 
     </div>

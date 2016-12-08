@@ -35,6 +35,7 @@ api_blueprint = Blueprint('api', __name__, static_folder='static')
 api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
 
+# add hooks to handle UID's and datetime strings
 @api.representation('application/json')
 def output_json(data, code, headers=None):
     inner = json.dumps(data, cls=flask.json.JSONEncoder)
@@ -536,10 +537,17 @@ class ParsetCalibration(Resource):
             autofit: boolean indicates to fetch the autofit version of the results
         """
         args = get_post_data_json()
-        parameters = args.get('parameters')
+        parameters = args.get('parameters', None)
         which = args.get('which')
+        startYear = args.get('startYear', None)
+        if startYear is not None:
+            startYear = int(startYear)
+        endYear = args.get('endYear', None)
+        if endYear is not None:
+            endYear = int(endYear)
         return dataio.load_parset_graphs(
-            project_id, parset_id, "calibration", which, parameters)
+            project_id, parset_id, "calibration", which, parameters,
+            startYear=startYear, endYear=endYear)
 
 api.add_resource(ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 

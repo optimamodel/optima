@@ -54,8 +54,19 @@ define(['angular' ], function (angular) {
         return modalInstance;
       }
 
+      function getUniqueName(name, otherNames) {
+        var i = 0;
+        var uniqueName = name;
+        while (_.indexOf(otherNames, uniqueName) >= 0) {
+          i += 1;
+          uniqueName = name + ' (' + i + ')';
+        }
+        return uniqueName;
+      }
+
       return {
         openEditNameModal: openEditNameModal,
+        getUniqueName: getUniqueName
       };
 
     }]);
