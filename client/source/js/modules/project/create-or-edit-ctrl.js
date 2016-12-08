@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ProjectCreateOrEditController', function (
       $scope, $state, $modal, $timeout, $http, activeProject, populations,
-      UserManager, modalService, projects, projectApiService, info) {
+      userManager, modalService, projects, projectApi, info) {
 
     function initialize() {
       $scope.allProjects = projects.data.projects;
@@ -197,7 +197,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var promise;
       var responseType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       if (isUpdate) {
-        promise = projectApiService.updateProject(
+        promise = projectApi.updateProject(
           $scope.projectInfo.id,
           {
             project: params,
@@ -205,7 +205,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             isDeleteData: true,
           });
       } else {
-        promise = projectApiService.createProject(params);
+        promise = projectApi.createProject(params);
       }
       promise
         .success(function (response, status, headers) {
@@ -214,7 +214,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             saveAs(blob, ($scope.projectParams.name + '.xlsx'));
             var newProjectId = headers()['x-project-id'];
             activeProject.setActiveProjectFor(
-                $scope.projectParams.name, newProjectId, UserManager.data);
+                $scope.projectParams.name, newProjectId, userManager.user);
           }
           $state.go('home');
         });

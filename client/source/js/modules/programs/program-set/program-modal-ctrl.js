@@ -315,11 +315,15 @@
         $scope.state.showAddData = false;
 
         if ($scope.state.program.attr) {
-          $scope.state.program.populations = _.filter($scope.state.populations, function(population) {
-            return population.active;
-          }).map(function(population) {
-            return population.short;
-          });
+          $scope.state.program.populations =
+            _.filter(
+              $scope.state.populations,
+              function(population) {
+                return population.active;
+              })
+            .map(function(population) {
+                return population.short;
+              });
         }
 
         $scope.state.program.criteria.hivstatus = '';

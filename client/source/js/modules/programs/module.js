@@ -3,25 +3,13 @@ define([
   'ui.router',
   'toastr',
   '../project/project-api-service',
-  '../resources/model',
-  '../mpld3-charts/export-all-charts',
-  '../mpld3-charts/export-all-data',
-  '../validations/more-than-directive',
-  '../validations/less-than-directive',
-  '../validations/year-directive',
-  '../validations/range-limit',
-], function (angular) {
+  '../charts/export-all-charts-directive',
+  ], function (angular) {
   'use strict';
 
   return angular.module('app.programs', [
     'app.export-all-charts',
-    'app.export-all-data',
-    'app.resources.model',
     'ui.router',
-    'app.validations.more-than',
-    'app.validations.less-than',
-    'app.validations.year',
-    'app.validations.range-limit',
     'toastr'
   ])
     .config(function ($stateProvider) {
@@ -36,8 +24,8 @@ define([
           templateUrl: 'js/modules/programs/program-set/program-set.html',
           controller: 'ProgramSetController',
           resolve: {
-            currentProject: function(projectApiService) {
-              return projectApiService.getActiveProject();
+            currentProject: function(projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         })
@@ -47,8 +35,8 @@ define([
           templateUrl: 'js/modules/programs/cost-coverage/cost-coverage.html',
           bindToController: true,
           resolve: {
-            activeProject: function (projectApiService) {
-              return projectApiService.getActiveProject();
+            activeProject: function (projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         });

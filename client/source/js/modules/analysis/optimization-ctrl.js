@@ -1,9 +1,11 @@
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+define(
+  ['./module', 'angular', 'underscore'], function (module, angular, _) {
+
   'use strict';
 
-
   module.controller('AnalysisOptimizationController', function (
-      $scope, $http, $upload, $modal, toastr, modalService, activeProject, $timeout, globalPoller) {
+      $scope, $http, $upload, $modal, toastr, modalService,
+      activeProject, $timeout, globalPoller) {
 
     function initialize() {
 
@@ -13,7 +15,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.isOptimizable = activeProject.data.isOptimizable;
       $scope.isMissingProgramSet = activeProject.data.nProgram == 0;
 
-      console.log("$scope", $scope);
       if ($scope.isMissingData || $scope.isMissingProgramSet || !$scope.isOptimizable) {
         return
       }
@@ -154,83 +155,51 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       .success(loadOptimizations);
     }
 
-    var openOptimizationModal = function (
-        callback, title, optimizationList, optimizationName, operation, isRename) {
-
-      var onModalKeyDown = function (event) {
-        if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
-      };
-
-      var modalInstance = $modal.open({
-        templateUrl: 'js/modules/analysis/optimization-modal.html',
-        controller: ['$scope', '$document', function ($scope, $document) {
-          $scope.title = title;
-          $scope.name = optimizationName;
-          $scope.operation = operation;
-          $scope.updateOptimization = function () {
-            $scope.newOptimizationName = $scope.name;
-            callback($scope.name);
-            modalInstance.close();
-          };
-          $scope.isUniqueName = function (optimizationForm) {
-            var exists = _(optimizationList).some(function(item) {
-                return item.name == $scope.name;
-              }) && $scope.name !== optimizationName && $scope.name !== $scope.newOptimizationName;
-            if(isRename) {
-              optimizationForm.optimizationName.$setValidity("optimizationUpdated", $scope.name !== optimizationName);
-            }
-            optimizationForm.optimizationName.$setValidity("optimizationExists", !exists);
-            return exists;
-          };
-          $document.on('keydown', onModalKeyDown); // observe
-          $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
-        }]
-      });
-
-      return modalInstance;
-    };
-
-    function addNewOptimization(name) {
-      console.log("Create new optimization");
-      var newOptimization = {
-        name: name,
-        which: 'outcomes',
-        constraints: {},
-        objectives: {}
-      };
-      selectDefaultProgsetAndParset(newOptimization);
-      $scope.state.optimizations.push(newOptimization);
-      var progset_id = newOptimization.progset_id;
-      var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
-      newOptimization.constraints = defaultOptimization.constraints;
-      newOptimization.objectives = defaultOptimization.objectives.outcomes;
-      $scope.setActiveOptimization(newOptimization);
-      saveOptimizations();
-    }
-
     $scope.addOptimization = function() {
-      openOptimizationModal(
+
+      function addNewOptimization(name) {
+        var newOptimization = {
+          name: name,
+          which: 'outcomes',
+          constraints: {},
+          objectives: {}
+        };
+        selectDefaultProgsetAndParset(newOptimization);
+        $scope.state.optimizations.push(newOptimization);
+        var progset_id = newOptimization.progset_id;
+        var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
+        newOptimization.constraints = defaultOptimization.constraints;
+        newOptimization.objectives = defaultOptimization.objectives.outcomes;
+        $scope.setActiveOptimization(newOptimization);
+        saveOptimizations();
+      }
+
+      modalService.rename(
         addNewOptimization,
         'Add optimization',
-        $scope.state.optimizations,
-        null,
-        'Add');
+        'Enter name', '',
+        'Name already exists',
+        _.pluck($scope.state.optimizations, 'name'));
     };
 
     $scope.renameOptimization = function () {
       if (!$scope.state.optimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
-        openOptimizationModal(
-          function(name) {
-            $scope.state.optimization.name = name;
-            saveOptimizations();
-          },
-          'Rename optimization',
-          $scope.state.optimizations,
-          $scope.state.optimization.name,
-          'Rename',
-          true);
+        function rename(name) {
+          $scope.state.optimization.name = name;
+          saveOptimizations();
+        }
+        var name = $scope.state.optimization.name;
+        var otherNames = _.pluck($scope.state.optimizations, 'name');
+        modalService.rename(
+          rename,
+          'Rename parameter set',
+          'Enter name',
+          name,
+          'Name already exists',
+          _.without(otherNames, name)
+        );
       }
     };
 
@@ -242,19 +211,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.state.optimization) {
         modalService.informError([{message: 'No optimization selected.'}]);
       } else {
-        openOptimizationModal(
-          function (name) {
-            var copyOptimization = deepCopyJson($scope.state.optimization);
-            copyOptimization.name = name;
-            delete copyOptimization.id;
-            $scope.setActiveOptimization(copyOptimization);
-            $scope.state.optimizations.push($scope.state.optimization);
-            saveOptimizations();
-          },
-          'Copy optimization',
-          $scope.state.optimizations,
-          $scope.state.optimization.name + ' copy',
-          'Copy');
+        function copy(name) {
+          var copyOptimization = deepCopyJson($scope.state.optimization);
+          copyOptimization.name = name;
+          delete copyOptimization.id;
+          $scope.setActiveOptimization(copyOptimization);
+          $scope.state.optimizations.push($scope.state.optimization);
+          saveOptimizations();
+        }
+        var names = _.pluck($scope.state.optimizations, 'name');
+        var name = $scope.state.optimization.name;
+        copy(modalService.getUniqueName(name, names));
       }
     };
 
