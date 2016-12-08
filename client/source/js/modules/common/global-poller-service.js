@@ -1,13 +1,15 @@
-/**
- * poller is a factory for tracking jobs on the server
- */
-
 define(['angular' ], function (angular) {
-
   'use strict';
 
-  return angular
-    .module('app.common.global-poller', [])
+  /**
+   * GlobalPoller provide generic services to run polling tasks
+   * on a URL. It expects a return JSON data structure
+   * { 'status': 'started' } to continue polling, otherwise it
+   * sends the response to `callback`
+   */
+
+  return angular.module('app.common.global-poller', [])
+
     .factory('globalPoller', ['$http', '$timeout', function($http, $timeout) {
 
       var polls = {};
@@ -83,6 +85,5 @@ define(['angular' ], function (angular) {
       };
 
     }]);
-
 
 });

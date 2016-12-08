@@ -191,7 +191,6 @@ def revert_populations_to_pop(populations):
     """
     data_pops = op.odict()
 
-    pprint(populations, indent=2)
     for key in ['short', 'long', 'male', 'female', 'age']:
         data_pops[key] = []
 
@@ -423,6 +422,7 @@ def get_parameters_for_scenarios(project, start_year=None):
                 - limits: [number, number]
                 - startVal: number
     """
+    print(">> Get parameters for scenarios")
     if start_year is None:
         start_year = project.settings.start
         end_year = project.settings.end
@@ -454,6 +454,7 @@ def get_parameters_for_scenarios(project, start_year=None):
                         'limits': get_par_limits(project, par),
                         'startval': startval
                     })
+    print(">> Finished calculating startvals for parameters")
     return result
 
 
@@ -520,30 +521,11 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
     return parameters
 
 
-def print_parset(parset):
-    result = {
-        'popkeys': normalize_obj(parset.popkeys),
-        'uid': str(parset.uid),
-        'name': parset.name,
-        'project_id': parset.project.id if parset.project else '',
-    }
-    s = pformat(result, indent=1) + "\n"
-    for pars in parset.pars:
-        for key, par in pars.items():
-            if hasattr(par, 'y'):
-                par = normalize_obj(par.y)
-            elif hasattr(par, 'p'):
-                par = normalize_obj(par.p)
-            else:
-                par = normalize_obj(par)
-            s += pformat({key: par}) + "\n"
-    return s
-
-
 # PROGRAMS
 
 
 def get_budgets_for_scenarios(project):
+    print(">> Get default budges for scenarios")
     result = {
         str(progset.uid): normalize_obj(progset.getdefaultbudget())
         for progset in project.progsets.values()}
@@ -559,6 +541,7 @@ def get_coverages_for_scenarios(project, year=None):
                 <year>:
                     <program_short>: coverage (float)
     """
+    print(">> Get default coverages for scenarios")
     result = {}
     start = project.settings.start
     end = project.settings.end
@@ -613,6 +596,18 @@ def revert_program_targetpars(pars):
     return targetpars
 
 
+def extract_key_i(data, key, i):
+    """
+    Safely extracts from (key, i) from a data structure
+      data = { <key>: [list of values] }
+    and returns None if unable to
+    """
+    try:
+        return data[key][i]
+    except:
+        return None
+
+
 def convert_program_costcovdata(costcovdata):
     if costcovdata is None:
         return None
@@ -620,11 +615,10 @@ def convert_program_costcovdata(costcovdata):
     costcovdata = normalize_obj(costcovdata)
     n_year = len(costcovdata['t'])
     for i_year in range(n_year):
-        entry = {
-            'year': costcovdata['t'][i_year],
-            'cost': costcovdata['cost'][i_year],
-            'coverage': costcovdata['coverage'][i_year]
-        }
+        entry = {}
+        for source_key, target_key in [
+               ('t', 'year'), ('cost', 'cost'), ('coverage', 'coverage')]:
+            entry[target_key] = extract_key_i(costcovdata, source_key, i_year)
         if entry["cost"] is None and entry["coverage"] is None:
             continue
         result.append(entry)
@@ -656,6 +650,15 @@ def revert_program_ccopars(ccopars):
             'unitcost': map(tuple, ccopars['unitcost'])
         })
     return result
+
+
+def split_pair(val):
+    if val is None:
+        return (None, None)
+    if isinstance(val, float) or isinstance(val, int):
+        return (val, val)
+    else:
+        return val
 
 
 def get_program_summary(program, progset, active):
@@ -714,6 +717,16 @@ def get_program_summary(program, progset, active):
                     - Males 50+,
                     - Females 50+
             """
+
+    ccopars_dict = normalize_obj(program.costcovfn.ccopars)
+    for key in ['saturation', 'unitcost']:
+        if key not in ccopars_dict:
+            continue
+        a_list = ccopars_dict[key]
+        n = len(a_list)
+        for i in range(n):
+            a_list[i] = split_pair(a_list[i])
+
     result = {
         'id': program.uid,
         'progset_id': progset.uid if progset is not None else None,
@@ -723,7 +736,7 @@ def get_program_summary(program, progset, active):
         'populations': normalize_obj(program.targetpops),
         'criteria': program.criteria,
         'targetpars': convert_program_targetpars(program.targetpars),
-        'ccopars': normalize_obj(program.costcovfn.ccopars),
+        'ccopars': ccopars_dict,
         'category': program.category,
         'costcov': convert_program_costcovdata(program.costcovdata),
         'optimizable': program.optimizable()
@@ -778,26 +791,25 @@ def get_outcome_summaries_from_progset(progset):
             }
             n_year = len(covout.ccopars.get('t', []))
             for i_year in range(n_year):
+                intercept = extract_key_i(covout.ccopars, 'intercept', i_year)
+                intercept = split_pair(intercept)
                 year = {
-                    'intercept_upper': covout.ccopars['intercept'][i_year][1],
-                    'intercept_lower': covout.ccopars['intercept'][i_year][0],
-                    'year': covout.ccopars['t'][i_year],
+                    'intercept_upper': intercept[1],
+                    'intercept_lower': intercept[0],
+                    'year': extract_key_i(covout.ccopars, 't', i_year),
                     'programs': []
                 }
                 for program_name, program_intercepts in covout.ccopars.items():
                     if program_name in ['intercept', 't', 'interact']:
                         continue
-                    lower = None
-                    upper = None
                     if len(program_intercepts) > i_year:
-                        pair = program_intercepts[i_year]
-                        if pair is not None:
-                            lower = program_intercepts[i_year][0]
-                            upper = program_intercepts[i_year][1]
+                        pair = split_pair(program_intercepts[i_year])
+                    else:
+                        pair = (None, None)
                     program = {
                         'name': program_name,
-                        'intercept_lower': lower,
-                        'intercept_upper': upper,
+                        'intercept_lower': pair[0],
+                        'intercept_upper': pair[1],
                     }
                     year['programs'].append(program)
 
@@ -901,6 +913,7 @@ def get_progset_summary(project, progset_name):
 
 
 def get_progset_summaries(project):
+    print(">> Get progset summaries")
     progset_summaries = [
         get_progset_summary(project, name) for name in project.progsets]
     return {'progsets': normalize_obj(progset_summaries)}
@@ -1059,11 +1072,11 @@ def convert_scenario_pars(pars):
     result = []
     for par in pars:
         result.append({
-            'name': par['name'],
-            'startyear': par['startyear'],
-            'endval': par['endval'],
-            'endyear': par['endyear'],
-            'startval': par['startval'],
+            'name': par.get('name', ''),
+            'startyear': par.get('startyear', None),
+            'endval': par.get('endval', None),
+            'endyear': par.get('endyear', None),
+            'startval': par.get('startval', None),
             'for': par['for'][0] if len(par['for']) == 1 else par['for']
         })
     return result
@@ -1131,18 +1144,18 @@ def get_scenario_summary(project, scenario):
               values: [number -or- null] # same length as years
             - ...
     """
-    extra_data = {}
+    variant_data = {}
 
     # budget, coverage, parameter, any others?
     if isinstance(scenario, op.Parscen):
         scenario_type = "parameter"
-        extra_data["pars"] = convert_scenario_pars(scenario.pars)
+        variant_data["pars"] = convert_scenario_pars(scenario.pars)
     elif isinstance(scenario, op.Coveragescen):
         scenario_type = "coverage"
-        extra_data["coverage"] = convert_program_list(scenario.coverage)
+        variant_data["coverage"] = convert_program_list(scenario.coverage)
     elif isinstance(scenario, op.Budgetscen):
         scenario_type = "budget"
-        extra_data["budget"] = convert_program_list(scenario.budget)
+        variant_data["budget"] = convert_program_list(scenario.budget)
 
     if hasattr(scenario, "progsetname"):
         progset_id = project.progsets[scenario.progsetname].uid
@@ -1165,11 +1178,12 @@ def get_scenario_summary(project, scenario):
         'years': scenario.t,
         'parset_id': project.parsets[scenario.parsetname].uid,
     }
-    result.update(extra_data)
+    result.update(variant_data)
     return result
 
 
 def get_scenario_summaries(project):
+    print(">> Get scenario summaries")
     scenario_summaries = []
     for scen in project.scens.values():
         summary = get_scenario_summary(project, scen)
@@ -1230,10 +1244,6 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
             scen.uid = UUID(summary["id"])
 
         scen.active = summary["active"]
-        print("save summary")
-        pprint(summary, indent=2)
-        print("save scen kwargs")
-        pprint(kwargs, indent=2)
         project.scens[scen.name] = scen
 
 
