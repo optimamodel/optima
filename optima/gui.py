@@ -555,7 +555,6 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     bottom = 0*tvec
     figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
     ax = subplot(111)
-    xlabel('Year')
     ylabel('Number of people')
     title(plottitle)
     xlim((tvec[0], tvec[-1]))

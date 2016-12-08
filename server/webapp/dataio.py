@@ -659,7 +659,7 @@ def load_portfolio(portfolio_id, db_session=None):
     if record:
         print("> load portfolio %s" % portfolio_id)
         return record.load()
-    raise ValueError("Couldn't find portfolio %s" % portfolio_id)
+    raise Exception("Portfolio %s not found" % portfolio_id)
 
 
 def load_portfolio_summaries(db_session=None):
@@ -788,12 +788,12 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     prj_names = []
     for prj_basename in district_prj_basenames:
         first_prj_name = prj_basename.replace('.prj', '')
-        print("> Slurping project %s" % prj_name, existing_prj_names, prj_name in existing_prj_names)
         prj_name = first_prj_name
         i = 1
         while prj_name in existing_prj_names:
             prj_name = first_prj_name + ' (%d)' % i
             i += 1
+        print("> Slurping project %s" % prj_name)
         create_project_from_prj(prj_fname, prj_name, current_user.id)
         prj_names.append(prj_name)
 

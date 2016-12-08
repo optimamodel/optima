@@ -315,7 +315,6 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                     subplot(rows, cols, count+2)
                     scatter(tmp2['x'], tmp2['datay'])
                     plot(tmp2['x'], tmp2['modely'])
-                    xlabel('Year')
                     ylabel(key1+' - '+key2)
                     ylim((0,ylim()[1]))
             

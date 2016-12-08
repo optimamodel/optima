@@ -383,7 +383,6 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
                 x[popid] = [z*popratio[popname][c] for z in x[popid]]
             for x in newproject.data['hivprev']:
                 x[popid] = [z*prevfactors[popname][c] for z in x[popid]]
-        newproject.data['numcirc'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numcirc']]
         newproject.data['numtx'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numtx']]
         newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
         newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
