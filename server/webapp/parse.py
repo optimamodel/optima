@@ -263,9 +263,14 @@ def get_project_summary_from_project(project):
         data_end = project.settings.end
 
     is_ready_to_optimize = True
+    n_program = 0
     for progset in project.progsets.values():
+        n_program_in_progset = 0
+        n_program_in_progset = len(progset.programs)
         if not is_progset_optimizable(progset):
             is_ready_to_optimize = False
+        if n_program_in_progset > n_program:
+            n_program = n_program_in_progset
     if len(project.progsets.values()) == 0:
         is_ready_to_optimize = False
 
@@ -281,6 +286,7 @@ def get_project_summary_from_project(project):
         'dataUploadTime': project.spreadsheetdate,
         'hasParset': len(project.parsets) > 0,
         'isOptimizable': is_ready_to_optimize,
+        'nProgram': n_program,
         'hasEcon': "econ" in project.data
     }
 

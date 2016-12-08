@@ -41,39 +41,40 @@ define(
   }
 
   function addLineToLegendLabel($svgFigure, nLegend) {
-      var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
+    var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
 
-      if ($textLabels) {
-        // the legend path is stored under .mpd3-axes, and needs
-        // to be moved into the .mpld3-baseaxes, it's presumably
-        // the last path under .mpld3-axes
-        // so need to work out how many entries in legend
-        // it is the the number of textlabels - title and axe labels
-        // var nLegend = $textLabels.length - 3;
-        var paths = $svgFigure.find('.mpld3-axes > path');
+    if ($textLabels) {
+      // the legend path is stored under .mpd3-axes, and needs
+      // to be moved into the .mpld3-baseaxes, it's presumably
+      // the last path under .mpld3-axes
+      // so need to work out how many entries in legend
+      // it is the the number of textlabels - title and axe labels
+      // var nLegend = $textLabels.length - 3;
+      var paths = $svgFigure.find('.mpld3-axes > path');
 
-        // it looks like the legend background sneaks in as a path
-        // and is not drawn in the right order
+      // it looks like the legend background sneaks in as a path
+      // and is not drawn in the right order
 
-        // we extract the lines of the legend AND the background
-        var pathsToCopy = paths.slice(paths.length - nLegend - 1, paths.length);
+      // we extract the lines of the legend AND the background
+      var pathsToCopy = paths.slice(paths.length - nLegend - 1, paths.length);
 
-        _.each(pathsToCopy, function(path) {
-          var $path = $(path);
+      _.each(pathsToCopy, function(path) {
+        var $path = $(path);
 
-          // we look for the background and make it opaque
-          if ($path.css('fill')=="rgb(255, 255, 255)") {
-            $path.css('fill', "rgba(255, 255, 255, 0)");
-            $path.css('stroke', "rgba(255, 255, 255, 0)");
-          }
-        });
+        // we look for the background and make it opaque
+        if ($path.css('fill')=="rgb(255, 255, 255)") {
+          $path.css('fill', "rgba(255, 255, 255, 0)");
+          $path.css('stroke', "rgba(255, 255, 255, 0)");
+        }
+      });
 
-        var baseAxes = $svgFigure.find('.mpld3-baseaxes');
-        baseAxes.append(pathsToCopy);
-      }
+      var baseAxes = $svgFigure.find('.mpld3-baseaxes');
+      baseAxes.append(pathsToCopy);
+    }
   }
 
   function reformatMpld3FigsInElement($element, nLegend) {
+
     $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
       var width = $svgFigure.attr('width');
@@ -301,19 +302,23 @@ define(
     };
   });
 
-  module.directive('optimaGraphs', function ($http, toastr) {
+  module.directive('optimaGraphs', function ($http, toastr, RzSliderOptions) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/charts/optima-graphs.html',
       link: function (scope, elem, attrs) {
 
         function initialize() {
+          var allCharts = elem.find('.allcharts');
+          console.log('allCharts', allCharts);
+          console.log('allCharts', allCharts.width());
           scope.state = {
             slider: {
-              value: 400,
+              value: 30,
+              min: 0,
               options: {
-                floor: 200,
-                ceil: 1300,
+                floor: 5,
+                ceil: 100,
                 onChange: scope.changeFigWidth
               }
             }
@@ -364,6 +369,7 @@ define(
           if (_.isUndefined(resultId)) {
             return;
           }
+          console.log('fetching graphs reusltId', scope.graphs.resultId);
           $http.post(
             '/api/results/' + resultId,
             {which: getSelectors()})
@@ -385,9 +391,13 @@ define(
             if (_.isUndefined(scope.graphs)) {
               return;
             }
-            _.each(scope.graphs.mpld3_graphs, function (g, i) {
-              g.isChecked = function () { return isChecked(i); };
-            });
+            if (scope.graphs) {
+              _.each(scope.graphs.mpld3_graphs, function(g, i) {
+                g.isChecked = function() {
+                  return isChecked(i);
+                };
+              });
+            }
           }
         );
 
@@ -398,12 +408,16 @@ define(
         };
 
         scope.changeFigWidth = function() {
+          var percentage = scope.state.slider.value;
+          var allCharts = elem.find('.allcharts');
+          var allChartsWidth = parseInt(allCharts.width());
+          var width = allChartsWidth * percentage / 100.;
+
           function setAllFiguresToWidth($element) {
             var $figures = $element.find('svg.mpld3-figure');
             $figures.each(function() {
               var $svgFigure = $(this);
               var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
-              var width = scope.state.slider.value;
               var height = width / ratio;
               $svgFigure.attr('width', width);
               $svgFigure.attr('height', height);

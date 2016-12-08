@@ -163,7 +163,7 @@ define(['./../module', 'underscore'], function(module, _) {
       vm.updateCostCovGraph = function() {
         vm.chartData = {};
         var years = vm.state.program.ccopars.t;
-        if (years.length == 0) {
+        if (_.isUndefined(years) || years.length == 0) {
           vm.chartData = null;
           return;
         }
@@ -185,16 +185,6 @@ define(['./../module', 'underscore'], function(module, _) {
             }
           );
       };
-
-      function toNullIfEmpty(val) {
-        if (_.isUndefined(val)) {
-          return null;
-        }
-        if (val == "") {
-          return null;
-        }
-        return val;
-      }
 
       function revertCcoparsTable() {
         var table = vm.state.ccoparsTable;

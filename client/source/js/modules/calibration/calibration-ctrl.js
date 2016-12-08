@@ -18,7 +18,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         isRunnable: false,
         parset: undefined,
         startYear: $scope.years[0],
-        endYear: $scope.years[iLast]
+        endYear: $scope.years[iLast],
+        graphs: undefined,
       };
 
       console.log("project", project);
@@ -51,8 +52,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function getSelectors() {
-      if ($scope.graphs) {
-        var selectors = $scope.graphs.selectors;
+      if ($scope.state.graphs) {
+        var selectors = $scope.state.graphs.selectors;
         if (selectors) {
           var which = _.filter(selectors, function(selector) {
             return selector.checked;
@@ -69,8 +70,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function loadParametersAndGraphs(response) {
-      console.log("loaded response", response);
-      $scope.graphs = response.graphs;
+      $scope.state.graphs = response.graphs;
       $scope.parameters = angular.copy(response.parameters);
     }
 

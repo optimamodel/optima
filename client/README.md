@@ -29,7 +29,7 @@ required to compile the assets required for the webserver.
   the third-party libraries in `source/vendor`
 - the CSS files are written as `sass` files in the `source/sass`
   directory, and are compiled by `gulp-sass`, and
-  ultimately placed in the `source/assets/css` folder
+  ultimately placed in the `*__``*source/assets/css` folder
 
 ## Compiling the webclient
 
