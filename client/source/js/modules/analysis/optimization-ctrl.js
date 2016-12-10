@@ -346,9 +346,7 @@ define(
     function convertToKeyList(dict) {
       var result = [];
       _.mapObject(dict, function(value, key) {
-        var newValue = angular.copy(value);
-        newValue.saveKey = key;
-        result.push(newValue);
+        result.push(_.extend(deepCopyJson(value), {'key':key}));
       });
       return result;
     }
@@ -356,9 +354,9 @@ define(
     function convertToDict(keyList) {
       var result = {};
       _.each(keyList, function(entry) {
-        var saveKey = entry.saveKey;
-        delete entry.saveKey;
-        result[saveKey] = entry;
+        var newEntry = deepCopyJson(entry);
+        var key = newEntry.key;
+        result[key] = _.omit(newEntry, 'key');
       });
       return result;
     }
@@ -394,7 +392,6 @@ define(
           $scope.isNameClash = isNameClash;
           $scope.addProgram = addProgram;
           $scope.selectProgset = selectProgset;
-          $scope.changeConstraint = changeConstraint;
 
           $scope.defaultOptimizationsByProgsetId = optimVm.defaultOptimizationsByProgsetId;
           var progsetId = $scope.state.optimization.progset_id;
@@ -442,8 +439,8 @@ define(
         .result
         .then(function(optimization) {
           console.log('save optimization', optimization);
-          // saveOptimization(optimization);
-          // $scope.state.optimization = optimization;
+          saveOptimization(optimization);
+          $scope.state.optimization = optimization;
         });
     }
 
@@ -458,7 +455,7 @@ define(
       $scope.state.optimizations.push(newOptimization);
       var progset_id = newOptimization.progset_id;
       var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
-      newOptimization.constraints = defaultOptimization.constraints;
+      newOptimization.constraints = [];
       newOptimization.objectives = defaultOptimization.objectives[which];
       openOptimizationModal(newOptimization);
     };

@@ -102,7 +102,6 @@
             class="txbox"
             type="text"
             ng-model="state.optimization.constraints[$index]"
-            ng-change="changeConstraint($index)"
             required
             ng-options="constraint as constraint.name for constraint in defaultPrograms track by constraint.name">
         </select>

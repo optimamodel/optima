@@ -1341,19 +1341,19 @@ def get_optimization_summaries(project):
             progset = project.progsets[0]
             optim_summary["progset_id"] = progset.uid
 
-        default_constraints = op.defaultconstraints(project=project, progset=progset)
-        constraints = optim_summary["constraints"]
-
-        default_prog_keys = default_constraints["name"].keys()
-        for prog_key in default_prog_keys:
-            if prog_key not in constraints["name"]:
-                for attr in ["name", "max", "min"]:
-                    constraints[attr][prog_key] = default_constraints[attr][prog_key]
-
-        for prog_key in constraints["name"].keys():
-            if prog_key not in default_prog_keys:
-                for attr in ["name", "max", "min"]:
-                    del constraints[attr][prog_key]
+        # default_constraints = op.defaultconstraints(project=project, progset=progset)
+        # constraints = optim_summary["constraints"]
+        #
+        # default_prog_keys = default_constraints["name"].keys()
+        # for prog_key in default_prog_keys:
+        #     if prog_key not in constraints["name"]:
+        #         for attr in ["name", "max", "min"]:
+        #             constraints[attr][prog_key] = default_constraints[attr][prog_key]
+        #
+        # for prog_key in constraints["name"].keys():
+        #     if prog_key not in default_prog_keys:
+        #         for attr in ["name", "max", "min"]:
+        #             del constraints[attr][prog_key]
 
         print(">> Optim constraints", optim.constraints)
         optim_summaries.append(optim_summary)
