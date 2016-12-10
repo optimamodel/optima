@@ -169,18 +169,6 @@ import portfolio as _portfolio
 from .portfolio import Portfolio 
 
 
-try:
-    import geospatial as _geospatial
-    from . import batchtools
-    from .batchtools import batchautofit
-    from .batchtools import batchBOC
-    from .geospatial import geogui # Import GUI tools for geospatial analysis
-except: 
-    _failed.append('geospatial')
-
-
-
-
 # Finally, load defaults
 from . import defaults
 from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms, demo
@@ -191,6 +179,17 @@ try:
     from .migrate import migrate, loadproj
 except:
     _failed.append('migrate')
-    
+
+
+# And really really finally, load geospatial functions (has to load projects, so has to come after migration)
+try:
+    import geospatial as _geospatial
+    from . import batchtools
+    from .batchtools import batchautofit
+    from .batchtools import batchBOC
+    from .geospatial import geogui # Import GUI tools for geospatial analysis
+except: 
+    _failed.append('geospatial')
+
 
 if not len(_failed): del _failed # If it's empty, don't bother keeping it
