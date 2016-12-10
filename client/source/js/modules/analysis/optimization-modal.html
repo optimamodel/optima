@@ -1,0 +1,156 @@
+
+<div class="modal-header"> CREATE OR EDIT {{state.optimization.which}} OPTIMIZATION</div>
+
+<div class="section">
+  <div style="float: left; width: 40%">
+    <label> Name </label>
+    <input
+        class="txbox"
+        type="text"
+        ng-model="state.optimization.name"
+        required/>
+    <div
+        class="error-hint"
+        ng-show="isNameClash(state.optimization.name)">
+      Scenario with this name already exists, please choose a different name.
+    </div>
+  </div>
+  <div style="float: left; width: 30%">
+    <label> Select a parameter set to use as baseline </label>
+    <select
+        class="txbox"
+        type="text"
+        ng-model="state.optimization.parset_id"
+        required
+        ng-options="parset.id as parset.name for parset in parsets">
+    </select>
+  </div>
+  <div style="float: left; width: 30%">
+    <label> Select a program set to use as baseline </label>
+    <select
+        class="txbox"
+        type="text"
+        ng-model="state.optimization.progset_id"
+        ng-change="selectProgset()"
+        required
+        ng-options="progset.id as progset.name for progset in progsets">
+    </select>
+  </div>
+</div>
+
+<div
+    class="section"
+    ng-if="state.optimization.objectives">
+
+  <h3>OBJECTIVES</h3>
+  <label>Timeline: </label>
+  from
+  <input
+    type="number"
+    class="txbox"
+    style="display: inline; width: 4em;"
+    ng-model="state.optimization.objectives.start"/>
+  to
+  <input
+    type="number"
+    class="txbox"
+    style="display: inline; width: 4em;"
+    ng-model="state.optimization.objectives.end"/>
+  <br/>
+
+  <label>Budget:</label>
+  <input
+    type="number"
+    class="txbox"
+    style="display: inline; width: 4em;"
+    ng-model="state.optimization.objectives.start"/>
+
+  <br/>
+
+  <label>Objectives:</label>
+  Infection weight:
+  <input
+    type="number"
+    class="txbox"
+    style="display: inline; width: 4em;"
+    ng-model="state.optimization.objectives.inciweight"/>
+  &nbsp;
+  Death weight:
+  <input
+    type="number"
+    class="txbox"
+    style="display: inline; width: 4em;"
+    ng-model="state.optimization.objectives.deathweight"/>
+
+</div>
+
+<div ng-if="state.optimization.constraints" class="section">
+  <h3>CONSTRAINTS</h3>
+  Maximum changes in funding over the program period
+  <table>
+    <tr style="justify-content: space-around; font-style: italic"
+        class="option">
+      <th style="width: 60%">Program</th>
+      <th style="width: 20%">Not less than</th>
+      <th style="width: 20%">Not more than</th>
+    </tr>
+    <tr style="justify-content: space-around"
+        class="option"
+        ng-repeat="constraint in state.optimization.constraints track by $index">
+      <td style="width: 60%">
+        <select
+            class="txbox"
+            type="text"
+            ng-model="state.optimization.constraints[$index]"
+            ng-change="changeConstraint($index)"
+            required
+            ng-options="constraint as constraint.name for constraint in defaultPrograms track by constraint.name">
+        </select>
+      </td>
+      <td style="width: 20%">
+        <input
+            class="txbox"
+            type="number"
+            ng-model="constraint.min"/>
+      </td>
+      <td style="width: 20%">
+        <input
+            class="txbox"
+            type="number"
+            ng-model="constraint.max"/>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<a
+  class="modal-close fa fa-times"
+  ng-click="cancel()">
+</a>
+
+<div style="width: 100%; text-align: left">
+  <button
+      type="button"
+      class="btn"
+      ng-click="addProgram()">
+    + program
+  </button>
+</div>
+
+<div
+  style="
+    width: 100%;
+    text-align: center;
+    padding-top: 2em;">
+  <button
+      class="btn"
+      ng-click="cancel()">
+    Cancel
+  </button>
+  <button
+      class="btn"
+      ng-click="save()" >
+    Save
+  </button>
+</div>
+
