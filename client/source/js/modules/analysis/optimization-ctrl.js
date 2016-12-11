@@ -74,18 +74,12 @@ define(
     }
 
     function getProgsetName(optimization) {
-      var parset_id = optimization.parset_id;
-      var parset = _.find($scope.state.parsets, function(parset) {
-        return parset.id == parset_id;
+      var progsetId = optimization.progset_id;
+      var progset = _.find($scope.state.progsets, function(progset) {
+        return progset.id == progsetId;
       });
-      return parset.name
+      return progset.name
     }
-
-    $scope.setType = function (which) {
-      $scope.state.optimization.which = which;
-      $scope.state.optimization.objectives = objectiveDefaults[which];
-      $scope.objectiveLabels = objectiveLabels[which];
-    };
 
     $scope.checkNotSavable = function() {
       return !$scope.state.optimization;
