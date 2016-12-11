@@ -454,8 +454,9 @@ define(
     }
 
     $scope.addOptimization = function(which) {
+      var otherNames = _.pluck($scope.state.optimizations, 'name');
       var newOptimization = {
-        name: name,
+        name: modalService.getUniqueName('Optimization', otherNames),
         which: which,
         constraints: {},
         objectives: {}
