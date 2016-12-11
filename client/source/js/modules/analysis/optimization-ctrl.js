@@ -366,12 +366,10 @@ define(
     }
 
     function revertToConstraints(listOfConstraints) {
-      var result = convertToDict(listOfConstraints);
-      var result2 = swapKeysOfDictOfDict(result);
-      return result2;
+      return swapKeysOfDictOfDict(convertToDict(listOfConstraints));
     }
 
-    var optimVm = $scope;
+    var optimsScope = $scope;
 
     function openOptimizationModal(optimization) {
 
@@ -382,34 +380,45 @@ define(
           $scope.state.optimization = angular.copy(optimization);
           $scope.state.optimization.constraints = listifyConstraints(
             $scope.state.optimization.constraints);
-          console.log("list of constraints", $scope.state.optimization.constraints);
           $scope.state.programShorts = _.keys($scope.state.optimization.constraints.name);
-          $scope.parsets = optimVm.state.parsets;
-          $scope.otherNames = _.without(_.pluck(optimVm.state.optimizations, 'name'), optimization.name);
-          $scope.progsets = optimVm.state.progsets;
+          $scope.parsets = optimsScope.state.parsets;
+          $scope.otherNames = _.without(_.pluck(optimsScope.state.optimizations, 'name'), optimization.name);
+          $scope.progsets = optimsScope.state.progsets;
           $scope.cancel = cancel;
           $scope.save = save;
           $scope.isNameClash = isNameClash;
-          $scope.addProgram = addProgram;
+          $scope.checkNotSavable = checkNotSavable;
+          $scope.defaultOptimizationsByProgsetId = optimsScope.defaultOptimizationsByProgsetId;
           $scope.selectProgset = selectProgset;
+          selectProgset();
+        }
 
-          $scope.defaultOptimizationsByProgsetId = optimVm.defaultOptimizationsByProgsetId;
-          var progsetId = $scope.state.optimization.progset_id;
-          $scope.defaultPrograms = listifyConstraints(
-            deepCopyJson(optimVm.defaultOptimizationsByProgsetId[progsetId].constraints));
-          console.log("list of default constraints", $scope.defaultPrograms);
+        function checkNotSavable() {
+          var name = $scope.state.optimization.name;
+          var result = _.isUndefined(name) || name.trim() === "";
+          return result;
         }
 
         function selectProgset() {
-        }
+          var progsetId = $scope.state.optimization.progset_id;
+          $scope.defaultConstraints = listifyConstraints(
+            deepCopyJson(optimsScope.defaultOptimizationsByProgsetId[progsetId].constraints));
+          console.log("list of default constraints", $scope.defaultConstraints);
 
-        function addProgram() {
-          $scope.state.optimization.constraints.push(
-            deepCopyJson($scope.defaultPrograms[0]));
-        }
+          var constraints = $scope.state.optimization.constraints;
+          var defaultKeys = _.pluck($scope.defaultConstraints, 'key');
+          var constraints = _.filter(
+            constraints, function(c) { return _.contains(defaultKeys, c.key)});
+          var constraintKeys = _.pluck(constraints, "key");
+          _.each($scope.defaultConstraints, function(constraint) {
+            if (!_.contains(constraintKeys, constraint.key)) {
+              constraints.push(constraint);
+            }
+          });
+          constraints = _.sortBy(constraints, function(c) { return c.key });
+          $scope.state.optimization.constraints = constraints;
 
-        function changeConstraint(i) {
-          console.log('change Constraint', i, $scope.state.optimization.constraints[i]);
+          console.log("patched constraints", $scope.state.optimization.constraints);
         }
 
         function cancel() { $modalInstance.dismiss("cancel"); }
