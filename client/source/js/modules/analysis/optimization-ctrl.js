@@ -461,9 +461,8 @@ define(
         objectives: {}
       };
       selectDefaultProgsetAndParset(newOptimization);
-      $scope.state.optimizations.push(newOptimization);
       var progset_id = newOptimization.progset_id;
-      var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
+      var defaultOptimization = deepCopyJson($scope.defaultOptimizationsByProgsetId[progset_id]);
       newOptimization.constraints = [];
       newOptimization.objectives = defaultOptimization.objectives[which];
       openOptimizationModal(newOptimization);
@@ -475,21 +474,3 @@ define(
 });
 
 
-var objectiveDefaults = {
-  outcomes: {
-    base: undefined,
-    start: 2017,
-    end: 2030,
-    budget: 63500000.0,
-    deathweight: 0,
-    inciweight: 0
-  },
-  money: {
-    base: 2015,
-    start: 2017,
-    end: 2030,
-    budget: 63500000.0,
-    deathfrac: 0,
-    incifrac: 0
-  }
-};
