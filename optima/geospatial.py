@@ -80,7 +80,7 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
     
     ## 1. Load a project file
     project = _loadproj(projectpath, usegui)
-    if project == None:
+    if project is None:
         raise OptimaException('No project loaded.')
     
     bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
@@ -260,7 +260,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     
     ## 1. Load a project file -- WARNING, could be combined with the above!
     project = _loadproj(projectpath, usegui)
-    if project == None:
+    if project is None:
         raise OptimaException('No project loaded.')
     try: project.parsets[-1].getresults()
     except: project.runsim(name=project.parsets[-1].name)
