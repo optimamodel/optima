@@ -85,7 +85,7 @@
             <td>&nbsp;</td>
           </tr>
           <tr ng-repeat="program in state.activeProgramSet.programs | orderBy : 'name'" ng-if="program.category==category">
-            <td class="text-center" style="width: 50px" update-checkbox-on-click>
+            <td class="text-center" style="width: 50px">
               <input type="checkbox" ng-change="saveActiveProgramSet('Program active state saved')" ng-model="program.active">
             </td>
             <td style="width: 450px">{{ program.name }}</td>

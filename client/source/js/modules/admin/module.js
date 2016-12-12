@@ -1,13 +1,10 @@
 define([
     'angular',
     'ui.router',
-    '../../config',
-    '../resources/model',
 ], function (angular) {
     'use strict';
 
     return angular.module('app.admin', [
-        'app.constants',
         'ui.router'
     ]).config(function ($stateProvider) {
         $stateProvider
@@ -31,8 +28,8 @@ define([
                 templateUrl: 'js/modules/admin/manage-projects.html' ,
                 controller: 'AdminManageProjectsController',
                 resolve: {
-                  projects: function (projectApiService) {
-                    return projectApiService.getAllProjectList();
+                  projects: function (projectApi) {
+                    return projectApi.getAllProjectList();
                   },
                   users:function($http){
                     return $http.get('/api/user');

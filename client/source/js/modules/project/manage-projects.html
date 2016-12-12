@@ -1,0 +1,136 @@
+
+<div class="rich">
+
+  <h1>Welcome to Optima</h1>
+
+  <div style="padding-top:1em" ng-hide="projects.length">
+    To begin, please create or upload a project:
+  </div>
+
+  <br>
+
+  <a class="btn" ui-sref="project.create">Create project</a> &nbsp;
+  <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp;
+  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xls</a> &nbsp;
+
+  <br>
+  <br>
+  <br>
+
+  <div class="section" ng-show="projects.length">
+
+    <h2>Projects -
+
+    <span ng-if="project"> current active project is "{{ project.name }}" </span>
+
+    <span ng-if="!project"> no project has been selected as active </span>
+
+    </h2>
+
+    <input type="text"
+           class="txbox"
+           style="margin-bottom: 20px"
+           placeholder="&#x1f50e; Filter Projects" ng-model="searchTerm">
+
+    <table class="table table-bordered table-hover table-striped" style="width: auto">
+      <thead>
+      <tr>
+        <th>
+          <input type="checkbox" ng-click="selectAll()" ng-model="allSelected"/>
+        </th>
+        <th ng-click="updateSorting('name')" class="sortable">
+          Name
+          <span ng-show="sortType == 'name' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'name' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'name'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th>
+          Select
+        </th>
+        <th ng-click="updateSorting('creationTime')" class="sortable">
+          Created on
+          <span ng-show="sortType == 'creationTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'creationTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'creationTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th ng-click="updateSorting('updatedTime')" class="sortable">
+          Updated on
+          <span ng-show="sortType == 'updatedTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'updatedTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'updatedTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th ng-click="updateSorting('dataUploadTime')" class="sortable">
+          Data on
+          <span ng-show="sortType == 'dataUploadTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'dataUploadTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'dataUploadTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th colspan="8">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="project in projects | orderBy:sortType:sortReverse | filter:filterByName" ng-class="{highlighted: activeProjectId === project.id}">
+        <td>
+          <input type="checkbox" ng-model="project.selected"/>
+        </td>
+        <td>
+          {{ ::project.name }}</i>
+        </td>
+        <td>
+          <button class="btn __green" ng-click="open(project.name, project.id)">Open</button>
+        </td>
+        <td>
+          {{ ::project.creationTime| date:'yyyy-MM-dd HH:mm'}}
+        </td>
+        <td>
+          {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm') : 'No modification'}}
+        </td>
+        <td>
+          {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm') : 'No data uploaded'}}
+        </td>
+        <td style="white-space: nowrap">
+          <button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>
+          <button class="btn" ng-click="workbook(project.name, project.id)">Download template xls</button>
+          <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload xls</button>
+          <i
+            ng-click="copy(project.name, project.id)"
+            class="fa fa-copy"
+            tp-text="Copy" tooltip tp-class="tooltip"
+            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+            style="margin-left: 0.5em">
+          </i>
+          <i
+            ng-click="editProjectName(project)"
+            class="fa fa-pencil"
+            tp-text="Rename" tooltip tp-class="tooltip"
+            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+            style="margin-left: 0.5em">
+          </i>
+          <i
+            ng-click="getData(project.name, project.id)"
+            class="fa fa-download"
+            tp-text="Download" tooltip tp-class="tooltip"
+            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+            style="margin-left: 0.5em">
+          </i>
+          <i
+            ng-click="remove($event, project.name, project.id, $index)"
+            class="fa fa-trash-o"
+            tp-text="Delete" tooltip tp-class="tooltip"
+            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+            style="margin-left: 0.5em">
+          </i>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <div style="display: flex; margin-left: -2%;" ng-show="projects.length">
+      <button ng-click="deleteSelected()" type="button" class="btn" style="margin-left:2%">Delete Selected</button>
+      <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download Selected</button>
+    </div>
+
+  </div>
+
+</div>
+

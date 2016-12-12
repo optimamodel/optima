@@ -2,7 +2,9 @@ define(['angular'], function (angular) {
   'use strict';
 
   return angular.module('app.common.form-input-validate', [])
+
     .directive('formInputValidate', function () {
+
       return {
         restrict: 'C',
         require: '^form',
@@ -32,5 +34,7 @@ define(['angular'], function (angular) {
           });
         }
       };
+
     });
 });
+

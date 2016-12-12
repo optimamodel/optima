@@ -7,7 +7,10 @@
       {{ ::user.data.displayName }}
       <span ng-show="user.data.email">{{ ::user.data.email }}</span>
     </h4>
-    <table ng-show="user.projects.length" class="table table-bordered table-hover table-striped" style="width: auto">
+    <table
+        ng-show="user.projects.length"
+        class="table table-bordered table-hover table-striped"
+        style="width: auto">
       <thead>
       <tr>
         <th>Name</th>

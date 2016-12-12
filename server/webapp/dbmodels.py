@@ -1,5 +1,4 @@
 import os
-from flask_restful import fields
 from flask_restful_swagger import swagger
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
@@ -15,14 +14,6 @@ from .dbconn import db, redis
 class UserDb(db.Model):
 
     __tablename__ = 'users'
-
-    resource_fields = {
-        'id': fields.String,
-        'displayName': fields.String(attribute='name'),
-        'username': fields.String,
-        'email': fields.String,
-        'is_admin': fields.Boolean,
-    }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     username = db.Column(db.String(255))
@@ -83,11 +74,6 @@ class ProjectDb(db.Model):
 
     __tablename__ = 'projects'
 
-    resource_fields = {
-        'id': fields.String,
-        'user_id': fields.String,
-    }
-
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
     results = db.relationship('ResultsDb', backref='project')
@@ -132,7 +118,6 @@ class ProjectDb(db.Model):
             work_log.cleanup()
         work_logs.delete(synchronize_session)
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
-        db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.flush()
 
@@ -222,15 +207,3 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
         redis.delete("working-" + self.id.hex)
 
 
-class ProjectEconDb(db.Model):  # pylint: disable=R0903
-
-    __tablename__ = 'project_econ'
-
-    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
-    meta = deferred(db.Column(db.LargeBinary))
-    updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
-
-    def __init__(self, project_id, meta, updated=None):
-        self.id = project_id
-        self.meta = meta
-        self.updated = updated

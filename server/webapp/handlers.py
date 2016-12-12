@@ -14,6 +14,8 @@ import json
 import os
 import pprint
 
+import yaml
+
 import flask.json
 from flask import helpers, current_app, request, Response, flash, \
     url_for, redirect, Blueprint, g, session, make_response
@@ -34,21 +36,13 @@ import server.webapp.tasks
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
-
+# add hooks to handle UID's and datetime strings
 @api.representation('application/json')
 def output_json(data, code, headers=None):
     inner = json.dumps(data, cls=flask.json.JSONEncoder)
     resp = make_response(inner, code)
     resp.headers.extend(headers or {})
     return resp
-
-
-@api_blueprint.before_request
-def before_request():
-    dbconn.db.engine.dispose()
-    g.user = None
-    if 'user_id' in session:
-        g.user = dataio.get_user_from_id(session['user_id'])
 
 
 def get_post_data_json():
@@ -74,6 +68,12 @@ def get_upload_file(dirname):
     return full_filename
 
 
+def log_yaml(summary, title=None):
+    if title:
+        print(">> " + title)
+    print(yaml.dump(summary))
+    return summary
+
 
 # PROJECTS
 
@@ -82,6 +82,25 @@ class ProjectsAll(Resource):
 
     @swagger.operation(summary="Returns list of project sumamaries (for admins)")
     def get(self):
+        """
+        Returns a list of:
+            - creationTime: 2016-11-24 02:59:49.778765+00:00
+              dataEnd: 2020.0
+              dataStart: 2000.0
+              dataUploadTime: 2016-11-24 13:59:48.899000
+              hasEcon: false
+              hasParset: true
+              id: !!python/object:uuid.UUID {int: 21882366148703344914572624594908261043}
+              isOptimizable: false
+              name: !!python/unicode 'concentrated'
+              populations:
+                  - {age_from: 15, age_to: 49, female: true, male: false, name: Female sex workers,
+                     short: FSW}
+                  - ...
+              updatedTime: 2016-11-24 02:59:49.778779+00:00
+              userId: !!python/object:uuid.UUID {int: 296644019381267506816166667285382118442}
+              version: 2.1.7
+        """
         return {'projects': dataio.load_project_summaries()}
 
 api.add_resource(ProjectsAll, '/api/project/all')
@@ -92,7 +111,7 @@ class Projects(Resource):
 
     @swagger.operation(summary="Returns list project summaries for current user")
     def get(self):
-        return {'projects': dataio.load_project_summaries(current_user.id)}
+        return log_yaml({'projects': dataio.load_project_summaries(current_user.id)})
 
     @swagger.operation(summary="Create new project")
     def post(self):
@@ -319,45 +338,6 @@ class ProjectDataSpreadsheet(Resource):
 api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 
 
-class ProjectEcon(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Downloads template/uploaded econ spreadsheet')
-    def get(self, project_id):
-        fname, binary = dataio.load_econ_spreadsheet_binary(project_id)
-        if binary is not None:
-            print("> Download previously-uploaded xls as %s" % fname)
-            return Response(
-                binary,
-                mimetype='application/octet-stream',
-                headers={
-                    'Content-Disposition': 'attachment;filename=' + fname
-                })
-        else:
-            dirname, basename = dataio.load_template_econ_spreadsheet(project_id)
-            print("> Template created: %s" % basename)
-            return helpers.send_from_directory(dirname, basename, as_attachment=True)
-
-    @swagger.operation(summary='Upload the economics data spreadsheet')
-    def post(self, project_id):
-        """
-        file-upload
-        """
-        econ_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        server_fname = dataio.update_project_from_econ_spreadsheet(project_id, econ_fname)
-        reply = {
-            'file': os.path.basename(server_fname),
-            'success': 'Econ spreadsheet uploaded for project %s' % load_project_name(project_id),
-        }
-        return reply
-
-    @swagger.operation(summary='Removes economics data from project')
-    def delete(self, project_id):
-        dataio.delete_econ(project_id)
-
-api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
-
-
 # Portfolios
 
 class ManagePortfolio(Resource):
@@ -378,10 +358,12 @@ api.add_resource(ManagePortfolio, '/api/portfolio')
 class SavePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
+    @swagger.operation(summary="Update portfolio")
     def post(self, portfolio_id):
         portfolio_summary = get_post_data_json()
         return dataio.save_portfolio_by_summary(portfolio_id, portfolio_summary)
 
+    @swagger.operation(summary="Delete portfolio")
     def delete(self, portfolio_id):
         return dataio.delete_portfolio(portfolio_id)
 
@@ -391,6 +373,7 @@ api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
 class DeletePortfolioProject(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
+    @swagger.operation(summary="Delete project in a portfolio")
     def delete(self, portfolio_id, project_id):
         return dataio.delete_portfolio_project(portfolio_id, project_id)
 
@@ -473,12 +456,12 @@ api.add_resource(TaskChecker, '/api/task/<uuid:pyobject_id>/type/<work_type>')
 class Parsets(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(description='Returns a list of parset summaries')
+    @swagger.operation(summary='Returns a list of parset summaries')
     def get(self, project_id):
         print("> Load parsets")
         return {"parsets": dataio.load_parset_summaries(project_id)}
 
-    @swagger.operation(description='Copy/create a parset, and returns a list of parset summaries')
+    @swagger.operation(summary='Copy/create a parset, and returns a list of parset summaries')
     def post(self, project_id):
         """
         data-json:
@@ -504,13 +487,13 @@ api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 class ParsetRenameDelete(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(description='Delete parset with parset_id.')
+    @swagger.operation(summary='Delete parset with parset_id.')
     def delete(self, project_id, parset_id):
         print("> Delete parset '%s'" % parset_id)
         dataio.delete_parset(project_id, parset_id)
         return '', 204
 
-    @swagger.operation(description='Rename parset and returns a list of parset summaries')
+    @swagger.operation(summary='Rename parset and returns a list of parset summaries')
     def put(self, project_id, parset_id):
         name = get_post_data_json()['name']
         print("> Rename parset '%s'" % name)
@@ -523,11 +506,11 @@ api.add_resource(ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uu
 class ParsetCalibration(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(description='Returns parameter summaries and graphs for a project/parset')
+    @swagger.operation(summary='Returns parameter summaries and graphs for a project/parset')
     def get(self, project_id, parset_id):
         return dataio.load_parset_graphs(project_id, parset_id, "calibration")
 
-    @swagger.operation(description='Updates a parset and returns the graphs for a parset_id')
+    @swagger.operation(summary='Updates a parset and returns the graphs for a parset_id')
     def post(self, project_id, parset_id):
         """
         data-json:
@@ -536,10 +519,17 @@ class ParsetCalibration(Resource):
             autofit: boolean indicates to fetch the autofit version of the results
         """
         args = get_post_data_json()
-        parameters = args.get('parameters')
+        parameters = args.get('parameters', None)
         which = args.get('which')
+        startYear = args.get('startYear', None)
+        if startYear is not None:
+            startYear = int(startYear)
+        endYear = args.get('endYear', None)
+        if endYear is not None:
+            endYear = int(endYear)
         return dataio.load_parset_graphs(
-            project_id, parset_id, "calibration", which, parameters)
+            project_id, parset_id, "calibration", which, parameters,
+            startYear=startYear, endYear=endYear)
 
 api.add_resource(ParsetCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 
@@ -623,11 +613,11 @@ api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
 class Progsets(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(description='Return progset summaries')
+    @swagger.operation(summary='Return progset summaries')
     def get(self, project_id):
         return dataio.load_progset_summaries(project_id)
 
-    @swagger.operation(description='Create a new progset')
+    @swagger.operation(summary='Create a new progset')
     def post(self, project_id):
         """
         data-json: progset_summary
@@ -641,7 +631,7 @@ api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 class Progset(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(description='Update progset with the given id.')
+    @swagger.operation(summary='Update progset with the given id.')
     def put(self, project_id, progset_id):
         """
         data-json: progset_summary
@@ -649,12 +639,12 @@ class Progset(Resource):
         progset_summary = get_post_data_json()
         return dataio.save_progset(project_id, progset_id, progset_summary)
 
-    @swagger.operation(description='Delete progset with the given id.')
+    @swagger.operation(summary='Delete progset with the given id.')
     def delete(self, project_id, progset_id):
         dataio.delete_progset(project_id, progset_id)
         return '', 204
 
-    @swagger.operation(description='Copy progset with the given id.')
+    @swagger.operation(summary='Copy progset with the given id.')
     def post(self, project_id, progset_id):
         """
         data-json: name:
@@ -683,7 +673,7 @@ api.add_resource(ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/
 
 class ProgsetParameters(Resource):
 
-    @swagger.operation(description='Return parameters for progset outcome page')
+    @swagger.operation(summary='Return parameters for progset outcome page')
     def get(self, project_id, progset_id, parset_id):
         return dataio.load_parameters_from_progset_parset(project_id, progset_id, parset_id)
 
@@ -791,8 +781,9 @@ class ScenarioSimulationGraphs(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Run scenarios and returns the graphs')
-    def get(self, project_id):
-        return dataio.make_scenarios_graphs(project_id)
+    def post(self, project_id):
+        is_run = get_post_data_json().get('isRun', False)
+        return dataio.make_scenarios_graphs(project_id, is_run)
 
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
 
@@ -853,7 +844,7 @@ api.add_resource(OptimizationCalculation, '/api/project/<uuid:project_id>/optimi
 class OptimizationGraph(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(description='Provides optimization graph for the given project')
+    @swagger.operation(summary='Provides optimization graph for the given project')
     def post(self, project_id, optimization_id):
         """
         post-json: which: list of graphs to display
@@ -874,7 +865,7 @@ class User(Resource):
     @swagger.operation(summary='List users')
     @verify_admin_request_decorator
     def get(self):
-        return {'users': dataio.get_users()}
+        return {'users': dataio.get_user_summaries()}
 
     @swagger.operation(summary='Create a user')
     def post(self):
@@ -907,7 +898,7 @@ class CurrentUser(Resource):
 
     @swagger.operation(summary='Return the current user')
     def get(self):
-        return dataio.marshal_user(current_user)
+        return dataio.parse_user_record(current_user)
 
 api.add_resource(CurrentUser, '/api/user/current')
 
