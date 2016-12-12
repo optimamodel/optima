@@ -16,7 +16,9 @@
 
   <div ng-if="!isMissingData && isOptimizable && !isMissingProgset" class="rich">
 
-    <table class="table table-bordered table-hover table-striped">
+    <table
+        class="table table-bordered table-hover table-striped"
+        style="margin-bottom: 0.5em">
       <tr>
         <td>Optimization</td>
         <td>Select</td>
@@ -87,18 +89,19 @@
 
     </table>
 
-    <div style="width: 100%; margin-top: 0px;">
+    <div style="width: 100%; margin-bottom: 1.5em;">
         <input
           type="button"
           value="+ money optimization"
           class="btn"
           ng-click="addOptimization('money')">
+        &nbsp;
         <input
           type="button"
           value="+ outcome optimization"
           class="btn"
           ng-click="addOptimization('outcomes')">
-
+        &nbsp;
         <button
           class="btn"
           ng-click="startOptimization(state.optimization)"

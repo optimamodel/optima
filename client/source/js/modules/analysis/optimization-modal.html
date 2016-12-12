@@ -1,5 +1,5 @@
 
-<div class="modal-header"> CREATE OR EDIT {{state.optimization.which}} OPTIMIZATION</div>
+<div class="modal-header"> CREATE/EDIT {{state.optimization.which}} OPTIMIZATION</div>
 
 <div class="section">
   <div style="float: left; width: 40%">
@@ -36,14 +36,16 @@
         ng-options="progset.id as progset.name for progset in progsets">
     </select>
   </div>
+  <br clear="all">
 </div>
 
 <div
+    style="margin-top: 1.5em"
     class="section"
     ng-if="state.optimization.objectives">
 
   <h3>OBJECTIVES</h3>
-  <label>Timeline: </label>
+  <b>Timeline: </b>
 
   <span ng-show="state.optimization.which == 'outcomes'">
     from
@@ -83,7 +85,7 @@
 
   <br/>
 
-  <label>Budget:</label>
+  <b>Budget:</b>
   <input
     type="number"
     class="txbox"
@@ -92,7 +94,7 @@
 
   <br/>
 
-  <label>Objectives:</label>
+  <b>Objectives:</b>
 
   <span ng-show="state.optimization.which == 'money'">
     Fractions of deaths to be averted:
@@ -128,14 +130,33 @@
 </div>
 
 <div ng-if="state.optimization.constraints" class="section">
+
   <h3>CONSTRAINTS</h3>
-  Maximum changes in funding over the program period
-  <table>
-    <tr style="justify-content: space-around; font-style: italic"
-        class="option">
-      <th style="width: 60%">Program</th>
-      <th style="width: 20%">Not less than</th>
-      <th style="width: 20%">Not more than</th>
+
+  <b>Maximum changes in funding over the program period</b>
+
+  <style>
+    .mytable th, .mytable td {
+      padding-top: 10px;
+      vertical-align: top;
+    }
+    .mytable th {
+      padding-bottom: 10px;
+    }
+  </style>
+
+  <table
+      class="mytable"
+      style="
+          width: 100%;
+          margin-top: 1em;
+          border-spacing: 10px;">
+    <tr style="
+          border-top: 1px solid #999;
+          border-bottom: 1px solid #999;">
+      <th>Program</th>
+      <th style="width: 6em">Not less than</th>
+      <th style="width: 5em">Not more than</th>
     </tr>
     <tr style="justify-content: space-around"
         class="option"
@@ -143,14 +164,16 @@
       <td style="width: 60%">
         {{constraint.name}}
       </td>
-      <td style="width: 20%">
+      <td style="width: 6em">
         <input
+            style="width: 5em;"
             class="txbox"
             type="number"
             ng-model="constraint.min"/>
       </td>
-      <td style="width: 20%">
+      <td style="width: 5em">
         <input
+            style="width: 5em;"
             class="txbox"
             type="number"
             ng-model="constraint.max"/>

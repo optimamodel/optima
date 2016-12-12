@@ -13,7 +13,7 @@ define(
       $scope.isOptimizable = activeProject.data.isOptimizable;
       $scope.isMissingProgset = activeProject.data.nProgram == 0;
 
-      $scope.editOptimization = openOptimizationModal;
+      $scope.editOptimization = openEditOptimizationModal;
       $scope.getParsetName = getParsetName;
       $scope.getProgsetName = getProgsetName;
 
@@ -81,20 +81,16 @@ define(
       return progset.name
     }
 
-    $scope.checkNotSavable = function() {
-      return !$scope.state.optimization;
-    };
-
     $scope.checkNotRunnable = function() {
       return !$scope.state.optimization || !$scope.state.optimization.id || !$scope.state.isRunnable;
     };
 
     $scope.setActiveOptimization = function(optimization) {
       $scope.state.optimization = optimization;
-      $scope.selectOptimization();
+      selectOptimization();
     };
 
-    $scope.selectOptimization = function() {
+    function selectOptimization() {
       globalPoller.stopPolls();
 
       $scope.state.isRunnable = false;
@@ -124,7 +120,7 @@ define(
       } else {
         $scope.state.isRunnable = true;
       }
-    };
+    }
 
     function loadOptimizations(response) {
       toastr.success('Saved optimization');
@@ -213,13 +209,6 @@ define(
             });
           })
         .click();
-    };
-
-    $scope.saveOptimizationForm = function(optimizationForm) {
-      $scope.validateOptimizationForm(optimizationForm);
-      if(!optimizationForm.$invalid) {
-        saveOptimizations();
-      }
     };
 
     $scope.startOptimization = function(optimization) {
@@ -365,8 +354,13 @@ define(
 
     var optimsScope = $scope;
 
-    function openOptimizationModal(optimization) {
+    function openEditOptimizationModal(optimization) {
 
+      /**
+       * The modal converts constraints into a list (as opposed to a dict)
+       * to allow angular to iterate through the constraints and
+       * to handle changing constraints for different progsets
+       */
       function OptimizationModalController($scope, $modalInstance) {
 
         function initialize() {
@@ -374,7 +368,6 @@ define(
           $scope.state.optimization = angular.copy(optimization);
           $scope.state.optimization.constraints = listifyConstraints(
             $scope.state.optimization.constraints);
-          $scope.state.programShorts = _.keys($scope.state.optimization.constraints.name);
           $scope.parsets = optimsScope.state.parsets;
           $scope.otherNames = _.without(_.pluck(optimsScope.state.optimizations, 'name'), optimization.name);
           $scope.progsets = optimsScope.state.progsets;
@@ -418,10 +411,8 @@ define(
         function cancel() { $modalInstance.dismiss("cancel"); }
 
         function save() {
-          console.log('saving from modal', $scope.state.optimization.constraints);
           $scope.state.optimization.constraints = revertToConstraints(
             $scope.state.optimization.constraints);
-          console.log('converted constraints', $scope.state.optimization.constraints);
           $modalInstance.close($scope.state.optimization);
         }
 
@@ -453,14 +444,14 @@ define(
         name: modalService.getUniqueName('Optimization', otherNames),
         which: which,
         constraints: {},
-        objectives: {}
       };
       selectDefaultProgsetAndParset(newOptimization);
+
       var progset_id = newOptimization.progset_id;
       var defaultOptimization = deepCopyJson($scope.defaultOptimizationsByProgsetId[progset_id]);
-      newOptimization.constraints = [];
       newOptimization.objectives = defaultOptimization.objectives[which];
-      openOptimizationModal(newOptimization);
+
+      openEditOptimizationModal(newOptimization);
     };
 
     initialize();
