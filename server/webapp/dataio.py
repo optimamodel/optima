@@ -653,7 +653,7 @@ def load_portfolio(portfolio_id, db_session=None):
     if record:
         print("> load portfolio %s" % portfolio_id)
         return record.load()
-    raise ValueError("Couldn't find portfolio %s" % portfolio_id)
+    raise Exception("Portfolio %s not found" % portfolio_id)
 
 
 def load_portfolio_summaries(db_session=None):
