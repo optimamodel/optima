@@ -609,7 +609,7 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jun
+    Version: 2016dec11
     '''
     
     # Handle inputs and initialization
@@ -618,13 +618,10 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'popkeys', 'injects', 'sexworker', 'rawtransit']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
-    if start is None: start=2000 # WARNING, should be a better way of declaring defaults...
-    if end is None: end=2030
-    if dt is None: dt=0.2
     if keys is None: keys = pars.keys() # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
-    elif settings is not None: simpars['tvec'] = settings.maketvec()
+    elif settings is not None: simpars['tvec'] = settings.maketvec(start=start, end=end, dt=dt)
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
