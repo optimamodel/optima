@@ -57,7 +57,7 @@
 
       console.log('$scope.state.program.targetpars', $scope.state.program.targetpars);
       console.log('$scope.state.program.costcov', $scope.state.program.costcov);
-      $scope.years = _.range(openProject.dataStart, openProject.dataEnd+1);
+      $scope.years = _.range(openProject.startYear, openProject.endYear+1);
       console.log('$scope.years', $scope.currentYear, $scope.years);
 
       if (isAnyTargetparForTotal) {

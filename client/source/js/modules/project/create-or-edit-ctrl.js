@@ -28,8 +28,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if (activeProject.isSet()) {
           $scope.projectParams.id = $scope.projectInfo.id;
           $scope.projectParams.name = $scope.projectInfo.name;
-          $scope.projectParams.dataStart = $scope.projectInfo.dataStart;
-          $scope.projectParams.dataEnd = $scope.projectInfo.dataEnd;
+          $scope.projectParams.startYear = $scope.projectInfo.startYear;
+          $scope.projectParams.endYear = $scope.projectInfo.endYear;
         }
 
         var newPopulations = _($scope.projectInfo.populations).filter(isNotInScopePopulations);
@@ -74,26 +74,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.invalidDataStart = function() {
-      if ($scope.projectParams.dataStart) {
-        var dataStart = parseInt($scope.projectParams.dataStart)
-        return dataStart < 1900 || 2100 < dataStart;
+      if ($scope.projectParams.startYear) {
+        var startYear = parseInt($scope.projectParams.startYear)
+        return startYear < 1900 || 2100 < startYear;
       }
-      return !$scope.projectParams.dataStart; 
+      return !$scope.projectParams.startYear;
     };
 
     $scope.invalidDataEnd = function() {
-      if ($scope.projectParams.dataEnd) {
-        var dataEnd = parseInt($scope.projectParams.dataEnd)
-        if (dataEnd < 1900 || 2100 < dataEnd) {
+      if ($scope.projectParams.endYear) {
+        var endYear = parseInt($scope.projectParams.endYear)
+        if (endYear < 1900 || 2100 < endYear) {
           return true;
         }
         if ($scope.invalidDataStart()) {
           return false;
         }
-        var dataStart = parseInt($scope.projectParams.dataStart)
-        return dataEnd <= dataStart;
+        var startYear = parseInt($scope.projectParams.startYear)
+        return endYear <= startYear;
       }
-      return !$scope.projectParams.dataEnd;  
+      return !$scope.projectParams.endYear;
     };
 
     $scope.invalidPopulationSelected = function() {

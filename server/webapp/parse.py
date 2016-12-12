@@ -227,11 +227,11 @@ def set_project_summary_on_project(project, summary):
     if not project.settings:
         project.settings = op.Settings()
 
-    dataStart = summary['dataStart']
-    dataEnd = summary['dataEnd']
-    project.data["years"] = (dataStart, dataEnd)
-    project.settings.start = dataStart
-    project.settings.end = dataEnd
+    startYear = summary['startYear']
+    endYear = summary['endYear']
+    project.data["years"] = (startYear, endYear)
+    project.settings.start = startYear
+    project.settings.end = endYear
 
 
 def is_progset_optimizable(progset):
@@ -254,13 +254,8 @@ def is_progset_optimizable(progset):
 
 
 def get_project_summary_from_project(project):
-    years = project.data.get('years')
-    if years:
-        data_start = years[0]
-        data_end = years[-1]
-    else:
-        data_start = project.settings.start
-        data_end = project.settings.end
+    start_year = project.settings.start
+    end_year = project.settings.end
 
     is_ready_to_optimize = True
     n_program = 0
@@ -277,8 +272,8 @@ def get_project_summary_from_project(project):
     project_summary = {
         'id': project.uid,
         'name': project.name,
-        'dataStart': data_start,
-        'dataEnd': data_end,
+        'startYear': start_year,
+        'endYear': end_year,
         'version': project.version,
         'populations': get_populations_from_project(project),
         'creationTime': project.created,
