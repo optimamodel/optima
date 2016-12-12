@@ -39,8 +39,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       projectApi
         .getDefault(project.id)
         .success(function(response) {
-          defaultPrograms = response;
-          console.log("default_programs = ", defaultPrograms);
+          defaultConstraints = response;
+          console.log("default_programs = ", defaultConstraints);
         });
 
       // Load parameters that can be used to set custom programs
@@ -70,7 +70,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Open pop-up to add new programSet
     $scope.addProgramSet = function () {
       var add = function (name) {
-        var newProgramSet = {name:name, programs: angular.copy(defaultPrograms.programs)};
+        var newProgramSet = {name:name, programs: angular.copy(defaultConstraints.programs)};
         $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = newProgramSet;
         $scope.state.activeProgramSet = newProgramSet;
         $scope.saveActiveProgramSet('Progset added');

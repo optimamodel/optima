@@ -17,8 +17,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.years = scenariosResponse.data.years;
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.isOptimizable = $scope.project.isOptimizable;
-      $scope.isMissingProgramSet = $scope.project.nProgram == 0;
-      $scope.state.graphs = {};
+      $scope.isMissingProgset = $scope.project.nProgram == 0;
       loadScenarios(scenariosResponse.data.scenarios);
       $scope.graphScenarios(false);
     }
@@ -133,12 +132,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         return openScenarioModal(scenario)
           .result
-          .then(
-            function (scenario) {
-              newScenarios[iScenario] = scenario;
-              newScenarios[iScenario].active = true;
-              $scope.saveScenarios(newScenarios, "Saved changes");
-            });
+          .then(function(scenario) {
+            newScenarios[iScenario] = scenario;
+            newScenarios[iScenario].active = true;
+            $scope.saveScenarios(newScenarios, "Saved changes");
+          });
 
       } else if (action === 'copy') {
 

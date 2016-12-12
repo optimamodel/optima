@@ -9,15 +9,13 @@ define(
 
     function initialize() {
 
-      $scope.isPolling = {};
-
       $scope.isMissingData = !activeProject.data.hasParset;
       $scope.isOptimizable = activeProject.data.isOptimizable;
-      $scope.isMissingProgramSet = activeProject.data.nProgram == 0;
+      $scope.isMissingProgset = activeProject.data.nProgram == 0;
 
-      if ($scope.isMissingData || $scope.isMissingProgramSet || !$scope.isOptimizable) {
-        return
-      }
+      $scope.editOptimization = openEditOptimizationModal;
+      $scope.getParsetName = getParsetName;
+      $scope.getProgsetName = getProgsetName;
 
       $scope.state = {
         project: activeProject.data,
@@ -27,50 +25,40 @@ define(
         optimizations: []
       };
 
-      // Fetch list of program-set for open-project
+      if ($scope.isMissingData || $scope.isMissingProgset || !$scope.isOptimizable) {
+        return
+      }
+
       $http
-        .get(
-          '/api/project/' + $scope.state.project.id + '/progsets')
-        .success(function (response) {
-          $scope.state.programSetList = response.progsets;
-
-          // Fetch list of parameter-set for open-project
-          $http
-            .get(
-              '/api/project/' + $scope.state.project.id + '/parsets')
-            .success(function (response) {
-              $scope.state.parsets = response.parsets;
-
-              // get optimizations
-              $http
-                .get(
-                  '/api/project/' + $scope.state.project.id + '/optimizations')
-                .success(function (response) {
-
-                  console.log('loading optimizations', response);
-                  $scope.state.optimizations = response.optimizations;
-
-                  $scope.defaultOptimizationsByProgsetId = response.defaultOptimizationsByProgsetId;
-
-                  if ($scope.state.optimizations.length > 0) {
-                    $scope.setActiveOptimization($scope.state.optimizations[0]);
-                    selectDefaultProgsetAndParset($scope.state.optimization);
-                  } else {
-                    $scope.state.optimization = undefined;
-                  }
-
-                });
-            });
+        .get('/api/project/' + $scope.state.project.id + '/progsets')
+        .then(function (response) {
+          $scope.state.progsets = response.data.progsets;
+          return $http.get('/api/project/' + $scope.state.project.id + '/parsets');
+        })
+        .then(function (response) {
+          $scope.state.parsets = response.data.parsets;
+          return $http.get('/api/project/' + $scope.state.project.id + '/optimizations')
+        })
+        .then(function (response) {
+          var data = response.data;
+          $scope.state.optimizations = data.optimizations;
+          console.log('optimizations', data.optimizations);
+          $scope.defaultOptimizationsByProgsetId = data.defaultOptimizationsByProgsetId;
+          console.log('defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
+          $scope.state.optimization = undefined;
+          if ($scope.state.optimizations.length > 0) {
+            $scope.setActiveOptimization($scope.state.optimizations[0]);
+            selectDefaultProgsetAndParset($scope.state.optimization);
+          }
         });
     }
 
     function selectDefaultProgsetAndParset(optimization) {
       if (_.isUndefined(optimization.progset_id)) {
-        if ($scope.state.programSetList.length > 0) {
-          optimization.progset_id = $scope.state.programSetList[0].id;
+        if ($scope.state.progsets.length > 0) {
+          optimization.progset_id = $scope.state.progsets[0].id;
         }
       }
-
       if (_.isUndefined(optimization.parset_id)) {
         if ($scope.state.parsets.length > 0) {
           optimization.parset_id = $scope.state.parsets[0].id;
@@ -78,15 +66,21 @@ define(
       }
     }
 
-    $scope.setType = function (which) {
-      $scope.state.optimization.which = which;
-      $scope.state.optimization.objectives = objectiveDefaults[which];
-      $scope.objectiveLabels = objectiveLabels[which];
-    };
+    function getParsetName(optimization) {
+      var parset_id = optimization.parset_id;
+      var parset = _.find($scope.state.parsets, function(parset) {
+        return parset.id == parset_id;
+      });
+      return parset.name
+    }
 
-    $scope.checkNotSavable = function() {
-      return !$scope.state.optimization;
-    };
+    function getProgsetName(optimization) {
+      var progsetId = optimization.progset_id;
+      var progset = _.find($scope.state.progsets, function(progset) {
+        return progset.id == progsetId;
+      });
+      return progset.name
+    }
 
     $scope.checkNotRunnable = function() {
       return !$scope.state.optimization || !$scope.state.optimization.id || !$scope.state.isRunnable;
@@ -94,16 +88,14 @@ define(
 
     $scope.setActiveOptimization = function(optimization) {
       $scope.state.optimization = optimization;
-      $scope.selectOptimization();
+      selectOptimization();
     };
 
-    $scope.selectOptimization = function() {
+    function selectOptimization() {
       globalPoller.stopPolls();
 
       $scope.state.isRunnable = false;
       var optimization = $scope.state.optimization;
-      $scope.state.constraintKeys = _.keys(optimization.constraints.name);
-      $scope.objectiveLabels = objectiveLabels[optimization.which];
 
       // clear screen
       $scope.optimizationCharts = [];
@@ -123,13 +115,13 @@ define(
               initPollOptimizations();
             } else {
               $scope.statusMessage = 'Checking for pre-calculated figures...';
-              $scope.getOptimizationGraphs();
+              getOptimizationGraphs();
             }
           });
       } else {
         $scope.state.isRunnable = true;
       }
-    };
+    }
 
     function loadOptimizations(response) {
       toastr.success('Saved optimization');
@@ -156,116 +148,61 @@ define(
       .success(loadOptimizations);
     }
 
-    $scope.addOptimization = function() {
-
-      function addNewOptimization(name) {
-        var newOptimization = {
-          name: name,
-          which: 'outcomes',
-          constraints: {},
-          objectives: {}
-        };
-        selectDefaultProgsetAndParset(newOptimization);
-        $scope.state.optimizations.push(newOptimization);
-        var progset_id = newOptimization.progset_id;
-        var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
-        newOptimization.constraints = defaultOptimization.constraints;
-        newOptimization.objectives = defaultOptimization.objectives.outcomes;
-        $scope.setActiveOptimization(newOptimization);
-        saveOptimizations();
-      }
-
-      modalService.rename(
-        addNewOptimization,
-        'Add optimization',
-        'Enter name', '',
-        'Name already exists',
-        _.pluck($scope.state.optimizations, 'name'));
-    };
-
-    $scope.renameOptimization = function () {
-      if (!$scope.state.optimization) {
-        modalService.informError([{message: 'No optimization selected.'}]);
-      } else {
-        function rename(name) {
-          $scope.state.optimization.name = name;
-          saveOptimizations();
-        }
-        var name = $scope.state.optimization.name;
-        var otherNames = _.pluck($scope.state.optimizations, 'name');
-        modalService.rename(
-          rename,
-          'Rename parameter set',
-          'Enter name',
-          name,
-          'Name already exists',
-          _.without(otherNames, name)
-        );
-      }
-    };
-
     function deepCopyJson(jsonObject) {
       return JSON.parse(JSON.stringify(jsonObject));
     }
 
-    $scope.copyOptimization = function() {
-      if (!$scope.state.optimization) {
-        modalService.informError([{message: 'No optimization selected.'}]);
-      } else {
-        function copy(name) {
-          var copyOptimization = deepCopyJson($scope.state.optimization);
-          copyOptimization.name = name;
-          delete copyOptimization.id;
-          $scope.setActiveOptimization(copyOptimization);
-          $scope.state.optimizations.push($scope.state.optimization);
+    $scope.copyOptimization = function(optimization) {
+      function copy(name) {
+        var copyOptimization = deepCopyJson(optimization);
+        copyOptimization.name = name;
+        delete copyOptimization.id;
+        $scope.setActiveOptimization(copyOptimization);
+        $scope.state.optimizations.push(copyOptimization);
+        saveOptimizations();
+      }
+      var names = _.pluck($scope.state.optimizations, 'name');
+      var name = $scope.state.optimization.name;
+      copy(modalService.getUniqueName(name, names));
+    };
+
+    $scope.deleteOptimization = function(deleteOptimization) {
+      modalService.confirm(
+        function() {
+          function isSelected(optimization) {
+            return optimization.name !== deleteOptimization.name;
+          }
+
+          $scope.state.optimizations = _.filter($scope.state.optimizations, isSelected);
+          if ($scope.state.optimizations && $scope.state.optimizations.length > 0) {
+            $scope.state.optimization = $scope.state.optimizations[0];
+          } else {
+            $scope.state.optimization = undefined;
+          }
           saveOptimizations();
-        }
-        var names = _.pluck($scope.state.optimizations, 'name');
-        var name = $scope.state.optimization.name;
-        copy(modalService.getUniqueName(name, names));
-      }
+        },
+        _.noop,
+        'Yes, remove this optimization',
+        'No',
+        'Are you sure you want to permanently remove optimization "' + $scope.state.optimization.name + '"?',
+        'Delete optimization'
+      );
     };
 
-    $scope.deleteOptimization = function() {
-      if (!$scope.state.optimization) {
-        modalService.informError([{message: 'No optimization selected.'}]);
-      } else {
-        modalService.confirm(
-          function () {
-            function isSelected(optimization) {
-              return optimization.name !== $scope.state.optimization.name;
-            }
-            $scope.state.optimizations = _.filter($scope.state.optimizations, isSelected);
-            if ($scope.state.optimizations && $scope.state.optimizations.length > 0) {
-              $scope.state.optimization = $scope.state.optimizations[0];
-            } else {
-              $scope.state.optimization = undefined;
-            }
-            saveOptimizations();
-          },
-          _.noop,
-          'Yes, remove this optimization',
-          'No',
-          'Are you sure you want to permanently remove optimization "' + $scope.state.optimization.name + '"?',
-          'Delete optimization'
-        );
-      }
-    };
-
-    $scope.downloadOptimization = function() {
-      var data = JSON.stringify(angular.copy($scope.state.optimization), null, 2);
+    $scope.downloadOptimization = function(optimization) {
+      var data = JSON.stringify(angular.copy(optimization), null, 2);
       var blob = new Blob([data], { type: 'application/octet-stream' });
-      saveAs(blob, ($scope.state.optimization.name + '.optim.json'));
+      saveAs(blob, (optimization.name + '.optim.json'));
     };
 
-    $scope.uploadOptimization = function() {
+    $scope.uploadOptimization = function(optimization) {
       angular
         .element('<input type=\'file\'>')
         .change(
           function(event) {
             $upload.upload({
               url: '/api/project/' + $scope.state.project.id
-                    + '/optimization/' + $scope.state.optimization.id
+                    + '/optimization/' + optimization.id
                     + '/upload',
               file: event.target.files[0]
             }).success(function(response) {
@@ -275,47 +212,23 @@ define(
         .click();
     };
 
-    $scope.saveOptimizationForm = function(optimizationForm) {
-      $scope.validateOptimizationForm(optimizationForm);
-      if(!optimizationForm.$invalid) {
-        saveOptimizations();
-      }
-    };
-
-    $scope.validateOptimizationForm = function(optimizationForm) {
-      optimizationForm.progset.$setValidity(
-          "required",
-          !(!$scope.state.optimization || !$scope.state.optimization.progset_id));
-      optimizationForm.parset.$setValidity(
-          "required",
-          !(!$scope.state.optimization || !$scope.state.optimization.parset_id));
-      optimizationForm.start.$setValidity(
-          "required",
-          !(!$scope.state.optimization || !$scope.state.optimization.objectives.start));
-      optimizationForm.end.$setValidity(
-          "required",
-          !(!$scope.state.optimization || !$scope.state.optimization.objectives.end));
-    };
-
-    $scope.startOptimization = function() {
-      if($scope.state.optimization.id) {
-        $scope.state.isRunnable = false;
-        $http
-          .post(
-            '/api/project/' + $scope.state.project.id
-              + '/optimizations/' + $scope.state.optimization.id
-              + '/results',
-            { maxtime: $scope.state.maxtime })
-          .success(function (response) {
-            $scope.task_id = response.task_id;
-            if (response.status === 'started') {
-              $scope.statusMessage = 'Optimization started.';
-              initPollOptimizations();
-            } else if (response.status === 'blocked') {
-              $scope.statusMessage = 'Another calculation on this project is already running.'
-            }
-          });
-      }
+    $scope.startOptimization = function(optimization) {
+      $scope.state.isRunnable = false;
+      $http
+        .post(
+          '/api/project/' + $scope.state.project.id
+            + '/optimizations/' + optimization.id
+            + '/results',
+          { maxtime: $scope.state.maxtime })
+        .success(function (response) {
+          $scope.task_id = response.task_id;
+          if (response.status === 'started') {
+            $scope.statusMessage = 'Optimization started.';
+            initPollOptimizations();
+          } else if (response.status === 'blocked') {
+            $scope.statusMessage = 'Another calculation on this project is already running.'
+          }
+        });
     };
 
     function initPollOptimizations() {
@@ -328,7 +241,7 @@ define(
           if (response.status === 'completed') {
             $scope.statusMessage = 'Loading graphs...';
             toastr.success('Optimization completed');
-            $scope.getOptimizationGraphs();
+            getOptimizationGraphs();
           } else if (response.status === 'started') {
             $scope.task_id = response.task_id;
             var start = new Date(response.start_time);
@@ -362,7 +275,7 @@ define(
       return null;
     }
 
-    $scope.getOptimizationGraphs = function() {
+    function getOptimizationGraphs() {
       if (!$scope.state.optimization.id) {
         return;
       }
@@ -384,6 +297,161 @@ define(
           $scope.state.isRunnable = true;
           toastr.error(response);
         });
+    }
+
+    function saveOptimization(saveOptim) {
+      var isExisting = false;
+      _.each($scope.state.optimizations, function(optim, i) {
+        if (optim.id == saveOptim.id) {
+          $scope.state.optimizations[i] = saveOptim;
+          isExisting = true;
+        }
+      });
+      if (!isExisting) {
+        $scope.state.optimizations.push(saveOptim);
+      }
+      saveOptimizations();
+    }
+
+    function swapKeysOfDictOfDict(dictOfDict) {
+      var result = {};
+      _.each(_.keys(dictOfDict), function(outerKey) {
+        _.each(_.keys(dictOfDict[outerKey]), function(innerKey) {
+          if (!_.has(result, innerKey)) {
+            result[innerKey] = {};
+          }
+          result[innerKey][outerKey] = dictOfDict[outerKey][innerKey];
+        });
+      });
+      return result;
+    }
+
+    function convertToKeyList(dict) {
+      var result = [];
+      _.mapObject(dict, function(value, key) {
+        result.push(_.extend(deepCopyJson(value), {'key':key}));
+      });
+      return result;
+    }
+
+    function convertToDict(keyList) {
+      var result = {};
+      _.each(keyList, function(entry) {
+        var newEntry = deepCopyJson(entry);
+        var key = newEntry.key;
+        result[key] = _.omit(newEntry, 'key');
+      });
+      return result;
+    }
+
+    function listifyConstraints(constraints) {
+      return convertToKeyList(swapKeysOfDictOfDict(constraints));
+    }
+
+    function revertToConstraints(listOfConstraints) {
+      return swapKeysOfDictOfDict(convertToDict(listOfConstraints));
+    }
+
+    var optimsScope = $scope;
+
+    function openEditOptimizationModal(optimization) {
+
+      /**
+       * The modal converts constraints into a list (as opposed to a dict)
+       * to allow angular to iterate through the constraints and
+       * to handle changing constraints for different progsets
+       */
+      function OptimizationModalController($scope, $modalInstance) {
+
+        function initialize() {
+          $scope.state = {};
+          $scope.state.optimization = angular.copy(optimization);
+          $scope.state.optimization.constraints = listifyConstraints(
+            $scope.state.optimization.constraints);
+          $scope.parsets = optimsScope.state.parsets;
+          $scope.otherNames = _.without(_.pluck(optimsScope.state.optimizations, 'name'), optimization.name);
+          $scope.progsets = optimsScope.state.progsets;
+          $scope.cancel = cancel;
+          $scope.save = save;
+          $scope.isNameClash = isNameClash;
+          $scope.checkNotSavable = checkNotSavable;
+          $scope.defaultOptimizationsByProgsetId = optimsScope.defaultOptimizationsByProgsetId;
+          $scope.selectProgset = selectProgset;
+          selectProgset();
+        }
+
+        function checkNotSavable() {
+          var name = $scope.state.optimization.name;
+          var result = _.isUndefined(name) || name.trim() === "";
+          return result;
+        }
+
+        function selectProgset() {
+          var progsetId = $scope.state.optimization.progset_id;
+          $scope.defaultConstraints = listifyConstraints(
+            deepCopyJson(optimsScope.defaultOptimizationsByProgsetId[progsetId].constraints));
+          console.log("list of default constraints", $scope.defaultConstraints);
+
+          var constraints = $scope.state.optimization.constraints;
+          var defaultKeys = _.pluck($scope.defaultConstraints, 'key');
+          var constraints = _.filter(
+            constraints, function(c) { return _.contains(defaultKeys, c.key)});
+          var constraintKeys = _.pluck(constraints, "key");
+          _.each($scope.defaultConstraints, function(constraint) {
+            if (!_.contains(constraintKeys, constraint.key)) {
+              constraints.push(constraint);
+            }
+          });
+          constraints = _.sortBy(constraints, function(c) { return c.key });
+          $scope.state.optimization.constraints = constraints;
+
+          console.log("patched constraints", $scope.state.optimization.constraints);
+        }
+
+        function cancel() { $modalInstance.dismiss("cancel"); }
+
+        function save() {
+          $scope.state.optimization.constraints = revertToConstraints(
+            $scope.state.optimization.constraints);
+          $modalInstance.close($scope.state.optimization);
+        }
+
+        function isNameClash(name) {
+          return _.contains($scope.otherNames, name);
+        }
+
+        initialize();
+
+      }
+
+      $modal
+        .open({
+          templateUrl: 'js/modules/analysis/optimization-modal.html',
+          controller: OptimizationModalController,
+          windowClass: 'fat-modal',
+        })
+        .result
+        .then(function(optimization) {
+          console.log('save optimization', optimization);
+          saveOptimization(optimization);
+          $scope.state.optimization = optimization;
+        });
+    }
+
+    $scope.addOptimization = function(which) {
+      var otherNames = _.pluck($scope.state.optimizations, 'name');
+      var newOptimization = {
+        name: modalService.getUniqueName('Optimization', otherNames),
+        which: which,
+        constraints: {},
+      };
+      selectDefaultProgsetAndParset(newOptimization);
+
+      var progset_id = newOptimization.progset_id;
+      var defaultOptimization = deepCopyJson($scope.defaultOptimizationsByProgsetId[progset_id]);
+      newOptimization.objectives = defaultOptimization.objectives[which];
+
+      openEditOptimizationModal(newOptimization);
     };
 
     initialize();
@@ -391,40 +459,4 @@ define(
   });
 });
 
-// this is to be replaced by an api
-var objectiveLabels = {
-  outcomes: [
-    { key: 'start', label: 'Year to begin optimization' },
-    { key: 'end', label: 'Year by which to achieve objectives' },
-    { key: 'budget', label: 'Starting budget' },
-    { key: 'deathweight', label: 'Relative weight per death' },
-    { key: 'inciweight', label: 'Relative weight per new infection' }
-  ],
-  money: [
-    { key: 'base', label: 'Baseline year to compare outcomes to' },
-    { key: 'start', label: 'Year to begin optimization' },
-    { key: 'end', label: 'Year by which to achieve objectives' },
-    { key: 'budget', label: 'Starting budget' },
-    { key: 'deathfrac', label: 'Fraction of deaths to be averted' },
-    { key: 'incifrac', label: 'Fraction of infections to be averted' }
-  ]
-};
 
-var objectiveDefaults = {
-  outcomes: {
-    base: undefined,
-    start: 2017,
-    end: 2030,
-    budget: 63500000.0,
-    deathweight: 0,
-    inciweight: 0
-  },
-  money: {
-    base: 2015,
-    start: 2017,
-    end: 2030,
-    budget: 63500000.0,
-    deathfrac: 0,
-    incifrac: 0
-  }
-};
