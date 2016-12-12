@@ -492,18 +492,32 @@ class BOC(object):
         
     def getoutcome(self, budgets):
         ''' Get interpolated outcome for a corresponding list of budgets '''
-        return pchip(self.x, self.y, budgets)
+        x = dcp(self.x)
+        y = dcp(self.y)
+        x.append(1e15+max(self.x))  # Big number
+        y.append(min(self.y))
+        return pchip(x, y, budgets)
         
     def getoutcomederiv(self, budgets):
         ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
-        return pchip(self.x, self.y, budgets, deriv = True)
+        x = dcp(self.x)
+        y = dcp(self.y)
+        x.append(1e15+max(self.x))  # Big number
+        y.append(min(self.y))
+        return pchip(x, y, budgets, deriv = True)
         
     def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None, baseline=0):
         ''' Plot the budget-outcome curve '''
         from pylab import xlabel, ylabel, show
         
-        ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
+        x = dcp(self.x)
+        y = dcp(self.y)
+        x.append(1e15+max(self.x))  # Big number
+        y.append(min(self.y))
+        
+        ax = plotpchip(x, y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
         xlabel('Budget')
+        ax.set_xlim((ax.get_xlim()[0],max(self.x+[optbudget]))) # Do not bother plotting the large x value, even though its effect on interpolation is visible
         if not deriv: ylabel('Outcome')
         else: ylabel('Marginal outcome')
         if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
