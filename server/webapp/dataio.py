@@ -328,12 +328,6 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     project.data["pops"] = data_pops
     project.data["npops"] = len(data_pops)
 
-    startYear = project_summary['startYear']
-    endYear = project_summary['endYear']
-    project.data["years"] = (startYear, endYear)
-    project.settings.start = startYear
-    project.settings.end = endYear
-
     project_entry.save_obj(project)
     db.session.commit()
 
