@@ -88,6 +88,8 @@ define(['angular', 'underscore'], function(module, _) {
           } else if ($scope.scenario_type == "coverage") {
             var coveragesByProgsetId = coveragesByParsetIdyProgsetId[$scope.scenario.parset_id];
             var coveragesByYear = coveragesByProgsetId[$scope.scenario.progset_id];
+            console.log('coveragesByYear', coveragesByYear);
+            console.log('program', program);
             var value = coveragesByYear[yearEntry.value][program.short];
           }
           program.value = value;
