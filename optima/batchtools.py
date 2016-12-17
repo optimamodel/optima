@@ -83,7 +83,7 @@ def batchautofit(
         prc.start()
         processes.append(prc)
     for i in range(nfiles):
-        outputlist[i] = outputqueue.get()
+        outputlist[i] = outputqueue.get() # WARNING, randomizes order!
         outputlist[i].save(filename=filelist[i])
     
     return outputlist
