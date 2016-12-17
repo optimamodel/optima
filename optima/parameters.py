@@ -443,14 +443,12 @@ def makepars(data, label=None, verbose=2):
     # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
-    pars['injects'] = array(data['pops']['injects']).astype(bool) # Populations that inject
-    pars['sexworker'] = array(data['pops']['sexworker']).astype(bool) # Populations that provide commercial sex
     
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
     fpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['female'][popno]]
-    mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]] # WARNING, these two lines should be consistent -- they both work, so the question is which is more elegant -- if pars['male'] is a dict then could do: [popkeys[key] for key in popkeys if pars['male'][key]]
+    mpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['male'][popno]]
     pars['popkeys'] = dcp(popkeys)
     
     # Read in parameters automatically
@@ -464,7 +462,7 @@ def makepars(data, label=None, verbose=2):
         partype = rawpar.pop('partype')
         parname = rawpar['short']
         by = rawpar['by']
-        fromdata = int(rawpar['fromdata'])
+        fromdata = rawpar['fromdata']
         rawpar['verbose'] = verbose # Easiest way to pass it in
         
         
@@ -485,7 +483,7 @@ def makepars(data, label=None, verbose=2):
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
             if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-            else: pars[parname] = Timepar(m=1, y=odict({'tot':array([nan])}), t=odict({'tot':array([0.0])}), **rawpar) # Create structure
+            else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
@@ -542,7 +540,7 @@ def makepars(data, label=None, verbose=2):
     pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
     for key in pars['numcirc'].y.keys():
-        pars['numcirc'].y[key] *= 0.0 # WARNING, forcilby set to 0 for all populations, since program parameter only
+        pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
     # Metaparameters
     for key in popkeys: # Define values
@@ -570,11 +568,14 @@ def makepars(data, label=None, verbose=2):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        if i>=j:
+                        if key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    
+    # Store information about injecting and commercial sex providing populations -- needs to be here since relies on other calculations
+    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
+    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
+
     return pars
 
 
@@ -588,22 +589,19 @@ def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jun
+    Version: 2016dec11
     '''
     
     # Handle inputs and initialization
     simpars = odict() 
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys','rawtransit']
+    generalkeys = ['male', 'female', 'popkeys', 'injects', 'sexworker', 'rawtransit']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
-    if start is None: start=2000 # WARNING, should be a better way of declaring defaults...
-    if end is None: end=2030
-    if dt is None: dt=0.2
     if keys is None: keys = pars.keys() # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
-    elif settings is not None: simpars['tvec'] = settings.maketvec()
+    elif settings is not None: simpars['tvec'] = settings.maketvec(start=start, end=end, dt=dt)
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
@@ -781,9 +779,13 @@ class Basepar(object):
 
 
 class Par(Basepar):
-    ''' The base class for epidemiological model parameters '''
-    def __init__(self, by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): 
-        Basepar.__init__(self, **defaultargs)
+    ''' The base class for parameters '''
+    def __init__(self, name=None, dataname=None, short=None, datashort=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
+        self.name = name # The full name, e.g. "HIV testing rate"
+        self.short = short # The short name, e.g. "hivtest"
+        self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
+        self.datashort = datashort # The short name used for the data, e.g. "numactsreg" (which may be different to the paramter name, e.g. "actsreg")
+        self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
@@ -1001,13 +1003,17 @@ class Parameterset(object):
             raise OptimaException('No results associated with this parameter set')
     
     
-    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=True):
+    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
         ''' Method for getting proportions'''
 
         if self.resultsref is not None and self.project is not None:
 
             # Get results
             results = getresults(project=self.project, pointer=self.resultsref, die=die)
+            if results is None: # Generate results if there aren't any and die is False (if die is true, it will've already died on the previous step)
+                self.project.runsim(name=self.name)
+                results = self.project.results[-1]
+                
 
             # Interpret inputs
             if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
