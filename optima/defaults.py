@@ -511,7 +511,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         R.addcovoutpar('hivtest', 'FSW', {'intercept': (0.30,0.40), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
         R.addcovoutpar('hivtest', 'Clients', {'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60)})
-        R.addcovoutpar('hivtest', 'M 15+', {'intercept': (0.01,0.02), 't': 2016.0, HTC': (0.20,0.30)})
+        R.addcovoutpar('hivtest', 'M 15+', {'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
         R.addcovoutpar('hivtest', 'F 15+', {'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
         R.addcovoutpar('hivtest', 'PWID', {'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
         R.addcovoutpar('hivtest', 'MSM', {'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
