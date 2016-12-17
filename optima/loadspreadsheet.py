@@ -106,8 +106,8 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'optpropdx', 'optpropcare', 'optproptx', 'optproppmtct', 'optpropsupp']
-    sheets['Cascade']             = ['linktocare', 'leavecare', 'freqvlmon']
-    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
+    sheets['Cascade']             = ['linktocare', 'aidslinktocare', 'leavecare', 'aidsleavecare', 'freqvlmon']
+    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population
@@ -155,8 +155,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     data['pops']['male'] = [] # Store whether or not population is male
     data['pops']['female'] = [] # Store whether or not population is female
     data['pops']['age'] = [] # Store the age range for this population
-    data['pops']['injects'] = [] # Store whether or not population injects
-    data['pops']['sexworker'] = [] # Store whether or not population is commercial sex provider
     
     ## Initialize partnerships
     data['pships'] = odict() # Initialize to empty list
@@ -211,8 +209,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     data['pops']['male'].append(forcebool(thesedata[2], 'male, row %i'% row))
                     data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
                     data['pops']['age'].append([int(thesedata[4]), int(thesedata[5])])
-                    data['pops']['injects'].append(forcebool(thesedata[6], 'injects, row %i'% row))
-                    data['pops']['sexworker'].append(forcebool(thesedata[7], 'sexworker, row %i'% row))
                     
                 
                 # It's key data, save both the values and uncertainties

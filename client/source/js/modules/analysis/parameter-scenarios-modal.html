@@ -10,7 +10,7 @@
       required/>
   <div
       class="error-hint"
-      ng-show="checkScenarioExists()">
+      ng-show="isNameClash(scenario.name)">
     Scenario with this name already exists, please choose a different name.
   </div>
 </div>
@@ -21,6 +21,7 @@
       class="txbox"
       type="text"
       ng-model="scenario.parset_id"
+      ng-change = "selectParset()"
       required
       ng-options="parset.id as parset.name for parset in parsets">
   </select>
@@ -37,14 +38,14 @@
     <th>Manage</th>
   </tr>
 
-  <tr ng-repeat="par in scenario.pars">
+  <tr ng-repeat="scenPar in scenario.pars">
     <td>
       <select
           class="txbox __inline"
           style="width: 300px;"
           type="text"
-          ng-model="par.name"
-          ng-options="par.short as par.name for par in parsInScenario"
+          ng-model="scenPar.name"
+          ng-options="p.short as p.name for p in parSelectors"
           ng-change="selectNewPar($index)">
       </select>
     </td>
@@ -53,35 +54,42 @@
           class="txbox __inline"
           style="width: 100px;"
           type="text"
-          ng-model="par.forLabel"
-          ng-options="pop.label as pop.label for pop in popsOfPar[$index]">
+          ng-model="scenPar.forLabel"
+          ng-change="resetStartValue($index)"
+          ng-options="pop.popLabel as pop.popLabel for pop in popsOfPar[$index]">
+      </select>
+    </td>
+    <td>
+      <select
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="scenPar.startyear"
+          ng-change="selectNewYear($index)"
+          ng-options="year for year in years"
+          type="number">
+      </select>
+    </td>
+    <td>
+      <select
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="scenPar.endyear"
+          ng-options="year for year in years"
+          type="number">
       </select>
     </td>
     <td>
       <input
           class="txbox __inline"
           style="width:70px;"
-          ng-model="par.startyear"
-          type="number"/></td>
-    <td>
-      <input
-          class="txbox __inline"
-          style="width:70px;"
-          ng-model="par.endyear"
+          ng-model="scenPar.startval"
           type="number"/>
     </td>
     <td>
       <input
           class="txbox __inline"
           style="width:70px;"
-          ng-model="par.startval"
-          type="number"/>
-    </td>
-    <td>
-      <input
-          class="txbox __inline"
-          style="width:70px;"
-          ng-model="par.endval"
+          ng-model="scenPar.endval"
           type="number"/>
     </td>
     <td>

@@ -102,6 +102,14 @@ def getplotselections(results):
     plotselections['keys'] += ['cascade']
     plotselections['names'] += ['Treatment cascade']
     
+    ## Deaths by CD4
+    plotselections['keys'] += ['deathbycd4']
+    plotselections['names'] += ['Deaths by CD4']
+    
+    ## People by CD4
+    plotselections['keys'] += ['plhivbycd4']
+    plotselections['names'] += ['PLHIV by CD4']
+    
     ## Get plot selections for plotepi
     plotepikeys = list()
     plotepinames = list()
@@ -193,6 +201,26 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot cascade: "%s"' % E.message, 1, verbose)
+    
+    
+    ## Add deaths by CD4 plot
+    if 'deathbycd4' in toplot:
+        toplot.remove('deathbycd4') # Because everything else is passed to plotepi()
+        try: 
+            allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot deaths by CD4: "%s"' % E.message, 1, verbose)
+    
+    
+    ## Add PLHIV by CD4 plot
+    if 'plhivbycd4' in toplot:
+        toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
+        try: 
+            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot PLHIV by CD4: "%s"' % E.message, 1, verbose)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
@@ -413,7 +441,6 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                 # Configure plot specifics
                 currentylims = ylim()
                 legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1,1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'borderaxespad':2}
-                ax.set_xlabel('Year')
                 plottitle = results.main[datatype].name
                 if isperpop:  
                     plotylabel = plottitle
@@ -726,7 +753,6 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
                           'frameon':False, 'scatterpoints':1}
         if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
         else:          ax.set_title('Cascade')
-        ax.set_xlabel('Year')
         if aspercentage: ax.set_ylabel('Percentage of PLHIV')
         else:            ax.set_ylabel('Number of PLHIV')
                 
@@ -803,3 +829,178 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         a.set_ylim([0,ymax])
     
     return fig
+    
+    
+##################################################################
+## Plot things by CD4
+##################################################################
+def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+                ticksize=globalticksize, legendsize=globallegendsize, ind=0, **kwargs):
+    ''' 
+    Plot deaths or people by CD4
+    NOTE: do not call this function directly; instead, call via plotresults().
+    '''
+    
+    # Figure out what kind of result it is
+    if type(results)==Resultset: 
+        ismultisim = False
+        nsims = 1
+    elif type(results)==Multiresultset:
+        ismultisim = True
+        titles = results.keys # Figure out the labels for the different lines
+        nsims = len(titles) # How ever many things are in results
+    else: 
+        errormsg = 'Results input to plotbycd4() must be either Resultset or Multiresultset, not "%s".' % type(results)
+        raise OptimaException(errormsg)
+
+    # Set up figure and do plot
+    fig = figure(figsize=figsize)
+    
+    titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
+    hivstates = results.project.settings.hivstates
+    indices = arange(0, len(results.raw[ind]['tvec']), int(round(1.0/(results.raw[ind]['tvec'][1]-results.raw[ind]['tvec'][0]))))
+    colors = gridcolormap(len(hivstates))
+    
+    for plt in range(nsims): # WARNING, copied from plotallocs()
+        bottom = 0.*results.tvec # Easy way of setting to 0...
+        thisdata = 0.*results.tvec # Initialise
+        
+        ## Do the plotting
+        subplot(nsims,1,plt+1)
+        for s,state in enumerate(reversed(hivstates)): # Loop backwards so correct ordering -- first one at the top, not bottom
+            if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata += results.raw[ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
+            fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
+            bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
+            plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
+        
+        ## Configure plot -- WARNING, copied from plotepi()
+        ax = gca()
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        ax.title.set_fontsize(titlesize)
+        ax.xaxis.label.set_fontsize(labelsize)
+        for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+
+        # Configure plot specifics
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
+                          'frameon':False}
+        if ismultisim: ax.set_title(titlemap[whattoplot]+'-- %s' % titles[plt])
+        else: ax.set_title(titlemap[whattoplot])
+        ax.set_ylim((0,ylim()[1]))
+        ax.set_xlim((results.tvec[0], results.tvec[-1]))
+        ax.legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
+        
+    SIticks(fig)
+    close(fig)
+    
+    return fig    
+
+
+from optima import promotetoarray
+from pylab import isnan, linspace
+
+def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
+    """ Plot the cost-coverage curve for a single program"""
+    
+    # Put plotting imports here so fails at the last possible moment
+    from pylab import figure, figtext, isinteractive, ioff, ion, close, show
+    from matplotlib.ticker import MaxNLocator
+    import textwrap
+    
+    wasinteractive = isinteractive() # Get current state of interactivity
+    ioff() # Just in case, so we don't flood the user's screen with figures
+
+    year = promotetoarray(year)
+    colors = gridcolormap(len(year))
+    plotdata = odict()
+    
+    # Get caption & scatter data 
+    caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
+    costdata = dcp(program.costcovdata['cost'])
+
+    # Make x data... 
+    if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
+        xupperlim = plotoptions['xupperlim']
+    else:
+        if costdata: xupperlim = 1.5*max(costdata)
+        else: xupperlim = maxupperlim
+    xlinedata = linspace(0,xupperlim,npts)
+
+    if plotoptions and plotoptions.get('perperson'):
+        xlinedata = linspace(0,xupperlim*program.gettargetpopsize(year[-1],parset),npts)
+
+    # Create x line data and y line data
+    try:
+        y_l = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
+        y_m = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
+        y_u = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
+    except:
+        y_l,y_m,y_u = None,None,None
+    plotdata['ylinedata_l'] = y_l
+    plotdata['ylinedata_m'] = y_m
+    plotdata['ylinedata_u'] = y_u
+    plotdata['xlabel'] = 'Spending'
+    plotdata['ylabel'] = 'Number covered'
+
+    # Flag to indicate whether we will adjust by population or not
+    if plotoptions and plotoptions.get('perperson'):
+        if costdata:
+            for yrno, yr in enumerate(program.costcovdata['t']):
+                targetpopsize = program.gettargetpopsize(t=yr, parset=parset, results=results)
+                costdata[yrno] /= targetpopsize[0]
+        if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
+            if costdata: xupperlim = 1.5*max(costdata) 
+            else: xupperlim = 1e3
+        plotdata['xlinedata'] = linspace(0,xupperlim,npts)
+    else:
+        plotdata['xlinedata'] = xlinedata
+        
+    cost_coverage_figure = existingFigure if existingFigure else figure()
+    cost_coverage_figure.hold(True)
+    axis = cost_coverage_figure.gca()
+
+    axis.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
+    figtext(.1, .05, textwrap.fill(caption))
+    
+    if y_m is not None:
+        for yr in range(y_m.shape[0]):
+            axis.plot(
+                plotdata['xlinedata'],
+                plotdata['ylinedata_m'][yr],
+                linestyle='-',
+                linewidth=2,
+                color=colors[yr],
+                label=year[yr])
+            if plotbounds:
+                axis.fill_between(plotdata['xlinedata'],
+                                  plotdata['ylinedata_l'][yr],
+                                  plotdata['ylinedata_u'][yr],
+                                  facecolor=colors[yr],
+                                  alpha=.1,
+                                  lw=0)
+    axis.scatter(
+        costdata,
+        program.costcovdata['coverage'],
+        color='#666666')
+    
+
+    axis.set_xlim([0, xupperlim])
+    axis.set_ylim(bottom=0)
+    axis.tick_params(axis='both', which='major', labelsize=11)
+    axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+    axis.set_ylabel(plotdata['ylabel'], fontsize=11)
+    axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
+    axis.set_title(program.short)
+    axis.get_xaxis().get_major_formatter().set_scientific(False)
+    axis.get_yaxis().get_major_formatter().set_scientific(False)
+    if len(year)>1: axis.legend(loc=4)
+    
+    # Tidy up
+    if not doplot: close(cost_coverage_figure)
+    if wasinteractive: ion()
+    if doplot: show()
+
+    return cost_coverage_figure

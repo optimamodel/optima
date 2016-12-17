@@ -1,193 +1,167 @@
-<div class="rich" style="margin: 0 -25px; padding: 10px;">
+<div class="rich">
 
-  <h1>Optimization</h1>
+  <h1>Optimization analysis</h1>
 
   <div class="error-hint" ng-show="isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
 
-  <div class="error-hint" ng-show="!isMissingData && isMissingProgramSet">
+  <div class="error-hint" ng-show="!isMissingData && isMissingProgset">
     Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a>.
   </div>
 
-  <div class="error-hint" ng-show="!isMissingData && !isMissingProgramSet && !isOptimizable">
+  <div class="error-hint" ng-show="!isMissingData && !isMissingProgset && !isOptimizable">
     Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
   </div>
 
-  <div ng-if="!isMissingData && isOptimizable && !isMissingProgramSet" class="rich"">
+  <div
+      style="
+        display: flex;
+        height: calc(100vh - 150px);
+        flex-direction: column"
+      ng-if="!isMissingData && isOptimizable && !isMissingProgset" >
 
-    <div class="3">
-      <label for="optimization-selection">Select an optimization:</label>
-    </div>
+    <div
+        style="
+          flex 1 1 auto;">
 
-    <div style="display: flex;justify-content: flex-start;">
-      <select id="optimization-selection"
-              name="optimization-selection"
-              class="updateGraph txbox"
-              ng-model="state.optimization"
-              ng-change="setActiveOptimization(state.optimization)"
-              ng-options="optimization.name for optimization in state.optimizations"
-              style="width: 20%;">
-      </select>
-      <button ng-click="addOptimization()" type="button" class="btn" style="margin-left:2%">New optimization</button>
-      <button ng-click="copyOptimization()" type="button" class="btn" style="margin-left:2%">Copy optimization</button>
-      <button ng-click="renameOptimization()" type="button" class="btn" style="margin-left:2%">Rename optimization</button>
-      <button ng-click="downloadOptimization()" type="button" class="btn" style="margin-left:2%">Download optimization</button>
-      <button ng-click="uploadOptimization()" type="button" class="btn" style="margin-left:2%">Upload optimization</button>
-      <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
-    </div>
+      <div style="
+            overflow: scroll;
+            border: 0px solid #AAA;
+            max-height: 300px;">
+        <table
+            class="table table-bordered table-hover table-striped"
+            style="margin: 0; border: 0">
+          <tr>
+            <td>Name</td>
+            <td>Select</td>
+            <td>Type</td>
+            <td>Parameter Set</td>
+            <td>Program Set</td>
+            <td>Manage</td>
+          </tr>
+          <tr ng-repeat="optimization in state.optimizations track by $index"
+              ng-class="{highlighted: optimization.id === state.optimization.id}">
+            <td>
+              {{optimization.name}}
+            </td>
+            <td>
+              <button
+                  class="btn __green"
+                  ng-click="setActiveOptimization(optimization)">
+                Select
+              </button>
+            </td>
+            <td>
+              {{optimization.which}}
+            </td>
+            <td>
+              {{getParsetName(optimization)}}
+            </td>
+            <td>
+              {{getProgsetName(optimization)}}
+            </td>
+            <td>
+              <i
+                  ng-click="editOptimization(optimization)"
+                  class="fa fa-pencil"
+                  tp-text="Edit" tooltip tp-class="tooltip"
+                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                  style="margin-left: 0.5em">
+              </i>
+              <i
+                  ng-click="copyOptimization(optimization)"
+                  class="fa fa-copy"
+                  tp-text="Copy" tooltip tp-class="tooltip"
+                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                  style="margin-left: 0.5em">
+              </i>
+              <i
+                  ng-click="downloadOptimization(optimization)"
+                  class="fa fa-download"
+                  tp-text="Download" tooltip tp-class="tooltip"
+                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                  style="margin-left: 0.5em">
+              </i>
+              <i
+                  ng-click="uploadOptimization(optimization)"
+                  class="fa fa-upload"
+                  tp-text="Upload" tooltip tp-class="tooltip"
+                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                  style="margin-left: 0.5em">
+              </i>
+              <i
+                  ng-click="deleteOptimization(optimization)"
+                  class="fa fa-trash-o"
+                  tp-text="Delete" tooltip tp-class="tooltip"
+                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                  style="margin-left: 0.5em">
+              </i>
+            </td>
+          </tr>
 
-    <div style="width: 100%; margin-top: 25px;">
-        <input
-            type="button"
-            value="Save Optimization"
-            class="updateGraph btn"
-            ng-click="saveOptimizationForm(optimizationForm)"
-            ng-disabled="checkNotSavale()"/>
-        &nbsp;
-        <input
-            type="button"
-            value="Run Optimization"
-            class="updateGraph btn"
-            ng-click="startOptimization()"
-            ng-disabled="checkNotRunnable()"/>
-        &nbsp;
-        <input
-            type="button"
-            ng-disabled="!task_id"
-            value="Cancel Job"
-            class="updateGraph btn"
-            ng-click="killJob()">
-        &nbsp;
-        Run optimization for about
-        &nbsp;
-        <select ng-init="state.maxtime=10" ng-model="state.maxtime">
-          <option value="10">10 seconds</option>
-          <option value="30">30 seconds</option>
-          <option value="60">1 minute</option>
-          <option value="300">5 minutes</option>
-          <option value="600">10 minutes</option>
-          <option value="1800">30 minutes</option>
-        </select>
-        &nbsp;
-        <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
-          {{ statusMessage }}
-        </span>
-    </div>
-
-    <div style="
-          display: flex;
-          margin-top: 20px;
-          justify-content: space-between;
-          height: calc(100vh - 300px);">
-
-      <div class="small_bordered_list"
-           style="
-              margin-left: 10px;
-              border: 1px solid #DDD;
-              padding: 10px;
-              flex: 0 0 400px;
-              height: 100%;
-              width: 100%;
-              overflow:auto">
-
-        <form name="optimizationForm">
-          <div>
-            <div class="section">
-              <div class="label">Program set</div>
-              <select class="txbox"
-                      name="progset"
-                      style="width: 60%;"
-                      ng-class="{'invalid': optimizationForm.progset.$invalid}"
-                      ng-options="program.id as program.name for program in state.programSetList"
-                      ng-change="validateOptimizationForm(optimizationForm)"
-                      ng-model="state.optimization.progset_id">
-                <option value="">-- Please select a program set --</option>
-              </select>
-            </div>
-            <div class="section">
-              <div class="label">Parameter set</div>
-              <select class="txbox"
-                      name="parset"
-                      style="width: 60%;"
-                      ng-class="{'invalid': optimizationForm.parset.$invalid}"
-                      ng-change="validateOptimizationForm(optimizationForm)"
-                      ng-options="parset.id as parset.name for parset in state.parsets"
-                      ng-model="state.optimization.parset_id">
-                <option value="">-- Please select a parameter set --</option>
-              </select>
-            </div>
-            <div class="section">
-              <div class="label">Type</div>
-              <div>
-                  <span style="width: 45%">
-                    <input
-                        type="radio"
-                        name="objectives_which"
-                        ng-click="setType('outcomes')"
-                        ng-checked="state.optimization.which==='outcomes'"/>
-                    Minimize outcomes
-                  </span>
-                  <span style="width: 45%">
-                    <input
-                        type="radio"
-                        name="objectives_which"
-                        ng-click="setType('money')"
-                        ng-checked="state.optimization.which==='money'"/>
-                    Minimize money
-                  </span>
-              </div>
-            </div>
-            <div ng-if="state.optimization.objectives" class="section">
-              <div class="label">Objectives</div>
-              <div style="justify-content: space-around" class="option" ng-repeat="objectiveLabel in objectiveLabels">
-                <span style="width: 70%">{{objectiveLabel.label}}</span>
-                  <span style="width: 30%">
-                    <input class="txbox __inline __m"
-                      type="number"
-                      ng-model="state.optimization.objectives[objectiveLabel.key]"
-                      name="{{objectiveLabel.key}}"
-                      ng-change="validateOptimizationForm(optimizationForm)"
-                      ng-class="{'invalid': optimizationForm[objectiveLabel.key].$invalid}"/>
-                  </span>
-              </div>
-            </div>
-            <div ng-if="state.optimization.constraints" class="section">
-              <div class="label">Constraints</div>
-              <div style="justify-content: space-around; font-weight: bold" class="option">
-                <span style="width: 60%">Program Name</span>
-                <span style="width: 20%">Minimum</span>
-                <span style="width: 20%">Maximum</span>
-              </div>
-            </div>
-            <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
-              <span style="width: 60%">{{ state.optimization.constraints.name[constraintKey] }}</span>
-                <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.optimization.constraints.min[constraintKey]"/>
-                </span>
-                <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.optimization.constraints.max[constraintKey]"/>
-                </span>
-            </div>
-          </div>
-
-        </form>
+        </table>
       </div>
 
       <div
-        style="
-           margin-left: 10px;
-           border: 1px solid #DDD;
-           flex: 1 1 auto;
-           height:100%;
-           width: 100%;
-           overflow:auto">
+          style="
+            width: 100%;
+            margin-top: 1em;
+            margin-bottom: 1.5em;">
+          <input
+            type="button"
+            value="+ money optimization"
+            class="btn"
+            ng-click="addOptimization('money')">
+          &nbsp;
+          <input
+            type="button"
+            value="+ outcome optimization"
+            class="btn"
+            ng-click="addOptimization('outcomes')">
+          &nbsp;
+          <button
+            class="btn"
+            ng-click="startOptimization(state.optimization)"
+            ng-disabled="checkNotRunnable()">
+            Optimize
+          </button>
+          &nbsp;
+          for about
+          &nbsp;
+          <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+            <option value="10">10 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60">1 minute</option>
+            <option value="300">5 minutes</option>
+            <option value="600">10 minutes</option>
+            <option value="1800">30 minutes</option>
+          </select>
+          &nbsp;
+          <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
+            {{ statusMessage }}
+          </span>
 
-          <optima-graphs graphs="graphs"></optima-graphs>
-
+          <div class="error-hint" ng-show="isMissingProgset">
+            Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
+          </div>
+          <div class="error-hint" ng-show="!isMissingProgset && !isOptimizable">
+            Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
+          </div>
       </div>
 
+    </div>
 
+    <div
+      ng-if="state.graphs"
+      style="
+        margin-top: 1em;
+        flex: 1 1 auto;
+        border: 1px solid #DDD;
+        height:100%;
+        width: 100%;
+        overflow:auto">
+      <optima-graphs graphs="state.graphs"></optima-graphs>
     </div>
   </div>
 </div>

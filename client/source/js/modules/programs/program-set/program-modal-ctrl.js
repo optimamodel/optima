@@ -56,6 +56,9 @@
       );
 
       console.log('$scope.state.program.targetpars', $scope.state.program.targetpars);
+      console.log('$scope.state.program.costcov', $scope.state.program.costcov);
+      $scope.years = _.range(openProject.startYear, openProject.endYear+1);
+      console.log('$scope.years', $scope.currentYear, $scope.years);
 
       if (isAnyTargetparForTotal) {
         $scope.state.progPopReadOnly = true;
@@ -293,15 +296,15 @@
     };
 
     // Function to add additional data
-    $scope.addHistoricalData = function () {
-      if($scope.state.newAddData.year && $scope.state.newAddData.cost >= 0 && $scope.state.newAddData.coverage >= 0) {
-        if(!$scope.state.program.costcov) {
-          $scope.state.program.costcov = [];
-        }
-        $scope.state.program.costcov.push($scope.state.newAddData);
-        $scope.state.newAddData = {};
-        $scope.state.showAddData = false;
+    $scope.addHistoricalYearCostcovData = function () {
+      if(!$scope.state.program.costcov) {
+        $scope.state.program.costcov = [];
       }
+      $scope.state.program.costcov.push({
+        year: new Date().getFullYear(),
+        cost: null,
+        coverage: null,
+      });
     };
 
     $scope.submit = function(form) {
@@ -312,11 +315,15 @@
         $scope.state.showAddData = false;
 
         if ($scope.state.program.attr) {
-          $scope.state.program.populations = _.filter($scope.state.populations, function(population) {
-            return population.active;
-          }).map(function(population) {
-            return population.short;
-          });
+          $scope.state.program.populations =
+            _.filter(
+              $scope.state.populations,
+              function(population) {
+                return population.active;
+              })
+            .map(function(population) {
+                return population.short;
+              });
         }
 
         $scope.state.program.criteria.hivstatus = '';

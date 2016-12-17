@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ProjectCreateOrEditController', function (
       $scope, $state, $modal, $timeout, $http, activeProject, populations,
-      UserManager, modalService, projects, projectApiService, info) {
+      userManager, modalService, projects, projectApi, info) {
 
     function initialize() {
       $scope.allProjects = projects.data.projects;
@@ -28,8 +28,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if (activeProject.isSet()) {
           $scope.projectParams.id = $scope.projectInfo.id;
           $scope.projectParams.name = $scope.projectInfo.name;
-          $scope.projectParams.dataStart = $scope.projectInfo.dataStart;
-          $scope.projectParams.dataEnd = $scope.projectInfo.dataEnd;
+          $scope.projectParams.startYear = $scope.projectInfo.startYear;
+          $scope.projectParams.endYear = $scope.projectInfo.endYear;
         }
 
         var newPopulations = _($scope.projectInfo.populations).filter(isNotInScopePopulations);
@@ -74,26 +74,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.invalidDataStart = function() {
-      if ($scope.projectParams.dataStart) {
-        var dataStart = parseInt($scope.projectParams.dataStart)
-        return dataStart < 1900 || 2100 < dataStart;
+      if ($scope.projectParams.startYear) {
+        var startYear = parseInt($scope.projectParams.startYear)
+        return startYear < 1900 || 2100 < startYear;
       }
-      return !$scope.projectParams.dataStart; 
+      return !$scope.projectParams.startYear;
     };
 
     $scope.invalidDataEnd = function() {
-      if ($scope.projectParams.dataEnd) {
-        var dataEnd = parseInt($scope.projectParams.dataEnd)
-        if (dataEnd < 1900 || 2100 < dataEnd) {
+      if ($scope.projectParams.endYear) {
+        var endYear = parseInt($scope.projectParams.endYear)
+        if (endYear < 1900 || 2100 < endYear) {
           return true;
         }
         if ($scope.invalidDataStart()) {
           return false;
         }
-        var dataStart = parseInt($scope.projectParams.dataStart)
-        return dataEnd <= dataStart;
+        var startYear = parseInt($scope.projectParams.startYear)
+        return endYear <= startYear;
       }
-      return !$scope.projectParams.dataEnd;  
+      return !$scope.projectParams.endYear;
     };
 
     $scope.invalidPopulationSelected = function() {
@@ -134,8 +134,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         age_from: '',
         female: false,
         male: false,
-        injects: false,
-        sexworker: false,
       };
 
       return openPopulationModal(population).result.then(
@@ -192,29 +190,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .value();
     }
 
-    function submit() {
-      var populations = getSelectedPopulations();
-      var params, promise;
-      if ($scope.editParams.isEdit) {
-        params = angular.copy($scope.projectParams);
-        params.populations = populations;
-        promise = projectApiService.updateProject(
-            $scope.projectInfo.id, params);
+    function saveProject(isUpdate, isDeleteData, isSpreadsheet) {
+      console.log('isUpdate', isUpdate, 'isDeleteData', isDeleteData, 'isSpreadsheet', isSpreadsheet)
+      var params = angular.copy($scope.projectParams);
+      params.populations = getSelectedPopulations();
+      var promise;
+      var responseType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      if (isUpdate) {
+        promise = projectApi.updateProject(
+          $scope.projectInfo.id,
+          {
+            project: params,
+            isSpreadsheet: isSpreadsheet,
+            isDeleteData: true,
+          });
       } else {
-        params = angular.copy($scope.projectParams);
-        params.populations = populations;
-        promise = projectApiService.createProject(params);
+        promise = projectApi.createProject(params);
       }
       promise
-        .success(function (response, status, headers, config) {
-          var newProjectId = headers()['x-project-id'];
-          var blob = new Blob(
-              [response],
-              { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-          saveAs(blob, ($scope.projectParams.name + '.xlsx'));
-          // update active project
-          activeProject.setActiveProjectFor(
-              $scope.projectParams.name, newProjectId, UserManager.data);
+        .success(function (response, status, headers) {
+          if (responseType) {
+            var blob = new Blob([response], {type: responseType});
+            saveAs(blob, ($scope.projectParams.name + '.xlsx'));
+            var newProjectId = headers()['x-project-id'];
+            activeProject.setActiveProjectFor(
+                $scope.projectParams.name, newProjectId, userManager.user);
+          }
           $state.go('home');
         });
     }
@@ -240,37 +241,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return false;
       }
 
+      function removeExtraFields(aDict) {
+        var copyDict = angular.copy(aDict);
+        if (copyDict.hasOwnProperty("$$hashKey")) {
+          delete copyDict["$$hashKey"];
+        }
+        if (copyDict.hasOwnProperty("active")) {
+          delete copyDict["active"];
+        }
+        return copyDict;
+      }
+
       if ($state.current.name == "project.edit") {
-        var message;
-        if (!angular.equals(
-                $scope.populations, $scope.projectInfo.populations)) {
-          $scope.editParams.canUpdate =
-              $scope.populations.length == $scope.projectInfo.populations.length;
-          message = 'You have made changes to populations. All existing data will be lost. Would you like to continue?';
-          if ($scope.editParams.canUpdate) {
-            message = 'You have changed some population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
-          }
+        var selectedPopulations = _.map(getSelectedPopulations(), removeExtraFields);
+        var originalPopulations = _.map($scope.projectInfo.populations, removeExtraFields);
+        var isPopulationsSame = angular.equals(selectedPopulations, originalPopulations);
+        if (isPopulationsSame) {
+          saveProject(true, false, true)
+        } else {
           modalService.confirm(
-              submit,
+              function() { saveProject(true, true, true) },
               function() {},
               'Yes, save this project',
               'No',
-              message,
+              'You have made changes to populations. All existing data will be lost. Would you like to continue?',
               'Save Project?'
-          );
-        } else {
-          message = 'No parameters have been changed. Do you intend to reload the original data and start from scratch?';
-          modalService.confirm(
-              submit,
-              function() {},
-              'Yes, reload this project',
-              'No',
-              message,
-              'Reload project?'
           );
         }
       } else {
-        submit();
+        // Create new project
+        saveProject(false, false, true);
       }
     };
 

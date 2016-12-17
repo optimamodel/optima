@@ -7,7 +7,7 @@ from numpy import array
 
 import optima as op
 
-from .utils import normalize_obj
+from .parse import normalize_obj
 
 
 def extract_graph_selector(graph_key):
@@ -25,7 +25,7 @@ def extract_graph_selector(graph_key):
 
 
 def convert_to_mpld3(figure):
-    plugin = mpld3.plugins.MousePosition(fontsize=0, fmt='.4r')
+    plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
 
     figure.set_size_inches(5.5, 2)

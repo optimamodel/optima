@@ -1,9 +1,7 @@
 var _ = require('underscore');
-var assets  = require('postcss-assets');
 var autoprefixer = require('autoprefixer');
 var es = require('event-stream');
 var gulp = require('gulp');
-var karma = require('gulp-karma');
 var livereload = require('gulp-livereload');
 var ngAnnotate = require('gulp-ng-annotate');
 var postcss = require('gulp-postcss');
@@ -13,6 +11,7 @@ var sass = require('gulp-sass');
 var spawn = require('child_process').spawn;
 var uglify = require('gulp-uglify');
 var plumber = require('gulp-plumber');
+var fs = require('fs');
 
 var handleError = function (err) {
   console.log(err.name, ' in ', err.plugin, ': ', err.message);
@@ -48,17 +47,39 @@ gulp.task('bump-version', function () {
     } else {
       console.error('This task should be executed on a release branch!');
     }
+
   });
 });
 
-// Copy
-gulp.task('copy', ['sass'], function () {
+// Write version.js
+gulp.task('write-version-js', function() {
+  spawn('git', ['rev-parse', '--short', 'HEAD']).stdout.on('data', function (data) {
+
+    var version = data.toString().trim();
+
+    spawn('git', ['show', '-s', '--format=%ci', 'HEAD']).stdout.on('data', function (data2) {
+
+      var date = data2.toString().split(' ')[0].trim();
+
+      var versionStr = version + " from " + date;
+      fs.writeFileSync(
+        'source/js/version.js',
+        "define([], function () { return '" + versionStr + "'; });");
+
+      console.log('Updated version.js to ' + versionStr);
+    });
+
+  });
+});
+
+// Copy assets, and vendor js files to the build directory
+gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
   return es.concat(
     // update index.html to work when built
     gulp.src(['source/index.html'])
       .pipe(gulp.dest('build')),
     // copy config-require
-    gulp.src(['source/js/config-require.js'])
+    gulp.src(['source/js/config.js'])
       .pipe(uglify().on('error', handleError))
       .pipe(gulp.dest('build/js')),
     // copy template files
@@ -80,50 +101,34 @@ gulp.task('copy', ['sass'], function () {
   );
 });
 
-// JavaScript
-gulp.task('js', function () {
-  var configRequire = require('./source/js/config-require.js');
+// Optimize the app into the build/js directory
+gulp.task('compile-build-js-client', function () {
+  var configRequire = require('./source/js/config.js');
   var configBuild = {
     baseUrl: 'source',
     insertRequire: ['js/main'],
     name: 'js/main',
-    optimize: 'none',
+    out: 'main.js',
+    optimize: 'uglify',
     wrap: true,
     excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
   };
   var config = _(configBuild).extend(configRequire);
 
-  return gulp.src(['source/js/main.js'])
-    .pipe(rjs(config).on('error', handleError))
+  return rjs(config)
+    .on('error', handleError)
     .pipe(ngAnnotate())
-    .pipe(uglify().on('error', handleError))
     .pipe(gulp.dest('build/js/'));
 });
 
-// Karma
-gulp.task('karma', function () {
-  return gulp.src(['no need to supply files because everything is in config file'])
-    .pipe(karma({
-      configFile: 'karma.conf.js',
-      action: 'watch'
-    }).on('error', handleError));
-});
-
-gulp.task('karma-ci', function () {
-  return gulp.src(['no need to supply files because everything is in config file'])
-    .pipe(karma({
-      configFile: 'karma-compiled.conf.js',
-      action: 'run'
-    }).on('error', handleError));
-});
-
-gulp.task('font-awesome', function() {
+// Copy font-awesome files for icons
+gulp.task('copy-font-awesome-icons', function() {
   return gulp.src('source/vendor/font-awesome/fonts/*')
     .pipe(gulp.dest('source/assets/fonts'))
-})
+});
 
-// Sass
-gulp.task('sass', ['font-awesome'], function () {
+// Process SASS to generate the CSS files
+gulp.task('compile-sass', ['copy-font-awesome-icons'], function () {
   var cssGlobbing = require('gulp-css-globbing');
   var postcss = require('gulp-postcss');
   var sass = require('gulp-sass');
@@ -152,23 +157,26 @@ gulp.task('sass', ['font-awesome'], function () {
 });
 
 // Watch
-gulp.task('watch', ['sass'], function () {
+gulp.task('watch', ['compile-sass'], function () {
   gulp.watch('source/sass/**/*.scss', ['sass']);
 
-  // enable Livereload
+  // enable livereload
   livereload.listen();
+
   gulp.watch([
-    'source/assets/*.css',
-    'source/index.html',
-    'source/js/**/*',
-    '!source/js/**/*.spec.js'
-  ]).on('change', livereload.changed);
+      'source/assets/*.css',
+      'source/index.html',
+      'source/js/**/*'])
+    .on(
+      'change', livereload.changed);
 });
 
-gulp.task('default', ['js', 'copy'], function () {
-  try {
-    gulp.run('karma-ci'); // CK: Put in a try-catch block because sometimes fails
-  }
-  catch(err) {
-  }
-});
+// Defaults
+gulp.task(
+  'default',
+  [
+    'compile-build-js-client',
+    'copy-assets-and-vendor-js',
+    'write-version-js'
+  ]);
+

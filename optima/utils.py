@@ -388,14 +388,20 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         hold(True)
         scatter(origx,origy)
     
-    Version: 2016jan29 by cliffk
+    Version: 2016nov02 by cliffk
     """
     from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
     # Ensure arrays and remove NaNs
+    if isnumber(newx): newx = [newx] # Make sure it has dimension
     newx = array(newx)
     origx = array(origx)
     origy = array(origy)
+    
+    # If only a single element, just return it, without checking everything else
+    if len(origy)==1: 
+        newy = zeros(newx.shape)+origy[0]
+        return newy
     
     if not(newx.shape): raise Exception('To interpolate, must have at least one new x value to interpolate to')
     if not(origx.shape): raise Exception('To interpolate, must have at least one original x value to interpolate to')
@@ -801,6 +807,11 @@ class odict(OrderedDict):
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing, slicing, and appending.
     Version: 2016sep14 (cliffk)
     '''
+    
+    def __init__(self, *args, **kwargs):
+        ''' See collections.py '''
+        if len(args)==1 and args[0] is None: args = [] # Remove a None argument
+        OrderedDict.__init__(self, *args, **kwargs) # Standard init
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
@@ -818,7 +829,7 @@ class odict(OrderedDict):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, (str,tuple)):
             try:
-                output = OrderedDict.__getitem__(self,key)
+                output = OrderedDict.__getitem__(self, key)
                 return output
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
@@ -1014,6 +1025,215 @@ class odict(OrderedDict):
 
 
 
+##############################################################################
+## DATA FRAME CLASS
+##############################################################################
+
+# These are repeated to make this frationally more self-contained
+from numpy import array, zeros, vstack, hstack, matrix, argsort # analysis:ignore
+from numbers import Number # analysis:ignore
+
+class dataframe(object):
+    '''
+    A simple data frame, based on simple lists, for simply storing simple data.
+    
+    Example usage:
+        a = dataframe(['x','y'],[[1238,2,3],[0.04,5,6]]) # Create data frame
+        print a['x'] # Print out a column
+        print a[0] # Print out a row
+        print a['x',0] # Print out an element
+        a[0] = [5,6]; print a # Set values for a whole row
+        a['y'] = [8,5,0]; print a # Set values for a whole column
+        a['z'] = [14,14,14]; print a # Add new column
+        a.addcol('z', [14,14,14]); print a # Alternate way to add new column
+        a.rmcol('z'); print a # Remove a column
+        a.pop(1); print a # Remove a row
+        a.append([1,2]); print a # Append a new row
+        a.insert(1,[9,9]); print a # Insert a new row
+        a.sort(); print a # Sort by the first column
+        a.sort('y'); print a # Sort by the second column
+        a.addrow([1,44]); print a # Replace the previous row and sort
+        a.rmrow(); print a # Remove last row
+        a.rmrow(3); print a # Remove the row starting with element '3'
+    
+    Version: 2016oct31
+    '''
+
+    def __init__(self, cols=None, data=None):
+        if cols is None: cols = list()
+        if data is None: data = zeros((len(cols),0), dtype=object)
+        self.cols = cols
+        self.data = array(data, dtype=object)
+        return None
+    
+    def __repr__(self, spacing=2):
+        ''' spacing = space between columns '''
+        if not self.cols: # No keys, give up
+            return ''
+        
+        else: # Go for it
+            outputlist = dict()
+            outputformats = dict()
+            
+            # Gather data
+            nrows = self.nrows()
+            for c,col in enumerate(self.cols):
+                outputlist[col] = list()
+                maxlen = -1
+                if nrows:
+                    for val in self.data[c,:]:
+                        output = str(val)
+                        maxlen = max(maxlen, len(output))
+                        outputlist[col].append(output)
+                outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
+            
+            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY
+            elif nrows<100:  indformat = '%3s'
+            elif nrows<1000: indformat = '%4s'
+            else:            indformat = '%5s'
+            
+            # Assemble output
+            output = indformat % '' # Empty column for index
+            for col in self.cols: # Print out header
+                output += outputformats[col] % col
+            output += '\n'
+            
+            for ind in range(nrows): # WARNING, KLUDGY
+                output += indformat % str(ind)
+                for col in self.cols: # Print out data
+                    output += outputformats[col] % outputlist[col][ind]
+                output += '\n'
+            
+            return output
+    
+    def _val2row(self, value):
+        ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
+        if isinstance(value, dict):
+            output = zeros(self.ncols(), dtype=object)
+            for c,col in enumerate(self.cols):
+                try: 
+                    output[c] = value[col]
+                except: 
+                    raise Exception('Entry for column %s not found; keys you supplied are: %s' % (col, value.keys()))
+            return array(output, dtype=object)
+        else: # Not sure what it is, just make it an array
+            return array(value, dtype=object)
+    
+    def _sanitizecol(self, col):
+        ''' Take None or a string and return the index of the column '''
+        if col is None: output = 0 # If not supplied, assume first column is control
+        elif isinstance(col, (str, unicode)): output = self.cols.index(col) # Convert to index
+        else: output = col
+        return output
+        
+    def __getitem__(self, key):
+        if isinstance(key, (str, unicode)):
+            colindex = self.cols.index(key)
+            output = self.data[colindex,:]
+        elif isinstance(key, Number):
+            rowindex = int(key)
+            output = self.data[:,rowindex]
+        elif isinstance(key, tuple):
+            colindex = self.cols.index(key[0])
+            rowindex = int(key[1])
+            output = self.data[colindex,rowindex]
+        return output
+        
+    def __setitem__(self, key, value):
+        if isinstance(key, (str, unicode)):
+            if len(value) != self.nrows(): 
+                raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows()))
+            try:
+                colindex = self.cols.index(key)
+                self.data[colindex,:] = value
+            except:
+                self.cols.append(key)
+                colindex = self.cols.index(key)
+                self.data = vstack((self.data, array(value, dtype=object)))
+        elif isinstance(key, Number):
+            value = self._val2row(value) # Make sure it's in the correct format
+            if len(value) != self.ncols(): 
+                raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols()))
+            rowindex = int(key)
+            self.data[:,rowindex] = value
+        elif isinstance(key, tuple):
+            colindex = self.cols.index(key[0])
+            rowindex = int(key[1])
+            self.data[colindex,rowindex] = value
+        return None
+    
+    def ncols(self):
+        ''' Get the number of columns in the data frame '''
+        return len(self.cols)
+
+    def nrows(self):
+        ''' Get the number of rows in the data frame '''
+        try:    return self.data.shape[1]
+        except: return 0 # If it didn't work, probably because it's empty
+    
+    def addcol(self, key, value):
+        ''' Add a new colun to the data frame -- for consistency only '''
+        self.__setitem__(key, value)
+    
+    def rmcol(self, key, returnval=True):
+        ''' Remove a column from the data frame '''
+        colindex = self.cols.index(key)
+        self.cols.pop(colindex)
+        thiscol = self.data[colindex,:]
+        self.data = vstack((self.data[:colindex,:], self.data[colindex+1:,:]))
+        if returnval: return thiscol
+        else: return None
+    
+    def pop(self, key, returnval=True):
+        ''' Remove a row from the data frame '''
+        rowindex = int(key)
+        thisrow = self.data[:,rowindex]
+        self.data = hstack((self.data[:,:rowindex], self.data[:,rowindex+1:]))
+        if returnval: return thisrow
+        else:         return None
+    
+    def append(self, value):
+        ''' Add a row to the end of the data frame '''
+        value = self._val2row(value) # Make sure it's in the correct format
+        self.data = hstack((self.data, array(matrix(value).transpose(), dtype=object)))
+        return None
+    
+    def addrow(self, value, overwrite=True, col=None, reverse=False):
+        ''' Like append, but removes duplicates in the first column and resorts '''
+        value = self._val2row(value) # Make sure it's in the correct format
+        col = self._sanitizecol(col)
+        try:    index = self.data[col,:].tolist().index(value[col]) # Try to find duplicates
+        except: index = None
+        if index is None or not overwrite: self.append(value)
+        else: self.data[:,index] = value # If it exists already, just replace it
+        self.sort(col=col, reverse=reverse) # Sort
+        return None
+    
+    def rmrow(self, key=None, col=None, returnval=False):
+        ''' Like pop, but removes by matching the first column instead of the index '''
+        col = self._sanitizecol(col)
+        if key is None: key = self.data[col,-1] # If not supplied, pick the last element
+        try:    index = self.data[col,:].tolist().index(key) # Try to find duplicates
+        except: raise Exception('Item %s not found; choices are: %s' % (key, self.data[col,:]))
+        thisrow = self.pop(index)
+        if returnval: return thisrow
+        else:         return None
+    
+    def insert(self, row=0, value=None):
+        ''' Insert a row at the specified location '''
+        rowindex = int(row)
+        value = self._val2row(value) # Make sure it's in the correct format
+        self.data = hstack((self.data[:,:rowindex], array(matrix(value).transpose(), dtype=object), self.data[:,rowindex:]))
+        return None
+    
+    def sort(self, col=None, reverse=False):
+        ''' Sort the data frame by the specified column '''
+        col = self._sanitizecol(col)
+        sortorder = argsort(self.data[col,:])
+        if reverse: sortorder = array(list(reversed(sortorder)))
+        self.data = self.data[:,sortorder]
+        return None
+        
 
 
 

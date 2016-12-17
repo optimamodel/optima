@@ -2,24 +2,16 @@
  * modalService provides controllers of a set of reusable modals.
  * They can display custom messages and title and action callbacks.
  */
-define([
-  'angular',
-  'ui.bootstrap'
-], function (angular) {
+define(['angular', 'ui.bootstrap' ], function (angular) {
+
   'use strict';
 
-  return angular.module('app.ui.modal', [
-    'ui.bootstrap'
-  ])
+  return angular
+    .module('app.ui.modal', ['ui.bootstrap'])
     .factory('modalService', ['$modal', function ($modal) {
+
       return {
 
-        /**
-         * Asks the user for confirmation.
-         *
-         * Uses the custom message and title (if present) and
-         * executes the right callback depending on the user's choice.
-         */
         confirm: function (onAccepted, onRejected, acceptButton, rejectButton, message, title) {
 
           var onModalKeyDown = function (event) {
@@ -42,8 +34,6 @@ define([
         },
 
         /**
-         * Displays the given message
-         *
          * @param {function} onAccepted - callback for the acceptButton.
          * @param {string} onAccepted - text for the acceptButton.
          * @param {string} message - text for the description.
@@ -127,47 +117,11 @@ define([
         },
 
         /**
-         * This function opens a modal that will ask the user to provide a name
-         * for a new optimization.
+         * Asks the user to choose between two choices.
+         *
+         * Uses the custom message and title (if present) and executes the right
+         * callback depending on the user's choice.
          */
-        addOptimization: function (callback, optimizations) {
-
-          var onModalKeyDown = function (event) {
-            if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
-          };
-
-          var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-add-optimization.html',
-            controller: ['$scope', '$document', function ($scope, $document) {
-
-              $scope.createOptimization = function (name) {
-                callback(name);
-                modalInstance.close();
-              };
-
-              $scope.isUniqueName = function (name, addOptimizationForm) {
-                var exists = _(optimizations).some(function(item) {
-                  return item.name == name;
-                });
-                addOptimizationForm.organizationName.$setValidity("organizationExists", !exists);
-                return exists;
-              };
-
-              $document.on('keydown', onModalKeyDown); // observe
-              $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
-
-            }]
-          });
-
-          return modalInstance;
-        },
-
-        /**
-        * Asks the user to choose between two choices.
-        *
-        * Uses the custom message and title (if present) and executes the right
-        * callback depending on the user's choice.
-        */
         choice: function (onChoiceA, onChoiceB, choiceAButton, choiceBButton, message, title) {
           var onModalKeyDown = function (event) {
             if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
@@ -196,6 +150,64 @@ define([
             }]
           });
           return modalInstance;
+        },
+
+        /**
+         * Asks the user to create/edit a name for
+         *
+         * Uses the custom message and title (if present) and invalidates the input
+         *  if it matches any of the invalidNames.
+         */
+        rename: function(acceptName, title, message, name, errorMessage, invalidNames) {
+
+          var modalInstance = $modal.open({
+            templateUrl: 'js/modules/ui/modal/modal-rename.html',
+            controller: ['$scope', '$document', function($scope, $document) {
+
+                $scope.name = name;
+                $scope.title = title;
+                $scope.message = message;
+                $scope.errorMessage = errorMessage;
+
+                $scope.checkBadForm = function(form) {
+                  var isGoodName = !_.contains(invalidNames, $scope.name);
+                  form.$setValidity("name", isGoodName);
+                  return !isGoodName;
+                };
+
+                $scope.submit = function() {
+                  acceptName($scope.name);
+                  modalInstance.close();
+                };
+
+                function onKey(event) {
+                  if (event.keyCode == 27) {
+                    return modalInstance.dismiss('ESC');
+                  }
+                }
+
+                $document.on('keydown', onKey);
+                $scope.$on(
+                  '$destroy',
+                  function() {
+                    $document.off('keydown', onKey);
+                  });
+
+              }
+            ]
+          });
+
+          return modalInstance;
+        },
+
+        getUniqueName: function(name, otherNames) {
+          var i = 0;
+          var uniqueName = name;
+          while (_.indexOf(otherNames, uniqueName) >= 0) {
+            i += 1;
+            uniqueName = name + ' (' + i + ')';
+          }
+          return uniqueName;
         }
 
       };

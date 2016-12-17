@@ -58,7 +58,7 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, defaultparset=0, debug=False):
+def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs):
     """
     Run all the scenarios.
     Version: 2016jan22 by cliffk
@@ -91,7 +91,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False):
         progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug)
+        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, **kwargs)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
@@ -115,8 +115,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             thisparset = dcp(project.parsets[scen.parsetname])
             thisparset.project = project # Replace copy of project with pointer -- WARNING, hacky
         except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
-        thisparset.modified = today()
-        thisparset.name = scen.name
         npops = len(thisparset.popkeys)
 
         if isinstance(scen,Parscen):
@@ -129,13 +127,23 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                     # Parse inputs to figure out which population(s) are affected
                     if type(scenpar['for'])==tuple: # If it's a partnership...
-                        pops = [scenpar['for']] 
-                    elif type(scenpar['for'])==int: #... if its asingle  population.
+                        if not scenpar['for'] in thispar.y.keys():
+                            errormsg = 'Partnership %s not associated with parameter %s' % (scenpar['for'],thispar.short)
+                            raise OptimaException(errormsg)
+                        else: pops = [scenpar['for']] 
+
+                    elif isnumber(scenpar['for']): #... if its asingle  population.
                         pops = [range(npops)] if scenpar['for'] > npops else [scenpar['for']]
+
                     elif type(scenpar['for']) in [list, type(array([]))]: #... if its list of population.
                         pops = scenpar['for']
-                    elif scenpar['for']=='tot': 
-                        pops = ['tot']
+
+                    elif type(scenpar['for'])==str: 
+                        if not scenpar['for'] in thispar.y.keys():
+                            errormsg = 'Population %s not associated with parameter %s' % (scenpar['for'],thispar.short)
+                            raise OptimaException(errormsg)
+                        else: pops = [scenpar['for']] 
+
                     else: 
                         errormsg = 'Unrecognized population or partnership type: %s' % scenpar['for']
                         raise OptimaException(errormsg)
@@ -144,15 +152,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
                     last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
 
-                    # Find or set new value 
-                    if scenpar.get('startval'):
-                        this_y = promotetoarray(scenpar['startval']) # Use supplied starting value if there is one
-                    else:
-                        if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
-                            this_y = thispar.interp(tvec=scenpar['startyear'], usemeta=False) # Find what the model would get for this value
-                        else:
-                            this_y = thisparset.getprop(proptype=scenpar['name'],year=scenpar['startyear'])                            
-
                     # Loop over populations
                     for pop in pops:
 
@@ -160,6 +159,15 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         if isnumber(pop): popind = pop
                         else: popind = thispar.y.keys().index(pop)
                         
+                        # Find or set new value 
+                        if scenpar.get('startval'):
+                            this_y = promotetoarray(scenpar['startval']) # Use supplied starting value if there is one
+                        else:
+                            if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
+                                this_y = thispar.interp(tvec=scenpar['startyear'], usemeta=False)[popind] # Find what the model would get for this value
+                            else:
+                                this_y = thisparset.getprop(proptype=scenpar['name'],year=scenpar['startyear'])                            
+
                         # Remove years after the last good year
                         if last_t < max(thispar.t[popind]):
                             thispar.t[popind] = thispar.t[popind][findinds(thispar.t[popind] <= last_t)]
@@ -169,7 +177,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         thispar.t[popind] = append(thispar.t[popind], last_t)
                         thispar.y[popind] = append(thispar.y[popind], last_y[popind]) 
                         thispar.t[popind] = append(thispar.t[popind], scenpar['startyear'])
-                        thispar.y[popind] = append(thispar.y[popind], this_y[popind]) 
+                        thispar.y[popind] = append(thispar.y[popind], this_y) 
                         
                         # Add end year values if supplied
                         if scenpar.get('endyear'): 
@@ -243,6 +251,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             errormsg = 'Unrecognized program scenario type.'
             raise OptimaException(errormsg)
             
+        thisparset.modified = today()
+        thisparset.name = scen.name
         scenparsets[scen.name] = thisparset
         
     return scenparsets

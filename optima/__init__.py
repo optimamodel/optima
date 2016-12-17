@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 This file performs all necessary imports, so Optima can be used either as
 
@@ -24,7 +25,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2016oct05 by cliffk
+Version: 2016nov03 by cliffk
 """
 
 optimalicense = '''
@@ -32,6 +33,8 @@ Optima HIV -- HIV optimization and analysis tool
 Copyright (C) 2016 by the Optima Consortium
 '''
 print(optimalicense)
+
+
 
 
 
@@ -67,7 +70,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, getvaliddata, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, dataindex, dataframe, defaultrepr, findinds, getdate, getvaliddata, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -82,6 +85,14 @@ from .dataio import loadobj, saveobj # CK: may want to tidy up
 from . import settings as _settings # Inter-project definitions, e.g. health states
 from .settings import Settings, convertlimits, gettvecdt
 
+## Generate results -- import first because parameters use results
+from . import results as _results
+from .results import Result, Resultset, Multiresultset, BOC, getresults
+
+## Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
+from . import parameters as _parameters
+from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, transtable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
+
 ## Create a blank spreadsheet
 try:
     from . import makespreadsheet as _makespreadsheet
@@ -91,14 +102,6 @@ except: _failed.append('makespreadsheet')
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
 from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
-
-## Generate results -- odd location, I know!
-from . import results as _results
-from .results import Result, Resultset, Multiresultset, BOC, getresults
-
-## Define the model parameters
-from . import parameters as _parameters
-from .parameters import Basepar, CCOpar, Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, transtable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
 
 ## Define and run the model
 from . import model as _model
@@ -122,7 +125,7 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 
 ## Plotting functions
 from . import plotting as _plotting 
-from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov
 
 
 #####################################################################################################################
@@ -140,7 +143,7 @@ try: from . import gui
 except: _failed.append('gui')
 
 ## Load simple function for displaying results
-try: from .gui import plotresults, pygui, plotpeople, plotallocations, plotpars
+try: from .gui import plotresults, pygui, plotpeople, plotpars
 except: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars')
 
 ## Handle the browser-based plotting -- relies on browser so might fail
@@ -166,6 +169,19 @@ import portfolio as _portfolio
 from .portfolio import Portfolio 
 
 
+# Finally, load defaults
+from . import defaults
+from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms, demo
+
+# And really finally, load other random things that don't matter
+try:
+    import migrate as _migrate
+    from .migrate import migrate, loadproj
+except:
+    _failed.append('migrate')
+
+
+# And really really finally, load geospatial functions (has to load projects, so has to come after migration)
 try:
     import geospatial as _geospatial
     from . import batchtools
@@ -175,19 +191,5 @@ try:
 except: 
     _failed.append('geospatial')
 
-
-
-
-# Finally, load defaults
-from . import defaults
-from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms, demo
-
-# And really finally, load other random things that don't matter
-try:
-    from . import migrations
-    from .migrations.migrate import migrate
-except:
-    _failed.append('migrations')
-    
 
 if not len(_failed): del _failed # If it's empty, don't bother keeping it

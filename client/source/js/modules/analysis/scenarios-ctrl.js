@@ -5,18 +5,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('AnalysisScenariosController', function (
       $scope, $http, $modal, info, progsetsResponse, parsetResponse,
-      scenariosResponse, toastr) {
+      scenariosResponse, modalService, toastr) {
 
     function initialize() {
       $scope.project = info.data;
       $scope.parsets = parsetResponse.data.parsets;
       $scope.progsets = progsetsResponse.data.progsets;
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+      $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
+      $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
       $scope.years = scenariosResponse.data.years;
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.isOptimizable = $scope.project.isOptimizable;
-      $scope.isMissingProgramSet = $scope.project.nProgram == 0;
+      $scope.isMissingProgset = $scope.project.nProgram == 0;
       loadScenarios(scenariosResponse.data.scenarios);
+      $scope.graphScenarios(false);
     }
 
     function loadScenarios(scenarios) {
@@ -27,25 +30,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     $scope.saveScenarios = function(scenarios, successMsg) {
+      delete $scope.state.graphs;
       console.log("saving scenarios", scenarios);
-      $http.put(
-        '/api/project/' + $scope.project.id + '/scenarios',
-        {'scenarios': scenarios })
-      .success(function (response) {
-        loadScenarios(response.scenarios);
-        if (successMsg) {
-          toastr.success(successMsg)
-        }
-      });
+      $http
+        .put(
+          '/api/project/' + $scope.project.id + '/scenarios',
+          {'scenarios': scenarios })
+        .success(function (response) {
+          loadScenarios(response.scenarios);
+          if (successMsg) {
+            toastr.success(successMsg)
+          }
+        });
     };
 
-    $scope.runScenarios = function () {
-      $scope.graphs = {};
-      $http.get(
-        '/api/project/' + $scope.project.id + '/scenarios/results')
-      .success(function (data) {
-        $scope.graphs = data.graphs;
-      });
+    $scope.graphScenarios = function(isRun) {
+      if (_.isUndefined(isRun)) {
+        isRun = false;
+      }
+      delete $scope.graphs;
+      $http
+        .post(
+          '/api/project/' + $scope.project.id + '/scenarios/results',
+          {isRun: isRun})
+        .success(function (data) {
+          $scope.state.graphs = data.graphs;
+        });
     };
 
     $scope.isRunnable = function () {
@@ -81,7 +91,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           scenario: function () { return angular.copy(scenario); },
           parsets: function () { return $scope.parsets; },
           progsets: function () { return $scope.progsets; },
-          ykeys: function () { return $scope.parametersByParsetId; },
+          parsByIdAndYear: function () { return $scope.parametersByParsetId; },
+          budgetsByProgsetId: function() { return $scope.budgetsByProgsetId; },
+          coveragesByParsetIdyProgsetId: function() { return $scope.defaultCoveragesByParsetIdyProgsetId; },
           years: function() { return $scope.years }
         }
       });
@@ -92,10 +104,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     /**
-     * Function opens a model in different modes
+     * Opens a scenario model in different modes
      * @param {string} action: 'add', 'edit' 'delete'
      */
     $scope.openModal = function (scenario, action, $event) {
+
       if ($event) {
         $event.preventDefault();
       }
@@ -119,26 +132,27 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         return openScenarioModal(scenario)
           .result
-          .then(
-            function (scenario) {
-              newScenarios[iScenario] = scenario;
-              newScenarios[iScenario].active = true;
-              $scope.saveScenarios(newScenarios, "Saved changes");
-            });
+          .then(function(scenario) {
+            newScenarios[iScenario] = scenario;
+            newScenarios[iScenario].active = true;
+            $scope.saveScenarios(newScenarios, "Saved changes");
+          });
 
       } else if (action === 'copy') {
 
         var newScenario = deepCopyJson(scenario);
-        newScenario.name = scenario.name + ' Copy';
+        var otherNames = _.pluck($scope.scenarios, 'name');
+        newScenario.name = modalService.getUniqueName(
+          scenario.name, otherNames);
         newScenario.id = null;
         newScenarios.push(newScenario);
         $scope.saveScenarios(newScenarios, "Copied scenario");
 
       } else if (action === 'delete') {
 
-        var scenario = _.findWhere(newScenarios, { id: scenario.id });
+        var deleteScenario = _.findWhere(newScenarios, { id: scenario.id });
         $scope.saveScenarios(
-            _.without(newScenarios, scenario), "Deleted scenario");
+            _.without(newScenarios, deleteScenario), "Deleted scenario");
 
       }
     };

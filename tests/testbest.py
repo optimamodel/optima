@@ -2,32 +2,34 @@
 Create a good test project -- WARNING, this should be combined with testworkflow,
 which is an outdated version of the same thing!
 
-Version: 2016oct05
+Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj, __file__ as optimapath # analysis:ignore
-import os
-
-# Figure out the path 
-parentdir = optimapath.split(os.sep)[:-2] # exclude /optima/__init__.pyc
-testdir = parentdir + ['tests'+os.sep]
-spreadsheetpath = os.sep.join(testdir)
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 
 ## Options
+standardrun = 1
+migrations = 0 # Whether or not to try migrating an old project
 autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 0
-runscenarios = 1 # Run scenarios
+runscenarios = 0 # Run scenarios
 optimize = 0
 dosave = 1
 filename = 'best.prj'
-programdatafile = 'concentratedprogramdata.xlsx'
 ind = -1 # Default index
 
-P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
-R = P.progsets[0]
+## Make or load&migrate a project
+if standardrun:
+    P = defaults.defaultproject('best',dorun=False)
+    P.runsim(debug=True)
+    P.results[-1].export()
 
-R.loadspreadsheet(spreadsheetpath+programdatafile)    
+if migrations:
+    oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_0160816_reconciled.prj'
+    P = loadproj(filename=oldprojectfile)
+    P.runsim()
+    P.makespreadsheet('newspreadsheet.xlsx')
 
 ## Calibration
 if autocalib: 

@@ -88,7 +88,7 @@ if 'parametercheck' in tests:
     
     parsonly = set([
     'actscas', 'actscom', 'actsinj', 'actsreg', 
-    'condcas', 'condcom', 'condreg', 
+    'condcas', 'condcom', 'condreg', 'numcirc',
     'female', 'force', 'inhomo', 'initprev', 
     'propdx','propcare','proptx','propsupp','proppmtct',
     'injects', 'label', 'male', 'popkeys', 'sexworker', 'rawtransit'])
@@ -150,7 +150,7 @@ if 'saveload' in tests:
     t = tic()
     print('Running save/load test...')
     
-    from optima import Project, saveobj, loadobj
+    from optima import Project, saveobj, loadproj
     from os import remove
     filename = 'testproject.prj'
     
@@ -159,7 +159,7 @@ if 'saveload' in tests:
     saveobj(filename, P)
     
     print('  Checking loading...')
-    Q = loadobj(filename)
+    Q = loadproj(filename)
     
     print('Cleaning up...')
     remove(filename)

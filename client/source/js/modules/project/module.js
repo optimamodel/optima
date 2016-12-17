@@ -1,25 +1,21 @@
-/**
- * ProjectOpenController can set a project as active
- * and allows to remove and create new projects.
- */
-
-define([
-  'angular',
-  'ui.router',
-  '../common/active-project-service',
-  '../common/update-checkbox-on-click-directive',
-  '../common/file-upload-service'
-], function (angular) {
+define(['angular', 'ui.router', '../common/active-project-service'], function (angular) {
   'use strict';
 
-  return angular.module('app.project', [
-    'app.active-project',
-    'app.common.update-checkbox-on-click',
-    'app.common.file-upload',
-    'ui.router'
-  ])
+  return angular.module('app.project', ['app.active-project', 'ui.router'])
+
     .config(function ($stateProvider) {
+
       $stateProvider
+        .state('home', {
+          url: '/',
+          templateUrl: 'js/modules/project/manage-projects.html',
+          controller: 'ProjectOpenController',
+          resolve: {
+            projects: function (projectApi) {
+              return projectApi.getProjectList();
+            }
+          }
+        })
         .state('project', {
           url: '/project',
           abstract: true,
@@ -30,14 +26,14 @@ define([
           templateUrl: 'js/modules/project/create-or-edit.html',
           controller: 'ProjectCreateOrEditController',
           resolve: {
-            populations: function(projectApiService) {
-              return projectApiService.getPopulations();
+            populations: function(projectApi) {
+              return projectApi.getPopulations();
             },
             info: function() {
               return undefined;
             },
-            projects: function (projectApiService) {
-              return projectApiService.getProjectList();
+            projects: function (projectApi) {
+              return projectApi.getProjectList();
             }
           }
         })
@@ -46,39 +42,16 @@ define([
           templateUrl: 'js/modules/project/create-or-edit.html',
           controller: 'ProjectCreateOrEditController',
           resolve: {
-            populations: function(projectApiService) {
-              return projectApiService.getPopulations();
+            populations: function(projectApi) {
+              return projectApi.getPopulations();
             },
-            info: function (projectApiService) {
-              return projectApiService.getActiveProject();
+            info: function (projectApi) {
+              return projectApi.getActiveProject();
             },
-            projects: function (projectApiService) {
-              return projectApiService.getProjectList();
+            projects: function (projectApi) {
+              return projectApi.getProjectList();
             }
           }
         })
-        .state('project.upload', {
-          url: '/upload',
-          templateUrl: 'js/modules/project/upload.html',
-          controller: 'ProjectUploadController',
-          resolve: {
-            projects: function (projectApiService) {
-              return projectApiService.getProjectList();
-            }
-          }
-        })
-        .state('project.economicdata', {
-          url: '/economic-data',
-          templateUrl: 'js/modules/project/economic-data.html',
-          controller: 'ProjectEconomicDataController',
-          resolve: {
-            info: function (projectApiService) {
-              return projectApiService.getActiveProject();
-            },
-            projects: function (projectApiService) {
-              return projectApiService.getProjectList();
-            }
-          }
-        });
     });
 });

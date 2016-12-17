@@ -4,14 +4,14 @@ Test to see if the calculation of people has changed.
 Version: 2016
 """
 
-from numpy import shape, array, nan
+from numpy import shape, array
 import optima as op
 import os
 
 
 refresh = 1 # Creates defaultpeople.ppl rather than copares
 eps = 1e-3 # Don't expect a totally exact match
-filename = '2016jul16.npy'
+filename = '2016nov21.npy'
 
 P = op.defaults.defaultproject('best')
 P.results = op.odict() # Clear
