@@ -60,7 +60,7 @@ if 'minimizeoutcomes' in tests:
     P = defaults.defaultproject('best') 
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
-    objectives['budget'] *= 0.5
+    objectives['budgetscale'] = [.5, 1., 1.5]
     constraints = defaultconstraints(P) # This or P.progsets[0]
     P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10, ccsample='random')
     
