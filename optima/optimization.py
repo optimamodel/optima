@@ -115,6 +115,7 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
         objectives['start'] = 2017 # "Year to begin optimization"
         objectives['end'] = 2030 # "Year to project outcomes to"
         objectives['budget'] = defaultbudget # "Annual budget to optimize"
+        objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"
         objectives['deathweight'] = 5 # "Relative weight per death"
         objectives['inciweight'] = 1 # "Relative weight per new infection"
         objectives['deathfrac'] = None # Fraction of deaths to get to
