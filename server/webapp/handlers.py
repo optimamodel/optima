@@ -782,8 +782,19 @@ class ScenarioSimulationGraphs(Resource):
 
     @swagger.operation(summary='Run scenarios and returns the graphs')
     def post(self, project_id):
-        is_run = get_post_data_json().get('isRun', False)
-        return dataio.make_scenarios_graphs(project_id, is_run)
+        """
+        post-json:
+            isRun: True or False
+            start: int -or- None
+            end: int -or- None
+        """
+        args = get_post_data_json()
+        print("> Get scenario graphs", args)
+        return dataio.make_scenarios_graphs(
+            project_id,
+            is_run=args.get('isRun', False),
+            start=args.get('start', None),
+            end=args.get('end', None))
 
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
 
