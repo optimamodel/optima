@@ -301,7 +301,7 @@ def launch_autofit(project_id, parset_id, maxtime):
 
 
 @celery_instance.task(bind=True)
-def run_optimization(self, project_id, optimization_id, maxtime):
+def run_optimization(self, project_id, optimization_id, maxtime, start, end):
 
     status = 'started'
     error_text = ""

@@ -842,7 +842,8 @@ class OptimizationCalculation(Resource):
         """
         data-json: maxtime: time to run in int
         """
-        maxtime = get_post_data_json().get('maxtime')
+        args = get_post_data_json()
+        maxtime = args.get('maxtime')
         return server.webapp.tasks.launch_optimization(project_id, optimization_id, int(maxtime)), 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
