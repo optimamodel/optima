@@ -20,8 +20,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.isOptimizable = $scope.project.isOptimizable;
       $scope.isMissingProgset = $scope.project.nProgram == 0;
       $scope.state = {
-        start: null,
-        end: null,
+        start: $scope.project.startYear,
+        end: $scope.project.endYear,
       };
       loadScenarios(scenariosResponse.data.scenarios);
       $scope.graphScenarios(false);
@@ -64,6 +64,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           })
         .success(function (data) {
           $scope.state.graphs = data.graphs;
+          toastr.success('loaded graphs');
         });
     };
 
