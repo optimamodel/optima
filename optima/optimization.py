@@ -451,7 +451,6 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
-    totalbudget = dcp(optim.objectives['budget'])
     if overwritebudget != None:
         origbudget = dcp(overwritebudget)
     else:
@@ -461,26 +460,36 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
 
-    ## Constrain the budget
-    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-
-    ## Actually run the optimization
-    # for ind in inds: # WARNING, kludgy -- should be a loop!
+    ## Get parset
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
     try: thisparset.pars = [thisparset.pars[inds[0]]] # Turn into a list -- WARNING
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
-    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose}
-    budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
 
-    ## Tidy up -- WARNING, need to think of a way to process multiple inds
-    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-    orig = objectivecalc(constrainedbudgetvec, outputresults=True, debug=False, **args)
-    new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
-    orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
-    new.name = 'Optimal allocation'
-    tmpresults = [orig, new]
+    ## Calculate original things
+    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=dcp(optim.objectives['budget']), budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':dcp(optim.objectives['budget']), 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose}
+    orig = objectivecalc(constrainedbudgetvecorig, outputresults=True, debug=False, **args)
+    orig.name = 'Current allocation'
+    tmpresults = [orig]
 
-    # Output
+    ## Loop over budget scale factors
+    for sf in optim.objectives['budgetscale']:
+
+        ## Get the total budget & constrain it 
+        totalbudget = dcp(optim.objectives['budget'])*sf
+        constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+
+        ## Actually run the optimization
+        budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
+
+        ## Tidy up 
+        constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+        new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        new.name = 'Optimal allocation (%.0f%% budget)' % (sf*100.)
+        tmpresults.append(new)
+
+    ## Output
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
