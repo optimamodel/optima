@@ -281,6 +281,7 @@ def addoptimscaling(project, **kwargs):
     """
     Migration between Optima 2.1.7 and 2.1.8.
     """
+    ## Bug fixes from previous migrations
     project.settings.ninf     = project.settings.nhealth - project.settings.nsus
     spacing = arange(project.settings.ninf)*project.settings.ncd4 
     project.settings.acute = 2 + spacing
@@ -290,8 +291,6 @@ def addoptimscaling(project, **kwargs):
     project.settings.gt50  = 6 + spacing
     project.settings.lt50  = 7 + spacing
     project.settings.aidsind = project.settings.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
-
-    # Combined states
     project.settings.sus            = cat([project.settings.susreg, project.settings.progcirc]) # All uninfected
     project.settings.alldx          = cat([project.settings.dx, project.settings.care, project.settings.usvl, project.settings.svl, project.settings.lost]) # All people diagnosed
     project.settings.allcare        = cat([         project.settings.care, project.settings.usvl, project.settings.svl]) # All people CURRENTLY in care
@@ -304,6 +303,7 @@ def addoptimscaling(project, **kwargs):
     if not hasattr(project.settings, 'allaids'):
         project.settings.allaids = cat([project.settings.lt50, project.settings.gt50]) # All people with AIDS
 
+    ## New attribute for new feature
     for optim in project.optims.values():
         if 'budgetscale' not in optim.objectives.keys():
             optim.objectives['budgetscale'] = [1.]
