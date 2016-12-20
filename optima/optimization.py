@@ -469,7 +469,7 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=dcp(optim.objectives['budget']), budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':dcp(optim.objectives['budget']), 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose}
     orig = objectivecalc(constrainedbudgetvecorig, outputresults=True, debug=False, **args)
-    orig.name = 'Current allocation'
+    orig.name = 'Current'
     tmpresults = [orig]
 
     ## Loop over budget scale factors
@@ -482,11 +482,11 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
         ## Actually run the optimization
         budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
 
-        ## Tidy up 
+        ## Calculate outcomes
         constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+        args['totalbudget'] = totalbudget
         new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-        new.name = 'Optimal allocation (%.0f%% budget)' % (sf*100.)
+        new.name = 'Optimal (%.0f%% budget)' % (sf*100.)
         tmpresults.append(new)
 
     ## Output
