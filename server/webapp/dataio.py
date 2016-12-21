@@ -1095,6 +1095,9 @@ def load_scenario_summaries(project_id):
         'years': parse.get_project_years(project)
     }
 
+def load_startval_for_parameter(project_id, parset_id, par_short, pop, year):
+    project = load_project(project_id)
+    return parse.get_startval_for_parameter(project, parset_id, par_short, pop, year)
 
 ## OPTIMIZATION
 
