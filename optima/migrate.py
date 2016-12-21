@@ -295,11 +295,6 @@ def fixsettings(project, **kwargs):
     for setting in settingslist: 
         setattr(project.settings, setting, oldsettings[setting]) 
     
-    ## New attribute for new feature
-    for optim in project.optims.values():
-        if 'budgetscale' not in optim.objectives.keys():
-            optim.objectives['budgetscale'] = [1.]
-
     project.version = "2.1.8"
     return None
 
