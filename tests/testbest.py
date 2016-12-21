@@ -22,6 +22,9 @@ ind = -1 # Default index
 ## Make or load&migrate a project
 if standardrun:
     P = defaults.defaultproject('best',dorun=False)
+    from numpy import array, nan
+    P.pars()['proptx'].t[0]= array([0.,2020., 2030.])
+    P.pars()['proptx'].y[0]= array([nan,.9,.95])
     P.runsim(debug=True)
     P.results[-1].export()
 
