@@ -277,47 +277,46 @@ def adddataend(project, **kwargs):
     return None
 
 
-def addoptimscaling(project, **kwargs):
+def fixsettings(project, **kwargs):
     """
     Migration between Optima 2.1.7 and 2.1.8.
     """
-    ## Bug fixes from previous migrations
-    project.settings.ninf     = project.settings.nhealth - project.settings.nsus
-    spacing = arange(project.settings.ninf)*project.settings.ncd4 
-    project.settings.acute = 2 + spacing
-    project.settings.gt500 = 3 + spacing
-    project.settings.gt350 = 4 + spacing
-    project.settings.gt200 = 5 + spacing
-    project.settings.gt50  = 6 + spacing
-    project.settings.lt50  = 7 + spacing
-    project.settings.aidsind = project.settings.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
-    project.settings.sus            = cat([project.settings.susreg, project.settings.progcirc]) # All uninfected
-    project.settings.alldx          = cat([project.settings.dx, project.settings.care, project.settings.usvl, project.settings.svl, project.settings.lost]) # All people diagnosed
-    project.settings.allcare        = cat([         project.settings.care, project.settings.usvl, project.settings.svl]) # All people CURRENTLY in care
-    project.settings.allevercare    = cat([         project.settings.care, project.settings.usvl, project.settings.svl, project.settings.lost]) # All people EVER in care
-    project.settings.alltx          = cat([                    project.settings.usvl, project.settings.svl]) # All people on treatment
-    project.settings.allplhiv       = cat([project.settings.undx, project.settings.alldx]) # All PLHIV
-    project.settings.allaids        = cat([project.settings.lt50, project.settings.gt50]) # All people with AIDS
-    project.settings.allstates      = cat([project.settings.sus, project.settings.allplhiv]) # All states
-    project.settings.nstates        = len(project.settings.allstates) # Total number of states
-    if not hasattr(project.settings, 'allaids'):
-        project.settings.allaids = cat([project.settings.lt50, project.settings.gt50]) # All people with AIDS
+    ## Make sure settings is up to date
+    settingslist = ['dt', 'start', 'now', 'dataend', 'safetymargin', 'eps', 'forcepopsize', 'transnorm'] # Keep these from the old settings object
+    oldsettings = {}
+    
+    # Pull out original setting
+    for setting in settingslist: 
+        oldsettings[setting] = getattr(project.settings, setting) 
+    
+    project.settings = op.Settings() # Completely refresh
+    
+    # Replace with original settings
+    for setting in settingslist: 
+        setattr(project.settings, setting, oldsettings[setting]) 
+    
+    project.version = "2.1.8"
+    return None
 
+
+def addoptimscaling(project, **kwargs):
+    """
+    Migration between Optima 2.1.8 and 2.1.9.
+    """
     ## New attribute for new feature
     for optim in project.optims.values():
         if 'budgetscale' not in optim.objectives.keys():
             optim.objectives['budgetscale'] = [1.]
 
-    project.version = "2.1.8"
+    project.version = "2.1.9"
     return None
-
 
 
 
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.7 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.9 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -340,8 +339,9 @@ migrations = {
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
-'2.1.7': addoptimscaling,
-#'2.1.8': redoprograms,
+'2.1.7': fixsettings,
+'2.1.8': addoptimscaling,
+#'2.2': redoprograms,
 }
 
 
