@@ -450,7 +450,8 @@ def get_startval_for_parameter(project, parset_id, par_short, pop, year):
             continue
         if par.short != par_short:
             continue
-        pop = force_tuple_list(pop)
+        if isinstance(pop, list):
+            pop = tuple(pop)
         print(">> Compare pops %s -> %s" % (pop, par.y.keys()))
         for par_pop in par.y.keys():
             if par_pop == pop:
