@@ -25,6 +25,9 @@ if standardrun:
     from numpy import array, nan
     P.pars()['proptx'].t[0]= array([0.,2020., 2030.])
     P.pars()['proptx'].y[0]= array([nan,.9,.95])
+    P.pars()['fixpropdx'].y = 2014.
+    P.pars()['propdx'].t[0]= array([0.,2020., 2030.])
+    P.pars()['propdx'].y[0]= array([nan,.9,.95])
     P.runsim(debug=True)
     P.results[-1].export()
 
