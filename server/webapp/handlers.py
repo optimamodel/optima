@@ -310,19 +310,9 @@ class ProjectDataSpreadsheet(Resource):
 
     @swagger.operation(summary='Downloads template/uploaded data spreadsheet')
     def get(self, project_id):
-        fname, binary = dataio.load_data_spreadsheet_binary(project_id)
-        if binary is not None:
-            print("> Download previously-uploaded xls as %s" % fname)
-            return Response(
-                binary,
-                mimetype='application/octet-stream',
-                headers={
-                    'Content-Disposition': 'attachment;filename=' + fname
-                })
-        else:
-            dirname, basename = dataio.load_template_data_spreadsheet(project_id)
-            print("> Template created: %s" % basename)
-            return helpers.send_from_directory(dirname, basename, as_attachment=True)
+        dirname, basename = dataio.load_data_spreadsheet(project_id, True)
+        print("> Template created: %s" % basename)
+        return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
     @swagger.operation(summary='Upload completed data spreadsheet')
     def post(self, project_id):
@@ -336,6 +326,18 @@ class ProjectDataSpreadsheet(Resource):
         return '"%s" was successfully uploaded to project "%s"' % (basename, project_name)
 
 api.add_resource(ProjectDataSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+
+class SpreadsheetDownload(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download spreadsheet data')
+    def get(self, project_id):
+        dirname, basename = dataio.load_data_spreadsheet(project_id, False)
+        print("> Data xls created: %s" % basename)
+        return helpers.send_from_directory(dirname, basename, as_attachment=True)
+
+api.add_resource(SpreadsheetDownload, '/api/project/<uuid:project_id>/downloaddata')
+
 
 
 # Portfolios

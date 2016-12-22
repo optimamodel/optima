@@ -1161,18 +1161,26 @@ def load_data_spreadsheet_binary(project_id):
     return None, None
 
 
-def load_template_data_spreadsheet(project_id):
+def load_data_spreadsheet(project_id, is_template=True):
     """
     Returns (dirname, basename) of the the template data spreadsheet
     """
     project = load_project(project_id)
     fname = secure_filename('{}.xlsx'.format(project.name))
     server_fname = templatepath(fname)
+    data = None
+    datastart = project.settings.start
+    dataend = project.settings.end
+    if not is_template:
+        data = project.data
+        datastart = int(project.data["years"][0])
+        dataend = int(project.data["years"][-1])
     op.makespreadsheet(
         server_fname,
         pops=parse.get_populations_from_project(project),
-        datastart=int(project.data["years"][0]),
-        dataend=int(project.data["years"][-1]))
+        datastart=datastart,
+        dataend=dataend,
+        data=data)
     return upload_dir_user(TEMPLATEDIR), fname
 
 

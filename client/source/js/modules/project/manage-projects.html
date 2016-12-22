@@ -65,6 +65,7 @@
           <span ng-show="sortType == 'dataUploadTime' && sortReverse" class="fa fa-caret-up"></span>
           <span ng-show="sortType != 'dataUploadTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
+        <th>Data spreadsheet (xlsx)</th>
         <th colspan="8">Actions</th>
       </tr>
       </thead>
@@ -91,7 +92,10 @@
         <td style="white-space: nowrap">
           <button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>
           <button class="btn" ng-click="workbook(project.name, project.id)">Download template xls</button>
+          <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download xls</button>
           <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload xls</button>
+        </td>
+        <td>
           <i
             ng-click="copy(project.name, project.id)"
             class="fa fa-copy"
@@ -107,7 +111,7 @@
             style="margin-left: 0.5em">
           </i>
           <i
-            ng-click="getData(project.name, project.id)"
+            ng-click="downloadProject(project.name, project.id)"
             class="fa fa-download"
             tp-text="Download" tooltip tp-class="tooltip"
             tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
