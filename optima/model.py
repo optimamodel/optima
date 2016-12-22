@@ -746,9 +746,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
                 # Calculations to fix proportions from a particular year, if requested
                 if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
-#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
-                    if isnan(prop[t+1:]).any(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
+                    if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
                         prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])
                     else: # If not, we will just use this value from now on

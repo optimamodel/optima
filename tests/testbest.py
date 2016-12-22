@@ -8,8 +8,8 @@ Version: 2016feb08
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 
 ## Options
-standardrun = 0
-migrations = 1 # Whether or not to try migrating an old project
+standardrun = 1
+migrations = 0 # Whether or not to try migrating an old project
 autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 0
@@ -22,12 +22,12 @@ ind = -1 # Default index
 ## Make or load&migrate a project
 if standardrun:
     P = defaults.defaultproject('best',dorun=False)
-    from numpy import array, nan
-    P.pars()['proptx'].t[0]= array([0.,2020., 2030.])
-    P.pars()['proptx'].y[0]= array([nan,.9,.95])
-    P.pars()['fixpropdx'].y = 2014.
-    P.pars()['propdx'].t[0]= array([0.,2020., 2030.])
-    P.pars()['propdx'].y[0]= array([nan,.9,.95])
+#    from numpy import array, nan
+#    P.pars()['proptx'].t[0]= array([0.,2020., 2030.])
+#    P.pars()['proptx'].y[0]= array([nan,.9,.95])
+#    P.pars()['fixpropdx'].y = 2014.
+#    P.pars()['propdx'].t[0]= array([0.,2020., 2030.])
+#    P.pars()['propdx'].y[0]= array([nan,.9,.95])
     P.runsim(debug=True)
     P.results[-1].export()
 

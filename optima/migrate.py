@@ -316,9 +316,41 @@ def addcosttx(project, **kwargs):
     kwargs['coverage'] = None
     kwargs['auto'] = 'no'
     kwargs['fittable'] = 'no'
+    kwargs['limits'] = (0, 'maxpopsize')
     kwargs['t'] = op.odict([('tot',array([2010.]))])
     kwargs['y'] = op.odict([('tot',array([100.]))]) # Setting to a non-trivial placeholder value
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropdx'
+    copyfrom = 'deathacute'
+    kwargs['name'] = 'Year to fix PLHIV aware of their status'
+    kwargs['dataname'] = 'Year to fix PLHIV aware of their status'
+    kwargs['datashort'] = 'fixpropdx'
+    kwargs['y'] = nan
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropcare'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix diagnosed PLHIV in care'
+    kwargs['dataname'] = 'Year to fix diagnosed PLHIV in care'
+    kwargs['datashort'] = 'fixpropcare'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixproptx'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix PLHIV in care on treatment'
+    kwargs['dataname'] = 'Year to fix PLHIV in care on treatment'
+    kwargs['datashort'] = 'fixproptx'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropsupp'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix people on ART with viral suppression'
+    kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
+    kwargs['datashort'] = 'fixpropsupp'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+
     project.version = "2.1.9"
     return None
 #Unit cost of treatment	Unit cost of treatment	costtx	costtx	(0, 'maxpopsize')	tot	timepar	no	no	0	None	0	None	1
