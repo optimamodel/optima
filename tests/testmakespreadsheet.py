@@ -11,7 +11,7 @@ Version: 2016feb06 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makespreadsheet',
-'makeprogramspreadsheet',
+#'makeprogramspreadsheet',
 'checkexisting',
 'makespreadsheetwithdata',
 #'unittests',

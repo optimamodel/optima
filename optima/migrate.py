@@ -299,6 +299,27 @@ def fixsettings(project, **kwargs):
     return None
 
 
+def addcosttx(project, **kwargs):
+    """
+    Migration between Optima 2.1.8 and 2.1.9.
+    """
+    short = 'costtx'
+    copyfrom = 'numtx'
+    kwargs['by'] = 'tot'
+    kwargs['name'] = 'Unit cost of treatment'
+    kwargs['dataname'] = 'Unit cost of treatment'
+    kwargs['datashort'] = 'costtx'
+    kwargs['coverage'] = None
+    kwargs['auto'] = 'no'
+    kwargs['fittable'] = 'no'
+    kwargs['t'] = op.odict([('tot',array([2010.]))])
+    kwargs['y'] = op.odict([('tot',array([100.]))]) # Setting to a non-trivial placeholder value
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    project.version = "2.1.9"
+    return None
+#Unit cost of treatment	Unit cost of treatment	costtx	costtx	(0, 'maxpopsize')	tot	timepar	no	no	0	None	0	None	1
+
+
 
 
 
@@ -328,6 +349,7 @@ migrations = {
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
 '2.1.7': fixsettings,
+'2.1.8': addcosttx,
 #'2.1.8': redoprograms,
 }
 
