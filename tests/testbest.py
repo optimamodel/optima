@@ -8,8 +8,8 @@ Version: 2016feb08
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 
 ## Options
-standardrun = 1
-migrations = 0 # Whether or not to try migrating an old project
+standardrun = 0
+migrations = 1 # Whether or not to try migrating an old project
 autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 0
@@ -26,7 +26,7 @@ if standardrun:
     P.results[-1].export()
 
 if migrations:
-    oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_0160816_reconciled.prj'
+    oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Optima HIV/Applications/!Other Applications/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_20161201_reconciled.prj'
     P = loadproj(filename=oldprojectfile)
     P.runsim()
     P.makespreadsheet('newspreadsheet.xlsx')
