@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, concatenate as cat, array
+from numpy import nan, concatenate as cat, array, arange
 
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
@@ -277,13 +277,35 @@ def adddataend(project, **kwargs):
     return None
 
 
+def fixsettings(project, **kwargs):
+    """
+    Migration between Optima 2.1.7 and 2.1.8.
+    """
+    ## Make sure settings is up to date
+    settingslist = ['dt', 'start', 'now', 'dataend', 'safetymargin', 'eps', 'forcepopsize', 'transnorm'] # Keep these from the old settings object
+    oldsettings = {}
+    
+    # Pull out original setting
+    for setting in settingslist: 
+        try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
+        except: pass # But don't worry if they don't exist
+    
+    project.settings = op.Settings() # Completely refresh
+    
+    # Replace with original settings
+    for settingkey,settingval in oldsettings.items(): 
+        setattr(project.settings, settingkey, settingval) 
+    
+    project.version = "2.1.8"
+    return None
+
 
 
 
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.7 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.8 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -306,7 +328,8 @@ migrations = {
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
-#'2.1.7': redoprograms,
+'2.1.7': fixsettings,
+#'2.1.8': redoprograms,
 }
 
 
