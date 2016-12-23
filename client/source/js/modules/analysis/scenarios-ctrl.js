@@ -9,6 +9,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initialize() {
       $scope.project = info.data;
+      $scope.years = _.range($scope.project.startYear, $scope.project.endYear+1);
       $scope.parsets = parsetResponse.data.parsets;
       $scope.progsets = progsetsResponse.data.progsets;
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
@@ -18,6 +19,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.isOptimizable = $scope.project.isOptimizable;
       $scope.isMissingProgset = $scope.project.nProgram == 0;
+      $scope.state = {
+        start: $scope.project.startYear,
+        end: $scope.project.endYear,
+      };
       loadScenarios(scenariosResponse.data.scenarios);
       $scope.graphScenarios(false);
     }
@@ -52,9 +57,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http
         .post(
           '/api/project/' + $scope.project.id + '/scenarios/results',
-          {isRun: isRun})
+          {
+            isRun: isRun,
+            start: $scope.state.start,
+            end: $scope.state.end
+          })
         .success(function (data) {
           $scope.state.graphs = data.graphs;
+          toastr.success('loaded graphs');
         });
     };
 
