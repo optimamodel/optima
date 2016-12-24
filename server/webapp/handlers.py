@@ -799,6 +799,30 @@ class ScenarioSimulationGraphs(Resource):
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
 
 
+class DefaultParStartVal(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Get default value for parameter')
+    def post(self):
+        """
+        post-json:
+          projectId: project.id,
+          parsetId: $scope.scenario.parset_id,
+          parShort: newScenPar.name,
+          pop: newScenPar.for,
+          year: newScenPar.startYear
+        """
+        args = get_post_data_json()
+        return dataio.load_startval_for_parameter(
+            args['projectId'],
+            args['parsetId'],
+            args['parShort'],
+            args['pop'],
+            args['year'])
+
+api.add_resource(DefaultParStartVal, '/api/startval')
+
+
 # OPTIMIZATIONS
 
 class Optimizations(Resource):

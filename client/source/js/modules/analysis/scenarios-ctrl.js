@@ -12,6 +12,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.years = _.range($scope.project.startYear, $scope.project.endYear+1);
       $scope.parsets = parsetResponse.data.parsets;
       $scope.progsets = progsetsResponse.data.progsets;
+      console.log("scenarios response", scenariosResponse.data);
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
       $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
       $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
@@ -97,11 +98,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         controller: controller,
         windowClass: 'fat-modal',
         resolve: {
+          project: function() { return $scope.project },
           scenarios: function () { return $scope.scenarios; },
           scenario: function () { return angular.copy(scenario); },
           parsets: function () { return $scope.parsets; },
           progsets: function () { return $scope.progsets; },
-          parsByIdAndYear: function () { return $scope.parametersByParsetId; },
+          parsByParsetId: function () { return $scope.parametersByParsetId; },
           budgetsByProgsetId: function() { return $scope.budgetsByProgsetId; },
           coveragesByParsetIdyProgsetId: function() { return $scope.defaultCoveragesByParsetIdyProgsetId; },
           years: function() { return $scope.years }
