@@ -898,10 +898,11 @@ def load_parset_graphs(
     result = load_result(project_id, parset_id, calculation_type)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
-        if startYear is not None and endYear is not None:
-            project.settings.start = startYear
-            project.settings.end = endYear
-        result = project.runsim(name=parset.name)
+        if startYear is None:
+            startYear = project.settings.start
+        if endYear is None:
+            endYear = project.settings.end
+        result = project.runsim(name=parset.name, start=startYear, end=endYear)
         result_record = update_or_create_result_record_by_id(
             result, project_id, parset_id, calculation_type)
         db.session.add(result_record)
@@ -1040,18 +1041,21 @@ def load_result_mpld3_graphs(result_id, which):
 ## SCENARIOS
 
 
-def make_scenarios_graphs(project_id, is_run=False):
+def make_scenarios_graphs(project_id, is_run=False, start=None, end=None):
     result = load_result(project_id, None, "scenarios")
     if result is None:
         if not is_run:
             print(">> No pre-calculated scenarios results found")
             return {}
+    if is_run:
         project = load_project(project_id)
         if len(project.scens) == 0:
             print(">> No scenarios in project")
             return {}
-        print(">> Run scenarios for project '%s'" % project_id)
-        project.runscenarios()
+        print(">> Run scenarios for project '%s' from %s to %s" % (
+            project_id, start, end))
+        # start=None, end=None -> does nothing
+        project.runscenarios(start=start, end=end)
         result = project.results[-1]
         record = update_or_create_result_record_by_id(
             result, project.uid, None, 'scenarios')
@@ -1091,6 +1095,9 @@ def load_scenario_summaries(project_id):
         'years': parse.get_project_years(project)
     }
 
+def load_startval_for_parameter(project_id, parset_id, par_short, pop, year):
+    project = load_project(project_id)
+    return parse.get_startval_for_parameter(project, parset_id, par_short, pop, year)
 
 ## OPTIMIZATION
 

@@ -286,18 +286,15 @@ def fixsettings(project, **kwargs):
     oldsettings = {}
     
     # Pull out original setting
-    updatesettingslist = []
     for setting in settingslist: 
-        if setting in oldsettings.keys():
-            oldsettings[setting] = getattr(project.settings, setting)
-            updatesettingslist.append(setting)
-            
+        try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
+        except: pass # But don't worry if they don't exist
     
     project.settings = op.Settings() # Completely refresh
     
     # Replace with original settings
-    for setting in updatesettingslist: 
-        setattr(project.settings, setting, oldsettings[setting]) 
+    for settingkey,settingval in oldsettings.items(): 
+        setattr(project.settings, settingkey, settingval) 
     
     project.version = "2.1.8"
     return None
