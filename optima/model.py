@@ -529,10 +529,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             else: printv(errormsg, 1, verbose)
             
         # Add these transition probabilities to the main array - WARNING, UGLY, FIX
-        thistransit[susreg][prob][susreg] = 1. - infections_to[0]
-        thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] = infections_to[0]
-        thistransit[progcirc][prob][susreg] = 1. - infections_to[1]
-        thistransit[progcirc][prob][thistransit[susreg][to].index(undx[0])] = infections_to[1]
+        thistransit[susreg[0]][prob][susreg] = 1. - infections_to[0]
+        thistransit[susreg[0]][prob][thistransit[susreg][to].index(undx[0])] = array([infections_to[0]])
+        thistransit[progcirc[0]][prob][susreg] = 1. - infections_to[1]
+        thistransit[progcirc[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = array([infections_to[1]])
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
 
         ##############################################################################################################
