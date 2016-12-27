@@ -5,7 +5,7 @@ Version: 2016apr11
 """
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber, promotetoarray # Utilities
 from numpy import zeros, arange, maximum, array, inf
 
 # Define global parameters that shouldn't really matter
@@ -473,10 +473,11 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     tmpresults = [orig]
 
     ## Loop over budget scale factors
-    for sf in optim.objectives['budgetscale']:
+    scalefactors = promotetoarray(optim.objectives['budgetscale'])
+    for scalefactor in scalefactors:  # Ensure it's a list
 
         ## Get the total budget & constrain it 
-        totalbudget = dcp(optim.objectives['budget'])*sf
+        totalbudget = dcp(optim.objectives['budget'])*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
 
         ## Actually run the optimization
@@ -486,11 +487,12 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
         constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
         new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
-        new.name = 'Optimal (%.0f%% budget)' % (sf*100.)
+        if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
+        else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
         tmpresults.append(new)
 
     ## Output
-    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
+    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
     optim.resultsref = multires.name # Store the reference for this result
