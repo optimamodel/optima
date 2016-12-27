@@ -749,6 +749,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
                     if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
+                        print('hi % i' % t)
                         prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])
                     else: # If not, we will just use this value from now on
                         for i in range(t+1,npts): prop[i] = calcprop
