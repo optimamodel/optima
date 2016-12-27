@@ -27,9 +27,12 @@ if standardrun:
 
 if migrations:
     oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Optima HIV/Applications/!Other Applications/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_20161201_reconciled.prj'
-    P = loadproj(filename=oldprojectfile)
-    P.runsim()
-    P.makespreadsheet('newspreadsheet.xlsx')
+    try:
+        P = loadproj(filename=oldprojectfile)
+        P.runsim()
+        P.makespreadsheet('newspreadsheet.xlsx')
+    except:
+        print('Could not load old project file, probably because you are not Robyn, so unable to test migrations')
 
 ## Calibration
 if autocalib: 
