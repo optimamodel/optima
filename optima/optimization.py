@@ -473,8 +473,8 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     tmpresults = [orig]
 
     ## Loop over budget scale factors
-    scalefactors = promotetoarray(optim.objectives['budgetscale'])
-    for scalefactor in scalefactors:  # Ensure it's a list
+    scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
+    for scalefactor in scalefactors: 
 
         ## Get the total budget & constrain it 
         totalbudget = dcp(optim.objectives['budget'])*scalefactor
