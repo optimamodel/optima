@@ -21,7 +21,7 @@ tests = [
 #'makeportfolio',
 #'generateBOCs',
 #'rungui',
-'runbackend'
+#'runbackend'
 ]
 
 ##############################################################################
