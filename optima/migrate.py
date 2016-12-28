@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, concatenate as cat, array, arange
+from numpy import nan, concatenate as cat, array
 
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
@@ -300,10 +300,22 @@ def fixsettings(project, **kwargs):
     return None
 
 
-<<<<<<< HEAD
-def addcosttx(project, **kwargs):
+def addoptimscaling(project, **kwargs):
     """
     Migration between Optima 2.1.8 and 2.1.9.
+    """
+    ## New attribute for new feature
+    for optim in project.optims.values():
+        if 'budgetscale' not in optim.objectives.keys():
+            optim.objectives['budgetscale'] = [1.]
+
+    project.version = "2.1.9"
+    return None
+
+
+def addcosttx(project, **kwargs):
+    """
+    Migration between Optima 2.1.9 and 2.1.10.
     """
     short = 'costtx'
     copyfrom = 'numtx'
@@ -349,22 +361,8 @@ def addcosttx(project, **kwargs):
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
 
-    project.version = "2.1.9"
+    project.version = "2.1.10"
     return None
-#Unit cost of treatment	Unit cost of treatment	costtx	costtx	(0, 'maxpopsize')	tot	timepar	no	no	0	None	0	None	1
-=======
-def addoptimscaling(project, **kwargs):
-    """
-    Migration between Optima 2.1.8 and 2.1.9.
-    """
-    ## New attribute for new feature
-    for optim in project.optims.values():
-        if 'budgetscale' not in optim.objectives.keys():
-            optim.objectives['budgetscale'] = [1.]
-
-    project.version = "2.1.9"
-    return None
->>>>>>> develop
 
 
 
@@ -372,7 +370,7 @@ def addoptimscaling(project, **kwargs):
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.9 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.10 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -396,13 +394,9 @@ migrations = {
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
 '2.1.7': fixsettings,
-<<<<<<< HEAD
-'2.1.8': addcosttx,
-#'2.1.8': redoprograms,
-=======
 '2.1.8': addoptimscaling,
+'2.1.9': addcosttx,
 #'2.2': redoprograms,
->>>>>>> develop
 }
 
 
