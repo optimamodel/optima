@@ -71,6 +71,19 @@
                     ng-disabled="!isRunnable()">
                   Run scenarios
                 </button>
+
+                &nbsp; from &nbsp;
+
+                <select
+                  ng-model="state.start"
+                  ng-options="year for year in years"></select>
+
+                &nbsp; to &nbsp;
+
+                <select
+                  ng-model="state.end"
+                  ng-options="year for year in years"></select>
+
               </div>
               <button
                   class="btn"

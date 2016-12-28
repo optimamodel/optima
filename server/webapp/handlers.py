@@ -782,10 +782,45 @@ class ScenarioSimulationGraphs(Resource):
 
     @swagger.operation(summary='Run scenarios and returns the graphs')
     def post(self, project_id):
-        is_run = get_post_data_json().get('isRun', False)
-        return dataio.make_scenarios_graphs(project_id, is_run)
+        """
+        post-json:
+            isRun: True or False
+            start: int -or- None
+            end: int -or- None
+        """
+        args = get_post_data_json()
+        print("> Get scenario graphs", args)
+        return dataio.make_scenarios_graphs(
+            project_id,
+            is_run=args.get('isRun', False),
+            start=args.get('start', None),
+            end=args.get('end', None))
 
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
+
+
+class DefaultParStartVal(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Get default value for parameter')
+    def post(self):
+        """
+        post-json:
+          projectId: project.id,
+          parsetId: $scope.scenario.parset_id,
+          parShort: newScenPar.name,
+          pop: newScenPar.for,
+          year: newScenPar.startYear
+        """
+        args = get_post_data_json()
+        return dataio.load_startval_for_parameter(
+            args['projectId'],
+            args['parsetId'],
+            args['parShort'],
+            args['pop'],
+            args['year'])
+
+api.add_resource(DefaultParStartVal, '/api/startval')
 
 
 # OPTIMIZATIONS
@@ -831,7 +866,8 @@ class OptimizationCalculation(Resource):
         """
         data-json: maxtime: time to run in int
         """
-        maxtime = get_post_data_json().get('maxtime')
+        args = get_post_data_json()
+        maxtime = args.get('maxtime')
         return server.webapp.tasks.launch_optimization(project_id, optimization_id, int(maxtime)), 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')

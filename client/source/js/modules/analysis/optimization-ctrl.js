@@ -17,13 +17,19 @@ define(
       $scope.getParsetName = getParsetName;
       $scope.getProgsetName = getProgsetName;
 
+      var project = activeProject.data;
       $scope.state = {
         project: activeProject.data,
         maxtime: 10,
         isRunnable: false,
         graphs: undefined,
-        optimizations: []
+        optimizations: [],
+        years: _.range(project.startYear, project.endYear+1),
+        start: project.startYear,
+        end: project.endYear,
       };
+
+      console.log('$scope.state', $scope.state);
 
       if ($scope.isMissingData || $scope.isMissingProgset || !$scope.isOptimizable) {
         return
@@ -219,7 +225,11 @@ define(
           '/api/project/' + $scope.state.project.id
             + '/optimizations/' + optimization.id
             + '/results',
-          { maxtime: $scope.state.maxtime })
+          {
+            maxtime: $scope.state.maxtime,
+            start: $scope.state.start,
+            end: $scope.state.end
+          })
         .success(function (response) {
           $scope.task_id = response.task_id;
           if (response.status === 'started') {
