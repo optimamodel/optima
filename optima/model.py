@@ -529,10 +529,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             else: printv(errormsg, 1, verbose)
             
         # Add these transition probabilities to the main array - WARNING, UGLY, FIX
-        thistransit[susreg][prob][susreg] = 1. - infections_to[0]
-        thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] = infections_to[0]
-        thistransit[progcirc][prob][susreg] = 1. - infections_to[1]
-        thistransit[progcirc][prob][thistransit[susreg][to].index(undx[0])] = infections_to[1]
+        thistransit[susreg[0]][prob][susreg] = 1. - infections_to[0] # susreg is a single element, but needs an index since can't index a list with an array
+        thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[0]
+        thistransit[progcirc[0]][prob][susreg] = 1. - infections_to[1]
+        thistransit[progcirc[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[1]
 
 
         ##############################################################################################################
@@ -624,9 +624,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 people[transition[to],:,t+1] += people[fromstate,:,t]*transition[prob]
 
         ## Calculate main indicators
-        raw_death[:,:,t]      = einsum('ij,i->ij',  people[:,:,t], deathprob)/dt
+        raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
-        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
+        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc[0]][prob][thistransit[progcirc[0]][to].index(undx[0])]/dt		
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
         
 

@@ -82,3 +82,4 @@
 1.09 2016-Sep-29_14:08:15 0a10d61 develop
 0.850 2016-Nov-03_12:19:07 39757ed various-fixes
 0.782 2016-Nov-03_12:20:22 0ddc046 various-fixes
+0.743 2016-Dec-27_19:41:44 e325e1e feature/investment-staircase

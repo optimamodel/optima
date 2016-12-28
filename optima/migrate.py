@@ -300,12 +300,25 @@ def fixsettings(project, **kwargs):
     return None
 
 
+def addoptimscaling(project, **kwargs):
+    """
+    Migration between Optima 2.1.8 and 2.1.9.
+    """
+    ## New attribute for new feature
+    for optim in project.optims.values():
+        if 'budgetscale' not in optim.objectives.keys():
+            optim.objectives['budgetscale'] = [1.]
+
+    project.version = "2.1.9"
+    return None
+
+
 
 
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.8 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.9 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -329,7 +342,8 @@ migrations = {
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
 '2.1.7': fixsettings,
-#'2.1.8': redoprograms,
+'2.1.8': addoptimscaling,
+#'2.2': redoprograms,
 }
 
 
