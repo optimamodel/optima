@@ -20,7 +20,7 @@ from time import time as TIME # Use caps to distinguish 'global' variables
 from sys import exc_info as EXC_INFO, argv as ARGV
 from glob import glob as GLOB
 import os as OS
-EVERYTHING = True # Whether to run all Python scripts in the folder
+EVERYTHING = False # Whether to run all Python scripts in the folder
 doplot = False # When running all tests, don't try to run the GUIs -- this must match the name in the script files
 
 

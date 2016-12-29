@@ -59,6 +59,12 @@ Diagnosed PLHIV in care	None	propcare	propcare	(0, 1)	tot	timepar	no	other	1	0	1
 PLHIV in care on treatment	None	proptx	proptx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
 People on ART with viral suppression	None	propsupp	propsupp	(0, 1)	tot	timepar	no	other	1	0	1	None	0
 Pregnant women and mothers on PMTCT	None	proppmtct	proppmtct	(0, 1)	tot	timepar	no	other	0	0	1	None	0
+Year to fix PLHIV aware of their status	None	fixpropdx	fixpropdx	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
+Year to fix diagnosed PLHIV in care	None	fixpropcare	fixpropcare	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
+Year to fix PLHIV in care on treatment	None	fixproptx	fixproptx	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
+Year to fix people on ART with viral suppression	None	fixpropsupp	fixpropsupp	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
+Year to fix pregnant women and mothers on PMTCT	None	fixproppmtct	fixproppmtct	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
+Unit cost of treatment	Unit cost of treatment	costtx	costtx	(0, 'maxpopsize')	tot	timepar	no	no	0	None	0	None	1
 Male-female insertive transmissibility (per act)	constant	transmfi	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-female receptive transmissibility (per act)	constant	transmfr	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-male insertive transmissibility (per act)	constant	transmmi	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None	1
@@ -505,7 +511,7 @@ def makepars(data, label=None, verbose=2):
             else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
+            best = data['const'][parname][0] if fromdata else nan  # low = data['const'][parname][1] ,  high = data['const'][parname][2]
             pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
@@ -560,6 +566,9 @@ def makepars(data, label=None, verbose=2):
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
     for key in pars['numcirc'].y.keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
+
+    # Fix treatment from final data year
+    pars['fixproptx'].y = pars['numtx'].t['tot'][-1]
 
     # Metaparameters
     for key in popkeys: # Define values

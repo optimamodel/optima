@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, concatenate as cat, array, arange
+from numpy import nan, concatenate as cat, array
 
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
@@ -313,12 +313,64 @@ def addoptimscaling(project, **kwargs):
     return None
 
 
+def addcosttx(project, **kwargs):
+    """
+    Migration between Optima 2.1.9 and 2.1.10.
+    """
+    short = 'costtx'
+    copyfrom = 'numtx'
+    kwargs['by'] = 'tot'
+    kwargs['name'] = 'Unit cost of treatment'
+    kwargs['dataname'] = 'Unit cost of treatment'
+    kwargs['datashort'] = 'costtx'
+    kwargs['coverage'] = None
+    kwargs['auto'] = 'no'
+    kwargs['fittable'] = 'no'
+    kwargs['limits'] = (0, 'maxpopsize')
+    kwargs['t'] = op.odict([('tot',array([op.Settings().now]))])
+    kwargs['y'] = op.odict([('tot',array([1.]))]) # Setting to a trivial placeholder value
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropdx'
+    copyfrom = 'deathacute'
+    kwargs['name'] = 'Year to fix PLHIV aware of their status'
+    kwargs['dataname'] = 'Year to fix PLHIV aware of their status'
+    kwargs['datashort'] = 'fixpropdx'
+    kwargs['y'] = nan
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropcare'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix diagnosed PLHIV in care'
+    kwargs['dataname'] = 'Year to fix diagnosed PLHIV in care'
+    kwargs['datashort'] = 'fixpropcare'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixproptx'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix PLHIV in care on treatment'
+    kwargs['dataname'] = 'Year to fix PLHIV in care on treatment'
+    kwargs['datashort'] = 'fixproptx'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropsupp'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix people on ART with viral suppression'
+    kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
+    kwargs['datashort'] = 'fixpropsupp'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+
+    project.version = "2.1.10"
+    return None
+
+
 
 
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.9 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.10 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -343,6 +395,7 @@ migrations = {
 '2.1.6': adddataend,
 '2.1.7': fixsettings,
 '2.1.8': addoptimscaling,
+'2.1.9': addcosttx,
 #'2.2': redoprograms,
 }
 
