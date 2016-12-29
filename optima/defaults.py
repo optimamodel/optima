@@ -345,11 +345,11 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         # "Calibrate"
         P.parsets[0].pars[0]['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
-#        P.pars()['proptx'].t[0]= array([0.,2020., 2030.])
-#        P.pars()['proptx'].y[0]= array([nan,.9,.95])
-#        P.pars()['fixpropdx'].y = 2014.
-#        P.pars()['propdx'].t[0]= array([0.,2020., 2030.])
-#        P.pars()['propdx'].y[0]= array([nan,.9,.95])
+        P.pars()['proptx'].t[0]= array([0.,2020., 2030.])
+        P.pars()['proptx'].y[0]= array([nan,.9,.95])
+        P.pars()['fixpropdx'].y = 2014.
+        P.pars()['propdx'].t[0]= array([0.,2020., 2030.])
+        P.pars()['propdx'].y[0]= array([nan,.9,.95])
         if dorun: P.runsim() # Run after calibration
     
         # Get a default progset 
