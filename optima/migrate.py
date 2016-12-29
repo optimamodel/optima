@@ -327,8 +327,8 @@ def addcosttx(project, **kwargs):
     kwargs['auto'] = 'no'
     kwargs['fittable'] = 'no'
     kwargs['limits'] = (0, 'maxpopsize')
-    kwargs['t'] = op.odict([('tot',array([2010.]))])
-    kwargs['y'] = op.odict([('tot',array([100.]))]) # Setting to a non-trivial placeholder value
+    kwargs['t'] = op.odict([('tot',array([op.Settings().now]))])
+    kwargs['y'] = op.odict([('tot',array([1.]))]) # Setting to a trivial placeholder value
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
     short = 'fixpropdx'
