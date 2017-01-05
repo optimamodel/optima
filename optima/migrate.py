@@ -313,7 +313,7 @@ def addoptimscaling(project, **kwargs):
     return None
 
 
-def addcosttx(project, **kwargs):
+def addpropsandcosttx(project, **kwargs):
     """
     Migration between Optima 2.1.9 and 2.1.10.
     """
@@ -336,7 +336,7 @@ def addcosttx(project, **kwargs):
     kwargs['name'] = 'Year to fix PLHIV aware of their status'
     kwargs['dataname'] = 'Year to fix PLHIV aware of their status'
     kwargs['datashort'] = 'fixpropdx'
-    kwargs['y'] = nan
+    kwargs['y'] = 2100
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
     short = 'fixpropcare'
@@ -395,7 +395,7 @@ migrations = {
 '2.1.6': adddataend,
 '2.1.7': fixsettings,
 '2.1.8': addoptimscaling,
-'2.1.9': addcosttx,
+'2.1.9': addpropsandcosttx,
 #'2.2': redoprograms,
 }
 
