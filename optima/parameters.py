@@ -3,7 +3,7 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 1.5 (2016jul06)
+Version: 1.6 (2017jan05)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
@@ -452,7 +452,7 @@ def makepars(data, label=None, verbose=2):
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2016jan14 by cliffk
+    Version: 2017jan05 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -569,6 +569,8 @@ def makepars(data, label=None, verbose=2):
 
     # Fix treatment from final data year
     pars['fixproptx'].y = pars['numtx'].t['tot'][-1]
+    for key in ['fixpropdx', 'fixpropcare', 'fixpropsupp', 'fixproppmtct']:
+        pars[key].y = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
 
     # Metaparameters
     for key in popkeys: # Define values
