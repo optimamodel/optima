@@ -589,7 +589,6 @@ def makepars(data, label=None, verbose=2):
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
         
     # Convert matrices to lists of of population-pair keys
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
         actsname = 'acts'+act
         condname = 'cond'+act

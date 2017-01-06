@@ -17,7 +17,7 @@ tests = [
 #'reconcile',
 #'runscenarios',
 #'optimize',
-#'dosave',
+'dosave',
 ]
 
 filename = 'best.prj'
@@ -49,7 +49,7 @@ T = tic()
 ## Make or load&migrate a project
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
-    P.runsim(debug=True)
+    P.runsim(debug=True, start=2000, end=2030)
     P.results[-1].export()
 
 if 'migrations' in tests:

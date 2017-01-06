@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp
+from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
@@ -143,10 +143,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
-    fixpropdx      = findinds(simpars['tvec'],simpars['fixpropdx'])[0] if ~isnan(simpars['fixpropdx']) else simpars['fixpropdx']
-    fixpropcare    = findinds(simpars['tvec'],simpars['fixpropcare'])[0] if ~isnan(simpars['fixpropcare']) else simpars['fixpropcare']
-    fixproptx      = findinds(simpars['tvec'],simpars['fixproptx'])[0] if ~isnan(simpars['fixproptx']) else simpars['fixproptx']
-    fixpropsupp    = findinds(simpars['tvec'],simpars['fixpropsupp'])[0] if ~isnan(simpars['fixpropsupp']) else simpars['fixpropsupp']
+    fixpropdx      = findinds(simpars['tvec'],simpars['fixpropdx'])[0] if simpars['fixpropdx'] in simpars['tvec'] else nan 
+    fixpropcare    = findinds(simpars['tvec'],simpars['fixpropcare'])[0] if simpars['fixpropcare'] in simpars['tvec'] else simpars['fixpropcare']
+    fixproptx      = findinds(simpars['tvec'],simpars['fixproptx'])[0] if simpars['fixproptx'] in simpars['tvec'] else simpars['fixproptx']
+    fixpropsupp    = findinds(simpars['tvec'],simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] in simpars['tvec'] else simpars['fixpropsupp']
     
     # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
     propdx_list     = ('propdx',   propdx,   undx, dx,   dxstates,   alldx,   allplhiv, raw_diag,       fixpropdx)
