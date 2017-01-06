@@ -59,11 +59,11 @@ Diagnosed PLHIV in care	None	propcare	propcare	(0, 1)	tot	timepar	no	other	1	0	1
 PLHIV in care on treatment	None	proptx	proptx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
 People on ART with viral suppression	None	propsupp	propsupp	(0, 1)	tot	timepar	no	other	1	0	1	None	0
 Pregnant women and mothers on PMTCT	None	proppmtct	proppmtct	(0, 1)	tot	timepar	no	other	0	0	1	None	0
-Year to fix PLHIV aware of their status	None	fixpropdx	fixpropdx	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
-Year to fix diagnosed PLHIV in care	None	fixpropcare	fixpropcare	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
-Year to fix PLHIV in care on treatment	None	fixproptx	fixproptx	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
-Year to fix people on ART with viral suppression	None	fixpropsupp	fixpropsupp	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
-Year to fix pregnant women and mothers on PMTCT	None	fixproppmtct	fixproppmtct	(0, 'maxyear')	tot	constant	const	const	0	0	1	None	0
+Year to fix PLHIV aware of their status	None	fixpropdx	fixpropdx	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix diagnosed PLHIV in care	None	fixpropcare	fixpropcare	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix PLHIV in care on treatment	None	fixproptx	fixproptx	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix people on ART with viral suppression	None	fixpropsupp	fixpropsupp	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix pregnant women and mothers on PMTCT	None	fixproppmtct	fixproppmtct	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
 Unit cost of treatment	Unit cost of treatment	costtx	costtx	(0, 'maxpopsize')	tot	timepar	no	no	0	None	0	None	1
 Male-female insertive transmissibility (per act)	constant	transmfi	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-female receptive transmissibility (per act)	constant	transmfr	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None	1
@@ -589,7 +589,6 @@ def makepars(data, label=None, verbose=2):
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
         
     # Convert matrices to lists of of population-pair keys
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
         actsname = 'acts'+act
         condname = 'cond'+act
