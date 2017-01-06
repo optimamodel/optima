@@ -478,7 +478,7 @@ def get_parameters_for_edit_program(project):
                 par = pars[par_key]
                 if not isinstance(pars[par_key], op.Par):
                     continue
-                if not par.proginteract or not par.y.keys():
+                if par.proginteract is not None or not par.y.keys():
                     continue
                 parameters.append({
                     'name': par.name,
