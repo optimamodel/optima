@@ -550,8 +550,8 @@ class GAOptim(object):
             
             
             for key in self.objectives['keys']:
-                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current allocation'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal allocation'][indices].sum()
+                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
                 overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
                 overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
                 
