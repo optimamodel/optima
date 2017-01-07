@@ -605,7 +605,7 @@ class Project(object):
                 print('Using old allocation as new starting point.')
             results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
             tmptotals.append(budget)
-            tmpallocs.append(dcp(results.budget['Optimal allocation']))
+            tmpallocs.append(dcp(results.budget['Optimal']))
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
