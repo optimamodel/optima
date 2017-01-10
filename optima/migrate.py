@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, concatenate as cat, array, arange
+from numpy import nan, concatenate as cat, array
 
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
@@ -287,15 +287,81 @@ def fixsettings(project, **kwargs):
     
     # Pull out original setting
     for setting in settingslist: 
-        oldsettings[setting] = getattr(project.settings, setting) 
+        try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
+        except: pass # But don't worry if they don't exist
     
     project.settings = op.Settings() # Completely refresh
     
     # Replace with original settings
-    for setting in settingslist: 
-        setattr(project.settings, setting, oldsettings[setting]) 
+    for settingkey,settingval in oldsettings.items(): 
+        setattr(project.settings, settingkey, settingval) 
     
     project.version = "2.1.8"
+    return None
+
+
+def addoptimscaling(project, **kwargs):
+    """
+    Migration between Optima 2.1.8 and 2.1.9.
+    """
+    ## New attribute for new feature
+    for optim in project.optims.values():
+        if 'budgetscale' not in optim.objectives.keys():
+            optim.objectives['budgetscale'] = [1.]
+
+    project.version = "2.1.9"
+    return None
+
+
+def addpropsandcosttx(project, **kwargs):
+    """
+    Migration between Optima 2.1.9 and 2.1.10.
+    """
+    short = 'costtx'
+    copyfrom = 'numtx'
+    kwargs['by'] = 'tot'
+    kwargs['name'] = 'Unit cost of treatment'
+    kwargs['dataname'] = 'Unit cost of treatment'
+    kwargs['datashort'] = 'costtx'
+    kwargs['coverage'] = None
+    kwargs['auto'] = 'no'
+    kwargs['fittable'] = 'no'
+    kwargs['limits'] = (0, 'maxpopsize')
+    kwargs['t'] = op.odict([('tot',array([op.Settings().now]))])
+    kwargs['y'] = op.odict([('tot',array([1.]))]) # Setting to a trivial placeholder value
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropdx'
+    copyfrom = 'deathacute'
+    kwargs['name'] = 'Year to fix PLHIV aware of their status'
+    kwargs['dataname'] = 'Year to fix PLHIV aware of their status'
+    kwargs['datashort'] = 'fixpropdx'
+    kwargs['y'] = 2100
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropcare'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix diagnosed PLHIV in care'
+    kwargs['dataname'] = 'Year to fix diagnosed PLHIV in care'
+    kwargs['datashort'] = 'fixpropcare'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixproptx'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix PLHIV in care on treatment'
+    kwargs['dataname'] = 'Year to fix PLHIV in care on treatment'
+    kwargs['datashort'] = 'fixproptx'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropsupp'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix people on ART with viral suppression'
+    kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
+    kwargs['datashort'] = 'fixpropsupp'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+
+    project.version = "2.1.10"
     return None
 
 
@@ -304,7 +370,7 @@ def fixsettings(project, **kwargs):
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.8 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.10 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -328,7 +394,9 @@ migrations = {
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
 '2.1.7': fixsettings,
-#'2.1.8': redoprograms,
+'2.1.8': addoptimscaling,
+'2.1.9': addpropsandcosttx,
+#'2.2': redoprograms,
 }
 
 

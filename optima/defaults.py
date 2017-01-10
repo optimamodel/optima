@@ -8,6 +8,7 @@ import optima as op
 from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
 try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
 except: pass
+from numpy import array, nan
 
 
 def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):

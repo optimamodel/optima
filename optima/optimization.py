@@ -5,7 +5,7 @@ Version: 2016apr11
 """
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber, promotetoarray # Utilities
 from numpy import zeros, arange, maximum, array, inf
 
 # Define global parameters that shouldn't really matter
@@ -115,6 +115,7 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
         objectives['start'] = 2017 # "Year to begin optimization"
         objectives['end'] = 2030 # "Year to project outcomes to"
         objectives['budget'] = defaultbudget # "Annual budget to optimize"
+        objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"
         objectives['deathweight'] = 5 # "Relative weight per death"
         objectives['inciweight'] = 1 # "Relative weight per new infection"
         objectives['deathfrac'] = None # Fraction of deaths to get to
@@ -450,7 +451,6 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
-    totalbudget = dcp(optim.objectives['budget'])
     if overwritebudget != None:
         origbudget = dcp(overwritebudget)
     else:
@@ -460,27 +460,39 @@ def minoutcomes(project=None, optim=None, name=None, inds=None, tvec=None, verbo
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
 
-    ## Constrain the budget
-    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-
-    ## Actually run the optimization
-    # for ind in inds: # WARNING, kludgy -- should be a loop!
+    ## Get parset
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
     try: thisparset.pars = [thisparset.pars[inds[0]]] # Turn into a list -- WARNING
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
-    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose}
-    budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
 
-    ## Tidy up -- WARNING, need to think of a way to process multiple inds
-    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-    orig = objectivecalc(constrainedbudgetvec, outputresults=True, debug=False, **args)
-    new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
-    orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
-    new.name = 'Optimal allocation'
-    tmpresults = [orig, new]
+    ## Calculate original things
+    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=dcp(optim.objectives['budget']), budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':dcp(optim.objectives['budget']), 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose}
+    orig = objectivecalc(constrainedbudgetvecorig, outputresults=True, debug=False, **args)
+    orig.name = 'Current'
+    tmpresults = [orig]
 
-    # Output
-    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
+    ## Loop over budget scale factors
+    scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
+    for scalefactor in scalefactors: 
+
+        ## Get the total budget & constrain it 
+        totalbudget = dcp(optim.objectives['budget'])*scalefactor
+        constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+
+        ## Actually run the optimization
+        budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
+
+        ## Calculate outcomes
+        constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+        args['totalbudget'] = totalbudget
+        new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
+        if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
+        else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
+        tmpresults.append(new)
+
+    ## Output
+    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
     optim.resultsref = multires.name # Store the reference for this result

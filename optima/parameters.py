@@ -3,7 +3,7 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 1.5 (2016jul06)
+Version: 1.6 (2017jan05)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
@@ -59,6 +59,12 @@ Diagnosed PLHIV in care	None	propcare	propcare	(0, 1)	tot	timepar	no	other	1	0	1
 PLHIV in care on treatment	None	proptx	proptx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
 People on ART with viral suppression	None	propsupp	propsupp	(0, 1)	tot	timepar	no	other	1	0	1	None	0
 Pregnant women and mothers on PMTCT	None	proppmtct	proppmtct	(0, 1)	tot	timepar	no	other	0	0	1	None	0
+Year to fix PLHIV aware of their status	None	fixpropdx	fixpropdx	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix diagnosed PLHIV in care	None	fixpropcare	fixpropcare	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix PLHIV in care on treatment	None	fixproptx	fixproptx	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix people on ART with viral suppression	None	fixpropsupp	fixpropsupp	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix pregnant women and mothers on PMTCT	None	fixproppmtct	fixproppmtct	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Unit cost of treatment	Unit cost of treatment	costtx	costtx	(0, 'maxpopsize')	tot	timepar	no	no	0	None	0	None	1
 Male-female insertive transmissibility (per act)	constant	transmfi	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-female receptive transmissibility (per act)	constant	transmfr	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-male insertive transmissibility (per act)	constant	transmmi	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None	1
@@ -446,7 +452,7 @@ def makepars(data, label=None, verbose=2):
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2016jan14 by cliffk
+    Version: 2017jan05 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -505,7 +511,7 @@ def makepars(data, label=None, verbose=2):
             else: pars[parname] = Timepar(m=1, y=odict({key:array([nan]) for key in keys}), t=odict({key:array([0.0]) for key in keys}), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
+            best = data['const'][parname][0] if fromdata else nan  # low = data['const'][parname][1] ,  high = data['const'][parname][2]
             pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
@@ -561,6 +567,11 @@ def makepars(data, label=None, verbose=2):
     for key in pars['numcirc'].y.keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
+    # Fix treatment from final data year
+    pars['fixproptx'].y = pars['numtx'].t['tot'][-1]
+    for key in ['fixpropdx', 'fixpropcare', 'fixpropsupp', 'fixproppmtct']:
+        pars[key].y = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
+
     # Metaparameters
     for key in popkeys: # Define values
         pars['force'].y[key] = 1.0
@@ -578,7 +589,6 @@ def makepars(data, label=None, verbose=2):
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
         
     # Convert matrices to lists of of population-pair keys
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
         actsname = 'acts'+act
         condname = 'cond'+act

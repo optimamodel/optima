@@ -411,53 +411,60 @@ def get_par_limits(project, par):
     return map(convert, par.limits)
 
 
-def get_parameters_for_scenarios(project, start_year=None):
+def get_parameters_for_scenarios(project):
     """
     Returns parameters that can be modified in a scenario:
         <parsetID>:
-            <year>:
-                - short: string
-                - name: string
-                - pop: string -or- list of two string
-                - popLabel: string
-                - limits: [number, number]
-                - startVal: number
+            - short: string
+            - name: string
+            - pop: string -or- list of two string
+            - popLabel: string
+            - limits: [number, number]
     """
     print(">> Get parameters for scenarios")
-    if start_year is None:
-        start_year = project.settings.start
-        end_year = project.settings.end
-        years = range(int(start_year), int(end_year) + 1)
     result = {}
     for id, parset in project.parsets.items():
         parset_id = str(parset.uid)
         result[parset_id] = {}
-        for year in years:
-            pars = []
-            result[parset_id][year] = pars
-            for par in parset.pars[0].values():
-                if not hasattr(par, 'y') or not par.visible:
-                    continue
-                for pop in par.y.keys():
-                    try:
-                        par_defaults = op.setparscenvalues(
-                            parset, par.short, pop, year)
-                        startval = par_defaults['startval']
-                        if np.isnan(startval):
-                            startval = None
-                    except:
-                        startval = None
-                    pars.append({
-                        'name': par.name,
-                        'short': par.short,
-                        'pop': pop,
-                        'popLabel': make_pop_label(pop),
-                        'limits': get_par_limits(project, par),
-                        'startval': startval
-                    })
+        pars = []
+        result[parset_id] = pars
+        for par in parset.pars[0].values():
+            if not hasattr(par, 'y') or not par.visible:
+                continue
+            for pop in par.y.keys():
+                pars.append({
+                    'name': par.name,
+                    'short': par.short,
+                    'pop': pop,
+                    'popLabel': make_pop_label(pop),
+                    'limits': get_par_limits(project, par),
+                })
     print(">> Finished calculating startvals for parameters")
     return result
 
+def get_startval_for_parameter(project, parset_id, par_short, pop, year):
+    print(">> Get parameters for scenarios")
+    parset = get_parset_from_project(project, parset_id)
+    for par in parset.pars[0].values():
+        if not hasattr(par, 'y') or not par.visible:
+            continue
+        if par.short != par_short:
+            continue
+        if isinstance(pop, list):
+            pop = tuple(pop)
+        print(">> Compare pops %s -> %s" % (pop, par.y.keys()))
+        for par_pop in par.y.keys():
+            if par_pop == pop:
+                try:
+                    par_defaults = op.setparscenvalues(
+                        parset, par.short, pop, year)
+                    startval = par_defaults['startval']
+                    if not np.isnan(startval):
+                        return startval
+                except:
+                    return None
+                break
+    return None
 
 def get_parameters_for_edit_program(project):
     parameters = []

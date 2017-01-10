@@ -88,6 +88,8 @@ class Resultset(object):
         self.main['numtreat']           = Result('Number of PLHIV on treatment')
         self.main['numsuppressed']      = Result('Number of virally suppressed PLHIV')
         
+        self.main['costtreat']          = Result('Annual treatment spend')
+
         self.main['propdiag']           = Result('PLHIV who are diagnosed (%)', ispercentage=True)
         self.main['propevercare']       = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True)
         self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True)
@@ -279,6 +281,9 @@ class Resultset(object):
         self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
+
+        self.main['costtreat'].pops = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['costtreat'].tot = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
 
         self.main['proptreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['proptreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations

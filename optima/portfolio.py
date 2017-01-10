@@ -512,8 +512,8 @@ class GAOptim(object):
             indices = arange(initial, final)
             
             projectname = self.resultpairs[x]['init'].project.name
-            initalloc = self.resultpairs[x]['init'].budget['Current allocation']
-            gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal allocation']
+            initalloc = self.resultpairs[x]['init'].budget['Current']
+            gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal']
             initoutcome = self.resultpairs[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
                                                                             # The second 0 corresponds to outcome pre-optimisation (which shouldn't matter anyway due to pre-GA budget 'init' being optimised for 0 seconds).
             gaoptoutcome = self.resultpairs[x]['opt'].improvement[0][-1]    # The -1 corresponds to outcome post-optimisation (with 'opt' being a maxtime optimisation of a post-GA budget).
@@ -550,8 +550,8 @@ class GAOptim(object):
             
             
             for key in self.objectives['keys']:
-                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current allocation'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal allocation'][indices].sum()
+                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
                 overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
                 overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
                 

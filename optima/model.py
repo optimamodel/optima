@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat
+from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, where
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
@@ -108,7 +108,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     # Births, deaths and transitions
     birth           = simpars['birth']*dt           # Multiply birth rates by dt
-    agetransit      = simpars['agetransit']      # Multiply age transition rates by dt
+    agetransit      = simpars['agetransit']         # Multiply age transition rates by dt
     risktransit     = simpars['risktransit']        # Don't multiply risk trnsitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
     birthtransit    = simpars['birthtransit']       # Don't multiply the birth transitions by dt as have already multiplied birth rates by dt
     
@@ -117,7 +117,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     for p1 in range(npops):
         for p2 in range(npops):
             if agetransit[p1,p2]:   agetransitlist.append((p1,p2, (1.-exp(-dt/agetransit[p1,p2]))))
-            if risktransit[p1,p2]: risktransitlist.append((p1,p2,(1.-exp(-dt/risktransit[p1,p2]))))
+            if risktransit[p1,p2]: risktransitlist.append((p1,p2, (1.-exp(-dt/risktransit[p1,p2]))))
     
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -125,7 +125,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     noinflows = findinds(ageinflows+birthinflows==0)    # Find populations with no inflows
 
     # Begin calculation of transmission probabilities -- continued in time loop
-    cd4trans *= settings.transnorm                            # Normalize CD4 transmission
+    cd4trans *= settings.transnorm                      # Normalize CD4 transmission
     dxfactor = (1.-simpars['effdx'])                    # Include diagnosis efficacy
     efftxunsupp = (1.-simpars['efftxunsupp'])*dxfactor  # Reduction in transmission probability for usVL
     efftxsupp = (1.-simpars['efftxsupp'])*dxfactor      # Reduction in transmission probability for sVL
@@ -143,12 +143,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
+    fixpropdx      = findinds(simpars['tvec']>=simpars['fixpropdx'])[0] if simpars['fixpropdx'] < simpars['tvec'][-1] else nan
+    fixpropcare    = findinds(simpars['tvec']>=simpars['fixpropcare'])[0] if simpars['fixpropcare'] < simpars['tvec'][-1] else nan
+    fixproptx      = findinds(simpars['tvec']>=simpars['fixproptx'])[0] if simpars['fixproptx'] < simpars['tvec'][-1] else nan
+    fixpropsupp    = findinds(simpars['tvec']>=simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] < simpars['tvec'][-1] else nan
     
     # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
-    propdx_list     = ('propdx',   propdx,   undx, dx,   dxstates,   alldx,   allplhiv, raw_diag)
-    propcare_list   = ('propcare', propcare, dx,   care, carestates, allcare, alldx,    raw_newcare)
-    proptx_list     = ('proptx',   proptx,   care, usvl, txstates,   alltx,   allcare,  raw_newtreat)
-    propsupp_list   = ('propsupp', propsupp, usvl, svl,  svlstates,  svl,     alltx,    raw_newsupp)
+    propdx_list     = ('propdx',   propdx,   undx, dx,   dxstates,   alldx,   allplhiv, raw_diag,       fixpropdx)
+    propcare_list   = ('propcare', propcare, dx,   care, carestates, allcare, alldx,    raw_newcare,    fixpropcare)
+    proptx_list     = ('proptx',   proptx,   care, usvl, txstates,   alltx,   allcare,  raw_newtreat,   fixproptx)
+    propsupp_list   = ('propsupp', propsupp, usvl, svl,  svlstates,  svl,     alltx,    raw_newsupp,    fixpropsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -529,10 +533,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             else: printv(errormsg, 1, verbose)
             
         # Add these transition probabilities to the main array - WARNING, UGLY, FIX
-        thistransit[susreg][prob][susreg] = 1. - infections_to[0]
-        thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] = infections_to[0]
-        thistransit[progcirc][prob][susreg] = 1. - infections_to[1]
-        thistransit[progcirc][prob][thistransit[susreg][to].index(undx[0])] = infections_to[1]
+        thistransit[susreg[0]][prob][susreg] = 1. - infections_to[0] # susreg is a single element, but needs an index since can't index a list with an array
+        thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[0]
+        thistransit[progcirc[0]][prob][susreg] = 1. - infections_to[1]
+        thistransit[progcirc[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[1]
 
 
         ##############################################################################################################
@@ -624,9 +628,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 people[transition[to],:,t+1] += people[fromstate,:,t]*transition[prob]
 
         ## Calculate main indicators
-        raw_death[:,:,t]      = einsum('ij,i->ij',  people[:,:,t], deathprob)/dt
+        raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
-        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg][prob][thistransit[susreg][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc][prob][thistransit[progcirc][to].index(undx[0])]/dt
+        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc[0]][prob][thistransit[progcirc[0]][to].index(undx[0])]/dt		
         raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
         
 
@@ -660,6 +664,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update incidence based on PMTCT calculation
+
 
         ###############################################################################
         ## Shift numbers of people (circs, treatment, age transitions, risk transitions, prop scenarios)
@@ -737,9 +742,19 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             ## Proportions
             ###########################################################################
 
-            for name,prop,lowerstate,tostate,higherstates,num,denom,raw_new in [propdx_list,propcare_list,proptx_list,propsupp_list]:
+            for name,prop,lowerstate,tostate,higherstates,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
-                if name is 'proptx' or ~isnan(prop[t+1]): # In this section, we shift numbers of people (as opposed to shifting proportions). If any of the prop parameters are non-nan, that means that some number of people will need to shift. However, treatment is special because it is always set by shifting numbers. That's why we have this condition here.
+                # Calculations to fix proportions from a particular year, if requested
+                if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
+                    calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
+                    if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
+                        nonnanind = findinds(~isnan(prop))[0]
+                        prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])
+                    else: # If not, we will just use this value from now on
+                        for i in range(t+1,npts): prop[i] = calcprop
+                    
+                # In this section, we shift numbers of people (as opposed to shifting proportions). If any of the prop parameters are non-nan, that means that some number of people will need to shift. However, treatment is special because it is always set by shifting numbers. That's why we have this condition here.
+                if name is 'proptx' or ~isnan(prop[t+1]): 
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
@@ -757,10 +772,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     new_movers      = zeros((ncd4,npops)) 
 
                     # Figure out how many people we want
-                    if isinf(prop[t+1]): # If the prop value is infinity, we use last timestep's value
-                        calcprop = people[num,:,t].sum()/people[denom,:,t].sum()
-                        wanted = calcprop*available
-                    if not isnan(prop[t+1]) and not isinf(prop[t+1]): # If the prop value is finite, we use it
+                    if not isnan(prop[t+1]): # If the prop value is finite, we use it
                         wanted = prop[t+1]*available
 
                     # Reconcile the differences between the number we have and the number we want
