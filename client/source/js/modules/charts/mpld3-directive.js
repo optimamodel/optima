@@ -286,8 +286,25 @@ define(
               }
             });
 
+            var ylabels;
+            if ('ylabels' in figure) {
+              ylabels = figure.ylabels;
+              delete figure.ylabels;
+            }
+
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
+
+            if (!_.isUndefined(ylabels)) {
+              var $yaxis = $element.find('.mpld3-yaxis');
+              var $labels = $yaxis.find('g.tick > text');
+              $labels.each(function(i, v) {
+                console.log(i, v);
+                var $label = $(this);
+                var newText = reformatYTickStr(ylabels[i]);
+                $label.text(newText);
+              });
+            }
 
             if (!_.isUndefined(moduleAllCharts)) {
               moduleAllCharts.scrollTop(moduleScrollTop);
@@ -311,7 +328,7 @@ define(
         function initialize() {
           var allCharts = elem.find('.allcharts');
           console.log('allCharts', allCharts);
-          console.log('allCharts', allCharts.width());
+          console.log('allCharts width', allCharts.width());
           scope.state = {
             slider: {
               value: 30,
@@ -392,6 +409,7 @@ define(
               return;
             }
             if (scope.graphs) {
+              console.log('detected graphs in directive', scope.graphs);
               _.each(scope.graphs.mpld3_graphs, function(g, i) {
                 g.isChecked = function() {
                   return isChecked(i);
