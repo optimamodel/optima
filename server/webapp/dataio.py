@@ -845,6 +845,18 @@ def create_parset(project_id, new_parset_name):
     update_project_with_fn(project_id, update_project_fn)
 
 
+def refresh_parset(project_id, parset_id):
+
+    def update_project_fn(project):
+        parset = parse.get_parset_from_project(project, parset_id)
+        parset_name = parset.name
+        print(">> Refreshing parset %s" % parset_name)
+        project.refreshparset(name=parset_name)
+
+    update_project_with_fn(project_id, update_project_fn)
+    delete_result_by_parset_id(project_id, parset_id)
+
+
 def load_parset_summaries(project_id):
     print(">> Get parset summaries")
     project = load_project(project_id)

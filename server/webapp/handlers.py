@@ -505,6 +505,17 @@ class ParsetRenameDelete(Resource):
 api.add_resource(ParsetRenameDelete, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
 
 
+class ParsetRefresh(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Refresh parset')
+    def post(self, project_id, parset_id):
+        dataio.refresh_parset(project_id, parset_id)
+        return dataio.load_parset_graphs(project_id, parset_id, "calibration")
+
+api.add_resource(ParsetRefresh, '/api/project/<uuid:project_id>/refreshparset/<uuid:parset_id>')
+
+
 class ParsetCalibration(Resource):
     method_decorators = [report_exception_decorator, login_required]
 

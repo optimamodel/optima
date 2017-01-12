@@ -275,6 +275,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).click();
     };
 
+    $scope.refreshParset = function() {
+      $http
+        .post(
+          '/api/project/' + project.id
+          + '/refreshparset/' + $scope.state.parset.id)
+        .success(function(response) {
+          toastr.success('refreshed parameter set')
+          loadParametersAndGraphs(response);
+        });
+    };
+
     // autofit routines
 
     $scope.checkNotRunnable = function() {
