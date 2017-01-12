@@ -36,7 +36,6 @@ define(['angular' ], function (angular) {
             $http
               .get(poll.url)
               .success(function(response) {
-                console.log(response);
                 if (response.status === 'started') {
                   poll.timer = $timeout(pollWithTimeout, 1000);
                 } else {

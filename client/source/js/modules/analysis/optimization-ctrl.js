@@ -400,7 +400,6 @@ define(
           var progsetId = $scope.state.optimization.progset_id;
           $scope.defaultConstraints = listifyConstraints(
             deepCopyJson(optimsScope.defaultOptimizationsByProgsetId[progsetId].constraints));
-          console.log("list of default constraints", $scope.defaultConstraints);
 
           var constraints = $scope.state.optimization.constraints;
           var defaultKeys = _.pluck($scope.defaultConstraints, 'key');
