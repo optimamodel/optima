@@ -372,7 +372,7 @@ def redoparameters(project, **kwargs):
     Migration between Optima 2.1.10 and 2.1.11 -- update fields of parameters.
     """
     
-    tmpproj = op.defaultproject() # Create a new project with refreshed parameters
+    tmpproj = op.defaultproject(verbose=0) # Create a new project with refreshed parameters
     complain = False # Usually fine to ignore warnings
     
     # Loop over all parsets
@@ -398,6 +398,14 @@ def redoparameters(project, **kwargs):
         for popkey in oldpars['popsize'].p.keys():
             ps.pars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
             ps.pars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
+        
+        # Just a bug I noticed -- I think the definition of this parameter got inverted at some point
+        for key in ps.pars['leavecare'].y:
+            for i,val in enumerate(ps.pars['leavecare'].y[key]):
+                if val>0.5:
+                    ps.pars['leavecare'].y[key][i] = 0.2
+                    print('Leave care rate for population %s seemed to be too high, resetting to default of 0.2' % key)
+        
     
     project.version = "2.1.11"
     return None
