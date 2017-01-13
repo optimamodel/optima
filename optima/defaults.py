@@ -8,7 +8,6 @@ import optima as op
 from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
 try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
 except: pass
-from numpy import array, nan
 
 
 def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
@@ -315,10 +314,8 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     
     
     # Figure out the path 
-    optimapath = op.__file__
-    parentdir = optimapath.split(os.sep)[:-2] # exclude /optima/__init__.pyc
-    testdir = parentdir + ['tests'+os.sep]
-    spreadsheetpath = os.sep.join(testdir)
+    optimapath = os.path.dirname(op.__file__)
+    spreadsheetpath = os.path.join(optimapath, '..', 'tests', '') # Empty last part puts a /
     
     
     ##########################################################################################################################
