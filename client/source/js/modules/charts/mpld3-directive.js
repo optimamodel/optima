@@ -118,6 +118,13 @@ define(
     });
   }
 
+  function changeWidthOfSvg(svg, width) {
+    var $svg = $(svg);
+    var ratio = $svg.attr('width') / $svg.attr('height');
+    var height = width / ratio;
+    $svg.attr('width', width);
+    $svg.attr('height', height);
+  }
 
   module.directive('mpld3Chart', function ($http, modalService, exportHelpers) {
 
@@ -292,6 +299,12 @@ define(
               delete figure.ylabels;
             }
 
+            var initWidth;
+            if ('initWidth' in figure) {
+              initWidth = figure.initWidth;
+              delete figure.initWidth;
+            }
+
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
 
@@ -304,6 +317,10 @@ define(
                 var newText = reformatYTickStr(ylabels[i]);
                 $label.text(newText);
               });
+            }
+
+            if (!_.isUndefined(initWidth)) {
+              changeWidthOfSvg($element.find('svg'), initWidth);
             }
 
             if (!_.isUndefined(moduleAllCharts)) {
@@ -326,9 +343,11 @@ define(
       link: function (scope, elem, attrs) {
 
         function initialize() {
+
           var allCharts = elem.find('.allcharts');
           console.log('allCharts', allCharts);
           console.log('allCharts width', allCharts.width());
+
           scope.state = {
             slider: {
               value: 30,
@@ -402,6 +421,15 @@ define(
           return (!_.isUndefined(selector) && (selector.checked));
         }
 
+        function getSelectedFigureWidth() {
+          var percentage = scope.state.slider.value;
+          var allCharts = elem.find('.allcharts');
+          var allChartsWidth = parseInt(allCharts.width());
+          var width = allChartsWidth * percentage / 100.;
+          console.log('changing width to ', width, '/', allChartsWidth, ' based on slider ', percentage);
+          return width;
+        }
+
         scope.$watch(
           'graphs',
           function() {
@@ -410,10 +438,13 @@ define(
             }
             if (scope.graphs) {
               console.log('detected graphs in directive', scope.graphs);
+              console.log('current graph width state', scope.state);
+              var width = getSelectedFigureWidth();
               _.each(scope.graphs.mpld3_graphs, function(g, i) {
                 g.isChecked = function() {
                   return isChecked(i);
                 };
+                g.initWidth = width;
               });
             }
           }
@@ -426,22 +457,12 @@ define(
         };
 
         scope.changeFigWidth = function() {
-          var percentage = scope.state.slider.value;
-          var allCharts = elem.find('.allcharts');
-          var allChartsWidth = parseInt(allCharts.width());
-          var width = allChartsWidth * percentage / 100.;
-
-          function setAllFiguresToWidth($element) {
-            var $figures = $element.find('svg.mpld3-figure');
-            $figures.each(function() {
-              var $svgFigure = $(this);
-              var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
-              var height = width / ratio;
-              $svgFigure.attr('width', width);
-              $svgFigure.attr('height', height);
-            });
-          }
-          setAllFiguresToWidth($(elem).find(".allcharts"));
+          var width = getSelectedFigureWidth();
+          var $svgFigures = $(elem).find(".allcharts").find('svg.mpld3-figure');
+          console.log('changing ', $svgFigures.length, 'figures');
+          $svgFigures.each(function(i, svg) {
+            changeWidthOfSvg(svg, width);
+          });
         };
 
         initialize();
