@@ -5,14 +5,14 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016feb07
+Version: 2017jan13
 """
 
 ## Define tests to run here!!!
 tests = [
 'minimizeoutcomes',
 #'investmentstaircase',
-#'minimizemoney',
+'minimizemoney',
 ]
 
 
