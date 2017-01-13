@@ -467,7 +467,6 @@ def makepars(data=None, label=None, verbose=2):
     ###############################################################################
     
     pars = odict()
-    pars['label'] = label # Add optional label, default None
     
     # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
@@ -1233,7 +1232,7 @@ class Parameterset(object):
 
         simparslist = []
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
-        if samples is None: sample = [None]
+        if samples is None: samples = [None]
         for sample in samples:
             simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up

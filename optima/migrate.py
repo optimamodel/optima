@@ -84,7 +84,7 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nstates   = len(project.settings.allstates) 
     project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
     project.settings.nhealth = len(project.settings.healthstates)
-    project.settings.transnorm = 0.6 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
+    project.settings.transnorm = 0.8 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
 
     if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
@@ -372,26 +372,38 @@ def redoparameters(project, **kwargs):
     Migration between Optima 2.1.10 and 2.1.11 -- update fields of parameters.
     """
     
-    raise Exception('Parameters migration not fully implemented yet')
-    
-#    newproj = op.defaultproject() # Create a new project 
+    tmpproj = op.defaultproject() # Create a new project with refreshed parameters
+    complain = False # Usually fine to ignore warnings
     
     # Loop over all parsets
     for ps in project.parsets.values():
-        ps.pars = ps.pars[0] # Change pars
-    
-        # Define new Metapar parameter objects
-    
+        oldpars = ps.pars[0]
+        ps.pars = op.dcp(tmpproj.pars())
+        for parname,par in oldpars.items():
+            try:
+                if parname=='init': parname = 'initprev' # Rename
+                for attr in ['y','t','m']:
+                    try:
+                        oldattr = getattr(oldpars[parname], attr)
+                        setattr(ps.pars[parname], attr, oldattr)
+                    except Exception as E:
+                        if complain:
+                            print('Could not set attribute %s for parameter %s' % (attr, parname))
+                            print(E.message)
+            except:
+                if complain:
+                    print('Could not process parameter %s' % parname)
+                
         # Fix Popsizepar objects
-        
-        # Create new prior distributions
-        
-        
-        # Change initprev name
-        ps.pars['initprev'].auto = 'initprev'
+        for popkey in oldpars['popsize'].p.keys():
+            ps.pars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
+            ps.pars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
     
     project.version = "2.1.11"
     return None
+
+
+
 
 def redoprograms(project, **kwargs):
     """
