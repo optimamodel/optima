@@ -9,7 +9,7 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     '''
     for ps in project.parsets.values():
         for i in range(len(ps.pars)):
-            ps.pars[i][short] = op.dcp(project.pars()[copyfrom])
+            ps.pars[i][short] = op.dcp(project.pars()[0][copyfrom])
             ps.pars[i][short].short = short
             for kwargkey,kwargval in kwargs.items():
                 setattr(ps.pars[i][short], kwargkey, kwargval)
