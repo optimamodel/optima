@@ -12,7 +12,7 @@ Version: 2017jan13
 tests = [
 'minimizeoutcomes',
 #'investmentstaircase',
-'minimizemoney',
+#'minimizemoney',
 ]
 
 
