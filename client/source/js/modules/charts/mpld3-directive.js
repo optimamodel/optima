@@ -312,7 +312,6 @@ define(
               var $yaxis = $element.find('.mpld3-yaxis');
               var $labels = $yaxis.find('g.tick > text');
               $labels.each(function(i, v) {
-                console.log(i, v);
                 var $label = $(this);
                 var newText = reformatYTickStr(ylabels[i]);
                 $label.text(newText);
@@ -458,11 +457,12 @@ define(
 
         scope.changeFigWidth = function() {
           var width = getSelectedFigureWidth();
-          var $svgFigures = $(elem).find(".allcharts").find('svg.mpld3-figure');
-          console.log('changing ', $svgFigures.length, 'figures');
-          $svgFigures.each(function(i, svg) {
-            changeWidthOfSvg(svg, width);
-          });
+          $(elem)
+            .find(".allcharts")
+            .find('svg.mpld3-figure')
+            .each(function(i, svg) {
+              changeWidthOfSvg(svg, width);
+            });
         };
 
         initialize();
