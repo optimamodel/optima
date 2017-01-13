@@ -1,7 +1,6 @@
 import optima as op
 from numpy import nan, concatenate as cat, array
 
-### Generic functions
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     ''' 
@@ -15,20 +14,6 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
             for kwargkey,kwargval in kwargs.items():
                 setattr(ps.pars[i][short], kwargkey, kwargval)
     project.data[short] = [[nan]*len(project.data['years'])]
-
-
-#def migrateobject(oldobj, newobj):
-#    ''' Move data from an old object to a new one -- WARNING, not sure if useful '''
-#    oldattrs = oldobj.__dict__.keys()
-#    newattrs = newobj.__dict__.keys()
-#    for attr in oldattrs:
-#        if attr in newattrs:
-#            newobj.__dict__[attr] = oldobj.__dict__[attr]
-#    return newobj
-        
-
-
-### Specific migrations
 
 
 def versiontostr(project, **kwargs):
@@ -292,11 +277,99 @@ def adddataend(project, **kwargs):
     return None
 
 
+def fixsettings(project, **kwargs):
+    """
+    Migration between Optima 2.1.7 and 2.1.8.
+    """
+    ## Make sure settings is up to date
+    settingslist = ['dt', 'start', 'now', 'dataend', 'safetymargin', 'eps', 'forcepopsize', 'transnorm'] # Keep these from the old settings object
+    oldsettings = {}
+    
+    # Pull out original setting
+    for setting in settingslist: 
+        try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
+        except: pass # But don't worry if they don't exist
+    
+    project.settings = op.Settings() # Completely refresh
+    
+    # Replace with original settings
+    for settingkey,settingval in oldsettings.items(): 
+        setattr(project.settings, settingkey, settingval) 
+    
+    project.version = "2.1.8"
+    return None
+
+
+def addoptimscaling(project, **kwargs):
+    """
+    Migration between Optima 2.1.8 and 2.1.9.
+    """
+    ## New attribute for new feature
+    for optim in project.optims.values():
+        if 'budgetscale' not in optim.objectives.keys():
+            optim.objectives['budgetscale'] = [1.]
+
+    project.version = "2.1.9"
+    return None
+
+
+def addpropsandcosttx(project, **kwargs):
+    """
+    Migration between Optima 2.1.9 and 2.1.10.
+    """
+    short = 'costtx'
+    copyfrom = 'numtx'
+    kwargs['by'] = 'tot'
+    kwargs['name'] = 'Unit cost of treatment'
+    kwargs['dataname'] = 'Unit cost of treatment'
+    kwargs['datashort'] = 'costtx'
+    kwargs['coverage'] = None
+    kwargs['auto'] = 'no'
+    kwargs['fittable'] = 'no'
+    kwargs['limits'] = (0, 'maxpopsize')
+    kwargs['t'] = op.odict([('tot',array([op.Settings().now]))])
+    kwargs['y'] = op.odict([('tot',array([1.]))]) # Setting to a trivial placeholder value
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropdx'
+    copyfrom = 'deathacute'
+    kwargs['name'] = 'Year to fix PLHIV aware of their status'
+    kwargs['dataname'] = 'Year to fix PLHIV aware of their status'
+    kwargs['datashort'] = 'fixpropdx'
+    kwargs['y'] = 2100
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropcare'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix diagnosed PLHIV in care'
+    kwargs['dataname'] = 'Year to fix diagnosed PLHIV in care'
+    kwargs['datashort'] = 'fixpropcare'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixproptx'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix PLHIV in care on treatment'
+    kwargs['dataname'] = 'Year to fix PLHIV in care on treatment'
+    kwargs['datashort'] = 'fixproptx'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    short = 'fixpropsupp'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix people on ART with viral suppression'
+    kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
+    kwargs['datashort'] = 'fixpropsupp'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+
+    project.version = "2.1.10"
+    return None
+
+
 
 
 def redoparameters(project, **kwargs):
     """
-    Migration between Optima 2.1.7 and 2.1.8 -- update fields of parameters.
+    Migration between Optima 2.1.10 and 2.1.11 -- update fields of parameters.
     """
     
     raise Exception('Parameters migration not fully implemented yet')
@@ -317,14 +390,12 @@ def redoparameters(project, **kwargs):
         # Change initprev name
         ps.pars['initprev'].auto = 'initprev'
     
-    project.version = "2.1.8"
+    project.version = "2.1.11"
     return None
-
-
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.8 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.11 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -347,8 +418,11 @@ migrations = {
 '2.1.4': addaidsleavecare,
 '2.1.5': addaidslinktocare,
 '2.1.6': adddataend,
-'2.1.7': redoparameters,
-#'2.1.7': redoprograms,
+'2.1.7': fixsettings,
+'2.1.8': addoptimscaling,
+'2.1.9': addpropsandcosttx,
+'2.1.10': redoparameters,
+#'2.2': redoprograms,
 }
 
 

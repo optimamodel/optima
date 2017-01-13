@@ -589,6 +589,7 @@ class OptimaSpreadsheet:
         ('emit_ref_years_block',    'Percentage of population tested for HIV in the last 12 months',    OptimaFormats.PERCENTAGE,   self.pop_range),
         ('emit_years_block',        'Probability of a person with CD4 <200 being tested per year',      OptimaFormats.GENERAL,      ['Average']),
         ('emit_years_block',        'Number of people on treatment',                                    OptimaFormats.GENERAL,      ['Total']),
+        ('emit_years_block',        'Unit cost of treatment',                                           OptimaFormats.GENERAL,      ['Total']),
         ('emit_ref_years_block',    'Percentage of people covered by pre-exposure prophylaxis',         OptimaFormats.PERCENTAGE,   self.pop_range),
         ('emit_years_block',        'Number of women on PMTCT (Option B/B+)',                           OptimaFormats.GENERAL,      ['Total']),
         ('emit_years_block',        'Birth rate (births per woman per year)',                           OptimaFormats.NUMBER,       self.ref_females_range),

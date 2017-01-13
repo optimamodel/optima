@@ -462,7 +462,7 @@ class Project(object):
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
             for i in range(n):
-                simparslist.append(makesimpars(self.parsets[name].pars, settings=self.settings, name=name, sample=sample, tosample=tosample))
+                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
@@ -526,10 +526,10 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2, debug=False):
+    def runscenarios(self, scenlist=None, verbose=2, debug=False, **kwargs):
         ''' Function to run scenarios '''
         if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
-        multires = runscenarios(project=self, verbose=verbose, debug=debug)
+        multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
         self.addresult(result=multires)
         self.modified = today()
         return None
@@ -573,8 +573,9 @@ class Project(object):
     def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
+        projectBOC.name += ' (' + str(projectBOC.uid) + ')'
         if objectives == None:
-            printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
+            printv('WARNING, you have called genBOC for project "%s" without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progset=progsetname)
         projectBOC.objectives = objectives
         
@@ -613,7 +614,7 @@ class Project(object):
                 print('Using old allocation as new starting point.')
             results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
             tmptotals.append(budget)
-            tmpallocs.append(dcp(results.budget['Optimal allocation']))
+            tmpallocs.append(dcp(results.budget['Optimal']))
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)

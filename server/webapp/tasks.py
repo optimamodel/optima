@@ -2,6 +2,7 @@ import traceback
 from pprint import pformat
 import datetime
 import dateutil.tz
+import server.webapp.parse
 
 from celery import Celery
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -19,7 +20,7 @@ optima.portfolio.Queue = Queue
 # must import api first
 from ..api import app
 from .dbconn import db
-from . import dbmodels, parse, utils, dataio
+from . import dbmodels, parse, dataio
 
 
 db = SQLAlchemy(app)
@@ -137,7 +138,6 @@ def delete_task(pyobject_id, work_type):
     db.session.commit()
 
     return "Deleted job"
-
 
 
 def start_or_report_project_calculation(project_id, work_type):
@@ -301,7 +301,7 @@ def launch_autofit(project_id, parset_id, maxtime):
 
 
 @celery_instance.task(bind=True)
-def run_optimization(self, project_id, optimization_id, maxtime):
+def run_optimization(self, project_id, optimization_id, maxtime, start=None, end=None):
 
     status = 'started'
     error_text = ""
@@ -349,8 +349,8 @@ def run_optimization(self, project_id, optimization_id, maxtime):
         result = None
         try:
             print ">> Start optimization '%s'" % optim.name
-            objectives = utils.normalize_obj(optim.objectives)
-            constraints = utils.normalize_obj(optim.constraints)
+            objectives = server.webapp.parse.normalize_obj(optim.objectives)
+            constraints = server.webapp.parse.normalize_obj(optim.constraints)
             constraints["max"] = optima.odict(constraints["max"])
             constraints["min"] = optima.odict(constraints["min"])
             constraints["name"] = optima.odict(constraints["name"])
@@ -395,12 +395,12 @@ def run_optimization(self, project_id, optimization_id, maxtime):
     print ">> Finish optimization"
 
 
-def launch_optimization(project_id, optimization_id, maxtime):
+def launch_optimization(project_id, optimization_id, maxtime, start=None, end=None):
     calc_state = start_or_report_project_calculation(
         project_id, 'optim-' + str(optimization_id))
     if calc_state['status'] != 'started':
         return calc_state, 208
-    run_optimization.delay(project_id, optimization_id, maxtime)
+    run_optimization.delay(project_id, optimization_id, maxtime, start, end)
     return calc_state
 
 

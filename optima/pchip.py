@@ -149,6 +149,7 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
 #    try:
     xstart = x[0]
     xend = x[-1]
+    if xend > 1e15: xend = x[-2]    # This handles any artificially big value
     if not initbudget == None:
         xstart = min(xstart,initbudget[0])
         xend = max(xend,initbudget[-1])

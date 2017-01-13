@@ -96,7 +96,7 @@
           style="width: 350px;"
           type="text"
           ng-model="program.short"
-          ng-change="selectProgram(program)"
+          ng-change="selectProgram(yearEntry, program)"
           ng-options="p.short as p.name for p in state.programs">
       </select>
       <input

@@ -1,4 +1,4 @@
-define([], function () {
+ define([], function () {
 
   /**
    * CryptoJS core components.

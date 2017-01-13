@@ -4,16 +4,16 @@ define(['angular'], function (module) {
 
   return angular.module('app.parameter-scenarios-modal', [])
     .controller('ParameterScenariosModalController', function (
-        $scope, $modalInstance, scenarios, scenario, parsets,
-        progsets, ykeys, years) {
+        $scope, $modalInstance, $http, project, scenarios, scenario, parsets,
+        progsets, parsByParsetId, years) {
 
       function initialize() {
         $scope.parsets = parsets;
         $scope.progsets = progsets;
-        $scope.otherNames = _.without(_.pluck(scenarios, 'name'), scenario.name);
         $scope.scenario = scenario;
         $scope.years = years;
-        $scope.defaultPars = ykeys;
+        $scope.parsByParsetId = parsByParsetId;
+
         $scope.state = {};
 
         if (_.isUndefined($scope.scenario.name)) {
@@ -25,13 +25,8 @@ define(['angular'], function (module) {
       }
 
       $scope.selectParset = function() {
-        var parset_id = $scope.scenario.parset_id;
-        $scope.state.parset = _.findWhere($scope.parsets, { id: parset_id });
-        $scope.parsInScenario = _.filter($scope.state.parset.pars[0], {visible: 1 });
-      };
-
-      $scope.isNameClash = function(scenario_name) {
-        return _.contains($scope.otherNames, scenario_name);
+        $scope.state.parset = _.findWhere(
+          $scope.parsets, { id: $scope.scenario.parset_id });
       };
 
       var initNewScenario = function() {
@@ -40,59 +35,83 @@ define(['angular'], function (module) {
         $scope.scenario.progset_id = null;
         $scope.scenario.parset_id = $scope.parsets[0].id;
         $scope.scenario.pars = [];
+        var otherNames = _.without(_.pluck(scenarios, 'name'), scenario.name);
         var i = 1;
         do {
           $scope.scenario.name = "Scenario " + i;
           i += 1;
-        } while ($scope.isNameClash(scenario.name));
+        } while (_.contains(otherNames, scenario.name));
 
       };
 
       function buildPopsOfPar() {
-        console.log('buildPopsOfPar')
         $scope.popsOfPar = [];
-        _.each($scope.scenario.pars, function(par) {
-          var parName = par.name;
-          var year = par.startyear;
-          var pops = [];
-          var defaultPars = $scope.defaultPars[$scope.scenario.parset_id][year];
-          if (defaultPars.hasOwnProperty(parName)) {
-            pops = defaultPars[parName];
-            var totalPop = _.findWhere(pops, {'val': 'tot'});
-            if (totalPop) {
-              totalPop["label"] = "Total Population";
-            }
-            if (_.isUndefined(par.forLabel)) {
-              var pop = _.find(pops, function(pop) {
-                return "" + pop.val == "" + par.for;
-              });
-              if (pop) {
-                par.forLabel = pop.label;
+        $scope.parSelectors = [];
+
+        _.each($scope.scenario.pars, function(scenPar) {
+          var scenParName = scenPar.name;
+          var pars = $scope.parsByParsetId[$scope.scenario.parset_id];
+
+          $scope.parSelectors = [];
+
+          var popsOfPar = [];
+          _.each(pars, function(par) {
+
+            $scope.parSelectors.push({name: par.name, short: par.short});
+
+            if (par.short == scenParName) {
+              if (par.pop == "tot") {
+                par.popLabel = "Total Population";
+                scenPar.forLabel = "Total Population";
+              } else if ("" + par.pop == "" + scenPar.for) {
+                scenPar.forLabel = par.popLabel;
               }
+              popsOfPar.push(par);
             }
-          }
-          $scope.popsOfPar.push(pops);
+          });
+
+          $scope.parSelectors = _.uniq($scope.parSelectors, function(par) { return par.short + par.name; });
+          $scope.popsOfPar.push(popsOfPar);
+
         });
-        console.log('new $scope.popsOfPar', $scope.popsOfPar);
+      }
+
+      function loadStartVal(scenPar) {
+        $http
+          .post(
+            '/api/startval',
+            {
+              projectId: project.id,
+              parsetId: $scope.scenario.parset_id,
+              parShort: scenPar.name,
+              pop: scenPar.for,
+              year: scenPar.startyear
+            })
+          .success(function(data) {
+            scenPar.startval = data;
+          });
       }
 
       $scope.selectNewPar = function (iPar) {
         buildPopsOfPar();
-        var par = $scope.scenario.pars[iPar];
+        var scenPar = $scope.scenario.pars[iPar];
         var pops = $scope.popsOfPar[iPar];
-        par.for = $scope.popsOfPar[iPar][0].val;
-        var labels = _.pluck(pops, "label");
-        if (!_.contains(labels, par.forLabel)) {
-          par.forLabel = labels[0];
+        scenPar.for = $scope.popsOfPar[iPar][0].pop;
+        var popLabels = _.pluck(pops, "popLabel");
+        if (!_.contains(popLabels, scenPar.forLabel)) {
+          scenPar.forLabel = popLabels[0];
         }
-        par.startval = $scope.popsOfPar[iPar][0].startval;
+        scenPar.startval = $scope.popsOfPar[iPar][0].startval;
+        loadStartVal(scenPar);
       };
 
       $scope.resetStartValue = function (iPar) {
-        var par = $scope.scenario.pars[iPar];
-        var popsOfPar = $scope.popsOfPar[iPar];
-        var pop = _.findWhere(popsOfPar, {label: par.forLabel});
-        par.startval = pop.startval;
+        var scenPar = $scope.scenario.pars[iPar];
+        var pops = $scope.popsOfPar[iPar];
+        console.log('scenPar, pops', scenPar, pops);
+        var pop = _.findWhere(pops, {popLabel: scenPar.forLabel});
+        console.log('pop', pop);
+        scenPar.startval = pop.startval;
       };
 
       $scope.selectNewYear = function (iPar) {
@@ -101,14 +120,19 @@ define(['angular'], function (module) {
       };
 
       $scope.addPar = function () {
-        var newPar = { 'name': $scope.parsInScenario[0].short };
-        newPar.endval = null;
-        newPar.startyear = new Date().getFullYear();
-        newPar.endyear = null;
-        $scope.scenario.pars.push(newPar);
+        var newScenPar = {};
+        newScenPar.endval = null;
+        newScenPar.startyear = new Date().getFullYear();
+        newScenPar.endyear = null;
+        var pars = $scope.parsByParsetId[$scope.scenario.parset_id];
+        newScenPar.name =  pars[0].short;
+
+        $scope.scenario.pars.push(newScenPar);
         var nPar = $scope.scenario.pars.length;
         $scope.selectNewPar(nPar - 1);
-        console.log('newPar', newPar);
+        console.log('newScenPar', newScenPar);
+
+        loadStartVal(newScenPar);
       };
 
       $scope.removePar = function (i) {
@@ -118,11 +142,11 @@ define(['angular'], function (module) {
       $scope.cancel = function () { $modalInstance.dismiss("cancel"); };
 
       $scope.save = function () {
-        _.each($scope.scenario.pars, function(par, iPar) {
+        _.each($scope.scenario.pars, function(scenPar, iPar) {
           var pops = $scope.popsOfPar[iPar];
-          var pop = _.findWhere(pops, {label: par.forLabel});
-          delete par.forLabel;
-          par.for = pop.val;
+          var pop = _.findWhere(pops, {popLabel: scenPar.forLabel});
+          delete scenPar.forLabel;
+          scenPar.for = pop.pop;
         });
         console.log('save scenario', JSON.stringify($scope.scenario, null, 2));
         $modalInstance.close($scope.scenario); };

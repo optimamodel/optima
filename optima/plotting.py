@@ -441,7 +441,6 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 # Configure plot specifics
                 currentylims = ylim()
                 legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1,1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'borderaxespad':2}
-                ax.set_xlabel('Year')
                 plottitle = results.main[datatype].name
                 if isperpop:  
                     plotylabel = plottitle
@@ -754,7 +753,6 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
                           'frameon':False, 'scatterpoints':1}
         if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
         else:          ax.set_title('Cascade')
-        ax.set_xlabel('Year')
         if aspercentage: ax.set_ylabel('Percentage of PLHIV')
         else:            ax.set_ylabel('Number of PLHIV')
                 
@@ -891,7 +889,6 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
                           'frameon':False}
         if ismultisim: ax.set_title(titlemap[whattoplot]+'-- %s' % titles[plt])
         else: ax.set_title(titlemap[whattoplot])
-        ax.set_xlabel('Year')
         ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations

@@ -1,7 +1,5 @@
 <div class="rich" xmlns="http://www.w3.org/1999/html">
 
-  <h1>Scenario analysis</h1>
-
   <div class="error-hint" ng-show="isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
@@ -44,15 +42,21 @@
             <td>{{ scenario.scenario_type }}</td>
 
             <td style="white-space: nowrap; width:200px; max-width:200px">
-                <a class="fa fa-pencil"
-                   ng-click="openModal(scenario, 'edit', $event)">
-                </a>
-                <i class="fa fa-copy"
-                   ng-click="openModal(scenario, 'copy', $event)">
-                </i>
-                <i class="fa fa-trash-o"
-                   ng-click="openModal(scenario, 'delete', $event)">
-                </i>
+              <i class="fa fa-pencil"
+                 tp-text="Edit" tooltip tp-class="tooltip"
+                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                 ng-click="openModal(scenario, 'edit', $event)">
+              </i>
+              <i class="fa fa-copy"
+                 tp-text="Copy" tooltip tp-class="tooltip"
+                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                 ng-click="openModal(scenario, 'copy', $event)">
+              </i>
+              <i class="fa fa-trash-o"
+                 tp-text="Delete" tooltip tp-class="tooltip"
+                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                 ng-click="openModal(scenario, 'delete', $event)">
+              </i>
             </td>
           </tr>
 
@@ -61,21 +65,34 @@
               <div style="float: left">
                 <button
                     class="btn"
-                    ng-click="runScenarios()"
+                    ng-click="graphScenarios(true)"
                     ng-disabled="!isRunnable()">
                   Run scenarios
                 </button>
+
+                &nbsp; from &nbsp;
+
+                <select
+                  ng-model="state.start"
+                  ng-options="year for year in years"></select>
+
+                &nbsp; to &nbsp;
+
+                <select
+                  ng-model="state.end"
+                  ng-options="year for year in years"></select>
+
               </div>
               <button
                   class="btn"
                   ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
-                  ng-disabled="isMissingProgramSet || !isOptimizable">
+                  ng-disabled="isMissingProgset || !isOptimizable">
                 + budget scenario
               </button>
               <button
                   class="btn"
                   ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
-                  ng-disabled="isMissingProgramSet || !isOptimizable">
+                  ng-disabled="isMissingProgset || !isOptimizable">
                 + coverage scenario
               </button>
               <button
@@ -83,10 +100,10 @@
                   ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
                 + parameter scenario
               </button>
-              <div class="error-hint" ng-show="isMissingProgramSet">
+              <div class="error-hint" ng-show="isMissingProgset">
                 Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
               </div>
-              <div class="error-hint" ng-show="!isMissingProgramSet && !isOptimizable">
+              <div class="error-hint" ng-show="!isMissingProgset && !isOptimizable">
                 Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
               </div>
             </td>
@@ -97,7 +114,7 @@
       </div>
 
       <div
-        ng-if="graphs"
+        ng-if="state.graphs"
         style="
           flex: 1 1 auto;
           border: 1px solid #DDD;
@@ -105,7 +122,7 @@
           width: 100%;
           overflow:auto">
 
-        <optima-graphs graphs="graphs"/>
+        <optima-graphs graphs="state.graphs"/>
 
       </div>
 

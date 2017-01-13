@@ -6,45 +6,75 @@ Version: 2016feb08
 """
 
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
+from optima import tic, toc, blank, pd # analysis:ignore
 
 ## Options
-standardrun = 1
-migrations = 0 # Whether or not to try migrating an old project
-autocalib = 0 # Whether or not to run autofitting
-manualcalib = 0
-reconcile = 0
-runscenarios = 0 # Run scenarios
-optimize = 0
-dosave = 1
+tests = [
+'standardrun',
+#'migrations',
+#'autocalib',
+#'manualcalib',
+#'reconcile',
+#'runscenarios',
+#'optimize',
+'dosave',
+]
+
 filename = 'best.prj'
 ind = -1 # Default index
 
+
+## Housekeeping
+
+if 'doplot' not in locals(): doplot = True
+
+def done(t=0):
+    print('Done.')
+    toc(t)
+    blank()
+
+blank()
+print('Running tests:')
+for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
+blank()
+
+
+
+##############################################################################
+## The tests
+##############################################################################
+
+T = tic()
+
 ## Make or load&migrate a project
-if standardrun:
+if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
-    P.runsim(debug=True)
+    P.runsim(debug=True, start=2000, end=2030)
     P.results[-1].export()
 
-if migrations:
-    oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_0160816_reconciled.prj'
-    P = loadproj(filename=oldprojectfile)
-    P.runsim()
-    P.makespreadsheet('newspreadsheet.xlsx')
+if 'migrations' in tests:
+    oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Optima HIV/Applications/!Other Applications/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_20161201_reconciled.prj'
+    try:
+        P = loadproj(filename=oldprojectfile)
+        P.runsim()
+        P.makespreadsheet('newspreadsheet.xlsx')
+    except:
+        print('Could not load old project file, probably because you are not Robyn, so unable to test migrations')
 
 ## Calibration
-if autocalib: 
+if 'autocalib' in tests: 
     P.autofit(name='default', maxiters=60)
-    pygui(P.parsets[ind].getresults())
+    if doplot: pygui(P.parsets[ind].getresults())
 
-if manualcalib: 
+if 'manualcalib' in tests: 
     P.manualfit()
 
-if reconcile:
+if 'reconcile' in tests:
     P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016)
 
 
-### Scenarios
-if runscenarios:
+## Scenarios
+if 'runscenarios' in tests:
     defaultbudget = P.progsets[ind].getdefaultbudget()
     maxbudget = dcp(defaultbudget)
     for key in maxbudget: maxbudget[key] += 1e14
@@ -61,18 +91,19 @@ if runscenarios:
     # Run the scenarios
     P.addscenlist(scenlist)
     P.runscenarios() 
-#    plotpeople(P, P.results[ind].raw[ind][0]['people'])
-    apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
-    pygui(P.results[ind], toplot='default')
+    if doplot:
+        plotpeople(P, P.results[ind].raw[ind][0]['people'])
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+        pygui(P.results[ind], toplot='default')
 
 
 
-if optimize:
+if 'optimize' in tests:
     P.optimize(maxtime=20)
-    pygui(P.results[ind])
+    if doplot: pygui(P.results[ind])
     
 
-if dosave:
+if 'dosave' in tests:
     P.save(filename)
     
     

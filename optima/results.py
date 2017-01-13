@@ -78,8 +78,10 @@ class Resultset(object):
         self.main = odict() # For storing main results
         self.main['numinci']            = Result('Number of new infections')
         self.main['numdeath']           = Result('Number of HIV-related deaths')
+        self.main['numdaly']            = Result('Number of HIV-related DALYs')
         
         self.main['numplhiv']           = Result('Number of PLHIV')
+        self.main['numaids']            = Result('Number of people with AIDS')
         self.main['numdiag']            = Result('Number of diagnosed PLHIV')
         self.main['numnewdiag']         = Result('Number of new diagnoses')
         self.main['numevercare']        = Result('Number of PLHIV initially linked to care')
@@ -87,6 +89,8 @@ class Resultset(object):
         self.main['numtreat']           = Result('Number of PLHIV on treatment')
         self.main['numsuppressed']      = Result('Number of virally suppressed PLHIV')
         
+        self.main['costtreat']          = Result('Annual treatment spend')
+
         self.main['propdiag']           = Result('PLHIV who are diagnosed (%)', ispercentage=True)
         self.main['propevercare']       = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True)
         self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True)
@@ -201,6 +205,7 @@ class Resultset(object):
         allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(len(self.raw))]))
         allreceivepmtct = dcp(array([self.raw[i]['receivepmtct'] for i in range(len(self.raw))]))
         allplhiv = self.settings.allplhiv
+        allaids = self.settings.allaids
         alldx = self.settings.alldx
         allevercare = self.settings.allevercare
         allcare = self.settings.allcare
@@ -250,6 +255,9 @@ class Resultset(object):
             self.main['numplhiv'].datatot = processdata(data['optplhiv'])
             self.main['numplhiv'].estimate = True # It's not real data, just an estimate
         
+        self.main['numaids'].pops = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numaids'].tot = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+
         self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         
@@ -274,6 +282,9 @@ class Resultset(object):
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
+        self.main['costtreat'].pops = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['costtreat'].tot = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+
         self.main['proptreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['proptreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['proptreat'].datatot = processdata(data['optproptx'])
@@ -296,17 +307,22 @@ class Resultset(object):
         if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         
-
-# WARNING, need to implement
-#        disutils = [D[self.pars['const']['disutil'][key] for key in D['G['healthstates']]
-#        tmpdalypops = allpeople[:,concatenate([D['G['tx1'], D['G['tx2']]),:,:].sum(axis=1) * D['P['const['disutil['tx']
-#        tmpdalytot = allpeople[:,concatenate([D['G['tx1'], D['G['tx2']]),:,:].sum(axis=(1,2)) * D['P['const['disutil['tx']
-#        for h in xrange(len(disutils)): # Loop over health states
-#            healthstates = array([D['G['undx'][h], D['G['dx'][h], D['G['fail'][h]])
-#            tmpdalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-#            tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-#        self.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
-#        self.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
+        # Calculate DALYs
+        yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
+        disutiltx = data['const']['disutiltx'][0]
+        disutils = [data['const']['disutil'+key][0] for key in self.settings.hivstates]
+        dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
+        dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
+        dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
+        dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
+        notonart = set(self.settings.notonart)
+        for h,key in enumerate(self.settings.hivstates): # Loop over health states
+            hivstateindices = set(getattr(self.settings,key))
+            healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
+            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+        self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles)
+        self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles)
         
         return None # make()
         
@@ -481,18 +497,32 @@ class BOC(object):
         
     def getoutcome(self, budgets):
         ''' Get interpolated outcome for a corresponding list of budgets '''
-        return pchip(self.x, self.y, budgets)
+        x = dcp(self.x)
+        y = dcp(self.y)
+        x.append(1e15+max(self.x))  # Big number
+        y.append(min(self.y))
+        return pchip(x, y, budgets)
         
     def getoutcomederiv(self, budgets):
         ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
-        return pchip(self.x, self.y, budgets, deriv = True)
+        x = dcp(self.x)
+        y = dcp(self.y)
+        x.append(1e15+max(self.x))  # Big number
+        y.append(min(self.y))
+        return pchip(x, y, budgets, deriv = True)
         
     def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None, baseline=0):
         ''' Plot the budget-outcome curve '''
         from pylab import xlabel, ylabel, show
         
-        ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
+        x = dcp(self.x)
+        y = dcp(self.y)
+        x.append(1e15+max(self.x))  # Big number
+        y.append(min(self.y))
+        
+        ax = plotpchip(x, y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
         xlabel('Budget')
+        ax.set_xlim((ax.get_xlim()[0],max(self.x+[optbudget]))) # Do not bother plotting the large x value, even though its effect on interpolation is visible
         if not deriv: ylabel('Outcome')
         else: ylabel('Marginal outcome')
         if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline

@@ -59,6 +59,12 @@ Diagnosed PLHIV in care	None	propcare	propcare	(0, 1)	tot	timepar	no	other	1	0	1
 PLHIV in care on treatment	None	proptx	proptx	(0, 1)	tot	timepar	no	other	0	0	1	None	0
 People on ART with viral suppression	None	propsupp	propsupp	(0, 1)	tot	timepar	no	other	1	0	1	None	0
 Pregnant women and mothers on PMTCT	None	proppmtct	proppmtct	(0, 1)	tot	timepar	no	other	0	0	1	None	0
+Year to fix PLHIV aware of their status	None	fixpropdx	fixpropdx	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix diagnosed PLHIV in care	None	fixpropcare	fixpropcare	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix PLHIV in care on treatment	None	fixproptx	fixproptx	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix people on ART with viral suppression	None	fixpropsupp	fixpropsupp	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Year to fix pregnant women and mothers on PMTCT	None	fixproppmtct	fixproppmtct	(0, 'maxyear')	tot	constant	const	const	0	0	0	None	0
+Unit cost of treatment	Unit cost of treatment	costtx	costtx	(0, 'maxpopsize')	tot	timepar	no	no	0	None	0	None	1
 Male-female insertive transmissibility (per act)	constant	transmfi	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-female receptive transmissibility (per act)	constant	transmfr	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None	1
 Male-male insertive transmissibility (per act)	constant	transmmi	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None	1
@@ -450,7 +456,7 @@ def makepars(data=None, label=None, verbose=2):
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2016jan14 by cliffk
+    Version: 2017jan05 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -509,9 +515,9 @@ def makepars(data=None, label=None, verbose=2):
             else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
         
         elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] 
-            low = data['const'][parname][1] 
-            high = data['const'][parname][2]
+            best = data['const'][parname][0] if fromdata else nan
+            low = data['const'][parname][1] if fromdata else nan
+            high = data['const'][parname][2] if fromdata else nan
             pars[parname] = Constant(y=best, prior={'dist':'uniform', 'pars':(low, high)}, **rawpar)
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
@@ -567,6 +573,11 @@ def makepars(data=None, label=None, verbose=2):
     for key in pars['numcirc'].y.keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
+    # Fix treatment from final data year
+    pars['fixproptx'].y = pars['numtx'].t['tot'][-1]
+    for key in ['fixpropdx', 'fixpropcare', 'fixpropsupp', 'fixproppmtct']:
+        pars[key].y = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
+
     # Metaparameters
     for key in popkeys: # Define values
         pars['force'].y[key] = 1.0
@@ -593,7 +604,7 @@ def makepars(data=None, label=None, verbose=2):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        if i>=j:
+                        if key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
@@ -614,7 +625,7 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jun
+    Version: 2016dec11
     '''
     
     # Handle inputs and initialization
@@ -623,13 +634,10 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'popkeys', 'injects', 'sexworker', 'rawtransit']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
-    if start is None: start=2000 # WARNING, should be a better way of declaring defaults...
-    if end is None: end=2030
-    if dt is None: dt=0.2
     if keys is None: keys = pars.keys() # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
-    elif settings is not None: simpars['tvec'] = settings.maketvec()
+    elif settings is not None: simpars['tvec'] = settings.maketvec(start=start, end=end, dt=dt)
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt

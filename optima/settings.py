@@ -64,6 +64,7 @@ class Settings(object):
         self.allevercare    = cat([         self.care, self.usvl, self.svl, self.lost]) # All people EVER in care
         self.alltx          = cat([                    self.usvl, self.svl]) # All people on treatment
         self.allplhiv       = cat([self.undx, self.alldx]) # All PLHIV
+        self.allaids        = cat([self.lt50, self.gt50]) # All people with AIDS
         self.allstates      = cat([self.sus, self.allplhiv]) # All states
         self.nstates        = len(self.allstates) # Total number of states
         
@@ -182,13 +183,14 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     maxduration = 1000.
     maxmeta = 1000.0
     maxacts = 5000.0
+    maxyear = settings.end if settings is not None else 2030. # Set to a default maximum year
     
     # It's a single number: just return it
     if isnumber(limits): return limits
     
     # Just return the limits themselves as a dict if no input argument
     if limits is None: 
-        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts}
+        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts, 'maxyear':maxyear}
     
     # If it's a string, convert to list, but remember this
     isstring = (type(limits)==str)
@@ -205,6 +207,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
         elif m=='maxduration': limits[i] = maxduration
         elif m=='maxmeta': limits[i] = maxmeta
         elif m=='maxacts': limits[i] = maxacts
+        elif m=='maxyear': limits[i] = maxyear
         else: limits[i] = limits[i] # This leaves limits[i] untouched if it's a number or something
     
     # Wrap up
