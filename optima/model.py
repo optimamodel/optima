@@ -712,8 +712,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             thisprogcirc = people[progcirc,noinflows,t+1]
             allsus = thissusreg+thisprogcirc
             newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-            people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
-            people[progcirc,noinflows,t+1] += newpeople*thisprogcirc/allsus # Add new people
+            people[susreg,noinflows[allsus>0.],t+1]   += (newpeople[allsus>0.]*thissusreg[allsus>0.]/allsus[allsus>0.]) # Add new people
+            people[progcirc,noinflows[allsus>0.],t+1] += (newpeople[allsus>0.]*thisprogcirc[allsus>0.]/allsus[allsus>0.]) # Add new people
             
             # Check population sizes are correct
             actualpeople = people[:,:,t+1][:,noinflows].sum()
