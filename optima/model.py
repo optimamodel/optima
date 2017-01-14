@@ -466,7 +466,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         ## Make a copy of the transitions for this timestep
         thistransit = dcp(rawtransit)
-
+        
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         allpeople[:,t] = people[:, :, t].sum(axis=0)
         if debug and not( all(allpeople[:,t]>0)):

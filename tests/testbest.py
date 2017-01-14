@@ -50,7 +50,8 @@ if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
     P.runsim(debug=True, start=2000, end=2030)
     P.sensitivity()
-#    P.results[-1].export()
+    pygui(P)
+    P.results[-1].export()
 
 ## Calibration
 if 'autocalib' in tests: 
