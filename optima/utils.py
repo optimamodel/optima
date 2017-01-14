@@ -417,6 +417,8 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
     # Ensure arrays and remove NaNs
     if isnumber(newx): newx = [newx] # Make sure it has dimension
+    if isnumber(origx): origx = [origx] # Make sure it has dimension
+    if isnumber(origy): origy = [origy] # Make sure it has dimension
     newx = array(newx)
     origx = array(origx)
     origy = array(origy)

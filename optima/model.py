@@ -322,7 +322,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     if not initpeople:
 
         initpeople = zeros((nstates, npops)) # Initialise
-        allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
+        allinfected = simpars['popsize'][:,0] * simpars['initprev'][:,0] # Set initial infected population
         uninfected = simpars['popsize'][:,0] - allinfected
         initnumtx = minimum(simpars['numtx'][0], allinfected.sum()/(1+eps)) # Don't allow there to be more people on treatment than infected
         if sum(allinfected): fractotal = allinfected / sum(allinfected) # Fractional total of infected people in this population

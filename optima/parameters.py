@@ -258,9 +258,10 @@ def getvalidyears(years, validdata, defaultind=0):
 
 def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Metapar(y=odict([(key,None) for key in keys]), **defaultargs) # Create structure -- need key:None for prior
+    par = Timepar(y=odict([(key,None) for key in keys]), **defaultargs) # Create structure -- need key:None for prior
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        par.t[key] = data['years'][0] # Use the first year
 
     return par
 
@@ -946,7 +947,7 @@ class Constant(Par):
 
 class Metapar(Par):
     ''' The definition of a single metaparameter, such as force of infection, which usually does vary by population '''
-    
+
     def __init__(self, y=None, prior=None, **defaultargs):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. {'FSW:'0.3, 'MSM':0.7}

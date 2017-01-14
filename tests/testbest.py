@@ -49,8 +49,6 @@ T = tic()
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
     P.runsim(debug=True, start=2000, end=2030)
-    for thesepars in P.pars()['initprev'].prior.values():
-        thesepars.pars = (0.01,0.1)
     P.sensitivity()
     pygui(P)
 
