@@ -195,7 +195,7 @@ def promotetoarray(x):
         else: 
             return array([x]) # e.g. array(3)
     else: # e.g. 'foo'
-        raise OptimaException("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
+        raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
@@ -359,6 +359,29 @@ def findinds(val1, val2=None, eps=1e-6):
             output = nonzero(abs(array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
     if ndim(val1)==1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
+    return output
+
+
+def findnearest(series=None, value=None):
+    """
+    Return the index of the nearest match in series to value
+    
+    Examples:
+        findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
+        findnearest([2,3,6,3], 6) # returns 2
+        findnearest([2,3,6,3], 6) # returns 2
+        findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
+    
+    Version: 2017jan07 by cliffk
+    """
+    from numpy import argmin
+    series = promotetoarray(series)
+    if isnumber(value):
+        output = argmin(abs(promotetoarray(series)-value))
+    else:
+        output = []
+        for val in value: output.append(findnearest(series, val))
+        output = promotetoarray(output)
     return output
     
     

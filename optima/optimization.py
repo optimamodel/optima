@@ -564,8 +564,8 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     
         args['totalbudget'] = origtotalbudget # Calculate new total funding
         args['which'] = 'outcomes' # Switch back to outcome minimization -- WARNING, there must be a better way of doing this
-        budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
-        budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
+#        budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
+        budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
     
         # See if objectives are met
         args['which'] = 'money' # Switch back to money minimization

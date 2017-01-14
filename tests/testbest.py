@@ -11,7 +11,6 @@ from optima import tic, toc, blank, pd # analysis:ignore
 ## Options
 tests = [
 'standardrun',
-#'migrations',
 #'autocalib',
 #'manualcalib',
 #'reconcile',

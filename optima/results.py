@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 
@@ -368,7 +368,31 @@ class Resultset(object):
         else:
             return output
         
-                    
+    
+    def get(self, what=None, year=None, pop='tot'):
+        '''
+        A small function to make it easier to access results. For example, to 
+        get the number of deaths in the current year, just do
+        
+        P = demo(0)
+        P.result().get('numinci')
+        '''
+        # If year isn't specified, use now
+        if year is None: 
+            year = self.project.settings.now
+        
+        # Use either total (by default) or a given population
+        if pop=='tot':
+            timeseries = self.main[what].tot[0]
+        else:
+            if isinstance(pop,str): 
+                pop = self.popkeys.index(pop) # Convert string to number
+            timeseries = self.main[what].pops[0][pop,:]
+        
+        # Get the index and return the result
+        index = findnearest(self.tvec, year)
+        result = timeseries[index]
+        return result
             
         
 

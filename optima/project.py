@@ -436,8 +436,12 @@ class Project(object):
         return self.progsets[key].programs
 
     def progset(self, key=-1):
-        ''' Shortcut for getting the latest active program set, i.e. self.progsets[-1] '''
+        ''' Shortcut for getting the latest active program set, i.e. self.progset[-1]'''
         return self.progsets[key]
+    
+    def result(self, key=-1):
+        ''' Shortcut for getting the latest active results, i.e. self.results[-1]'''
+        return self.results[key]
 
 
     #######################################################################################################

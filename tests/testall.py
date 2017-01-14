@@ -31,6 +31,7 @@ MASTER = [
 'testmakespreadsheet',
 'testproject',
 'testprograms',
+'testmigrations',
 'testmodalities',
 'testmodel',
 'testscenarios',
