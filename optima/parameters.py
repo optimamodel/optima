@@ -7,7 +7,7 @@ Version: 2.0 (2016nov05)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
-from numpy.random import random, seed
+from numpy.random import uniform, normal, seed, random
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
@@ -517,7 +517,8 @@ def makepars(data=None, label=None, verbose=2):
             best = data['const'][parname][0] if fromdata else nan
             low = data['const'][parname][1] if fromdata else nan
             high = data['const'][parname][2] if fromdata else nan
-            pars[parname] = Constant(y=best, prior={'dist':'uniform', 'pars':(low, high)}, **rawpar)
+            thisprior = {'dist':'uniform', 'pars':(low, high)} if fromdata else None
+            pars[parname] = Constant(y=best, prior=thisprior, **rawpar)
         
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Metapar(y=odict([(key,None) for key in keys]), **rawpar)
@@ -819,11 +820,12 @@ class Dist(object):
         ''' Draw random samples from the specified distribution '''
         if randseed is not None: seed(randseed) # Reset the random seed, if specified
         if self.dist=='uniform':
-            samples = random(n)
-            samples = samples * (self.pars[1] - self.pars[0])  + self.pars[0] # Scale to correct range
+            samples = uniform(low=self.pars[0], high=self.pars[1], size=n)
             return samples
+        if self.dist=='normal':
+            return normal(loc=self.pars[0], scale=self.pars[1], size=n)
         else:
-            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform, normal' % self.dist
             raise OptimaException(errormsg)
 
 
