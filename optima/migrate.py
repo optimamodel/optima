@@ -336,6 +336,7 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['name'] = 'Year to fix PLHIV aware of their status'
     kwargs['dataname'] = 'Year to fix PLHIV aware of their status'
     kwargs['datashort'] = 'fixpropdx'
+    kwargs['fittable'] = 'year'
     kwargs['y'] = 2100
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
@@ -359,7 +360,6 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
     kwargs['datashort'] = 'fixpropsupp'
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
-
 
     project.version = "2.1.10"
     return None

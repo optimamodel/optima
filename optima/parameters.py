@@ -59,11 +59,11 @@ Diagnosed PLHIV in care	None	propcare	propcare	(0, 1)	tot	timepar	other	0	1	None
 PLHIV in care on treatment	None	proptx	proptx	(0, 1)	tot	timepar	other	0	1	None	0	no
 People on ART with viral suppression	None	propsupp	propsupp	(0, 1)	tot	timepar	other	0	1	None	0	no
 Pregnant women and mothers on PMTCT	None	proppmtct	proppmtct	(0, 1)	tot	timepar	other	0	1	None	0	no
-Year to fix PLHIV aware of their status	None	fixpropdx	fixpropdx	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	const
-Year to fix diagnosed PLHIV in care	None	fixpropcare	fixpropcare	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	const
-Year to fix PLHIV in care on treatment	None	fixproptx	fixproptx	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	const
-Year to fix people on ART with viral suppression	None	fixpropsupp	fixpropsupp	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	const
-Year to fix pregnant women and mothers on PMTCT	None	fixproppmtct	fixproppmtct	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	const
+Year to fix PLHIV aware of their status	None	fixpropdx	fixpropdx	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	year
+Year to fix diagnosed PLHIV in care	None	fixpropcare	fixpropcare	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	year
+Year to fix PLHIV in care on treatment	None	fixproptx	fixproptx	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	year
+Year to fix people on ART with viral suppression	None	fixpropsupp	fixpropsupp	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	year
+Year to fix pregnant women and mothers on PMTCT	None	fixproppmtct	fixproppmtct	(0, 'maxyear')	tot	yearpar	no	0	0	None	0	year
 Unit cost of treatment	Unit cost of treatment	costtx	costtx	(0, 'maxpopsize')	tot	timepar	no	None	0	None	1	no
 Male-female insertive transmissibility (per act)	constant	transmfi	transmfi	(0, 1)	tot	constant	const	None	0	None	1	const
 Male-female receptive transmissibility (per act)	constant	transmfr	transmfr	(0, 1)	tot	constant	const	None	0	None	1	const
@@ -1399,6 +1399,12 @@ class Parameterset(object):
                     typelist.append(par.fittable)
                     valuelist.append(par.y)
                     labellist.append(par.name)
+                elif par.fittable == 'year':
+                    keylist.append(key)
+                    subkeylist.append(None)
+                    typelist.append(par.fittable)
+                    valuelist.append(par.t)
+                    labellist.append(par.name)
                 elif par.fittable in ['pop', 'pship']:
                     for subkey in par.y.keys():
                         keylist.append(key)
@@ -1489,6 +1495,10 @@ class Parameterset(object):
                     values = par.y
                     prefix = "pars['%s'].y = " % parname
                     if cpars is not None: cvalues = cpars[parname].y
+                elif par.fittable=='year': 
+                    values = par.t
+                    prefix = "pars['%s'].t = " % parname
+                    if cpars is not None: cvalues = cpars[parname].t
                 elif par.fittable=='meta':
                     values = par.m
                     prefix = "pars['%s'].m = " % parname

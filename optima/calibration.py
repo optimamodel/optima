@@ -72,8 +72,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                         for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
                     elif par.fittable=='exp':
                         for i in range(len(par.i)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
-                    elif par.fittable=='const':
-                        parlist.append({'name':par.short, 'type':'const', 'limits':par.limits, 'ind':None})
+                    elif par.fittable=='const' or par.fittable=='year':
+                        parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':None})
                     else:
                         raise OptimaException('Parameter "fittable" type "%s" not understood' % par.fittable)
             else: pass # It's like popkeys or something -- don't worry, be happy
