@@ -7,8 +7,8 @@ Version: 2.0 (2016nov05)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
-from numpy.random import uniform, normal, seed, random
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata # Utilities 
+from numpy.random import uniform, normal, seed
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -258,11 +258,10 @@ def getvalidyears(years, validdata, defaultind=0):
 
 def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Timepar(y=odict([(key,None) for key in keys]), **defaultargs) # Create structure -- need key:None for prior
+    par = Metapar(y=odict([(key,None) for key in keys]), **defaultargs) # Create structure -- need key:None for prior
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
-        par.t[key] = data['years'][0] # Use the first year
-
+        par.prior[key].pars *= par.y[key] # Get prior in right range
     return par
 
 
@@ -810,9 +809,9 @@ class Dist(object):
     ''' Define a distribution object for drawing samples from, usually to create a prior '''
     def __init__(self, dist=None, pars=None):
         defaultdist = 'uniform'
-        defaultpars = (0.9, 1.1) # This is arbitrary, of course
+        defaultpars = array([0.9, 1.1]) # This is arbitrary, of course
         self.dist = dist if dist is not None else defaultdist
-        self.pars = pars if pars is not None else defaultpars
+        self.pars = promotetoarray(pars) if pars is not None else defaultpars
     
     def __repr__(self):
         ''' Print out useful information when called'''
