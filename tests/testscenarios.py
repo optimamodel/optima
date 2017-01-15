@@ -225,7 +225,7 @@ if '90-90-90' in tests:
     print('Running standard scenarios test...')
     from optima import Parscen, defaults, pygui, findinds, plotpeople
     
-    P = defaults.defaultproject('generalized')
+    P = defaults.defaultproject('best')
     P.cleanresults() # Check that scenarios can be run even if no results stored
     
     pops = P.data['pops']['short']
