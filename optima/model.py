@@ -753,7 +753,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     else: # If not, we will just use this value from now on
                         for i in range(t+1,npts): prop[i] = calcprop
                     
-                # In this section, we shift numbers of people (as opposed to shifting proportions). If any of the prop parameters are non-nan, that means that some number of people will need to shift. However, treatment is special because it is always set by shifting numbers. That's why we have this condition here.
+                # In this section, we shift people around the cascade until we meet some targeted number/proportion.
+                # If any of the prop parameters are non-nan, that means that we've got some proportion target.
+                # However, treatment is special because it is always set by shifting numbers.
                 if name is 'proptx' or ~isnan(prop[t+1]): 
 
                     # Move the people who started treatment last timestep from usvl to svl
@@ -769,7 +771,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     available       = people[denom,:,t+1].sum()
                     new_movers      = zeros((ncd4,npops)) 
 
-                    # How many people waiting to move up the cascade? And what distribution should we use to move them?
+                    # Figure out how many people waiting to move up the cascade, and what distribution should we use to move them
                     ppltomoveup     = people[lowerstate,:,t+1]
                     if name == 'proptx': # For treatment, we move people in lower CD4 states first
                         movingdistribution = einsum('ij,i->ij',ppltomoveup,1/(eps+ppltomoveup.sum(axis=1)))
