@@ -290,7 +290,7 @@ def get_project_summary_from_project(project):
 
 # PARSETS
 
-def get_parameters_from_parset(parset, ind=0):
+def get_parameters_from_parset(parset):
     """
     Returns a flat dictionary of parameters for the calibration
     page from an optima parameter set object. Extracts subkey's
@@ -311,7 +311,7 @@ def get_parameters_from_parset(parset, ind=0):
         - ...
     """
     parameters = []
-    for key, par in parset.pars[ind].items():
+    for key, par in parset.pars.items():
         if hasattr(par, 'fittable') and par.fittable != 'no':
             if par.fittable == 'meta':
                 parameters.append({
@@ -329,6 +329,14 @@ def get_parameters_from_parset(parset, ind=0):
                     "value": par.y,
                     "label": par.name,
                 })
+            elif par.fittable == 'year':
+                parameters.append({
+                    "key": key,
+                    "subkey": None,
+                    "type": par.fittable,
+                    "value": par.t,
+                    "label": par.name,
+                })
             elif par.fittable in ['pop', 'pship']:
                 for subkey in par.y.keys():
                     parameters.append({
@@ -339,12 +347,12 @@ def get_parameters_from_parset(parset, ind=0):
                         "label": '%s -- %s' % (par.name, str(subkey)),
                     })
             elif par.fittable == 'exp':
-                for subkey in par.p.keys():
+                for subkey in par.i.keys():
                     parameters.append({
                         "key": key,
                         "subkey": subkey,
                         "type": par.fittable,
-                        "value": par.p[subkey][0],
+                        "value": par.i[subkey],
                         "label": '%s -- %s' % (par.name, str(subkey)),
                     })
             else:
