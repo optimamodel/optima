@@ -37,6 +37,7 @@ MASTER = [
 'testscenarios',
 'testcalibration',
 'testoptimization',
+'testmigrations',
 ]
 
 ## Optionally run everything

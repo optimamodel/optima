@@ -83,6 +83,7 @@ class Resultset(object):
         self.main['numplhiv']           = Result('Number of PLHIV')
         self.main['numaids']            = Result('Number of people with AIDS')
         self.main['numdiag']            = Result('Number of diagnosed PLHIV')
+        self.main['numnewdiag']         = Result('Number of new diagnoses')
         self.main['numevercare']        = Result('Number of PLHIV initially linked to care')
         self.main['numincare']          = Result('Number of PLHIV in care')
         self.main['numtreat']           = Result('Number of PLHIV on treatment')
@@ -98,7 +99,6 @@ class Resultset(object):
         
         self.main['prev']               = Result('HIV prevalence (%)', ispercentage=True)
         self.main['force']              = Result('Incidence (per 100 p.y.)', ispercentage=True)
-        self.main['numnewdiag']         = Result('Number of new diagnoses')
         self.main['nummtct']            = Result('Number of HIV+ births')
         self.main['numhivbirths']       = Result('Number of births to HIV+ women')
         self.main['numpmtct']           = Result('Number of HIV+ women receiving PMTCT')
@@ -241,7 +241,7 @@ class Resultset(object):
         self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: 
             self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
-            self.main['numnewdiag'].estimate = True # It's not real data, just an estimate
+            self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
         
         self.main['numdeath'].pops = quantile(alldeaths[:,:,:,indices].sum(axis=1), quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
