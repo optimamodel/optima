@@ -47,7 +47,12 @@ T = tic()
 
 ## Make or load&migrate a project
 if 'standardrun' in tests:
+    from numpy import array, nan
     P = defaults.defaultproject('best',dorun=False)
+    P.pars()['fixpropdx'].y = 2014.
+    P.pars()['propdx'].y[0] = array([nan, .9])
+    P.pars()['propdx'].t[0] = array([2000., 2020.])
+    
     P.runsim(debug=True, start=2000, end=2030)
     P.results[-1].export()
 
