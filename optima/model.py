@@ -46,7 +46,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_incibycd4   = zeros((nstates, npts))        # Total incidence transmitted by each health state
-    raw_incibypop   = zeros((nstates, npts))        # Total incidence transmitted by population
+    raw_incibypop   = zeros((npops, npts))        # Total incidence transmitted by population
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
@@ -81,6 +81,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     susreg          = settings.susreg               # Susceptible, regular
     progcirc        = settings.progcirc             # Susceptible, programmatically circumcised
     sus             = settings.sus                  # Susceptible, both circumcised and uncircumcised
+    nsus            = settings.nsus                 # Number of susceptible states
     undx            = settings.undx                 # Undiagnosed
     dx              = settings.dx                   # Diagnosed
     alldx           = settings.alldx                # All diagnosed
@@ -232,7 +233,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     rawtransit[fromstate][prob][ts] *= prog[fromhealthstate]
     
             # Death probabilities
-            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt 
+            rawtransit[fromstate][prob][ts] *= 1.-deathhiv[fromhealthstate]*dt 
             deathprob[fromstate] = deathhiv[fromhealthstate]*dt
             
     ## Recovery and deaths for people on suppressive ART
@@ -302,7 +303,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             # Death probabilities
             rawtransit[fromstate][prob][ts] *= 1.-deathhiv[fromhealthstate]*deathusvl*dt
             deathprob[fromstate] = deathhiv[fromhealthstate]*deathusvl*dt
-
   
 
   
@@ -527,28 +527,27 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 raise OptimaException(errormsg)
         
         # Probability of getting infected is one minus forceinffull times any scaling factors
-        forceinffull = einsum('ijkl,j,j->ijkl', 1.-forceinffull, force, inhomo)
-        infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
-        infections_by = forceinffull.sum(axis=(1,3)) # Infections transmitted through sex and injecting - by health state who transmits
+        forceinffull  = einsum('ijkl,j,j->ijkl', 1.-forceinffull, force, inhomo)
+        infections_to = einsum('ij,j->ij',forceinffull.sum(axis=(2,3)),(1.-background[:,t])) # Infections acquired through sex and injecting - by population who gets infected
+        infections_by = einsum('kj,j->kj',forceinffull.sum(axis=(0,1)),(1.-background[:,t])) # Infections transmitted through sex and injecting - by health state who transmits
 
-        if debug and abs(infections_to.sum() - infections_by.sum()) > 1:
+        if debug and abs(infections_to.sum() - infections_by.sum()) > eps:
             errormsg = 'Probability of someone getting infected (%f) is not equal to probability of someone causing an infection (%f) at time %i' % (infections_by.sum(), infections_to.sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
             
         # Add these transition probabilities to the main array - WARNING, UGLY, FIX
-        thistransit[susreg[0]][prob][susreg] = 1. - infections_to[0] # susreg is a single element, but needs an index since can't index a list with an array
+        thistransit[susreg[0]][prob][susreg] = (1.-background[:,t]) - infections_to[0] # susreg is a single element, but needs an index since can't index a list with an array
         thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[0]
-        thistransit[progcirc[0]][prob][susreg] = 1. - infections_to[1]
+        thistransit[progcirc[0]][prob][susreg] = (1.-background[:,t]) - infections_to[1]
         thistransit[progcirc[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[1]
-
 
         ##############################################################################################################
         ### Calculate probabilities of shifting along cascade IF programmatically determined
         ##############################################################################################################
 
         # Deaths
-        for state in range(nstates):
+        for state in range(nsus,nstates):
             thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
 
         # Undiagnosed to diagnosed
@@ -634,9 +633,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ## Calculate main indicators
         raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
-        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc[0]][prob][thistransit[progcirc[0]][to].index(undx[0])]/dt		
-        raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
-        
+        raw_inci[:,t]       = einsum('ij,ij->j', people[sus,:,t], infections_to)/dt
 
         ## Calculate births
         for p1,p2,birthrates,alleligbirthrate in birthslist:
@@ -820,7 +817,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['popkeys']      = popkeys
     raw['people']       = people
     raw['inci']         = raw_inci
-    raw['inciby']       = raw_inciby
+    raw['incibycd4']    = raw_incibycd4
+    raw['incibypop']    = raw_incibypop
     raw['mtct']         = raw_mtct
     raw['births']       = raw_births
     raw['hivbirths']    = raw_hivbirths

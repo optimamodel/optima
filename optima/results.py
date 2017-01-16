@@ -104,6 +104,7 @@ class Resultset(object):
         self.main['numpmtct']           = Result('Number of HIV+ women receiving PMTCT')
         self.main['popsize']            = Result('Population size')
 
+
         self.other = odict() # For storing other results -- not available in the interface
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
@@ -198,10 +199,11 @@ class Resultset(object):
             self.tvec = tvec[indices] # Subsample time vector too
         self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
         allpeople = dcp(array([self.raw[i]['people'] for i in range(len(self.raw))]))
-        allinci   = dcp(array([self.raw[i]['inci'] for i in range(len(self.raw))]))
+        allinci = dcp(array([self.raw[i]['inci'] for i in range(len(self.raw))]))
+        allincibypop = dcp(array([self.raw[i]['incibypop'] for i in range(len(self.raw))]))
         alldeaths = dcp(array([self.raw[i]['death'] for i in range(len(self.raw))]))
-        alldiag   = dcp(array([self.raw[i]['diag'] for i in range(len(self.raw))]))
-        allmtct   = dcp(array([self.raw[i]['mtct'] for i in range(len(self.raw))]))
+        alldiag = dcp(array([self.raw[i]['diag'] for i in range(len(self.raw))]))
+        allmtct = dcp(array([self.raw[i]['mtct'] for i in range(len(self.raw))]))
         allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(len(self.raw))]))
         allreceivepmtct = dcp(array([self.raw[i]['receivepmtct'] for i in range(len(self.raw))]))
         allplhiv = self.settings.allplhiv
