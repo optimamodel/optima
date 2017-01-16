@@ -17,6 +17,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     if simpars is None: raise OptimaException('model() requires simpars as an input')
     if settings is None: raise OptimaException('model() requires settings as an input')
 
+    if verbose is None: verbose = settings.verbose # Verbosity of output
+    printv('Running model...', 1, verbose)
+    
+    # Extract key items
     popkeys         = simpars['popkeys']
     npops           = len(popkeys)
     simpars         = dcp(simpars)
@@ -25,24 +29,22 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     npts            = len(tvec)                     # Number of time points
     ncd4            = settings.ncd4                 # Shorten number of CD4 states
     nstates         = settings.nstates              # Shorten number of health states
-    people          = zeros((nstates, npops, npts)) # Matrix to hold everything
-    allpeople       = zeros((npops, npts))          # Population sizes
-    effallprev      = zeros((nstates, npops))       # HIV effective prevalence (prevalence times infectiousness), by health state
-    inhomo          = zeros(npops)                  # Inhomogeneity calculations
-    new_movers      = zeros((ncd4, npops))          # Initialise a place to store the number of people that shift into a new compartment (e.g. number of treatment initiators)
     eps             = settings.eps                  # Define another small number to avoid divide-by-zero errors
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
     rawtransit      = simpars['rawtransit']         # Raw transitions
     to, prob        = 0,1                           # Indices for entries of rawtransit elements that reference the states that once moves TO and the PROBABILITY of moving
 		
-    if verbose is None: verbose = settings.verbose # Verbosity of output
-    
-    # Would be at the top of the script, but need to figure out verbose first
-    printv('Running model...', 1, verbose)
-    
+    # Initialize people array
+    people          = zeros((nstates, npops, npts)) # Matrix to hold everything
+
+    # Initialize other arrays used for internatl calculations
+    allpeople       = zeros((npops, npts))          # Population sizes
+    effallprev      = zeros((nstates, npops))       # HIV effective prevalence (prevalence times infectiousness), by health state
+    inhomo          = zeros(npops)                  # Inhomogeneity calculations
+    new_movers      = zeros((ncd4, npops))          # Initialise a place to store the number of people that shift into a new compartment (e.g. number of treatment initiators)
+
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
-    raw_inciby      = zeros((nstates, npts))        # Total incidence transmitted by each health state
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
@@ -54,15 +56,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_death       = zeros((nstates, npops, npts)) # Number of deaths per timestep
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
     
-    # Biological and failure parameters -- death etc
+    # Biological and failure parameters
     prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],simpars['deathlt50']]) ))
     svlrecov        = maximum(eps,1-exp(-dt/array([inf,inf,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']])))
     deathhiv        = array([simpars['deathacute'],simpars['deathgt500'],simpars['deathgt350'],simpars['deathgt200'],simpars['deathgt50'],simpars['deathlt50']])
     deathsvl        = simpars['deathsvl']           # Death rate whilst on suppressive ART
     deathusvl       = simpars['deathusvl']          # Death rate whilst on unsuppressive ART
     cd4trans        = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
-    deathprob       = zeros((nstates))              # Initialise death probability array
     background      = simpars['death']*dt
+    deathprob       = zeros((nstates))              # Initialise death probability array
 
     # Cascade-related parameters
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
@@ -77,6 +79,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     susreg          = settings.susreg               # Susceptible, regular
     progcirc        = settings.progcirc             # Susceptible, programmatically circumcised
     sus             = settings.sus                  # Susceptible, both circumcised and uncircumcised
+    nsus            = settings.nsus                 # Number of susceptible states
     undx            = settings.undx                 # Undiagnosed
     dx              = settings.dx                   # Diagnosed
     alldx           = settings.alldx                # All diagnosed
@@ -117,7 +120,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     for p1 in range(npops):
         for p2 in range(npops):
             if agetransit[p1,p2]:   agetransitlist.append((p1,p2, (1.-exp(-dt/agetransit[p1,p2]))))
-            if risktransit[p1,p2]: risktransitlist.append((p1,p2, (1.-exp(-dt/risktransit[p1,p2]))))
+            if risktransit[p1,p2]:  risktransitlist.append((p1,p2, (1.-exp(-dt/risktransit[p1,p2]))))
     
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -171,7 +174,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     numpmtct  = simpars['numpmtct']     # Number of people receiving PMTCT (N)
     
     # Uptake of OST
-    numost = simpars['numost']                  # Number of people on OST (N)
+    numost    = simpars['numost']                  # Number of people on OST (N)
     if any(injects):
         numpwid = popsize[injects,:].sum(axis=0)  # Total number of PWID
         try: 
@@ -228,7 +231,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     rawtransit[fromstate][prob][ts] *= prog[fromhealthstate]
     
             # Death probabilities
-            rawtransit[fromstate][1][ts] *= 1.-deathhiv[fromhealthstate]*dt 
+            rawtransit[fromstate][prob][ts] *= 1.-deathhiv[fromhealthstate]*dt 
             deathprob[fromstate] = deathhiv[fromhealthstate]*dt
             
     ## Recovery and deaths for people on suppressive ART
@@ -298,7 +301,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             # Death probabilities
             rawtransit[fromstate][prob][ts] *= 1.-deathhiv[fromhealthstate]*deathusvl*dt
             deathprob[fromstate] = deathhiv[fromhealthstate]*deathusvl*dt
-
   
 
   
@@ -523,28 +525,27 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 raise OptimaException(errormsg)
         
         # Probability of getting infected is one minus forceinffull times any scaling factors
-        forceinffull = einsum('ijkl,j,j->ijkl', 1.-forceinffull, force, inhomo)
-        infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
-        infections_by = forceinffull.sum(axis=(1,3)) # Infections transmitted through sex and injecting - by health state who transmits
+        forceinffull  = einsum('ijkl,j,j->ijkl', 1.-forceinffull, force, inhomo)
+        infections_to = einsum('ij,j->ij',forceinffull.sum(axis=(2,3)),(1.-background[:,t])) # Infections acquired through sex and injecting - by population who gets infected
+        infections_by = einsum('kj,j->kj',forceinffull.sum(axis=(0,1)),(1.-background[:,t])) # Infections transmitted through sex and injecting - by health state who transmits
 
-        if debug and abs(infections_to.sum() - infections_by.sum()) > 1:
+        if debug and abs(infections_to.sum() - infections_by.sum()) > eps:
             errormsg = 'Probability of someone getting infected (%f) is not equal to probability of someone causing an infection (%f) at time %i' % (infections_by.sum(), infections_to.sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
             
         # Add these transition probabilities to the main array - WARNING, UGLY, FIX
-        thistransit[susreg[0]][prob][susreg] = 1. - infections_to[0] # susreg is a single element, but needs an index since can't index a list with an array
+        thistransit[susreg[0]][prob][susreg] = (1.-background[:,t]) - infections_to[0] # susreg is a single element, but needs an index since can't index a list with an array
         thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[0]
-        thistransit[progcirc[0]][prob][susreg] = 1. - infections_to[1]
+        thistransit[progcirc[0]][prob][susreg] = (1.-background[:,t]) - infections_to[1]
         thistransit[progcirc[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[1]
-
 
         ##############################################################################################################
         ### Calculate probabilities of shifting along cascade IF programmatically determined
         ##############################################################################################################
 
         # Deaths
-        for state in range(nstates):
+        for state in range(nsus,nstates):
             thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
 
         # Undiagnosed to diagnosed
@@ -630,9 +631,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ## Calculate main indicators
         raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
-        raw_inci[:,t]       = people[susreg,:,t]*thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] + people[susreg,:,t]*thistransit[progcirc[0]][prob][thistransit[progcirc[0]][to].index(undx[0])]/dt		
-        raw_inciby[:,t]     = einsum('ij,ki->i', people[:,:,t], infections_by)/dt
-        
+        raw_inci[:,t]       = einsum('ij,ij->j', people[sus,:,t], infections_to)/dt
 
         ## Calculate births
         for p1,p2,birthrates,alleligbirthrate in birthslist:
@@ -822,11 +821,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['popkeys']      = popkeys
     raw['people']       = people
     raw['inci']         = raw_inci
-    raw['inciby']       = raw_inciby
     raw['mtct']         = raw_mtct
     raw['births']       = raw_births
     raw['hivbirths']    = raw_hivbirths
-    raw['receivepmtct'] = raw_receivepmtct
+    raw['pmtct']        = raw_receivepmtct
     raw['diag']         = raw_diag
     raw['newtreat']     = raw_newtreat
     raw['death']        = raw_death
