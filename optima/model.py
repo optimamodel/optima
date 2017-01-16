@@ -45,8 +45,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
-    raw_incibycd4   = zeros((nstates, npts))        # Total incidence transmitted by each health state
-    raw_incibypop   = zeros((npops, npts))        # Total incidence transmitted by population
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
@@ -817,8 +815,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['popkeys']      = popkeys
     raw['people']       = people
     raw['inci']         = raw_inci
-    raw['incibycd4']    = raw_incibycd4
-    raw['incibypop']    = raw_incibypop
     raw['mtct']         = raw_mtct
     raw['births']       = raw_births
     raw['hivbirths']    = raw_hivbirths
