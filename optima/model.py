@@ -818,7 +818,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['mtct']         = raw_mtct
     raw['births']       = raw_births
     raw['hivbirths']    = raw_hivbirths
-    raw['receivepmtct'] = raw_receivepmtct
+    raw['pmtct']        = raw_receivepmtct
     raw['diag']         = raw_diag
     raw['newtreat']     = raw_newtreat
     raw['death']        = raw_death
