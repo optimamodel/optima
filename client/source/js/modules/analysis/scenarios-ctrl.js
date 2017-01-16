@@ -50,6 +50,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
+    function getSelectors() {
+      if ($scope.state.graphs) {
+        var selectors = $scope.state.graphs.selectors;
+        if (selectors) {
+          var which = _.filter(selectors, function(selector) {
+            return selector.checked;
+          })
+          .map(function(selector) {
+            return selector.key;
+          });
+          if (which.length > 0) {
+            return which;
+          }
+        }
+      }
+      return null;
+    }
+
     $scope.graphScenarios = function(isRun) {
       if (_.isUndefined(isRun)) {
         isRun = false;
@@ -59,6 +77,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .post(
           '/api/project/' + $scope.project.id + '/scenarios/results',
           {
+            which: getSelectors(),
             isRun: isRun,
             start: $scope.state.start,
             end: $scope.state.end
