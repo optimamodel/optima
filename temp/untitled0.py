@@ -43,7 +43,7 @@ class CKTest(plugins.PluginBase):
     """
     
     JAVASCRIPT = '''
-    mpld3.register_plugin("tooltip", CKTestPlugin);
+    mpld3.register_plugin("ckhighlight", CKTestPlugin);
 CKTestPlugin.prototype = Object.create(mpld3.Plugin.prototype);
 CKTestPlugin.prototype.constructor = CKTestPlugin;
 CKTestPlugin.prototype.requiredProps = ["id"];
@@ -63,8 +63,8 @@ CKTestPlugin.prototype.draw = function() {
     var labels = this.props.labels;
     var loc = this.props.location;
 
-    this.tooltip = this.fig.canvas.append("text")
-        .attr("class", "mpld3-tooltip-text")
+    this.ckhighlight = this.fig.canvas.append("text")
+        .attr("class", "mpld3-ckhighlight-text")
         .attr("x", 0)
         .attr("y", 0)
         .text("")
@@ -72,12 +72,12 @@ CKTestPlugin.prototype.draw = function() {
 
     if (loc == "bottom left" || loc == "top left") {
         this.x = obj.ax.position[0] + 5 + this.props.hoffset;
-        this.tooltip.style("text-anchor", "beginning")
+        this.ckhighlight.style("text-anchor", "beginning")
     } else if (loc == "bottom right" || loc == "top right") {
         this.x = obj.ax.position[0] + obj.ax.width - 5 + this.props.hoffset;
-        this.tooltip.style("text-anchor", "end");
+        this.ckhighlight.style("text-anchor", "end");
     } else {
-        this.tooltip.style("text-anchor", "middle");
+        this.ckhighlight.style("text-anchor", "middle");
     }
 
     if (loc == "bottom left" || loc == "bottom right") {
@@ -91,7 +91,7 @@ CKTestPlugin.prototype.draw = function() {
     }
 
     function mouseover(d, i) {
-        this.tooltip
+        this.ckhighlight
             .style("visibility", "visible")
             .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
     }
@@ -103,13 +103,13 @@ CKTestPlugin.prototype.draw = function() {
             this.y = pos[1] - this.props.voffset;
         }
 
-        this.tooltip
+        this.ckhighlight
             .attr('x', this.x)
             .attr('y', this.y);
     }
 
     function mouseout(d, i) {
-        this.tooltip.style("visibility", "hidden");
+        this.ckhighlight.style("visibility", "hidden");
     }
 
     obj.elements()
@@ -123,20 +123,21 @@ CKTestPlugin.prototype.draw = function() {
 #        self.lines = lines
 #        self.dict_ = {"type": "cktest",
 #                      "line_ids": [utils.get_id(line) for line in lines],
-#                      "alpha_bg": 0.7,
-#                      "alpha_fg": 1.0}
+#                      }
     
-    def __init__(self, points, label=None,
+    def __init__(self, area, label=None,
                  hoffset=0, voffset=10, location="mouse"):
         if location not in ["bottom left", "top left", "bottom right",
                             "top right", "mouse"]:
             raise ValueError("invalid location: {0}".format(location))
-        self.dict_ = {"type": "tooltip",
-                      "id": utils.get_id(points),
+        self.dict_ = {"type": "ckhighlight",
+                      "id": utils.get_id(area),
                       "labels": label if label is None else [label],
                       "hoffset": hoffset,
                       "voffset": voffset,
-                      "location": location}
+                      "location": location,
+                      "alpha_bg": 0.7,
+                      "alpha_fg": 1.0}
 
 n = 50
 m = 5
@@ -154,6 +155,6 @@ for i in range(m):
 
 #plugins.connect(fig, CKTest(areas))
 for i in range(len(areas)):
-    tooltip = CKTest(areas[i], '%i'%i)
-    plugins.connect(fig, tooltip) 
+    ckhighlight = CKTest(areas[i], '%i'%i)
+    plugins.connect(fig, ckhighlight) 
 d3show()
