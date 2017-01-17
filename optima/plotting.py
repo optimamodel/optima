@@ -435,7 +435,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                             legend(labels, **legendsettings) # Multiple simulations
                 else:
                     if not ismultisim and isstacked:
-                        highlightareasplugin(epiplots[pk], areas, labels, colors)
+                        highlightareasplugin(epiplots[pk], areas, results.popkeys, colors)
                 if useSIticks: SIticks(epiplots[pk])
                 else:          commaticks(epiplots[pk])
                 if doclose: close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell

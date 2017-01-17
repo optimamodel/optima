@@ -307,7 +307,7 @@ def browser(results, toplot=None, doplot=True):
         fig = figure() # Create a blank figure
         naxes = len(plots[p].axes)
         for ax in range(naxes): addplot(fig, plots[p].axes[ax], name=plots.keys()[p], nrows=naxes, n=ax+1) # Add this plot to this figure
-        mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
+#        mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
         jsons.append(str(json.dumps(mpld3.fig_to_dict(fig)))) # Save to JSON
         close(fig) # Close
     

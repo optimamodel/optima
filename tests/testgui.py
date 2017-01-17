@@ -72,7 +72,7 @@ if 'browser' in tests and doplot:
     
     P = defaults.defaultproject('concentrated')
     P.runsim() # Not necessary, but just in case results haven't been saved with the project
-    browser(P.results[-1], toplot='cascade')
+    browser(P.results[-1])
 
     done(t)
 
