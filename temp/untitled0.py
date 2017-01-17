@@ -118,8 +118,12 @@ class CKTest(plugins.PluginBase):
         alpha_bg = this.props.alpha_bg;
         
         obj.elements()
-            .on("mouseover", d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg))
-            .on("mouseout", d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg));
+            .on("mouseover", function(){
+                            d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
+                            })
+             .on("mouseout", function(){
+                            d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
+                            });
     }
 '''
 
