@@ -115,18 +115,27 @@ class CKTest(plugins.PluginBase):
         alpha_fg = this.props.alpha_fg;
         alpha_bg = this.props.alpha_bg;
         
+        var schopenhauer = this
+        
+        console.log("jumanji");
+        console.log(schopenhauer);
+        
         obj.elements()
-            .on("mouseover", function(){
+            .on("mouseover", function(d, i){
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
-                            mouseover.bind(obj);
+                            mouseover.bind(schopenhauer);
                             console.log("hiiiiii");
                             console.log(this);
+                            console.log("kmahshshshs");
+                            console.log(obj.elements());
                             console.log("bbbbiiiiii");
                             console.log(obj);
+                            console.log("kajkajdkajdkajdkdjak");
+                            console.log(schopenhauer);
                             })
-             .on("mouseout", function(){
+             .on("mouseout", function(d, i){
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
-                            mouseout.bind(obj);
+                            mouseout.bind(schopenhauer);
                             })
     }
 ''' 
