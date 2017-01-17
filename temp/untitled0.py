@@ -16,31 +16,31 @@ from optima import gridcolormap
 class CKTest(plugins.PluginBase):
     """A plugin to highlight lines on hover"""
 
-#    JAVASCRIPT = """
-#    mpld3.register_plugin("cktest", CKTestPlugin);
-#    CKTestPlugin.prototype = Object.create(mpld3.Plugin.prototype);
-#    CKTestPlugin.prototype.constructor = CKTestPlugin;
-#    CKTestPlugin.prototype.requiredProps = ["line_ids"];
-#    CKTestPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
-#    function CKTestPlugin(fig, props){
-#        mpld3.Plugin.call(this, fig, props);
-#    };
-#
-#    CKTestPlugin.prototype.draw = function(){
-#      for(var i=0; i<this.props.line_ids.length; i++){
-#         var obj = mpld3.get_element(this.props.line_ids[i], this.fig),
-#             alpha_fg = this.props.alpha_fg;
-#             alpha_bg = this.props.alpha_bg;
-#         obj.elements()
-#             .on("mouseover", function(d, i){
-#                            d3.select(this).transition().duration(50)
-#                              .style("fill-opacity", alpha_fg);})
-#             .on("mouseout", function(d, i){
-#                            d3.select(this).transition().duration(200)
-#                              .style("fill-opacity", alpha_bg); });
-#      }
-#    };
-#    """
+    JAVASCRIPT = """
+    mpld3.register_plugin("cktest", CKTestPlugin);
+    CKTestPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    CKTestPlugin.prototype.constructor = CKTestPlugin;
+    CKTestPlugin.prototype.requiredProps = ["line_ids"];
+    CKTestPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
+    function CKTestPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    CKTestPlugin.prototype.draw = function(){
+      for(var i=0; i<this.props.line_ids.length; i++){
+         var obj = mpld3.get_element(this.props.line_ids[i], this.fig),
+             alpha_fg = this.props.alpha_fg;
+             alpha_bg = this.props.alpha_bg;
+         obj.elements()
+             .on("mouseover", function(d, i){
+                            d3.select(this).transition().duration(50)
+                              .style("fill-opacity", alpha_fg);})
+             .on("mouseout", function(d, i){
+                            d3.select(this).transition().duration(200)
+                              .style("fill-opacity", alpha_bg); });
+      }
+    };
+    """
     
     JAVASCRIPT = '''
     mpld3.register_plugin("tooltip", CKTestPlugin);
