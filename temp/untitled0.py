@@ -43,7 +43,6 @@ class CKTest(plugins.PluginBase):
 #    """
     
     JAVASCRIPT = '''
-    import "base";
     mpld3.register_plugin("tooltip", CKTestPlugin);
 CKTestPlugin.prototype = Object.create(mpld3.Plugin.prototype);
 CKTestPlugin.prototype.constructor = CKTestPlugin;
