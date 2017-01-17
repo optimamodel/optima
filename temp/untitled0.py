@@ -92,7 +92,7 @@ class CKTest(plugins.PluginBase):
             return (L.length > 0) ? L[i % L.length] : null;
         }
     
-        function mouseover(d, i) {
+        this.mouseover = function (d, i) {
             this.ckhighlight
                 .style("visibility", "visible")
                 .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
@@ -106,9 +106,12 @@ class CKTest(plugins.PluginBase):
             this.ckhighlight
                 .attr('x', this.x)
                 .attr('y', this.y);
+                
+            console.log("ketchup");
+            console.log(this);
         }
     
-        function mouseout(d, i) {
+        this.mouseout = function (d, i) {
             this.ckhighlight.style("visibility", "hidden");
         }
     
@@ -117,13 +120,16 @@ class CKTest(plugins.PluginBase):
         
         var schopenhauer = this
         
+        schopenhauer.x = 409;
+        schopenhauer.y = 293;
+        
         console.log("jumanji");
         console.log(schopenhauer);
         
         obj.elements()
             .on("mouseover", function(d, i){
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
-                            mouseover.bind(schopenhauer);
+                            schopenhauer.mouseover();
                             console.log("hiiiiii");
                             console.log(this);
                             console.log("kmahshshshs");
@@ -135,8 +141,8 @@ class CKTest(plugins.PluginBase):
                             })
              .on("mouseout", function(d, i){
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
-                            mouseout.bind(schopenhauer);
-                            })
+                            schopenhauer.mouseout();
+                            });
     }
 ''' 
 
