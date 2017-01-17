@@ -18,33 +18,7 @@ def rgb2hex(colors):
 
 
 class HighlightArea(plugins.PluginBase):
-    """A plugin to highlight lines on hover"""
-
-    JAVASCRIPT = """
-    mpld3.register_plugin("highlightarea", HighlightAreaPlugin);
-    HighlightAreaPlugin.prototype = Object.create(mpld3.Plugin.prototype);
-    HighlightAreaPlugin.prototype.constructor = HighlightAreaPlugin;
-    HighlightAreaPlugin.prototype.requiredProps = ["line_ids"];
-    HighlightAreaPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
-    function HighlightAreaPlugin(fig, props){
-        mpld3.Plugin.call(this, fig, props);
-    };
-
-    HighlightAreaPlugin.prototype.draw = function(){
-      for(var i=0; i<this.props.line_ids.length; i++){
-         var obj = mpld3.get_element(this.props.line_ids[i], this.fig),
-             alpha_fg = this.props.alpha_fg;
-             alpha_bg = this.props.alpha_bg;
-         obj.elements()
-             .on("mouseover", function(d, i){
-                            d3.select(this).transition().duration(50)
-                              .style("fill-opacity", alpha_fg);})
-             .on("mouseout", function(d, i){
-                            d3.select(this).transition().duration(200)
-                              .style("fill-opacity", alpha_bg); });
-      }
-    };
-    """
+    """A plugin to highlight areas on hover"""
     
     JAVASCRIPT = '''
     mpld3.register_plugin("highlightarea", HighlightAreaPlugin);
@@ -52,7 +26,7 @@ class HighlightArea(plugins.PluginBase):
     HighlightAreaPlugin.prototype.constructor = HighlightAreaPlugin;
     HighlightAreaPlugin.prototype.requiredProps = ["id"];
     HighlightAreaPlugin.prototype.defaultProps = {
-        labels: null,
+        label: 'Missing label',
         color: '#000000',
         hoffset: 0,
         voffset: 10,
@@ -68,7 +42,7 @@ class HighlightArea(plugins.PluginBase):
     
     HighlightAreaPlugin.prototype.draw = function() {
         var obj = mpld3.get_element(this.props.id, this.fig);
-        var labels = this.props.labels;
+        var label = this.props.label;
         var color = this.props.color;
         var loc = this.props.location;
     
@@ -147,8 +121,8 @@ class HighlightArea(plugins.PluginBase):
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
                             tooltip
                                 .style("visibility", "visible")
-                                .text(labels)
-                                .style("color", color);
+                                .style("color", color)
+                                .text(label);
                             })
              .on("mouseout", function(d, i){
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
@@ -162,7 +136,7 @@ class HighlightArea(plugins.PluginBase):
     def __init__(self, area, label=None, color=None):
         self.dict_ = {"type": "highlightarea",
                       "id": utils.get_id(area),
-                      "labels": label,
+                      "label": label,
                       "color": color,
                       "alpha_bg": 0.7,
                       "alpha_fg": 1.0}
