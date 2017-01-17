@@ -1,16 +1,41 @@
 """
-Visualizing Random Walks
-========================
-This shows the use of transparent lines to visualize random walk data.
-Thre is also a custom plugin defined which causes lines to be highlighted
-when the mouse hovers over them.
-Use the toolbar buttons at the bottom-right of the plot to enable zooming
-and panning, and to reset the view.
+PLOTUTILS
+
+This file stores plotting utilities -- for adjusting the ticks, MPLD3 properties, etc.
+
+Version: 2017jan17
 """
 
+from optima import OptimaException, gridcolormap
 from pylab import fill_between, rand, figure, arange
 from mpld3 import plugins, utils, show as d3show
-from optima import gridcolormap
+from matplotlib import ticker
+
+def SItickformatter(x, pos):  # formatter function takes tick label and tick position
+    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    if abs(x)>=1e9:     output = str(x/1e9)+'B'
+    elif abs(x)>=1e6:   output = str(x/1e6)+'M'
+    elif abs(x)>=1e3:   output = str(x/1e3)+'K'
+    else:               output = str(x)
+    return output
+
+def SIticks(figure, axis='y'):
+    ''' Apply SI tick formatting to the y axis of a figure '''
+    for ax in figure.axes:
+        if axis=='x':   thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise OptimaException('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+
+def commaticks(figure, axis='y'):
+    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
+    for ax in figure.axes:
+        if axis=='x':   thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise OptimaException('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 def rgb2hex(colors):
     """Return color as #rrggbb for the given color values."""
@@ -86,7 +111,8 @@ class HighlightArea(plugins.PluginBase):
                       "alpha_fg": 1.0}
 
 
-def connect(fig, areas, labels, colors):
+def highlightareasplugin(fig=None, areas=None, labels=None, colors=None):
+    ''' Helper function to make it easier to use the plugin '''
     for i in range(len(areas)):
         highlightarea = HighlightArea(areas[i], label=labels[i], color=rgb2hex(colors[i]))
         plugins.connect(fig, highlightarea) 
@@ -97,16 +123,16 @@ def highlightdemo():
     n = 50
     m = 5
     fig = figure()
-    a = rand(n)
+    lower = rand(n)
     areas = []
     labels = []
     colors = gridcolormap(m)
     for i in range(m):
-        b = rand(n)
-        tmp = fill_between(arange(n), a, a+b, facecolor=colors[i], alpha=0.8, lw=0)
-        a = a+b
+        upper = rand(n)
+        tmp = fill_between(arange(n), lower, lower+upper, facecolor=colors[i], alpha=0.8, lw=0)
+        lower += upper
         areas.append(tmp)
-        labels.append('%0.5f'%rand())
+        labels.append('Value: %0.5f'%rand())
     
-    connect(fig, areas, labels, colors)
+    highlightareasplugin(fig, areas, labels, colors)
     d3show()

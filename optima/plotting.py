@@ -11,12 +11,13 @@ plotting to this file.
 Version: 2016jul06
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds 
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, sum as npsum
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
-from matplotlib import ticker
+from optima import _plotutils as pltu 
+SIticks = pltu.SIticks; commaticks = pltu.commaticks; highlightareasplugin = pltu.highlightareasplugin # Must be a better way
 
-# Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
+# Define allowable plot formats --s 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = [ # WARNING, definition requires each of these to start with the same letter!
                   ['t', 'tot', 'total'], 
                   ['p', 'pop', 'per population', 'pops', 'per', 'population'], 
@@ -32,34 +33,6 @@ globaltitlesize = 10
 globallabelsize = 10
 globalticksize = 8
 globallegendsize = 8
-
-
-def SItickformatter(x, pos):  # formatter function takes tick label and tick position
-    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    if abs(x)>=1e9:     output = str(x/1e9)+'B'
-    elif abs(x)>=1e6:   output = str(x/1e6)+'M'
-    elif abs(x)>=1e3:   output = str(x/1e3)+'K'
-    else:               output = str(x)
-    return output
-
-def SIticks(figure, axis='y'):
-    ''' Apply SI tick formatting to the y axis of a figure '''
-    for ax in figure.axes:
-        if axis=='x':   thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise OptimaException('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
-
-def commaticks(figure, axis='y'):
-    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
-    for ax in figure.axes:
-        if axis=='x':   thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise OptimaException('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-
 
 def getplotselections(results):
     ''' 
@@ -237,7 +210,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 
-def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plotdata=True, plotlegend=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, colors=None, reorder=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
@@ -380,6 +353,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                 
                 # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
                 if not ismultisim and isstacked:
+                    areas = []
                     if ispercentage: # Multi-line plot
                         for l in range(nlinesperplot):
                             plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
@@ -389,8 +363,9 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                         plotorder = nlinesperplot-1-origorder
                         if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
-                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
+                            area = fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
                             bottom += best[k]
+                            areas.append(area)
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             plot((0, 0), (0, 0), color=colors[l], linewidth=10)
                 
@@ -449,14 +424,18 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))
-                if not ismultisim:
-                    if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
-                    if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
-                    if isstacked: 
-                        handles, labels = ax.get_legend_handles_labels()
-                        ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
+                if plotlegend:
+                    if not ismultisim:
+                        if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
+                        if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
+                        if isstacked: 
+                            handles, labels = ax.get_legend_handles_labels()
+                            ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
+                        else:
+                            legend(labels, **legendsettings) # Multiple simulations
                 else:
-                    legend(labels, **legendsettings) # Multiple simulations
+                    if not ismultisim and isstacked:
+                        highlightareasplugin(epiplots[pk], areas, labels, colors)
                 if useSIticks: SIticks(epiplots[pk])
                 else:          commaticks(epiplots[pk])
                 if doclose: close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
