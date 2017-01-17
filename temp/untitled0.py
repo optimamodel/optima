@@ -123,13 +123,14 @@ class CKTest(plugins.PluginBase):
                             })
              .on("mouseout", function(){
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
-                            });
+                            })
+            .on("mouseover", mouseover.bind(this))
+            .on("mousemove", mousemove.bind(this))
+            .on("mouseout", mouseout.bind(this));
     }
 '''
 
-#            .on("mouseover", mouseover.bind(this))
-#            .on("mousemove", mousemove.bind(this))
-#            .on("mouseout", mouseout.bind(this));
+
 
 
 
