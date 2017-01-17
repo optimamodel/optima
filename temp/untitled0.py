@@ -13,20 +13,20 @@ from mpld3 import plugins, utils, show as d3show
 from optima import gridcolormap
 
 
-class HighlightAreas(plugins.PluginBase):
+class CKTest(plugins.PluginBase):
     """A plugin to highlight lines on hover"""
 
     JAVASCRIPT = """
-    mpld3.register_plugin("linehighlight", LineHighlightPlugin);
-    LineHighlightPlugin.prototype = Object.create(mpld3.Plugin.prototype);
-    LineHighlightPlugin.prototype.constructor = LineHighlightPlugin;
-    LineHighlightPlugin.prototype.requiredProps = ["line_ids"];
-    LineHighlightPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
-    function LineHighlightPlugin(fig, props){
+    mpld3.register_plugin("cktest", CKTestPlugin);
+    CKTestPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    CKTestPlugin.prototype.constructor = CKTestPlugin;
+    CKTestPlugin.prototype.requiredProps = ["line_ids"];
+    CKTestPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
+    function CKTestPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
 
-    LineHighlightPlugin.prototype.draw = function(){
+    CKTestPlugin.prototype.draw = function(){
       for(var i=0; i<this.props.line_ids.length; i++){
          var obj = mpld3.get_element(this.props.line_ids[i], this.fig),
              alpha_fg = this.props.alpha_fg;
@@ -44,7 +44,7 @@ class HighlightAreas(plugins.PluginBase):
 
     def __init__(self, lines):
         self.lines = lines
-        self.dict_ = {"type": "linehighlight",
+        self.dict_ = {"type": "cktest",
                       "line_ids": [utils.get_id(line) for line in lines],
                       "alpha_bg": 0.7,
                       "alpha_fg": 1.0}
@@ -66,7 +66,7 @@ for i in range(m):
 
 
 
-plugins.connect(fig, HighlightAreas(areas))
+plugins.connect(fig, CKTest(areas))
 #for i in range(len(areas)):
 #    tooltip = plugins.LineLabelTooltip(areas[i], '%i'%i)
 #    plugins.connect(fig, tooltip) 
