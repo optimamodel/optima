@@ -48,33 +48,6 @@ class HighlightArea(plugins.PluginBase):
         alpha_fg = this.props.alpha_fg;
         alpha_bg = this.props.alpha_bg;
     
-        this.highlightarea = this.fig.canvas.append("text")
-            .attr("class", "mpld3-highlightarea-text")
-            .attr("x", 0)
-            .attr("y", 0)
-            .text("")
-            .style("visibility", "hidden");
-    
-        if (loc == "bottom left" || loc == "top left") {
-            this.x = obj.ax.position[0] + 5 + this.props.hoffset;
-            this.highlightarea.style("text-anchor", "beginning")
-        } else if (loc == "bottom right" || loc == "top right") {
-            this.x = obj.ax.position[0] + obj.ax.width - 5 + this.props.hoffset;
-            this.highlightarea.style("text-anchor", "end");
-        } else {
-            this.highlightarea.style("text-anchor", "middle");
-        }
-    
-        if (loc == "bottom left" || loc == "bottom right") {
-            this.y = obj.ax.position[1] + obj.ax.height - 5 + this.props.voffset;
-        } else if (loc == "top left" || loc == "top right") {
-            this.y = obj.ax.position[1] + 5 + this.props.voffset;
-        }
-        
-        function getMod(L, i) {
-            return (L.length > 0) ? L[i % L.length] : null;
-        }
-        
         var xpos = 600;
         var ypos = 300;
         
