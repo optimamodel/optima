@@ -143,8 +143,9 @@ class CKTest(plugins.PluginBase):
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
                             schopenhauer.mouseover();
                             tooltip
-                                .style("visibility", "visible");
-                                
+                                .style("visibility", "visible")
+                                .style("left", schopenhauer.x)
+                                .style("top", schopenhauer.y);
                             
                             
                             
