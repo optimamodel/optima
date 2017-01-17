@@ -85,20 +85,30 @@ class HighlightArea(plugins.PluginBase):
                       "alpha_bg": 0.7,
                       "alpha_fg": 1.0}
 
+
+def connect(areas, labels, colors):
+    for i in range(len(areas)):
+        highlightarea = HighlightArea(areas[i], label=labels[i], color=rgb2hex(colors[i]))
+        plugins.connect(fig, highlightarea) 
+    return None
+
+
 n = 50
 m = 5
 fig = figure()
 a = rand(n)
 areas = []
+labels = []
 colors = gridcolormap(m)
 for i in range(m):
     b = rand(n)
     tmp = fill_between(arange(n), a, a+b, facecolor=colors[i], alpha=0.8, lw=0)
     a = a+b
     areas.append(tmp)
+    labels.append('%0.5f'%rand())
 
 
-for i in range(len(areas)):
-    highlightarea = HighlightArea(areas[i], label='%0.5f'%rand(), color=rgb2hex(colors[i]))
-    plugins.connect(fig, highlightarea) 
+
+connect(areas, labels, colors)
+
 d3show()
