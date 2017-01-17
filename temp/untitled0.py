@@ -126,8 +126,8 @@ class CKTest(plugins.PluginBase):
         alpha_bg = schopenhauer.props.alpha_bg;
         color = schopenhauer.props.color;
         
-        schopenhauer.x = 409;
-        schopenhauer.y = 293;
+        schopenhauer.x = 600;
+        schopenhauer.y = 300;
         
         console.log("jumanji");
         console.log(schopenhauer);
@@ -140,7 +140,9 @@ class CKTest(plugins.PluginBase):
             .style("position", "absolute")
             .style("z-index", "10")
             .style("visibility", "hidden")
-            .text("a simple tooltip");
+            .style("left", schopenhauer.x)
+            .style("top", schopenhauer.y)
+            .text("Missing label");
         
         obj.elements()
             .on("mouseover", function(d, i){
@@ -149,9 +151,7 @@ class CKTest(plugins.PluginBase):
                             tooltip
                                 .style("visibility", "visible")
                                 .text(labels)
-                                .style("color", color)
-                                .style("left", schopenhauer.x)
-                                .style("top", schopenhauer.y);
+                                .style("color", color);
                             })
              .on("mouseout", function(d, i){
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
