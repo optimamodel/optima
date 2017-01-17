@@ -663,7 +663,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        ylabel = 'Coverage (% of targeted)'
+        ylabel = 'Coverage (%)'
         ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
