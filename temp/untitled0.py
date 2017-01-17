@@ -158,7 +158,7 @@ class CKTest(plugins.PluginBase):
 
 
 
-    def __init__(self, area, label=None,
+    def __init__(self, area, label=None, color=None,
                  hoffset=0, voffset=10, location="mouse"):
         if location not in ["bottom left", "top left", "bottom right",
                             "top right", "mouse"]:
@@ -166,6 +166,7 @@ class CKTest(plugins.PluginBase):
         self.dict_ = {"type": "ckhighlight",
                       "id": utils.get_id(area),
                       "labels": label,
+                      "color": color,
                       "hoffset": hoffset,
                       "voffset": voffset,
                       "location": location,
@@ -185,9 +186,12 @@ for i in range(m):
     areas.append(tmp)
 
 
+def rgb2hex(colors):
+    """Return color as #rrggbb for the given color values."""
+    return '#%02x%02x%02x' % tuple([int(round(col*255)) for col in colors])
 
 #plugins.connect(fig, CKTest(areas))
 for i in range(len(areas)):
-    ckhighlight = CKTest(areas[i], 'a'*int(10*rand()))
+    ckhighlight = CKTest(areas[i], label='a'*int(10*rand()), color=rgb2hex(colors[i]))
     plugins.connect(fig, ckhighlight) 
 d3show()
