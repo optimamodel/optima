@@ -121,32 +121,6 @@ class CKTest(plugins.PluginBase):
             .on("mouseover", mouseover.bind(this))
             .on("mousemove", mousemove.bind(this))
             .on("mouseout", mouseout.bind(this));
-        
-        var obj2 = mpld3.get_element(this.props.id, this.fig),
-             alpha_fg = this.props.alpha_fg;
-             alpha_bg = this.props.alpha_bg;
-         obj2.elements()
-            .on("mouseover", function(d, i){
-                this.ckhighlight
-                    .style("visibility", "visible")
-                    .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
-            })
-            
-            .on("mousemove", function(d, i){
-                if (loc === "mouse") {
-                var pos = d3.mouse(this.fig.canvas.node())
-                this.x = pos[0] + this.props.hoffset;
-                this.y = pos[1] - this.props.voffset;
-                }
-                this.ckhighlight
-                    .attr('x', this.x)
-                    .attr('y', this.y);
-            })
-            
-            .on("mouseout", function(d, i){
-                this.ckhighlight.style("visibility", "hidden");
-            });
-            
     }
 '''
 #             .on("mouseover", function(d, i){
