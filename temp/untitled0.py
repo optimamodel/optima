@@ -75,45 +75,20 @@ class HighlightArea(plugins.PluginBase):
         
         var schopenhauer = this
     
-        schopenhauer.mouseover = function (d, i) {
-            schopenhauer.highlightarea
-                .style("visibility", "visible")
-                .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
-            
-            if (loc === "mouse") {
-                var pos = d3.mouse(this.fig.canvas.node())
-                schopenhauer.x = pos[0] + schopenhauer.props.hoffset;
-                schopenhauer.y = pos[1] - schopenhauer.props.voffset;
-            }
-    
-            schopenhauer.highlightarea
-                .attr('x', schopenhauer.x)
-                .attr('y', schopenhauer.y);
-                
-            console.log("ketchup");
-            console.log(this);
-            console.log("moocat");
-            console.log(schopenhauer);
-        }
-    
-        schopenhauer.mouseout = function (d, i) {
-            schopenhauer.highlightarea.style("visibility", "hidden");
-        }
-    
         alpha_fg = schopenhauer.props.alpha_fg;
         alpha_bg = schopenhauer.props.alpha_bg;
         color = schopenhauer.props.color;
         
-        schopenhauer.x = 600;
-        schopenhauer.y = 300;
+        var xpos = 600;
+        var ypos = 300;
         
         var tooltip = d3.select("body")
             .append("div")
             .style("position", "absolute")
             .style("z-index", "10")
             .style("visibility", "hidden")
-            .style("left", schopenhauer.x)
-            .style("top", schopenhauer.y)
+            .style("left", xpos)
+            .style("top", ypos)
             .text("Missing label");
         
         obj.elements()
