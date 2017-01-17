@@ -49,7 +49,7 @@ T = tic()
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
     P.runsim(debug=True, start=2000, end=2030)
-    if doplot: pygui(P)
+    if doplot: pygui(P,toplot=['numinci-sta','numincibypop-sta'])
 
 ## Calibration
 if 'autocalib' in tests: 

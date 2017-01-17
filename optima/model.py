@@ -45,6 +45,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
+    raw_incibypop   = zeros((npops, npts))          # Total incidence caused by each population
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
@@ -476,7 +477,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
                 
-        effallprev[:,:] = einsum('i,ij->ij',alltrans,people[:,:,t]) / allpeople[:,t]                            
+        effallprev = einsum('i,ij->ij',alltrans,people[:,:,t]) / allpeople[:,t]                            
         if debug and not((effallprev[:,:]>=0).all()): 
             errormsg = 'HIV prevalence invalid in populations %s!' % (findinds(effallprev[:,:]<0))
             if die: raise OptimaException(errormsg)
@@ -525,21 +526,32 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 raise OptimaException(errormsg)
         
         # Probability of getting infected is one minus forceinffull times any scaling factors
-        forceinffull  = einsum('ijkl,j,j->ijkl', 1.-forceinffull, force, inhomo)
-        infections_to = einsum('ij,j->ij',forceinffull.sum(axis=(2,3)),(1.-background[:,t])) # Infections acquired through sex and injecting - by population who gets infected
-        infections_by = einsum('kj,j->kj',forceinffull.sum(axis=(0,1)),(1.-background[:,t])) # Infections transmitted through sex and injecting - by health state who transmits
+        forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
+        infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
+#        infections_by = forceinffull.sum(axis=(0,1)) # Infections transmitted through sex and injecting - by health state who transmits
 
-        if debug and abs(infections_to.sum() - infections_by.sum()) > eps:
-            errormsg = 'Probability of someone getting infected (%f) is not equal to probability of someone causing an infection (%f) at time %i' % (infections_by.sum(), infections_to.sum(), t)
+        # Add these transition probabilities to the main array - WARNING, UGLY, FIX
+        ii = undx[0]
+        si = susreg[0] # susreg is a single element, but needs an index since can't index a list with an array
+        s2s = thistransit[si][to].index(si) # Index for moving from sus to sus
+        s2i = thistransit[si][to].index(ii) # Index for moving from sus to infection
+        pi = progcirc[0] # as above 
+        p2p = thistransit[pi][to].index(pi) # Index for moving from circ to circ
+        p2i = thistransit[pi][to].index(ii) # Index for moving from circ to infection
+        
+        thistransit[si][prob][s2s] = (1.-background[:,t]) - infections_to[si]
+        thistransit[si][prob][s2i] = infections_to[si]
+        thistransit[pi][prob][p2p] = (1.-background[:,t]) - infections_to[pi]
+        thistransit[pi][prob][p2i] = infections_to[pi]
+
+        raw_inci[:,t]       = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
+        raw_incibypop[:,t]  = einsum('ij,ijkl->l', people[sus,:,t], forceinffull)/dt
+
+        if debug and abs(raw_inci[:,t].sum() - raw_incibypop[:,t].sum()) > eps:
+            errormsg = 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,t].sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
             
-        # Add these transition probabilities to the main array - WARNING, UGLY, FIX
-        thistransit[susreg[0]][prob][susreg] = (1.-background[:,t]) - infections_to[0] # susreg is a single element, but needs an index since can't index a list with an array
-        thistransit[susreg[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[0]
-        thistransit[progcirc[0]][prob][susreg] = (1.-background[:,t]) - infections_to[1]
-        thistransit[progcirc[0]][prob][thistransit[susreg[0]][to].index(undx[0])] = infections_to[1]
-
         ##############################################################################################################
         ### Calculate probabilities of shifting along cascade IF programmatically determined
         ##############################################################################################################
@@ -631,7 +643,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         ## Calculate main indicators
         raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
         raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
-        raw_inci[:,t]       = einsum('ij,ij->j', people[sus,:,t], infections_to)/dt
 
         ## Calculate births
         for p1,p2,birthrates,alleligbirthrate in birthslist:
@@ -821,6 +832,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['popkeys']      = popkeys
     raw['people']       = people
     raw['inci']         = raw_inci
+    raw['incibypop']    = raw_incibypop
     raw['mtct']         = raw_mtct
     raw['births']       = raw_births
     raw['hivbirths']    = raw_hivbirths
