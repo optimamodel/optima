@@ -114,12 +114,23 @@ class CKTest(plugins.PluginBase):
             this.ckhighlight.style("visibility", "hidden");
         }
     
+        alpha_fg = this.props.alpha_fg;
+        alpha_bg = this.props.alpha_bg;
+        
         obj.elements()
-            .on("mouseover", mouseover.bind(this))
+            .on("mouseover", function(d, i){
+                                mouseover.bind(this);})
             .on("mousemove", mousemove.bind(this))
-            .on("mouseout", mouseout.bind(this));
+            .on("mouseout", function(d, i){
+                                mouseout.bind(this);});
+            
     }
 '''
+#         obj.elements()
+#             .on("mouseover", function(d, i){
+#                            d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);})
+#             .on("mouseout", function(d, i){
+#                            d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg); });
 
     def __init__(self, area, label=None,
                  hoffset=0, voffset=10, location="mouse"):
