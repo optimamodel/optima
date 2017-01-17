@@ -44,87 +44,83 @@ class CKTest(plugins.PluginBase):
     
     JAVASCRIPT = '''
     mpld3.register_plugin("ckhighlight", CKTestPlugin);
-CKTestPlugin.prototype = Object.create(mpld3.Plugin.prototype);
-CKTestPlugin.prototype.constructor = CKTestPlugin;
-CKTestPlugin.prototype.requiredProps = ["id"];
-CKTestPlugin.prototype.defaultProps = {
-    labels: null,
-    hoffset: 0,
-    voffset: 10,
-    location: 'mouse'
-};
-
-function CKTestPlugin(fig, props) {
-    mpld3.Plugin.call(this, fig, props);
-}
-
-CKTestPlugin.prototype.draw = function() {
-    var obj = mpld3.get_element(this.props.id, this.fig);
-    var labels = this.props.labels;
-    var loc = this.props.location;
-
-    this.ckhighlight = this.fig.canvas.append("text")
-        .attr("class", "mpld3-ckhighlight-text")
-        .attr("x", 0)
-        .attr("y", 0)
-        .text("")
-        .style("visibility", "hidden");
-
-    if (loc == "bottom left" || loc == "top left") {
-        this.x = obj.ax.position[0] + 5 + this.props.hoffset;
-        this.ckhighlight.style("text-anchor", "beginning")
-    } else if (loc == "bottom right" || loc == "top right") {
-        this.x = obj.ax.position[0] + obj.ax.width - 5 + this.props.hoffset;
-        this.ckhighlight.style("text-anchor", "end");
-    } else {
-        this.ckhighlight.style("text-anchor", "middle");
-    }
-
-    if (loc == "bottom left" || loc == "bottom right") {
-        this.y = obj.ax.position[1] + obj.ax.height - 5 + this.props.voffset;
-    } else if (loc == "top left" || loc == "top right") {
-        this.y = obj.ax.position[1] + 5 + this.props.voffset;
+    CKTestPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    CKTestPlugin.prototype.constructor = CKTestPlugin;
+    CKTestPlugin.prototype.requiredProps = ["id"];
+    CKTestPlugin.prototype.defaultProps = {
+        labels: null,
+        hoffset: 0,
+        voffset: 10,
+        location: 'mouse',
+        alpha_bg: 0.7,
+        alpha_fg: 1.0
+    };
+    
+    function CKTestPlugin(fig, props) {
+        mpld3.Plugin.call(this, fig, props);
     }
     
-    function getMod(L, i) {
-        return (L.length > 0) ? L[i % L.length] : null;
-    }
-
-    function mouseover(d, i) {
-        this.ckhighlight
-            .style("visibility", "visible")
-            .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
-    }
-
-    function mousemove(d, i) {
-        if (loc === "mouse") {
-            var pos = d3.mouse(this.fig.canvas.node())
-            this.x = pos[0] + this.props.hoffset;
-            this.y = pos[1] - this.props.voffset;
+    CKTestPlugin.prototype.draw = function() {
+        var obj = mpld3.get_element(this.props.id, this.fig);
+        var labels = this.props.labels;
+        var loc = this.props.location;
+    
+        this.ckhighlight = this.fig.canvas.append("text")
+            .attr("class", "mpld3-ckhighlight-text")
+            .attr("x", 0)
+            .attr("y", 0)
+            .text("")
+            .style("visibility", "hidden");
+    
+        if (loc == "bottom left" || loc == "top left") {
+            this.x = obj.ax.position[0] + 5 + this.props.hoffset;
+            this.ckhighlight.style("text-anchor", "beginning")
+        } else if (loc == "bottom right" || loc == "top right") {
+            this.x = obj.ax.position[0] + obj.ax.width - 5 + this.props.hoffset;
+            this.ckhighlight.style("text-anchor", "end");
+        } else {
+            this.ckhighlight.style("text-anchor", "middle");
         }
-
-        this.ckhighlight
-            .attr('x', this.x)
-            .attr('y', this.y);
+    
+        if (loc == "bottom left" || loc == "bottom right") {
+            this.y = obj.ax.position[1] + obj.ax.height - 5 + this.props.voffset;
+        } else if (loc == "top left" || loc == "top right") {
+            this.y = obj.ax.position[1] + 5 + this.props.voffset;
+        }
+        
+        function getMod(L, i) {
+            return (L.length > 0) ? L[i % L.length] : null;
+        }
+    
+        function mouseover(d, i) {
+            this.ckhighlight
+                .style("visibility", "visible")
+                .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
+        }
+    
+        function mousemove(d, i) {
+            if (loc === "mouse") {
+                var pos = d3.mouse(this.fig.canvas.node())
+                this.x = pos[0] + this.props.hoffset;
+                this.y = pos[1] - this.props.voffset;
+            }
+    
+            this.ckhighlight
+                .attr('x', this.x)
+                .attr('y', this.y);
+        }
+    
+        function mouseout(d, i) {
+            this.ckhighlight.style("visibility", "hidden");
+        }
+    
+        obj.elements()
+            .on("mouseover", mouseover.bind(this))
+            .on("mousemove", mousemove.bind(this))
+            .on("mouseout", mouseout.bind(this));
     }
-
-    function mouseout(d, i) {
-        this.ckhighlight.style("visibility", "hidden");
-    }
-
-    obj.elements()
-        .on("mouseover", mouseover.bind(this))
-        .on("mousemove", mousemove.bind(this))
-        .on("mouseout", mouseout.bind(this));
-}
 '''
 
-#    def __init__(self, lines, labels):
-#        self.lines = lines
-#        self.dict_ = {"type": "cktest",
-#                      "line_ids": [utils.get_id(line) for line in lines],
-#                      }
-    
     def __init__(self, area, label=None,
                  hoffset=0, voffset=10, location="mouse"):
         if location not in ["bottom left", "top left", "bottom right",
