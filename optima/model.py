@@ -48,6 +48,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_incibypop   = zeros((npops, npts))          # Total incidence caused by each population
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
+    raw_mtctfrom    = zeros((npops, npts))      # Number of mother-to-child transmissions from each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
     raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
@@ -467,6 +468,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     for t in range(npts): # Loop over time
         printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
         
+        ###############################################################################
+        ## Initial steps
+        ###############################################################################
+
         ## Make a copy of the transitions for this timestep
         thistransit = dcp(rawtransit)
 
@@ -528,7 +533,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         # Probability of getting infected is one minus forceinffull times any scaling factors
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
-#        infections_by = forceinffull.sum(axis=(0,1)) # Infections transmitted through sex and injecting - by health state who transmits
 
         # Add these transition probabilities to the main array - WARNING, UGLY, FIX
         ii = undx[0]
@@ -544,21 +548,27 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         thistransit[pi][prob][p2p] = (1.-background[:,t]) - infections_to[pi]
         thistransit[pi][prob][p2i] = infections_to[pi]
 
+        # Calculate infections acquired and transmitted
         raw_inci[:,t]       = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
         raw_incibypop[:,t]  = einsum('ij,ijkl->l', people[sus,:,t], forceinffull)/dt
 
-        if debug and abs(raw_inci[:,t].sum() - raw_incibypop[:,t].sum()) > eps:
-            errormsg = 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,t].sum(), t)
-            if die: raise OptimaException(errormsg)
-            else: printv(errormsg, 1, verbose)
             
         ##############################################################################################################
-        ### Calculate probabilities of shifting along cascade IF programmatically determined
+        ### Calculate deaths
         ##############################################################################################################
 
-        # Deaths
+        # Adjust transition rates
         for state in range(nsus,nstates):
             thistransit[state][prob] = (1.-background[:,t])*thistransit[state][prob]
+
+        # Store deaths
+        raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
+        raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
+
+
+        ##############################################################################################################
+        ### Calculate probabilities of shifting along cascade (if programmatically determined)
+        ##############################################################################################################
 
         # Undiagnosed to diagnosed
         if isnan(propdx[t]):
@@ -634,17 +644,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             errormsg = 'model(): Transitions are less than 0 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
             raise OptimaException(errormsg)
             
-            
         ## Shift people as required
         if t<npts-1:
             for fromstate, transition in enumerate(thistransit):
                 people[transition[to],:,t+1] += people[fromstate,:,t]*transition[prob]
 
-        ## Calculate main indicators
-        raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
-        raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
+        ##############################################################################################################
+        ### Calculate births
+        ##############################################################################################################
 
-        ## Calculate births
         for p1,p2,birthrates,alleligbirthrate in birthslist:
             thisbirthrate = birthrates[t]
             peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
@@ -670,11 +678,18 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             
             raw_receivepmtct[p1, t] += thisreceivepmtct/dt 
             raw_mtct[p2, t] += popmtct/dt
+            raw_mtctfrom[p1, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
             
-        raw_inci[:,t] += raw_mtct[:,t] # Update incidence based on PMTCT calculation
+        raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
+        raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
 
+        if debug and abs(raw_inci[:,t].sum() - raw_incibypop[:,t].sum()) > eps:
+            errormsg = 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,t].sum(), t)
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            if die: raise OptimaException(errormsg)
+            else: printv(errormsg, 1, verbose)
 
         ###############################################################################
         ## Shift numbers of people (circs, treatment, age transitions, risk transitions, prop scenarios)
