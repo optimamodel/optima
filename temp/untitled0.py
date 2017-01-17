@@ -145,7 +145,6 @@ class CKTest(plugins.PluginBase):
         obj.elements()
             .on("mouseover", function(d, i){
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
-                            schopenhauer.mouseover();
                             console.log(color)
                             tooltip
                                 .style("visibility", "visible")
@@ -156,7 +155,6 @@ class CKTest(plugins.PluginBase):
                             })
              .on("mouseout", function(d, i){
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
-                            schopenhauer.mouseout();
                             tooltip.style("visibility", "hidden");
                             });
     }
