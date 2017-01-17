@@ -127,7 +127,6 @@ class CKTest(plugins.PluginBase):
              alpha_bg = this.props.alpha_bg;
          obj2.elements()
             .on("mouseover", function(d, i){
-                d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
                 this.ckhighlight
                     .style("visibility", "visible")
                     .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
@@ -145,7 +144,6 @@ class CKTest(plugins.PluginBase):
             })
             
             .on("mouseout", function(d, i){
-                d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
                 this.ckhighlight.style("visibility", "hidden");
             });
             
