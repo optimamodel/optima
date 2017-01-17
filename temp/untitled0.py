@@ -49,11 +49,13 @@ class CKTest(plugins.PluginBase):
     CKTestPlugin.prototype.requiredProps = ["id"];
     CKTestPlugin.prototype.defaultProps = {
         labels: null,
+        color: '#000000',
         hoffset: 0,
         voffset: 10,
         location: 'mouse',
         alpha_bg: 0.7,
         alpha_fg: 1.0
+        
     };
     
     function CKTestPlugin(fig, props) {
@@ -63,6 +65,7 @@ class CKTest(plugins.PluginBase):
     CKTestPlugin.prototype.draw = function() {
         var obj = mpld3.get_element(this.props.id, this.fig);
         var labels = this.props.labels;
+        var color = this.props.color;
         var loc = this.props.location;
     
         this.ckhighlight = this.fig.canvas.append("text")
@@ -121,6 +124,7 @@ class CKTest(plugins.PluginBase):
     
         alpha_fg = schopenhauer.props.alpha_fg;
         alpha_bg = schopenhauer.props.alpha_bg;
+        color = schopenhauer.props.color;
         
         schopenhauer.x = 409;
         schopenhauer.y = 293;
@@ -142,9 +146,11 @@ class CKTest(plugins.PluginBase):
             .on("mouseover", function(d, i){
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
                             schopenhauer.mouseover();
+                            console.log(color)
                             tooltip
                                 .style("visibility", "visible")
                                 .text(labels)
+                                .style("color", color)
                                 .style("left", schopenhauer.x)
                                 .style("top", schopenhauer.y);
                             })
@@ -172,6 +178,8 @@ class CKTest(plugins.PluginBase):
                       "location": location,
                       "alpha_bg": 0.7,
                       "alpha_fg": 1.0}
+        print('hiiisdifu')
+        print(color)
 
 n = 50
 m = 5
@@ -192,6 +200,6 @@ def rgb2hex(colors):
 
 #plugins.connect(fig, CKTest(areas))
 for i in range(len(areas)):
-    ckhighlight = CKTest(areas[i], label='a'*int(10*rand()), color=rgb2hex(colors[i]))
+    ckhighlight = CKTest(areas[i], label='%0.5f'%rand(), color=rgb2hex(colors[i]))
     plugins.connect(fig, ckhighlight) 
 d3show()
