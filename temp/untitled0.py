@@ -118,15 +118,23 @@ class CKTest(plugins.PluginBase):
         obj.elements()
             .on("mouseover", function(){
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
+                            mouseover.bind(obj);
+                            console.log("hiiiiii");
+                            console.log(this);
+                            console.log("bbbbiiiiii");
+                            console.log(obj);
                             })
              .on("mouseout", function(){
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
+                            mouseout.bind(obj);
                             })
-            .on("mouseover", mouseover.bind(this))
-            .on("mouseout", mouseout.bind(this));
     }
-'''
+''' 
 
+#            .on("mouseover", mouseover.bind(this))
+#            .on("mouseout", mouseout.bind(this));
+#        console.log("bbbbiiiiii");
+#        console.log(this);
 
     def __init__(self, area, label=None,
                  hoffset=0, voffset=10, location="mouse"):
