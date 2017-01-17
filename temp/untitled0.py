@@ -118,11 +118,9 @@ class CKTest(plugins.PluginBase):
         alpha_bg = this.props.alpha_bg;
         
         obj.elements()
-            .on("mouseover", function(d, i){
-                                mouseover.bind(this);})
+            .on("mouseover", mouseover.bind(this))
             .on("mousemove", mousemove.bind(this))
-            .on("mouseout", function(d, i){
-                                mouseout.bind(this);});
+            .on("mouseout", mouseout.bind(this));
             
     }
 '''
