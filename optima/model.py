@@ -687,7 +687,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         if debug and abs(raw_inci[:,t].sum() - raw_incibypop[:,t].sum()) > eps:
             errormsg = 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,t].sum(), t)
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
 
