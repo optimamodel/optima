@@ -45,6 +45,8 @@ class HighlightArea(plugins.PluginBase):
         var label = this.props.label;
         var color = this.props.color;
         var loc = this.props.location;
+        alpha_fg = this.props.alpha_fg;
+        alpha_bg = this.props.alpha_bg;
     
         this.highlightarea = this.fig.canvas.append("text")
             .attr("class", "mpld3-highlightarea-text")
@@ -72,12 +74,6 @@ class HighlightArea(plugins.PluginBase):
         function getMod(L, i) {
             return (L.length > 0) ? L[i % L.length] : null;
         }
-        
-        var schopenhauer = this
-    
-        alpha_fg = schopenhauer.props.alpha_fg;
-        alpha_bg = schopenhauer.props.alpha_bg;
-        color = schopenhauer.props.color;
         
         var xpos = 600;
         var ypos = 300;
