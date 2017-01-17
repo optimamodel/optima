@@ -65,71 +65,8 @@ class CKTest(plugins.PluginBase):
         var labels = this.props.labels;
         var loc = this.props.location;
     
-        this.ckhighlight = this.fig.canvas.append("text")
-            .attr("class", "mpld3-ckhighlight-text")
-            .attr("x", 0)
-            .attr("y", 0)
-            .text("")
-            .style("visibility", "hidden");
-    
-        if (loc == "bottom left" || loc == "top left") {
-            this.x = obj.ax.position[0] + 5 + this.props.hoffset;
-            this.ckhighlight.style("text-anchor", "beginning")
-        } else if (loc == "bottom right" || loc == "top right") {
-            this.x = obj.ax.position[0] + obj.ax.width - 5 + this.props.hoffset;
-            this.ckhighlight.style("text-anchor", "end");
-        } else {
-            this.ckhighlight.style("text-anchor", "middle");
-        }
-    
-        if (loc == "bottom left" || loc == "bottom right") {
-            this.y = obj.ax.position[1] + obj.ax.height - 5 + this.props.voffset;
-        } else if (loc == "top left" || loc == "top right") {
-            this.y = obj.ax.position[1] + 5 + this.props.voffset;
-        }
-        
-        function getMod(L, i) {
-            return (L.length > 0) ? L[i % L.length] : null;
-        }
-        
-        var schopenhauer = this
-    
-        schopenhauer.mouseover = function (d, i) {
-            schopenhauer.ckhighlight
-                .style("visibility", "visible")
-                .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
-            
-            if (loc === "mouse") {
-                var pos = d3.mouse(this.fig.canvas.node())
-                schopenhauer.x = pos[0] + schopenhauer.props.hoffset;
-                schopenhauer.y = pos[1] - schopenhauer.props.voffset;
-            }
-    
-            schopenhauer.ckhighlight
-                .attr('x', schopenhauer.x)
-                .attr('y', schopenhauer.y);
-                
-            console.log("ketchup");
-            console.log(this);
-            console.log("moocat");
-            console.log(schopenhauer);
-        }
-    
-        schopenhauer.mouseout = function (d, i) {
-            schopenhauer.ckhighlight.style("visibility", "hidden");
-        }
-    
         alpha_fg = schopenhauer.props.alpha_fg;
         alpha_bg = schopenhauer.props.alpha_bg;
-        
-        schopenhauer.x = 409;
-        schopenhauer.y = 293;
-        
-        console.log("jumanji");
-        console.log(schopenhauer);
-        
-        console.log("schmack");
-        console.log(CKTestPlugin());
         
         var tooltip = d3.select("body")
             .append("div")
@@ -141,36 +78,23 @@ class CKTest(plugins.PluginBase):
         obj.elements()
             .on("mouseover", function(d, i){
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
-                            schopenhauer.mouseover();
+                            
+                            var pos = d3.mouse(this.fig.canvas.node())
+                            var xpos = pos[0] + this.props.hoffset;
+                            var ypos = pos[1] - this.props.voffset;
+                            
                             tooltip
                                 .style("visibility", "visible")
-                                .style("left", schopenhauer.x)
-                                .style("top", schopenhauer.y);
-                            
-                            
-                            
-                            
-                            console.log("hiiiiii");
-                            console.log(this);
-                            console.log("kmahshshshs");
-                            console.log(obj.elements());
-                            console.log("bbbbiiiiii");
-                            console.log(obj);
-                            console.log("kajkajdkajdkajdkdjak");
-                            console.log(schopenhauer);
+                                .style("left", xpos)
+                                .style("top", ypos);
                             })
              .on("mouseout", function(d, i){
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
-                            schopenhauer.mouseout();
                             tooltip.style("visibility", "hidden");
                             });
     }
 ''' 
 
-#            .on("mouseover", mouseover.bind(this))
-#            .on("mouseout", mouseout.bind(this));
-#        console.log("bbbbiiiiii");
-#        console.log(this);
 
     def __init__(self, area, label=None,
                  hoffset=0, voffset=10, location="mouse"):
