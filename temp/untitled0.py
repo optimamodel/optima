@@ -17,43 +17,34 @@ class HighlightAreas(plugins.PluginBase):
     """A plugin to highlight lines on hover"""
 
     JAVASCRIPT = """
-    mpld3.register_plugin("cktest", CKTestPlugin);
-    CKTestPlugin.prototype = Object.create(mpld3.Plugin.prototype);
-    CKTestPlugin.prototype.constructor = CKTestPlugin;
-    CKTestPlugin.prototype.requiredProps = ["line_ids"];
-    CKTestPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
-    
-    function CKTestPlugin(fig, props){
+    mpld3.register_plugin("linehighlight", LineHighlightPlugin);
+    LineHighlightPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    LineHighlightPlugin.prototype.constructor = LineHighlightPlugin;
+    LineHighlightPlugin.prototype.requiredProps = ["line_ids"];
+    LineHighlightPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
+    function LineHighlightPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
 
-    CKTestPlugin.prototype.draw = function(){
+    LineHighlightPlugin.prototype.draw = function(){
       for(var i=0; i<this.props.line_ids.length; i++){
          var obj = mpld3.get_element(this.props.line_ids[i], this.fig),
              alpha_fg = this.props.alpha_fg;
              alpha_bg = this.props.alpha_bg;
-             
-             var tip = d3.tip()
-              .attr('class', 'd3-tip')
-              .offset([-10, 0])
-              .html(function(d) {
-                return "<strong>Frequency:</strong> <span style='color:red'>" + "</span>";
-              })
-  
          obj.elements()
              .on("mouseover", function(d, i){
                             d3.select(this).transition().duration(50)
-                              .style("fill-opacity", alpha_fg); tip.show;})
+                              .style("fill-opacity", alpha_fg);})
              .on("mouseout", function(d, i){
                             d3.select(this).transition().duration(200)
-                              .style("fill-opacity", alpha_bg); tip.hide;});
+                              .style("fill-opacity", alpha_bg); });
       }
     };
     """
 
     def __init__(self, lines):
         self.lines = lines
-        self.dict_ = {"type": "cktest",
+        self.dict_ = {"type": "linehighlight",
                       "line_ids": [utils.get_id(line) for line in lines],
                       "alpha_bg": 0.7,
                       "alpha_fg": 1.0}
