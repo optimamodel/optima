@@ -164,18 +164,11 @@ class CKTest(plugins.PluginBase):
 
 
 
-    def __init__(self, area, label=None, color=None,
-                 hoffset=0, voffset=10, location="mouse"):
-        if location not in ["bottom left", "top left", "bottom right",
-                            "top right", "mouse"]:
-            raise ValueError("invalid location: {0}".format(location))
+    def __init__(self, area, label=None, color=None):
         self.dict_ = {"type": "ckhighlight",
                       "id": utils.get_id(area),
                       "labels": label,
                       "color": color,
-                      "hoffset": hoffset,
-                      "voffset": voffset,
-                      "location": location,
                       "alpha_bg": 0.7,
                       "alpha_fg": 1.0}
         print('hiiisdifu')
