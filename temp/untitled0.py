@@ -142,15 +142,9 @@ class CKTest(plugins.PluginBase):
             .on("mouseover", function(d, i){
                             d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);
                             schopenhauer.mouseover();
-                            
-                            if (loc === "mouse") {
-                                var pos = d3.mouse(this.fig.canvas.node())
-                                schopenhauer.x = pos[0] + schopenhauer.props.hoffset;
-                                schopenhauer.y = pos[1] - schopenhauer.props.voffset;
-                            }
-                            
                             tooltip
                                 .style("visibility", "visible");
+                                
                             
                             
                             
