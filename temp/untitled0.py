@@ -96,9 +96,7 @@ class CKTest(plugins.PluginBase):
             this.ckhighlight
                 .style("visibility", "visible")
                 .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
-        }
-    
-        function mousemove(d, i) {
+            
             if (loc === "mouse") {
                 var pos = d3.mouse(this.fig.canvas.node())
                 this.x = pos[0] + this.props.hoffset;
@@ -125,20 +123,10 @@ class CKTest(plugins.PluginBase):
                             d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg);
                             })
             .on("mouseover", mouseover.bind(this))
-            .on("mousemove", mousemove.bind(this))
             .on("mouseout", mouseout.bind(this));
     }
 '''
 
-
-
-
-
-#         obj.elements()
-#             .on("mouseover", function(d, i){
-#                            d3.select(this).transition().duration(50).style("fill-opacity", alpha_fg);})
-#             .on("mouseout", function(d, i){
-#                            d3.select(this).transition().duration(200).style("fill-opacity", alpha_bg); });
 
     def __init__(self, area, label=None,
                  hoffset=0, voffset=10, location="mouse"):
