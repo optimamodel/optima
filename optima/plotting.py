@@ -397,11 +397,11 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different e.g. scenario
+                        plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        plot(results.tvec, factor*best[l][i], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
+                        plot(results.tvec, factor*best[nlinesperplot-1-l][i], lw=lw, c=colors[nlinesperplot-1-l]) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -456,7 +456,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                         handles, labels = ax.get_legend_handles_labels()
                         ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
                 else:
-                    legend(labels, **legendsettings) # Multiple simulations
+                    legend(labels[::-1], **legendsettings) # Multiple simulations
                 if useSIticks: SIticks(epiplots[pk])
                 else:          commaticks(epiplots[pk])
                 if doclose: close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
