@@ -3,12 +3,12 @@ GEOSPATIAL
 
 This file defines everything needed for the Python GUI for geospatial analysis.
 
-Version: 2016jan29
+Version: 2016nov03
 """
 
-from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
+from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
 from PyQt4 import QtGui
-from pylab import figure, close
+from pylab import figure, close, array
 from time import time
 import os
 
@@ -42,7 +42,7 @@ def _loadproj(filepath=None, usegui=True):
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+projext)
     project = None
     if filepath:
-        try: project = loadobj(filepath, verbose=0)
+        try: project = loadproj(filepath, verbose=0)
         except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.message))
         if type(project)==Project: return project
         else: print('File "%s" is not an Optima project file' % filepath)
@@ -80,7 +80,7 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
     
     ## 1. Load a project file
     project = _loadproj(projectpath, usegui)
-    if project == None:
+    if project is None:
         raise OptimaException('No project loaded.')
     
     bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
@@ -260,7 +260,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     
     ## 1. Load a project file -- WARNING, could be combined with the above!
     project = _loadproj(projectpath, usegui)
-    if project == None:
+    if project is None:
         raise OptimaException('No project loaded.')
     try: project.parsets[-1].getresults()
     except: project.runsim(name=project.parsets[-1].name)
@@ -383,7 +383,6 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
                 x[popid] = [z*popratio[popname][c] for z in x[popid]]
             for x in newproject.data['hivprev']:
                 x[popid] = [z*prevfactors[popname][c] for z in x[popid]]
-        newproject.data['numcirc'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numcirc']]
         newproject.data['numtx'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numtx']]
         newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
         newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
@@ -402,9 +401,9 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         if len(project.progsets) > 0:
             for progid in newproject.progsets[-1].programs:
                 program = newproject.progsets[-1].programs[progid]
-                program.costcovdata['cost'] = [x*popratio['tot'][c] for x in program.costcovdata['cost']]
+                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
                 if not program.costcovdata['coverage'] == [None]:
-                    program.costcovdata['coverage'] = [x*popratio['tot'][c] for x in program.costcovdata['coverage']]
+                    program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
             
         ### -----------------------------------------------------------------------------------------
 
@@ -470,7 +469,7 @@ def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
         if type(filepaths)==str: filepaths = [filepaths] # Convert to list
         for filepath in filepaths:
             tmpproj = None
-            try: tmpproj = loadobj(filepath, verbose=0)
+            try: tmpproj = loadproj(filepath, verbose=0)
             except: print('Could not load file "%s"; moving on...' % filepath)
             if tmpproj is not None: 
                 try: 
