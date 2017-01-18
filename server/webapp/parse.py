@@ -481,22 +481,22 @@ def get_parameters_for_edit_program(project):
     added_par_keys = set()
     default_par_keys = [par['short'] for par in op.loadpartable(op.partable)]
     for parset in project.parsets.values():
-        for pars in parset.pars:
-            for par_key in default_par_keys:
-                if par_key in added_par_keys or par_key not in pars:
-                    continue
-                par = pars[par_key]
-                if not isinstance(pars[par_key], op.Par):
-                    continue
-                if not par.visible == 1 or not par.y.keys():
-                    continue
-                parameters.append({
-                    'name': par.name,
-                    'param': par.short,
-                    'by': par.by,
-                    'pships': par.y.keys() if par.by == 'pship' else []
-                })
-                added_par_keys.add(par_key)
+        pars = parset.pars
+        for par_key in default_par_keys:
+            if par_key is None or par_key in added_par_keys or par_key not in pars:
+                continue
+            par = pars[par_key]
+            if not isinstance(pars[par_key], op.Par):
+                continue
+            if not par.visible == 1 or not par.y.keys():
+                continue
+            parameters.append({
+                'name': par.name,
+                'param': par.short,
+                'by': par.by,
+                'pships': par.y.keys() if par.by == 'pship' else []
+            })
+            added_par_keys.add(par_key)
     return parameters
 
 
