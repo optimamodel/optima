@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, where
+from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
@@ -468,7 +468,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         
         ## Make a copy of the transitions for this timestep
         thistransit = dcp(rawtransit)
-
+        
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         allpeople[:,t] = people[:, :, t].sum(axis=0)
         if debug and not( all(allpeople[:,t]>0)):
@@ -710,10 +710,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             thissusreg = people[susreg,noinflows,t+1] # WARNING, will break if susreg is not a scalar index!
             thisprogcirc = people[progcirc,noinflows,t+1]
             allsus = thissusreg+thisprogcirc
+            if debug and not all(allsus>0): 
+                errormsg = '100%% prevalence detected (t=%f, pop=%s)' % (t+1, array(popkeys)[findinds(allsus>0)][0])
+                raise OptimaException(errormsg)
             newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
             people[progcirc,noinflows,t+1] += newpeople*thisprogcirc/allsus # Add new people
-                        
+            
             # Check population sizes are correct
             actualpeople = people[:,:,t+1][:,noinflows].sum()
             wantedpeople = popsize[noinflows,t+1].sum()

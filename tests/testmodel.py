@@ -65,12 +65,12 @@ if 'force' in tests:
     results1 = P.runsim('default')
     
     P.copyparset('default', 'forcetest')
-    P.parsets['forcetest'].pars[0]['force'].y[:] *= 3
+    P.parsets['forcetest'].pars['force'].y[:] *= 3
     results2 = P.runsim('forcetest')
     
     if doplot:
         from optima import plotpeople
-        plotpeople(results2)
+        plotpeople(P)
 
     done(t)
 
@@ -88,13 +88,13 @@ if 'treatment' in tests:
     results1 = P.runsim('default')
     
     P.copyparset('default', 'treatment')
-    treatpar = P.parsets['treatment'].pars[0]['numtx']
+    treatpar = P.parsets['treatment'].pars['numtx']
     treatpar.y['tot'][treatpar.t['tot']>=2010] *= 3
     results2 = P.runsim('treatment')
     
     if doplot:
         from optima import plotpeople
-        plotpeople(results2)
+        plotpeople(P)
 
     done(t)
 

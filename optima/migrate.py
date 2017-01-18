@@ -9,7 +9,7 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     '''
     for ps in project.parsets.values():
         for i in range(len(ps.pars)):
-            ps.pars[i][short] = op.dcp(project.pars()[copyfrom])
+            ps.pars[i][short] = op.dcp(project.pars()[0][copyfrom])
             ps.pars[i][short].short = short
             for kwargkey,kwargval in kwargs.items():
                 setattr(ps.pars[i][short], kwargkey, kwargval)
@@ -84,7 +84,7 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nstates   = len(project.settings.allstates) 
     project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
     project.settings.nhealth = len(project.settings.healthstates)
-    project.settings.transnorm = 0.6 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
+    project.settings.transnorm = 0.8 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
 
     if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
@@ -336,6 +336,7 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['name'] = 'Year to fix PLHIV aware of their status'
     kwargs['dataname'] = 'Year to fix PLHIV aware of their status'
     kwargs['datashort'] = 'fixpropdx'
+    kwargs['fittable'] = 'year'
     kwargs['y'] = 2100
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
@@ -360,17 +361,61 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['datashort'] = 'fixpropsupp'
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
-
     project.version = "2.1.10"
     return None
 
 
 
 
+def redoparameters(project, **kwargs):
+    """
+    Migration between Optima 2.1.10 and 2.1.11 -- update fields of parameters.
+    """
+    
+    tmpproj = op.defaultproject(verbose=0) # Create a new project with refreshed parameters
+    complain = False # Usually fine to ignore warnings
+    
+    # Loop over all parsets
+    for ps in project.parsets.values():
+        oldpars = ps.pars[0]
+        ps.pars = op.dcp(tmpproj.pars())
+        for parname,par in oldpars.items():
+            try:
+                if parname=='init': parname = 'initprev' # Rename
+                for attr in ['y','t','m']:
+                    try:
+                        oldattr = getattr(oldpars[parname], attr)
+                        setattr(ps.pars[parname], attr, oldattr)
+                    except Exception as E:
+                        if complain:
+                            print('Could not set attribute %s for parameter %s' % (attr, parname))
+                            print(E.message)
+            except:
+                if complain:
+                    print('Could not process parameter %s' % parname)
+                
+        # Fix Popsizepar objects
+        for popkey in oldpars['popsize'].p.keys():
+            ps.pars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
+            ps.pars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
+        
+        # Just a bug I noticed -- I think the definition of this parameter got inverted at some point
+        for key in ps.pars['leavecare'].y:
+            for i,val in enumerate(ps.pars['leavecare'].y[key]):
+                if val>0.5:
+                    ps.pars['leavecare'].y[key][i] = 0.2
+                    print('Leave care rate for population %s seemed to be too high, resetting to default of 0.2' % key)
+        
+    
+    project.version = "2.1.11"
+    return None
+
+
+
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.10 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.1.11 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -396,6 +441,7 @@ migrations = {
 '2.1.7': fixsettings,
 '2.1.8': addoptimscaling,
 '2.1.9': addpropsandcosttx,
+'2.1.10': redoparameters,
 #'2.2': redoprograms,
 }
 
