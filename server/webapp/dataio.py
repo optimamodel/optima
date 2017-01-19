@@ -850,7 +850,7 @@ def refresh_parset(project_id, parset_id):
     def update_project_fn(project):
         parset = parse.get_parset_from_project(project, parset_id)
         parset_name = parset.name
-        print(">> Refreshing parset %s" % parset_name)
+        print(">> Resetting parset %s to match default" % parset_name)
         project.refreshparset(name=parset_name)
 
     update_project_with_fn(project_id, update_project_fn)
@@ -1189,7 +1189,7 @@ def load_data_spreadsheet(project_id, is_template=True):
     server_fname = templatepath(fname)
     data = None
     datastart = project.settings.start
-    dataend = project.settings.end
+    dataend = project.settings.dataend
     if not is_template:
         data = project.data
         datastart = int(project.data["years"][0])

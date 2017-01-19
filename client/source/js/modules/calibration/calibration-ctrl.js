@@ -281,7 +281,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           '/api/project/' + project.id
           + '/refreshparset/' + $scope.state.parset.id)
         .success(function(response) {
-          toastr.success('refreshed parameter set')
+          toastr.success('Reset parameters to match default')
           loadParametersAndGraphs(response);
         });
     };
