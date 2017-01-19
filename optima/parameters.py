@@ -13,52 +13,46 @@ from optima import Settings, getresults, convertlimits, gettvecdt # Heftier func
 import xlrd
 from os import path, sep
 
+defaultsmoothness = 1.0 # The number of years of smoothing to do by default
+
 #############################################################################################################################
 ### Functions to load the parameters and transitions
 #############################################################################################################################
 
-def loadpartable(inputpartable=None):
+def loadpartable(filename, sheetname='Parameters'):
     ''' 
-    Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
+    Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters
     '''
+    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    sheet = workbook.sheet_by_name(sheetname)
+
     rawpars = []
-    alllines = inputpartable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
-    for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
-    attrs = alllines.pop(0) # First line is attributes
-    for l in range(len(alllines)): # Loop over parameters
-        rawpars.append(dict()) # Create an odict to store attributes
-        for i,attr in enumerate(attrs): # Loop over attributes
-            try:
-                if attr in ['limits', 'coverage', 'visible', 'cascade', 'fromdata']: alllines[l][i] = eval(alllines[l][i]) # Turn into actual values
-                if alllines[l][i]=='None': alllines[l][i] = None # Turn any surviving 'None' values to actual None
-                rawpars[l][attr] = alllines[l][i] # Store attributes
-            except:
-                errormsg = 'Error processing parameter line "%s"' % alllines[l]
-                raise OptimaException(errormsg)
+    for rownum in range(sheet.nrows-1):
+        rawpars.append({})
+        for colnum in range(sheet.ncols):
+            rawpars[rownum][sheet.cell_value(0,colnum)] = sheet.cell_value(rownum+1,colnum) if sheet.cell_value(rownum+1,colnum)!='None' else None
+            if sheet.cell_value(0,colnum) in ['limits']:
+                rawpars[rownum][sheet.cell_value(0,colnum)] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
     return rawpars
 
-def loadtranstable(npops=None,inputtranstable=None):
+def loadtranstable(filename, sheetname='Transitions', npops=None):
     ''' 
-    Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
+    Function to load the allowable transitions from the spreadsheet
     '''
-    if npops is None: npops = 1 # Use just one population if not told otherwise
-    rawtransit = []
-    alllines = inputtranstable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
-    for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
-    attrs = alllines.pop(0) # First line is tostates
-    for l in range(len(alllines)): # Loop over all healthstates 
-        rawtransit.append([[],[]]) # Create a list to store states that you can move to
-        for i,attr in enumerate(attrs): # Loop over attributes
-            try:
-                if alllines[l][i] and attrs[i]:
-                    rawtransit[l][0].append(int(attrs[i]))
-                    rawtransit[l][1].append(ones(npops))
-            except:
-                errormsg = 'Error processing transition line "%s"' % alllines[l]
-                raise OptimaException(errormsg)
-        rawtransit[l][1] = array(rawtransit[l][1])
-    return rawtransit
+    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    sheet = workbook.sheet_by_name(sheetname)
 
+    if npops is None: npops = 1 # Use just one population if not told otherwise
+
+    rawtransit = []
+    for rownum in range(sheet.nrows-1):
+        rawtransit.append([[],[]])
+        for colnum in range(sheet.ncols-1):
+            if sheet.cell_value(rownum+1,colnum+1):
+                rawtransit[rownum][0].append(colnum)
+                rawtransit[rownum][1].append(ones(npops))
+        rawtransit[rownum][1] = array(rawtransit[rownum][1])
+    return rawtransit
 
 #############################################################################################################################
 ### Functions for handling the parameters
@@ -307,16 +301,13 @@ def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
     
     # Read in parameters automatically
     try: 
-        workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
-        rawpars  = workbook.sheet_by_name('Parameters')
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         rawpars = loadpartable(filename) # Read the parameters structure
     except OptimaException as E: 
         errormsg = 'Could not load parameter table from "%s"' % filename
         errormsg += 'Error: "%s"' % E.message
         raise OptimaException(errormsg)
         
-    pars['rawtransit'] = loadtranstable(npops=len(popkeys)) # Read the transitions
+    pars['rawtransit'] = loadtranstable(filename, sheetname='Transitions', npops=len(popkeys)) # Read the transitions
     
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
