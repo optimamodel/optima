@@ -11,13 +11,12 @@ from optima import tic, toc, blank, pd # analysis:ignore
 ## Options
 tests = [
 'standardrun',
-#'migrations',
 #'autocalib',
 #'manualcalib',
 #'reconcile',
 #'runscenarios',
 #'optimize',
-'dosave',
+#'dosave',
 ]
 
 filename = 'best.prj'
@@ -49,17 +48,9 @@ T = tic()
 ## Make or load&migrate a project
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
-    P.runsim(debug=True, start=2000, end=2030)
-    P.results[-1].export()
-
-if 'migrations' in tests:
-    oldprojectfile = '/Users/robynstuart/Google Drive/Optima/Optima HIV/Applications/!Other Applications/Global model/Cost optimization 2.0/Stage 7f optims/Cote dIvoire_20161201_reconciled.prj'
-    try:
-        P = loadproj(filename=oldprojectfile)
-        P.runsim()
-        P.makespreadsheet('newspreadsheet.xlsx')
-    except:
-        print('Could not load old project file, probably because you are not Robyn, so unable to test migrations')
+    P.runsim(debug=False, start=2000, end=2030)
+    P.sensitivity()
+    pygui(P)
 
 ## Calibration
 if 'autocalib' in tests: 

@@ -227,10 +227,12 @@ if '90-90-90' in tests:
     
     P = defaults.defaultproject('best')
     P.cleanresults() # Check that scenarios can be run even if no results stored
+    P.pars()['fixproptx'].y = 2100 # WARNING, kludgy
+    print('need to fix y->t when merge parameters PR')
     
     pops = P.data['pops']['short']
     
-    startyear = 2014.
+    startyear = 2015.
     endyear = 2020.
     
     ## Define scenarios
@@ -277,7 +279,7 @@ if '90-90-90' in tests:
               {'name': 'numtx',
               'for': 'tot',
               'startyear': startyear,
-              'endyear': 2030.,
+              'endyear': 2020.,
               'endval': 68000.,
               }]),
                                 

@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 
@@ -76,33 +76,34 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['numinci']            = Result('Number of new infections')
-        self.main['numdeath']           = Result('Number of HIV-related deaths')
-        self.main['numdaly']            = Result('Number of HIV-related DALYs')
+        self.main['numinci']        = Result('Number of new infections')
+        self.main['numdeath']       = Result('Number of HIV-related deaths')
+        self.main['numdaly']        = Result('Number of HIV-related DALYs')
         
-        self.main['numplhiv']           = Result('Number of PLHIV')
-        self.main['numaids']            = Result('Number of people with AIDS')
-        self.main['numdiag']            = Result('Number of diagnosed PLHIV')
-        self.main['numevercare']        = Result('Number of PLHIV initially linked to care')
-        self.main['numincare']          = Result('Number of PLHIV in care')
-        self.main['numtreat']           = Result('Number of PLHIV on treatment')
-        self.main['numsuppressed']      = Result('Number of virally suppressed PLHIV')
+        self.main['numplhiv']       = Result('Number of PLHIV')
+        self.main['numaids']        = Result('Number of people with AIDS')
+        self.main['numdiag']        = Result('Number of diagnosed PLHIV')
+        self.main['numevercare']    = Result('Number of PLHIV initially linked to care')
+        self.main['numincare']      = Result('Number of PLHIV in care')
+        self.main['numtreat']       = Result('Number of PLHIV on treatment')
+        self.main['numsuppressed']  = Result('Number of virally suppressed PLHIV')
         
-        self.main['costtreat']          = Result('Annual treatment spend')
+        self.main['costtreat']      = Result('Annual treatment spend')
 
-        self.main['propdiag']           = Result('PLHIV who are diagnosed (%)', ispercentage=True)
-        self.main['propevercare']       = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True)
-        self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True)
-        self.main['proptreat']          = Result('PLHIV in care who are on treatment (%)', ispercentage=True)
-        self.main['propsuppressed']     = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True)
+        self.main['propdiag']       = Result('PLHIV who are diagnosed (%)', ispercentage=True)
+        self.main['propevercare']   = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True)
+        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True)
+        self.main['proptreat']      = Result('PLHIV in care who are on treatment (%)', ispercentage=True)
+        self.main['propsuppressed'] = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True)
         
-        self.main['prev']               = Result('HIV prevalence (%)', ispercentage=True)
-        self.main['force']              = Result('Incidence (per 100 p.y.)', ispercentage=True)
-        self.main['numnewdiag']         = Result('Number of new diagnoses')
-        self.main['nummtct']            = Result('Number of HIV+ births')
-        self.main['numhivbirths']       = Result('Number of births to HIV+ women')
-        self.main['numpmtct']           = Result('Number of HIV+ women receiving PMTCT')
-        self.main['popsize']            = Result('Population size')
+        self.main['prev']           = Result('HIV prevalence (%)', ispercentage=True)
+        self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True)
+        self.main['numnewdiag']     = Result('Number of new diagnoses')
+        self.main['nummtct']        = Result('Number of HIV+ births')
+        self.main['numhivbirths']   = Result('Number of births to HIV+ women')
+        self.main['numpmtct']       = Result('Number of HIV+ women receiving PMTCT')
+        self.main['popsize']        = Result('Population size')
+
 
         self.other = odict() # For storing other results -- not available in the interface
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
@@ -197,13 +198,13 @@ class Resultset(object):
             indices = arange(0, len(tvec), int(round(1.0/(tvec[1]-tvec[0])))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
             self.tvec = tvec[indices] # Subsample time vector too
         self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
-        allpeople = dcp(array([self.raw[i]['people'] for i in range(len(self.raw))]))
-        allinci   = dcp(array([self.raw[i]['inci'] for i in range(len(self.raw))]))
-        alldeaths = dcp(array([self.raw[i]['death'] for i in range(len(self.raw))]))
-        alldiag   = dcp(array([self.raw[i]['diag'] for i in range(len(self.raw))]))
-        allmtct   = dcp(array([self.raw[i]['mtct'] for i in range(len(self.raw))]))
+        allpeople    = dcp(array([self.raw[i]['people']    for i in range(len(self.raw))]))
+        allinci      = dcp(array([self.raw[i]['inci']      for i in range(len(self.raw))]))
+        alldeaths    = dcp(array([self.raw[i]['death']     for i in range(len(self.raw))]))
+        alldiag      = dcp(array([self.raw[i]['diag']      for i in range(len(self.raw))]))
+        allmtct      = dcp(array([self.raw[i]['mtct']      for i in range(len(self.raw))]))
         allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(len(self.raw))]))
-        allreceivepmtct = dcp(array([self.raw[i]['receivepmtct'] for i in range(len(self.raw))]))
+        allpmtct     = dcp(array([self.raw[i]['pmtct']     for i in range(len(self.raw))]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -234,14 +235,14 @@ class Resultset(object):
         self.main['numhivbirths'].pops = quantile(allhivbirths[:,:,indices], quantiles=quantiles)
         self.main['numhivbirths'].tot = quantile(allhivbirths[:,:,indices].sum(axis=1), quantiles=quantiles)
 
-        self.main['numpmtct'].pops = quantile(allreceivepmtct[:,:,indices], quantiles=quantiles)
-        self.main['numpmtct'].tot = quantile(allreceivepmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
+        self.main['numpmtct'].pops = quantile(allpmtct[:,:,indices], quantiles=quantiles)
+        self.main['numpmtct'].tot = quantile(allpmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
 
         self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
         self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: 
             self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
-            self.main['numnewdiag'].estimate = True # It's not real data, just an estimate
+            self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
         
         self.main['numdeath'].pops = quantile(alldeaths[:,:,:,indices].sum(axis=1), quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
@@ -368,7 +369,31 @@ class Resultset(object):
         else:
             return output
         
-                    
+    
+    def get(self, what=None, year=None, pop='tot'):
+        '''
+        A small function to make it easier to access results. For example, to 
+        get the number of deaths in the current year, just do
+        
+        P = demo(0)
+        P.result().get('numinci')
+        '''
+        # If year isn't specified, use now
+        if year is None: 
+            year = self.project.settings.now
+        
+        # Use either total (by default) or a given population
+        if pop=='tot':
+            timeseries = self.main[what].tot[0]
+        else:
+            if isinstance(pop,str): 
+                pop = self.popkeys.index(pop) # Convert string to number
+            timeseries = self.main[what].pops[0][pop,:]
+        
+        # Get the index and return the result
+        index = findnearest(self.tvec, year)
+        result = timeseries[index]
+        return result
             
         
 
