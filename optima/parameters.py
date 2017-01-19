@@ -19,7 +19,7 @@ defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 ### Functions to load the parameters and transitions
 #############################################################################################################################
 
-def loadpartable(filename, sheetname='Parameters'):
+def loadpartable(filename='model-inputs.xlsx', sheetname='Parameters'):
     ''' 
     Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters
     '''
@@ -35,7 +35,7 @@ def loadpartable(filename, sheetname='Parameters'):
                 rawpars[rownum][sheet.cell_value(0,colnum)] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
     return rawpars
 
-def loadtranstable(filename, sheetname='Transitions', npops=None):
+def loadtranstable(filename='model-inputs.xlsx', sheetname='Transitions', npops=None):
     ''' 
     Function to load the allowable transitions from the spreadsheet
     '''
