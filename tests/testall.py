@@ -31,11 +31,13 @@ MASTER = [
 'testmakespreadsheet',
 'testproject',
 'testprograms',
+'testmigrations',
 'testmodalities',
 'testmodel',
 'testscenarios',
 'testcalibration',
 'testoptimization',
+'testmigrations',
 ]
 
 ## Optionally run everything
