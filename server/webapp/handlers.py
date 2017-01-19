@@ -768,7 +768,7 @@ class GeneralRpcLoader(Resource):
         """
         json = get_post_data_json()
 
-        fn_name = json['procedure']
+        fn_name = json['name']
         print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
         fn = getattr(dataio, fn_name)
 

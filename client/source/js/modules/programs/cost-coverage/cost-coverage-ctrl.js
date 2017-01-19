@@ -32,6 +32,8 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.progsets = [];
         vm.parsets = [];
 
+        vm.state.year = new Date().getFullYear();
+
         vm.state.yearSelector = _.range(
           vm.project.startYear, vm.project.endYear+1);
 
@@ -66,19 +68,13 @@ define(['./../module', 'underscore'], function(module, _) {
             vm.parsets = response.data.parsets;
             console.log('vm.parsets', vm.parsets);
             vm.state.parset = vm.parsets[0];
-
-            return $http.post(
-              '/api/procedure',
-              {
-                'procedure': 'load_reconcile_summary',
-                'args': [vm.project.id, vm.state.progset.id, vm.state.parset.id, 2016]
-              })
-          })
-          .then(function(response) {
-            vm.state.summary = response.data;
-            console.log('vm.state.summary', response.data);
             vm.changeProgsetAndParset();
           });
+      }
+
+      function runServerProcedure(procName, args, kwargs) {
+        return $http.post(
+          '/api/procedure', { name: procName, args: args, kwargs: kwargs });
       }
 
       $scope.onResize = function() {
@@ -157,18 +153,25 @@ define(['./../module', 'underscore'], function(module, _) {
         console.log('selected program', vm.state.program);
         vm.state.popsizes = {};
 
-        // Fetch outcomes for this progset
-        $http
-          .get(
+        runServerProcedure(
+          'load_reconcile_summary',
+          [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
+        .then(function(response) {
+          vm.state.summary = response.data;
+          console.log('vm.state.summary', response.data);
+
+          // Fetch outcomes for this progset
+          return $http.get(
             '/api/project/' + vm.project.id
-              + '/progsets/' + vm.state.progset.id
-              + '/effects')
-          .success(function(response) {
-            vm.outcomes = response;
-            console.log('outcome summaries', vm.outcomes);
-            changeParset();
-            vm.changeProgram();
-          })
+            + '/progsets/' + vm.state.progset.id
+            + '/effects')
+        })
+        .then(function(response) {
+          vm.outcomes = response.data;
+          console.log('outcome summaries', vm.outcomes);
+          changeParset();
+          vm.changeProgram();
+        })
       };
 
       vm.updateCostCovGraph = function() {
@@ -472,6 +475,27 @@ define(['./../module', 'underscore'], function(module, _) {
         buildParameterSelectors();
       };
 
+      vm.updateSummary = function() {
+        runServerProcedure(
+          'load_reconcile_summary',
+          [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
+        .then(function(response) {
+          vm.state.summary = response.data;
+          console.log('vm.state.summary', response.data);
+        });
+      };
+
+      vm.reconcilePrograms = function() {
+        runServerProcedure(
+            'reconcile_progset',
+            [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
+          .success(function(data) {
+            vm.state.summary = data;
+            toastr.success('Program set reconciled');
+          });
+      };
+
+
       initialize();
 
     });
@@ -479,44 +503,3 @@ define(['./../module', 'underscore'], function(module, _) {
 });
 
 
-// $scope.Math = window.Math;
-
-// ccDataForm.cost.$setValidity("required", !angular.isUndefined($scope.state.newCCData.cost));
-// ccDataForm.coverage.$setValidity("required", !angular.isUndefined($scope.state.newCCData.coverage));
-// ccDataForm.year.$setValidity("valid", isValidCCDataYear());
-
-// var isValidCCDataYear = function() {
-//   if ($scope.state.newCCData.year) {
-//     if ($scope.state.newCCData.year >= $scope.vm.project.startYear ||
-//       $scope.state.newCCData.year <= $scope.vm.project.endYear) {
-//       var recordExisting = _.filter($scope.state.ccData, function(ccData) {
-//         return ccData.year === $scope.state.newCCData.year;
-//       });
-//       if(recordExisting.length === 0) {
-//         return true;
-//       }
-//     }
-//   }
-//   return false;
-// };
-
-// cpDataForm.splower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_lower));
-// cpDataForm.spupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_upper));
-// cpDataForm.uclower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_lower));
-// cpDataForm.ucupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_upper));
-// cpDataForm.year.$setValidity("valid", isValidCPDataYear());
-
-// var isValidCPDataYear = function() {
-//   if ($scope.state.newCPData.year) {
-//     if ($scope.state.newCPData.year >= $scope.vm.project.startYear ||
-//       $scope.state.newCPData.year <= $scope.vm.project.endYear) {
-//       var recordExisting = _.filter($scope.state.cpData, function(cpData) {
-//         return cpData.year === $scope.state.newCPData.year;
-//       });
-//       if(recordExisting.length === 0) {
-//         return true;
-//       }
-//     }
-//   }
-//   return false;
-// };

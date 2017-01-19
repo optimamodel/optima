@@ -459,6 +459,13 @@
           </table>
 
           <h1>Parameters</h1>
+          Year:
+          <select
+              ng-model="vm.state.year"
+              ng-options="year for year in vm.state.yearSelector"
+              ng-change="vm.updateSummary()"
+              class="txbox __inline"/>
+          <br><br>
           <table
               class="section table table-bordered">
             <tr>
@@ -472,9 +479,9 @@
             </tr>
           </table>
 
-          <button class="btn">Reconcile</button>
-        </div>
+          <button ng-click="vm.reconcilePrograms()" class="btn">Reconcile</button>
 
+        </div>
 
       </div>
     </div>

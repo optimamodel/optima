@@ -1150,6 +1150,8 @@ def reconcile_progset(project_id, progset_id, parset_id, year):
 
     update_project_with_fn(project_id, update_project_fn)
 
+    return load_reconcile_summary(project_id, progset_id, parset_id, year)
+
 
 ########
 ## SCENARIOS
