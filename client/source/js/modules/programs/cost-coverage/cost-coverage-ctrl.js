@@ -21,6 +21,10 @@ define(['./../module', 'underscore'], function(module, _) {
           {
             name: 'Define outcome functions',
             slug: 'outcome'
+          },
+          {
+            name: 'Summary',
+            slug: 'summary'
           }
         ];
 
@@ -49,24 +53,31 @@ define(['./../module', 'underscore'], function(module, _) {
           window.loadCostCovGraphResize = true;
         }
 
-        // Fetch progsets
         $http
-          .get(
-            '/api/project/' + vm.project.id + '/progsets')
-          .success(function(response) {
-            vm.progsets = response.progsets;
+          // Fetch progsets
+          .get('/api/project/' + vm.project.id + '/progsets')
+          .then(function(response) {
+            vm.progsets = response.data.progsets;
             vm.state.progset = vm.progsets[0];
+            // Fetch parsets
+            return $http.get('/api/project/' + vm.project.id + '/parsets')
+          })
+          .then(function(response) {
+            vm.parsets = response.data.parsets;
+            console.log('vm.parsets', vm.parsets);
+            vm.state.parset = vm.parsets[0];
 
-            // Fetch parsets (independent of progset)
-            $http
-              .get(
-                '/api/project/' + vm.project.id + '/parsets')
-              .success(function(response) {
-                vm.parsets = response.parsets;
-                console.log('vm.parsets', vm.parsets);
-                vm.state.parset = vm.parsets[0];
-                vm.changeProgsetAndParset();
-              });
+            return $http.post(
+              '/api/procedure',
+              {
+                'procedure': 'load_reconcile_summary',
+                'args': [vm.project.id, vm.state.progset.id, vm.state.parset.id, 2016]
+              })
+          })
+          .then(function(response) {
+            vm.state.summary = response.data;
+            console.log('vm.state.summary', response.data);
+            vm.changeProgsetAndParset();
           });
       }
 
@@ -167,23 +178,19 @@ define(['./../module', 'underscore'], function(module, _) {
           vm.chartData = null;
           return;
         }
-        var url = '/api/project/' + vm.project.id
-          + '/progsets/' + vm.state.progset.id
-          + '/programs/' + vm.state.program.id
-          + '/costcoverage/graph?t=' + years.join(',')
-          + '&parset_id=' + vm.state.parset.id;
         $http
           .get(
-            url)
-          .success(
-            function(data) {
-              vm.state.chartData = data;
-            })
-          .error(
-            function() {
-              console.log('Failed to load graph for', vm.state.program.short);
-            }
-          );
+            '/api/project/' + vm.project.id
+              + '/progsets/' + vm.state.progset.id
+              + '/programs/' + vm.state.program.id
+              + '/costcoverage/graph?t=' + years.join(',')
+              + '&parset_id=' + vm.state.parset.id)
+          .success(function(data) {
+            vm.state.chartData = data;
+          })
+          .error(function() {
+            console.log('Failed to load graph for', vm.state.program.short);
+          });
       };
 
       function revertCcoparsTable() {

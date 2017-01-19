@@ -440,6 +440,42 @@
           </div>
 
         </div>
+
+        <!--Summary tab windoe-->
+        <div style="width: 100%;"
+             class="c-tab"
+             ng-if="vm.activeTab === 'summary'">
+          <h1>Budget</h1>
+          <table
+              class="section table table-bordered">
+            <tr>
+              <th>Program</th>
+              <th>Budget</th>
+            </tr>
+            <tr ng-repeat="(programShort, budget) in vm.state.summary.budgets">
+              <td>{{programShort}}</td>
+              <td>{{budget}}</td>
+            </tr>
+          </table>
+
+          <h1>Parameters</h1>
+          <table
+              class="section table table-bordered">
+            <tr>
+              <th>Parameter</th>
+              <th>Population</th>
+              <th>Calibration value</th>
+              <th>Coverage value</th>
+            </tr>
+            <tr ng-repeat="par in vm.state.summary.pars">
+              <td ng-repeat="p in par">{{p}}</td>
+            </tr>
+          </table>
+
+          <button class="btn">Reconcile</button>
+        </div>
+
+
       </div>
     </div>
 
