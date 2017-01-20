@@ -74,9 +74,9 @@ if 'runscenarios' in tests:
     for key in nobudget: nobudget[key] *= 1e-6
     scenlist = [
 #        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
-        Budgetscen(name='No Lab budget', parsetname=ind, progsetname=ind, t=[2016], budget={'Lab': 0.}),
+        Budgetscen(name='No Adherence budget', parsetname=ind, progsetname=ind, t=[2016], budget={'Adherence': 0.}),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
-        Budgetscen(name='Infinite Lab budget', parsetname=ind, progsetname=ind, t=[2016], budget={'Lab': 1e9}),
+        Budgetscen(name='Infinite Adherence budget', parsetname=ind, progsetname=ind, t=[2016], budget={'Adherence': 1e9}),
 #        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
     
