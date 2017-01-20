@@ -14,9 +14,9 @@ tests = [
 #'autocalib',
 #'manualcalib',
 #'reconcile',
-#'runscenarios',
+'runscenarios',
 #'optimize',
-'dosave',
+#'dosave',
 ]
 
 filename = 'best.prj'
@@ -85,7 +85,7 @@ if 'runscenarios' in tests:
     P.runscenarios() 
     if doplot:
         plotpeople(P, P.results[ind].raw[ind][0]['people'])
-        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+#        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
         pygui(P.results[ind], toplot='default')
 
 
