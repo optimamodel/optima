@@ -15,6 +15,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     
     # Shorten variable names
     pops = project.data['pops']['short']
+    hivstates = project.settings.hivstates
     malelist = [pop for popno,pop in enumerate(pops) if project.data['pops']['male'][popno]]
     pwidlist = [pop for popno,pop in enumerate(pops) if project.pars()['injects'][popno]]
     fswlist = [pop for popno,pop in enumerate(pops) if project.pars()['sexworker'][popno]]
@@ -153,21 +154,21 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
     
     Lab = Program(short='Lab',
                   name='Lab monitoring',
                   category='Care and treatment',
                   targetpars=[{'param': 'freqvlmon', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
                   name='Prevention of mother-to-child transmission',
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': True})
+                  criteria = {'hivstatus': hivstates, 'pregnant': True})
                   
     OVC = Program(short='OVC',
                   name='Orphans and vulnerable children',
@@ -363,7 +364,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
         R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
         R.programs['ART'].costcovdata =          {'t':[2014],'cost':[2e7],'coverage':[2e4]}
-        R.programs['Lab'].costcovdata =          {'t':[2014],'cost':[1e6],'coverage':[1e4]}
+        R.programs['Lab'].costcovdata =          {'t':[2014],'cost':[2e6],'coverage':[1e4]}
         R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
         
         # Add program effects

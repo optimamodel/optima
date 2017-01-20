@@ -881,7 +881,7 @@ class Program(object):
             raise OptimaException(errormsg)
 
 
-    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False):
+    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=True):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Validate inputs
@@ -904,8 +904,11 @@ class Program(object):
         else: 
 
             # Get settings
-            settings = self.getsettings()
-            
+            try: settings = parset.project.settings
+            except:
+                try: settings = results.project.settings
+                except: settings = Settings()
+
             npops = len(parset.pars['popkeys'])
     
             if not self.criteria['pregnant']:

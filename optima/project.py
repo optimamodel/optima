@@ -485,11 +485,11 @@ class Project(object):
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
+        resultname = 'parset-'+self.parsets[name].name 
         results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
-            if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
+            self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
         self.modified = today()
         return results

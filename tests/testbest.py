@@ -73,11 +73,11 @@ if 'runscenarios' in tests:
     nobudget = dcp(defaultbudget)
     for key in nobudget: nobudget[key] *= 1e-6
     scenlist = [
-        Parscen(name='Current conditions', parsetname=ind, pars=[]),
-        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
-        Budgetscen(name='No FSW budget', parsetname=ind, progsetname=ind, t=[2016], budget={'FSW programs': 0.}),
+#        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
+        Budgetscen(name='No Lab budget', parsetname=ind, progsetname=ind, t=[2016], budget={'Lab': 0.}),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
-        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
+        Budgetscen(name='Infinite Lab budget', parsetname=ind, progsetname=ind, t=[2016], budget={'Lab': 1e9}),
+#        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
