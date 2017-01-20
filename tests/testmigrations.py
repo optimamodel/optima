@@ -44,7 +44,7 @@ if 'migrations' in tests:
     oldprojectfile = spreadsheetpath+'concentrated_v2.1.prj'
     P = op.loadproj(filename=oldprojectfile)
     P.runsim()
-    op.pygui(P)
+    if doplot: op.pygui(P)
 
 
     
