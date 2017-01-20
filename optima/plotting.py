@@ -12,7 +12,7 @@ Version: 2016jul06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, sum as npsum
+from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
 
@@ -57,7 +57,7 @@ def commaticks(figure, axis='y'):
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 
-def getplotselections(results, advanced=False):
+def getplotselections(results, advanced=True):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
@@ -289,7 +289,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (epikey, results.main.keys())
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
-            if plottype not in npsum(epiplottypes): # Sum flattens a list of lists. Stupid.
+            if plottype not in epiplottypes: # Sum flattens a list of lists. Stupid.
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plottype, epiplottypes)
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)

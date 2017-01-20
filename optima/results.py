@@ -14,13 +14,14 @@ from numbers import Number
 
 class Result(object):
     ''' Class to hold overall and by-population results '''
-    def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None, defaultplot=None):
+    def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None, estimate=False, defaultplot=None):
         self.name = name # Name of this parameter
         self.ispercentage = ispercentage # Whether or not the result is a percentage
         self.pops = pops # The model result by population, if available
         self.tot = tot # The model result total, if available
         self.datapops = datapops # The input data by population, if available
         self.datatot = datatot # The input data total, if available
+        self.estimate = estimate # Whether or not the "data" is actually a model-based output
         self.defaultplot = defaultplot if defaultplot is not None else 'stacked'
     
     def __repr__(self):
