@@ -20,8 +20,8 @@ from matplotlib import ticker
 epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = 'none' # Color of estimates rather than real data
-defaultplots = ['cascade', 'budget', 'numplhiv', 'numinci', 'numdeath', 'numtreat', 'numnewdiag', 'prev', 'popsize'] # Default epidemiological plots
-defaultmultiplots = ['budget', 'numplhiv', 'numinci', 'numdeath', 'numtreat', 'numnewdiag', 'prev'] # Default epidemiological plots
+defaultplots = ['budget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+defaultmultiplots = ['budget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
@@ -57,7 +57,7 @@ def commaticks(figure, axis='y'):
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 
-def getplotselections(results, advanced=True):
+def getplotselections(results, advanced=False):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
@@ -127,9 +127,10 @@ def getplotselections(results, advanced=True):
     else:
         plotepikeys = dcp(epikeys)
         plotepinames = dcp(epinames)
-#        for key in epikeys:
-#            plotepikeys.append(key+'-'+results.main[key].defaultplot) # The non-advanced version is the default plot
-        
+    
+    if not advanced:
+        for i in range(len(defaultplots)): defaultplots[i] = defaultplots[i].split('-')[0] # Discard second half of plot name
+        for i in range(len(defaultmultiplots)): defaultmultiplots[i] = defaultmultiplots[i].split('-')[0] # Discard second half of plot name
     plotselections['keys'] += plotepikeys
     plotselections['names'] += plotepinames
     for key in plotselections['keys']: # Loop over each key
