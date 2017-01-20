@@ -114,7 +114,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
 
 
 
-def pygui(tmpresults, toplot=None, verbose=2):
+def pygui(tmpresults, toplot=None, verbose=2, **kwargs):
     '''
     PYGUI
     
@@ -147,11 +147,14 @@ def pygui(tmpresults, toplot=None, verbose=2):
     plotselections = getplotselections(results)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
-    if toplot is None or toplot=='default': isselected = plotselections['defaults']
-    else:
-        if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
+    isselected = []
+    if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
+    if toplot[0] is None or toplot[0]=='default': 
+        toplot.pop(0) # Remove the first element
+        defaultboxes = [checkboxes[i] for i,tf in enumerate(plotselections['defaults']) if tf] # WARNING, ugly -- back-convert defaults from true/false list to list of keys
+        toplot.extend(defaultboxes)
+    if len(toplot):
         tmptoplot = dcp(toplot) # Make a copy to compare arguments
-        isselected = []
         for key in checkboxes:
             if key in toplot:
                 isselected.append(True)
@@ -167,10 +170,10 @@ def pygui(tmpresults, toplot=None, verbose=2):
     
     ## Set up control panel
     figwidth = 7
-    figheight = 0.2+len(checkboxes)*0.17 # Scale dynamically based on how many options are available
+    figheight = 12
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
-    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
+    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95), **kwargs) # Open control panel
     checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
     updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location
     clearaxes    = axes([0.4, 0.02, 0.2, 0.03]) # Create close button location
@@ -359,7 +362,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
-    tmppars = parset.pars[0]
+    tmppars = parset.pars
     origpars = dcp(tmppars)
     
     mflists = parset.manualfitlists(parsubset=parsubset)
@@ -400,8 +403,8 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
             elif fulltypelist[b]=='exp': # Population growth
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
-                tmppars[key].p[subkey][0] = eval(str(box.text()))
-                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
+                tmppars[key].i[subkey] = eval(str(box.text()))
+                printv('%s.i[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             elif fulltypelist[b]=='const': # Constants
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
@@ -419,8 +422,8 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
         ''' Little function to reset origpars and update the project '''
         global origpars, tmppars, parset
         origpars = dcp(tmppars)
-        parset.pars[0] = tmppars
-        project.parsets[name].pars[0] = tmppars
+        parset.pars = tmppars
+        project.parsets[name].pars = tmppars
         print('Parameters kept')
         return None
     
@@ -429,7 +432,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
         ''' Reset the parameters to the last saved version -- WARNING, doesn't work '''
         global origpars, tmppars, parset
         tmppars = dcp(origpars)
-        parset.pars[0] = tmppars
+        parset.pars = tmppars
 #        populatelists()
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
@@ -604,14 +607,14 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     
     # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
     tmp = parslist
-    try:  parslist = tmp.parsets[-1].pars[0] # If it's a project
+    try:  parslist = tmp.parsets[-1].pars # If it's a project
     except:
-        try: parslist = tmp.pars[0] # If it's a parset
+        try: parslist = tmp.pars # If it's a parset
         except: pass
     if type(parslist)!=list: parslist = [parslist] # Convert to list
     try:
-        for i in range(len(parslist)): parslist[i] = parslist[i].pars[0]
-    except: pass # Assume it's in the correct form -- a list of pars[0] odicts
+        for i in range(len(parslist)): parslist[i] = parslist[i].pars
+    except: pass # Assume it's in the correct form -- a list of pars odicts
     
     allplotdata = []
     for pars in parslist:

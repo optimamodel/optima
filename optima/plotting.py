@@ -25,8 +25,8 @@ epiformatslist = [ # WARNING, definition requires each of these to start with th
                  ]
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = 'none' # Color of estimates rather than real data
-defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
-defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
+defaultplots = ['cascade', 'budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numnewdiag-tot', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
+defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numnewdiag-tot', 'prev-tot'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
@@ -210,7 +210,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 
-def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plotdata=True, plotlegend=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, colors=None, reorder=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
@@ -372,11 +372,11 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different e.g. scenario
+                        plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        plot(results.tvec, factor*best[l][i], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
+                        plot(results.tvec, factor*best[nlinesperplot-1-l][i], lw=lw, c=colors[nlinesperplot-1-l]) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -432,7 +432,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, doclose=True, plo
                             handles, labels = ax.get_legend_handles_labels()
                             ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
                         else:
-                            legend(labels, **legendsettings) # Multiple simulations
+                            legend(labels[::-1], **legendsettings) # Multiple simulations
                 else:
                     if not ismultisim and isstacked:
                         highlightareasplugin(epiplots[pk], areas, results.popkeys, colors)
