@@ -479,7 +479,7 @@ def get_startval_for_parameter(project, parset_id, par_short, pop, year):
 def get_parameters_for_edit_program(project):
     parameters = []
     added_par_keys = set()
-    default_par_keys = [par['short'] for par in op.loadpartable(op.partable)]
+    default_par_keys = [par['short'] for par in op.loadpartable()]
     for parset in project.parsets.values():
         pars = parset.pars
         for par_key in default_par_keys:
