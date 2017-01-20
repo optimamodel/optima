@@ -17,15 +17,11 @@ from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_betw
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
-epiformatslist = [ # WARNING, definition requires each of these to start with the same letter!
-                  ['t', 'tot', 'total'], 
-                  ['p', 'pop', 'per population', 'pops', 'per', 'population'], 
-                  ['s', 'sta', 'stacked']
-                 ]
+epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = 'none' # Color of estimates rather than real data
-defaultplots = ['cascade', 'budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numnewdiag-tot', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
-defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numnewdiag-tot', 'prev-tot'] # Default epidemiological plots
+defaultplots = ['cascade', 'budget', 'numplhiv', 'numinci', 'numdeath', 'numtreat', 'numnewdiag', 'prev', 'popsize'] # Default epidemiological plots
+defaultmultiplots = ['budget', 'numplhiv', 'numinci', 'numdeath', 'numtreat', 'numnewdiag', 'prev'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
@@ -61,13 +57,13 @@ def commaticks(figure, axis='y'):
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 
-def getplotselections(results):
+def getplotselections(results, advanced=False):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
     plots such as the cascade.
     
-    Version: 2016jan28
+    Version: 2017jan20
     '''
     
     # Figure out what kind of result it is -- WARNING, copied from below
@@ -103,32 +99,36 @@ def getplotselections(results):
     plotselections['names'] += ['Treatment cascade']
     
     ## Deaths by CD4
-    plotselections['keys'] += ['deathbycd4']
-    plotselections['names'] += ['Deaths by CD4']
+    if advanced:
+        plotselections['keys'] += ['deathbycd4']
+        plotselections['names'] += ['Deaths by CD4']
     
     ## People by CD4
-    plotselections['keys'] += ['plhivbycd4']
-    plotselections['names'] += ['PLHIV by CD4']
+    if advanced:
+        plotselections['keys'] += ['plhivbycd4']
+        plotselections['names'] += ['PLHIV by CD4']
     
     ## Get plot selections for plotepi
     plotepikeys = list()
     plotepinames = list()
     
     epikeys = results.main.keys() # e.g. 'prev'
-    epinames = [thing.name for thing in results.main.values()]
-    episubkeys = [sublist[1] for sublist in epiformatslist] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
-    episubnames = [sublist[2] for sublist in epiformatslist] # e.g. 'per population'
+    epinames = [result.name for result in results.main.values()]
     
-    for key in epikeys: # e.g. 'prev'
-        for subkey in episubkeys: # e.g. 'tot'
-            if not(ismultisim and subkey=='sta'): # Stacked multisim plots don't make sense
-                plotepikeys.append(key+'-'+subkey)
-    for name in epinames: # e.g. 'HIV prevalence'
-        for subname in episubnames: # e.g. 'total'
-            if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
-                plotepinames.append(name+' -- '+subname)
-    
-    
+    if advanced: # Loop has to be written this way so order is correct
+        for key in epikeys: # e.g. 'prev'
+            for subkey in epiplottypes: # e.g. 'total'
+                if not(ismultisim and subkey=='stacked'): # Stacked multisim plots don't make sense
+                    plotepikeys.append(key+'-'+subkey)
+        for name in epinames: # e.g. 'HIV prevalence'
+            for subname in epiplottypes: # e.g. 'total'
+                if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
+                    plotepinames.append(name+' -- '+subname)
+    else:
+        plotepinames = dcp(epinames)
+        for key in epikeys:
+            plotepikeys.append(key+'-'+results.main[key].defaultplot) # The non-advanced version is the default plot
+        
     plotselections['keys'] += plotepikeys
     plotselections['names'] += plotepinames
     for key in plotselections['keys']: # Loop over each key
@@ -284,8 +284,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
             plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
-            if plotformat not in npsum(epiformatslist): # Sum flattens a list of lists. Stupid.
-                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
+            if plotformat not in npsum(epiplottypes): # Sum flattens a list of lists. Stupid.
+                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiplottypes)
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
             toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
