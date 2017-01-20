@@ -363,8 +363,8 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.programs['Condoms'].costcovdata =      {'t':[2014],'cost':[1.3e7],'coverage':[3e5]}
         R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
         R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
-        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[2e7],'coverage':[2e4]}
-        R.programs['Lab'].costcovdata =          {'t':[2014],'cost':[2e6],'coverage':[1e4]}
+        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[5e7],'coverage':[4.81e4]}
+        R.programs['Lab'].costcovdata =          {'t':[2014],'cost':[1.3e6],'coverage':[1e4]}
         R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
         
         # Add program effects
