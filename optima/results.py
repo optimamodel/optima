@@ -76,21 +76,22 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['numinci']        = Result('Number of new infections')
-        self.main['numdeath']       = Result('Number of HIV-related deaths')
-        self.main['numdaly']        = Result('Number of HIV-related DALYs')
+        self.main['numinci']        = Result('New infections acquired')
+        self.main['numdeath']       = Result('HIV-related deaths')
+        self.main['numdaly']        = Result('HIV-related DALYs')
+        self.main['numincibypop']   = Result('New infections caused')
         
-        self.main['numplhiv']       = Result('Number of PLHIV')
-        self.main['numaids']        = Result('Number of people with AIDS')
-        self.main['numdiag']        = Result('Number of diagnosed PLHIV')
-        self.main['numevercare']    = Result('Number of PLHIV initially linked to care')
-        self.main['numincare']      = Result('Number of PLHIV in care')
-        self.main['numtreat']       = Result('Number of PLHIV on treatment')
-        self.main['numsuppressed']  = Result('Number of virally suppressed PLHIV')
+        self.main['numplhiv']       = Result('PLHIV')
+        self.main['numaids']        = Result('People with AIDS')
+        self.main['numdiag']        = Result('Diagnosed PLHIV')
+        self.main['numevercare']    = Result('PLHIV initially linked to care')
+        self.main['numincare']      = Result('PLHIV in care')
+        self.main['numtreat']       = Result('PLHIV on treatment')
+        self.main['numsuppressed']  = Result('Virally suppressed PLHIV')
         
         self.main['costtreat']      = Result('Annual treatment spend')
 
-        self.main['propdiag']       = Result('PLHIV who are diagnosed (%)', ispercentage=True)
+        self.main['propdiag']       = Result('Diagnosed PLHIV (%)', ispercentage=True)
         self.main['propevercare']   = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True)
         self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True)
         self.main['proptreat']      = Result('PLHIV in care who are on treatment (%)', ispercentage=True)
@@ -98,10 +99,10 @@ class Resultset(object):
         
         self.main['prev']           = Result('HIV prevalence (%)', ispercentage=True)
         self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True)
-        self.main['numnewdiag']     = Result('Number of new diagnoses')
-        self.main['nummtct']        = Result('Number of HIV+ births')
-        self.main['numhivbirths']   = Result('Number of births to HIV+ women')
-        self.main['numpmtct']       = Result('Number of HIV+ women receiving PMTCT')
+        self.main['numnewdiag']     = Result('New diagnoses')
+        self.main['nummtct']        = Result('HIV+ births')
+        self.main['numhivbirths']   = Result('Births to HIV+ women')
+        self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
 
 
@@ -200,6 +201,7 @@ class Resultset(object):
         self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
         allpeople    = dcp(array([self.raw[i]['people']    for i in range(len(self.raw))]))
         allinci      = dcp(array([self.raw[i]['inci']      for i in range(len(self.raw))]))
+        allincibypop = dcp(array([self.raw[i]['incibypop'] for i in range(len(self.raw))]))
         alldeaths    = dcp(array([self.raw[i]['death']     for i in range(len(self.raw))]))
         alldiag      = dcp(array([self.raw[i]['diag']      for i in range(len(self.raw))]))
         allmtct      = dcp(array([self.raw[i]['mtct']      for i in range(len(self.raw))]))
@@ -228,6 +230,12 @@ class Resultset(object):
         if data is not None: 
             self.main['numinci'].datatot = processdata(data['optnuminfect'])
             self.main['numinci'].estimate = True # It's not real data, just an estimate
+        
+        self.main['numincibypop'].pops = quantile(allincibypop[:,:,indices], quantiles=quantiles)
+        self.main['numincibypop'].tot = quantile(allincibypop[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: 
+            self.main['numincibypop'].datatot = processdata(data['optnuminfect'])
+            self.main['numincibypop'].estimate = True # It's not real data, just an estimate
         
         self.main['nummtct'].pops = quantile(allmtct[:,:,indices], quantiles=quantiles)
         self.main['nummtct'].tot = quantile(allmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
