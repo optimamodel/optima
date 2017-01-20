@@ -72,12 +72,13 @@ if 'runscenarios' in tests:
     for key in maxbudget: maxbudget[key] += 1e14
     nobudget = dcp(defaultbudget)
     for key in nobudget: nobudget[key] *= 1e-6
+    testprog = 'Tracing' # Try zero & infinite budgets for one test program
     scenlist = [
-#        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
-        Budgetscen(name='No Adherence budget', parsetname=ind, progsetname=ind, t=[2016], budget={'Adherence': 0.}),
+        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
-        Budgetscen(name='Infinite Adherence budget', parsetname=ind, progsetname=ind, t=[2016], budget={'Adherence': 1e9}),
-#        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
+        Budgetscen(name='No '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 0.}),
+        Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 1e9}),
+        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
@@ -85,7 +86,6 @@ if 'runscenarios' in tests:
     P.runscenarios() 
     if doplot:
         plotpeople(P, P.results[ind].raw[ind][0]['people'])
-#        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
         pygui(P.results[ind], toplot='default')
 
 
