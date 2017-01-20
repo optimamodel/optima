@@ -275,10 +275,10 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 raise OptimaException(errormsg)
             else:
                 try:
-                    plotkeys = plotkeys.split('-') # Try splitting if it's a string
-                    epikey = plotkeys[0] # This must always exist
-                    if   len(plotkeys)==1: plottype = results.main[epikey].defaultplot
-                    elif len(plotkeys)==2: plottype = plotkeys[1]
+                    plotkeys = plotkeys.split('-') # Try splitting if it's a string, e.g. numplhiv-stacked
+                    epikey = plotkeys[0] # This must always exist, e.g. numplhiv
+                    if   len(plotkeys)==1: plottype = results.main[epikey].defaultplot # If it's just e.g. numplhiv, then use the default plotting type
+                    elif len(plotkeys)==2: plottype = plotkeys[1] # Otherwise, use the one specified
                     else: 
                         errormsg = 'Plotkeys must have length 1 or 2, but you have %s' % plotkeys
                         raise OptimaException(errormsg)
