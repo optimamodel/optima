@@ -16,7 +16,7 @@ tests = [
 #'reconcile',
 #'runscenarios',
 #'optimize',
-#'dosave',
+'dosave',
 ]
 
 filename = 'best.prj'
