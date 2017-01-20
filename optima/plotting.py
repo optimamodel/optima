@@ -125,9 +125,10 @@ def getplotselections(results, advanced=False):
                 if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
                     plotepinames.append(name+' -- '+subname)
     else:
+        plotepikeys = dcp(epikeys)
         plotepinames = dcp(epinames)
-        for key in epikeys:
-            plotepikeys.append(key+'-'+results.main[key].defaultplot) # The non-advanced version is the default plot
+#        for key in epikeys:
+#            plotepikeys.append(key+'-'+results.main[key].defaultplot) # The non-advanced version is the default plot
         
     plotselections['keys'] += plotepikeys
     plotselections['names'] += plotepinames
@@ -266,29 +267,33 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
 
 
         ## Validate plot keys
-        for pk,plotkey in enumerate(toplot):
-            datatype, plotformat = None, None
-            if type(plotkey) not in [str, list, tuple]: 
-                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numplhiv","tot"]' % str(plotkey)
+        for pk,plotkeys in enumerate(toplot):
+            epikey, plottype = None, None
+            if type(plotkeys)!=str: 
+                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-stacked"' % str(plotkeys)
                 raise OptimaException(errormsg)
             else:
                 try:
-                    if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
-                    elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
+                    plotkeys = plotkeys.split('-') # Try splitting if it's a string
+                    epikey = plotkeys[0] # This must always exist
+                    if   len(plotkeys)==1: plottype = results.main[epikey].defaultplot
+                    elif len(plotkeys)==2: plottype = plotkeys[1]
+                    else: 
+                        errormsg = 'Plotkeys must have length 1 or 2, but you have %s' % plotkeys
+                        raise OptimaException(errormsg)
                 except:
-                    errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
+                    errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkeys
                     if die: raise OptimaException(errormsg)
                     else: printv(errormsg, 2, verbose)
-            if datatype not in results.main.keys():
-                errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
+            if epikey not in results.main.keys():
+                errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (epikey, results.main.keys())
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
-            plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
-            if plotformat not in npsum(epiplottypes): # Sum flattens a list of lists. Stupid.
-                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiplottypes)
+            if plottype not in npsum(epiplottypes): # Sum flattens a list of lists. Stupid.
+                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plottype, epiplottypes)
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
-            toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
+            toplot[pk] = (epikey, plottype) # Convert to tuple for this index
         
         # Remove failed ones
         toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
@@ -306,9 +311,10 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
             isestimate = results.main[datatype].estimate # Indicate whether result is a percentage
             factor = 100.0 if ispercentage else 1.0 # Swap between number and percent
             datacolor = estimatecolor if isestimate else realdatacolor # Light grey for
-            istotal   = (plotformat=='t') # Only using first letter, see above...
-            isperpop  = (plotformat=='p')
-            isstacked = (plotformat=='s')
+            istotal   = (plotformat=='total')
+            isstacked = (plotformat=='stacked')
+            isperpop  = (plotformat=='population')
+            
             
             
             ################################################################################################################
