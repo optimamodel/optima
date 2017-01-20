@@ -26,6 +26,7 @@ ind = -1 # Default index
 ## Housekeeping
 
 if 'doplot' not in locals(): doplot = True
+if 'runsensitivity' not in locals(): runsensitivity = False
 
 def done(t=0):
     print('Done.')
@@ -49,7 +50,7 @@ T = tic()
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
     P.runsim(debug=False, start=2000, end=2030)
-    P.sensitivity()
+    if runsensitivity: P.sensitivity()
     if doplot: pygui(P)
 
 ## Calibration
