@@ -72,7 +72,7 @@ if doprofile:
     from optima import Project, model, makesimpars, applylimits # analysis:ignore -- called by eval() function
     P = Project(spreadsheet='generalized.xlsx', dorun=False)
     runsim = P.runsim # analysis:ignore
-    interp = P.parsets[0].pars[0]['hivtest'].interp
+    interp = P.pars()['hivtest'].interp
     
     def profile():
         print('Profiling...')

@@ -16,7 +16,7 @@ tests = [
 #'reconcile',
 #'runscenarios',
 #'optimize',
-#'dosave',
+'dosave',
 ]
 
 filename = 'best.prj'
@@ -50,7 +50,7 @@ if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
     P.runsim(debug=False, start=2000, end=2030)
     P.sensitivity()
-    pygui(P)
+    if doplot: pygui(P)
 
 ## Calibration
 if 'autocalib' in tests: 

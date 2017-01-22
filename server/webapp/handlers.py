@@ -816,6 +816,7 @@ class ScenarioSimulationGraphs(Resource):
         print("> Get scenario graphs", args)
         return dataio.make_scenarios_graphs(
             project_id,
+            which=args.get('which', None),
             is_run=args.get('isRun', False),
             start=args.get('start', None),
             end=args.get('end', None))
