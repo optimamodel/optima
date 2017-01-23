@@ -126,6 +126,14 @@ def make_mpld3_graph_dict(result, which=None):
             graph = graphs[graph_key]
             ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]
             graph_dict['ylabels'] = ylabels
+        if graph_key == "coverage":
+            graph = graphs[graph_key]
+            print("[debug] coverage %s" % graph_key)
+            print("[debug] len(graph.axes) %s" % len(graph.axes))
+            print("[debug] get_xticklabels %s" % graph.axes[-1].get_xticklabels())
+            xlabels = [l.get_text() for l in graph.axes[-1].get_xticklabels()]
+            print("[debug] xlabels %s" % xlabels)
+            graph_dict['xlabels'] = xlabels
         mpld3_graphs.append(graph_dict)
 
     return {

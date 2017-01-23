@@ -299,6 +299,13 @@ define(
               delete figure.ylabels;
             }
 
+            var xlabels;
+            if ('xlabels' in figure) {
+              console.log('found xlabels for ', figure, figure.xlabels);
+              xlabels = figure.xlabels;
+              delete figure.xlabels;
+            }
+
             var initWidth;
             if ('initWidth' in figure) {
               initWidth = figure.initWidth;
@@ -312,9 +319,24 @@ define(
               var $yaxis = $element.find('.mpld3-yaxis');
               var $labels = $yaxis.find('g.tick > text');
               $labels.each(function(i, v) {
-                var $label = $(this);
-                var newText = reformatYTickStr(ylabels[i]);
-                $label.text(newText);
+                $(this).text(ylabels[i]);
+              });
+            }
+
+            if (!_.isUndefined(xlabels)) {
+              var nTextLabel = xlabels.length;
+              var $xaxis = $element.find('.mpld3-xaxis');
+              console.log('xaxis', $xaxis);
+              console.log('xlabels', xlabels);
+              var $labels = $xaxis.find('g.tick > text');
+              var nLabel = $labels.length;
+              var nGraph = Math.round(nLabel / nTextLabel);
+              $labels.each(function(i, v) {
+                if ((i / nTextLabel) >= (nGraph - 1)) {
+                  $(this).text(xlabels[i % nTextLabel]);
+                } else {
+                  $(this).text("");
+                }
               });
             }
 
