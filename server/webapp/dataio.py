@@ -907,7 +907,7 @@ def load_parset_graphs(
         delete_result_by_parset_id(project_id, parset_id)
         update_project(project)
 
-    result = load_result(project_id, parset_id, calculation_type)
+    result = load_result(project_id, parset_id, calculation_type, which)
     if result is None:
         print ">> Runsim for for parset '%s'" % parset.name
         if startYear is None:
@@ -923,6 +923,7 @@ def load_parset_graphs(
     assert result is not None
 
     print ">> Generating graphs for parset '%s'" % parset.name
+
     graph_dict = make_mpld3_graph_dict(result, which)
 
     return {
@@ -934,19 +935,47 @@ def load_parset_graphs(
 # RESULT
 
 
-def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
-    result_record = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
-    if result_record is None:
+def load_result(
+        project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
+        name=None, which=None):
+    result_records = db.session.query(ResultsDb).filter_by(
+        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type)
+    if result_records is None:
         return None
-    return result_record.load()
+    for result_record in result_records:
+        if name is None:
+            result = result_record.load()
+            break
+        else:
+            result = result_record.load()
+            if result.name == name:
+                break
+            else:
+                result = None
+    else:
+        result = None
+    if result is not None:
+        if which is not None:
+            result.which = which
+            print(">> Saving which options")
+            result_record.save_obj(result)
+    if result is None:
+        print(">> No result found")
+    else:
+        print(">> Result %s" % str(result.name))
+    return result
 
 
-def load_result_by_id(result_id):
+def load_result_by_id(result_id, which=None):
     result_record = db.session.query(ResultsDb).get(result_id)
     if result_record is None:
         raise Exception("Results '%s' does not exist" % result_id)
-    return result_record.load()
+    result = result_record.load()
+    if which is not None:
+        result.which = which
+        print(">> Saving which options")
+        result_record.save_obj(result)
+    return result
 
 
 def update_or_create_result_record_by_id(
@@ -1024,37 +1053,16 @@ def load_result_csv(result_id):
     return dirname, filename
 
 
-def load_result_by_optimization(project, optimization):
-
-    result_name = "optim-" + optimization.name
-    parset_id = project.parsets[optimization.parsetname].uid
-
-    print(">> Loading result '%s'" % result_name)
-    result_records = db.session.query(ResultsDb).filter_by(
-        project_id=project.uid,
-        parset_id=parset_id,
-        calculation_type="optimization")
-
-    for result_record in result_records:
-        result = result_record.load()
-        if result.name == result_name:
-            return result
-
-    print(">> Not found result '%s'" % (optimization.name))
-
-    return None
-
-
 def load_result_mpld3_graphs(result_id, which):
-    result = load_result_by_id(result_id)
+    result = load_result_by_id(result_id, which)
     return make_mpld3_graph_dict(result, which)
 
 
 ## SCENARIOS
 
 
-def make_scenarios_graphs(project_id, is_run=False, start=None, end=None):
-    result = load_result(project_id, None, "scenarios")
+def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=None):
+    result = load_result(project_id, None, "scenarios", which)
     if result is None:
         if not is_run:
             print(">> No pre-calculated scenarios results found")
@@ -1071,9 +1079,11 @@ def make_scenarios_graphs(project_id, is_run=False, start=None, end=None):
         result = project.results[-1]
         record = update_or_create_result_record_by_id(
             result, project.uid, None, 'scenarios')
+        if which is not None:
+            result.which = which
         db.session.add(record)
         db.session.commit()
-    return make_mpld3_graph_dict(result)
+    return make_mpld3_graph_dict(result, which)
 
 
 def save_scenario_summaries(project_id, scenario_summaries):
@@ -1155,7 +1165,9 @@ def upload_optimization_summary(project_id, optimization_id, optimization_summar
 def load_optimization_graphs(project_id, optimization_id, which):
     project = load_project(project_id)
     optimization = parse.get_optimization_from_project(project, optimization_id)
-    result = load_result_by_optimization(project, optimization)
+    result_name = "optim-" + optimization.name
+    parset_id = project.parsets[optimization.parsetname].uid
+    result = load_result(project.uid, parset_id, "optimization", result_name, which)
     if result is None:
         return {}
     else:
