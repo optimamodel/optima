@@ -255,6 +255,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
+      $scope.downloadPrjWithResults = function (name, id) {
+        $http.post(
+          '/api/download',
+          {
+            'name': 'download_project_with_result',
+            'args': [id]
+          })
+          .then(function(response) {
+            var blob = new Blob([response], {type: 'application/octet-stream'});
+            saveAs(blob, (name + '.prj'));
+          });
+      };
+
       /**
        * Removes the project.
        */

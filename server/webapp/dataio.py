@@ -577,6 +577,28 @@ def download_project(project_id):
     return dirname, filename
 
 
+def download_project_with_result(project_id):
+    """
+    Returns the filenae of the .prj binary of the project on the server
+    """
+    project_record = load_project_record(project_id, raise_exception=True)
+    project = project_record.load()
+    result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
+    is_save = False
+    if result_records is not None:
+        for result_record in result_records:
+            result = result_record.load()
+            project.addresult(result)
+            is_save = True
+    if is_save:
+        project_record.save_obj(project, is_skip_result=False)
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    filename = project_record.as_file(dirname)
+    return os.path.join(dirname, filename)
+
+
 def update_project_from_prj(project_id, prj_filename):
     project = op.dataio.loadobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)

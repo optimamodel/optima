@@ -5,7 +5,7 @@ import logging
 
 import redis
 
-from flask import Flask, redirect, abort
+from flask import Flask, redirect, abort, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 
@@ -56,21 +56,69 @@ def unauthorized_handler():
     abort(401)
 
 
-from .webapp.handlers import api_blueprint
-
-app.register_blueprint(api_blueprint, url_prefix='')
-
-
 @app.route('/')
 def site():
     """ site - needed to correctly redirect to it from blueprints """
     return redirect('/')
 
 
+# NOTE: the twisted wgsi server is set up to
+# only allows url's with /api/* to be served
+
 @app.route('/api', methods=['GET'])
 def root():
     """ API root, nothing interesting here """
     return 'Optima API v.1.0.0'
+
+
+from .webapp.handlers import api_blueprint, get_post_data_json, report_exception_decorator, login_required
+from .webapp import dataio
+
+
+app.register_blueprint(api_blueprint, url_prefix='')
+
+
+@app.route('/api/procedure', methods=['POST'])
+@report_exception_decorator
+@login_required
+def run_remote_procedure():
+    """
+    url-args:
+        'procedure': string name of function in dataio
+        'args': list of arguments for the function
+    """
+    json = get_post_data_json()
+
+    fn_name = json['name']
+    print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
+    fn = getattr(dataio, fn_name)
+
+    args = json.get('args', [])
+    kwargs = json.get('kwargs', {})
+    return jsonify(fn(*args, **kwargs))
+
+
+from flask import helpers
+@app.route('/api/download', methods=['POST'])
+@report_exception_decorator
+@login_required
+def get_remote_file():
+    """
+    url-args:
+        'procedure': string name of function in dataio
+        'args': list of arguments for the function
+    """
+    json = get_post_data_json()
+
+    fn_name = json['name']
+    print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
+    fn = getattr(dataio, fn_name)
+
+    args = json.get('args', [])
+    kwargs = json.get('kwargs', {})
+    filename = fn(*args, **kwargs)
+    return helpers.send_from_directory(*os.path.split(filename))
+
 
 
 def init_db():
