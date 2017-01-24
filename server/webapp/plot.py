@@ -105,6 +105,10 @@ def make_mpld3_graph_dict(result, which=None):
         {'key': key, 'name': name, 'checked': checked}
          for (key, name, checked) in zip(keys, names, checks)]
 
+    if which is None and hasattr(result, 'which'):
+        print ">> Loading saved which options"
+        which = result.which
+
     if which is None:
         which = [s["key"] for s in selectors if s["checked"]]
     else:
@@ -116,7 +120,6 @@ def make_mpld3_graph_dict(result, which=None):
     graph_selectors = []
     mpld3_graphs = []
     for graph_key in graphs:
-        print('>> Graph key: %s' % str(graph_key))
         graph_selectors.append(extract_graph_selector(graph_key))
         graph_dict = convert_to_mpld3(graphs[graph_key])
         if graph_key == "budget":

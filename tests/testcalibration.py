@@ -11,8 +11,8 @@ Version: 2016feb06 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'attributes',
-#'sensitivity',
-'manualfit',
+'sensitivity',
+#'manualfit',
 #'autofit',
 #'autofitmulti',
 # 'longfit',
@@ -71,15 +71,15 @@ if 'sensitivity' in tests:
     t = tic()
 
     print('Running sensitivity test...')
-    from optima import Project
+    from optima import demo
     
-    P = Project(spreadsheet='generalized.xlsx')
-    P.sensitivity(orig='default', name='sensitivity', n=10, span=0.5)
-    results = P.runsim('sensitivity')
+    P = demo(doplot=False)
+    P.parset().updateprior() # Make sure it's up to date with the calibration
+    results = P.sensitivity(orig='default', name='sensitivity', tosample=None, n=10) # tosample=['initprev','force']
     
     if doplot:
         from optima import pygui
-        pygui(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        pygui(results)
     
     done(t)
 

@@ -8,7 +8,6 @@ import optima as op
 from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
 try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
 except: pass
-from numpy import array, nan
 
 
 def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
@@ -16,6 +15,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     
     # Shorten variable names
     pops = project.data['pops']['short']
+    hivstates = project.settings.hivstates
     malelist = [pop for popno,pop in enumerate(pops) if project.data['pops']['male'][popno]]
     pwidlist = [pop for popno,pop in enumerate(pops) if project.pars()['injects'][popno]]
     fswlist = [pop for popno,pop in enumerate(pops) if project.pars()['sexworker'][popno]]
@@ -154,14 +154,35 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+    
+    Lab = Program(short='Lab',
+                  name='Lab monitoring',
+                  category='Care and treatment',
+                  targetpars=[{'param': 'freqvlmon', 'pop': 'tot'}],# for pop in pops],
+                  targetpops=pops,
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+    
+    Adherence = Program(short='Adherence',
+                  name='Adherence support',
+                  category='Care and treatment',
+                  targetpars=[{'param': 'leavecare', 'pop': pop} for pop in pops],# for pop in pops],
+                  targetpops=pops,
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+    
+    Tracing = Program(short='Tracing',
+                  name='Pre-ART tracing',
+                  category='Care and treatment',
+                  targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops],# for pop in pops],
+                  targetpops=pops,
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
                   name='Prevention of mother-to-child transmission',
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': True})
+                  criteria = {'hivstatus': hivstates, 'pregnant': True})
                   
     OVC = Program(short='OVC',
                   name='Orphans and vulnerable children',
@@ -254,6 +275,18 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                                  't': 2016.0,
                                  'unitcost': (400,800)})
                                  
+        Lab.costcovfn.addccopar({'saturation': (0.99,0.99),
+                                 't': 2016.0,
+                                 'unitcost': (40,80)})
+                                 
+        Adherence.costcovfn.addccopar({'saturation': (0.99,0.99),
+                                 't': 2016.0,
+                                 'unitcost': (20,50)})
+                                 
+        Tracing.costcovfn.addccopar({'saturation': (0.99,0.99),
+                                 't': 2016.0,
+                                 'unitcost': (20,50)})
+                                 
         PMTCT.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,
                                  'unitcost': (100,200)})
@@ -273,6 +306,9 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         PrEP.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         HTC.addcostcovdatum({'t':2014,'cost':2e7,'coverage':1.3e6})
         ART.addcostcovdatum({'t':2014,'cost':1e6,'coverage':3308.})
+        Lab.addcostcovdatum({'t':2014,'cost':1e5,'coverage':2000.})
+        Adherence.addcostcovdatum({'t':2014,'cost':1e5,'coverage':2000.})
+        Tracing.addcostcovdatum({'t':2014,'cost':2e1,'coverage':2000.})
         PMTCT.addcostcovdatum({'t':2014,'cost':4e6,'coverage':5500})
 
         OVC.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
@@ -285,7 +321,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         INFR.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
         Other.addcostcovdatum({'t':2014,'cost':5e5,'coverage':None})
         
-    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTC, ART, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
+    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTC, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
     if filterprograms: # Only select those programs in filterprograms
         finalprograms = [program for program in allprograms if program.short in filterprograms]
@@ -315,10 +351,8 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     
     
     # Figure out the path 
-    optimapath = op.__file__
-    parentdir = optimapath.split(os.sep)[:-2] # exclude /optima/__init__.pyc
-    testdir = parentdir + ['tests'+os.sep]
-    spreadsheetpath = os.sep.join(testdir)
+    optimapath = os.path.dirname(op.__file__)
+    spreadsheetpath = os.path.join(optimapath, '..', 'tests', '') # Empty last part puts a /
     
     
     ##########################################################################################################################
@@ -344,16 +378,19 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
         
         # "Calibrate"
-        P.parsets[0].pars[0]['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
+        P.pars()['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
         if dorun: P.runsim() # Run after calibration
     
         # Get a default progset 
-        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
+        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Lab', 'Adherence', 'Tracing', 'Other'])
         
         R.programs['Condoms'].costcovdata =      {'t':[2014],'cost':[1.3e7],'coverage':[3e5]}
         R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
         R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
-        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[2e7],'coverage':[2e4]}
+        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[5e7],'coverage':[4.81e4]}
+        R.programs['Lab'].costcovdata =          {'t':[2014],'cost':[1.3e6],'coverage':[1e4]}
+        R.programs['Adherence'].costcovdata =    {'t':[2014],'cost':[1e6],'coverage':[1e4]}
+        R.programs['Tracing'].costcovdata =      {'t':[2014],'cost':[8e5],'coverage':[1e4]}
         R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
         
         # Add program effects
@@ -374,7 +411,22 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
     
         R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
+        R.covout['freqvlmon']['tot'].addccopar({'intercept': (0.5,0.6), 't': 2016.0, 'Lab': (1.6,1.8)})
         
+        R.covout['leavecare']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+        R.covout['leavecare']['Clients'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+        R.covout['leavecare']['M 15+'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+        R.covout['leavecare']['F 15+'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+        R.covout['leavecare']['PWID'].addccopar({'intercept': (0.50,0.60), 't': 2016.0, 'Adherence': (0.3,0.4)})
+        R.covout['leavecare']['MSM'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+    
+        R.covout['linktocare']['FSW'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+        R.covout['linktocare']['Clients'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+        R.covout['linktocare']['M 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+        R.covout['linktocare']['F 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+        R.covout['linktocare']['PWID'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+        R.covout['linktocare']['MSM'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+    
         # Store this program set in the project
         P.addprogset(R)
     
@@ -389,7 +441,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', verbose=verbose, **kwargs)
 
         # Get a default progset 
-        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
+        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'Lab', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
 
         pops = P.data['pops']['short']
         adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
@@ -499,6 +551,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
 
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        R.covout['freqvlmon']['tot'].addccopar({'intercept': (0.5,0.6), 't': 2016.0, 'Lab': (1.6,1.8)})
 
         R.covout['numcirc']['MSM'].addccopar({'intercept': (0,0), 't': 2016.0})
         R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
@@ -511,7 +564,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         
         # Do a super-manual calibration
-        P.parsets[0].pars[0]['inhomo'].y[:] = 0.2
+        P.pars()['inhomo'].y[:] = 0.2
     
     
     
@@ -549,7 +602,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
         currnumtx =    res.main['numtreat'].tot[0][curryearind]
         currpropdx = currnumdx/currnumplhiv
         currproptx = currnumtx/currnumdx
-        currvs = project.parsets['default'].pars[0]['treatvs'].interp(startyear)
+        currvs = project.pars()['treatvs'].interp(startyear)
         
         scenlist = [
             Parscen(name='Current conditions', parsetname='default', pars=[]),

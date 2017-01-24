@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, defaultconstraints, runmodel # Import functions
+from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
+from optima import defaultobjectives, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
 import os
@@ -27,7 +27,6 @@ class Project(object):
         1. data -- loaded from the spreadsheet
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
-        4. econ -- data and time series loaded from the economics spreadsheet
 
 
     Methods for structure lists:
@@ -42,7 +41,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Built-in methods -- initialization, and the thing to print if you call a project
+    ### Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
     def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2):
@@ -100,7 +99,7 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Methods for I/O and spreadsheet loading
+    ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
 
@@ -177,17 +176,17 @@ class Project(object):
             progset = Programset(name=name, project=self)
             self.addprogset(progset)
         if overwrite or scenname not in self.scens:
-            scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
+            scen = Parscen(name=scenname)
             self.addscen(scen)
         if overwrite or name not in self.optims:
-            optim = Optim(project=self, name=name, objectives=defaultobjectives(project=self, progset=0, verbose=0), constraints=defaultconstraints(project=self, progset=0, verbose=0), parsetname=self.parsets.keys()[0], progsetname=self.progsets.keys()[0])
+            optim = Optim(project=self, name=name)
             self.addoptim(optim)
         return None
 
 
 
     #######################################################################################################
-    ## Methods to handle common tasks with structure lists
+    ### Methods to handle common tasks with structure lists
     #######################################################################################################
 
 
@@ -291,7 +290,7 @@ class Project(object):
         
 
     #######################################################################################################
-    ## Convenience functions -- NOTE, do we need these...?
+    ### Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
 
     def addparset(self,   name=None, parset=None,   overwrite=True): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
@@ -370,55 +369,9 @@ class Project(object):
         return None
 
 
-
-
     #######################################################################################################
-    ## Methods to perform major tasks
+    ### Utilities
     #######################################################################################################
-
-
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
-        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
-        
-        WARNING, do we need this? What's it for? Why not use runmodel()?
-        '''
-        if start is None: start=self.settings.start # Specify the start year
-        if end is None: end=self.settings.end # Specify the end year
-        if dt is None: dt=self.settings.dt # Specify the timestep
-        if name is None and simpars is None: name = -1 # Set default name
-        if verbose is None: verbose = self.settings.verbose
-        
-        # Get the parameters sorted
-        if simpars is None: # Optionally run with a precreated simpars instead
-            simparslist = []
-            for pardict in self.parsets[name].pars:
-                simparslist.append(makesimpars(pardict, start=start, end=end, dt=dt, settings=self.settings, name=name))
-        else:
-            if type(simpars)==list: simparslist = simpars
-            else: simparslist = [simpars]
-
-        # Run the model! -- wARNING, the logic of this could be cleaned up a lot!
-        rawlist = []
-        for ind in range(len(simparslist)):
-            if debug: # Should this be die?
-                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-            else:
-                try:
-                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose)
-                except:
-                    printv('Running model failed; running again with debugging...', 1, verbose)
-                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
-            rawlist.append(raw)
-
-        # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
-        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
-        if addresult:
-            keyname = self.addresult(result=results, overwrite=overwrite)
-            if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
-
-        self.modified = today()
-        return results
 
 
     def refreshparset(self, name=None, orig='default'):
@@ -433,14 +386,13 @@ class Project(object):
         
         if name is None: name = self.parsets.keys() # If none is given, use all
         if type(name)!=list: name = [name] # Make sure it's a list
-        origpars = self.parsets[orig].pars[0] # "Original" parameters to copy from (based on data)
+        origpars = self.parsets[orig].pars # "Original" parameters to copy from (based on data)
         for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
-            keys = parset.pars[0].keys() # Assume all pars structures have the same keys
-            for i in range(len(parset.pars)): # Loop over each set of pars
-                newpars = parset.pars[i]
-                for key in keys:
-                    if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
-                    if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
+            keys = parset.pars.keys() # Assume all pars structures have the same keys
+            newpars = parset.pars
+            for key in keys:
+                if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
+                if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
         
         self.modified = today()
         return None
@@ -467,16 +419,16 @@ class Project(object):
         return name, orig
 
 
-    def pars(self, key=-1, ind=0):
-        ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
-        return self.parsets[key].pars[ind]
+    def pars(self, key=-1):
+        ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars '''
+        return self.parsets[key].pars
     
-    def progs(self, key=-1, ind=0):
+    def progs(self, key=-1):
         ''' Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs '''
         return self.progsets[key].programs
     
     def parset(self, key=-1):
-        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
+        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1] '''
         return self.parsets[key]
     
     def programs(self, key=-1):
@@ -484,7 +436,7 @@ class Project(object):
         return self.progsets[key].programs
 
     def progset(self, key=-1):
-        ''' Shortcut for getting the latest active program set, i.e. self.progset[-1]'''
+        ''' Shortcut for getting the latest active program set, i.e. self.progsets[-1]'''
         return self.progsets[key]
     
     def result(self, key=-1):
@@ -492,27 +444,84 @@ class Project(object):
         return self.results[key]
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
-        ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
-        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
+    #######################################################################################################
+    ### Methods to perform major tasks
+    #######################################################################################################
+
+
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, verbose=None):
+        ''' 
+        This function runs a single simulation, or multiple simulations if n>1.
+        
+        Version: 2016nov07
+        '''
+        if start is None: start=self.settings.start # Specify the start year
+        if end is None: end=self.settings.end # Specify the end year
+        if dt is None: dt=self.settings.dt # Specify the timestep
+        if name is None and simpars is None: name = -1 # Set default name
+        if verbose is None: verbose = self.settings.verbose
+        
+        # Get the parameters sorted
+        if simpars is None: # Optionally run with a precreated simpars instead
+            simparslist = [] # Needs to be a list
+            if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
+            for i in range(n):
+                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample))
+        else:
+            if type(simpars)==list: simparslist = simpars
+            else: simparslist = [simpars]
+
+        # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
+        rawlist = []
+        for ind,simpars in enumerate(simparslist):
+            if debug: # Should this be die?
+                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+            else:
+                try:
+                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose)
+                except:
+                    printv('Running model failed; running again with debugging...', 1, verbose)
+                    raw = model(simpars, self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+            rawlist.append(raw)
+
+        # Store results -- WARNING, is this correct in all cases?
+        resultname = 'parset-'+self.parsets[name].name 
+        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+        if addresult:
+            keyname = self.addresult(result=results, overwrite=overwrite)
+            self.parsets[name].resultsref = keyname # If linked to a parset, store the results
+
         self.modified = today()
-        return None
+        return results
 
 
-    def manualfit(self, orig=None, parsubset=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, **kwargs): # orig=default or orig=0?
+        '''
+        Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
+        
+        Specify tosample as a string or list of par.auto types to only look at sensitivity in a subset
+        of parameters. Set to None for all. For example:
+        
+        P.sensitivity(n=5, tosample='force')
+        '''
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, **kwargs)
+        self.modified = today()
+        return results
+
+
+    def manualfit(self, orig=None, parsubset=None, name=None, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(project=self, name=name, parsubset=parsubset, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
+        manualfit(project=self, name=name, parsubset=parsubset, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
         return None
 
 
-    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
         keyname = self.addresult(result=results)
@@ -548,10 +557,10 @@ class Project(object):
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
+        multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)
@@ -566,7 +575,7 @@ class Project(object):
     #######################################################################################################
         
     def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
-        ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''   
+        ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
         projectBOC.name += ' (' + str(projectBOC.uid) + ')'
         if objectives == None:
@@ -625,7 +634,6 @@ class Project(object):
                 for y in boc.objectives:
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
-#                    print('BOC located in project: %s' % self.name)
                     return boc
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
