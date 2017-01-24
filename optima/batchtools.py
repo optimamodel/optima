@@ -90,13 +90,13 @@ def batchautofit(
 
 
 def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
-             progsetname, inds, objectives, constraints, maxiters, maxtime,
+             progsetname, objectives, constraints, maxiters, maxtime,
              verbose, stoppingfunc, method):
     loadbalancer(index=ind)
     print('Running BOC generation...')
     project.genBOC(
         budgetlist=budgetlist, name=name, parsetname=parsetname,
-        progsetname=progsetname, inds=inds, objectives=objectives, 
+        progsetname=progsetname, objectives=objectives, 
         constraints=constraints, maxiters=maxiters, maxtime=maxtime,
         verbose=verbose, stoppingfunc=stoppingfunc, method=method)
     outputqueue.put(project)
@@ -106,7 +106,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
 
 def batchBOC(
         folder='.', budgetlist=None, name=None, parsetname=None, 
-        progsetname=None, inds=0, objectives=None, constraints=None, 
+        progsetname=None, objectives=None, constraints=None, 
         maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
         method='asd'):
     """
@@ -165,7 +165,7 @@ def batchBOC(
         prc = Process(
             target=boc_task,
             args=(project, i, outputqueue, budgetlist, name, parsetname, 
-                  progsetname, inds, prjobjectives, prjconstraints, maxiters, 
+                  progsetname, prjobjectives, prjconstraints, maxiters, 
                   maxtime, verbose, stoppingfunc, method))
         prc.start()
         processes.append(prc)
