@@ -484,7 +484,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 
         effallprev = einsum('i,ij->ij',alltrans,people[:,:,t]) / allpeople[:,t]                            
         if debug and not((effallprev[:,:]>=0).all()): 
-            errormsg = 'HIV prevalence invalid in populations %s!' % (findinds(effallprev[:,:]<0))
+            errormsg = 'HIV prevalence invalid at time %s' % (t)
             if die: raise OptimaException(errormsg)
             else:
                 printv(errormsg, 1, verbose)
