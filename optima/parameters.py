@@ -462,7 +462,9 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'popkeys', 'injects', 'sexworker', 'rawtransit']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
-    if keys is None: keys = pars.keys() # Just get all keys
+    try:
+        if keys is None: keys = pars.keys() # Just get all keys
+    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
     elif settings is not None: simpars['tvec'] = settings.maketvec(start=start, end=end, dt=dt)
