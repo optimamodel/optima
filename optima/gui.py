@@ -21,7 +21,7 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
 
 
 
-def plotresults(results, toplot=None, fig=None, uncertainty=False, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
+def plotresults(results, toplot=None, fig=None, uncertainty=False, legendon=True, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
     Does the hard work for updateplots() for pygui()
     Keyword arguments if supplied are passed on to figure().
@@ -42,7 +42,7 @@ def plotresults(results, toplot=None, fig=None, uncertainty=False, **kwargs): # 
     width,height = fig.get_size_inches()
     
     # Actually create plots
-    plots = makeplots(results, toplot=toplot, uncertainty=uncertainty, die=True, figsize=(width, height))
+    plots = makeplots(results, toplot=toplot, uncertainty=uncertainty, legendon=legendon, die=True, figsize=(width, height))
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
