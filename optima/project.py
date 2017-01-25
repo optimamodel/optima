@@ -458,6 +458,7 @@ class Project(object):
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
+        self.parsets[name].name = name
         self.modified = today()
         return None
 

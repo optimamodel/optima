@@ -121,7 +121,7 @@ def getplotselections(results):
 
 
 
-def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, uncertainty=False, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -186,7 +186,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, uncertainty=uncertainty, **kwargs)
     allplots.update(epiplots)
     
     

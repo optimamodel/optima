@@ -46,7 +46,7 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
     if what=='force':
         for n in range(ncopies):
             for key in popkeys:
-                parset.pars[n]['force'].y[key] = perturb(n=1, span=span)[0] # perturb() returns array, so need to index -- WARNING, could make more efficient and remove loop
+                parset.pars[n]['force'].y[key] *= perturb(n=1, span=span)[0] # perturb() returns array, so need to index -- WARNING, could make more efficient and remove loop
     else:
         raise OptimaException('Sorry, only "force" is implemented currently')
     
