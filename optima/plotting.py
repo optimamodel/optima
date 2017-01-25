@@ -121,7 +121,7 @@ def getplotselections(results):
 
 
 
-def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, uncertainty=False, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -186,7 +186,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, uncertainty=uncertainty, **kwargs)
     allplots.update(epiplots)
     
     
@@ -200,7 +200,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
+            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, legendon=True, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -407,12 +407,13 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))
-                if not ismultisim:
-                    if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
-                    if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
-                    if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
-                else:
-                    legend(labels, **legendsettings) # Multiple simulations
+                if legendon:
+                    if not ismultisim:
+                        if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
+                        if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
+                        if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
+                    else:
+                        legend(labels, **legendsettings) # Multiple simulations
                 SIticks(epiplots[pk])
                 close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
