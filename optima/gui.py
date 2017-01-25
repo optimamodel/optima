@@ -83,7 +83,7 @@ def getchecked(check=None):
     for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
     return ischecked
 
-def clearselections():
+def clearselections(event=None):
     global plotfig, check, checkboxes, results
     for box in range(len(check.lines)):
         for i in [0,1]: check.lines[box][i].set_visible(False)
@@ -91,7 +91,7 @@ def clearselections():
     return None
     
     
-def updateplots(event=None, tmpresults=None, uncertainty=False, **kwargs):
+def updateplots(event=None, tmpresults=None, **kwargs):
     ''' Close current window if it exists and open a new one based on user selections '''
     global plotfig, check, checkboxes, results
     if tmpresults is not None: results = tmpresults
@@ -108,13 +108,13 @@ def updateplots(event=None, tmpresults=None, uncertainty=False, **kwargs):
     if sum(ischecked): # Don't do anything if no plots
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
         for key in ['toplot','fig','figsize']: kwargs.pop(key, None) # Remove duplicated arguments if they exist
-        plotresults(results, toplot=toplot, uncertainty=uncertainty, fig=plotfig, figsize=(width, height), **kwargs)
+        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **kwargs)
     
     return None
 
 
 
-def pygui(tmpresults, toplot=None, verbose=2, uncertainty=False):
+def pygui(tmpresults, toplot=None, verbose=2):
     '''
     PYGUI
     
@@ -197,7 +197,7 @@ def pygui(tmpresults, toplot=None, verbose=2, uncertainty=False):
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     clearbutton.on_clicked(clearselections) # Clear all checkboxes
     closebutton.on_clicked(closegui) # Close figures
-    updateplots(event=None, tmpresults=None, uncertainty=uncertainty) # Plot initially -- ACTUALLY GENERATES THE PLOTS
+    updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
 
     
 
@@ -411,7 +411,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
         
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
-        updateplots(event=None, tmpresults=results, **kwargs)
+        updateplots(tmpresults=results, **kwargs)
         
     
     ## Keep the current parameters in the project; otherwise discard
