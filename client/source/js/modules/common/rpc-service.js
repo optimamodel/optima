@@ -21,14 +21,15 @@ define(['angular'], function (angular) {
 
     return {
       template: '<a ng-mouseenter="mouseenter()" ng-mouseleave="mouseleave()">[?]</a>',
+      scope: true,
       link: function(scope, element, attrs) {
-        let div = angular.element('<div style="display: inline"></div>');
+        scope.div = angular.element('<div style="display: inline"></div>');
 
         scope.tpl = angular.element(
-          '<div style="display: none; position: absolute; font-size: 10px; font-weight: normal; background: white; border: 1px solid #999; padding: 10px; margin-top: 5px; margin-left: -5px"><div class="arrow-down"></div></div>');
+          '<div style="display: none; position: absolute; font-size: 10px; font-weight: normal; background: white; border: 1px solid #999; padding: 6px; margin-top: 5px; margin-left: -5px"><div class="arrow-down"></div></div>');
 
-        element.append(div);
-        div.append(scope.tpl);
+        element.append(scope.div);
+        scope.div.append(scope.tpl);
 
         runRemoteProcedure(
             'load_help', [attrs.helpId])
@@ -38,13 +39,15 @@ define(['angular'], function (angular) {
 
         scope.mouseenter = function() {
           scope.tpl.css('display', 'block');
-          scope.tpl.css('left', div.position().left);
-          scope.tpl.css('top', div.position().top);
+          scope.tpl.css('left', scope.div.position().left);
+          scope.tpl.css('top', scope.div.position().top);
         };
 
         scope.mouseleave = function() {
           scope.tpl.css('display', 'none');
         };
+
+        console.log(scope);
       }
     };
   });
