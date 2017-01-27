@@ -116,8 +116,10 @@ def get_remote_file():
 
     args = json.get('args', [])
     kwargs = json.get('kwargs', {})
-    filename = fn(*args, **kwargs)
-    return helpers.send_from_directory(*os.path.split(filename))
+    full_filename = fn(*args, **kwargs)
+    dirname, filename = os.path.split(full_filename)
+    print(">> Get remote filen %s %s" % (dirname, filename))
+    return helpers.send_from_directory(dirname, filename)
 
 
 

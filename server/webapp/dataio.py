@@ -542,12 +542,18 @@ def copy_project(project_id, new_project_name):
 def create_project_from_prj(prj_filename, project_name, user_id):
     """
     Returns the project id of the new project.
+        results.name
+            - 'scenarios' - scenarios results
+            - 'parset-' - calibration/autofit results
+            - 'optim-' - optimization results
     """
     project = op.dataio.loadobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)
     project = op.migrate(project)
     print('>> ...to version %s' % project.version)
     project.name = project_name
+    for result in project.results.values():
+        print(">> Project results %s" % result.name)
     resolve_project(project)
     save_project_as_new(project, user_id)
     return project.uid
@@ -596,6 +602,7 @@ def download_project_with_result(project_id):
     if not dirname:
         dirname = TEMPLATEDIR
     filename = project_record.as_file(dirname)
+    print(">> Saving download_project %s %s" % (dirname, filename))
     return os.path.join(dirname, filename)
 
 

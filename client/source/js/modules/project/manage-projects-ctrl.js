@@ -261,9 +261,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           {
             'name': 'download_project_with_result',
             'args': [id]
+          },
+          {
+            headers: {'Content-type': 'application/octet-stream'},
+            responseType:'blob'
           })
           .then(function(response) {
-            var blob = new Blob([response], {type: 'application/octet-stream'});
+            var blob = new Blob([response.data], {type: 'application/octet-stream'});
             saveAs(blob, (name + '.prj'));
           });
       };
