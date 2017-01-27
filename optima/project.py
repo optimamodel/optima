@@ -574,7 +574,7 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
+    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
         projectBOC.name += ' (' + str(projectBOC.uid) + ')'
@@ -616,7 +616,7 @@ class Project(object):
                 closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
                 owbudget = tmpallocs[closest]
                 print('Using old allocation as new starting point.')
-            results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
+            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
             tmptotals.append(budget)
             tmpallocs.append(dcp(results.budget['Optimal']))
             projectBOC.x.append(budget)

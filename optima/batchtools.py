@@ -49,14 +49,14 @@ def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
 
 def autofit_task(
         project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters,
-        inds, verbose):
+        verbose):
     """Kick off the autofit task for a given project file."""
     loadbalancer(index=ind)
     print('Running autofitting...')
     # Run automatic fitting and update calibration
     project.autofit(
         name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, 
-        maxiters=maxiters, inds=inds, verbose=verbose)
+        maxiters=maxiters, verbose=verbose)
     outputqueue.put(project)
     print('...done.')
     return None
@@ -64,7 +64,7 @@ def autofit_task(
 
 def batchautofit(
         folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None, 
-        maxiters=200, inds=None, verbose=2):
+        maxiters=200, verbose=2):
     ''' Perform batch autofitting '''
     
     filelist = glob(path.join(folder, '*.prj'))
@@ -79,7 +79,7 @@ def batchautofit(
         prc = Process(
             target=autofit_task, 
             args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, 
-                  maxiters, inds, verbose))
+                  maxiters, verbose))
         prc.start()
         processes.append(prc)
     for i in range(nfiles):
@@ -90,13 +90,13 @@ def batchautofit(
 
 
 def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
-             progsetname, inds, objectives, constraints, maxiters, maxtime,
+             progsetname, objectives, constraints, maxiters, maxtime,
              verbose, stoppingfunc, method):
     loadbalancer(index=ind)
     print('Running BOC generation...')
     project.genBOC(
         budgetlist=budgetlist, name=name, parsetname=parsetname,
-        progsetname=progsetname, inds=inds, objectives=objectives, 
+        progsetname=progsetname, objectives=objectives, 
         constraints=constraints, maxiters=maxiters, maxtime=maxtime,
         verbose=verbose, stoppingfunc=stoppingfunc, method=method)
     outputqueue.put(project)
@@ -106,7 +106,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
 
 def batchBOC(
         folder='.', budgetlist=None, name=None, parsetname=None, 
-        progsetname=None, inds=0, objectives=None, constraints=None, 
+        progsetname=None, objectives=None, constraints=None, 
         maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
         method='asd'):
     """
@@ -165,7 +165,7 @@ def batchBOC(
         prc = Process(
             target=boc_task,
             args=(project, i, outputqueue, budgetlist, name, parsetname, 
-                  progsetname, inds, prjobjectives, prjconstraints, maxiters, 
+                  progsetname, prjobjectives, prjconstraints, maxiters, 
                   maxtime, verbose, stoppingfunc, method))
         prc.start()
         processes.append(prc)
