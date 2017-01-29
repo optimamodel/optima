@@ -690,7 +690,7 @@ def runcommand(command, printinput=False, printoutput=False):
 
 
 
-def gitinfo():
+def gitinfo(die=False):
     ''' Try to extract git information based on the file structure '''
     try: # This whole thing could fail, you know!
         from os import path, sep # Path and file separator
@@ -702,9 +702,11 @@ def gitinfo():
         headstrip = 'ref: ref'+sep+'heads'+sep # Header to strip off...hope this is generalizable!
         with open(gitdir+sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
         with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: gitversion = f.read().strip() # Read git commit
-    except: # Failure? Give up
+    except Exception as E: # Failure? Give up
         gitbranch = 'Git branch information not retrivable'
         gitversion = 'Git version information not retrivable'
+        if die:
+            raise E
     return gitbranch, gitversion
 
 
