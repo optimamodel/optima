@@ -67,7 +67,7 @@ def batchautofit(
         maxiters=200, verbose=2):
     ''' Perform batch autofitting '''
     
-    filelist = glob(path.join(folder, '*.prj'))
+    filelist = sorted(glob(path.join(folder, '*.prj')))
     nfiles = len(filelist)
 
     outputqueue = Queue()
@@ -84,7 +84,7 @@ def batchautofit(
         processes.append(prc)
     for i in range(nfiles):
         outputlist[i] = outputqueue.get()
-        outputlist[i].save(filename=filelist[i])
+        outputlist[i].save(filename=filelist[i]) # NO, this randomizes it, need to draw from outputlist
     
     return outputlist
 
