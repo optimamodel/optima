@@ -401,6 +401,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
     printv('Running %s optimization...' % which, 1, verbose)
     
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
+    tmp = project.runsim(name=optim.parsetname) # Run a single sim to begin with 
     
     # optim structure validation
     if not(hasattr(optim, 'objectives')) or optim.objectives is None:
