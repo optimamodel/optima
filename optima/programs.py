@@ -476,8 +476,12 @@ class Programset(object):
                                 part2 = thisprog.getcoverage(x=fullx, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
                                 thiscov[thisprog.short] = part1/part2
                             else:
-                                part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
-                                part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
+                                if thispop == 'tot':
+                                    part1 = coverage[thisprog.short]
+                                    part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=True)
+                                else:
+                                    part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
+                                    part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
                                 thiscov[thisprog.short] = part1/part2
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
@@ -877,7 +881,7 @@ class Program(object):
             raise OptimaException(errormsg)
 
 
-    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False):
+    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=True):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Validate inputs
@@ -900,8 +904,11 @@ class Program(object):
         else: 
 
             # Get settings
-            settings = self.getsettings()
-            
+            try: settings = parset.project.settings
+            except:
+                try: settings = results.project.settings
+                except: settings = Settings()
+
             npops = len(parset.pars['popkeys'])
     
             if not self.criteria['pregnant']:
