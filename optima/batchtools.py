@@ -76,6 +76,7 @@ def batchautofit(
     for i in range(nfiles):
         loadbalancer(0.5)
         project = loadproj(filelist[i])
+        project.filename = filelist[i]
         prc = Process(
             target=autofit_task, 
             args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, 
@@ -84,7 +85,7 @@ def batchautofit(
         processes.append(prc)
     for i in range(nfiles):
         outputlist[i] = outputqueue.get()
-        outputlist[i].save(filename=filelist[i]) # NO, this randomizes it, need to draw from outputlist
+        outputlist[i].save()
     
     return outputlist
 
