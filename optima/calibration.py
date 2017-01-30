@@ -8,7 +8,7 @@ from optima import OptimaException, Par, dcp, runmodel, asd, printv, findinds, i
 from numpy import zeros, array, mean
 
 
-def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
+def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False):
     ''' 
     Function to automatically fit parameters. Parameters:
         fitwhat = which parameters to vary to improve the fit; these are defined in parameters.py under the 'auto' attribute; default is 'force' (FOI metaparameters only)
@@ -34,18 +34,11 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set
     parset.project = project # Try to link the parset back to the project -- WARNING, seems fragile
-    origparlist = dcp(parset.pars)
-    lenparlist = len(origparlist)
+    pars = dcp(parset.pars) # Just get a copy of the pars for parsing
     if fitwhat is None: fitwhat = ['force'] # By default, automatically fit force-of-infection only
     if type(fitwhat)==str: fitwhat = [fitwhat]
     if type(fitto)==str: fitto = [fitto]
-    if isnumber(inds): inds = [inds] # # Turn into a list if necessary
-    if inds is None: inds = range(lenparlist)
-    if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
-    parset.pars = [] # Clear out in preparation for fitting
     parset.improvement = [] # For storing the improvement for each fit
-    pars = origparlist[0] # Just get a copy of the pars for parsing
-    
     
     
     ## WARNING -- the following two functions must be updated together! Annoying, I know...
@@ -270,21 +263,14 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     parlower  = array([item['limits'][0] for item in parlist])
     parhigher = array(project.settings.convertlimits([item['limits'][1] for item in parlist])) # Replace text labels with numeric values
     
-    # Loop over each pars
-    for ind in inds:
-        
-        # Get this set of parameters
-        try: pars = origparlist[ind]
-        except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
-        
-        # Perform fit
-        parvec = convert(pars, parlist)
-        args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
-        parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-        
-        # Save
-        pars = convert(pars, parlist, parvecnew)        
-        parset.pars.append(pars)
-        parset.improvement.append(output.fval) # Store improvement history
+    # Perform fit
+    parvec = convert(pars, parlist)
+    args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
+    parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    
+    # Save
+    pars = convert(pars, parlist, parvecnew)        
+    parset.pars = pars
+    parset.improvement.append(output.fval) # Store improvement history
     
     return parset
