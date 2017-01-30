@@ -93,7 +93,13 @@
       &nbsp; &#183; &nbsp;
 
       <button
-          class="btn       &nbsp;"
+          class="btn"
+          ng-click="refreshParset()">Set to default</button>
+
+      &nbsp; &#183; &nbsp;
+
+      <button
+          class="btn"
           ng-click="startAutoCalibration()"
           ng-disabled="checkNotRunnable()">Run autofit</button>
 
