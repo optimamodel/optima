@@ -415,11 +415,13 @@ def redoparameters(project, **kwargs):
                         newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
                 elif isinstance(newpars[parname], op.Yearpar): # y attribute is renamed t
                     newpars[parname].t = oldpars[parname].y
-                elif parname in 'male female popkeys rawtransit risktransit agetransit birthtransit:
+                elif parname in op._parameters.generalkeys+op._parameters.staticmatrixkeys: # These can all be copied directly
                     if verbose: print('Directly copying %s' % parname)
                     newpars[parname] = oldpars[parname]
             else:
-                if verbose: print('Parameter %s does not exist in both sets' % parname)
+                if verbose: 
+                    print('################################WARNING')
+                    print('Parameter %s does not exist in both sets' % parname)
                 
             if success:
                 if parname in oldparnames: oldparnames.remove(parname) # We're dealing with it, so remove it
