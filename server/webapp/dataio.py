@@ -845,6 +845,18 @@ def create_parset(project_id, new_parset_name):
     update_project_with_fn(project_id, update_project_fn)
 
 
+def refresh_parset(project_id, parset_id):
+
+    def update_project_fn(project):
+        parset = parse.get_parset_from_project(project, parset_id)
+        parset_name = parset.name
+        print(">> Resetting parset %s to match default" % parset_name)
+        project.refreshparset(name=parset_name)
+
+    update_project_with_fn(project_id, update_project_fn)
+    delete_result_by_parset_id(project_id, parset_id)
+
+
 def load_parset_summaries(project_id):
     print(">> Get parset summaries")
     project = load_project(project_id)
@@ -1180,18 +1192,26 @@ def load_data_spreadsheet_binary(project_id):
     return None, None
 
 
-def load_template_data_spreadsheet(project_id):
+def load_data_spreadsheet(project_id, is_template=True):
     """
     Returns (dirname, basename) of the the template data spreadsheet
     """
     project = load_project(project_id)
     fname = secure_filename('{}.xlsx'.format(project.name))
     server_fname = templatepath(fname)
+    data = None
+    datastart = project.settings.start
+    dataend = project.settings.dataend
+    if not is_template:
+        data = project.data
+        datastart = int(project.data["years"][0])
+        dataend = int(project.data["years"][-1])
     op.makespreadsheet(
         server_fname,
         pops=parse.get_populations_from_project(project),
-        datastart=int(project.data["years"][0]),
-        dataend=int(project.data["years"][-1]))
+        datastart=datastart,
+        dataend=dataend,
+        data=data)
     return upload_dir_user(TEMPLATEDIR), fname
 
 

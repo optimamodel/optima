@@ -275,6 +275,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).click();
     };
 
+    $scope.refreshParset = function() {
+      modalService.confirm(
+        function () {
+          $http
+            .post(
+              '/api/project/' + project.id
+              + '/refreshparset/' + $scope.state.parset.id)
+            .success(function(response) {
+              toastr.success('refreshed parameter set')
+              loadParametersAndGraphs(response);
+            });
+        },
+        function () { },
+        'Yes',
+        'No',
+        'This will reset all your calibration parameters to match the ones in the "default" parset. Do you wish to continue?',
+        'Refresh paramter set'
+      );
+    };
+
     // autofit routines
 
     $scope.checkNotRunnable = function() {
