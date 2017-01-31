@@ -493,3 +493,95 @@ def loadproj(filename, verbose=2):
 #    del op.programs.Covout
     
     return proj
+
+
+
+
+
+def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=False, die=False):
+    '''
+    Reads the current script file and adds Optima version info. Simply add the line
+    
+    optimaversion(__file__)
+    
+    to a script file, and on running it will automatically re-save it as e.g.
+    
+    optimaversion(__file__) # Version: 2.1.11 | Branch: optima-version-for-scripts | SHA: e2620b9e849e0bd1c9115891df112e6744a26469
+    
+    Note: you can also use e.g. op.optimaversion(__file__), as long as "optimaversion(__file__)" appears.
+    
+    If version, branch, or sha arguments are supplied, then it will raise an exception if they don't match, e.g.
+    
+    optimaversion(__file__, version='2.1.4')
+    
+    Version: 2017jan29
+    '''
+    
+    # Preliminaries
+    if filename is None: # Check to make sure a file name is given
+        errormsg = 'Please call this function like this: optimaversion(__file__)'
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    currversion = op.__version__ # Get Optima version info
+    currbranch,currsha = op.gitinfo(die=die) # Get git info, dying on failure if requested
+    if version is not None and version!=currversion: # Optionally check that versions match
+        errormsg = 'Actual version does not match requested version (%s vs. %s)' % (currversion, version)
+        raise op.OptimaException(errormsg)
+    if branch is not None and branch!=currbranch: # Optionally check that versions match
+        errormsg = 'Actual branch does not match requested branch (%s vs. %s)' % (currbranch, branch)
+        raise op.OptimaException(errormsg)
+    if sha is not None and sha!=currsha: # Optionally check that versions match
+        errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha, sha)
+        raise op.OptimaException(errormsg)
+    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha) # Create string to write
+    strtofind = 'optimaversion(' # String to look for -- note, must exactly match function call!
+
+    # Read script file
+    try: 
+        f = open(filename, 'r')
+    except:
+        errormsg = 'Could not open file "%s" for reading' % filename
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    if verbose: print('Reading file %s' % filename)
+    alllines = f.readlines() # Read all lines in the file
+    notfound = True # By default, fail
+    for l,line in enumerate(alllines): # Loop over each line
+        ind = line.find(strtofind) # Look for string to find
+        if ind>=0: # If found...
+            if verbose: print('Found function call at line %i' % l)
+            if line.count(')')!=1: # If it's not a usual function call, give up
+                errormsg = 'optimaversion got confused by this line with more or less than one ")": "%s"' % line
+                if die: raise op.OptimaException(errormsg)
+                else: print(errormsg); return None
+            functionend = line.find(')')+1 # Find the end of the function (inclusive)
+            alllines[l] = line[:functionend]+versionstring # Replace with version info
+            notfound = False # It's not a failure
+            break # Don't keep looking
+    if notfound: # Couldn't find it
+        errormsg = 'Could not find call to optimaversion() in %s' % filename
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    f.close()
+        
+    
+    # Write script file
+    try: 
+        f = open(filename, 'w')
+    except:
+        errormsg = 'Could not open file "%s" for writing' % filename
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    if verbose: print('Writing file %s' % filename)
+    try: 
+        f.writelines(alllines) # Just write everything
+    except: 
+        errormsg = 'optimaversion() write failed on %s' % filename
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    f.close()
+    
+    return None
+    
+    
+    

@@ -930,6 +930,18 @@ def create_parset(project_id, new_parset_name):
     update_project_with_fn(project_id, update_project_fn)
 
 
+def refresh_parset(project_id, parset_id):
+
+    def update_project_fn(project):
+        parset = parse.get_parset_from_project(project, parset_id)
+        parset_name = parset.name
+        print(">> Resetting parset %s to match default" % parset_name)
+        project.refreshparset(name=parset_name)
+
+    update_project_with_fn(project_id, update_project_fn)
+    delete_result_by_parset_id(project_id, parset_id)
+
+
 def load_parset_summaries(project_id):
     print(">> Get parset summaries")
     project = load_project(project_id)
@@ -1310,6 +1322,7 @@ def create_portfolio(name, db_session=None):
     """
     Returns the portfolio summary of the portfolio
     """
+
     if db_session is None:
         db_session = db.session
     print("> Create portfolio %s" % name)
@@ -1325,6 +1338,26 @@ def create_portfolio(name, db_session=None):
     db_session.add(record)
     db_session.commit()
     return parse.get_portfolio_summary(portfolio)
+
+
+def load_data_spreadsheet(project_id, is_template=True):
+    project = load_project(project_id)
+    fname = secure_filename('{}.xlsx'.format(project.name))
+    server_fname = templatepath(fname)
+    data = None
+    datastart = project.settings.start
+    dataend = project.settings.dataend
+    if not is_template:
+        data = project.data
+        datastart = int(project.data["years"][0])
+        dataend = int(project.data["years"][-1])
+    op.makespreadsheet(
+        server_fname,
+        pops=parse.get_populations_from_project(project),
+        datastart=datastart,
+        dataend=dataend,
+        data=data)
+    return upload_dir_user(TEMPLATEDIR), fname
 
 
 def delete_portfolio(portfolio_id, db_session=None):

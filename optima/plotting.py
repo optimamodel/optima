@@ -389,10 +389,11 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                         plotorder = nlinesperplot-1-origorder
                         if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
-                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=gridcolormap(nlinesperplot)[k], alpha=1, lw=0, label=results.popkeys[k])
+                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
+#                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=gridcolormap(nlinesperplot)[k], alpha=1, lw=0, label=results.popkeys[k])
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
-                            plot((0, 0), (0, 0), color=gridcolormap(nlinesperplot)[l], linewidth=10)
+                            plot((0, 0), (0, 0), color=colors[l], linewidth=10)
                 
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
@@ -577,12 +578,14 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
         barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
 
-    ax.set_xlabel('Spending')
+    # Set up legend
     labels = proglabels
-    labels.reverse()
-#    legend(labels, ncol=4, fontsize=legendsize, loc=(0.0,-1))
+    labels.reverse() # Wrong order otherwise, don't know why
+    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+    ax.legend(proglabels, **legendsettings) # Multiple entries, all populations
     
-#    ax.legend(frameon=False, ncol=4)
+    # Set up other things
+    ax.set_xlabel('Spending')
     ax.set_yticks(arange(nallocs)+1)
     ax.set_yticklabels(alloclabels)
     ax.set_ylim(0,nallocs+1)
@@ -661,7 +664,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        ylabel = 'Coverage (% of targeted)'
+        ylabel = 'Coverage (%)'
         ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
@@ -748,9 +751,11 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         ax.yaxis.label.set_fontsize(labelsize)
         for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
 
-        # Configure plot specifics
-        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
-                          'frameon':False, 'scatterpoints':1}
+        # Configure legend
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'scatterpoints':1}
+        ax.legend(**legendsettings) # Multiple entries, all populations
+        
+        # Configure rest of the plot
         if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
         else:          ax.set_title('Cascade')
         if aspercentage: ax.set_ylabel('Percentage of PLHIV')
@@ -759,7 +764,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         if aspercentage: ax.set_ylim((0,100))
         else:            ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
-        ax.legend(**legendsettings) # Multiple entries, all populations
+        
         
     if useSIticks: SIticks(fig)
     else:          commaticks(fig)
