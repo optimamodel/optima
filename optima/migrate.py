@@ -387,7 +387,7 @@ def redoparameters(project, **kwargs):
     """
     
     tmpproj = op.defaultproject(verbose=0) # Create a new project with refreshed parameters
-    verbose = 1 # Usually fine to ignore warnings
+    verbose = 0 # Usually fine to ignore warnings
     
     if verbose>1:
         print('\n\n\nRedoing parameters...\n\n')
