@@ -438,8 +438,9 @@ def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    # Store information about injecting and commercial sex providing populations -- needs to be here since relies on other calculations
+    # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
+    
 
     return pars
 
