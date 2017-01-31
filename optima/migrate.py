@@ -383,44 +383,50 @@ def redoparameters(project, **kwargs):
         oldpars = ps.pars[0]
         newpars = op.dcp(tmpproj.pars())
         
-        parnames = ps.pars.keys()
+        oldparnames = oldpars.keys()
+        newparnames = newpars.keys()
+        
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         ## Handle some things explicitly
         
         # Initial prevalence
-        parnames.pop('initprev')
+        oldparnames.remove('init')
+        newparnames.remove('initprev')
         newpars['initprev'] = oldpars['init']
         
-        # Popsizepar objects
-        parnames.pop('popsize')
-        for popkey in oldpars['popsize'].p.keys():
-            newpars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
-            newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
-        
-        
         # Loop over everything else
-        for parname,par in ps.pars.items():
-            if verbose: print('Working on %s' % parname)
-            try:
-                for attr in ['y','t','m']:
-                    try:
-                        oldattr = getattr(oldpars[parname], attr)
-                        setattr(ps.pars[parname], attr, oldattr)
-                    except Exception as E:
-                        if verbose:
-                            print('Could not set attribute %s for parameter %s' % (attr, parname))
-                            print(E.message)
-            except:
-                if verbose:
-                    print('Could not process parameter %s' % parname)
-                
+        while len(newparnames)+len(oldparnames): # Keep going until everything is dealt with in both
         
+            parname = (newparnames+oldparnames)[0] # Get the first parameter name
+            if verbose: print('Working on %s' % parname)
+            success = True
+            
+            if isinstance(newpars[parname], op.Timepar):
+                for attr in ['y','t','m']: # Need to copy y value, year points, and metaparameter
+                    oldattr = getattr(oldpars[parname], attr)
+                    setattr(newpars[parname], attr, oldattr)
+            elif isinstance(newpars[parname], (op.Constant, op.Metapar)): # Just copy y
+                newpars[parname].y = oldpars[parname].y
+            elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
+                newpars['popsize'].i = op.odict()
+                newpars['popsize'].e = op.odict()
+                for popkey in oldpars['popsize'].p.keys():
+                    newpars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
+                    newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
+            else:
+                success = False
+                raise Exception('Could not process %s' % parname)
+                
+            if success:
+                if parname in oldparnames: oldparnames.remove(parname) # We're dealing with it, so remove it
+                if parname in newparnames: newparnames.remove(parname) # We're dealing with it, so remove it
         
         # Just a bug I noticed -- I think the definition of this parameter got inverted at some point
-        for key in ps.pars['leavecare'].y:
-            for i,val in enumerate(ps.pars['leavecare'].y[key]):
+        for key in newpars['leavecare'].y:
+            for i,val in enumerate(newpars['leavecare'].y[key]):
                 if val>0.5:
-                    ps.pars['leavecare'].y[key][i] = 0.2
+                    newpars['leavecare'].y[key][i] = 0.2
                     print('Leave care rate for population %s seemed to be too high, resetting to default of 0.2' % key)
         
         ps.pars = newpars # Keep the new version
