@@ -393,6 +393,9 @@ def redoparameters(project, **kwargs):
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()
         
+        oldparnames.remove('label') # Never used
+        oldparnames.remove('sexworker') # Was removed also
+        
         # Loop over everything else
         while len(newparnames)+len(oldparnames): # Keep going until everything is dealt with in both
         
@@ -416,7 +419,7 @@ def redoparameters(project, **kwargs):
                 elif isinstance(newpars[parname], op.Yearpar): # y attribute is renamed t
                     newpars[parname].t = oldpars[parname].y
                 elif parname in op._parameters.generalkeys+op._parameters.staticmatrixkeys: # These can all be copied directly
-                    if verbose: print('Directly copying %s' % parname)
+                    if verbose: print('    Directly copying %s' % parname)
                     newpars[parname] = oldpars[parname]
             else:
                 if verbose: 
