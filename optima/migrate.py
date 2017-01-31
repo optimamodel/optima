@@ -400,21 +400,26 @@ def redoparameters(project, **kwargs):
             if verbose: print('Working on %s' % parname)
             success = True
             
-            if isinstance(newpars[parname], op.Timepar):
-                for attr in ['y','t','m']: # Need to copy y value, year points, and metaparameter
-                    oldattr = getattr(oldpars[parname], attr)
-                    setattr(newpars[parname], attr, oldattr)
-            elif isinstance(newpars[parname], (op.Constant, op.Metapar)): # Just copy y
-                newpars[parname].y = oldpars[parname].y
-            elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
-                newpars['popsize'].i = op.odict()
-                newpars['popsize'].e = op.odict()
-                for popkey in oldpars['popsize'].p.keys():
-                    newpars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
-                    newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
+            if parname in newparnames and parname in oldparnames:
+                if isinstance(newpars[parname], op.Timepar):
+                    for attr in ['y','t','m']: # Need to copy y value, year points, and metaparameter
+                        oldattr = getattr(oldpars[parname], attr)
+                        setattr(newpars[parname], attr, oldattr)
+                elif isinstance(newpars[parname], (op.Constant, op.Metapar)): # Just copy y
+                    newpars[parname].y = oldpars[parname].y
+                elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
+                    newpars['popsize'].i = op.odict()
+                    newpars['popsize'].e = op.odict()
+                    for popkey in oldpars['popsize'].p.keys():
+                        newpars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
+                        newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
+                elif isinstance(newpars[parname], op.Yearpar): # y attribute is renamed t
+                    newpars[parname].t = oldpars[parname].y
+                elif parname in 'male female popkeys rawtransit risktransit agetransit birthtransit:
+                    if verbose: print('Directly copying %s' % parname)
+                    newpars[parname] = oldpars[parname]
             else:
-                if verbose: print('Directly copying %s' % parname)
-                newpars[parname] = oldpars[parname]
+                if verbose: print('Parameter %s does not exist in both sets' % parname)
                 
             if success:
                 if parname in oldparnames: oldparnames.remove(parname) # We're dealing with it, so remove it

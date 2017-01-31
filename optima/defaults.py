@@ -4,25 +4,39 @@ Defines the default parameters for each program.
 Version: 2016jan28
 """
 import os
+from numpy import array
 import optima as op
 from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
 try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
 except: pass
 
 
+
 def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
     ''' Make some default programs'''
     
     # Shorten variable names
-    pops = project.data['pops']['short']
+    pops = project.pars()['popkeys']
     hivstates = project.settings.hivstates
-    malelist = [pop for popno,pop in enumerate(pops) if project.data['pops']['male'][popno]]
-    pwidlist = [pop for popno,pop in enumerate(pops) if project.pars()['injects'][popno]]
-    fswlist = [pop for popno,pop in enumerate(pops) if project.pars()['sexworker'][popno]]
+    malelist   = array(pops)[project.pars()['male']].tolist()
+    femalelist = array(pops)[project.pars()['female']].tolist()
+    pwidlist   = array(pops)[project.pars()['injects']].tolist()
+    regpships = project.pars()['condreg'].keys()
+    caspships = project.pars()['condcas'].keys()
+    compships = project.pars()['condcom'].keys()
+    
+    # Extract female sex workers
+    fswlist = []
+    for pop in femalelist:
+        if pop in project.pars()['actscom'].keys():
+            fswlist.append(pop)
 
-    regpships = project.pars()['condreg'].y.keys()
-    caspships = project.pars()['condcas'].y.keys()
-    compships = project.pars()['condcom'].y.keys()
+    # Extract men who have sex with men
+    msmlist = []
+    for pship in regpships+caspships+compships:
+        if pship[0] in malelist and pship[1] in malelist:
+            msmlist.append(pship[0])
+    msmlist = list(set(msmlist))    
     
     # Extract casual partnerships that include at least one female sex worker
     fsw_caspships = []
@@ -37,13 +51,6 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         for compship in compships:
             if fsw in compship:
                 fsw_compships.append(compship)
-
-    # Extract men who have sex with men
-    msmlist = []
-    for pship in regpships+caspships+compships:
-        if pship[0] in malelist and pship[1] in malelist:
-            msmlist.append(pship[0])
-    msmlist = list(set(msmlist))
 
     # Extract casual partnerships that include at least one man who has sex with men
     msm_caspships = []
