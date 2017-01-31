@@ -27,16 +27,18 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     
     # Extract female sex workers
     fswlist = []
-    for pop in femalelist:
-        if pop in project.pars()['actscom'].keys():
-            fswlist.append(pop)
+    for pship in compships:
+        for pop in pship:
+            if pop in femalelist:
+                fswlist.append(pop)
+    fswlist = list(set(fswlist))
 
     # Extract men who have sex with men
     msmlist = []
     for pship in regpships+caspships+compships:
         if pship[0] in malelist and pship[1] in malelist:
-            msmlist.append(pship[0])
-    msmlist = list(set(msmlist))    
+            msmlist += list(pship) # Add both populations
+    msmlist = list(set(msmlist))
     
     # Extract casual partnerships that include at least one female sex worker
     fsw_caspships = []
