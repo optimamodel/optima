@@ -1279,10 +1279,23 @@ class dataframe(object):
 
 
 ##############################################################################
-## OPTIMA EXCEPTIONS CLASS
+## OTHER CLASSES
 ##############################################################################
 
 class OptimaException(Exception):
     ''' A tiny class to allow for Optima-specific exceptions '''
     def __init(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
+
+
+class Link(object):
+    ''' A class to differentiate between an object and a link to an object '''
+    
+    def __init__(self, ref=None):
+        ''' Store the reference to the object being referred to '''
+        self.ref = ref
+    
+    def __call__(self):
+        ''' When called, return the stored object '''
+        return self.ref
+        
