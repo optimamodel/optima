@@ -389,10 +389,11 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                         plotorder = nlinesperplot-1-origorder
                         if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
-                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=gridcolormap(nlinesperplot)[k], alpha=1, lw=0, label=results.popkeys[k])
+                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
+#                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=gridcolormap(nlinesperplot)[k], alpha=1, lw=0, label=results.popkeys[k])
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
-                            plot((0, 0), (0, 0), color=gridcolormap(nlinesperplot)[l], linewidth=10)
+                            plot((0, 0), (0, 0), color=colors[l], linewidth=10)
                 
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):

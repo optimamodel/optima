@@ -244,10 +244,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           otherNames);
       };
 
-      /**
-       * Gets the data for the given project `name` as <name>.json  file.
-       */
-      $scope.getData = function (name, id) {
+      $scope.downloadProject = function (name, id) {
         projectApi.getProjectData(id)
           .success(function (response, status, headers, config) {
             var blob = new Blob([response], { type: 'application/octet-stream' });
