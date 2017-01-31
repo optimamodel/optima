@@ -1,22 +1,207 @@
-<form name="optimizationForm" ng-submit="updateOptimization()" >
-  <div class="modal-header">
-    <a class="modal-close" ng-click="$dismiss('cancel')">&times;</a>
-    <h4 class="modal-title">{{ ::title }}</h4>
-  </div>
-  <div class="modal-body grid" style="margin-bottom: 20px">
 
-    <div class="++3 6">
-      <p style="margin-top: 0">{{ :: isEdit ? 'Please choose a new name for the optimization.' : 'Please choose a name for the new optimization.' }}</p>
-    </div>
+<div class="modal-header"> CREATE/EDIT {{state.optimization.which}} OPTIMIZATION</div>
 
-    <div class="++3 6" style="padding-bottom: 20px">
-      <label for="prompt-input">optimization name</label>
-      <input class="txbox" id="prompt-input" name="optimizationName" ng-model="name" required style="margin-top: 6px" ng-change="isUniqueName(optimizationForm)">
-      <div class="error-hint" ng-show="isUniqueName(optimizationForm)"> A optimization with this name already exists, please choose a different one. </div>
+<div class="section">
+  <div style="float: left; width: 40%">
+    <label> Name </label>
+    <input
+        class="txbox"
+        type="text"
+        ng-model="state.optimization.name"
+        required/>
+    <div
+        class="error-hint"
+        ng-show="isNameClash(state.optimization.name)">
+      Scenario with this name already exists, please choose a different name.
     </div>
   </div>
-  <div class="modal-footer text-center">
-    <button type="button" class="btn __white" ng-click="$close()">Cancel</button>
-    <button type="submit" class="btn" ng-disabled="optimizationForm.$invalid">{{operation}}</button>
+  <div style="float: left; width: 30%">
+    <label> Select a parameter set to use as baseline </label>
+    <select
+        class="txbox"
+        type="text"
+        ng-model="state.optimization.parset_id"
+        required
+        ng-options="parset.id as parset.name for parset in parsets">
+    </select>
   </div>
-</form>
+  <div style="float: left; width: 30%">
+    <label> Select a program set to use as baseline </label>
+    <select
+        class="txbox"
+        type="text"
+        ng-model="state.optimization.progset_id"
+        ng-change="selectProgset()"
+        required
+        ng-options="progset.id as progset.name for progset in progsets">
+    </select>
+  </div>
+  <br clear="all">
+</div>
+
+<div
+    style="margin-top: 1.5em"
+    class="section"
+    ng-if="state.optimization.objectives">
+
+  <h3>OBJECTIVES</h3>
+  <b>Timeline: </b>
+
+  <span ng-show="state.optimization.which == 'outcomes'">
+    from
+    <input
+      type="number"
+      class="txbox"
+      style="display: inline; width: 5em;"
+      ng-model="state.optimization.objectives.start"/>
+    to
+    <input
+      type="number"
+      class="txbox"
+      style="display: inline; width: 5em;"
+      ng-model="state.optimization.objectives.end"/>
+  </span>
+
+  <span ng-show="state.optimization.which == 'money'">
+    compare to base year
+    <input
+      type="number"
+      class="txbox"
+      style="display: inline; width: 5em;"
+      ng-model="state.optimization.objectives.base"/>
+    and run from
+    <input
+      type="number"
+      class="txbox"
+      style="display: inline; width: 5em;"
+      ng-model="state.optimization.objectives.start"/>
+    to
+    <input
+      type="number"
+      class="txbox"
+      style="display: inline; width: 5em;"
+      ng-model="state.optimization.objectives.end"/>
+  </span>
+
+  <br/>
+
+  <b>Budget:</b>
+  <input
+    type="number"
+    class="txbox"
+    style="display: inline; width: 8em;"
+    ng-model="state.optimization.objectives.budget"/>
+
+  <br/>
+
+  <b>Objectives:</b>
+
+  <span ng-show="state.optimization.which == 'money'">
+    Fractions of deaths to be averted:
+    <input
+        type="number"
+        class="txbox"
+        style="display: inline; width: 5em;"
+        ng-model="state.optimization.objectives.incifrac"/>
+    &nbsp;
+    Fractions of infections to be averted:
+    <input
+        type="number"
+        class="txbox"
+        style="display: inline; width: 5em;"
+        ng-model="state.optimization.objectives.deathfrac"/>
+  </span>
+
+  <span ng-show="state.optimization.which == 'outcomes'">
+    Infection weight:
+    <input
+        type="number"
+        class="txbox"
+        style="display: inline; width: 5em;"
+        ng-model="state.optimization.objectives.inciweight"/>
+    &nbsp;
+    Death weight:
+    <input
+        type="number"
+        class="txbox"
+        style="display: inline; width: 5em;"
+        ng-model="state.optimization.objectives.deathweight"/>
+  </span>
+</div>
+
+<div ng-if="state.optimization.constraints" class="section">
+
+  <h3>CONSTRAINTS</h3>
+
+  <b>Maximum changes in funding over the program period</b>
+
+  <style>
+    .mytable th, .mytable td {
+      padding-top: 10px;
+      vertical-align: top;
+    }
+    .mytable th {
+      padding-bottom: 10px;
+    }
+  </style>
+
+  <table
+      class="mytable"
+      style="
+          width: 100%;
+          margin-top: 1em;
+          border-spacing: 10px;">
+    <tr style="
+          border-top: 1px solid #999;
+          border-bottom: 1px solid #999;">
+      <th>Program</th>
+      <th style="width: 6em">Not less than</th>
+      <th style="width: 5em">Not more than</th>
+    </tr>
+    <tr style="justify-content: space-around"
+        class="option"
+        ng-repeat="constraint in state.optimization.constraints track by $index">
+      <td style="width: 60%">
+        {{constraint.name}}
+      </td>
+      <td style="width: 6em">
+        <input
+            style="width: 5em;"
+            class="txbox"
+            type="number"
+            ng-model="constraint.min"/>
+      </td>
+      <td style="width: 5em">
+        <input
+            style="width: 5em;"
+            class="txbox"
+            type="number"
+            ng-model="constraint.max"/>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<a
+  class="modal-close fa fa-times"
+  ng-click="cancel()">
+</a>
+
+<div
+  style="
+    width: 100%;
+    text-align: center;
+    padding-top: 2em;">
+  <button
+      class="btn"
+      ng-click="cancel()">
+    Cancel
+  </button>
+  <button
+      class="btn"
+      ng-click="save()"
+      ng-disabled="checkNotSavable()">
+    Save
+  </button>
+</div>
+

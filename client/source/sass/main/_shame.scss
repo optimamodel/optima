@@ -1,0 +1,18 @@
+.tooltip {
+  @include font-height(10px, 12px);
+
+  background: #EEF9FF;
+  color: #53646F;
+
+  border-color: #C7DDEA;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 2px;
+
+  padding: 3px;
+
+}
+
+.fa {
+  cursor: pointer;
+}

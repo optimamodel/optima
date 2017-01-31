@@ -780,8 +780,8 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, objective='mape', maxiters=400, uselimits=True, verbose=2, **kwargs):
-        """
+    def reconcile(self, parset=None, year=None, ind=0, objective='mape', maxiters=1000, maxtime=None, uselimits=True, verbose=2, **kwargs):
+        '''
         A method for automatically reconciling coverage-outcome parameters with model parameters.
         
         Example code to test:
@@ -789,7 +789,7 @@ class Programset(object):
         import optima as op
         P = op.defaults.defaultproject('best')
         P.progset().reconcile(year=2016, uselimits=False, verbose=4)
-        """
+        '''
         printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
         
         # Try defaults if none supplied
@@ -827,7 +827,8 @@ class Programset(object):
         # Prepare inputs to optimization method
         args = odict([('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('verbose',verbose)])
         origmismatch = costfuncobjectivecalc(parmeans, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
-        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, MaxIter=maxiters, verbose=verbose, **kwargs)
+            
+        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, MaxIter=maxiters, timelimit=maxtime, verbose=verbose, **kwargs)
         currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up

@@ -5,12 +5,13 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016feb07
+Version: 2017jan13
 """
 
 ## Define tests to run here!!!
 tests = [
 'minimizeoutcomes',
+#'investmentstaircase',
 #'minimizemoney',
 ]
 
@@ -60,9 +61,8 @@ if 'minimizeoutcomes' in tests:
     P = defaults.defaultproject('best') 
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
-    objectives['budget'] *= 0.5
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10, ccsample='random')
+    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
@@ -75,6 +75,25 @@ if 'minimizeoutcomes' in tests:
     done(t)
 
 
+
+if 'investmentstaircase' in tests:
+    t = tic()
+
+    print('Running investment staircase test...')
+    from optima import defaultobjectives, defaultconstraints
+    
+    P = defaults.defaultproject('best') 
+    
+    objectives = defaultobjectives(P.progsets[0]) # This or P
+    objectives['budgetscale'] = [0.1, 0.2, 0.5, 1., 1.2, 1.5]
+    constraints = defaultconstraints(P) # This or P.progsets[0]
+    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
+    
+    if doplot: 
+        from optima import pygui
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'numinci-tot'])
+    
+    done(t)
 
 
 

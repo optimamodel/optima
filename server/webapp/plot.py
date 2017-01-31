@@ -7,7 +7,7 @@ from numpy import array
 
 import optima as op
 
-from .utils import normalize_obj
+from .parse import normalize_obj
 
 
 def extract_graph_selector(graph_key):
@@ -25,7 +25,7 @@ def extract_graph_selector(graph_key):
 
 
 def convert_to_mpld3(figure):
-    plugin = mpld3.plugins.MousePosition(fontsize=0, fmt='.4r')
+    plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
 
     figure.set_size_inches(5.5, 2)
@@ -105,6 +105,10 @@ def make_mpld3_graph_dict(result, which=None):
         {'key': key, 'name': name, 'checked': checked}
          for (key, name, checked) in zip(keys, names, checks)]
 
+    if which is None and hasattr(result, 'which'):
+        print ">> Loading saved which options"
+        which = result.which
+
     if which is None:
         which = [s["key"] for s in selectors if s["checked"]]
     else:
@@ -117,7 +121,12 @@ def make_mpld3_graph_dict(result, which=None):
     mpld3_graphs = []
     for graph_key in graphs:
         graph_selectors.append(extract_graph_selector(graph_key))
-        mpld3_graphs.append(convert_to_mpld3(graphs[graph_key]))
+        graph_dict = convert_to_mpld3(graphs[graph_key])
+        if graph_key == "budget":
+            graph = graphs[graph_key]
+            ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]
+            graph_dict['ylabels'] = ylabels
+        mpld3_graphs.append(graph_dict)
 
     return {
         'graphs': {

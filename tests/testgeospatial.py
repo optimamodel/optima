@@ -21,7 +21,7 @@ tests = [
 #'makeportfolio',
 #'generateBOCs',
 #'rungui',
-'runbackend'
+#'runbackend'
 ]
 
 ##############################################################################
@@ -137,6 +137,8 @@ if 'rungui' in tests and doplot:
 
 
 if 'runbackend' in tests:
+    print('WARNING, broken since project files no longer in repo')
+    
     from optima import defaultobjectives
     from optima.geospatial import makesheet, makeproj, create, addproj, saveport, loadport, rungeo, export, plotgeo
 

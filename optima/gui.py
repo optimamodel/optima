@@ -1,7 +1,7 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, findinds
+from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
-from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title, arange, maximum, plot
+from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
@@ -114,7 +114,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
 
 
 
-def pygui(tmpresults, toplot=None, verbose=2):
+def pygui(tmpresults, toplot=None, verbose=2, **kwargs):
     '''
     PYGUI
     
@@ -147,11 +147,14 @@ def pygui(tmpresults, toplot=None, verbose=2):
     plotselections = getplotselections(results)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
-    if toplot is None or toplot=='default': isselected = plotselections['defaults']
-    else:
-        if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
+    isselected = []
+    if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
+    if toplot[0] is None or toplot[0]=='default': 
+        toplot.pop(0) # Remove the first element
+        defaultboxes = [checkboxes[i] for i,tf in enumerate(plotselections['defaults']) if tf] # WARNING, ugly -- back-convert defaults from true/false list to list of keys
+        toplot.extend(defaultboxes)
+    if len(toplot):
         tmptoplot = dcp(toplot) # Make a copy to compare arguments
-        isselected = []
         for key in checkboxes:
             if key in toplot:
                 isselected.append(True)
@@ -167,14 +170,14 @@ def pygui(tmpresults, toplot=None, verbose=2):
     
     ## Set up control panel
     figwidth = 7
-    figheight = 1+len(checkboxes)*0.20 # Scale dynamically based on how many options are available
+    figheight = 12
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
-    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    checkboxaxes = axes([0.1, 0.15, 0.8, 0.8]) # Create checkbox locations
-    updateaxes   = axes([0.1, 0.05, 0.2, 0.03]) # Create update button location
-    clearaxes    = axes([0.4, 0.05, 0.2, 0.03]) # Create close button location
-    closeaxes    = axes([0.7, 0.05, 0.2, 0.03]) # Create close button location
+    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95), **kwargs) # Open control panel
+    checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
+    updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location
+    clearaxes    = axes([0.4, 0.02, 0.2, 0.03]) # Create close button location
+    closeaxes    = axes([0.7, 0.02, 0.2, 0.03]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     
     # Reformat the checkboxes
@@ -359,7 +362,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
-    tmppars = parset.pars[0]
+    tmppars = parset.pars
     origpars = dcp(tmppars)
     
     mflists = parset.manualfitlists(parsubset=parsubset)
@@ -400,8 +403,8 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
             elif fulltypelist[b]=='exp': # Population growth
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
-                tmppars[key].p[subkey][0] = eval(str(box.text()))
-                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
+                tmppars[key].i[subkey] = eval(str(box.text()))
+                printv('%s.i[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             elif fulltypelist[b]=='const': # Constants
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
@@ -419,8 +422,8 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
         ''' Little function to reset origpars and update the project '''
         global origpars, tmppars, parset
         origpars = dcp(tmppars)
-        parset.pars[0] = tmppars
-        project.parsets[name].pars[0] = tmppars
+        parset.pars = tmppars
+        project.parsets[name].pars = tmppars
         print('Parameters kept')
         return None
     
@@ -429,7 +432,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
         ''' Reset the parameters to the last saved version -- WARNING, doesn't work '''
         global origpars, tmppars, parset
         tmppars = dcp(origpars)
-        parset.pars[0] = tmppars
+        parset.pars = tmppars
 #        populatelists()
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
@@ -531,8 +534,7 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     ('care',     ('O','o')), 
     ('usvl',     ('-','|')), 
     ('svl',      ('x','|')), 
-    ('lost',     ('O','o')), 
-    ('off',      ('*','*'))])
+    ('lost',     ('O','o'))])
     
     hatchstyles = []
     linestyles = []
@@ -556,7 +558,6 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     bottom = 0*tvec
     figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
     ax = subplot(111)
-    xlabel('Year')
     ylabel('Number of people')
     title(plottitle)
     xlim((tvec[0], tvec[-1]))
@@ -606,14 +607,14 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     
     # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
     tmp = parslist
-    try:  parslist = tmp.parsets[-1].pars[0] # If it's a project
+    try:  parslist = tmp.parsets[-1].pars # If it's a project
     except:
-        try: parslist = tmp.pars[0] # If it's a parset
+        try: parslist = tmp.pars # If it's a parset
         except: pass
     if type(parslist)!=list: parslist = [parslist] # Convert to list
     try:
-        for i in range(len(parslist)): parslist[i] = parslist[i].pars[0]
-    except: pass # Assume it's in the correct form -- a list of pars[0] odicts
+        for i in range(len(parslist)): parslist[i] = parslist[i].pars
+    except: pass # Assume it's in the correct form -- a list of pars odicts
     
     allplotdata = []
     for pars in parslist:
@@ -729,58 +730,3 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
 
 
 
-
-def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False):
-    ''' Plot allocations in bar charts '''
-    
-    if budgets is None:
-        try: budgets = project.results[-1].budget
-        except: budgets = project # Maybe first argument is budget
-    
-    labels = budgets.keys()
-    progs = budgets[0].keys()
-    
-    indices = None
-    if not plotfixed:
-        try: indices = findinds(project.progset().optimizable()) # Not possible if project not defined
-        except: pass
-    if indices is None: indices = arange(len(progs))
-    nprogs = len(indices)
-    
-    if colors is None:
-        colors = gridcolormap(nprogs)
-            
-    
-    fig = figure(figsize=(10,10))
-    fig.subplots_adjust(left=0.10) # Less space on left
-    fig.subplots_adjust(right=0.98) # Less space on right
-    fig.subplots_adjust(top=0.95) # Less space on bottom
-    fig.subplots_adjust(bottom=0.35) # Less space on bottom
-    fig.subplots_adjust(wspace=0.30) # More space between
-    fig.subplots_adjust(hspace=0.40) # More space between
-    
-    ax = []
-    xbardata = arange(nprogs)+0.5
-    ymax = 0
-    nplt = len(budgets)
-    for plt in range(nplt):
-        ax.append(subplot(len(budgets),1,plt+1))
-        ax[-1].hold(True)
-        for p in indices:
-            ax[-1].bar([xbardata[p]], [budgets[plt][p]/factor], color=colors[p], linewidth=0)
-            if plt==1 and compare:
-                ax[-1].bar([xbardata[p]], [budgets[0][p]/factor], color='None', linewidth=1)
-        ax[-1].set_xticks(arange(nprogs)+1)
-        if plt!=nplt: ax[-1].set_xticklabels('')
-        if plt==nplt-1: 
-            ax[-1].set_xticklabels(progs,rotation=90)
-            plot([0,nprogs+1],[0,0],c=(0,0,0))
-        ax[-1].set_xlim(0,nprogs+1)
-        
-        if factor==1: ax[-1].set_ylabel('Spending (US$)')
-        elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
-        elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
-        ax[-1].set_title(labels[plt])
-        ymax = maximum(ymax, ax[-1].get_ylim()[1])
-    for a in ax:
-        a.set_ylim([0,ymax])

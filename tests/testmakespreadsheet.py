@@ -11,7 +11,9 @@ Version: 2016feb06 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makespreadsheet',
+#'makeprogramspreadsheet',
 'checkexisting',
+'makespreadsheetwithdata',
 #'unittests',
 ]
 
@@ -56,6 +58,21 @@ if 'makespreadsheet' in tests:
     done(t)
 
 
+
+
+if 'makeprogramspreadsheet' in tests:
+    t = tic()
+    
+    print('Making programs spreadsheet ...')
+    from optima import defaults, makeprogramspreadsheet
+
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
+    R = P.progsets[0]
+    filename = 'tmpprogramspreadsheet.xlsx'
+    progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
+    makeprogramspreadsheet(filename, pops=P.data['pops']['short'], progs=progs)
+    if not dosave: remove(filename)
+    done()
 
 
 
@@ -166,15 +183,50 @@ if 'checkexisting' in tests:
             print('Constants are OK for spreadsheet "%s"!' % tochecknames[ntc])
                 
     ## Tidy up
-    for name in freshnames:
-        print('Removing temporary file "%s"...' % name)
-        remove(name)
+    if not dosave:
+        for name in freshnames:
+            print('Removing temporary file "%s"...' % name)
+            remove(name)
     
     done(t)
 
 
 
+## Make a spreadsheet from a project
+if 'makespreadsheetwithdata' in tests:
+    t = tic()
+    print('Running makespreadsheetwithdata test...')
+    
+    from optima import makespreadsheet, defaults, Project
+    from os import remove
 
+    # Create simple project
+    P = defaults.defaultproject('best')
+    P.runsim(debug=True)
+    
+    # Modify pop names
+    pops = []
+    npops = len(P.data['pops']['short'])
+    newpopnames = ['SW', 'Clients', 'MSM', 'MWID', 'M 15+', 'F 15+']
+    for pop in range(npops):
+        pops.append({'short':newpopnames[pop],
+                     'name':P.data['pops']['long'][pop],
+                     'male':bool(P.data['pops']['male'][pop]),
+                     'female':bool(P.data['pops']['female'][pop]),
+                     'age_from':P.data['pops']['age'][pop][0],
+                     'age_to':P.data['pops']['age'][pop][1]})
+
+    filename = 'tmpspreadsheet.xlsx'
+    P.makespreadsheet(filename, pops=pops)
+    
+    # Try reloading the spreadsheet you just made
+    Q = Project(spreadsheet='tmpspreadsheet.xlsx', dorun=False)
+    Q.pars()['force'] = P.pars()['force']
+    Q.runsim(debug=True)    
+
+    if not dosave: remove(filename)
+        
+    done(t)
 
 
 

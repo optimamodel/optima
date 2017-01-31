@@ -76,7 +76,7 @@ if 'parametercheck' in tests:
     datakeys = P.data.keys()
     datakeys += P.data['const'].keys()
     
-    parkeys = P.parsets[0].pars[0].keys()
+    parkeys = P.pars().keys()
     
     dataonly = set([
     'condomcas', 'condomcom', 'condomreg', 
@@ -88,10 +88,11 @@ if 'parametercheck' in tests:
     
     parsonly = set([
     'actscas', 'actscom', 'actsinj', 'actsreg', 
-    'condcas', 'condcom', 'condreg', 
+    'condcas', 'condcom', 'condreg', 'numcirc',
     'female', 'force', 'inhomo', 'initprev', 
     'propdx','propcare','proptx','propsupp','proppmtct',
-    'injects', 'label', 'male', 'popkeys', 'sexworker', 'rawtransit'])
+    'injects', 'male', 'popkeys', 'sexworker', 'rawtransit',
+    'fixproppmtct', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproptx'])
     
     dataminuspars = set(datakeys) - set(parkeys)
     parsminusdata = set(parkeys) - set(datakeys)
@@ -150,7 +151,7 @@ if 'saveload' in tests:
     t = tic()
     print('Running save/load test...')
     
-    from optima import Project, saveobj, loadobj
+    from optima import Project, saveobj, loadproj
     from os import remove
     filename = 'testproject.prj'
     
@@ -159,7 +160,7 @@ if 'saveload' in tests:
     saveobj(filename, P)
     
     print('  Checking loading...')
-    Q = loadobj(filename)
+    Q = loadproj(filename)
     
     print('Cleaning up...')
     remove(filename)

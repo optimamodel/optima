@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, makeprogramspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, makesimpars
+from optima import loadspreadsheet, makeprogramspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, makesimpars
 from optima import defaultobjectives, defaultconstraints, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
@@ -27,7 +27,6 @@ class Project(object):
         1. data -- loaded from the spreadsheet
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
-        4. econ -- data and time series loaded from the economics spreadsheet
 
 
     Methods for structure lists:
@@ -42,11 +41,11 @@ class Project(object):
 
 
     #######################################################################################################
-    ## Built-in methods -- initialization, and the thing to print if you call a project
+    ### Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
     def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2):
-        """ Initialize the project """
+        ''' Initialize the project '''
 
         ## Define the structure sets
         self.parsets  = odict()
@@ -78,7 +77,7 @@ class Project(object):
 
 
     def __repr__(self):
-        """ Print out useful information when called """
+        ''' Print out useful information when called '''
         output = objrepr(self)
         output += '      Project name: %s\n'    % self.name
         output += '\n'
@@ -105,7 +104,7 @@ class Project(object):
 
 
     def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, **kwargs):
-        """ Load a data spreadsheet -- enormous, ugly function so located in its own file """
+        ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
         self.spreadsheet = Spreadsheet(filename) # Load spreadsheet binary file into project -- WARNING, only partly implemented since not sure how to read from
@@ -120,8 +119,45 @@ class Project(object):
         return None
 
 
+    def makespreadsheet(self, filename=None, pops=None):
+        ''' Create a spreadsheet with the data from the project'''
+        if filename is None: filename = self.name+'.xlsx'
+        if filename[-5:]!='.xlsx': filename += '.xlsx'
+        makespreadsheet(filename=filename, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
+        return None
+
+
+    
+    def reorderpops(self, poporder=None):
+        '''
+        Reorder populations according to a defined list.
+        
+        WARNING, doesn't reorder things like circumcision or birthrates
+        
+        '''
+        def reorder(origlist, neworder):
+            return [origlist[i] for i in neworder]
+        
+        if self.data is None: raise OptimaException('Need to load spreadsheet before can reorder populations')
+        if len(poporder) != self.data['npops']: raise OptimaException('Wrong number of populations')
+        origdata = dcp(self.data)
+        for key in self.data['pops']:
+            self.data['pops'][key] = reorder(origdata['pops'][key], poporder)
+        for key1 in self.data:
+            try:
+                if len(self.data[key1])==self.data['npops']:
+                    self.data[key1] = reorder(origdata[key1], poporder)
+                    print('    %s succeeded' % key1)
+                else:
+                    print('  %s wrong length' % key1)
+            except:
+                print('%s failed' % key1)
+        
+        
+
+
     def makeparset(self, name='default', overwrite=True):
-        """ If parameter set of that name doesn't exist, create it """
+        ''' If parameter set of that name doesn't exist, create it '''
         # question: what is that parset does exist? delete it first?
         if not self.data:
             raise OptimaException('No data in project "%s"!' % self.name)
@@ -134,16 +170,16 @@ class Project(object):
 
 
     def makedefaults(self, name='default', overwrite=False):
-        """ When creating a project, create a default program set, scenario, and optimization to begin with """
+        ''' When creating a project, create a default program set, scenario, and optimization to begin with '''
         scenname = 'Current conditions'
         if overwrite or name not in self.progsets:
             progset = Programset(name=name, project=self)
             self.addprogset(progset)
         if overwrite or scenname not in self.scens:
-            scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
+            scen = Parscen(name=scenname)
             self.addscen(scen)
         if overwrite or name not in self.optims:
-            optim = Optim(project=self, name=name, objectives=defaultobjectives(project=self, progset=0, verbose=0), constraints=defaultconstraints(project=self, progset=0, verbose=0), parsetname=self.parsets.keys()[0], progsetname=self.progsets.keys()[0])
+            optim = Optim(project=self, name=name)
             self.addoptim(optim)
         return None
 
@@ -155,11 +191,11 @@ class Project(object):
 
 
     def getwhat(self, item=None, what=None):
-        """
+        '''
         Figure out what kind of structure list is being requested, e.g.
             structlist = getwhat('parameters')
         will return P.parset.
-        """
+        '''
         if item is None and what is None: raise OptimaException('No inputs provided')
         if what is not None: # Explicitly define the type, item be damned
             if what in ['p', 'pars', 'parset', 'parameters']: structlist = self.parsets
@@ -177,7 +213,7 @@ class Project(object):
 
 
     def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=True):
-        """ Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to """
+        ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         if type(what)==odict: structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
         if isnumber(checkexists): # It's a numerical index
@@ -197,7 +233,7 @@ class Project(object):
 
 
     def add(self, name=None, item=None, what=None, overwrite=True, consistentnames=True):
-        """ Add an entry to a structure list -- can be used as add('blah', obj), add(name='blah', item=obj), or add(item) """
+        ''' Add an entry to a structure list -- can be used as add('blah', obj), add(name='blah', item=obj), or add(item) '''
         if name is None:
             try: name = item.name # Try getting name from the item
             except: name = 'default' # If not, revert to default
@@ -217,7 +253,7 @@ class Project(object):
 
 
     def remove(self, what=None, name=None):
-        """ Remove an entry from a structure list by name """
+        ''' Remove an entry from a structure list by name '''
         if name is None: name = -1 # If no name is supplied, remove the last item
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
@@ -228,7 +264,7 @@ class Project(object):
 
 
     def copy(self, what=None, orig='default', new='copy', overwrite=True):
-        """ Copy an entry in a structure list """
+        ''' Copy an entry in a structure list '''
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
@@ -243,7 +279,7 @@ class Project(object):
 
 
     def rename(self, what=None, orig='default', new='new', overwrite=True):
-        """ Rename an entry in a structure list """
+        ''' Rename an entry in a structure list '''
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
@@ -254,7 +290,7 @@ class Project(object):
         
 
     #######################################################################################################
-    ## Convenience functions -- NOTE, do we need these...?
+    #%% Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
 
     def addparset(self,   name=None, parset=None,   overwrite=True): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
@@ -280,7 +316,7 @@ class Project(object):
 
 
     def addscens(self, scenlist, overwrite=True): 
-        """ Function to make it slightly easier to add scenarios all in one go """
+        ''' Function to make it slightly easier to add scenarios all in one go '''
         if overwrite: self.scens = odict() # Remove any existing scenarios
         if type(scenlist)!=list: scenlist = [scenlist] # Allow adding a single scenario
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
@@ -289,16 +325,15 @@ class Project(object):
 
 
     def addresult(self, result=None, overwrite=True): 
-        """ Try adding result by name, but if no name, add by UID """
+        ''' Try adding result by name, but if no name, add by UID '''
         if result.name is None: keyname = str(result.uid)
         else: keyname = result.name
         self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=overwrite) # Use UID for key but keep name
         self.modified = today()
         return keyname # Can be useful to know what ended up being chosen
     
-    
     def rmresult(self, name=-1):
-        """ Remove a single result by name """
+        ''' Remove a single result by name '''
         resultuids = self.results.keys() # Pull out UID keys
         resultnames = [res.name for res in self.results.values()] # Pull out names
         if isnumber(name) and name<len(self.results):  # Remove by index rather than name
@@ -316,27 +351,27 @@ class Project(object):
     
     
     def cleanresults(self):
-        """ Remove all results from the current project """
+        ''' Remove all results '''
         self.results = odict() # Just replace with an empty odict, as at initialization
         self.modified = today()
         return None
     
 
     def makeprogramspreadsheet(self, filename=None, progset=-1, verbose=2):
-        """
+        '''
         Create a spreadsheet for entering program data. Example:
             from optima import defaultproject; P = defaultproject()
             P.makeprogramspreadsheet(filename='defaultprogamspreadsheet.xlsx', progset='default')
-        """
+        '''
         if filename is None: filename = self.name+'-programspreadsheet.xlsx'
         pops = self.data['pops']['short']
         progs = [{'short':p.short, 'name':p.name, 'targetpops': p.targetpops} for p in self.progsets[progset].programs.values()]
         makeprogramspreadsheet(filename=filename, pops=pops, progs=progs, datastart=self.settings.start, dataend=self.settings.end, verbose=verbose)
         return None
-
+    
     
     def save(self, filename=None, saveresults=False, verbose=2):
-        """ Save the current project, by default using its name, and without results """
+        ''' Save the current project, by default using its name, and without results '''
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
         if filename is None: filename = self.name+'.prj'
         self.filename = os.path.abspath(filename) # Store file path
@@ -353,74 +388,29 @@ class Project(object):
 
 
     #######################################################################################################
-    #%% Methods to perform major tasks
+    #%% Utilities
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
-        """ This function runs a single simulation, or multiple simulations if pars/simpars is a list.
-        
-        WARNING, do we need this? What's it for? Why not use runmodel()?
-        """
-        if start is None: start=self.settings.start # Specify the start year
-        if end is None: end=self.settings.end # Specify the end year
-        if dt is None: dt=self.settings.dt # Specify the timestep
-        if name is None and simpars is None: name = -1 # Set default name
-        if verbose is None: verbose = self.settings.verbose
-        
-        # Get the parameters sorted
-        if simpars is None: # Optionally run with a precreated simpars instead
-            simparslist = []
-            for pardict in self.parsets[name].pars:
-                simparslist.append(makesimpars(pardict, settings=self.settings, name=name))
-        else:
-            if type(simpars)==list: simparslist = simpars
-            else: simparslist = [simpars]
-
-        # Run the model! -- wARNING, the logic of this could be cleaned up a lot!
-        rawlist = []
-        for ind in range(len(simparslist)):
-            if debug: # Should this be die?
-                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-            else:
-                try:
-                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose)
-                except:
-                    printv('Running model failed; running again with debugging...', 1, verbose)
-                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
-            rawlist.append(raw)
-
-        # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
-        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
-        if addresult:
-            keyname = self.addresult(result=results, overwrite=overwrite)
-            if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
-
-        self.modified = today()
-        return results
-
-
     def refreshparset(self, name=None, orig='default'):
-        """
+        '''
         Reset the chosen (or all) parsets to reflect the parameter values from the spreadsheet (or another parset).
         
         Usage:
             P.refreshparset() # Refresh all parsets in the project to match 'default'
             P.refreshparset(name='calibrated') # Reset parset 'calibrated' to match 'default'
             P.refreshparset(name=['default', 'bugaboo'], orig='calibrated') # Reset parsets 'default' and 'bugaboo' to match 'calibrated'
-        """
+        '''
         
         if name is None: name = self.parsets.keys() # If none is given, use all
         if type(name)!=list: name = [name] # Make sure it's a list
-        origpars = self.parsets[orig].pars[0] # "Original" parameters to copy from (based on data)
+        origpars = self.parsets[orig].pars # "Original" parameters to copy from (based on data)
         for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
-            keys = parset.pars[0].keys() # Assume all pars structures have the same keys
-            for i in range(len(parset.pars)): # Loop over each set of pars
-                newpars = parset.pars[i]
-                for key in keys:
-                    if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
-                    if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
+            keys = parset.pars.keys() # Assume all pars structures have the same keys
+            newpars = parset.pars
+            for key in keys:
+                if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
+                if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
         
         self.modified = today()
         return None
@@ -428,7 +418,7 @@ class Project(object):
         
 
     def reconcileparsets(self, name=None, orig=None):
-        """ Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit """
+        ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
         if name is None and orig is None: # Nothing supplied, just use defaults
             name = -1
             orig = -1
@@ -447,48 +437,109 @@ class Project(object):
         return name, orig
 
 
-    def pars(self, key=-1, ind=0):
-        """ Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] """
-        return self.parsets[key].pars[ind]
+    def pars(self, key=-1):
+        ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars '''
+        return self.parsets[key].pars
     
-    def progs(self, key=-1, ind=0):
-        """ Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs """
+    def progs(self, key=-1):
+        ''' Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs '''
         return self.progsets[key].programs
     
     def parset(self, key=-1):
-        """ Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] """
+        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1] '''
         return self.parsets[key]
     
     def programs(self, key=-1):
-        """ Shortcut for getting the latest active set of programs """
+        ''' Shortcut for getting the latest active set of programs '''
         return self.progsets[key].programs
 
     def progset(self, key=-1):
-        """ Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] """
+        ''' Shortcut for getting the latest active program set, i.e. self.progsets[-1]'''
         return self.progsets[key]
+    
+    def result(self, key=-1):
+        ''' Shortcut for getting the latest active results, i.e. self.results[-1]'''
+        return self.results[key]
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
-        """ Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty" """
+    #######################################################################################################
+    ### Methods to perform major tasks
+    #######################################################################################################
+
+
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, verbose=None):
+        ''' 
+        This function runs a single simulation, or multiple simulations if n>1.
+        
+        Version: 2016nov07
+        '''
+        if start is None: start=self.settings.start # Specify the start year
+        if end is None: end=self.settings.end # Specify the end year
+        if dt is None: dt=self.settings.dt # Specify the timestep
+        if name is None and simpars is None: name = -1 # Set default name
+        if verbose is None: verbose = self.settings.verbose
+        
+        # Get the parameters sorted
+        if simpars is None: # Optionally run with a precreated simpars instead
+            simparslist = [] # Needs to be a list
+            if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
+            for i in range(n):
+                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample))
+        else:
+            if type(simpars)==list: simparslist = simpars
+            else: simparslist = [simpars]
+
+        # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
+        rawlist = []
+        for ind,simpars in enumerate(simparslist):
+            if debug: # Should this be die?
+                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+            else:
+                try:
+                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose)
+                except:
+                    printv('Running model failed; running again with debugging...', 1, verbose)
+                    raw = model(simpars, self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+            rawlist.append(raw)
+
+        # Store results -- WARNING, is this correct in all cases?
+        resultname = 'parset-'+self.parsets[name].name 
+        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+        if addresult:
+            keyname = self.addresult(result=results, overwrite=overwrite)
+            self.parsets[name].resultsref = keyname # If linked to a parset, store the results
+
+        self.modified = today()
+        return results
+
+
+    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, **kwargs): # orig=default or orig=0?
+        '''
+        Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
+        
+        Specify tosample as a string or list of par.auto types to only look at sensitivity in a subset
+        of parameters. Set to None for all. For example:
+        
+        P.sensitivity(n=5, tosample='force')
+        '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
+        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, **kwargs)
+        self.modified = today()
+        return results
+
+
+    def manualfit(self, orig=None, parsubset=None, name=None, verbose=2, **kwargs): # orig=default or orig=0?
+        ''' Function to perform manual fitting '''
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        manualfit(project=self, name=name, parsubset=parsubset, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
         return None
 
 
-    def manualfit(self, orig=None, parsubset=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
-        """ Function to perform manual fitting """
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False):
+        ''' Function to perform automatic fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(project=self, name=name, parsubset=parsubset, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
-        self.modified = today()
-        return None
-
-
-    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
-        """ Function to perform automatic fitting """
-        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
         keyname = self.addresult(result=results)
@@ -497,17 +548,17 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2, debug=False):
-        """ Function to run scenarios """
-        if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
-        multires = runscenarios(project=self, verbose=verbose, debug=debug)
+    def runscenarios(self, scenlist=None, verbose=2, debug=False, **kwargs):
+        ''' Function to run scenarios '''
+        if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
+        multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
         self.addresult(result=multires)
         self.modified = today()
         return None
     
 
     def runbudget(self, name='runbudget', budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
-        """ Function to run the model for a given budget, years, programset and parameterset """
+        ''' Function to run the model for a given budget, years, programset and parameterset '''
         if budget is None: raise OptimaException("Please enter a budget dictionary to run")
         if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
         if progsetname is None:
@@ -524,10 +575,10 @@ class Project(object):
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None):
-        """ Function to minimize outcomes or money """
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+        ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed)
+        multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)
@@ -538,14 +589,15 @@ class Project(object):
 
 
     #######################################################################################################
-    #%%% Methods to handle tasks for geospatial analysis
+    #%% Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
-        """ Function to generate project-specific budget-outcome curve for geospatial analysis """
+    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
+        ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
+        projectBOC.name += ' (' + str(projectBOC.uid) + ')'
         if objectives == None:
-            printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
+            printv('WARNING, you have called genBOC for project "%s" without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progset=progsetname)
         projectBOC.objectives = objectives
         
@@ -582,9 +634,9 @@ class Project(object):
                 closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
                 owbudget = tmpallocs[closest]
                 print('Using old allocation as new starting point.')
-            results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
+            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
             tmptotals.append(budget)
-            tmpallocs.append(dcp(results.budget['Optimal allocation']))
+            tmpallocs.append(dcp(results.budget['Optimal']))
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
@@ -592,7 +644,7 @@ class Project(object):
         return None        
     
     def getBOC(self, objectives):
-        """ Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None """
+        ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         for x in self.results:
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
@@ -600,14 +652,13 @@ class Project(object):
                 for y in boc.objectives:
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
-#                    print('BOC located in project: %s' % self.name)
                     return boc
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
         
         
     def delBOC(self, objectives):
-        """ Deletes BOC results with the required objectives (budget notwithstanding) """
+        ''' Deletes BOC results with the required objectives (budget notwithstanding) '''
         while not self.getBOC(objectives = objectives) == None:
             print('Deleting an old BOC...')
             ind = self.getBOC(objectives = objectives).uid
@@ -617,7 +668,7 @@ class Project(object):
     
     
     def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
-        """ If a BOC result with the desired objectives exists, return an interpolated object """
+        ''' If a BOC result with the desired objectives exists, return an interpolated object '''
         from pylab import title, show
         if boc is None:
             try: boc = self.getBOC(objectives=objectives)
@@ -636,7 +687,7 @@ class Project(object):
 
 
 class Spreadsheet(object):
-    """ A class for reading and writing spreadsheet data in binary format, so a project contains the spreadsheet loaded """
+    ''' A class for reading and writing spreadsheet data in binary format, so a project contains the spreadsheet loaded '''
     
     def __init__(self, filename=None):
         self.data = None

@@ -22,11 +22,14 @@ class Settings(object):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
         self.now = 2016.0 # Default current year
-        self.end = 2030.0 # Default end year
+        self.dataend = 2020.0 # Default end year for data entry
+        self.end = 2030.0 # Default end year for projections
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
         self.ncd4 = len(self.hivstates)
         self.nhealth = len(self.healthstates)
+        self.hivstatesfull = ['Acute infection', 'CD4>500', '350<CD4<500', '200<CD4<350', '50<CD4<200', 'CD4<50']
+        self.healthstatesfull = ['Susceptible', 'Programmatically circumcised', 'Undiagnosed', 'Diagnosed', 'Initially linked to care', 'On unsuppressive ART', 'On suppressive ART', 'Lost to follow up']
         
         # Health states by diagnosis
         self.susreg   = arange(0,1) # Regular uninfected, may be uncircumcised
@@ -38,6 +41,7 @@ class Settings(object):
         self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
         self.notonart = cat([self.undx,self.dx,self.care,self.lost])
+        self.dxnotincare = cat([self.dx,self.lost])
 
         self.nsus     = len(self.susreg) + len(self.progcirc)
         self.ninf     = self.nhealth - self.nsus
@@ -60,6 +64,7 @@ class Settings(object):
         self.allevercare    = cat([         self.care, self.usvl, self.svl, self.lost]) # All people EVER in care
         self.alltx          = cat([                    self.usvl, self.svl]) # All people on treatment
         self.allplhiv       = cat([self.undx, self.alldx]) # All PLHIV
+        self.allaids        = cat([self.lt50, self.gt50]) # All people with AIDS
         self.allstates      = cat([self.sus, self.allplhiv]) # All states
         self.nstates        = len(self.allstates) # Total number of states
         
@@ -178,13 +183,14 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     maxduration = 1000.
     maxmeta = 1000.0
     maxacts = 5000.0
+    maxyear = settings.end if settings is not None else 2030. # Set to a default maximum year
     
     # It's a single number: just return it
     if isnumber(limits): return limits
     
     # Just return the limits themselves as a dict if no input argument
     if limits is None: 
-        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts}
+        return {'maxrate':maxrate, 'maxpopsize':maxpopsize, 'maxduration':maxduration, 'maxmeta':maxmeta, 'maxacts':maxacts, 'maxyear':maxyear}
     
     # If it's a string, convert to list, but remember this
     isstring = (type(limits)==str)
@@ -201,6 +207,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
         elif m=='maxduration': limits[i] = maxduration
         elif m=='maxmeta': limits[i] = maxmeta
         elif m=='maxacts': limits[i] = maxacts
+        elif m=='maxyear': limits[i] = maxyear
         else: limits[i] = limits[i] # This leaves limits[i] untouched if it's a number or something
     
     # Wrap up

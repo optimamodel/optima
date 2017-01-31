@@ -2,12 +2,7 @@ define([
   'angular',
   'ui.router',
   '../project/project-api-service',
-  '../resources/model',
-  '../ui/type-selector/index',
-  '../mpld3-charts/export-all-charts',
-  '../mpld3-charts/export-all-data',
-  '../validations/more-than-directive',
-  '../validations/less-than-directive',
+  '../charts/export-all-charts-directive',
   '../analysis/parameter-scenarios-modal',
   '../analysis/program-scenarios-modal',
 ], function (angular) {
@@ -17,12 +12,7 @@ define([
     'app.analysis',
     [
       'app.export-all-charts',
-      'app.export-all-data',
-      'app.resources.model',
-      'app.ui.type-selector',
       'ui.router',
-      'app.validations.more-than',
-      'app.validations.less-than',
       'app.parameter-scenarios-modal',
       'app.program-scenarios-modal',
     ])
@@ -33,11 +23,8 @@ define([
           abstract: true,
           template: '<div ui-view></div>',
           resolve: {
-            info: function (projectApiService) {
-              return projectApiService.getActiveProject();
-            },
-            meta: function (Model) {
-              //return Model.getKeyDataMeta().$promise;
+            info: function (projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         })
@@ -46,9 +33,6 @@ define([
           templateUrl: 'js/modules/analysis/scenarios.html' ,
           controller: 'AnalysisScenariosController',
           resolve: {
-            scenarioParametersResponse: function($http, info) {
-              //return $http.get('/api/analysis/scenarios/list');
-            },
             scenariosResponse: function($http, info) {
               return $http.get('/api/project/'+info.data.id+'/scenarios');
             },
@@ -65,8 +49,8 @@ define([
           templateUrl: 'js/modules/analysis/optimization.html',
           controller: 'AnalysisOptimizationController',
           resolve: {
-            activeProject: function (projectApiService) {
-              return projectApiService.getActiveProject();
+            activeProject: function (projectApi) {
+              return projectApi.getActiveProject();
             }
           }
         });

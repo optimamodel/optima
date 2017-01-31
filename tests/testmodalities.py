@@ -260,11 +260,11 @@ if 'modalities' in tests:
     hometestparsdict = R.getpars(coverage_hometestscaleup_number, t=2013, parset=P.parsets['default'])
     
     initialparset = dcp(P.parsets['default'])
-    initialparset.pars[0] = initialparsdict
+    initialparset.pars = initialparsdict
     outreachparset = dcp(P.parsets['default'])
-    outreachparset.pars[0] = outreachparsdict
+    outreachparset.pars = outreachparsdict
     hometestparset = dcp(P.parsets['default'])
-    hometestparset.pars[0] = hometestparsdict
+    hometestparset.pars = hometestparsdict
     
     P.addparset(name='initial',parset=initialparset)
     P.addparset(name='outreach',parset=outreachparset)

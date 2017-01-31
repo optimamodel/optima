@@ -1,81 +1,14 @@
 """
 CALIBRATION
 
-Functions to perform calibration.
+Function(s) to perform calibration.
 """
 
-from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds, isnumber, odict
-from numpy import median, zeros, array, mean
+from optima import OptimaException, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
+from numpy import zeros, array, mean
 
 
-
-def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
-    ''' 
-    Function to perturb the parameters to get "uncertainties".
-    
-    Inputs:
-        orig = parset to perturb
-        ncopies = number of perturbed copies of pars to produce
-        what = which parameters to perturb
-        span = how much to perturb
-        ind = index of pars to start from
-    Outputs:
-        parset = perturbed parameter set with ncopies sets of pars
-    
-    Version: 2016jan19 by cliffk
-    '''
-    
-    printv('Performing sensitivity analysis...', 1, verbose)
-    
-    # Validate input
-    if type(orig)!=Parameterset:
-        raise OptimaException('First argument to sensitivity() must be a parameter set')
-    if span>1 or span<0:
-        print('WARNING: span argument must be a scalar in the interval [0,1], resetting...')
-        span = median([0,1,span])
-    
-    # Copy things
-    parset = dcp(orig) # Copy the original parameter set
-    parset.project = project # Keep original project information
-    origpars = dcp(parset.pars[ind])
-    parset.pars = []
-    for n in range(ncopies):
-        parset.pars.append(dcp(origpars))
-    popkeys = origpars['popkeys']
-    
-    if what=='force':
-        for n in range(ncopies):
-            for key in popkeys:
-                parset.pars[n]['force'].y[key] = perturb(n=1, span=span)[0] # perturb() returns array, so need to index -- WARNING, could make more efficient and remove loop
-    else:
-        raise OptimaException('Sorry, only "force" is implemented currently')
-    
-    return parset
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
+def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False):
     ''' 
     Function to automatically fit parameters. Parameters:
         fitwhat = which parameters to vary to improve the fit; these are defined in parameters.py under the 'auto' attribute; default is 'force' (FOI metaparameters only)
@@ -101,18 +34,11 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set
     parset.project = project # Try to link the parset back to the project -- WARNING, seems fragile
-    origparlist = dcp(parset.pars)
-    lenparlist = len(origparlist)
+    pars = dcp(parset.pars) # Just get a copy of the pars for parsing
     if fitwhat is None: fitwhat = ['force'] # By default, automatically fit force-of-infection only
     if type(fitwhat)==str: fitwhat = [fitwhat]
     if type(fitto)==str: fitto = [fitto]
-    if isnumber(inds): inds = [inds] # # Turn into a list if necessary
-    if inds is None: inds = range(lenparlist)
-    if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
-    parset.pars = [] # Clear out in preparation for fitting
     parset.improvement = [] # For storing the improvement for each fit
-    pars = origparlist[0] # Just get a copy of the pars for parsing
-    
     
     
     ## WARNING -- the following two functions must be updated together! Annoying, I know...
@@ -138,9 +64,9 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                     elif par.fittable=='pop':
                         for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
                     elif par.fittable=='exp':
-                        for i in range(len(par.p)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
-                    elif par.fittable=='const':
-                        parlist.append({'name':par.short, 'type':'const', 'limits':par.limits, 'ind':None})
+                        for i in range(len(par.i)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
+                    elif par.fittable=='const' or par.fittable=='year':
+                        parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':None})
                     else:
                         raise OptimaException('Parameter "fittable" type "%s" not understood' % par.fittable)
             else: pass # It's like popkeys or something -- don't worry, be happy
@@ -150,7 +76,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     def convert(pars, parlist, parvec=None):
         ''' 
         If parvec is not supplied:
-            Take a parameter set (e.g. P.parsets[0].pars[0]), a list of "types" 
+            Take a parameter set (e.g. P.parsets[0].pars), a list of "types" 
             (e.g. 'force'), and a list of keys (e.g. 'hivtest'), and return a
             vector of values, e.g. "dehydrate" them.
         
@@ -177,8 +103,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                 if tv: parvec[i] = pars[thisname].y[thisind]
                 else:  pars[thisname].y[thisind] = parvec[i]
             elif thistype=='exp': 
-                if tv: parvec[i] = pars[thisname].p[thisind][0] # Don't change growth rates
-                else:  pars[thisname].p[thisind][0] = parvec[i]
+                if tv: parvec[i] = pars[thisname].i[thisind] # Don't change growth rates, just intercept i
+                else:  pars[thisname].i[thisind] = parvec[i]
             elif thistype=='meta': 
                 if tv: parvec[i] = pars[thisname].m
                 else:  pars[thisname].m = parvec[i]
@@ -315,7 +241,6 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                     subplot(rows, cols, count+2)
                     scatter(tmp2['x'], tmp2['datay'])
                     plot(tmp2['x'], tmp2['modely'])
-                    xlabel('Year')
                     ylabel(key1+' - '+key2)
                     ylim((0,ylim()[1]))
             
@@ -338,21 +263,14 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     parlower  = array([item['limits'][0] for item in parlist])
     parhigher = array(project.settings.convertlimits([item['limits'][1] for item in parlist])) # Replace text labels with numeric values
     
-    # Loop over each pars
-    for ind in inds:
-        
-        # Get this set of parameters
-        try: pars = origparlist[ind]
-        except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
-        
-        # Perform fit
-        parvec = convert(pars, parlist)
-        args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
-        parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-        
-        # Save
-        pars = convert(pars, parlist, parvecnew)        
-        parset.pars.append(pars)
-        parset.improvement.append(output.fval) # Store improvement history
+    # Perform fit
+    parvec = convert(pars, parlist)
+    args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
+    parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    
+    # Save
+    pars = convert(pars, parlist, parvecnew)        
+    parset.pars = pars
+    parset.improvement.append(output.fval) # Store improvement history
     
     return parset

@@ -2,6 +2,7 @@ import traceback
 from pprint import pformat
 import datetime
 import dateutil.tz
+import server.webapp.parse
 
 from celery import Celery
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -9,10 +10,17 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 import optima
 
+from multiprocessing.dummy import Process, Queue
+
+# this is needed to disable multiprocessing in the portfolio
+# module so that celery can handle the multiprocessing itself
+optima.portfolio.Process = Process
+optima.portfolio.Queue = Queue
+
 # must import api first
 from ..api import app
 from .dbconn import db
-from . import dbmodels, parse, utils, dataio
+from . import dbmodels, parse, dataio
 
 
 db = SQLAlchemy(app)
@@ -130,7 +138,6 @@ def delete_task(pyobject_id, work_type):
     db.session.commit()
 
     return "Deleted job"
-
 
 
 def start_or_report_project_calculation(project_id, work_type):
@@ -261,8 +268,8 @@ def run_autofit(project_id, parset_id, maxtime=60):
         project_record.save_obj(project)
         db_session.add(project_record)
         dataio.delete_result_by_parset_id(project_id, parset_id, db_session=db_session)
-        result_record = dataio.update_or_create_result_record(
-            project, result, orig_parset_name, 'calibration', db_session=db_session)
+        result_record = dataio.update_or_create_result_record_by_id(
+            result, project_id, orig_parset.uid, 'calibration', db_session=db_session)
         print(">> Save result '%s'" % result.name)
         db_session.add(result_record)
         db_session.commit()
@@ -294,7 +301,7 @@ def launch_autofit(project_id, parset_id, maxtime):
 
 
 @celery_instance.task(bind=True)
-def run_optimization(self, project_id, optimization_id, maxtime):
+def run_optimization(self, project_id, optimization_id, maxtime, start=None, end=None):
 
     status = 'started'
     error_text = ""
@@ -342,8 +349,8 @@ def run_optimization(self, project_id, optimization_id, maxtime):
         result = None
         try:
             print ">> Start optimization '%s'" % optim.name
-            objectives = utils.normalize_obj(optim.objectives)
-            constraints = utils.normalize_obj(optim.constraints)
+            objectives = server.webapp.parse.normalize_obj(optim.objectives)
+            constraints = server.webapp.parse.normalize_obj(optim.constraints)
             constraints["max"] = optima.odict(constraints["max"])
             constraints["min"] = optima.odict(constraints["min"])
             constraints["name"] = optima.odict(constraints["name"])
@@ -369,8 +376,9 @@ def run_optimization(self, project_id, optimization_id, maxtime):
         if result:
             db_session = init_db_session()
             dataio.delete_result_by_name(project_id, result.name, db_session)
-            result_record = dataio.update_or_create_result_record(
-                project, result, optim.parsetname, 'optimization', db_session=db_session)
+            parset = project.parsets[optim.parsetname]
+            result_record = dataio.update_or_create_result_record_by_id(
+                result, project_id, parset.uid, 'optimization', db_session=db_session)
             db_session.add(result_record)
             db_session.commit()
             close_db_session(db_session)
@@ -387,12 +395,12 @@ def run_optimization(self, project_id, optimization_id, maxtime):
     print ">> Finish optimization"
 
 
-def launch_optimization(project_id, optimization_id, maxtime):
+def launch_optimization(project_id, optimization_id, maxtime, start=None, end=None):
     calc_state = start_or_report_project_calculation(
         project_id, 'optim-' + str(optimization_id))
     if calc_state['status'] != 'started':
         return calc_state, 208
-    run_optimization.delay(project_id, optimization_id, maxtime)
+    run_optimization.delay(project_id, optimization_id, maxtime, start, end)
     return calc_state
 
 
