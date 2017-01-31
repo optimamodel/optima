@@ -383,7 +383,7 @@ def addpropsandcosttx(project, **kwargs):
 
 def redoparameters(project, **kwargs):
     """
-    Migration between Optima 2.1.10 and 2.1.11 -- update fields of parameters.
+    Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
     
     tmpproj = op.defaultproject(verbose=0) # Create a new project with refreshed parameters
@@ -445,7 +445,7 @@ def redoparameters(project, **kwargs):
         
         ps.pars = newpars # Keep the new version
     
-    project.version = "2.1.11"
+    project.version = "2.2"
     return None
 
 
