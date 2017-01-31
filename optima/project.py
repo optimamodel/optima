@@ -1,4 +1,4 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
+from optima import OptimaException, Link, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
@@ -246,7 +246,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
-        if hasattr(structlist[name],'project'): structlist[name].project = self # Refresh link to parent project
+        if hasattr(structlist[name],'project'): structlist[name].projectref = Link(self) # Refresh link to parent project
         printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
         self.modified = today()
         return None
@@ -272,7 +272,7 @@ class Project(object):
         structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
-        if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
+        if hasattr(structlist[new], 'project'): structlist[new].projectref = Link(self) # Preserve information about project -- don't deep copy -- WARNING, may not work?
         printv('%s "%s" copied to "%s"' % (what, orig, new), 2, self.settings.verbose)
         self.modified = today()
         return None
