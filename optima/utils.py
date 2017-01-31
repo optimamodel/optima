@@ -1289,13 +1289,27 @@ class OptimaException(Exception):
 
 
 class Link(object):
-    ''' A class to differentiate between an object and a link to an object '''
+    '''
+    A class to differentiate between an object and a link to an object. Not very
+    useful at the moment, but the idea eventually is that this object would be
+    parsed differently from other objects -- most notably, a recursive method
+    (such as a pickle) would skip over Link objects, and then would fix them up
+    after the other objects had been reinstated.
     
-    def __init__(self, ref=None):
+    Version: 2017jan31
+    '''
+    
+    def __init__(self, obj=None):
         ''' Store the reference to the object being referred to '''
-        self.ref = ref
+        self.obj = obj # Store the object -- or rather a reference to it, if it's mutable
+        try:    self.uid = obj.uid # If the object has a UID, store it separately 
+        except: self.uid = None # If not, just use None
     
-    def __call__(self):
-        ''' When called, return the stored object '''
-        return self.ref
+    def __call__(self, obj=None):
+        ''' If called with no argument, return the stored object; if called with argument, update object '''
+        if obj is None:
+            return self.obj
+        else:
+            self.__init__(obj)
+            return None
         
