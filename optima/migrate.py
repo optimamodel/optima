@@ -373,31 +373,48 @@ def redoparameters(project, **kwargs):
     """
     
     tmpproj = op.defaultproject(verbose=0) # Create a new project with refreshed parameters
-    complain = False # Usually fine to ignore warnings
+    verbose = True # Usually fine to ignore warnings
+    
+    if verbose:
+        print('\n\n\nRedoing parameters...\n\n')
     
     # Loop over all parsets
     for ps in project.parsets.values():
         oldpars = ps.pars[0]
-        ps.pars = op.dcp(tmpproj.pars())
-        for parname,par in oldpars.items():
+        newpars = op.dcp(tmpproj.pars())
+        
+        parnames = ps.pars.keys()
+        
+        ## Handle some things explicitly
+        
+        # Initial prevalence
+        parnames.pop('initprev')
+        newpars['initprev'] = oldpars['init']
+        
+        # Popsizepar objects
+        parnames.pop('popsize')
+        for popkey in oldpars['popsize'].p.keys():
+            newpars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
+            newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
+        
+        
+        # Loop over everything else
+        for parname,par in ps.pars.items():
+            if verbose: print('Working on %s' % parname)
             try:
-                if parname=='init': parname = 'initprev' # Rename
                 for attr in ['y','t','m']:
                     try:
                         oldattr = getattr(oldpars[parname], attr)
                         setattr(ps.pars[parname], attr, oldattr)
                     except Exception as E:
-                        if complain:
+                        if verbose:
                             print('Could not set attribute %s for parameter %s' % (attr, parname))
                             print(E.message)
             except:
-                if complain:
+                if verbose:
                     print('Could not process parameter %s' % parname)
                 
-        # Fix Popsizepar objects
-        for popkey in oldpars['popsize'].p.keys():
-            ps.pars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
-            ps.pars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
+        
         
         # Just a bug I noticed -- I think the definition of this parameter got inverted at some point
         for key in ps.pars['leavecare'].y:
@@ -406,6 +423,7 @@ def redoparameters(project, **kwargs):
                     ps.pars['leavecare'].y[key][i] = 0.2
                     print('Leave care rate for population %s seemed to be too high, resetting to default of 0.2' % key)
         
+        ps.pars = newpars # Keep the new version
     
     project.version = "2.1.11"
     return None
