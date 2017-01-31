@@ -380,7 +380,7 @@ def redoparameters(project, **kwargs):
     """
     
     tmpproj = op.defaultproject(verbose=0) # Create a new project with refreshed parameters
-    verbose = True # Usually fine to ignore warnings
+    verbose = 1 # Usually fine to ignore warnings
     
     if verbose:
         print('\n\n\nRedoing parameters...\n\n')
@@ -400,7 +400,7 @@ def redoparameters(project, **kwargs):
         while len(newparnames)+len(oldparnames): # Keep going until everything is dealt with in both
         
             parname = (newparnames+oldparnames)[0] # Get the first parameter name
-            if verbose: print('Working on %s' % parname)
+            if verbose>1: print('Working on %s' % parname)
             success = True
             
             if parname in newparnames and parname in oldparnames:
