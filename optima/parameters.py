@@ -1312,6 +1312,9 @@ class Parameterset(object):
         
         output = ''
         for parname,par in self.pars.items():
+            prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
+            values2 = None
+            cvalues2 = None
             if hasattr(par,'fittable'):
                 if par.fittable=='pop': 
                     values = par.y[:].tolist()
@@ -1329,14 +1332,24 @@ class Parameterset(object):
                     values = par.m
                     prefix = "pars['%s'].m = " % parname
                     if cpars is not None: cvalues = cpars[parname].m
+                elif par.fittable=='exp':
+                    values  = par.i[:].tolist()
+                    values2 = par.e[:].tolist()
+                    prefix  = "pars['%s'].i[:] = " % parname
+                    prefix2 = "pars['%s'].e[:] = " % parname
+                    if cpars is not None: 
+                        cvalues  = cpars[parname].i[:].tolist()
+                        cvalues2 = cpars[parname].e[:].tolist()
                 elif par.fittable=='no':
                     values = None
                 else: 
                     print('Parameter fittable type "%s" not implemented' % par.fittable)
                     values = None
                 if values is not None:
-                    if compare is None or (values!=cvalues):
+                    if compare is None or (values!=cvalues) or (values2!=cvalues2):
                         output += prefix+oneline(values)+'\n'
+                        if prefix2 is not None:
+                            output += prefix2+oneline(values2)+'\n'
         
         if filename is not None:
             with open(filename, 'w') as f:
