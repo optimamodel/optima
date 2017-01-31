@@ -8,12 +8,19 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     Use kwargs to arbitrarily specify the new parameter's properties.
     '''
     for ps in project.parsets.values():
-        for i in range(len(ps.pars)):
-            ps.pars[i][short] = op.dcp(project.pars()[0][copyfrom])
-            ps.pars[i][short].short = short
+        if op.compareversions(project.version, '2.1.11')>=0: # Newer project, pars is dict
+            ps.pars[short] = op.dcp(project.pars()[copyfrom])
+            ps.pars[short].short = short
             for kwargkey,kwargval in kwargs.items():
-                setattr(ps.pars[i][short], kwargkey, kwargval)
+                setattr(ps.pars[short], kwargkey, kwargval)
+        else: # Older project, pars is list of dicts
+            for i in range(len(ps.pars)):
+                ps.pars[i][short] = op.dcp(project.pars()[0][copyfrom])
+                ps.pars[i][short].short = short
+                for kwargkey,kwargval in kwargs.items():
+                    setattr(ps.pars[i][short], kwargkey, kwargval)
     project.data[short] = [[nan]*len(project.data['years'])]
+    return None
 
 
 def versiontostr(project, **kwargs):
@@ -386,15 +393,6 @@ def redoparameters(project, **kwargs):
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()
         
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-        
-        ## Handle some things explicitly
-        
-        # Initial prevalence
-        oldparnames.remove('init')
-        newparnames.remove('initprev')
-        newpars['initprev'] = oldpars['init']
-        
         # Loop over everything else
         while len(newparnames)+len(oldparnames): # Keep going until everything is dealt with in both
         
@@ -415,8 +413,8 @@ def redoparameters(project, **kwargs):
                     newpars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
                     newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
             else:
-                success = False
-                raise Exception('Could not process %s' % parname)
+                if verbose: print('Directly copying %s' % parname)
+                newpars[parname] = oldpars[parname]
                 
             if success:
                 if parname in oldparnames: oldparnames.remove(parname) # We're dealing with it, so remove it
