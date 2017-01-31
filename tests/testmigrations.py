@@ -12,7 +12,7 @@ tests = [
 'migrations',
 ]
 
-oldprojectname = 'concentrated.prj' # Options are concentrated_v2.0.4.prj and concentrated_v2.1.prj
+oldprojectname = 'concentrated_v2.0.4.prj' # Options are concentrated_v2.0.4.prj and concentrated_v2.1.prj
 
 ## Housekeeping
 

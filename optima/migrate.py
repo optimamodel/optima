@@ -360,6 +360,13 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['dataname'] = 'Year to fix PLHIV in care on treatment'
     kwargs['datashort'] = 'fixproptx'
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    
+    short = 'fixproppmtct'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix pregnant women and mothers on PMTCT'
+    kwargs['dataname'] = 'Year to fix pregnant women and mothers on PMTCT'
+    kwargs['datashort'] = 'fixproppmtct'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
     short = 'fixpropsupp'
     copyfrom = 'fixpropdx'
@@ -382,7 +389,7 @@ def redoparameters(project, **kwargs):
     tmpproj = op.defaultproject(verbose=0) # Create a new project with refreshed parameters
     verbose = 1 # Usually fine to ignore warnings
     
-    if verbose:
+    if verbose>1:
         print('\n\n\nRedoing parameters...\n\n')
     
     # Loop over all parsets
@@ -419,12 +426,11 @@ def redoparameters(project, **kwargs):
                 elif isinstance(newpars[parname], op.Yearpar): # y attribute is renamed t
                     newpars[parname].t = oldpars[parname].y
                 elif parname in op._parameters.generalkeys+op._parameters.staticmatrixkeys: # These can all be copied directly
-                    if verbose: print('    Directly copying %s' % parname)
+                    if verbose>1: print('    Directly copying %s' % parname)
                     newpars[parname] = oldpars[parname]
             else:
                 if verbose: 
-                    print('################################WARNING')
-                    print('Parameter %s does not exist in both sets' % parname)
+                    print('WARNING, parameter %s does not exist in both sets' % parname)
                 
             if success:
                 if parname in oldparnames: oldparnames.remove(parname) # We're dealing with it, so remove it
@@ -435,7 +441,7 @@ def redoparameters(project, **kwargs):
             for i,val in enumerate(newpars['leavecare'].y[key]):
                 if val>0.5:
                     newpars['leavecare'].y[key][i] = 0.2
-                    print('Leave care rate for population %s seemed to be too high, resetting to default of 0.2' % key)
+                    if verbose: print('Leave care rate for %s seems too high (%0.1f), resetting to 0.2' % (key, val))
         
         ps.pars = newpars # Keep the new version
     
