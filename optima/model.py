@@ -69,6 +69,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     deathprob       = zeros((nstates))              # Initialise death probability array
 
     # Cascade-related parameters
+    requiredvl      = simpars['requiredvl']                               # Number of VL tests required per year
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
     treatfail       = simpars['treatfail']*dt                             # Probability of treatment failure in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
@@ -169,7 +170,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Intervention uptake (P=proportion, N=number)
     sharing   = simpars['sharing']      # Sharing injecting equiptment (P)
     numtx     = simpars['numtx']        # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
-    numvlmon  = simpars['numvlmon']*dt  # Number of viral load tests done per time step (N)
+    numvlmon  = simpars['numvlmon']     # Number of viral load tests done per year (N)
     hivtest   = simpars['hivtest']*dt   # HIV testing (P) [npop,npts]
     aidstest  = simpars['aidstest']*dt  # HIV testing in AIDS stage (P) [npts]
     numcirc   = simpars['numcirc']      # Number of programmatic circumcisions performed (N)
@@ -795,7 +796,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
                     # We figure out how many people should be moved to suppressed based on how many VL tests were done
                     if name is 'propsupp' and isnan(prop[t+1]):
-                        wanted = numvlmon[t+1] # If propsupp is nan, we use numvlmon
+                        wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
+#                        if t==60: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
                     # Figure out how many people we currently have...
                     actual          = people[num,:,t+1].sum() # ... in the higher cascade state
@@ -807,6 +809,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         movingdistribution = einsum('ij,i->ij',ppltomoveup,1/(eps+ppltomoveup.sum(axis=1)))
                     else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                         movingdistribution = ppltomoveup/(eps+ppltomoveup.sum())
+
 
                     # Figure out how many people we want and initialise new movers
                     if not isnan(prop[t+1]): # If the prop value is finite, we use it

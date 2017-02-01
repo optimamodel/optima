@@ -118,7 +118,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                            ['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
                            ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
-                           ['svlrecovgt350', 'svlrecovgt200', 'svlrecovgt50', 'svlrecovlt50','treatvs'],
+                           ['svlrecovgt350', 'svlrecovgt200', 'svlrecovgt50', 'svlrecovlt50','treatvs','requiredvl'],
                            ['usvlproggt500', 'usvlrecovgt350', 'usvlproggt350', 'usvlrecovgt200', 'usvlproggt200', 'usvlrecovgt50', 'usvlproggt50',  'usvlrecovlt50', 'treatfail'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathsvl', 'deathusvl', 'deathtb'],
                            ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp'],
