@@ -65,8 +65,9 @@
           <span ng-show="sortType == 'dataUploadTime' && sortReverse" class="fa fa-caret-up"></span>
           <span ng-show="sortType != 'dataUploadTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
+        <th>Actions</th>
         <th>Data spreadsheet (.xlsx)</th>
-        <th colspan="8">Actions</th>
+        <th>Project file (.prj)</th>
       </tr>
       </thead>
       <tbody>
@@ -90,11 +91,6 @@
           {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm') : 'No data uploaded'}}
         </td>
         <td style="white-space: nowrap">
-          <button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>
-          <button class="btn" ng-click="workbook(project.name, project.id)">Download template xls</button>
-          <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download xls</button>
-          <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload xls</button>
-          <button class="btn" ng-click="downloadPrjWithResults(project.name, project.id)">Download with results</button>
           <i
             ng-click="copy(project.name, project.id)"
             class="fa fa-copy"
@@ -110,19 +106,22 @@
             style="margin-left: 0.5em">
           </i>
           <i
-            ng-click="downloadProject(project.name, project.id)"
-            class="fa fa-download"
-            tp-text="Download" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-          </i>
-          <i
             ng-click="remove($event, project.name, project.id, $index)"
             class="fa fa-trash-o"
             tp-text="Delete" tooltip tp-class="tooltip"
             tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
             style="margin-left: 0.5em">
           </i>
+        </td>
+        <td style="white-space: nowrap">
+          <button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>
+          <button class="btn" ng-click="workbook(project.name, project.id)">Template</button>
+          <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download</button>
+          <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload</button>
+        </td>
+        <td style="white-space: nowrap">
+          <button class="btn" ng-click="downloadProject(project.name, project.id)">Download</button>
+          <button class="btn" ng-click="downloadPrjWithResults(project.name, project.id)">Download with results</button>
         </td>
       </tr>
       </tbody>
