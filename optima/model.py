@@ -70,7 +70,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     # Cascade-related parameters
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
-    requiredvl      = simpars['requiredvl']*dt                            # Number of VL tests that should be done per person per time step
     treatfail       = simpars['treatfail']*dt                             # Probability of treatment failure in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
     aidslinktocare  = 1.-exp(-dt/(maximum(eps,simpars['aidslinktocare'])))# Probability of being linked to care in 1 time step for people with AIDS
