@@ -101,12 +101,6 @@ class OptimaContent:
     def has_data(self):
         return self.data != None
 
-    def add_assumption(self):
-        self.assumption = True
-
-    def has_assumption(self):
-        return self.assumption
-        
     def has_assumption_data(self):
         return self.assumption_data != None
 
@@ -351,13 +345,13 @@ class TitledRange:
         #top-top headers
         formats.write_block_name(self.sheet, self.content.name, self.first_row)
 
-        if self.content.has_assumption() and  self.first_row==0 and self.content.assumption_properties['title'] is not None:
+        if self.content.assumption and  self.first_row==0 and self.content.assumption_properties['title'] is not None:
             formats.write_rowcol_name(self.sheet, self.first_row, self.data_range.last_col+2, self.content.assumption_properties['title'])
 
         #headers
         for i, name in enumerate(self.content.column_names):
             formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name, rc_title_align)
-        if self.content.has_assumption():
+        if self.content.assumption:
             for index, col_name in enumerate(self.content.assumption_properties['columns']):
                 formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2+index, col_name)
 
@@ -380,7 +374,7 @@ class TitledRange:
                 for j in range(self.data_range.num_cols):
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
-            if self.content.has_assumption():
+            if self.content.assumption:
                 formats.write_option(self.sheet, current_row, self.data_range.last_col+1, \
                     name = self.content.assumption_properties['connector'])
                 for index, col_name in enumerate(self.content.assumption_properties['columns']):
@@ -434,8 +428,7 @@ class OptimaSpreadsheet:
         assumption_properties = None):
         content = OptimaContent(name, row_names, column_names, data)
         content.set_row_format(row_format)
-        if assumption:
-            content.add_assumption()
+        content.assumption = assumption
         if assumption_properties:
             content.set_assumption_properties(assumption_properties)
         if row_levels is not None:
@@ -465,10 +458,8 @@ class OptimaSpreadsheet:
         assumption=False, row_levels=None, row_formats=None, data=None, assumption_data=None):
         content = make_years_range(name, row_names, self.data_start, self.data_end, data=data)
         content.set_row_format(row_format)
-        if assumption:
-            content.add_assumption()
-            if assumption_data:
-                content.assumption_data = assumption_data
+        content.assumption = assumption
+        content.assumption_data = assumption_data
         if row_levels is not None:
             content.set_row_levels(row_levels)
         if row_formats is not None:
@@ -481,10 +472,8 @@ class OptimaSpreadsheet:
         assumption = None, row_levels = None, row_formats = None, data = None, assumption_data=None):
         content = make_ref_years_range(name, ref_range, self.data_start, self.data_end, data=data)
         content.set_row_format(row_format)
-        if assumption:
-            content.add_assumption()
-            if assumption_data:
-                content.assumption_data = assumption_data
+        content.assumption = assumption
+        content.assumption_data = assumption_data
         if row_levels is not None:
             content.set_row_levels(row_levels)
         if row_formats is not None:
@@ -870,8 +859,7 @@ class OptimaProgramSpreadsheet:
         assumption = False, row_levels = None, row_formats = None):
         content = make_years_range(name, row_names, self.data_start, self.data_end)
         content.set_row_format(row_format)
-        if assumption:
-            content.add_assumption()
+        content.assumption = assumption
         if row_levels is not None:
             content.set_row_levels(row_levels)
         if row_formats is not None:
