@@ -788,7 +788,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     # We figure out how many people should be moved to suppressed based on how many VL tests were done
                     if name is 'propsupp' and isnan(prop[t+1]):
                         wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
-#                        if t==60: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
                     # Figure out how many people we currently have...
                     actual          = people[num,:,t+1].sum() # ... in the higher cascade state
