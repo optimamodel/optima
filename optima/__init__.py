@@ -71,7 +71,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -92,7 +92,7 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 
 ## Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
 from . import parameters as _parameters
-from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Parameterset, makepars, makesimpars, loadpartable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
+from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset, makepars, makesimpars, loadpartable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
 
 ## Create a blank spreadsheet
 try:

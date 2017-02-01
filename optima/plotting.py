@@ -451,8 +451,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))
                 if not ismultisim:
-                    if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
-                    if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
+#                    if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total" # Feedback is that this isn't so useful, but keeping as placeholder for now
+#                    if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
                     if isstacked: 
                         handles, labels = ax.get_legend_handles_labels()
                         ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations

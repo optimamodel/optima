@@ -783,7 +783,23 @@ def gitinfo(die=False):
 
 
 
-
+def compareversions(version1=None, version2=None):
+    ''' Function to compare versions, expecting both arguments to be a string of the format 1.2.3, but numeric works too '''
+    if version1 is None or version2 is None: 
+        raise Exception('Must supply both versions as strings')
+    versions = [version1, version2]
+    for i in range(2):
+        versions[i] = array(str(versions[i]).split('.'), dtype=float) # Convert to array of numbers
+    maxlen = max(len(versions[0]), len(versions[1]))
+    versionsarr = zeros((2,maxlen))
+    for i in range(2):
+        versionsarr[i,:len(versions[i])] = versions[i]
+    for j in range(maxlen):
+        if versionsarr[0,j]<versionsarr[1,j]: return -1
+        if versionsarr[0,j]>versionsarr[1,j]: return 1
+    if (versionsarr[0,:]==versionsarr[1,:]).all(): return 0
+    else:
+        raise Exception('Failed to compare %s and %s' % (version1, version2))
 
 
 
