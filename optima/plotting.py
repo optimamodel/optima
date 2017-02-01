@@ -269,23 +269,24 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
 
         ## Validate plot keys
         for pk,plotkeys in enumerate(toplot):
-            epikey, plottype = None, None
+            epikey = None # By default, don't make any assumptions
+            plottype = 'stacked' # Assume stacked by default
             if type(plotkeys)!=str: 
-                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-stacked"' % str(plotkeys)
+                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv" or "numplhiv-stacked"' % str(plotkeys)
                 raise OptimaException(errormsg)
             else:
-                try:
-                    plotkeys = plotkeys.split('-') # Try splitting if it's a string, e.g. numplhiv-stacked
-                    epikey = plotkeys[0] # This must always exist, e.g. numplhiv
-                    if   len(plotkeys)==1: plottype = results.main[epikey].defaultplot # If it's just e.g. numplhiv, then use the default plotting type
-                    elif len(plotkeys)==2: plottype = plotkeys[1] # Otherwise, use the one specified
-                    else: 
-                        errormsg = 'Plotkeys must have length 1 or 2, but you have %s' % plotkeys
-                        raise OptimaException(errormsg)
-                except:
-                    errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkeys
-                    if die: raise OptimaException(errormsg)
-                    else: printv(errormsg, 2, verbose)
+                plotkeys = plotkeys.split('-') # Try splitting if it's a string, e.g. numplhiv-stacked
+                epikey = plotkeys[0] # This must always exist, e.g. numplhiv
+                if len(plotkeys)==2: plottype = plotkeys[1] # Use the one specified
+                elif len(plotkeys)==1: # Otherwise, try to use the default
+                    try: plottype = results.main[epikey].defaultplot # If it's just e.g. numplhiv, then use the default plotting type
+                    except: 
+                        errormsg = 'Unable to retrieve default plot type (total/population/stacked); falling back on %s'% plottype
+                        if die: raise OptimaException(errormsg)
+                        else: printv(errormsg, 2, verbose)
+                else: # Give up
+                    errormsg = 'Plotkeys must have length 1 or 2, but you have %s' % plotkeys
+                    raise OptimaException(errormsg)
             if epikey not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (epikey, results.main.keys())
                 if die: raise OptimaException(errormsg)
