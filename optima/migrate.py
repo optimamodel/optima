@@ -422,6 +422,7 @@ def redoparameters(project, **kwargs):
                         newpars[parname].prior = op.odict()
                         for popkey in newpars[parname].keys():
                             newpars[parname].prior[popkey] = op.Dist() # Initialise with defaults
+                            newpars[parname].prior[popkey].pars *= newpars[parname].y[popkey]
                 elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
                     newpars['popsize'].i = op.odict()
                     newpars['popsize'].e = op.odict()
