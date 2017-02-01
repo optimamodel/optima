@@ -14,6 +14,8 @@ import xlrd
 from os import path, sep
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
+generalkeys = ['male', 'female', 'popkeys', 'injects', 'rawtransit'] # General parameter keys that are just copied
+staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
 
 #############################################################################################################################
 ### Functions to load the parameters and transitions
@@ -398,7 +400,7 @@ def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
     pars['propcirc'].t = pars['propcirc'].t.sort(popkeys)
     pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
-    for key in pars['numcirc'].y.keys():
+    for key in pars['numcirc'].keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
     # Fix treatment from final data year
@@ -436,9 +438,9 @@ def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    # Store information about injecting and commercial sex providing populations -- needs to be here since relies on other calculations
-    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
-    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
+    # Store information about injecting populations -- needs to be here since relies on other calculations
+    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
+    
 
     return pars
 
@@ -460,8 +462,6 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
     simpars = odict() 
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'popkeys', 'injects', 'sexworker', 'rawtransit']
-    staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if keys is None: keys = pars.keys() # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
@@ -1117,13 +1117,13 @@ class Parameterset(object):
             if hasattr(par,'y'):
                 if hasattr(par.y, 'keys'):
                     count += 1
-                    if len(par.y.keys())>1:
+                    if len(par.keys())>1:
                         outstr += '%3i: %s\n' % (count, par.name)
-                        for key in par.y.keys():
+                        for key in par.keys():
                             outstr += '     %s = %s\n' % (key, par.y[key])
-                    elif len(par.y.keys())==1:
+                    elif len(par.keys())==1:
                         outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y[0])
-                    elif len(par.y.keys())==0:
+                    elif len(par.keys())==0:
                         outstr += '%3i: %s = (empty)' % (count, par.name)
                     else:
                         print('WARNING, not sure what to do with %s: %s' % (par.name, par.y))
@@ -1232,14 +1232,14 @@ class Parameterset(object):
                     valuelist.append(par.t)
                     labellist.append(par.name)
                 elif par.fittable in ['pop', 'pship']:
-                    for subkey in par.y.keys():
+                    for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.fittable)
                         valuelist.append(par.y[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
                 elif par.fittable == 'exp':
-                    for subkey in par.i.keys():
+                    for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.fittable)
@@ -1312,6 +1312,9 @@ class Parameterset(object):
         
         output = ''
         for parname,par in self.pars.items():
+            prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
+            values2 = None
+            cvalues2 = None
             if hasattr(par,'fittable'):
                 if par.fittable=='pop': 
                     values = par.y[:].tolist()
@@ -1329,14 +1332,24 @@ class Parameterset(object):
                     values = par.m
                     prefix = "pars['%s'].m = " % parname
                     if cpars is not None: cvalues = cpars[parname].m
+                elif par.fittable=='exp':
+                    values  = par.i[:].tolist()
+                    values2 = par.e[:].tolist()
+                    prefix  = "pars['%s'].i[:] = " % parname
+                    prefix2 = "pars['%s'].e[:] = " % parname
+                    if cpars is not None: 
+                        cvalues  = cpars[parname].i[:].tolist()
+                        cvalues2 = cpars[parname].e[:].tolist()
                 elif par.fittable=='no':
                     values = None
                 else: 
                     print('Parameter fittable type "%s" not implemented' % par.fittable)
                     values = None
                 if values is not None:
-                    if compare is None or (values!=cvalues):
+                    if compare is None or (values!=cvalues) or (values2!=cvalues2):
                         output += prefix+oneline(values)+'\n'
+                        if prefix2 is not None:
+                            output += prefix2+oneline(values2)+'\n'
         
         if filename is not None:
             with open(filename, 'w') as f:
