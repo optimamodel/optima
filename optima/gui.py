@@ -1,7 +1,7 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
-from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title
+from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
@@ -182,8 +182,8 @@ def pygui(tmpresults, toplot=None, verbose=2, **kwargs):
     
     # Reformat the checkboxes
     totstr = ' -- total' # analysis:ignore WARNING, these should not be explicit!!!!!
-    perstr = ' -- per population'
     stastr = ' -- stacked'
+    perstr = ' -- population'
     nboxes = len(check.rectangles)
     for b in range(nboxes):
         label = check.labels[b]
