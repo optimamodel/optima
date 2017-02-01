@@ -93,14 +93,14 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     printv('Loading data from %s...' % filename, 1, verbose)
     sheets = odict()
     
-    # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
+    # Metadata -- population names -- array size is (# populations)
     sheets['Populations'] = ['pops']
-    
-    # Population size data -- array sizes are time x population x uncertainty
-    sheets['Population size'] =  ['popsize']
     
     # HIV prevalence data -- array sizes are time x population x uncertainty
     sheets['HIV prevalence'] =  ['hivprev']
+    
+    # Population size data -- array sizes are time x population x uncertainty
+    sheets['Population size'] =  ['popsize']
     
     # Time data -- array sizes are time x population
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
