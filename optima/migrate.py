@@ -463,20 +463,22 @@ def redovlmon(project, **kwargs):
     Migration between Optima 2.2 and 2.2.1 -- update the VL monitoring parameter
     """
     
-    tmpproj = op.defaultproject(addprogset=False, addcostcovdata=False, usestandardcostcovdata=False, addcostcovpars=False, usestandardcostcovpars=False, addcovoutpars=False, dorun=False, verbose=0) # Create a new project with refreshed parameters
-    newpars = op.dcp(tmpproj.pars())
+#    tmpproj = op.defaultproject(addprogset=False, addcostcovdata=False, usestandardcostcovdata=False, addcostcovpars=False, usestandardcostcovpars=False, addcovoutpars=False, dorun=False, verbose=0) # Create a new project with refreshed parameters
+#    newpars = op.dcp(tmpproj.pars())
 
     oldvldata = op.dcp(project.data['freqvlmon']) # Get out old VL data
     project.data.pop('freqvlmon', None) # Delete it from data structure
     project.data['numvlmon'] = [[oldvldata[0][-1]*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
+    project.data['requiredvl'] = [2.0, 1.5, 2.5]
 
-    # Loop over all parsets
-    for ps in project.parsets.values():
-
-        ps.pars.pop('freqvlmon',None)
-        ps.pars['numvlmon'] = newpars['numvlmon']
-        ps.pars['numvlmon'].y['tot'] = array([project.data['numvlmon'][0][-1]]) # Just take one value
-        ps.pars['numvlmon'].t['tot'] = array([2015.]) # Just set a year
+#    # Loop over all parsets
+#    for ps in project.parsets.values():
+#
+#        ps.pars.pop('freqvlmon',None)
+#        ps.pars['numvlmon'] = newpars['numvlmon']
+#        ps.pars['numvlmon'].y['tot'] = array([project.data['numvlmon'][0][-1]]) # Just take one value
+#        ps.pars['numvlmon'].t['tot'] = array([2015.]) # Just set a year
+#        ps.pars['numvlmon'].t['tot'] = array([2015.]) # Just set a year
 
     project.version = "2.2.1"
 
