@@ -611,15 +611,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 else: # Probability of being lost
                     thistransit[fromstate][prob][ts] *= lossprob[cd4]
     
-#        # USVL to SVL
-#        svlprob = freqvlmon[t] if isnan(propsupp[t]) else 0.
-#        for fromstate in usvl:
-#            for ts, tostate in enumerate(thistransit[fromstate][to]):
-#                if tostate in usvl: # Probability of remaining unsuppressed
-#                    thistransit[fromstate][prob][ts] *= (1.-svlprob)
-#                elif tostate in svl: # Probability of becoming suppressed
-#                    thistransit[fromstate][prob][ts] *= svlprob
-                                
         # SVL to USVL
         usvlprob = treatfail if isnan(propsupp[t]) else 0.
         for fromstate in svl:
