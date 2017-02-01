@@ -485,11 +485,11 @@ class Project(object):
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
+        resultname = 'parset-'+self.parsets[name].name 
         results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
-            if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
+            self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
         self.modified = today()
         return results
@@ -574,7 +574,7 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
+    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
         projectBOC.name += ' (' + str(projectBOC.uid) + ')'
@@ -616,7 +616,7 @@ class Project(object):
                 closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
                 owbudget = tmpallocs[closest]
                 print('Using old allocation as new starting point.')
-            results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
+            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
             tmptotals.append(budget)
             tmpallocs.append(dcp(results.budget['Optimal']))
             projectBOC.x.append(budget)
