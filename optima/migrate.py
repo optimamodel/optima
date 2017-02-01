@@ -417,6 +417,11 @@ def redoparameters(project, **kwargs):
                         setattr(newpars[parname], attr, oldattr)
                 elif isinstance(newpars[parname], (op.Constant, op.Metapar)): # Just copy y
                     newpars[parname].y = oldpars[parname].y
+                    newpars[parname].prior = op.odict()
+                    if newpars[parname].keys() is not None:
+                        newpars[parname].prior = op.odict()
+                        for popkey in newpars[parname].keys():
+                            newpars[parname].prior[popkey] = op.Dist() # Initialise with defaults
                 elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
                     newpars['popsize'].i = op.odict()
                     newpars['popsize'].e = op.odict()
