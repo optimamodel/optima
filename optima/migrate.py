@@ -387,7 +387,7 @@ def redoparameters(project, **kwargs):
     """
     
     tmpproj = op.defaultproject(addprogset=False, addcostcovdata=False, usestandardcostcovdata=False, addcostcovpars=False, usestandardcostcovpars=False, addcovoutpars=False, dorun=False, verbose=0) # Create a new project with refreshed parameters
-    verbose = 0 # Usually fine to ignore warnings
+    verbose = 3 # Usually fine to ignore warnings
     
     if verbose>1:
         print('\n\n\nRedoing parameters...\n\n')
