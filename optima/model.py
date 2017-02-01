@@ -71,7 +71,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Cascade-related parameters
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
     treatfail       = simpars['treatfail']*dt                             # Probability of treatment failure in 1 time step
-    numvlmon        = simpars['numvlmon']*dt                              # Probability of getting virally monitored in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
     aidslinktocare  = 1.-exp(-dt/(maximum(eps,simpars['aidslinktocare'])))# Probability of being linked to care in 1 time step for people with AIDS
     leavecare       = simpars['leavecare']*dt                             # Proportion of people lost to follow-up per year
@@ -170,6 +169,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Intervention uptake (P=proportion, N=number)
     sharing   = simpars['sharing']      # Sharing injecting equiptment (P)
     numtx     = simpars['numtx']        # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
+    numvlmon  = simpars['numvlmon']*dt  # Number of viral load tests done per time step (N)
     hivtest   = simpars['hivtest']*dt   # HIV testing (P) [npop,npts]
     aidstest  = simpars['aidstest']*dt  # HIV testing in AIDS stage (P) [npts]
     numcirc   = simpars['numcirc']      # Number of programmatic circumcisions performed (N)
@@ -610,14 +610,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 else: # Probability of being lost
                     thistransit[fromstate][prob][ts] *= lossprob[cd4]
     
-        # USVL to SVL
-        svlprob = freqvlmon[t] if isnan(propsupp[t]) else 0.
-        for fromstate in usvl:
-            for ts, tostate in enumerate(thistransit[fromstate][to]):
-                if tostate in usvl: # Probability of remaining unsuppressed
-                    thistransit[fromstate][prob][ts] *= (1.-svlprob)
-                elif tostate in svl: # Probability of becoming suppressed
-                    thistransit[fromstate][prob][ts] *= svlprob
+#        # USVL to SVL
+#        svlprob = freqvlmon[t] if isnan(propsupp[t]) else 0.
+#        for fromstate in usvl:
+#            for ts, tostate in enumerate(thistransit[fromstate][to]):
+#                if tostate in usvl: # Probability of remaining unsuppressed
+#                    thistransit[fromstate][prob][ts] *= (1.-svlprob)
+#                elif tostate in svl: # Probability of becoming suppressed
+#                    thistransit[fromstate][prob][ts] *= svlprob
                                 
         # SVL to USVL
         usvlprob = treatfail if isnan(propsupp[t]) else 0.
@@ -782,8 +782,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     
                 # In this section, we shift people around the cascade until we meet some targeted number/proportion.
                 # If any of the prop parameters are non-nan, that means that we've got some proportion target.
-                # However, treatment is special because it is always set by shifting numbers.
-                if name is 'proptx' or ~isnan(prop[t+1]): 
+                # However, treatment and VL monitoring are special because it is always set by shifting numbers.
+                if name in ['proptx','propsupp'] or ~isnan(prop[t+1]): 
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
@@ -792,6 +792,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
+
+                    # We figure out how many people should be moved to suppressed based on how many VL tests were done
+                    if name is 'propsupp' and isnan(prop[t+1]): wanted = numvlmon[t+1] # If propsupp is nan, we use numvlmon
 
                     # Figure out how many people we currently have...
                     actual          = people[num,:,t+1].sum() # ... in the higher cascade state
