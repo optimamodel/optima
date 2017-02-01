@@ -70,6 +70,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
     # Cascade-related parameters
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
+    requiredvl      = simpars['requiredvl']*dt                            # Number of VL tests that should be done per person per time step
     treatfail       = simpars['treatfail']*dt                             # Probability of treatment failure in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
     aidslinktocare  = 1.-exp(-dt/(maximum(eps,simpars['aidslinktocare'])))# Probability of being linked to care in 1 time step for people with AIDS
@@ -794,7 +795,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
 
                     # We figure out how many people should be moved to suppressed based on how many VL tests were done
-                    if name is 'propsupp' and isnan(prop[t+1]): wanted = numvlmon[t+1] # If propsupp is nan, we use numvlmon
+                    if name is 'propsupp' and isnan(prop[t+1]):
+                        wanted = numvlmon[t+1] # If propsupp is nan, we use numvlmon
 
                     # Figure out how many people we currently have...
                     actual          = people[num,:,t+1].sum() # ... in the higher cascade state
