@@ -67,17 +67,6 @@ def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, d
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
     return filename
 
-
-def abbreviate(param):
-    words = re.sub('([^a-z0-9+]+)',' ',param.lower()).strip().split()
-    short_param = ''
-    for w in words:
-        if re.match('[a-z]+',w):
-            short_param += w[0]
-        else:
-            short_param += w
-    return short_param.upper()
-
 def years_range(data_start, data_end):
     return [x for x in range(data_start, data_end+1)]
 
@@ -94,6 +83,7 @@ class OptimaContent:
         self.row_formats = None
         self.assumption_properties = {'title':None, 'connector':'OR', 'columns':['Assumption']}
         self.assumption_data = assumption_data
+        self.rawpars = loadpartable()
 
     def set_row_format(self, row_format):
         self.row_format = row_format
@@ -154,14 +144,14 @@ def make_populations_range(name, items):
     for item in items:
         if type(item) is dict:
             item_name = item['name']
-            short_name = item.get('short', abbreviate(item_name))
+            short_name = item.get('short', item_name)
             male = item.get('male', False)
             female = item.get('female', False)
             age_from = item.get('age_from',15)
             age_to = item.get('age_to',49)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            short_name = abbreviate(item)
+            short_name = item
             male = False
             female = False
             age_from = 15
@@ -517,10 +507,13 @@ class OptimaSpreadsheet:
                 assumption.append('')
         return {'data':newdata,'assumption_data':assumption}
 
-    def getshortname(self, name):
+    def getdata(self, name):
         ''' Get the short name of indicators in the data sheet'''
-        rawpars = loadpartable()
-        return [par['datashort'] for par in rawpars if par['dataname']==name][0]
+        for par in self.rawpars:
+            if par['dataname']==name:
+                shortname = par['dataname']
+#        return [par['datashort']  if ][0]
+        return self.data.get(shortname)
 
     def generate_meta(self):
         self.current_sheet.set_column(2,2,15)
@@ -555,8 +548,8 @@ class OptimaSpreadsheet:
         current_row = 0
         name = 'Population size'
         if self.data is not None:
-            data = self.formatkeydata(self.data.get(self.getshortname(name)))['data']
-            assumption_data = self.formatkeydata(self.data.get(self.getshortname(name)))['assumption_data']
+            data = self.formatkeydata(self.getdata(name))['data']
+            assumption_data = self.formatkeydata(self.getdata(name))['assumption_data']
         current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
                             row_format=OptimaFormats.GENERAL, assumption=True, row_levels=row_levels, data=data, assumption_data=assumption_data)
             
@@ -566,8 +559,8 @@ class OptimaSpreadsheet:
         for name in ['Percentage of people who die from non-HIV-related causes per year',
         'Prevalence of any ulcerative STIs', 'Tuberculosis prevalence']:
             if self.data is not None:
-                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
-                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+                data = self.formattimedata(self.getdata(name))['data']
+                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
                 
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
                 row_format=OptimaFormats.DECIMAL_PERCENTAGE, assumption=True, data=data, assumption_data=assumption_data)
@@ -586,8 +579,8 @@ class OptimaSpreadsheet:
         ]
         for (method, name, row_format, row_range) in methods_names_formats_ranges:
             if self.data is not None:
-                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
-                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+                data = self.formattimedata(self.getdata(name))['data']
+                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
             current_row = getattr(self, method)(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
 
     def generate_opt(self, data=None, assumption_data=None):
@@ -609,8 +602,8 @@ class OptimaSpreadsheet:
         
         for (name, row_format, row_range) in names_formats_ranges:
             if self.data is not None:
-                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
-                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+                data = self.formattimedata(self.getdata(name))['data']
+                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
             current_row = self.emit_years_block(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
     
     def generate_casc(self, data=None, assumption_data=None):
@@ -624,8 +617,8 @@ class OptimaSpreadsheet:
         ]
         for (method, name, row_format, row_range) in methods_names_formats_ranges:
             if self.data is not None:
-                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
-                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+                data = self.formattimedata(self.getdata(name))['data']
+                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
             current_row = getattr(self, method)(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
 
     def generate_sex(self, data=None, assumption_data=None):
@@ -641,8 +634,8 @@ class OptimaSpreadsheet:
 
         for (name, row_format, row_range) in names_formats_ranges:
             if self.data is not None:
-                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
-                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+                data = self.formattimedata(self.getdata(name))['data']
+                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
             current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True, data=data, assumption_data=assumption_data)
 
     def generate_inj(self, data=None, assumption_data=None):
@@ -654,8 +647,8 @@ class OptimaSpreadsheet:
 
         for (name, row_format, row_range) in names_formats_ranges:
             if self.data is not None:
-                data = self.formattimedata(self.data.get(self.getshortname(name)))['data']
-                assumption_data = self.formattimedata(self.data.get(self.getshortname(name)))['assumption_data']
+                data = self.formattimedata(self.getdata(name))['data']
+                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
             current_row = self.emit_years_block(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
 
     def generate_ptrans(self, data=None):
@@ -667,7 +660,7 @@ class OptimaSpreadsheet:
         for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            if self.data is not None: data = self.data.get(self.getshortname(name))
+            if self.data is not None: data = self.getdata(name)
             if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range, data=data)
             else: current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range, data=data)
 
@@ -805,6 +798,9 @@ class OptimaSpreadsheet:
         self.book.close()
 
 
+
+
+
 class OptimaProgramSpreadsheet:
     def __init__(self, name, pops, progs, data_start = default_datastart, data_end = default_dataend, verbose = 0):
         self.sheet_names = odict([
@@ -888,48 +884,4 @@ class OptimaProgramSpreadsheet:
             self.sheets[name] = self.book.add_worksheet(self.sheet_names[name])
             self.current_sheet = self.sheets[name]
             getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
-        self.book.close()
-
-
-
-
-
-class OptimaGraphTable:
-    def __init__ (self, sheets, verbose = 2):
-        self.verbose = verbose
-        self.sheets = sheets
-
-    def create(self, path):
-        if self.verbose >=1:
-            print("Creating graph table %s" % path)
-
-        self.book = xlsxwriter.Workbook(path)
-        self.formats = OptimaFormats(self.book)
-        sheet_name = 'GRAPH DATA'
-
-        k = 0
-        for s in self.sheets:
-            k += 1
-            name = sheet_name + " " + str(k)
-            sheet = self.book.add_worksheet(name)
-
-            titles = [c['title'] for c in s["columns"]]
-            max_row = max([len(c['data']) for c in s["columns"]])
-
-            for i in range(len(s["columns"])):
-                sheet.set_column(i,i,20)
-
-            self.formats.write_block_name(sheet, s["name"], 0) #sheet name
-
-            for i,title in enumerate(titles):
-                self.formats.write_rowcol_name(sheet, 1, i, str(title))
-            row =0
-            while row<=max_row:
-                for i,col in enumerate(s["columns"]):
-                    if row<len(col['data']):
-                        data = col['data'][row]
-                    else:
-                        data = None
-                    self.formats.write_unlocked(sheet, row+2, i, data)
-                row+=1
         self.book.close()
