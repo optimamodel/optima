@@ -225,88 +225,88 @@ class Resultset(object):
         self.main['force'].pops = quantile(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['force'].tot = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
-        self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
-        self.main['numinci'].tot = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles).round()
+        self.main['numinci'].tot = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: 
             self.main['numinci'].datatot = processdata(data['optnuminfect'])
             self.main['numinci'].estimate = True # It's not real data, just an estimate
         
-        self.main['numincibypop'].pops = quantile(allincibypop[:,:,indices], quantiles=quantiles)
-        self.main['numincibypop'].tot = quantile(allincibypop[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.main['numincibypop'].pops = quantile(allincibypop[:,:,indices], quantiles=quantiles).round()
+        self.main['numincibypop'].tot = quantile(allincibypop[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: 
             self.main['numincibypop'].datatot = processdata(data['optnuminfect'])
             self.main['numincibypop'].estimate = True # It's not real data, just an estimate
         
-        self.main['nummtct'].pops = quantile(allmtct[:,:,indices], quantiles=quantiles)
-        self.main['nummtct'].tot = quantile(allmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
+        self.main['nummtct'].pops = quantile(allmtct[:,:,indices], quantiles=quantiles).round()
+        self.main['nummtct'].tot = quantile(allmtct[:,:,indices].sum(axis=1), quantiles=quantiles).round()
 
-        self.main['numhivbirths'].pops = quantile(allhivbirths[:,:,indices], quantiles=quantiles)
-        self.main['numhivbirths'].tot = quantile(allhivbirths[:,:,indices].sum(axis=1), quantiles=quantiles)
+        self.main['numhivbirths'].pops = quantile(allhivbirths[:,:,indices], quantiles=quantiles).round()
+        self.main['numhivbirths'].tot = quantile(allhivbirths[:,:,indices].sum(axis=1), quantiles=quantiles).round()
 
-        self.main['numpmtct'].pops = quantile(allpmtct[:,:,indices], quantiles=quantiles)
-        self.main['numpmtct'].tot = quantile(allpmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
+        self.main['numpmtct'].pops = quantile(allpmtct[:,:,indices], quantiles=quantiles).round()
+        self.main['numpmtct'].tot = quantile(allpmtct[:,:,indices].sum(axis=1), quantiles=quantiles).round()
 
-        self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
-        self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles).round()
+        self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: 
             self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
             self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
         
-        self.main['numdeath'].pops = quantile(alldeaths[:,:,:,indices].sum(axis=1), quantiles=quantiles)
-        self.main['numdeath'].tot = quantile(alldeaths[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numdeath'].pops = quantile(alldeaths[:,:,:,indices].sum(axis=1), quantiles=quantiles).round()
+        self.main['numdeath'].tot = quantile(alldeaths[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: 
             self.main['numdeath'].datatot = processdata(data['optdeath'])
             self.main['numdeath'].estimate = True # It's not real data, just an estimate
         
-        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is health state
+        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 2 is populations
         if data is not None: 
             self.main['numplhiv'].datatot = processdata(data['optplhiv'])
             self.main['numplhiv'].estimate = True # It's not real data, just an estimate
         
-        self.main['numaids'].pops = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numaids'].tot = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numaids'].pops = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is health state
+        self.main['numaids'].tot = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 2 is populations
 
-        self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
         
         self.main['propdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['propdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'])
         
-        self.main['numevercare'].pops = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numevercare'].tot = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numevercare'].pops = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numevercare'].tot = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['propevercare'].pops = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['propevercare'].tot = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
 
-        self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['propincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['propincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['propincare'].datatot = processdata(data['optpropcare'])
 
-        self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
-        self.main['costtreat'].pops = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['costtreat'].tot = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['costtreat'].pops = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['costtreat'].tot = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['proptreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['proptreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['proptreat'].datatot = processdata(data['optproptx'])
 
-        self.main['numsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['propsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['propsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['propsuppressed'].datatot = processdata(data['optpropsupp'])
 
-        self.main['popsize'].pops = quantile(allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) 
-        self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
+        self.main['popsize'].pops = quantile(allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles).round()
+        self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round()
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
         upperagelims = array(self.data['pops']['age'])[:,1]
@@ -330,8 +330,8 @@ class Resultset(object):
             healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
             dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
             dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-        self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles)
-        self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles)
+        self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles).round()
+        self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles).round()
         
         return None # make()
         
