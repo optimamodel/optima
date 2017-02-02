@@ -1195,7 +1195,7 @@ class Parameterset(object):
         return None
 
 
-    def manualfitlists(self, parsubset=None):
+    def manualfitlists(self, parsubset=None, advanced=False):
         ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
             raise OptimaException("No parameters available!")
@@ -1223,32 +1223,40 @@ class Parameterset(object):
             par = tmppars[key]
             if hasattr(par,
                        'fittable') and par.fittable != 'no':  # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-                if par.fittable == 'meta':
-                    keylist.append(key)
-                    subkeylist.append(None)
-                    typelist.append(par.fittable)
-                    valuelist.append(par.m)
-                    labellist.append('%s -- meta' % par.name)
-                elif par.fittable == 'const':
+                if par.fittable=='meta':
+                    if advanced: # By default, don't include these
+                        keylist.append(key)
+                        subkeylist.append(None)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.m)
+                        labellist.append('%s -- meta' % par.name)
+                elif par.fittable=='const':
                     keylist.append(key)
                     subkeylist.append(None)
                     typelist.append(par.fittable)
                     valuelist.append(par.y)
                     labellist.append(par.name)
-                elif par.fittable == 'year':
+                elif par.fittable=='advanced': # These are also constants, but skip by default
+                    if advanced:
+                        keylist.append(key)
+                        subkeylist.append(None)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.y)
+                        labellist.append(par.name)
+                elif par.fittable=='year':
                     keylist.append(key)
                     subkeylist.append(None)
                     typelist.append(par.fittable)
                     valuelist.append(par.t)
                     labellist.append(par.name)
-                elif par.fittable in ['pop', 'pship']:
+                elif par.fittable=='pop':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.fittable)
                         valuelist.append(par.y[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
-                elif par.fittable == 'exp':
+                elif par.fittable=='exp':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
@@ -1277,24 +1285,29 @@ class Parameterset(object):
         ## Loop over all parameters and update them
         verbose = 0
         for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
-            if ptype == 'meta':  # Metaparameters
+            if ptype=='meta':  # Metaparameters
                 vtype = type(tmppars[key].m)
                 tmppars[key].m = vtype(value)
                 printv('%s.m = %s' % (key, value), 4, verbose)
-            elif ptype in ['pop', 'pship']:  # Populations or partnerships
+            elif ptype=='pop':  # Populations or partnerships
                 vtype = type(tmppars[key].y[subkey])
                 tmppars[key].y[subkey] = vtype(value)
                 printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
-            elif ptype == 'exp':  # Population growth
+            elif ptype=='exp':  # Population growth
                 vtype = type(tmppars[key].i[subkey])
                 tmppars[key].i[subkey] = vtype(value)
                 printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
-            elif ptype == 'const':  # Constants
+            elif ptype in ['const', 'advanced']:  # Constants
                 vtype = type(tmppars[key].y)
                 tmppars[key].y = vtype(value)
                 printv('%s.y = %s' % (key, value), 4, verbose)
+            elif ptype=='year':  # Year parameters
+                vtype = type(tmppars[key].t)
+                tmppars[key].t = vtype(value)
+                printv('%s.t = %s' % (key, value), 4, verbose)
             else:
-                print('Parameter type "%s" not implemented!' % ptype)
+                errormsg = 'Parameter type "%s" not implemented!' % ptype
+                raise OptimaException(errormsg)
     
                 # parset.interp() and calculate results are supposed to be called from the outside
     

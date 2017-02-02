@@ -387,31 +387,17 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     ## Define update step
     def manualupdate():
         ''' Update GUI with new results '''
-        global results, tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
+        global results, tmppars, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
         
-        ## Loop over all parameters and update them
-        for b,box in enumerate(boxes):
-            if fulltypelist[b]=='meta': # Metaparameters
-                key = fullkeylist[b]
-                tmppars[key].m = eval(str(box.text()))
-                printv('%s.m = %s' % (key, box.text()), 3, verbose)
-            elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship': # Populations or partnerships
-                key = fullkeylist[b]
-                subkey = fullsubkeylist[b]
-                tmppars[key].y[subkey] = eval(str(box.text()))
-                printv('%s.y[%s] = %s' % (key, subkey, box.text()), 3, verbose)
-            elif fulltypelist[b]=='exp': # Population growth
-                key = fullkeylist[b]
-                subkey = fullsubkeylist[b]
-                tmppars[key].i[subkey] = eval(str(box.text()))
-                printv('%s.i[%s] = %s' % (key, subkey, box.text()), 3, verbose)
-            elif fulltypelist[b]=='const': # Constants
-                key = fullkeylist[b]
-                tmppars[key].y = eval(str(box.text()))
-                printv('%s.y = %s' % (key, box.text()), 3, verbose)
-            else:
-                printv('Parameter type "%s" not implemented!' % fulltypelist[b], 2, verbose)
+        # Create lists for update
+        mflists = dict()
+        mflists['keys'] = fullkeylist
+        mflists['subkeys'] = fullsubkeylist
+        mflists['types'] = fulltypelist
+        mflists['values'] = fullvallist
+        parset.update(mflists)
         
+        # Rerun
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
         updateplots(tmpresults=results, **kwargs)
