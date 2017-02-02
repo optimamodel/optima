@@ -184,18 +184,18 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
         
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
-#        try:
-        validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
-        par.t[key] = getvaliddata(data['years'], validdata, defaultind=defaultind) 
-        if sum(validdata): 
-            par.y[key] = sanitize(data[short][row])
-        else:
-            printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
-            par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
-            par.t[key] = array([0.0])
-#        except Exception as E:
-#            errormsg = 'Error converting time parameter "%s", key "%s": %s' % (name, key, E.message)
-#            raise OptimaException(errormsg)
+        try:
+            validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
+            par.t[key] = getvaliddata(data['years'], validdata, defaultind=defaultind) 
+            if sum(validdata): 
+                par.y[key] = sanitize(data[short][row])
+            else:
+                printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
+                par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
+                par.t[key] = array([0.0])
+        except:
+            errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
+            raise OptimaException(errormsg)
 
     return par
 
