@@ -168,7 +168,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     Lab = Program(short='Lab',
                   name='Lab monitoring',
                   category='Care and treatment',
-                  targetpars=[{'param': 'freqvlmon', 'pop': 'tot'}],# for pop in pops],
+                  targetpars=[{'param': 'numvlmon', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
                   criteria = {'hivstatus': hivstates, 'pregnant': False})
     
@@ -420,7 +420,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
     
         R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
-        R.covout['freqvlmon']['tot'].addccopar({'intercept': (0.5,0.6), 't': 2016.0, 'Lab': (1.6,1.8)})
+        R.covout['numvlmon']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
         
         R.covout['leavecare']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
         R.covout['leavecare']['Clients'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
@@ -560,7 +560,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
 
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-        R.covout['freqvlmon']['tot'].addccopar({'intercept': (0.5,0.6), 't': 2016.0, 'Lab': (1.6,1.8)})
+        R.covout['numvlmon']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
         R.covout['numcirc']['MSM'].addccopar({'intercept': (0,0), 't': 2016.0})
         R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
