@@ -330,6 +330,8 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
             validdata = array(array(data)[validindices]) # Store each year
         elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
             validdata = array([array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+        else:
+            raise Exception('Array sizes are mismatched: %i vs. %i' % (len(data), len(validindices)))    
     else: 
         validdata = array([]) # No valid data, return an empty array
     return validdata
