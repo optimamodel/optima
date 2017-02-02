@@ -23,6 +23,31 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     return None
 
 
+def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False):
+    ''' 
+    Remove a parameter from a parset
+    '''
+    if short is not None:
+        for ps in project.parsets.values():
+            if op.compareversions(project.version, '2.2')>=0: # Newer project, pars is dict
+                try: ps.pars.pop(short) # Fail loudly
+                except:
+                    if verbose: print('Failed to remove parameter %s' % short)
+                    if die: raise
+            else: # Older project, pars is list of dicts
+                for i in range(len(ps.pars)):
+                    try: ps.pars[i].pop(short) # Fail loudly
+                    except:
+                        if verbose: print('Failed to remove parameter %s' % short)
+                        if die: raise
+    if datashort is not None:
+        try: project.data.pop(datashort) # Fail loudly
+        except:
+            if verbose: print('Failed to remove data parameter %s' % datashort)
+            if die: raise
+    return None
+
+
 def versiontostr(project, **kwargs):
     """
     Convert Optima version number from number to string.
@@ -56,10 +81,7 @@ def delimmediatecare(project, **kwargs):
     """
     Migration between Optima 2.0.2 and 2.0.3 -- WARNING, will this work for scenarios etc.?
     """
-    for ps in project.parsets.values():
-        for i in range(len(ps.pars)):
-            ps.pars[i].pop('immediatecare', None)
-    project.data.pop('immediatecare', None)
+    removeparameter(project, short='immediatecare', datashort='immediatecare')
     project.version = "2.0.3"
     return None
 
@@ -386,7 +408,7 @@ def redoparameters(project, **kwargs):
     Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
     
-    verbose = 1 # Usually fine to ignore warnings
+    verbose = 0 # Usually fine to ignore warnings
     if verbose>1:
         print('\n\n\nRedoing parameters...\n\n')
     
@@ -425,10 +447,12 @@ def redoparameters(project, **kwargs):
                 # Handle specific changes
                 if isinstance(newpars[parname], op.Metapar): # Get priors right
                     newpars[parname].prior = op.odict()
-                    newpars[parname].prior = op.odict()
                     for popkey in newpars[parname].keys():
                         newpars[parname].prior[popkey] = op.Dist() # Initialise with defaults
                         newpars[parname].prior[popkey].pars *= newpars[parname].y[popkey]
+                if isinstance(newpars[parname], op.Constant): # Get priors right, if required
+                    if all(newpars['treatvs'].prior.pars==op.Dist().pars): # See if defaults are used
+                        newpars[parname].prior.pars *= newpars[parname].y # If so, rescale
                 elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
                     newpars['popsize'].i = op.odict()
                     newpars['popsize'].e = op.odict()
@@ -461,25 +485,29 @@ def redovlmon(project, **kwargs):
     """
     
     oldvldata = op.dcp(project.data['freqvlmon']) # Get out old VL data
-    project.data.pop('freqvlmon', None) # Delete it from data structure
     project.data['numvlmon'] = [[oldvldata[0][-1]*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
-    project.data['requiredvl'] = [2.0, 1.5, 2.5]
+    requiredvldata = [2.0, 1.5, 2.5]
+    project.data['const']['requiredvl'] = requiredvldata
+    
+    removeparameter(project, short='freqvlmon', datashort='freqvlmon')
     
     short = 'numvlmon'
-    copyfrom = 'fixpropdx'
-    kwargs['name'] = 'Year to fix people on ART with viral suppression'
-    kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
-    kwargs['datashort'] = 'fixpropsupp'
+    copyfrom = 'numtx'
+    kwargs['name'] = 'Viral load monitoring (number/year)'
+    kwargs['dataname'] = 'Viral load monitoring (number/year)'
+    kwargs['datashort'] = 'numvlmon'
+    kwargs['t'] = op.odict([('tot',array([2015.]))])
+    kwargs['y'] = op.odict([('tot',array([project.data['numvlmon'][0][-1]]))])
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
-
-#    # Loop over all parsets
-#    for ps in project.parsets.values():
-#
-#        ps.pars.pop('freqvlmon',None)
-#        ps.pars['numvlmon'] = newpars['numvlmon']
-#        ps.pars['numvlmon'].y['tot'] = array([project.data['numvlmon'][0][-1]]) # Just take one value
-#        ps.pars['numvlmon'].t['tot'] = array([2015.]) # Just set a year
-#        ps.pars['numvlmon'].t['tot'] = array([2015.]) # Just set a year
+    
+    short = 'requiredvl'
+    copyfrom = 'treatvs'
+    kwargs['name'] = 'Number of VL tests recommended per person per year'
+    kwargs['dataname'] = 'Number of VL tests recommended per person per year'
+    kwargs['datashort'] = 'requiredvl'
+    kwargs['y'] = requiredvldata[0]
+    kwargs['prior'] = {'dist':'uniform', 'pars':(requiredvldata[1], requiredvldata[2])}
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
     project.version = "2.2.1"
 

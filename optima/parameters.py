@@ -195,7 +195,7 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
                 par.t[key] = array([0.0])
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
-            print(errormsg)
+            printv(errormsg, 1, verbose)
             raise
 
     return par
