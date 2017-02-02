@@ -153,6 +153,9 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
             weightedyear = mean(sanitizedy[key][:]*sanitizedt[key][:])/meanpopulationsize # Calculate the "mean year"
             par.i[key] = meanpopulationsize*(1+par.e[key])**(startyear-weightedyear) # Project backwards to starting population size
     
+    for key in keys:
+        par.i[key] = round(par.i[key]) # Fractional people look weird
+        
     if doplot:
         from pylab import figure, subplot, plot, scatter, arange, show, title
         nplots = len(par.keys())
