@@ -355,7 +355,7 @@ class Resultset(object):
                 else:                       data = self.main[key].tot[ind][:]
                 output += self.main[key].name+sep+popkey+sep
                 for t in range(npts):
-                    if self.main[key].ispercentage: output += ('%s'+sep) % sigfig(data[t])
+                    if self.main[key].ispercentage: output += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                           output += ('%i'+sep) % data[t]
        
         if len(self.budget)>ind: # WARNING, does not support multiple years
