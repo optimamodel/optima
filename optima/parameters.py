@@ -195,7 +195,8 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
                 par.t[key] = array([0.0])
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
-            raise OptimaException(errormsg)
+            print(errormsg)
+            raise
 
     return par
 
@@ -271,7 +272,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
+def makepars(data=None, filename='model-inputs.xlsx', verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
