@@ -97,7 +97,7 @@ def make_mpld3_graph_dict(result, which=None):
         }
     """
 
-    graph_selectors = op.getplotselections(result)
+    graph_selectors = op.getplotselections(result, advanced=False) # BOSCO MODIFY
     keys = graph_selectors['keys']
     names = graph_selectors['names']
     checks = graph_selectors['defaults']
