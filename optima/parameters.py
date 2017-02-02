@@ -272,14 +272,14 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data=None, filename='model-inputs.xlsx', verbose=2):
+def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2017jan05 by cliffk
+    Version: 2017feb02 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -315,45 +315,51 @@ def makepars(data=None, filename='model-inputs.xlsx', verbose=2):
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
         
-        # Shorten key variables
-        partype = rawpar.pop('partype')
-        parname = rawpar['short']
-        by = rawpar['by']
-        fromdata = rawpar['fromdata']
-        rawpar['verbose'] = verbose # Easiest way to pass it in
+        try: # Optionally keep going if some parameters fail
         
-        
-        # Decide what the keys are
-        if by=='tot': keys = totkey
-        elif by=='pop': keys = popkeys
-        elif by=='fpop': keys = fpopkeys
-        elif by=='mpop': keys = mpopkeys
-        else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
-        if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed
-        
-        # Decide how to handle it based on parameter type
-        if partype=='initprev': # Initialize prevalence only
-            pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
-        
-        elif partype=='popsize': # Population size only
-            pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
-        
-        elif partype=='timepar': # Otherwise it's a regular time par, made from data
-            if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-            else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
-        
-        elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] if fromdata else nan
-            low = data['const'][parname][1] if fromdata else nan
-            high = data['const'][parname][2] if fromdata else nan
-            thisprior = {'dist':'uniform', 'pars':(low, high)} if fromdata else None
-            pars[parname] = Constant(y=best, prior=thisprior, **rawpar)
-        
-        elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
-            pars[parname] = Metapar(y=odict([(key,None) for key in keys]), **rawpar)
+            # Shorten key variables
+            partype = rawpar.pop('partype')
+            parname = rawpar['short']
+            by = rawpar['by']
+            fromdata = rawpar['fromdata']
+            rawpar['verbose'] = verbose # Easiest way to pass it in
             
-        elif partype=='yearpar': # Years to fix proportions of people at different cascade stages
-            pars[parname] = Yearpar(t=nan, **rawpar)
+            # Decide what the keys are
+            if by=='tot': keys = totkey
+            elif by=='pop': keys = popkeys
+            elif by=='fpop': keys = fpopkeys
+            elif by=='mpop': keys = mpopkeys
+            else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
+            if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed
+            
+            # Decide how to handle it based on parameter type
+            if partype=='initprev': # Initialize prevalence only
+                pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
+            
+            elif partype=='popsize': # Population size only
+                pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
+            
+            elif partype=='timepar': # Otherwise it's a regular time par, made from data
+                if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
+                else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
+            
+            elif partype=='constant': # The constants, e.g. transmfi
+                best = data['const'][parname][0] if fromdata else nan
+                low = data['const'][parname][1] if fromdata else nan
+                high = data['const'][parname][2] if fromdata else nan
+                thisprior = {'dist':'uniform', 'pars':(low, high)} if fromdata else None
+                pars[parname] = Constant(y=best, prior=thisprior, **rawpar)
+            
+            elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
+                pars[parname] = Metapar(y=odict([(key,None) for key in keys]), **rawpar)
+                
+            elif partype=='yearpar': # Years to fix proportions of people at different cascade stages
+                pars[parname] = Yearpar(t=nan, **rawpar)
+        
+        except Exception as E:
+            errormsg = 'Failed to convert parameter %s:\n%s' % (parname, E.message)
+            if die: raise OptimaException(errormsg)
+            else: printv(errormsg, 1, verbose)
     
     ###############################################################################
     ## Tidy up -- things that can't be converted automatically

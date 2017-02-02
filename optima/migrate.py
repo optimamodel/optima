@@ -386,21 +386,26 @@ def redoparameters(project, **kwargs):
     Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
     
-    verbose = 0 # Usually fine to ignore warnings
+    verbose = 1 # Usually fine to ignore warnings
     if verbose>1:
         print('\n\n\nRedoing parameters...\n\n')
     
     # Loop over all parsets
     for ps in project.parsets.values():
         oldpars = ps.pars[0]
-        newpars = op.makepars(data = project.data, verbose=0) # Remake parameters using data
+        newpars = op.makepars(data = project.data, verbose=0, die=False) # Remake parameters using data, forging boldly ahead come hell or high water
         
         oldparnames = oldpars.keys()
-        oldparnames.remove('label') # Never used
-        oldparnames.remove('sexworker') # Was removed also
+        newparnames = newpars.keys()
+        matchingnames = [parname for parname in oldparnames if parname in newparnames] # Find matches only
+        if verbose:
+            newonly = list(set(newparnames) - set(oldparnames))
+            oldonly = list(set(oldparnames) - set(newparnames))
+            if len(oldonly): print('The following parameters are old and not processed: %s' % oldonly)
+            if len(newonly): print('The following parameters are new and not processed: %s' % newonly)
         
         # Loop over everything else
-        for parname in oldparnames: # Keep going until everything is dealt with in both
+        for parname in matchingnames: # Keep going until everything is dealt with in both
             if verbose>1: print('Working on %s' % parname)
             
             # These can all be copied directly
@@ -455,13 +460,17 @@ def redovlmon(project, **kwargs):
     Migration between Optima 2.2 and 2.2.1 -- update the VL monitoring parameter
     """
     
-#    tmpproj = op.defaultproject(addprogset=False, addcostcovdata=False, usestandardcostcovdata=False, addcostcovpars=False, usestandardcostcovpars=False, addcovoutpars=False, dorun=False, verbose=0) # Create a new project with refreshed parameters
-#    newpars = op.dcp(tmpproj.pars())
-
     oldvldata = op.dcp(project.data['freqvlmon']) # Get out old VL data
     project.data.pop('freqvlmon', None) # Delete it from data structure
     project.data['numvlmon'] = [[oldvldata[0][-1]*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
     project.data['requiredvl'] = [2.0, 1.5, 2.5]
+    
+    short = 'numvlmon'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix people on ART with viral suppression'
+    kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
+    kwargs['datashort'] = 'fixpropsupp'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
 #    # Loop over all parsets
 #    for ps in project.parsets.values():
