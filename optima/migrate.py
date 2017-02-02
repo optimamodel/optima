@@ -386,7 +386,6 @@ def redoparameters(project, **kwargs):
     Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
     
-    tmpproj = op.defaultproject(addprogset=False, addcostcovdata=False, usestandardcostcovdata=False, addcostcovpars=False, usestandardcostcovpars=False, addcovoutpars=False, dorun=False, verbose=0) # Create a new project with refreshed parameters
     verbose = 3 # Usually fine to ignore warnings
     
     if verbose>1:
@@ -395,7 +394,7 @@ def redoparameters(project, **kwargs):
     # Loop over all parsets
     for ps in project.parsets.values():
         oldpars = ps.pars[0]
-        newpars = op.dcp(tmpproj.pars())
+        newpars = op.makepars(data = project.data) # Remake parameters using data
         
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()
@@ -403,11 +402,10 @@ def redoparameters(project, **kwargs):
         oldparnames.remove('label') # Never used
         oldparnames.remove('sexworker') # Was removed also
         
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        
         # Loop over everything else
-        count = 0
-        maxcount = 1000 # Arbitrary, just to avoid not hanging indefinitely with no warning
-        while len(newparnames)+len(oldparnames): # Keep going until everything is dealt with in both
-            parname = (newparnames+oldparnames)[0] # Get the first parameter name
+        for parname in oldparnames: # Keep going until everything is dealt with in both
             if verbose>1: print('Working on %s' % parname)
             
             if parname in newparnames and parname in oldparnames:
@@ -438,12 +436,6 @@ def redoparameters(project, **kwargs):
                 if verbose: 
                     print('WARNING, parameter %s does not exist in both sets' % parname)
                 
-            if parname in oldparnames: oldparnames.remove(parname) # We're dealing with it, so remove it
-            if parname in newparnames: newparnames.remove(parname) # We're dealing with it, so remove it
-            
-            count += 1
-            if count>maxcount: raise op.OptimaException('Seem to be stuck in an infinite loop updating parameters')
-        
         # Just a bug I noticed -- I think the definition of this parameter got inverted at some point
         for key in newpars['leavecare'].y:
             for i,val in enumerate(newpars['leavecare'].y[key]):
