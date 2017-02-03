@@ -1,7 +1,7 @@
 
 <div class="rich">
 
-  <h1>Welcome to Optima</h1>
+  <h1>Welcome to Optima <help-me help-id="project"></help-me></h1>
 
   <div style="padding-top:1em" ng-hide="projects.length">
     To begin, please create or upload a project:
@@ -52,6 +52,7 @@
           <span ng-show="sortType == 'creationTime' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'creationTime' && sortReverse" class="fa fa-caret-up"></span>
           <span ng-show="sortType != 'creationTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+          <help-me help-id="creation-date"></help-me>
         </th>
         <th ng-click="updateSorting('updatedTime')" class="sortable">
           Updated on

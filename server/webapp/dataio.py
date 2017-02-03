@@ -1460,3 +1460,9 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
     return convert_to_mpld3(plot)
 
 
+def load_help(help_id):
+    help = {
+        'project': 'Projects for Optima',
+        'creation-date': 'Date on which the project was created'
+    }
+    return { 'html': help.get(help_id, '') }
