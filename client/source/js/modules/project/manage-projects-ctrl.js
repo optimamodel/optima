@@ -252,17 +252,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
-      $scope.downloadSpreadsheet = function (name, id) {
-        return $http
-          .get(
-            '/api/project/'+ id + '/downloaddata',
-            {
-              headers: {'Content-type': 'application/octet-stream'},
-              responseType:'blob'
-            })
-          .success(function (response, status, headers, config) {
-            var blob = new Blob([response], { type: 'application/octet-stream' });
-            saveAs(blob, (name + '.xlsx'));
+      $scope.downloadPrjWithResults = function (name, id) {
+        $http.post(
+          '/api/download',
+          {
+            'name': 'download_project_with_result',
+            'args': [id]
+          },
+          {
+            headers: {'Content-type': 'application/octet-stream'},
+            responseType:'blob'
+          })
+          .then(function(response) {
+            var blob = new Blob([response.data], {type: 'application/octet-stream'});
+            saveAs(blob, (name + '.prj'));
           });
       };
 

@@ -480,9 +480,20 @@ def save_project_as_new(project, user_id):
 
     project.uid = project_record.id
 
-    for attr in ['parsets','progsets','scens','optims']:
+    for attr in ['parsets','progsets','scens','optims','results']:
         for obj in getattr(project,attr).values():
             obj.uid = op.uuid()
+
+    for result in project.results.values():
+        name = result.name
+        print(">> Store result: %s" % result.name)
+        if 'scenarios' in name:
+            update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
+        if 'optim' in name:
+            update_or_create_result_record_by_id(result, project.uid, None, 'optimization')
+        if 'parset' in name:
+            update_or_create_result_record_by_id(result, project.uid, result.parset.uid, 'calibration')
+    db.session.commit()
 
     project.created = datetime.now(dateutil.tz.tzutc())
     project.modified = datetime.now(dateutil.tz.tzutc())
@@ -542,6 +553,10 @@ def copy_project(project_id, new_project_name):
 def create_project_from_prj(prj_filename, project_name, user_id):
     """
     Returns the project id of the new project.
+        results.name
+            - 'scenarios' - scenarios results
+            - 'parset-' - calibration/autofit results
+            - 'optim-' - optimization results
     """
     project = op.dataio.loadobj(prj_filename)
     print('>> Migrating project from version %s' % project.version)
@@ -575,6 +590,29 @@ def download_project(project_id):
         dirname = TEMPLATEDIR
     filename = project_record.as_file(dirname)
     return dirname, filename
+
+
+def download_project_with_result(project_id):
+    """
+    Returns the filenae of the .prj binary of the project on the server
+    """
+    project_record = load_project_record(project_id, raise_exception=True)
+    project = project_record.load()
+    result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
+    is_save = False
+    if result_records is not None:
+        for result_record in result_records:
+            result = result_record.load()
+            project.addresult(result)
+            is_save = True
+    if is_save:
+        project_record.save_obj(project, is_skip_result=False)
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    filename = project_record.as_file(dirname)
+    print(">> Saving download_project %s %s" % (dirname, filename))
+    return os.path.join(dirname, filename)
 
 
 def update_project_from_prj(project_id, prj_filename):
@@ -938,8 +976,14 @@ def load_parset_graphs(
 def load_result(
         project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
         name=None, which=None):
-    result_records = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type)
+    kwargs = {
+        'calculation_type': calculation_type
+    }
+    if parset_id is not None:
+        kwargs['parset_id'] = parset_id
+    if project_id is not None:
+        kwargs['project_id'] = project_id
+    result_records = db.session.query(ResultsDb).filter_by(**kwargs)
     if result_records is None:
         return None
     for result_record in result_records:
@@ -1167,7 +1211,7 @@ def load_optimization_graphs(project_id, optimization_id, which):
     optimization = parse.get_optimization_from_project(project, optimization_id)
     result_name = "optim-" + optimization.name
     parset_id = project.parsets[optimization.parsetname].uid
-    result = load_result(project.uid, parset_id, "optimization", result_name, which)
+    result = load_result(project.uid, None, "optimization", result_name, which)
     if result is None:
         return {}
     else:
