@@ -8,12 +8,44 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     Use kwargs to arbitrarily specify the new parameter's properties.
     '''
     for ps in project.parsets.values():
-        for i in range(len(ps.pars)):
-            ps.pars[i][short] = op.dcp(project.pars()[0][copyfrom])
-            ps.pars[i][short].short = short
+        if op.compareversions(project.version, '2.2')>=0: # Newer project, pars is dict
+            ps.pars[short] = op.dcp(project.pars()[copyfrom])
+            ps.pars[short].short = short
             for kwargkey,kwargval in kwargs.items():
-                setattr(ps.pars[i][short], kwargkey, kwargval)
+                setattr(ps.pars[short], kwargkey, kwargval)
+        else: # Older project, pars is list of dicts
+            for i in range(len(ps.pars)):
+                ps.pars[i][short] = op.dcp(project.pars()[0][copyfrom])
+                ps.pars[i][short].short = short
+                for kwargkey,kwargval in kwargs.items():
+                    setattr(ps.pars[i][short], kwargkey, kwargval)
     project.data[short] = [[nan]*len(project.data['years'])]
+    return None
+
+
+def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False):
+    ''' 
+    Remove a parameter from a parset
+    '''
+    if short is not None:
+        for ps in project.parsets.values():
+            if op.compareversions(project.version, '2.2')>=0: # Newer project, pars is dict
+                try: ps.pars.pop(short) # Fail loudly
+                except:
+                    if verbose: print('Failed to remove parameter %s' % short)
+                    if die: raise
+            else: # Older project, pars is list of dicts
+                for i in range(len(ps.pars)):
+                    try: ps.pars[i].pop(short) # Fail loudly
+                    except:
+                        if verbose: print('Failed to remove parameter %s' % short)
+                        if die: raise
+    if datashort is not None:
+        try: project.data.pop(datashort) # Fail loudly
+        except:
+            if verbose: print('Failed to remove data parameter %s' % datashort)
+            if die: raise
+    return None
 
 
 def versiontostr(project, **kwargs):
@@ -49,10 +81,7 @@ def delimmediatecare(project, **kwargs):
     """
     Migration between Optima 2.0.2 and 2.0.3 -- WARNING, will this work for scenarios etc.?
     """
-    for ps in project.parsets.values():
-        for i in range(len(ps.pars)):
-            ps.pars[i].pop('immediatecare', None)
-    project.data.pop('immediatecare', None)
+    removeparameter(project, short='immediatecare', datashort='immediatecare')
     project.version = "2.0.3"
     return None
 
@@ -84,7 +113,7 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nstates   = len(project.settings.allstates) 
     project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
     project.settings.nhealth = len(project.settings.healthstates)
-    project.settings.transnorm = 0.8 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being the inverse of that)
+    project.settings.transnorm = 0.85 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being close to the inverse of that, value determined empirically)
 
     if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
@@ -353,6 +382,13 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['dataname'] = 'Year to fix PLHIV in care on treatment'
     kwargs['datashort'] = 'fixproptx'
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    
+    short = 'fixproppmtct'
+    copyfrom = 'fixpropdx'
+    kwargs['name'] = 'Year to fix pregnant women and mothers on PMTCT'
+    kwargs['dataname'] = 'Year to fix pregnant women and mothers on PMTCT'
+    kwargs['datashort'] = 'fixproppmtct'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
     short = 'fixpropsupp'
     copyfrom = 'fixpropdx'
@@ -369,53 +405,120 @@ def addpropsandcosttx(project, **kwargs):
 
 def redoparameters(project, **kwargs):
     """
-    Migration between Optima 2.1.10 and 2.1.11 -- update fields of parameters.
+    Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
     
-    tmpproj = op.defaultproject(verbose=0) # Create a new project with refreshed parameters
-    complain = False # Usually fine to ignore warnings
+    verbose = 0 # Usually fine to ignore warnings
+    if verbose>1:
+        print('\n\n\nRedoing parameters...\n\n')
     
     # Loop over all parsets
     for ps in project.parsets.values():
         oldpars = ps.pars[0]
-        ps.pars = op.dcp(tmpproj.pars())
-        for parname,par in oldpars.items():
-            try:
-                if parname=='init': parname = 'initprev' # Rename
-                for attr in ['y','t','m']:
-                    try:
+        newpars = op.makepars(data = project.data, verbose=0, die=False) # Remake parameters using data, forging boldly ahead come hell or high water
+        
+        oldparnames = oldpars.keys()
+        newparnames = newpars.keys()
+        matchingnames = [parname for parname in oldparnames if parname in newparnames] # Find matches only
+        if verbose:
+            newonly = list(set(newparnames) - set(oldparnames))
+            oldonly = list(set(oldparnames) - set(newparnames))
+            if len(oldonly): print('The following parameters are old and not processed: %s' % oldonly)
+            if len(newonly): print('The following parameters are new and not processed: %s' % newonly)
+        
+        # Loop over everything else
+        for parname in matchingnames: # Keep going until everything is dealt with in both
+            if verbose>1: print('Working on %s' % parname)
+            
+            # These can all be copied directly
+            if parname in op._parameters.generalkeys+op._parameters.staticmatrixkeys: 
+                if verbose>1: print('    Directly copying %s' % parname)
+                newpars[parname] = oldpars[parname]
+            
+            # These require a bit more work
+            else:
+                # Re-populate as many attributes as possible
+                for attr in oldpars[parname].__dict__.keys():
+                    if hasattr(newpars[parname], attr):
                         oldattr = getattr(oldpars[parname], attr)
-                        setattr(ps.pars[parname], attr, oldattr)
-                    except Exception as E:
-                        if complain:
-                            print('Could not set attribute %s for parameter %s' % (attr, parname))
-                            print(E.message)
-            except:
-                if complain:
-                    print('Could not process parameter %s' % parname)
+                        setattr(newpars[parname], attr, oldattr)
+                        if verbose>2: print('     Set %s' % attr)
                 
-        # Fix Popsizepar objects
-        for popkey in oldpars['popsize'].p.keys():
-            ps.pars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
-            ps.pars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
-        
+                # Handle specific changes
+                if isinstance(newpars[parname], op.Metapar): # Get priors right
+                    newpars[parname].prior = op.odict()
+                    for popkey in newpars[parname].keys():
+                        newpars[parname].prior[popkey] = op.Dist() # Initialise with defaults
+                        newpars[parname].prior[popkey].pars *= newpars[parname].y[popkey]
+                if isinstance(newpars[parname], op.Constant): # Get priors right, if required
+                    if all(newpars['treatvs'].prior.pars==op.Dist().pars): # See if defaults are used
+                        newpars[parname].prior.pars *= newpars[parname].y # If so, rescale
+                elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
+                    newpars['popsize'].i = op.odict()
+                    newpars['popsize'].e = op.odict()
+                    for popkey in oldpars['popsize'].p.keys():
+                        newpars['popsize'].i[popkey] = oldpars['popsize'].p[popkey][0]
+                        newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
+                elif isinstance(newpars[parname], op.Yearpar): # y attribute is renamed t
+                    newpars[parname].t = oldpars[parname].y
+                else: # Nothing to do
+                    if verbose>2: print('  Nothing special to do with %s' % parname)
+                
         # Just a bug I noticed -- I think the definition of this parameter got inverted at some point
-        for key in ps.pars['leavecare'].y:
-            for i,val in enumerate(ps.pars['leavecare'].y[key]):
+        resetleavecare = False
+        for key in newpars['leavecare'].y:
+            for i,val in enumerate(newpars['leavecare'].y[key]):
                 if val>0.5:
-                    ps.pars['leavecare'].y[key][i] = 0.2
-                    print('Leave care rate for population %s seemed to be too high, resetting to default of 0.2' % key)
+                    newpars['leavecare'].y[key][i] = 0.2
+        if verbose and resetleavecare: print('Leave care rate seemed too high (%0.1f), resetting to 0.2' % (val))
         
+        ps.pars = newpars # Keep the new version
     
-    project.version = "2.1.11"
+    project.version = "2.2"
     return None
 
+
+
+def redovlmon(project, **kwargs):
+    """
+    Migration between Optima 2.2 and 2.2.1 -- update the VL monitoring parameter
+    """
+    
+    oldvldata = op.dcp(project.data['freqvlmon']) # Get out old VL data
+    project.data['numvlmon'] = [[oldvldata[0][-1]*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
+    requiredvldata = [2.0, 1.5, 2.5]
+    project.data['const']['requiredvl'] = requiredvldata
+    
+    removeparameter(project, short='freqvlmon', datashort='freqvlmon')
+    
+    short = 'numvlmon'
+    copyfrom = 'numtx'
+    kwargs['name'] = 'Viral load monitoring (number/year)'
+    kwargs['dataname'] = 'Viral load monitoring (number/year)'
+    kwargs['datashort'] = 'numvlmon'
+    kwargs['t'] = op.odict([('tot',array([2015.]))])
+    kwargs['y'] = op.odict([('tot',array([project.data['numvlmon'][0][-1]]))])
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    
+    short = 'requiredvl'
+    copyfrom = 'treatvs'
+    kwargs['name'] = 'Number of VL tests recommended per person per year'
+    kwargs['dataname'] = 'Number of VL tests recommended per person per year'
+    kwargs['datashort'] = 'requiredvl'
+    kwargs['y'] = requiredvldata[0]
+    kwargs['prior'] = {'dist':'uniform', 'pars':(requiredvldata[1], requiredvldata[2])}
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+    project.version = "2.2.1"
+
+    return None
+        
 
 
 
 def redoprograms(project, **kwargs):
     """
-    Migration between Optima 2.1.11 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
+    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
     """
     project.version = "2.2"
     print('NOT IMPLEMENTED')
@@ -442,6 +545,7 @@ migrations = {
 '2.1.8': addoptimscaling,
 '2.1.9': addpropsandcosttx,
 '2.1.10': redoparameters,
+'2.2': redovlmon,
 #'2.2': redoprograms,
 }
 

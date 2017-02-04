@@ -14,14 +14,15 @@ from numbers import Number
 
 class Result(object):
     ''' Class to hold overall and by-population results '''
-    def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None):
+    def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None, estimate=False, defaultplot=None):
         self.name = name # Name of this parameter
         self.ispercentage = ispercentage # Whether or not the result is a percentage
         self.pops = pops # The model result by population, if available
         self.tot = tot # The model result total, if available
         self.datapops = datapops # The input data by population, if available
         self.datatot = datatot # The input data total, if available
-        self.estimate = False # If the input data is an estimate rather than real data
+        self.estimate = estimate # Whether or not the "data" is actually a model-based output
+        self.defaultplot = defaultplot if defaultplot is not None else 'stacked'
     
     def __repr__(self):
         ''' Print out useful information when called '''
@@ -89,21 +90,20 @@ class Resultset(object):
         self.main['numtreat']       = Result('PLHIV on treatment')
         self.main['numsuppressed']  = Result('Virally suppressed PLHIV')
         
-        self.main['costtreat']      = Result('Annual treatment spend')
-
-        self.main['propdiag']       = Result('Diagnosed PLHIV (%)', ispercentage=True)
-        self.main['propevercare']   = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True)
-        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True)
-        self.main['proptreat']      = Result('PLHIV in care who are on treatment (%)', ispercentage=True)
-        self.main['propsuppressed'] = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True)
+        self.main['propdiag']       = Result('Diagnosed PLHIV (%)', ispercentage=True, defaultplot='total')
+        self.main['propevercare']   = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True, defaultplot='total')
+        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True, defaultplot='total')
+        self.main['proptreat']      = Result('PLHIV in care who are on treatment (%)', ispercentage=True, defaultplot='total')
+        self.main['propsuppressed'] = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True, defaultplot='total')
         
-        self.main['prev']           = Result('HIV prevalence (%)', ispercentage=True)
-        self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True)
+        self.main['prev']           = Result('HIV prevalence (%)', ispercentage=True, defaultplot='population')
+        self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
         self.main['numnewdiag']     = Result('New diagnoses')
         self.main['nummtct']        = Result('HIV+ births')
         self.main['numhivbirths']   = Result('Births to HIV+ women')
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
+        self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
 
         self.other = odict() # For storing other results -- not available in the interface

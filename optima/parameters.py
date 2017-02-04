@@ -14,6 +14,8 @@ import xlrd
 from os import path, sep
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
+generalkeys = ['male', 'female', 'popkeys', 'injects', 'rawtransit'] # General parameter keys that are just copied
+staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
 
 #############################################################################################################################
 ### Functions to load the parameters and transitions
@@ -193,7 +195,8 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
                 par.t[key] = array([0.0])
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
-            raise OptimaException(errormsg)
+            printv(errormsg, 1, verbose)
+            raise
 
     return par
 
@@ -269,14 +272,14 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
+def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2017jan05 by cliffk
+    Version: 2017feb02 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -312,45 +315,51 @@ def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
         
-        # Shorten key variables
-        partype = rawpar.pop('partype')
-        parname = rawpar['short']
-        by = rawpar['by']
-        fromdata = rawpar['fromdata']
-        rawpar['verbose'] = verbose # Easiest way to pass it in
+        try: # Optionally keep going if some parameters fail
         
-        
-        # Decide what the keys are
-        if by=='tot': keys = totkey
-        elif by=='pop': keys = popkeys
-        elif by=='fpop': keys = fpopkeys
-        elif by=='mpop': keys = mpopkeys
-        else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
-        if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed
-        
-        # Decide how to handle it based on parameter type
-        if partype=='initprev': # Initialize prevalence only
-            pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
-        
-        elif partype=='popsize': # Population size only
-            pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
-        
-        elif partype=='timepar': # Otherwise it's a regular time par, made from data
-            if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-            else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
-        
-        elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] if fromdata else nan
-            low = data['const'][parname][1] if fromdata else nan
-            high = data['const'][parname][2] if fromdata else nan
-            thisprior = {'dist':'uniform', 'pars':(low, high)} if fromdata else None
-            pars[parname] = Constant(y=best, prior=thisprior, **rawpar)
-        
-        elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
-            pars[parname] = Metapar(y=odict([(key,None) for key in keys]), **rawpar)
+            # Shorten key variables
+            partype = rawpar.pop('partype')
+            parname = rawpar['short']
+            by = rawpar['by']
+            fromdata = rawpar['fromdata']
+            rawpar['verbose'] = verbose # Easiest way to pass it in
             
-        elif partype=='yearpar': # Years to fix proportions of people at different cascade stages
-            pars[parname] = Yearpar(t=nan, **rawpar)
+            # Decide what the keys are
+            if by=='tot': keys = totkey
+            elif by=='pop': keys = popkeys
+            elif by=='fpop': keys = fpopkeys
+            elif by=='mpop': keys = mpopkeys
+            else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
+            if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed
+            
+            # Decide how to handle it based on parameter type
+            if partype=='initprev': # Initialize prevalence only
+                pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
+            
+            elif partype=='popsize': # Population size only
+                pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
+            
+            elif partype=='timepar': # Otherwise it's a regular time par, made from data
+                if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
+                else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
+            
+            elif partype=='constant': # The constants, e.g. transmfi
+                best = data['const'][parname][0] if fromdata else nan
+                low = data['const'][parname][1] if fromdata else nan
+                high = data['const'][parname][2] if fromdata else nan
+                thisprior = {'dist':'uniform', 'pars':(low, high)} if fromdata else None
+                pars[parname] = Constant(y=best, prior=thisprior, **rawpar)
+            
+            elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
+                pars[parname] = Metapar(y=odict([(key,None) for key in keys]), **rawpar)
+                
+            elif partype=='yearpar': # Years to fix proportions of people at different cascade stages
+                pars[parname] = Yearpar(t=nan, **rawpar)
+        
+        except Exception as E:
+            errormsg = 'Failed to convert parameter %s:\n%s' % (parname, E.message)
+            if die: raise OptimaException(errormsg)
+            else: printv(errormsg, 1, verbose)
     
     ###############################################################################
     ## Tidy up -- things that can't be converted automatically
@@ -398,7 +407,7 @@ def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
     pars['propcirc'].t = pars['propcirc'].t.sort(popkeys)
     pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
-    for key in pars['numcirc'].y.keys():
+    for key in pars['numcirc'].keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
     # Fix treatment from final data year
@@ -436,9 +445,9 @@ def makepars(data=None, filename='model-inputs.xlsx', label=None, verbose=2):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    # Store information about injecting and commercial sex providing populations -- needs to be here since relies on other calculations
-    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].y.keys()] for pop in pars['popkeys']])
-    pars['sexworker'] = array([pop in [pop1 for (pop1,pop2) in pars['actscom'].y.keys() if pop1 in fpopkeys] for pop in pars['popkeys']])
+    # Store information about injecting populations -- needs to be here since relies on other calculations
+    pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
+    
 
     return pars
 
@@ -460,8 +469,6 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
     simpars = odict() 
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'popkeys', 'injects', 'sexworker', 'rawtransit']
-    staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if keys is None: keys = pars.keys() # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
@@ -1117,13 +1124,13 @@ class Parameterset(object):
             if hasattr(par,'y'):
                 if hasattr(par.y, 'keys'):
                     count += 1
-                    if len(par.y.keys())>1:
+                    if len(par.keys())>1:
                         outstr += '%3i: %s\n' % (count, par.name)
-                        for key in par.y.keys():
+                        for key in par.keys():
                             outstr += '     %s = %s\n' % (key, par.y[key])
-                    elif len(par.y.keys())==1:
+                    elif len(par.keys())==1:
                         outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y[0])
-                    elif len(par.y.keys())==0:
+                    elif len(par.keys())==0:
                         outstr += '%3i: %s = (empty)' % (count, par.name)
                     else:
                         print('WARNING, not sure what to do with %s: %s' % (par.name, par.y))
@@ -1232,14 +1239,14 @@ class Parameterset(object):
                     valuelist.append(par.t)
                     labellist.append(par.name)
                 elif par.fittable in ['pop', 'pship']:
-                    for subkey in par.y.keys():
+                    for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.fittable)
                         valuelist.append(par.y[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
                 elif par.fittable == 'exp':
-                    for subkey in par.i.keys():
+                    for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.fittable)
@@ -1312,6 +1319,9 @@ class Parameterset(object):
         
         output = ''
         for parname,par in self.pars.items():
+            prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
+            values2 = None
+            cvalues2 = None
             if hasattr(par,'fittable'):
                 if par.fittable=='pop': 
                     values = par.y[:].tolist()
@@ -1329,14 +1339,24 @@ class Parameterset(object):
                     values = par.m
                     prefix = "pars['%s'].m = " % parname
                     if cpars is not None: cvalues = cpars[parname].m
+                elif par.fittable=='exp':
+                    values  = par.i[:].tolist()
+                    values2 = par.e[:].tolist()
+                    prefix  = "pars['%s'].i[:] = " % parname
+                    prefix2 = "pars['%s'].e[:] = " % parname
+                    if cpars is not None: 
+                        cvalues  = cpars[parname].i[:].tolist()
+                        cvalues2 = cpars[parname].e[:].tolist()
                 elif par.fittable=='no':
                     values = None
                 else: 
                     print('Parameter fittable type "%s" not implemented' % par.fittable)
                     values = None
                 if values is not None:
-                    if compare is None or (values!=cvalues):
+                    if compare is None or (values!=cvalues) or (values2!=cvalues2):
                         output += prefix+oneline(values)+'\n'
+                        if prefix2 is not None:
+                            output += prefix2+oneline(values2)+'\n'
         
         if filename is not None:
             with open(filename, 'w') as f:

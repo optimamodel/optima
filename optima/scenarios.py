@@ -127,7 +127,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                 # Parse inputs to figure out which population(s) are affected
                 if type(scenpar['for'])==tuple: # If it's a partnership...
-                    if not scenpar['for'] in thispar.y.keys():
+                    if not scenpar['for'] in thispar.keys():
                         errormsg = 'Partnership %s not associated with parameter %s' % (scenpar['for'],thispar.short)
                         raise OptimaException(errormsg)
                     else: pops = [scenpar['for']] 
@@ -139,7 +139,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     pops = scenpar['for']
 
                 elif type(scenpar['for'])==str: 
-                    if not scenpar['for'] in thispar.y.keys():
+                    if not scenpar['for'] in thispar.keys():
                         errormsg = 'Population %s not associated with parameter %s' % (scenpar['for'],thispar.short)
                         raise OptimaException(errormsg)
                     else: pops = [scenpar['for']] 
@@ -157,7 +157,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                     # Get the index of the population
                     if isnumber(pop): popind = pop
-                    else: popind = thispar.y.keys().index(pop)
+                    else: popind = thispar.keys().index(pop)
                     
                     # Find or set new value 
                     if scenpar.get('startval'):
