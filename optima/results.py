@@ -199,14 +199,15 @@ class Resultset(object):
             indices = arange(0, len(tvec), int(round(1.0/(tvec[1]-tvec[0])))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
             self.tvec = tvec[indices] # Subsample time vector too
         self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
-        allpeople    = dcp(array([self.raw[i]['people']    for i in range(len(self.raw))]))
-        allinci      = dcp(array([self.raw[i]['inci']      for i in range(len(self.raw))]))
-        allincibypop = dcp(array([self.raw[i]['incibypop'] for i in range(len(self.raw))]))
-        alldeaths    = dcp(array([self.raw[i]['death']     for i in range(len(self.raw))]))
-        alldiag      = dcp(array([self.raw[i]['diag']      for i in range(len(self.raw))]))
-        allmtct      = dcp(array([self.raw[i]['mtct']      for i in range(len(self.raw))]))
-        allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(len(self.raw))]))
-        allpmtct     = dcp(array([self.raw[i]['pmtct']     for i in range(len(self.raw))]))
+        nraw = len(self.raw) # Number of raw results sets
+        allpeople    = dcp(array([self.raw[i]['people']    for i in range(nraw)]))
+        allinci      = dcp(array([self.raw[i]['inci']      for i in range(nraw)]))
+        allincibypop = dcp(array([self.raw[i]['incibypop'] for i in range(nraw)]))
+        alldeaths    = dcp(array([self.raw[i]['death']     for i in range(nraw)]))
+        alldiag      = dcp(array([self.raw[i]['diag']      for i in range(nraw)]))
+        allmtct      = dcp(array([self.raw[i]['mtct']      for i in range(nraw)]))
+        allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(nraw)]))
+        allpmtct     = dcp(array([self.raw[i]['pmtct']     for i in range(nraw)]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -215,6 +216,9 @@ class Resultset(object):
         alltx = self.settings.alltx
         svl = self.settings.svl
         data = self.data
+        
+        if (allpeople<0).any():
+            raise OptimaException('Negative people found')
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
@@ -315,7 +319,6 @@ class Resultset(object):
         if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
-        
         # Calculate DALYs
         yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
         disutiltx = data['const']['disutiltx'][0]
