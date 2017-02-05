@@ -21,7 +21,7 @@ staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys tha
 ### Functions to load the parameters and transitions
 #############################################################################################################################
 
-def loadpartable(filename='model-inputs.xlsx', sheetname='Parameters'):
+def loadpartable(filename='model-inputs.xlsx', sheetname='Model parameters'):
     ''' 
     Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters
     '''
