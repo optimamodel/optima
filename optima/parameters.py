@@ -32,9 +32,11 @@ def loadpartable(filename='model-inputs.xlsx', sheetname='Model parameters'):
     for rownum in range(sheet.nrows-1):
         rawpars.append({})
         for colnum in range(sheet.ncols):
-            rawpars[rownum][sheet.cell_value(0,colnum)] = sheet.cell_value(rownum+1,colnum) if sheet.cell_value(rownum+1,colnum)!='None' else None
+            attr = sheet.cell_value(0,colnum)
+            rawpars[rownum][attr] = sheet.cell_value(rownum+1,colnum) if sheet.cell_value(rownum+1,colnum)!='None' else None
             if sheet.cell_value(0,colnum) in ['limits']:
-                rawpars[rownum][sheet.cell_value(0,colnum)] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
+                rawpars[rownum][attr] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     return rawpars
 
 def loadtranstable(filename='model-inputs.xlsx', sheetname='Transitions', npops=None):

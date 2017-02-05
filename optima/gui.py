@@ -114,7 +114,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
 
 
 
-def pygui(tmpresults, toplot=None, verbose=2, **kwargs):
+def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     '''
     PYGUI
     
@@ -144,7 +144,7 @@ def pygui(tmpresults, toplot=None, verbose=2, **kwargs):
             
     
     ## Define options for selection
-    plotselections = getplotselections(results)
+    plotselections = getplotselections(results, advanced=advanced)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
     isselected = []
