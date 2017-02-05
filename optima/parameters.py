@@ -36,7 +36,6 @@ def loadpartable(filename='model-inputs.xlsx', sheetname='Model parameters'):
             rawpars[rownum][attr] = sheet.cell_value(rownum+1,colnum) if sheet.cell_value(rownum+1,colnum)!='None' else None
             if sheet.cell_value(0,colnum) in ['limits']:
                 rawpars[rownum][attr] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     return rawpars
 
 def loadtranstable(filename='model-inputs.xlsx', sheetname='Transitions', npops=None):
@@ -696,7 +695,7 @@ class Par(object):
     
     Version: 2016nov06 by cliffk    
     '''
-    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, by=None, fittable='', auto='', coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, by=None, manual='', auto='', coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
@@ -706,7 +705,7 @@ class Par(object):
         self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
-        self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
+        self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
         self.coverage = coverage # Whether or not this is a coverage parameter
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
@@ -1210,9 +1209,9 @@ class Parameterset(object):
             if parsubset and type(parsubset) not in (list, str):
                 raise OptimaException("Expecting parsubset to be a list or a string!")
             for item in parsubset:
-                if item not in [par.short for par in self.pars.values() if hasattr(par,'fittable') and par.fittable!='no']:
-                    raise OptimaException("Parameter %s is not a fittable parameter.")
-            tmppars = {par.short:par for par in self.pars.values() if hasattr(par,'fittable') and par.fittable!='no' and par.short in parsubset}
+                if item not in [par.short for par in self.pars.values() if hasattr(par,'manual') and par.manual!='no']:
+                    raise OptimaException("Parameter %s is not a manual parameter.")
+            tmppars = {par.short:par for par in self.pars.values() if hasattr(par,'manual') and par.manual!='no' and par.short in parsubset}
             
         mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
         keylist = mflists['keys']
@@ -1223,50 +1222,49 @@ class Parameterset(object):
 
         for key in tmppars.keys():
             par = tmppars[key]
-            if hasattr(par,
-                       'fittable') and par.fittable != 'no':  # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-                if par.fittable=='meta':
+            if hasattr(par, 'manual') and par.manual != 'no':  # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+                if par.manual=='meta':
                     if advanced: # By default, don't include these
                         keylist.append(key)
                         subkeylist.append(None)
-                        typelist.append(par.fittable)
+                        typelist.append(par.manual)
                         valuelist.append(par.m)
                         labellist.append('%s -- meta' % par.name)
-                elif par.fittable=='const':
+                elif par.manual in ['const', 'advanced']:
                     keylist.append(key)
                     subkeylist.append(None)
-                    typelist.append(par.fittable)
+                    typelist.append(par.manual)
                     valuelist.append(par.y)
                     labellist.append(par.name)
-                elif par.fittable=='advanced': # These are also constants, but skip by default
+                elif par.manual=='advanced': # These are also constants, but skip by default
                     if advanced:
                         keylist.append(key)
                         subkeylist.append(None)
-                        typelist.append(par.fittable)
+                        typelist.append(par.manual)
                         valuelist.append(par.y)
                         labellist.append(par.name)
-                elif par.fittable=='year':
+                elif par.manual=='year':
                     keylist.append(key)
                     subkeylist.append(None)
-                    typelist.append(par.fittable)
+                    typelist.append(par.manual)
                     valuelist.append(par.t)
                     labellist.append(par.name)
-                elif par.fittable=='pop':
+                elif par.manual=='pop':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
-                        typelist.append(par.fittable)
+                        typelist.append(par.manual)
                         valuelist.append(par.y[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
-                elif par.fittable=='exp':
+                elif par.manual=='exp':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
-                        typelist.append(par.fittable)
+                        typelist.append(par.manual)
                         valuelist.append(par.i[subkey])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
                 else:
-                    print('Parameter type "%s" not implemented!' % par.fittable)
+                    print('Parameter type "%s" not implemented!' % par.manual)
     
         return mflists
     
@@ -1340,24 +1338,24 @@ class Parameterset(object):
             prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
             values2 = None
             cvalues2 = None
-            if hasattr(par,'fittable'):
-                if par.fittable=='pop': 
+            if hasattr(par,'manual'):
+                if par.manual=='pop': 
                     values = par.y[:].tolist()
                     prefix = "pars['%s'].y[:] = " % parname
                     if cpars is not None: cvalues = cpars[parname].y[:].tolist()
-                elif par.fittable=='const': 
+                elif par.manual in ['const', 'advanced']: 
                     values = par.y
                     prefix = "pars['%s'].y = " % parname
                     if cpars is not None: cvalues = cpars[parname].y
-                elif par.fittable=='year': 
+                elif par.manual=='year': 
                     values = par.t
                     prefix = "pars['%s'].t = " % parname
                     if cpars is not None: cvalues = cpars[parname].t
-                elif par.fittable=='meta':
+                elif par.manual=='meta':
                     values = par.m
                     prefix = "pars['%s'].m = " % parname
                     if cpars is not None: cvalues = cpars[parname].m
-                elif par.fittable=='exp':
+                elif par.manual=='exp':
                     values  = par.i[:].tolist()
                     values2 = par.e[:].tolist()
                     prefix  = "pars['%s'].i[:] = " % parname
@@ -1365,10 +1363,10 @@ class Parameterset(object):
                     if cpars is not None: 
                         cvalues  = cpars[parname].i[:].tolist()
                         cvalues2 = cpars[parname].e[:].tolist()
-                elif par.fittable=='no':
+                elif par.manual=='no':
                     values = None
                 else: 
-                    print('Parameter fittable type "%s" not implemented' % par.fittable)
+                    print('Parameter manual type "%s" not implemented' % par.manual)
                     values = None
                 if values is not None:
                     if compare is None or (values!=cvalues) or (values2!=cvalues2):
