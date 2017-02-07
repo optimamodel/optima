@@ -48,7 +48,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_incibypop   = zeros((npops, npts))          # Total incidence caused by each population
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
-    raw_mtctfrom    = zeros((npops, npts))      # Number of mother-to-child transmissions from each population
+    raw_mtctfrom    = zeros((npops, npts))          # Number of mother-to-child transmissions from each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
     raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
