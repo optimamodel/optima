@@ -881,7 +881,7 @@ class Program(object):
             raise OptimaException(errormsg)
 
 
-    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=True):
+    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=True, die=False):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Validate inputs
@@ -915,36 +915,35 @@ class Program(object):
             if not self.criteria['pregnant']:
                 if self.criteria['hivstatus']=='allstates':
                     initpopsizes = defaultinitpopsizes
-        
                 else: # If it's a program for HIV+ people, need to find the number of positives
                     try:
-                        if not results: results = parset.getresults(die=True)
+                        if not results: results = parset.getresults(die=die)
                         cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
                         initpopsizes = zeros((npops,len(t))) 
                         for yrno,yr in enumerate(t):
                             initpopsizes[:,yrno] = results.raw[0]['people'][cd4index,:,findinds(results.tvec,yr)].sum(axis=0) # WARNING, is using the zeroth result OK?
                     except OptimaException as E: 
-#                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
-#                        results = runmodel(pars=parset.pars, settings=settings)
-#                        parset.resultsref = results.name # So it doesn't have to be rerun
-                        print('Failed to extract results because "%s"' % E.message)
-                        initpopsizes = defaultinitpopsizes
-            # ... or if it's a program for pregnant women.
-            else:
+                        if die: 
+                            raise E
+                        else:
+                            print('Failed to extract results because "%s", using default' % E.message)
+                            initpopsizes = defaultinitpopsizes
+            
+            else: # ... or if it's a program for pregnant women.
                 if self.criteria['hivstatus']=='allstates': # All pregnant women
                     initpopsizes = parset.pars['popsize'].interp(tvec=t)*parset.pars['birth'].interp(tvec=t)
     
                 else: # HIV+ pregnant women
                     try: 
-                        if not results: results = parset.getresults(die=True)
+                        if not results: results = parset.getresults(die=die)
                         for yr in t:
                             initpopsizes = parset.pars['popsize'].interp(tvec=[yr])*parset.pars['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
                     except OptimaException as E: 
-#                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
-#                        results = runmodel(pars=parset.pars, settings=settings)
-#                        parset.resultsref = results.name # So it doesn't have to be rerun
-                        print('Failed to extract results because "%s"' % E.message)
-                        initpopsizes = defaultinitpopsizes
+                        if die: 
+                            raise E
+                        else: 
+                            print('Failed to extract results because "%s", using default' % E.message)
+                            initpopsizes = defaultinitpopsizes
         for popno, pop in enumerate(parset.pars['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
         for targetpop in self.targetpops:
