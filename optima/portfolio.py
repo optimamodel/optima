@@ -1,11 +1,13 @@
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException, findinds # Import utilities
-from optima import gitinfo, tic, toc # Import functions
+from optima import gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj # Import utilities
+from optima import OptimaException, BOC # Import classes
 from optima import __version__ # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
 from numpy import arange, argsort
+from glob import glob
 import sys
+import os
 
 #######################################################################################################
 ## Portfolio class -- this contains Projects and GA optimisations
@@ -72,15 +74,34 @@ class Portfolio(object):
     ## Methods to handle common tasks
     #######################################################################################################
 
-    def addprojects(self, projects, verbose=2):
+    def addprojects(self, projects=None, replace=False, verbose=2):
         ''' Store a project within portfolio '''
         printv('Adding project to portfolio...', 2, verbose)
         if type(projects)==Project: projects = [projects]
         if type(projects)==list:
+            if replace: self.projects = odict() # Wipe clean before adding new projects
             for project in projects:
                 project.uid = uuid() # TEMPPPP WARNING overwrite UUID
                 self.projects[str(project.uid)] = project        
                 printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
+        else:
+            raise OptimaException('Could not understand project list of type %s' % type(projects))
+        return None
+    
+    
+    def addfolder(self, folder=None, replace=True, verbose=2):
+        ''' Add a folder of projects to a portfolio '''
+        filelist = sorted(glob(os.path.join(folder, '*.prj')))
+        projects = []
+        if replace: self.projects = odict() # Wipe clean before adding new projects
+        for f,filename in enumerate(filelist):
+            printv('Loading project %i/%i "%s"...' % (f+1, len(filelist), filename), 3, verbose)
+            project = loadproj(filename)
+            projects.append(project)
+        self.addprojects(projects)
+        return None
+        
+        
         
     def getdefaultbudgets(self, progsetnames=None, verbose=2):
         ''' Get the default allocation totals of each project, using the progset names or indices specified '''
@@ -118,6 +139,24 @@ class Portfolio(object):
             budgets.append(sum(p.progsets[progsetnames[pno]].getdefaultbudget().values()))
         
         return budgets
+        
+    
+    def save(self, filename=None, saveresults=False, verbose=2):
+        ''' Save the current portfolio, by default using its name, and without results '''
+        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
+        if filename is None: filename = self.name+'.prj'
+        self.filename = os.path.abspath(filename) # Store file path
+        if saveresults:
+            saveobj(filename, self, verbose=verbose)
+        else:
+            tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
+            for p in range(len(self.projects.values())):
+                for r,result in enumerate(self.projects[p].results.values()):
+                    if type(result)!=BOC:
+                        self.projects[p].results.pop(r) # Remove results that aren't BOCs
+            saveobj(filename, tmpportfolio, verbose=verbose) # Save it to file
+            del tmpportfolio # Don't need it hanging around any more
+        return None
     
     
     #######################################################################################################

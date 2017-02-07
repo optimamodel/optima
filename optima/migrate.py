@@ -579,7 +579,7 @@ def migrate(project, verbose=2):
 
 
 
-def loadproj(filename, verbose=2):
+def loadproj(filename=None, verbose=2):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     # Create legacy classes for compatibility -- FOR FUTURE
@@ -590,15 +590,32 @@ def loadproj(filename, verbose=2):
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
 
-    proj = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose)
+    P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose)
     
 #    del op.programs.CCOF
 #    del op.programs.Costcov
 #    del op.programs.Covout
     
-    return proj
+    return P
 
 
+
+
+
+def loadportfolio(filename=None, verbose=2):
+    ''' Load a saved portfolio, migrating constituent projects -- NB, portfolio itself is not migrated (no need yet), only the projects '''
+    
+    op.printv('Loading portfolio %s...' % filename, 2, verbose)
+    F = op.loadobj(filename, verbose=verbose) # Load portfolio
+    
+    
+    for i in range(len(F.projects)): # Migrate projects one by one
+        op.printv('Loading project %s...' % F.projects[i].name, 3, verbose)
+        F.projects[i] = migrate(F.projects[i], verbose=verbose)
+    
+    F.version = op.version # Update version number
+    
+    return F
 
 
 
