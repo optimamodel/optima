@@ -605,9 +605,12 @@ def loadproj(filename=None, verbose=2):
 def loadportfolio(filename=None, verbose=2):
     ''' Load a saved portfolio, migrating constituent projects -- NB, portfolio itself is not migrated (no need yet), only the projects '''
     
+    op.printv('Loading portfolio %s...' % filename, 2, verbose)
     F = op.loadobj(filename, verbose=verbose) # Load portfolio
     
+    
     for i in range(len(F.projects)): # Migrate projects one by one
+        op.printv('Loading project %s...' % F.projects[i].name, 3, verbose)
         F.projects[i] = migrate(F.projects[i], verbose=verbose)
     
     F.version = op.version # Update version number
