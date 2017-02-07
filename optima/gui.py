@@ -30,7 +30,7 @@ def sanitizeresults(tmpresults):
     return results
 
 
-def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
+def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
     Does the hard work for updateplots() for pygui()
     Keyword arguments if supplied are passed on to figure().
@@ -44,7 +44,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
-    results = sanitizeresults(results)
+    results = sanitizeresults(tmpresults)
     
     # Do plotting
     wasinteractive = isinteractive()
@@ -124,7 +124,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
 
 
 
-def pygui(results=None, toplot=None, verbose=2, **kwargs):
+def pygui(tmpresults, toplot=None, verbose=2, **kwargs):
     '''
     PYGUI
     
@@ -146,7 +146,7 @@ def pygui(results=None, toplot=None, verbose=2, **kwargs):
     '''
     
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
-    results = sanitizeresults(results)
+    results = sanitizeresults(tmpresults)
             
     
     ## Define options for selection
