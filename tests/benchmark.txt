@@ -90,3 +90,4 @@
 0.729 2017-Jan-20_01:55:27 f8051a3 make-partable-and-rawtransit-csv-files
 0.708 2017-Jan-20_01:57:14 8e12ff7 make-partable-and-rawtransit-csv-files
 1.39 2017-Feb-07_18:32:09 e19d00d fix-programs-bug
+0.657 2017-Feb-07_18:40:05 b7b04cc fix-programs-bug
