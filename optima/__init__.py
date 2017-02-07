@@ -177,7 +177,7 @@ from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultp
 # And really finally, load other random things that don't matter
 try:
     import migrate as _migrate
-    from .migrate import migrate, loadproj, optimaversion
+    from .migrate import migrate, loadproj, loadportfolio, optimaversion
 except:
     _failed.append('migrate')
 
