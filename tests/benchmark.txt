@@ -89,3 +89,4 @@
 0.668 2017-Jan-17_16:59:06 36b725f feature/plot-infections-caused
 0.729 2017-Jan-20_01:55:27 f8051a3 make-partable-and-rawtransit-csv-files
 0.708 2017-Jan-20_01:57:14 8e12ff7 make-partable-and-rawtransit-csv-files
+1.39 2017-Feb-07_18:32:09 e19d00d fix-programs-bug

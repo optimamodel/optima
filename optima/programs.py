@@ -931,7 +931,7 @@ class Program(object):
             # ... or if it's a program for pregnant women.
             else:
                 if self.criteria['hivstatus']=='allstates': # All pregnant women
-                    initpopsizes = parset.pars['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
+                    initpopsizes = parset.pars['popsize'].interp(tvec=t)*parset.pars['birth'].interp(tvec=t)
     
                 else: # HIV+ pregnant women
                     initpopsizes = parset.pars['popsize'].interp(tvec=t)
