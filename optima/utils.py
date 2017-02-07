@@ -849,13 +849,11 @@ def sendemail(to=None, subject=None, body=None):
     
     email = 'optima.notifications@gmail.com'
     password = 'gallopinggametesgathergrins' # CANNOT BE PART OF A PUBLIC REPOSITORY, OBVIOUSLY
-    
     server = 'smtp.gmail.com'
     port = 587
     session = SMTP(server, port)        
     session.ehlo()
     session.starttls()
-    session.ehlo
     session.login(email, password)
     
     headers = [
