@@ -881,7 +881,7 @@ class Program(object):
             raise OptimaException(errormsg)
 
 
-    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=True, die=False):
+    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False, die=False):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Validate inputs
