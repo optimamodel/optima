@@ -9,7 +9,7 @@ Version: 2016mar20
 from multiprocessing import Process, Queue
 from numpy import empty
 from glob import glob
-from optima import loadproj, saveobj, loadbalancer, printv
+from optima import loadproj, loadbalancer, printv
 from os import path
 
 
@@ -90,9 +90,20 @@ def batchautofit(
 
 def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
              progsetname, objectives, constraints, maxiters, maxtime,
-             verbose, stoppingfunc, method, maxload):
+             verbose, stoppingfunc, method, maxload, prerun):
     loadbalancer(index=ind, maxload=maxload)
-    print('Running BOC generation...')
+    printv('Running BOC generation...', 1, verbose)
+    if prerun:
+        if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
+        rerun = False
+        try:
+            results = project.parsets[parsetname].getresults() # First, try getting results 
+            if results is None: rerun = True
+        except:
+            rerun = True
+        if rerun: 
+            printv('No results set found, so rerunning model...', 2, verbose)
+            project.runsim(parsetname) # Rerun if exception or if results is None
     project.genBOC(
         budgetlist=budgetlist, name=name, parsetname=parsetname,
         progsetname=progsetname, objectives=objectives, 
@@ -108,7 +119,7 @@ def batchBOC(
         folder='.', budgetlist=None, name=None, parsetname=None, 
         progsetname=None, objectives=None, constraints=None, 
         maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-        method='asd', maxload=0.5):
+        method='asd', maxload=0.5, prerun=True):
     """
     Perform batch BOC calculation.
 
@@ -167,7 +178,7 @@ def batchBOC(
             target=boc_task,
             args=(project, i, outputqueue, budgetlist, name, parsetname, 
                   progsetname, prjobjectives, prjconstraints, maxiters, 
-                  maxtime, verbose, stoppingfunc, method, maxload))
+                  maxtime, verbose, stoppingfunc, method, maxload, prerun))
         prc.start()
         processes.append(prc)
     
