@@ -162,11 +162,6 @@ except: _failed.append('manualfit')
 import project as _project
 from .project import Project
 
-# Portfolio class (container of Projects)
-import portfolio as _portfolio
-from .portfolio import Portfolio 
-
-
 # Finally, load defaults
 from . import defaults
 from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms, demo
@@ -178,6 +173,9 @@ try:
 except:
     _failed.append('migrate')
 
+# Really really finally, load the portfolio class (container of Projects), relies on loadproj, hence is here
+import portfolio as _portfolio
+from .portfolio import Portfolio 
 
 # And really really finally, load geospatial functions (has to load projects, so has to come after migration)
 try:
