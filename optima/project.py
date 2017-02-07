@@ -341,8 +341,9 @@ class Project(object):
     
     
     def cleanresults(self):
-        ''' Remove all results '''
-        self.results = odict() # Just replace with an empty odict, as at initialization
+        ''' Remove all results except for BOCs '''
+        for key,result in self.results.items():
+            if type(result)!=BOC: self.results.pop(key)
         self.modified = today()
         return None
     
