@@ -224,7 +224,7 @@ class Project(object):
                 if overwrite==False:
                     raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
                 else:
-                    printv('Structure list already has item named "%s"' % (checkabsent), 2, self.settings.verbose)
+                    printv('Structure list already has item named "%s"' % (checkabsent), 3, self.settings.verbose)
                 
         if checkexists is not None:
             if not checkexists in structlist:
@@ -247,7 +247,7 @@ class Project(object):
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
         if hasattr(structlist[name],'project'): structlist[name].project = self # Refresh link to parent project
-        printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
+        printv('Item "%s" added to "%s"' % (name, what), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -258,7 +258,7 @@ class Project(object):
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
-        printv('%s "%s" removed' % (what, name), 2, self.settings.verbose)
+        printv('%s "%s" removed' % (what, name), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -273,7 +273,7 @@ class Project(object):
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
         if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
-        printv('%s "%s" copied to "%s"' % (what, orig, new), 2, self.settings.verbose)
+        printv('%s "%s" copied to "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -284,7 +284,7 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
-        printv('%s "%s" renamed "%s"' % (what, orig, new), 2, self.settings.verbose)
+        printv('%s "%s" renamed "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None
         
