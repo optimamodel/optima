@@ -28,12 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Version: 2016nov03 by cliffk
 """
 
-optimalicense = '''
-Optima HIV -- HIV optimization and analysis tool
-Copyright (C) 2016 by the Optima Consortium
-'''
-print(optimalicense)
-
 
 
 
@@ -42,6 +36,9 @@ print(optimalicense)
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 from ._version import __version__
 version = __version__ # Make it accessible via from optima import *
+
+optimalicense = 'Optima HIV %s -- (c) 2017 by the Optima Consortium' % version
+print(optimalicense)
 
 # Create an empty list to stored failed imports
 _failed = [] 
