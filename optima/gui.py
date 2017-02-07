@@ -20,6 +20,15 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     return None
 
 
+def sanitizeresults(tmpresults):
+    ''' Allow for flexible input -- a results structure, a list, or a project file '''
+    if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
+    elif type(tmpresults) not in [Resultset, Multiresultset]:
+        try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
+        except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
+    else: results = tmpresults # Just use directly
+    return results
+
 
 def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
@@ -35,6 +44,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
+    results = sanitizeresults(results)
     
     # Do plotting
     wasinteractive = isinteractive()
@@ -114,7 +124,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
 
 
 
-def pygui(tmpresults, toplot=None, verbose=2, **kwargs):
+def pygui(results=None, toplot=None, verbose=2, **kwargs):
     '''
     PYGUI
     
@@ -132,15 +142,11 @@ def pygui(tmpresults, toplot=None, verbose=2, **kwargs):
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 1.2 (2016feb04)
+    Version: 1.3 (2017feb07)
     '''
     
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
-    if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
-    elif type(tmpresults) not in [Resultset, Multiresultset]:
-        try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
-        except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
-    else: results = tmpresults # Just use directly
+    results = sanitizeresults(results)
             
     
     ## Define options for selection
