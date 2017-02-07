@@ -1,11 +1,12 @@
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException, findinds # Import utilities
-from optima import gitinfo, tic, toc # Import functions
+from optima import gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj # Import utilities
+from optima import OptimaException, BOC # Import classes
 from optima import __version__ # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
 from numpy import arange, argsort
 import sys
+import os
 
 #######################################################################################################
 ## Portfolio class -- this contains Projects and GA optimisations
@@ -118,6 +119,24 @@ class Portfolio(object):
             budgets.append(sum(p.progsets[progsetnames[pno]].getdefaultbudget().values()))
         
         return budgets
+        
+    
+    def save(self, filename=None, saveresults=False, verbose=2):
+        ''' Save the current portfolio, by default using its name, and without results '''
+        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
+        if filename is None: filename = self.name+'.prj'
+        self.filename = os.path.abspath(filename) # Store file path
+        if saveresults:
+            saveobj(filename, self, verbose=verbose)
+        else:
+            tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
+            for p in range(len(self.projects.values())):
+                for r,result in enumerate(self.projects[p].results.values()):
+                    if type(result)!=BOC:
+                        self.projects[p].results.pop(r) # Remove results that aren't BOCs
+            saveobj(filename, tmpportfolio, verbose=verbose) # Save it to file
+            del tmpportfolio # Don't need it hanging around any more
+        return None
     
     
     #######################################################################################################
