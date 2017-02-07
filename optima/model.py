@@ -389,8 +389,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             initpeople[initpeople<0] = 0.0
             
     people[:,:,0] = initpeople
-    
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
     
     ##################################################################################################################
     ### Compute the effective numbers of acts outside the time loop
