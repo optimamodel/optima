@@ -832,7 +832,7 @@ def sendemail(to=None, subject=None, body=None):
         Dear user,
         
         This is a gentle notification that the process for which you have been so
-        valiantly waiting for has, at least, come to completion -- you may rest
+        valiantly waiting for has, at last, come to completion -- you may rest
         assured that I, your humble servant, have been as impatient for this moment
         as you have been, dearest reader. I apologize for the longwindedness of my
         rather simple missive, but one must be wary of the canned-meat filters these
