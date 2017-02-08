@@ -656,6 +656,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
     '''
     
     # Preliminaries
+    shalength = 6 # Don't use the whole thing, it's ugly and unnecessary
     if filename is None: # Check to make sure a file name is given
         errormsg = 'Please call this function like this: optimaversion(__file__)'
         if die: raise op.OptimaException(errormsg)
@@ -668,10 +669,12 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
     if branch is not None and branch!=currbranch: # Optionally check that versions match
         errormsg = 'Actual branch does not match requested branch (%s vs. %s)' % (currbranch, branch)
         raise op.OptimaException(errormsg)
-    if sha is not None and sha!=currsha: # Optionally check that versions match
-        errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha, sha)
-        raise op.OptimaException(errormsg)
-    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha) # Create string to write
+    if sha is not None:
+        validshalength = min(len(sha), shalength)
+        if sha[:validshalength+1]!=currsha[:validshalength+1]: # Optionally check that versions match
+            errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha[:validshalength+1], sha[:validshalength+1])
+            raise op.OptimaException(errormsg)
+    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha[:shalength+1]) # Create string to write
     strtofind = 'optimaversion(' # String to look for -- note, must exactly match function call!
 
     # Read script file
