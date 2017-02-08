@@ -808,6 +808,68 @@ def compareversions(version1=None, version2=None):
 
 
 
+def sendemail(to=None, subject=None, body=None):
+    ''' 
+    Send an email notifying one or more people that something is finished.
+    
+    Usage:
+        sendemail(to='alice@optimamodel.com, bob@optimamodel.com')
+        sendemail(to='chloe@optimamodel.com', body='The deed is done.')
+    
+    What's the point? Add this to the end of a very long-running script to notify
+    your loved ones that the script has finished.
+        
+    Version: 2017feb08 by cliffk    
+    '''
+    
+    from smtplib import SMTP
+    from datetime import datetime
+    
+    if to is None: to = 'cliff.optima@gmail.com'
+    if subject is None: subject = 'Process finished'
+    if body is None: 
+        body = '''
+        Dear user,
+        
+        This is a gentle notification that the process for which you have been so
+        valiantly waiting for has, at last, come to completion -- you may rest
+        assured that I, your humble servant, have been as impatient for this moment
+        as you have been, dearest reader. I apologize for the longwindedness of my
+        rather simple missive, but one must be wary of the canned-meat filters these
+        days, and my earlier, less poetic attempts at crafting prose failed to pass
+        muster by these unfeeling yet all-seeing lords.
+        
+        Finally, if you must know, the process finished at %s.
+        
+        Good day to you,
+        
+        Optima Notifications Service
+        ''' % str(datetime.today())
+    print('Sending email to "%s"...' % to)
+    
+    email = 'optima.notifications@gmail.com'
+    password = 'gallopinggametesgathergrins' # CANNOT BE PART OF A PUBLIC REPOSITORY, OBVIOUSLY
+    server = 'smtp.gmail.com'
+    port = 587
+    session = SMTP(server, port)        
+    session.ehlo()
+    session.starttls()
+    session.login(email, password)
+    
+    headers = [
+        "From: " + email,
+        "Subject: " + subject,
+        "To: " + to,
+        "MIME-Version: 1.0",
+       "Content-Type: text/html"]
+    headers = "\r\n".join(headers)
+    session.sendmail(email, to, headers + "\r\n\r\n" + body)
+    print('Email sent.')
+    return None
+
+
+
+
 ##############################################################################
 ## CLASS FUNCTIONS
 ##############################################################################
