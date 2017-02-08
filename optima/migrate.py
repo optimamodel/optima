@@ -48,6 +48,14 @@ def removeparameter(project=None, short=None, datashort=None, verbose=False, die
     return None
 
 
+def addwarning(project=None, message=None):
+    ''' Add a warning to the project, which is printed when migrated or loaded '''
+    if not hasattr(project, 'warnings') or type(project.warnings)!=str: # If no warnings attribute, create it
+        project.warnings = ''
+    project.warnings += '\n'*3+str(message) # # Add this warning
+    return None
+
+
 def versiontostr(project, **kwargs):
     """
     Convert Optima version number from number to string.
@@ -120,11 +128,13 @@ def redotransitions(project, dorun=False, **kwargs):
     if hasattr(project.settings, 'off'):        del project.settings.off
 
     # Update variables in data
-    project.data.pop('immediatecare', None)
-    project.data.pop('biofailure', None)
-    project.data.pop('restarttreat', None)
-    project.data.pop('stoprate', None)
-    project.data.pop('treatvs', None)
+    oldtimepars = ['immediatecare', 'biofailure', 'restarttreat','stoprate', 'treatvs']
+    for oldpar in oldtimepars:
+        project.data.pop(oldpar, None)
+        for key,progset in project.progsets.items():
+            if oldpar in progset.covout.keys():
+                msg = 'Project includes a program in program set "%s" that affects "%s", but this parameter has been removed' % (key, oldpar)
+                addwarning(project, msg)
 
     # Add new constants
     project.data['const']['deathsvl']       = [0.23,    0.15,   0.3]
@@ -319,7 +329,7 @@ def fixsettings(project, **kwargs):
         try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
         except: pass # But don't worry if they don't exist
     
-    project.settings = op.Settings() # Completely refresh
+    project.settings = op.Settings() # Completely refresh -- WARNING, will mean future migrations to settings aren't necessary!
     
     # Replace with original settings
     for settingkey,settingval in oldsettings.items(): 
@@ -490,6 +500,10 @@ def redovlmon(project, **kwargs):
     project.data['const']['requiredvl'] = requiredvldata
     
     removeparameter(project, short='freqvlmon', datashort='freqvlmon')
+    for key,progset in project.progsets.items():
+        if 'freqvlmon' in progset.covout.keys():
+            msg = 'Project includes a program in programset "%s" that affects "freqvlmon", but this parameter has been removed' % key
+            addwarning(project, msg)
     
     short = 'numvlmon'
     copyfrom = 'numtx'
@@ -553,7 +567,7 @@ migrations = {
 
 
 
-def migrate(project, verbose=2):
+def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
@@ -568,6 +582,9 @@ def migrate(project, verbose=2):
         op.printv("%s" % project.version, 2, verbose, indent=False)
     
     op.printv('Migration successful!', 3, verbose)
+    
+    # If any warnings were generated during the migration, print them now
+    project.getwarnings()
 
     return project
 
@@ -579,7 +596,7 @@ def migrate(project, verbose=2):
 
 
 
-def loadproj(filename=None, verbose=2):
+def loadproj(filename=None, verbose=2, die=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     # Create legacy classes for compatibility -- FOR FUTURE
@@ -590,7 +607,7 @@ def loadproj(filename=None, verbose=2):
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
 
-    P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose)
+    P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose, die=die)
     
 #    del op.programs.CCOF
 #    del op.programs.Costcov

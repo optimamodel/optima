@@ -68,6 +68,7 @@ class Project(object):
         self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
+        self.warnings = None # Place to store information about warnings (mostly used during migrations)
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -95,8 +96,19 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
+        output += self.getwarnings(doprint=False) # Don't print since print later
         return output
 
+    def getwarnings(self, doprint=True):
+        ''' Tiny method to print the warnings in the project, if any '''
+        if hasattr(self, 'warnings') and self.warnings: # There are warnings
+            output = '\nWARNING: This project contains the following warnings:'
+            output += str(self.warnings)
+        else: # There are no warnings
+            output = ''
+        if output and doprint: # Print warnings if requested
+            print(output)
+        return output
 
     #######################################################################################################
     ### Methods for I/O and spreadsheet loading
