@@ -528,12 +528,6 @@ def redovlmon(project, **kwargs):
     return None
         
 
-def addwarnings(project, **kwargs):
-    ''' Migrate from Optima 2.2.1 to 2.2.2 '''
-    if not hasattr(project, 'warnings'):
-        project.warnings = None
-    project.version = '2.2.2'
-    return None
 
 
 def redoprograms(project, **kwargs):
@@ -564,9 +558,8 @@ migrations = {
 '2.1.7': fixsettings,
 '2.1.8': addoptimscaling,
 '2.1.9': addpropsandcosttx,
-'2.1.10':redoparameters,
-'2.2':   redovlmon,
-'2.2.1': addwarnings,
+'2.1.10': redoparameters,
+'2.2': redovlmon,
 #'2.2': redoprograms,
 }
 
