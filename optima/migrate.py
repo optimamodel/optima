@@ -131,9 +131,9 @@ def redotransitions(project, dorun=False, **kwargs):
     oldtimepars = ['immediatecare', 'biofailure', 'restarttreat','stoprate', 'treatvs']
     for oldpar in oldtimepars:
         project.data.pop(oldpar, None)
-        for progset in project.progsets.values():
+        for key,progset in project.progsets.items():
             if oldpar in progset.covout.keys():
-                msg = 'Project includes a program that affects "%s", but this parameter has been removed' % oldpar
+                msg = 'Project includes a program in program set "%s" that affects "%s", but this parameter has been removed' % (key, oldpar)
                 addwarning(project, msg)
 
     # Add new constants
@@ -500,9 +500,9 @@ def redovlmon(project, **kwargs):
     project.data['const']['requiredvl'] = requiredvldata
     
     removeparameter(project, short='freqvlmon', datashort='freqvlmon')
-    for progset in project.progsets.values():
+    for key,progset in project.progsets.items():
         if 'freqvlmon' in progset.covout.keys():
-            msg = 'Project includes a program that affects "freqvlmon", but this parameter has been removed'
+            msg = 'Project includes a program in programset "%s" that affects "freqvlmon", but this parameter has been removed' % key
             addwarning(project, msg)
     
     short = 'numvlmon'
@@ -528,6 +528,12 @@ def redovlmon(project, **kwargs):
     return None
         
 
+def addwarnings(project, **kwargs):
+    ''' Migrate from Optima 2.2.1 to 2.2.2 '''
+    if not hasattr(project, 'warnings'):
+        project.warnings = None
+    project.version = '2.2.2'
+    return None
 
 
 def redoprograms(project, **kwargs):
@@ -558,8 +564,9 @@ migrations = {
 '2.1.7': fixsettings,
 '2.1.8': addoptimscaling,
 '2.1.9': addpropsandcosttx,
-'2.1.10': redoparameters,
-'2.2': redovlmon,
+'2.1.10':redoparameters,
+'2.2':   redovlmon,
+'2.2.1': addwarnings,
 #'2.2': redoprograms,
 }
 
@@ -584,9 +591,7 @@ def migrate(project, verbose=2, die=False):
     op.printv('Migration successful!', 3, verbose)
     
     # If any warnings were generated during the migration, print them now
-    if hasattr(project, 'warnings'):
-        if die: raise op.OptimaException(project.warnings)
-        else:   print(project.warnings)
+    project.getwarnings()
 
     return project
 

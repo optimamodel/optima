@@ -96,11 +96,19 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        if hasattr(self, 'warnings') and self.warnings:
-            output += '\nWARNING: This project contains the following warnings:'
-            output += self.warnings
+        output += self.getwarnings(doprint=False) # Don't print since print later
         return output
 
+    def getwarnings(self, doprint=True):
+        ''' Tiny method to print the warnings in the project, if any '''
+        if hasattr(self, 'warnings') and self.warnings: # There are warnings
+            output = '\nWARNING: This project contains the following warnings:'
+            output += str(self.warnings)
+        else: # There are no warnings
+            output = ''
+        if output and doprint: # Print warnings if requested
+            print(output)
+        return output
 
     #######################################################################################################
     ### Methods for I/O and spreadsheet loading
