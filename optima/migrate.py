@@ -48,6 +48,14 @@ def removeparameter(project=None, short=None, datashort=None, verbose=False, die
     return None
 
 
+def addwarning(project=None, message=None):
+    ''' Add a warning to the project, which is printed when migrated or loaded '''
+    if not hasattr(project, 'warnings'): # If no warnings attribute, create it
+        project.warnings = ''
+    project.warnings += '\n'+str(message) # # Add this warning
+    return None
+
+
 def versiontostr(project, **kwargs):
     """
     Convert Optima version number from number to string.
@@ -120,11 +128,13 @@ def redotransitions(project, dorun=False, **kwargs):
     if hasattr(project.settings, 'off'):        del project.settings.off
 
     # Update variables in data
-    project.data.pop('immediatecare', None)
-    project.data.pop('biofailure', None)
-    project.data.pop('restarttreat', None)
-    project.data.pop('stoprate', None)
-    project.data.pop('treatvs', None)
+    oldtimepars = ['immediatecare', 'biofailure', 'restarttreat','stoprate', 'treatvs']
+    for oldpar in oldtimepars:
+        project.data.pop(oldpar, None)
+        for progset in project.progsets.values():
+            if oldpar in progset.covout.keys():
+                msg = ''
+                addwarning(project, msg)
 
     # Add new constants
     project.data['const']['deathsvl']       = [0.23,    0.15,   0.3]
@@ -553,7 +563,7 @@ migrations = {
 
 
 
-def migrate(project, verbose=2):
+def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
@@ -568,6 +578,11 @@ def migrate(project, verbose=2):
         op.printv("%s" % project.version, 2, verbose, indent=False)
     
     op.printv('Migration successful!', 3, verbose)
+    
+    # If any warnings were generated during the migration, print them now
+    if hasattr(project, 'warnings'):
+        if die: raise op.OptimaException(project.warnings)
+        else:   print(project.warnings)
 
     return project
 
@@ -579,7 +594,7 @@ def migrate(project, verbose=2):
 
 
 
-def loadproj(filename=None, verbose=2):
+def loadproj(filename=None, verbose=2, die=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     # Create legacy classes for compatibility -- FOR FUTURE
@@ -590,7 +605,7 @@ def loadproj(filename=None, verbose=2):
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
 
-    P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose)
+    P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose, die=die)
     
 #    del op.programs.CCOF
 #    del op.programs.Costcov
