@@ -25,11 +25,11 @@ class Settings(object):
         self.dataend = 2020.0 # Default end year for data entry
         self.end = 2030.0 # Default end year for projections
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
-        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost']
+        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
         self.ncd4 = len(self.hivstates)
         self.nhealth = len(self.healthstates)
         self.hivstatesfull = ['Acute infection', 'CD4>500', '350<CD4<500', '200<CD4<350', '50<CD4<200', 'CD4<50']
-        self.healthstatesfull = ['Susceptible', 'Programmatically circumcised', 'Undiagnosed', 'Diagnosed', 'Initially linked to care', 'On unsuppressive ART', 'On suppressive ART', 'Lost to follow up']
+        self.healthstatesfull = ['Susceptible', 'Programmatically circumcised', 'Undiagnosed', 'Diagnosed', 'Linked to care', 'Lost to follow up', 'On unsuppressive ART', 'On suppressive ART']
         
         # Health states by diagnosis
         self.susreg   = arange(0,1) # Regular uninfected, may be uncircumcised
@@ -37,9 +37,9 @@ class Settings(object):
         self.undx     = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
         self.dx       = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
         self.care     = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
-        self.usvl     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
-        self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
-        self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
+        self.lost     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, but lost to follow-up
+        self.usvl     = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
+        self.svl      = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.notonart = cat([self.undx,self.dx,self.care,self.lost])
         self.dxnotincare = cat([self.dx,self.lost])
 
@@ -59,9 +59,9 @@ class Settings(object):
 
         # Combined states
         self.sus            = cat([self.susreg, self.progcirc]) # All uninfected
-        self.alldx          = cat([self.dx, self.care, self.usvl, self.svl, self.lost]) # All people diagnosed
-        self.allcare        = cat([         self.care, self.usvl, self.svl]) # All people CURRENTLY in care
-        self.allevercare    = cat([         self.care, self.usvl, self.svl, self.lost]) # All people EVER in care
+        self.alldx          = cat([self.dx, self.care, self.lost, self.usvl, self.svl]) # All people diagnosed
+        self.allcare        = cat([         self.care,            self.usvl, self.svl]) # All people CURRENTLY in care
+        self.allevercare    = cat([         self.care, self.lost, self.usvl, self.svl]) # All people EVER in care
         self.alltx          = cat([                    self.usvl, self.svl]) # All people on treatment
         self.allplhiv       = cat([self.undx, self.alldx]) # All PLHIV
         self.allaids        = cat([self.lt50, self.gt50]) # All people with AIDS
