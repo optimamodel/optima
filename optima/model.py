@@ -798,11 +798,17 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 # If any of the prop parameters are non-nan, that means that we've got some proportion target.
                 # However, treatment and VL monitoring are special because it is always set by shifting numbers.
                 if name in ['proptx','propsupp'] or ~isnan(prop[t+1]): 
+                    
+                    # Figure out how many people we currently have...
+                    actual          = people[num,:,t+1].sum() # ... in the higher cascade state
+                    available       = people[denom,:,t+1].sum() # ... waiting to move up
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
                         if isnan(propsupp[t+1]) and people[usvl,:,t+1].sum()>eps:
-                            newlysuppressed = raw_newtreat[:,t].sum()*dt*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
+                            unsuppressed = people[usvl,:,t+1] # To make sure it doesn't go negative
+                            suppressedprop = minimum(1.0, raw_newtreat[:,t].sum()*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
+                            newlysuppressed = suppressedprop*unsuppressed # Calculate actual number of people suppressed
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
@@ -811,10 +817,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     if name is 'propsupp' and isnan(prop[t+1]):
                         wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
 
-                    # Figure out how many people we currently have...
-                    actual          = people[num,:,t+1].sum() # ... in the higher cascade state
-                    available       = people[denom,:,t+1].sum() # ... waiting to move up
-
                     # Figure out how many people waiting to move up the cascade, and what distribution should we use to move them
                     ppltomoveup     = people[lowerstate,:,t+1]
                     if name == 'proptx': # For treatment, we move people in lower CD4 states first
@@ -822,6 +824,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                         movingdistribution = ppltomoveup/(eps+ppltomoveup.sum())
 
+                    checkfornegativepeople(people, tind=t+1)
 
                     # Figure out how many people we want and initialise new movers
                     if not isnan(prop[t+1]): # If the prop value is finite, we use it
@@ -829,7 +832,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     new_movers      = zeros((ncd4,npops)) 
 
                     # Reconcile the differences between the number we have and the number we want
-                    diff = wanted - actual # Wanted number less actual number 
+                    diff = minimum(wanted, available) - actual # Wanted number (or available number) minus actual number 
                     if diff>0.: # We need to move people UP the cascade 
                         for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
                             if diff>eps: # Move people until you have the right proportions
@@ -839,6 +842,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         people[lowerstate,:,t+1] -= new_movers # Shift people out of the lower state... 
                         people[tostate,:,t+1] += new_movers # ... and into the higher state
                         raw_new[:,t+1] += new_movers.sum(axis=0)/dt # Save new movers
+                        checkfornegativepeople(people, tind=t+1)
     
                     elif diff<0.: # We need to move people DOWN the cascade
                         for state in higherstates: # Start with the first higher state
@@ -848,6 +852,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 diff -= new_movers.sum() # Adjust the number of available spots
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
+                                checkfornegativepeople(people, tind=t+1)
 
         # Check no negative people
         if debug: checkfornegativepeople(people, tind=t+1)
