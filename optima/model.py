@@ -460,7 +460,28 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             birthrates = birthtransit[p1, p2] * birth[p1, :]
             if birthrates.any():
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
-                
+    
+    
+    ##################################################################################################################
+    ### Define error checking
+    ##################################################################################################################
+    
+    def checkfornegativepeople(people, tind=None):
+        if tind is None: 
+            tind = Ellipsis
+            tvec = simpars['tvec']
+        else:
+            tvec = [tind]            
+        if not((people[:,:,tind]>=0).all()): # If not every element is a real number >0, throw an error
+            for t in tvec:
+                for errstate in range(nstates): # Loop over all heath states
+                    for errpop in range(npops): # Loop over all populations
+                        if not(people[errstate,errpop,t]>=0):
+                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t], errstate, thistransit[errstate])
+                            if die: raise OptimaException(errormsg)
+                            else: 
+                                printv(errormsg, 1, verbose=verbose)
+                                people[errstate,errpop,t] = 0.0 # Reset
                 
 
     ##################################################################################################################
@@ -828,20 +849,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
 
-            # Check no negative people
-            if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
-                for errstate in range(nstates): # Loop over all heath states
-                    for errpop in range(npops): # Loop over all populations
-                        if not(people[errstate,errpop,t+1]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
-                            if die: raise OptimaException(errormsg)
-                            else: 
-                                printv(errormsg, 1, verbose=verbose)
-                                people[errstate,errpop,t+1] = 0.0 # Reset
-                                
-        raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
-                
-    
+        # Check no negative people
+        if debug: checkfornegativepeople(people, tind=t+1)
+    raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
+        
     raw                 = odict()    # Sim output structure
     raw['tvec']         = tvec
     raw['popkeys']      = popkeys
@@ -857,6 +868,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['death']        = raw_death
     raw['otherdeath']   = raw_otherdeath
     
+    if not debug: checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
     return raw # Return raw results
 
