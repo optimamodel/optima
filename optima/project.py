@@ -96,7 +96,7 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        if hasattr(self, 'warnings') and self.warnings is not None:
+        if hasattr(self, 'warnings') and self.warnings:
             output += '\nWARNING: This project contains the following warnings:'
             output += self.warnings
         return output

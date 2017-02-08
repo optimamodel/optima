@@ -50,9 +50,9 @@ def removeparameter(project=None, short=None, datashort=None, verbose=False, die
 
 def addwarning(project=None, message=None):
     ''' Add a warning to the project, which is printed when migrated or loaded '''
-    if not hasattr(project, 'warnings'): # If no warnings attribute, create it
+    if not hasattr(project, 'warnings') or type(project.warnings)!=str: # If no warnings attribute, create it
         project.warnings = ''
-    project.warnings += '\n'+str(message) # # Add this warning
+    project.warnings += '\n'*3+str(message) # # Add this warning
     return None
 
 
@@ -133,7 +133,7 @@ def redotransitions(project, dorun=False, **kwargs):
         project.data.pop(oldpar, None)
         for progset in project.progsets.values():
             if oldpar in progset.covout.keys():
-                msg = ''
+                msg = 'Project includes a program that affects "%s", but this parameter has been removed' % oldpar
                 addwarning(project, msg)
 
     # Add new constants
@@ -329,7 +329,7 @@ def fixsettings(project, **kwargs):
         try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
         except: pass # But don't worry if they don't exist
     
-    project.settings = op.Settings() # Completely refresh
+    project.settings = op.Settings() # Completely refresh -- WARNING, will mean future migrations to settings aren't necessary!
     
     # Replace with original settings
     for settingkey,settingval in oldsettings.items(): 
@@ -500,6 +500,10 @@ def redovlmon(project, **kwargs):
     project.data['const']['requiredvl'] = requiredvldata
     
     removeparameter(project, short='freqvlmon', datashort='freqvlmon')
+    for progset in project.progsets.values():
+        if 'freqvlmon' in progset.covout.keys():
+            msg = 'Project includes a program that affects "freqvlmon", but this parameter has been removed'
+            addwarning(project, msg)
     
     short = 'numvlmon'
     copyfrom = 'numtx'
