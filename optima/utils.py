@@ -322,10 +322,11 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     '''
     from numpy import array, isnan
     data = array(data)
+    if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = array(filterdata)
     if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
     else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
-    if sum(validindices): # There's at least one data point entered
+    if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
             validdata = array(array(data)[validindices]) # Store each year
         elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption

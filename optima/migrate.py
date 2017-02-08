@@ -510,8 +510,8 @@ def redovlmon(project, **kwargs):
     kwargs['name'] = 'Viral load monitoring (number/year)'
     kwargs['dataname'] = 'Viral load monitoring (number/year)'
     kwargs['datashort'] = 'numvlmon'
-    kwargs['t'] = op.odict([('tot',array([2015.]))])
-    kwargs['y'] = op.odict([('tot',array([project.data['numvlmon'][0][-1]]))])
+    kwargs['t'] = op.odict([('tot',op.getvaliddata(project.data['years'], project.data['numvlmon'][0]))])
+    kwargs['y'] = op.odict([('tot',op.getvaliddata(project.data['numvlmon'][0]))])
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     
     short = 'requiredvl'
