@@ -874,9 +874,9 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
-    if start is None: start = project.settings.start
-    if end is None: end = project.settings.end
-    if dt is None: dt = project.settings.dt
+    if start is None: start = settings.start
+    if end is None: end = settings.end
+    if dt is None: dt = settings.dt
     if simpars is None:
         if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
         simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)

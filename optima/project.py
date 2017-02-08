@@ -353,8 +353,9 @@ class Project(object):
     
     
     def cleanresults(self):
-        ''' Remove all results '''
-        self.results = odict() # Just replace with an empty odict, as at initialization
+        ''' Remove all results except for BOCs '''
+        for key,result in self.results.items():
+            if type(result)!=BOC: self.results.pop(key)
         self.modified = today()
         return None
     
@@ -637,11 +638,13 @@ class Project(object):
         self.modified = today()
         return None        
     
-    def getBOC(self, objectives):
+    def getBOC(self, objectives=None):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
+        
         for x in self.results:
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
+                if objectives is None: return boc
                 same = True
                 for y in boc.objectives:
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False

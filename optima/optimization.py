@@ -6,7 +6,7 @@ Version: 2016apr11
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
-from numpy import zeros, arange, maximum, array, inf
+from numpy import zeros, arange, maximum, array, inf, isfinite
 
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
@@ -223,8 +223,9 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if abslimits['max'][pind] is None: abslimits['max'][pind] = inf
     for oi,oind in enumerate(optiminds): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
         # Fully-relative limits (i.e. scale according to total spend).
-        abslimits['min'][oind] *= rescaledbudget[oind]
-        abslimits['max'][oind] *= rescaledbudget[oind]
+        if isfinite(abslimits['min'][oind]): abslimits['min'][oind] *= rescaledbudget[oind]
+        if isfinite(abslimits['max'][oind]): abslimits['max'][oind] *= rescaledbudget[oind]
+        
 
 #        # Semi-relative limits. Note: Has issues, but is left here for posterity.
 #        if scaleratio<1:
