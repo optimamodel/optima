@@ -4,6 +4,7 @@ from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscena
 from optima import defaultobjectives, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
+from numpy.random import seed, randint
 import os
 
 #######################################################################################################
@@ -469,7 +470,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -485,8 +486,10 @@ class Project(object):
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
+            if randseed is not None: seed(randseed) # Reset the random seed, if specified
             for i in range(n):
-                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample))
+                sampleseed = randint(0,2**32-1)
+                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
@@ -515,7 +518,7 @@ class Project(object):
         return results
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, **kwargs): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
         '''
         Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
         
@@ -525,7 +528,7 @@ class Project(object):
         P.sensitivity(n=5, tosample='force')
         '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, **kwargs)
+        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, randseed=randseed, **kwargs)
         self.modified = today()
         return results
 
