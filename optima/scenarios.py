@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append, array
-from optima import OptimaException, Link, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
+from optima import OptimaException, Settings, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
 
 
 class Scen(object):
@@ -19,10 +19,10 @@ class Scen(object):
         output = defaultrepr(self)
         return output
 
-    def getresults(self):
+    def getresults(self, project=None):
         ''' Returns the results '''
-        if self.resultsref is not None and self.projectref() is not None:
-            results = getresults(project=self.projectref(), pointer=self.resultsref)
+        if self.resultsref is not None and project is not None:
+            results = getresults(project=project, pointer=self.resultsref)
             return results
         else:
             print('WARNING, no results associated with this scenario')
@@ -112,10 +112,11 @@ def makescenarios(project=None, scenlist=None, verbose=2):
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
         
-        try: 
+        try:
             thisparset = dcp(project.parsets[scen.parsetname])
-            thisparset.projectref = Link(project) # Replace copy of project with pointer -- WARNING, hacky
-        except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
+        except: 
+            errormsg = 'Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project)
+            raise OptimaException(errormsg)
         npops = len(thisparset.popkeys)
 
         if isinstance(scen,Parscen):
@@ -286,7 +287,7 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
         if startyear is None: startyear = parset.pars[parname].t[forwhom][-1]
         startval = parset.pars[parname].interp(startyear,asarray=False)[forwhom][0]
     else:
-        if startyear is None: startyear = parset.projectref().settings.now
+        if startyear is None: startyear = Settings().now
         startval = parset.getprop(proptype=parname,year=startyear)[0]
 
     

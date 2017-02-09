@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
+from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -177,8 +177,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     ## Set up control panel
     figwidth = 7
     figheight = 12
-    try: fc = results.projectref().settings.optimablue # Try loading global optimablue
-    except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
+    fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95), **kwargs) # Open control panel
     checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
     updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location

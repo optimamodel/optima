@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, asd, convertlimits
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
@@ -30,7 +30,6 @@ class Programset(object):
         self.defaultbudget = odict()
         self.created = today()
         self.modified = today()
-        self.projectref = Link(project) # Store pointer for the project, if available
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -45,19 +44,6 @@ class Programset(object):
         
         return output
 
-    def getsettings(self, project=None, parset=None, results=None):
-        ''' Try to get the freshest settings available '''
-
-        try: settings = project.settings
-        except:
-            try: settings = self.projectref().settings
-            except:
-                try: settings = parset.projectref().settings
-                except:
-                    try: settings = results.projectref().settings
-                    except: settings = Settings()
-        
-        return settings
         
     def gettargetpops(self):
         '''Update populations targeted by some program in the response'''
@@ -425,12 +411,6 @@ class Programset(object):
 
         # Validate inputs
         if isnumber(t): t = [t]
-        if parset is None:
-            if results and results.parset: 
-                parset = results.parset
-            else: 
-                try:    parset = self.projectref().parset() # Get default parset
-                except: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         if coverage is None:
             coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample)
         for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
@@ -667,7 +647,7 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, objective='mape', maxiters=1000, maxtime=None, uselimits=True, verbose=2, **kwargs):
+    def reconcile(self, project=None, parset=None, year=None, ind=0, objective='mape', maxiters=1000, maxtime=None, uselimits=True, verbose=2, **kwargs):
         '''
         A method for automatically reconciling coverage-outcome parameters with model parameters.
         
@@ -678,15 +658,6 @@ class Programset(object):
         P.progset().reconcile(year=2016, uselimits=False, verbose=4)
         '''
         printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
-        
-        # Try defaults if none supplied
-        if not hasattr(self,'project'):
-            try: self.projectref = Link(parset.projectref())
-            except: raise OptimaException('Could not find a usable project')
-                
-        if parset is None:
-            try: parset = self.projectref().parset()
-            except: raise OptimaException('Could not find a usable parset')
         
         # Initialise internal variables 
         settings = self.getsettings()
@@ -905,11 +876,7 @@ class Program(object):
         else: 
 
             # Get settings
-            try: settings = parset.projectref().settings
-            except:
-                try: settings = results.projectref().settings
-                except: settings = Settings()
-
+            settings = Settings() # Create new
             npops = len(parset.pars['popkeys'])
     
             if not self.criteria['pregnant']:
