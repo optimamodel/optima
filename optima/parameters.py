@@ -412,7 +412,8 @@ def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
 
     # Fix treatment from final data year
     pars['fixproptx'].t = pars['numtx'].t['tot'][-1]
-    for key in ['fixpropdx', 'fixpropcare', 'fixpropsupp', 'fixproppmtct']:
+    pars['fixpropsupp'].t = pars['numvlmon'].t['tot'][-1]
+    for key in ['fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
 
     # Metaparameters
