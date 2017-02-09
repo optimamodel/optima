@@ -544,6 +544,26 @@ def addprojectinfotoresults(project, verbose=2, **kwargs):
     return None
 
 
+def redoparameterattributes(project, **kwargs):
+    ''' Change the names of the parameter attributes, and change transnorm from being a setting to being a parameter '''
+    
+    # Change parameter attributes
+    
+    # Add transnorm
+    short = 'transnorm'
+    copyfrom = 'transmfi'
+    kwargs['name'] = 'Normalization factor for transmissibility'
+    kwargs['y'] = project.settings.transnorm
+    kwargs['fromdata'] = 0
+    kwargs['limits'] = (0, 'maxmeta')
+    kwargs['prior'] = {'dist':'uniform', 'pars':project.settings.transnorm*array([ 0.9,  1.1])}
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    
+    project.version = '2.2.3'
+    
+    return None
+
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -575,6 +595,7 @@ migrations = {
 '2.1.10': redoparameters,
 '2.2': redovlmon,
 '2.2.1': addprojectinfotoresults,
+'2.2.2': movetransnorm,
 #'2.2': redoprograms,
 }
 
