@@ -493,7 +493,7 @@ class GAOptim(object):
             final = findinds(tvector, self.objectives['end'])
             indices = arange(initial, final)
             
-            projectname = self.resultpairs[x]['init'].project.name
+            projectname = self.resultpairs[x]['init'].projectref().name
             initalloc = self.resultpairs[x]['init'].budget['Current']
             gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal']
             initoutcome = self.resultpairs[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
