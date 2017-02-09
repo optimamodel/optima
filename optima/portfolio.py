@@ -283,11 +283,10 @@ class Portfolio(object):
         if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         
         gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
-        outputstring = gaoptim.printresults()
-        
-        self.outputstring = outputstring # Store the results as an output string
+        self.outputstring = gaoptim.printresults() # Store the results as an output string
         
         toc(GAstart)
+        return None
         
         
         
