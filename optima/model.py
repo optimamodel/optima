@@ -852,7 +852,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
             # Check no negative people -- this is inside the t<npts statement, so doesn't check the last point
             if debug: checkfornegativepeople(people, tind=t+1)
-    raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
+#    raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year -- this is outside the time loop
         
     raw                 = odict()    # Sim output structure
     raw['tvec']         = tvec
