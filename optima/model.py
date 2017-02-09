@@ -798,10 +798,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 # If any of the prop parameters are non-nan, that means that we've got some proportion target.
                 # However, treatment and VL monitoring are special because it is always set by shifting numbers.
                 if name in ['proptx','propsupp'] or ~isnan(prop[t+1]): 
-                    
-                    # Figure out how many people we currently have...
-                    actual          = people[num,:,t+1].sum() # ... in the higher cascade state
-                    available       = people[denom,:,t+1].sum() # ... waiting to move up
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
@@ -816,6 +812,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     # We figure out how many people should be moved to suppressed based on how many VL tests were done
                     if name is 'propsupp' and isnan(prop[t+1]):
                         wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
+
+                    # Figure out how many people we currently have...
+                    actual          = people[num,:,t+1].sum() # ... in the higher cascade state
+                    available       = people[denom,:,t+1].sum() # ... waiting to move up
 
                     # Figure out how many people waiting to move up the cascade, and what distribution should we use to move them
                     ppltomoveup     = people[lowerstate,:,t+1]
