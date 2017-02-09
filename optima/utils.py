@@ -322,10 +322,11 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     '''
     from numpy import array, isnan
     data = array(data)
+    if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = array(filterdata)
     if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
     else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
-    if sum(validindices): # There's at least one data point entered
+    if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
             validdata = array(array(data)[validindices]) # Store each year
         elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
@@ -804,6 +805,67 @@ def compareversions(version1=None, version2=None):
         raise Exception('Failed to compare %s and %s' % (version1, version2))
 
 
+
+
+
+
+def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=2, die=False):
+    ''' 
+    Send a Slack notification when something is finished.
+    
+    Arguments:
+        to:
+            The Slack channel or user to post to. Note that channels begin with #, while users begin with @.
+        message:
+            The message to be posted.
+        fromuser:
+            The pseudo-user the message will appear from.
+        token:
+            This must be a plain text file containing a single line which is the Slack API URL token.
+            Tokens are effectively passwords and must be kept secure. If you need one, contact me.
+        verbose:
+            How much detail to display.
+        die:
+            If false, prints warnings. If true, raises exceptions.
+    
+    Example usage:
+        slacknotification('#athena', 'Long process is finished')
+        slacknotification(token='/.slackurl', channel='@cliffk', message='Hi, how are you going?')
+    
+    What's the point? Add this to the end of a very long-running script to notify
+    your loved ones that the script has finished.
+        
+    Version: 2017feb09 by cliffk    
+    '''
+    
+    # Imports
+    from requests import post # Simple way of posting data to a URL
+    from json import dumps # For sanitizing the message
+    from getpass import getuser # In case username is left blank
+    
+    # Validate input arguments
+    printv('Sending Slack message...', 2, verbose)
+    if token is None: token = '/.slackurl'
+    if to is None: to = '#athena'
+    if fromuser is None: fromuser = getuser()+'-bot'
+    if message is None: message = 'This is an automated notification: your notifier is notifying you.'
+    printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
+    
+    # Try opening token file    
+    try:
+        with open(token) as f: slackurl = f.read()
+    except:
+        print('Could not open Slack URL/token file "%s"' % token)
+        if die: raise
+        else: return None
+    
+    # Package and post payload
+    payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
+    printv('Full payload: %s' % payload, 4, verbose)
+    response = post(url=slackurl, data=payload)
+    printv(response, 3, verbose) # Optionally print response
+    printv('Message sent.', 1, verbose) # We're done
+    return None
 
 
 
@@ -1297,10 +1359,55 @@ class dataframe(object):
 
 
 ##############################################################################
-## OPTIMA EXCEPTIONS CLASS
+## OTHER CLASSES
 ##############################################################################
 
 class OptimaException(Exception):
     ''' A tiny class to allow for Optima-specific exceptions '''
     def __init(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
+
+
+
+class LinkException(Exception):
+        ''' An exception to raise when links are broken -- note, can't define classes inside classes :( '''
+        def __init(self, *args, **kwargs):
+            Exception.__init__(self, *args, **kwargs)
+
+
+class Link(object):
+    '''
+    A class to differentiate between an object and a link to an object. Not very
+    useful at the moment, but the idea eventually is that this object would be
+    parsed differently from other objects -- most notably, a recursive method
+    (such as a pickle) would skip over Link objects, and then would fix them up
+    after the other objects had been reinstated.
+    
+    Version: 2017jan31
+    '''
+    
+    def __init__(self, obj=None):
+        ''' Store the reference to the object being referred to '''
+        self.obj = obj # Store the object -- or rather a reference to it, if it's mutable
+        try:    self.uid = obj.uid # If the object has a UID, store it separately 
+        except: self.uid = None # If not, just use None
+    
+    def __call__(self, obj=None):
+        ''' If called with no argument, return the stored object; if called with argument, update object '''
+        if obj is None:
+            if type(self.obj)==LinkException: # If the link is broken, raise it now
+                raise self.obj 
+            return self.obj
+        else:
+            self.__init__(obj)
+            return None
+    
+    def __copy__(self, *args, **kwargs):
+        ''' Do NOT automatically copy link objects!! '''
+        return Link(LinkException('Link object copied but not yet repaired'))
+    
+    def __deepcopy__(self, *args, **kwargs):
+        ''' Same as copy '''
+        return self.__copy__(self, *args, **kwargs)
+        
+        

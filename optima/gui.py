@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
+from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -20,8 +20,17 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     return None
 
 
+def sanitizeresults(tmpresults):
+    ''' Allow for flexible input -- a results structure, a list, or a project file '''
+    if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
+    elif type(tmpresults) not in [Resultset, Multiresultset]:
+        try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
+        except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
+    else: results = tmpresults # Just use directly
+    return results
 
-def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
+
+def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
     Does the hard work for updateplots() for pygui()
     Keyword arguments if supplied are passed on to figure().
@@ -35,6 +44,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
+    results = sanitizeresults(tmpresults)
     
     # Do plotting
     wasinteractive = isinteractive()
@@ -132,15 +142,11 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 1.2 (2016feb04)
+    Version: 1.3 (2017feb07)
     '''
     
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
-    if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
-    elif type(tmpresults) not in [Resultset, Multiresultset]:
-        try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
-        except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
-    else: results = tmpresults # Just use directly
+    results = sanitizeresults(tmpresults)
             
     
     ## Define options for selection
@@ -171,8 +177,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     ## Set up control panel
     figwidth = 7
     figheight = 12
-    try: fc = results.project.settings.optimablue # Try loading global optimablue
-    except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
+    fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95), **kwargs) # Open control panel
     checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
     updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location

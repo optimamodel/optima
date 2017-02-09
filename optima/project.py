@@ -44,7 +44,7 @@ class Project(object):
     ### Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2):
+    def __init__(self, name='default', spreadsheet=None, dorun=True, makedefaults=True, verbose=2, **kwargs):
         ''' Initialize the project '''
 
         ## Define the structure sets
@@ -68,10 +68,11 @@ class Project(object):
         self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
+        self.warnings = None # Place to store information about warnings (mostly used during migrations)
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
-            self.loadspreadsheet(spreadsheet, dorun=dorun)
+            self.loadspreadsheet(spreadsheet, dorun=dorun, makedefaults=makedefaults, verbose=verbose, **kwargs)
 
         return None
 
@@ -95,8 +96,28 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
+        output += self.getwarnings(doprint=False) # Don't print since print later
         return output
+    
+    def getinfo(self):
+        ''' Return an odict with basic information about the project '''
+        info = odict()
+        for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
+            info[attr] = getattr(self, attr) # Populate the dictionary
+        info['parsetkeys'] = self.parsets.keys()
+        info['progsetkeys'] = self.parsets.keys()
+        return info
 
+    def getwarnings(self, doprint=True):
+        ''' Tiny method to print the warnings in the project, if any '''
+        if hasattr(self, 'warnings') and self.warnings: # There are warnings
+            output = '\nWARNING: This project contains the following warnings:'
+            output += str(self.warnings)
+        else: # There are no warnings
+            output = ''
+        if output and doprint: # Print warnings if requested
+            print(output)
+        return output
 
     #######################################################################################################
     ### Methods for I/O and spreadsheet loading
@@ -224,7 +245,7 @@ class Project(object):
                 if overwrite==False:
                     raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
                 else:
-                    printv('Structure list already has item named "%s"' % (checkabsent), 2, self.settings.verbose)
+                    printv('Structure list already has item named "%s"' % (checkabsent), 3, self.settings.verbose)
                 
         if checkexists is not None:
             if not checkexists in structlist:
@@ -246,8 +267,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
-        if hasattr(structlist[name],'project'): structlist[name].project = self # Refresh link to parent project
-        printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
+        printv('Item "%s" added to "%s"' % (name, what), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -258,7 +278,7 @@ class Project(object):
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
-        printv('%s "%s" removed' % (what, name), 2, self.settings.verbose)
+        printv('%s "%s" removed' % (what, name), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -272,8 +292,7 @@ class Project(object):
         structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
-        if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
-        printv('%s "%s" copied to "%s"' % (what, orig, new), 2, self.settings.verbose)
+        printv('%s "%s" copied to "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -284,7 +303,7 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
-        printv('%s "%s" renamed "%s"' % (what, orig, new), 2, self.settings.verbose)
+        printv('%s "%s" renamed "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None
         
@@ -341,8 +360,9 @@ class Project(object):
     
     
     def cleanresults(self):
-        ''' Remove all results '''
-        self.results = odict() # Just replace with an empty odict, as at initialization
+        ''' Remove all results except for BOCs '''
+        for key,result in self.results.items():
+            if type(result)!=BOC: self.results.pop(key)
         self.modified = today()
         return None
     
@@ -625,11 +645,13 @@ class Project(object):
         self.modified = today()
         return None        
     
-    def getBOC(self, objectives):
+    def getBOC(self, objectives=None):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
+        
         for x in self.results:
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
+                if objectives is None: return boc
                 same = True
                 for y in boc.objectives:
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False

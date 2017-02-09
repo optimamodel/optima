@@ -28,12 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Version: 2016nov03 by cliffk
 """
 
-optimalicense = '''
-Optima HIV -- HIV optimization and analysis tool
-Copyright (C) 2016 by the Optima Consortium
-'''
-print(optimalicense)
-
 
 
 
@@ -42,6 +36,9 @@ print(optimalicense)
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 from ._version import __version__
 version = __version__ # Make it accessible via from optima import *
+
+optimalicense = 'Optima HIV %s -- (c) 2017 by the Optima Consortium' % version
+print(optimalicense)
 
 # Create an empty list to stored failed imports
 _failed = [] 
@@ -71,7 +68,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -165,11 +162,6 @@ except: _failed.append('manualfit')
 import project as _project
 from .project import Project
 
-# Portfolio class (container of Projects)
-import portfolio as _portfolio
-from .portfolio import Portfolio 
-
-
 # Finally, load defaults
 from . import defaults
 from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms, demo
@@ -177,10 +169,13 @@ from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultp
 # And really finally, load other random things that don't matter
 try:
     import migrate as _migrate
-    from .migrate import migrate, loadproj, optimaversion
+    from .migrate import migrate, loadproj, loadportfolio, optimaversion
 except:
     _failed.append('migrate')
 
+# Really really finally, load the portfolio class (container of Projects), relies on loadproj, hence is here
+import portfolio as _portfolio
+from .portfolio import Portfolio 
 
 # And really really finally, load geospatial functions (has to load projects, so has to come after migration)
 try:
