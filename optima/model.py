@@ -473,7 +473,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         else:
             tvec = [tind]            
         if not((people[:,:,tind]>=0).all()): # If not every element is a real number >0, throw an error
-            for t in tvec:
+            for t in range(len(tvec)):
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
