@@ -167,7 +167,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
                             this_y = thispar.interp(tvec=scenpar['startyear'], sample=False)[popind] # Find what the model would get for this value
                         else:
-                            this_y = thisparset.getprop(proptype=scenpar['name'],year=scenpar['startyear'])                            
+                            this_y = thisparset.getprop(project=project, proptype=scenpar['name'],year=scenpar['startyear'])                            
 
                     # Remove years after the last good year
                     if last_t < max(thispar.t[popind]):
@@ -276,7 +276,7 @@ def defaultscenarios(parset=None, verbose=2):
 
 
 
-def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, verbose=2):
+def setparscenvalues(project=None, parset=None, parname=None, forwhom=None, startyear=None, verbose=2):
     """ Define a list of default scenarios -- only "Current conditions" by default """
     if parset is None: raise OptimaException('You need to supply a parset to generate default scenarios')
     
@@ -288,7 +288,7 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
         startval = parset.pars[parname].interp(startyear,asarray=False)[forwhom][0]
     else:
         if startyear is None: startyear = Settings().now
-        startval = parset.getprop(proptype=parname,year=startyear)[0]
+        startval = parset.getprop(project=project, proptype=parname,year=startyear)[0]
 
     
     return {'startval':startval,'startyear':startyear}

@@ -290,8 +290,7 @@ class Programset(object):
         if t is not None: t = promotetoarray(t)
 
         # Set up internal variables
-        settings = self.getsettings()
-        tvec = settings.maketvec() 
+        tvec = Settings().maketvec() 
         emptyarray = array([nan]*len(tvec))
         
         # Get cost data for each program in each year that it exists
@@ -533,7 +532,7 @@ class Programset(object):
         
         
         
-    def getpars(self, coverage, t=None, parset=None, results=None, sample='best', die=False, verbose=2):
+    def getpars(self, coverage, t=None, parset=None, results=None, sample='best', settings=None, die=False, verbose=2):
         ''' Make pars'''
         
         years = t # WARNING, not renaming in the function definition for now so as to not break things
@@ -547,7 +546,7 @@ class Programset(object):
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         
         # Get settings
-        settings = self.getsettings()
+        if settings is None: settings = Settings()
 
         # Get outcome dictionary
         outcomes = self.getoutcomes(coverage=coverage, t=years, parset=parset, results=results, sample=sample)
@@ -647,7 +646,7 @@ class Programset(object):
     
     
     
-    def reconcile(self, project=None, parset=None, year=None, ind=0, objective='mape', maxiters=1000, maxtime=None, uselimits=True, verbose=2, **kwargs):
+    def reconcile(self, parset=None, year=None, settings=None, objective='mape', maxiters=1000, maxtime=None, uselimits=True, verbose=2, **kwargs):
         '''
         A method for automatically reconciling coverage-outcome parameters with model parameters.
         
@@ -660,7 +659,7 @@ class Programset(object):
         printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
         
         # Initialise internal variables 
-        settings = self.getsettings()
+        if settings is None: settings = Settings()
         origpardict = dcp(self.cco2odict(t=year))
         pardict = dcp(origpardict)
         pararray = dcp(pardict[:]) # Turn into array format

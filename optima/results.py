@@ -466,7 +466,7 @@ class Multiresultset(Resultset):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = '============================================================\n'
-        output += '      Project name: %s\n'    % self.projectinfo['name'
+        output += '      Project name: %s\n'    % self.projectinfo['name']
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '      Results sets: %s\n'    % self.keys
