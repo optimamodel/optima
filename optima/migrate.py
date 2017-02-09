@@ -528,12 +528,16 @@ def redovlmon(project, **kwargs):
     return None
         
 
-def addprojectinfotoresults(project, **kwargs):
+def addprojectinfotoresults(project, verbose=2, **kwargs):
     ''' Add project info to resultsets so they can be loaded '''
     
+    for item in project.parsets.values()+project.progsets.values()+project.optims.values()+project.results.values():
+        item.projectref = op.Link(project)
+        try:    del item.project
+        except: op.printv('No project attribute found for %s' % item.name, 3, verbose)
+            
     for result in project.results.values():
         result.projectinfo = project.getinfo()
-        result.projectref = op.Link(project)
     
     project.version = '2.2.2'
     
