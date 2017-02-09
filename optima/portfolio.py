@@ -283,11 +283,10 @@ class Portfolio(object):
         if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         
         gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
-        outputstring = gaoptim.printresults()
-        
-        self.outputstring = outputstring # Store the results as an output string
+        self.outputstring = gaoptim.printresults() # Store the results as an output string
         
         toc(GAstart)
+        return None
         
         
         
@@ -493,7 +492,7 @@ class GAOptim(object):
             final = findinds(tvector, self.objectives['end'])
             indices = arange(initial, final)
             
-            projectname = self.resultpairs[x]['init'].project.name
+            projectname = self.resultpairs[x]['init'].projectinfo['name']
             initalloc = self.resultpairs[x]['init'].budget['Current']
             gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal']
             initoutcome = self.resultpairs[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
