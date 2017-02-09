@@ -1359,10 +1359,54 @@ class dataframe(object):
 
 
 ##############################################################################
-## OPTIMA EXCEPTIONS CLASS
+## OTHER CLASSES
 ##############################################################################
 
 class OptimaException(Exception):
     ''' A tiny class to allow for Optima-specific exceptions '''
     def __init(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
+
+
+
+class Link(object):
+    '''
+    A class to differentiate between an object and a link to an object. Not very
+    useful at the moment, but the idea eventually is that this object would be
+    parsed differently from other objects -- most notably, a recursive method
+    (such as a pickle) would skip over Link objects, and then would fix them up
+    after the other objects had been reinstated.
+    
+    Version: 2017jan31
+    '''
+    
+    class LinkException(Exception):
+        ''' An exception to raise when links are broken '''
+        def __init(self, *args, **kwargs):
+            Exception.__init__(self, *args, **kwargs)
+    
+    def __init__(self, obj=None):
+        ''' Store the reference to the object being referred to '''
+        self.obj = obj # Store the object -- or rather a reference to it, if it's mutable
+        try:    self.uid = obj.uid # If the object has a UID, store it separately 
+        except: self.uid = None # If not, just use None
+    
+    def __call__(self, obj=None):
+        ''' If called with no argument, return the stored object; if called with argument, update object '''
+        if obj is None:
+            if type(self.obj)==self.LinkException: # If the link is broken, raise it now
+                raise self.obj 
+            return self.obj
+        else:
+            self.__init__(obj)
+            return None
+    
+    def __copy__(self, *args, **kwargs):
+        ''' Do NOT automatically copy link objects!! '''
+        return Link(self.LinkException('Link object copied but not yet repaired'))
+    
+    def __deepcopy__(self, *args, **kwargs):
+        ''' Same as copy '''
+        return self.__copy__(self, *args, **kwargs)
+        
+        

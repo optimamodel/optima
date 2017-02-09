@@ -258,7 +258,6 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
-        if hasattr(structlist[name],'project'): structlist[name].project = self # Refresh link to parent project
         printv('Item "%s" added to "%s"' % (name, what), 3, self.settings.verbose)
         self.modified = today()
         return None
@@ -284,7 +283,6 @@ class Project(object):
         structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
-        if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
         printv('%s "%s" copied to "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None

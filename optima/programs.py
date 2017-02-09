@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
@@ -30,7 +30,7 @@ class Programset(object):
         self.defaultbudget = odict()
         self.created = today()
         self.modified = today()
-        self.project = project # Store pointer for the project, if available
+        self.projectref = Link(project) # Store pointer for the project, if available
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -50,11 +50,11 @@ class Programset(object):
 
         try: settings = project.settings
         except:
-            try: settings = self.project.settings
+            try: settings = self.projectref().settings
             except:
-                try: settings = parset.project.settings
+                try: settings = parset.projectref().settings
                 except:
-                    try: settings = results.project.settings
+                    try: settings = results.projectref().settings
                     except: settings = Settings()
         
         return settings
@@ -429,7 +429,7 @@ class Programset(object):
             if results and results.parset: 
                 parset = results.parset
             else: 
-                try:    parset = self.project.parset() # Get default parset
+                try:    parset = self.projectref().parset() # Get default parset
                 except: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         if coverage is None:
             coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample)
@@ -681,11 +681,11 @@ class Programset(object):
         
         # Try defaults if none supplied
         if not hasattr(self,'project'):
-            try: self.project = parset.project
+            try: self.projectref = Link(parset.projectref())
             except: raise OptimaException('Could not find a usable project')
                 
         if parset is None:
-            try: parset = self.project.parset()
+            try: parset = self.projectref().parset()
             except: raise OptimaException('Could not find a usable parset')
         
         # Initialise internal variables 
@@ -905,9 +905,9 @@ class Program(object):
         else: 
 
             # Get settings
-            try: settings = parset.project.settings
+            try: settings = parset.projectref().settings
             except:
-                try: settings = results.project.settings
+                try: settings = results.projectref().settings
                 except: settings = Settings()
 
             npops = len(parset.pars['popkeys'])

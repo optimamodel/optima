@@ -177,7 +177,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     ## Set up control panel
     figwidth = 7
     figheight = 12
-    try: fc = results.project.settings.optimablue # Try loading global optimablue
+    try: fc = results.projectref().settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95), **kwargs) # Open control panel
     checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
