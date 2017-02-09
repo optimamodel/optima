@@ -31,21 +31,15 @@ def loadpardefitions(filename='model-inputs.xlsx', verbose=2):
     return pardefinitions
 
 
-
-    
 def forcebool(entry, location=''):
     ''' Convert an entry to be Boolean '''
-    if entry in [1, 'TRUE', 'true', 'True', 't', 'T']:
-        return 1
-    elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']:
-        return 0
+    if   entry in [1, 'TRUE',  'true',  'True',  't', 'T']: return 1
+    elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']: return 0
     else:
         errormsg = 'Boolean data "%s" not understood in spreadsheet location "%s"' % (entry, location)
         raise OptimaException(errormsg)
     
     
-    
-
 def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklower=True, checkblank=True):
     ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
     
@@ -76,7 +70,6 @@ def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklowe
         raise OptimaException(errormsg)
     
     return None
-
 
 
 def blank2nan(thesedata):
@@ -162,7 +155,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     lastdatacol, data['years'] = getyears(sheetdata)
     assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
     
-
     ##################################################################
     ## Now, actually load the data
     ##################################################################    
@@ -324,7 +316,6 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
                'Coverage': 'coverage',
                'Saturation': 'saturation'} 
     sheetdata = workbook.sheet_by_name('Program data') # Load 
-    parcount = -1    
     
     for row in range(sheetdata.nrows): 
         sheetname = sheetdata.cell_value(row,0) # Sheet name
@@ -332,7 +323,6 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
 
         if sheetname == 'Program data': 
             printv('Loading "%s"...' % sheetname, 3, verbose)
-            parcount += 1 # Increment the parameter count
 
         elif progname != '': # The first column is blank: it's time for the data
             thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 3rd column, and ends lastdatacol-1
