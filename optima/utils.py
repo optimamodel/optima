@@ -842,6 +842,7 @@ def slacknotification(message=None, channel=None, user=None, token=None, verbose
     printv('Sending Slack message...', 2, verbose)
     
     # Validate input arguments
+    from requests import post
     from json import dumps # For sanitizing the message
     from getpass import getuser # In case username is left blank
     if token is None: token = '/.slackurl'
@@ -860,14 +861,23 @@ def slacknotification(message=None, channel=None, user=None, token=None, verbose
         if die: raise
         else: return None
     
-    command = 'curl -X POST --data-urlencode ''payload={"text": %s, "channel": %s, "username": %s}'' %s' % (dumps(message), dumps(channel), dumps(user), slackurl)
-    printv('Full command: %s' % command, 4, verbose)
+    payload = {'text':dumps(message), 'channel':dumps(channel), 'username':dumps(user)}
+    payload1 = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(channel), dumps(user))
+    payload2 = dumps(payload)
+    printv('Full command: %s' % payload1, 4, verbose)
+    printv('Full command: %s' % payload2, 4, verbose)
+#    command = 'curl -X POST --data-urlencode ''payload={"text": %s, "channel": %s, "username": %s}'' %s' % (dumps(message), dumps(channel), dumps(user), slackurl)
+#    printv('Full command: %s' % command, 4, verbose)
+    
+    r = post(url=slackurl, data=payload1)
+    print(r)
+    print(dir(r))
 
-    try: runcommand(command)
-    except Exception as E:
-        print('Could not send message :( Because "%s"' % E.message)
-        if die: raise
-        else: return None
+#    try: runcommand(command, printinput=True, printoutput=True)
+#    except Exception as E:
+#        print('Could not send message :( Because "%s"' % E.message)
+#        if die: raise
+#        else: return None
     printv('Message sent.', 2, verbose)
     return None
 
