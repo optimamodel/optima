@@ -807,7 +807,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     if name is 'proptx':
                         if isnan(propsupp[t+1]) and people[usvl,:,t+1].sum()>eps:
                             unsuppressed = people[usvl,:,t+1] # To make sure it doesn't go negative
-                            suppressedprop = minimum(1.0, raw_newtreat[:,t].sum()*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
+                            suppressedprop = minimum(1.0, (raw_newtreat[:,t].sum()-raw_newsupp[:,t].sum())*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
                             newlysuppressed = suppressedprop*unsuppressed # Calculate actual number of people suppressed
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
@@ -830,7 +830,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     new_movers      = zeros((ncd4,npops)) 
 
                     # Reconcile the differences between the number we have and the number we want
-                    diff = minimum(wanted, available) - actual # Wanted number (or available number) minus actual number 
+                    diff = wanted - actual # Wanted number minus actual number 
                     if diff>0.: # We need to move people UP the cascade 
                         for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
                             if diff>eps: # Move people until you have the right proportions
