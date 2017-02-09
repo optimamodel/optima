@@ -824,8 +824,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                         movingdistribution = ppltomoveup/(eps+ppltomoveup.sum())
 
-                    checkfornegativepeople(people, tind=t+1)
-
                     # Figure out how many people we want and initialise new movers
                     if not isnan(prop[t+1]): # If the prop value is finite, we use it
                         wanted = prop[t+1]*available
@@ -842,7 +840,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                         people[lowerstate,:,t+1] -= new_movers # Shift people out of the lower state... 
                         people[tostate,:,t+1] += new_movers # ... and into the higher state
                         raw_new[:,t+1] += new_movers.sum(axis=0)/dt # Save new movers
-                        checkfornegativepeople(people, tind=t+1)
     
                     elif diff<0.: # We need to move people DOWN the cascade
                         for state in higherstates: # Start with the first higher state
@@ -852,7 +849,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 diff -= new_movers.sum() # Adjust the number of available spots
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
-                                checkfornegativepeople(people, tind=t+1)
 
         # Check no negative people
         if debug: checkfornegativepeople(people, tind=t+1)
