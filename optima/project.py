@@ -4,6 +4,7 @@ from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscena
 from optima import defaultobjectives, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
+from numpy.random import seed, randint
 import os
 
 #######################################################################################################
@@ -487,8 +488,10 @@ class Project(object):
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
+            if randseed is not None: seed(randseed) # Reset the random seed, if specified
             for i in range(n):
-                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=randseed))
+                sampleseed = randint(0,2**32-1)
+                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
