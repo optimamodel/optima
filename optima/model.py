@@ -781,7 +781,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
                         if isnan(propsupp[t+1]) and people[usvl,:,t+1].sum()>eps:
-                            newlysuppressed = raw_newtreat[:,t].sum()*dt*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
+                            newlysuppressed = (raw_newtreat[:,t].sum()-raw_newsupp[:,t].sum())*dt*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
