@@ -809,16 +809,16 @@ def compareversions(version1=None, version2=None):
 
 
 
-def slacknotification(channel=None, message=None, user=None, token=None, verbose=2, die=False):
+def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=2, die=False):
     ''' 
     Send a Slack notification when something is finished.
     
     Arguments:
-        channel:
+        to:
             The Slack channel or user to post to. Note that channels begin with #, while users begin with @.
         message:
             The message to be posted.
-        user:
+        fromuser:
             The pseudo-user the message will appear from.
         token:
             This must be a plain text file containing a single line which is the Slack API URL token.
@@ -846,10 +846,10 @@ def slacknotification(channel=None, message=None, user=None, token=None, verbose
     # Validate input arguments
     printv('Sending Slack message...', 2, verbose)
     if token is None: token = '/.slackurl'
-    if channel is None: channel = '#athena'
-    if user is None: user = getuser()+'-bot'
-    if message is None: message = 'This is an automated notification: your script is finished running'
-    printv('Channel: %s\nUser: %s\nMessage: %s\n' % (channel, user, message), 3, verbose) # Print details of what's being sent
+    if to is None: to = '#athena'
+    if fromuser is None: fromuser = getuser()+'-bot'
+    if message is None: message = 'This is an automated notification: your notifier is notifying you.'
+    printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
     
     # Try opening token file    
     try:
@@ -860,8 +860,8 @@ def slacknotification(channel=None, message=None, user=None, token=None, verbose
         else: return None
     
     # Package and post payload
-    payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(channel), dumps(user))
-    printv('Full command: %s' % payload, 4, verbose)
+    payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
+    printv('Full payload: %s' % payload, 4, verbose)
     response = post(url=slackurl, data=payload)
     printv(response, 3, verbose) # Optionally print response
     printv('Message sent.', 1, verbose) # We're done
