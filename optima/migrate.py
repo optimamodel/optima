@@ -528,15 +528,25 @@ def redovlmon(project, **kwargs):
     return None
         
 
-
-
-def redoprograms(project, **kwargs):
-    """
-    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
-    """
-    project.version = "2.2"
-    print('NOT IMPLEMENTED')
+def addprojectinfotoresults(project, **kwargs):
+    ''' Add project info to resultsets so they can be loaded '''
+    
+    for result in project.results.values():
+        result.projectinfo = project.getinfo()
+        result.projectref = op.Link(project)
+    
+    project.version = '2.2.2'
+    
     return None
+
+
+#def redoprograms(project, **kwargs):
+#    """
+#    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
+#    """
+#    project.version = "2.2"
+#    print('NOT IMPLEMENTED')
+#    return None
 
 
 
@@ -560,6 +570,7 @@ migrations = {
 '2.1.9': addpropsandcosttx,
 '2.1.10': redoparameters,
 '2.2': redovlmon,
+'2.2.1': addprojectinfotoresults,
 #'2.2': redoprograms,
 }
 
