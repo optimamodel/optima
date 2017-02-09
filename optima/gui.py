@@ -424,7 +424,6 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
         global origpars, tmppars, parset
         tmppars = dcp(origpars)
         parset.pars = tmppars
-#        populatelists()
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
