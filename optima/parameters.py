@@ -305,6 +305,7 @@ def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
     fpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['female'][popno]]
     mpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['male'][popno]]
     pars['popkeys'] = dcp(popkeys)
+    pars['age'] = array(data['pops']['age'])
     
     # Read in parameters automatically
     try: 

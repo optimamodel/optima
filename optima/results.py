@@ -306,31 +306,29 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round()
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        if data is not None:
-            upperagelims = array(self.data['pops']['age'])[:,1]
-            adultpops = findinds(upperagelims>=15)
-            childpops = findinds(upperagelims<15)
-            if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-            if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        upperagelims = self.parset.pars['age'][:,1] # All populations, but upper range
+        adultpops = findinds(upperagelims>=15)
+        childpops = findinds(upperagelims<15)
+        if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         
-        # Calculate DALYs -- WARNING, shouldn't rely on data, but does
-        if data is not None:
-            yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
-            disutiltx = data['const']['disutiltx'][0]
-            disutils = [data['const']['disutil'+key][0] for key in self.settings.hivstates]
-            dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
-            dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
-            dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
-            dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
-            notonart = set(self.settings.notonart)
-            for h,key in enumerate(self.settings.hivstates): # Loop over health states
-                hivstateindices = set(getattr(self.settings,key))
-                healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
-                dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-                dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-            self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles).round()
-            self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles).round()
+        # Calculate DALYs
+        yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
+        disutiltx = self.parset.pars['disutiltx'].y
+        disutils = [self.parset.pars['disutil'+key].y for key in self.settings.hivstates]
+        dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
+        dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
+        dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
+        dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
+        notonart = set(self.settings.notonart)
+        for h,key in enumerate(self.settings.hivstates): # Loop over health states
+            hivstateindices = set(getattr(self.settings,key))
+            healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
+            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+        self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles).round()
+        self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles).round()
         
         return None # make()
         
