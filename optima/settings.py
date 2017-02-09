@@ -91,7 +91,6 @@ class Settings(object):
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         self.forcepopsize = True # Whether or not to force the population size to match the parameters
-        self.transnorm = 0.43 # See analyses/misc/calculatecd4transnorm.py for calculation
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     

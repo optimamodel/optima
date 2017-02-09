@@ -420,11 +420,16 @@ def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
     for key in ['fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
 
-    # Metaparameters
-    for key in popkeys: # Define values
+    # Set the values of parameters that aren't from data
+    pars['transnorm'].y = 0.43 # See analyses/misc/calculatecd4transnorm.py for calculation
+    pars['transnorm'].prior.pars *= pars['transnorm'].y # Scale default range
+    for key in popkeys: # Define values for each population
         pars['force'].y[key] = 1.0
-        pars['inhomo'].y[key] = 0.0        
+        pars['inhomo'].y[key] = 0.0
+        pars['inhomo'].prior[key].pars = array([0.0, 0.3]) # Arbitrary
     
+    
+    # Handle acts
     tmpacts = odict()
     tmpcond = odict()
     tmpactspts = odict()
