@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2016jul06
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, Settings, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
@@ -870,10 +870,10 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
     fig = figure(figsize=figsize)
     
     titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
-    hivstates = Settings().hivstates
+    settings = results.projectref().settings
+    hivstates = settings.hivstates
     indices = arange(0, len(results.raw[ind]['tvec']), int(round(1.0/(results.raw[ind]['tvec'][1]-results.raw[ind]['tvec'][0]))))
     colors = gridcolormap(len(hivstates))
-    settings = Settings() # Get current settings
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0.*results.tvec # Easy way of setting to 0...

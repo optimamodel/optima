@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest
+from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 
@@ -64,9 +64,12 @@ class Resultset(object):
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
+        self.projectref = Link(project) # ...and just store the whole project
         self.parset = dcp(parset) # Store parameters
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
+        if self.parset is not None:  self.parset.projectref  = Link(project) # Replace copy of project with reference to project
+        if self.progset is not None: self.progset.projectref = Link(project) # Replace copy of project with reference to project
         self.budget = budget if budget is not None else odict() # Store budget
         self.coverage = coverage if coverage is not None else odict()  # Store coverage
         self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
@@ -381,7 +384,7 @@ class Resultset(object):
         '''
         # If year isn't specified, use now
         if year is None: 
-            year = Settings().now
+            year = self.projectref().settings.now
         
         # Use either total (by default) or a given population
         if pop=='tot':
@@ -422,7 +425,7 @@ class Multiresultset(Resultset):
         
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
-        commonattrs = ['data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
+        commonattrs = ['projectref', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
         diffattrs = ['parset', 'progset', 'raw', 'simpars'] # Things that differ between between results sets
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
@@ -466,7 +469,7 @@ class Multiresultset(Resultset):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = '============================================================\n'
-        output += '      Project name: %s\n'    % self.projectinfo['name']
+        output += '      Project name: %s\n'    % (self.projectref().name if self.projectref() is not None else None)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '      Results sets: %s\n'    % self.keys

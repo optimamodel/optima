@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2016apr11
 """
 
-from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions
+from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
 from numpy import zeros, arange, maximum, array, inf, isfinite
 
@@ -26,6 +26,7 @@ class Optim(object):
         if constraints is None: constraints = defaultconstraints(project=project, progset=progsetname, verbose=0)
         self.name         = name # Name of the parameter set, e.g. 'default'
         self.uid          = uuid() # ID
+        self.projectref   = Link(project) # Store pointer for the project, if available
         self.created      = today() # Date created
         self.modified     = today() # Date modified
         self.parsetname   = parsetname # Parameter set name
@@ -49,23 +50,20 @@ class Optim(object):
         return output
 
 
-    def getresults(self, project=None):
+    def getresults(self):
         ''' A method for getting the results '''
-        if self.resultsref is not None and project is not None:
-            results = getresults(project=project, pointer=self.resultsref)
+        if self.resultsref is not None and self.projectref() is not None:
+            results = getresults(project=self.projectref(), pointer=self.resultsref)
             return results
         else:
             print('WARNING, no results associated with this parameter set')
             return None
 
 
-    def optimize(self, project=None, name=None, parsetname=None, progsetname=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+    def optimize(self, name=None, parsetname=None, progsetname=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
-        if project is None:
-            errormsg = 'Please supply a project'
-            raise OptimaException(errormsg)
         if name is None: name='default'
-        multires = optimize(which=self.objectives['which'], project=project, optim=self, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
+        multires = optimize(which=self.objectives['which'], project=self.projectref(), optim=self, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
         multires.name = 'optim-'+name # Multires might be None if couldn't meet targets
         return multires
 

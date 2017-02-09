@@ -97,7 +97,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
         if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
         rerun = False
         try:
-            results = project.parsets[parsetname].getresults(project) # First, try getting results 
+            results = project.parsets[parsetname].getresults() # First, try getting results 
             if results is None: rerun = True
         except:
             rerun = True

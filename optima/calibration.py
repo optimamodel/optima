@@ -4,7 +4,7 @@ CALIBRATION
 Function(s) to perform calibration.
 """
 
-from optima import OptimaException, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
+from optima import OptimaException, Link, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
 from numpy import zeros, array, mean
 
 
@@ -33,6 +33,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set
+    parset.projectref = Link(project) # Try to link the parset back to the project
     pars = dcp(parset.pars) # Just get a copy of the pars for parsing
     if fitwhat is None: fitwhat = ['force'] # By default, automatically fit force-of-infection only
     if type(fitwhat)==str: fitwhat = [fitwhat]

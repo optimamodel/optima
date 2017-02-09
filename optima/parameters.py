@@ -8,7 +8,7 @@ Version: 2.1 (2017jan31)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
+from optima import OptimaException, Link, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 import xlrd
 from os import path, sep
@@ -1012,6 +1012,7 @@ class Parameterset(object):
     def __init__(self, name='default', project=None, progsetname=None, budget=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
+        self.projectref = Link(project) # Store pointer for the project, if available
         self.created = today() # Date created
         self.modified = today() # Date modified
         self.pars = None
@@ -1033,10 +1034,10 @@ class Parameterset(object):
         return output
     
     
-    def getresults(self, project=None, die=True):
+    def getresults(self, die=True):
         ''' Method for getting the results '''
-        if self.resultsref is not None and project is not None:
-            results = getresults(project=project, pointer=self.resultsref, die=die)
+        if self.resultsref is not None and self.projectref() is not None:
+            results = getresults(project=self.projectref(), pointer=self.resultsref, die=die)
             return results
         else:
             raise OptimaException('No results associated with this parameter set')
@@ -1051,22 +1052,18 @@ class Parameterset(object):
         return parslist
     
     
-    def getprop(self, project=None, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
+    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
         ''' Method for getting proportions'''
-        
-        if project is None:
-            errormsg = 'Please supply a project'
-            raise OptimaException(errormsg)
 
         # Get results
         try:
-            results = getresults(project=project, pointer=self.resultsref, die=die)
+            results = getresults(project=self.projectref(), pointer=self.resultsref, die=die)
             assert(results is not None) # Might return something empty
         except:
             if die: # Give up
                 raise OptimaException('No results associated with this parameter set')
             else: # Or, just rerun
-                results = project.runsim(name=self.name)
+                results = self.projectref().runsim(name=self.name)
 
         # Interpret inputs
         if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
@@ -1298,7 +1295,7 @@ class Parameterset(object):
     
                 # parset.interp() and calculate results are supposed to be called from the outside
     
-    def export(self, filename=None, compare=None, project=None):
+    def export(self, filename=None, compare=None):
         '''
         Little function to export code for the current parameter set. To use, do something like:
         
@@ -1312,8 +1309,11 @@ class Parameterset(object):
         '''
         cpars, cvalues = None, None
         if compare is not None:
-            try:    cpars = project.parsets[compare].pars # Assume it's another parset name
-            except: cpars = compare # Assume it's been supplied directly
+            try: 
+                cpars = self.projectref().parsets[compare].pars
+            except: 
+                print('Could not compare parset %s to parset %s; printing all parameters' % (self.name, compare))
+                compare = None
         
         def oneline(values): return str(values).replace('\n',' ') 
         
