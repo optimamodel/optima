@@ -809,63 +809,71 @@ def compareversions(version1=None, version2=None):
 
 
 
-def sendemail(to=None, subject=None, body=None):
+def slacknotification(token=None, channel=None, message=None, verbose=2, die=False):
     ''' 
-    Send an email notifying one or more people that something is finished.
+    Send a Slack notification when something is finished.
     
-    Usage:
-        sendemail(to='alice@optimamodel.com, bob@optimamodel.com')
-        sendemail(to='chloe@optimamodel.com', body='The deed is done.')
+    Arguments:
+        token:
+            This must be a plain text file containing a single line which is the Slack API token.
+            You can get this token from https://api.slack.com/docs/oauth-test-tokens.
+            WARNING, this is a type of password, do NOT put it in a public place!!!!!
+        channel:
+            The Slack channel to post to.
+        message:
+            The message to be posted.
+        verbose:
+            How much detail to display.
+        die:
+            If false, prints warnings. If true, raises exceptions.
+    
+    Example usage:
+        slacknotification(token='/u/cliffk/.slack-api-token', message='Long process is finished')
     
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
         
-    Version: 2017feb08 by cliffk    
+    Version: 2017feb09 by cliffk    
     '''
     
-    from smtplib import SMTP
-    from datetime import datetime
+    # Try importing slacker
+    try:
+        from slacker import Slacker
+    except:
+        errormsg = 'Could not import slacker; try "pip install slacker"'
+        if die: raise Exception(errormsg)
+        else: 
+            print(errormsg)
+            return None
     
-    if to is None: to = 'cliff.optima@gmail.com'
-    if subject is None: subject = 'Process finished'
-    if body is None: 
-        body = '''
-        Dear user,
-        
-        This is a gentle notification that the process for which you have been so
-        valiantly waiting for has, at last, come to completion -- you may rest
-        assured that I, your humble servant, have been as impatient for this moment
-        as you have been, dearest reader. I apologize for the longwindedness of my
-        rather simple missive, but one must be wary of the canned-meat filters these
-        days, and my earlier, less poetic attempts at crafting prose failed to pass
-        muster by these unfeeling yet all-seeing lords.
-        
-        Finally, if you must know, the process finished at %s.
-        
-        Good day to you,
-        
-        Optima Notifications Service
-        ''' % str(datetime.today())
-    print('Sending email to "%s"...' % to)
+    # Validate input arguments
+    if channel is None: channel = '#athena'
+    if channel[0] is not '#': channel = '#'+channel # Make sure it starts with an...octothorpe
+    if message is None: message = 'This is an automated notification: your script is finished running'
+    if token is None:
+        errormsg = 'Slack token must be supplied; see function help'
+        if die: raise Exception(errormsg)
+        else:
+            print(errormsg)
+            return None
     
-    email = 'optima.notifications@gmail.com'
-    password = 'gallopinggametesgathergrins' # CANNOT BE PART OF A PUBLIC REPOSITORY, OBVIOUSLY
-    server = 'smtp.gmail.com'
-    port = 587
-    session = SMTP(server, port)        
-    session.ehlo()
-    session.starttls()
-    session.login(email, password)
+    # Try opening token file    
+    try:
+        with open(token) as f: slacktoken = f.read()
+    except:
+        print('Could not open Slack token file "%s"' % token)
+        if die: raise
+        else: return None
     
-    headers = [
-        "From: " + email,
-        "Subject: " + subject,
-        "To: " + to,
-        "MIME-Version: 1.0",
-       "Content-Type: text/html"]
-    headers = "\r\n".join(headers)
-    session.sendmail(email, to, headers + "\r\n\r\n" + body)
-    print('Email sent.')
+    printv('Connecting to Slack...', 2, verbose)
+    
+    command = 'curl -X POST --data-urlencode ''payload={"text": "%s", "channel": "@cliffk", "username": "monkey-bot"}'' %s' % (message, channel, token)
+#    runcommand(command)
+    
+    # Send a message to #general channel
+    printv('Sending message...', 3, verbose)
+    slack.chat.post_message(channel, message)
+    printv('Message sent.', 2, verbose)
     return None
 
 
