@@ -115,7 +115,7 @@ from .calibration import autofit
 
 ## Scenario analyses
 from . import scenarios as _scenarios 
-from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, setparscenvalues
+from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios
 
 ## Optimization analyses
 from . import optimization as _optimization
@@ -164,7 +164,7 @@ from .project import Project
 
 # Finally, load defaults
 from . import defaults
-from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms, demo
+from .defaults import defaultproject, defaultprogset, defaultprograms, demo
 
 # And really finally, load other random things that don't matter
 try:
