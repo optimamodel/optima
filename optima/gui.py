@@ -394,6 +394,10 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
         ''' Update GUI with new results '''
         global results, tmppars, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
         
+        # Update parameter values from GUI values
+        for b,box in enumerate(boxes): 
+            fullvallist[b] = eval(str(box.text())) 
+        
         # Create lists for update
         mflists = dict()
         mflists['keys'] = fullkeylist
