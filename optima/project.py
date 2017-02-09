@@ -478,7 +478,7 @@ class Project(object):
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
-        if name is None and simpars is None: name = -1 # Set default name
+        if name is None: name = -1 # Set default name
         if verbose is None: verbose = self.settings.verbose
         
         # Get the parameters sorted
