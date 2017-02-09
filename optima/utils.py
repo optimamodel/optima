@@ -809,21 +809,20 @@ def compareversions(version1=None, version2=None):
 
 
 
-def slacknotification(message=None, channel=None, user=None, token=None, verbose=2, die=False):
+def slacknotification(channel=None, message=None, user=None, token=None, verbose=2, die=False):
     ''' 
     Send a Slack notification when something is finished.
     
     Arguments:
+        channel:
+            The Slack channel or user to post to. Note that channels begin with #, while users begin with @.
         message:
             The message to be posted.
-        channel:
-            The Slack channel to post to.
         user:
             The pseudo-user the message will appear from.
         token:
-            This must be a plain text file containing a single line which is the Slack API token.
-            You can get this token from https://api.slack.com/docs/oauth-test-tokens.
-            WARNING, this is a type of password, do NOT put it in a public place!!!!!
+            This must be a plain text file containing a single line which is the Slack API URL token.
+            Tokens are effectively passwords and must be kept secure. If you need one, contact me.
         verbose:
             How much detail to display.
         die:
@@ -839,38 +838,33 @@ def slacknotification(message=None, channel=None, user=None, token=None, verbose
     Version: 2017feb09 by cliffk    
     '''
     
-    printv('Sending Slack message...', 2, verbose)
-    
-    # Validate input arguments
-    from requests import post
+    # Imports
+    from requests import post # Simple way of posting data to a URL
     from json import dumps # For sanitizing the message
     from getpass import getuser # In case username is left blank
+    
+    # Validate input arguments
+    printv('Sending Slack message...', 2, verbose)
     if token is None: token = '/.slackurl'
     if channel is None: channel = '#athena'
     if user is None: user = getuser()+'-bot'
     if message is None: message = 'This is an automated notification: your script is finished running'
-    
-    # Print details of what's being sent
-    printv('Channel: %s\nUser: %s\nMessage: %s\n' % (channel, user, message), 3, verbose)
+    printv('Channel: %s\nUser: %s\nMessage: %s\n' % (channel, user, message), 3, verbose) # Print details of what's being sent
     
     # Try opening token file    
     try:
         with open(token) as f: slackurl = f.read()
     except:
-        print('Could not open Slack token file "%s"' % token)
+        print('Could not open Slack URL/token file "%s"' % token)
         if die: raise
         else: return None
     
-    # Package payload
+    # Package and post payload
     payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(channel), dumps(user))
     printv('Full command: %s' % payload, 4, verbose)
-    
-    # Post it
-    r = post(url=slackurl, data=payload)
-    printv(r, 3, verbose) # Optionally print response
-
-    # We're done
-    printv('Message sent.', 2, verbose)
+    response = post(url=slackurl, data=payload)
+    printv(response, 3, verbose) # Optionally print response
+    printv('Message sent.', 1, verbose) # We're done
     return None
 
 
