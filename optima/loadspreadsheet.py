@@ -5,6 +5,32 @@
 from optima import OptimaException, odict, printv, today, isnumber
 from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
 from xlrd import open_workbook # For opening Excel workbooks
+from os import path, sep
+
+
+def loadpardefitions(filename='model-inputs.xlsx', verbose=2):
+    '''  Function to parse the data parameter definitions '''
+    workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    
+    printv('Loading parameter definitions from %s...' % filename, 3, verbose)
+    
+    sheetnames = ['Data inputs', 'Data constants']
+    pardefinitions = odict()
+    for sheetname in sheetnames:
+        sheet = workbook.sheet_by_name(sheetname)
+        rawpars = []
+        for rownum in range(sheet.nrows-1):
+            rawpars.append({})
+            for colnum in range(sheet.ncols):
+                attr = str(sheet.cell_value(0,colnum))
+                cellval = sheet.cell_value(rownum+1,colnum)
+                if cellval=='None': cellval = None
+                if type(cellval)==unicode: cellval = str(cellval)
+                rawpars[rownum][attr] = cellval
+        pardefinitions[sheetname] = rawpars
+    return pardefinitions
+
+
 
     
 def forcebool(entry, location=''):
@@ -90,40 +116,62 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Version: 1.4 (2016feb07)
     """
     
+    pardefinitions = loadpardefitions(filename='model-inputs.xlsx', verbose=verbose)
+    
     printv('Loading data from %s...' % filename, 1, verbose)
+    
+    # Create dictionary of parameters to load
     sheets = odict()
+    sheettypes = odict()
+    for par in pardefinitions['Data inputs']:
+        if par['sheet'] not in sheets.keys(): # Create new list if sheet not encountered yet
+            sheets[par['sheet']] = []
+        sheets[par['sheet']].append(par['short'])
+        if par['sheet'] not in sheettypes.keys():
+            sheettypes[par['sheet']] = par['type'] # Figure out why kind of sheet this is
+        else:
+            if sheettypes[par['sheet']] != par['type']:
+                errormsg = 'All parameters on a sheet must have the same type, not %s and %s' % (sheettypes[par['sheet']], par['type'])
+                raise OptimaException(errormsg)
     
-    # Metadata -- population names -- array size is (# populations)
-    sheets['Populations'] = ['pops']
+    # Handle constants separately
+    sheets['Constants'] = []
+    for par in pardefinitions['Data constants']:
+        sheets['Constants'].append(par['short'])
+    sheettypes['Constants'] = 'constant' # Hard-code this
     
-    # HIV prevalence data -- array sizes are time x population x uncertainty
-    sheets['HIV prevalence'] =  ['hivprev']
     
-    # Population size data -- array sizes are time x population x uncertainty
-    sheets['Population size'] =  ['popsize']
-    
-    # Time data -- array sizes are time x population
-    sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
-    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'costtx', 'prep', 'numpmtct', 'birth', 'breast']
-    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'optpropdx', 'optpropcare', 'optproptx', 'optproppmtct', 'optpropsupp']
-    sheets['Cascade']             = ['linktocare', 'aidslinktocare', 'leavecare', 'aidsleavecare', 'numvlmon']
-    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc']
-    sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
-    
-    # Matrix data -- array sizes are population x population
-    sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','birthtransit','agetransit','risktransit']
-    
-    # Constants -- array sizes are scalars x uncertainty
-    sheets['Constants'] = [
-                           ['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
-                           ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
-                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
-                           ['svlrecovgt350', 'svlrecovgt200', 'svlrecovgt50', 'svlrecovlt50','treatvs','requiredvl'],
-                           ['usvlproggt500', 'usvlrecovgt350', 'usvlproggt350', 'usvlrecovgt200', 'usvlproggt200', 'usvlrecovgt50', 'usvlproggt50',  'usvlrecovlt50', 'treatfail'],
-                           ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathsvl', 'deathusvl', 'deathtb'],
-                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp'],
-                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx'],
-                          ]
+#    # Metadata -- population names -- array size is (# populations)
+#    sheets['Populations'] = ['pops']
+#    
+#    # HIV prevalence data -- array sizes are time x population x uncertainty
+#    sheets['HIV prevalence'] =  ['hivprev']
+#    
+#    # Population size data -- array sizes are time x population x uncertainty
+#    sheets['Population size'] =  ['popsize']
+#    
+#    # Time data -- array sizes are time x population
+#    sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
+#    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'costtx', 'prep', 'numpmtct', 'birth', 'breast']
+#    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'optpropdx', 'optpropcare', 'optproptx', 'optproppmtct', 'optpropsupp']
+#    sheets['Cascade']             = ['linktocare', 'aidslinktocare', 'leavecare', 'aidsleavecare', 'numvlmon']
+#    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc']
+#    sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
+#    
+#    # Matrix data -- array sizes are population x population
+#    sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','birthtransit','agetransit','risktransit']
+#    
+#    # Constants -- array sizes are scalars x uncertainty
+#    sheets['Constants'] = [
+#                           ['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
+#                           ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
+#                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
+#                           ['svlrecovgt350', 'svlrecovgt200', 'svlrecovgt50', 'svlrecovlt50','treatvs','requiredvl'],
+#                           ['usvlproggt500', 'usvlrecovgt350', 'usvlproggt350', 'usvlrecovgt200', 'usvlproggt200', 'usvlrecovgt50', 'usvlproggt50',  'usvlrecovlt50', 'treatfail'],
+#                           ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathsvl', 'deathusvl', 'deathtb'],
+#                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp'],
+#                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx'],
+#                          ]
     
     
     ###########################################################################
@@ -162,11 +210,10 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     data['pships']['cas'] = [] # Store casual partnerships
     data['pships']['com'] = [] # Store commercial partnerships
     data['pships']['inj'] = [] # Store injecting partnerships
+    
+    data['const'] = odict()
+    print('TEMP')
 
-    ## Initialize constants
-    data['const'] = odict() # Initialize to empty list
-    
-    
     ##################################################################
     ## Now, actually load the data
     ##################################################################    
@@ -176,6 +223,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
         subparlist = sheets[sheetname] # List of subparameters
         sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
         parcount = -1 # Initialize the parameter count
+        sheettype = sheettypes[sheetname] # Get the type of this sheet -- e.g., is it a time parameter or a matrix?
         printv('Loading "%s"...' % sheetname, 3, verbose)
         
         # Loop over each row in the workbook, starting from the top
@@ -188,7 +236,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                 parcount += 1 # Increment the parameter count
                 
                 # It's anything other than the populations or constants sheet: create an empty list
-                if sheetname not in ['Populations', 'Constants']: 
+                if sheetname!='Populations': 
                     try:
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
                     except:
@@ -200,9 +248,8 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
             elif subparam != '': # The first column is blank: it's time for the data
                 printv('Parameter: %s' % subparam, 4, verbose)
                 
-                
                 # It's pops-data, split into pieces
-                if sheetname=='Populations': 
+                if sheettype=='meta': 
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                     data['pops']['short'].append(str(thesedata[0]))
                     data['pops']['long'].append(str(thesedata[1]))
@@ -210,9 +257,8 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
                     data['pops']['age'].append([int(thesedata[4]), int(thesedata[5])])
                     
-                
                 # It's key data, save both the values and uncertainties
-                elif sheetname in ['Population size', 'HIV prevalence']:
+                elif sheettype=='key':
                     if len(data[thispar])==0: 
                         data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 4th column -- need room for high/best/low
@@ -224,11 +270,8 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     if thispar=='hivprev': validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=True)  # Make sure at least the best estimate isn't blank
                     else:                  validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'))
                     
-
-                    
-                
                 # It's basic data, append the data and check for programs
-                elif sheetname in ['Other epidemiology', 'Optional indicators', 'Testing & treatment', 'Cascade', 'Sexual behavior', 'Injecting behavior']: 
+                elif sheettype=='time': 
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol-1)) # Data starts in 3rd column, and ends lastdatacol-1
                     assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
                     if assumptiondata != '': # There's an assumption entered
@@ -239,31 +282,22 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'propcirc',  'sharing']: # All probabilities
                         validatedata(thesedata, sheetname, thispar, row, checkupper=True)                        
 
-
-
                 # It's a matrix, append the data                                     
-                elif sheetname in ['Partnerships & transitions']:
+                elif sheettype=='matrix':
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                     thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
                     data[thispar].append(thesedata) # Store data
                     validatedata(thesedata, sheetname, thispar, row)
                 
-                
-                
                 # It's a constant, create a new dictionary entry
-                elif sheetname in ['Constants']:
+                elif sheettype=='constant':
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=5)) # Data starts in 3rd column, finishes in 5th column
-                    try:
-                        subpar = subparlist[parcount].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
-                    except:
-                        errormsg = 'Failed to load constant subparameter "%s" from subparlist %i' % (thispar, parcount)
-                        raise OptimaException(errormsg)
                     validatedata(thesedata, sheetname, thispar, row)
-                    data['const'][subpar] = thesedata # Store data
+                    data['const'][thispar] = thesedata # Store data
                 
                 # It's not recognized: throw an error
                 else: 
-                    errormsg = 'Sheet name "%s" not recognized: please do not change the names of the sheets!' % sheetname
+                    errormsg = 'Sheet type "%s" not recognized: please do not change the names of the sheets!' % sheettype
                     raise OptimaException(errormsg)
     
     
