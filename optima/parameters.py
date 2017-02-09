@@ -348,9 +348,9 @@ def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
                 else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
             
             elif partype=='constant': # The constants, e.g. transmfi
-                best = data['const'][parname][0] if fromdata else nan
-                low = data['const'][parname][1] if fromdata else nan
-                high = data['const'][parname][2] if fromdata else nan
+                best = data[parname][0] if fromdata else nan
+                low = data[parname][1] if fromdata else nan
+                high = data[parname][2] if fromdata else nan
                 thisprior = {'dist':'uniform', 'pars':(low, high)} if fromdata else None
                 pars[parname] = Constant(y=best, prior=thisprior, **rawpar)
             

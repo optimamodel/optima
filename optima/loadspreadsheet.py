@@ -220,7 +220,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     for sheetname in sheets.keys(): # Loop over each type of data, but treat constants differently
         subparlist = sheets[sheetname] # List of subparameters
         sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
-        parcount = -1 # Initialize the parameter count
         sheettype = sheettypes[sheetname] # Get the type of this sheet -- e.g., is it a time parameter or a matrix?
         printv('Loading "%s"...' % sheetname, 3, verbose)
         
@@ -231,19 +230,18 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
             
             if paramcategory != '': # It's not blank: e.g. "HIV prevalence"
                 printv('Loading "%s"...' % paramcategory, 3, verbose)
-                parcount += 1 # Increment the parameter count
                 
                 # It's anything other than the populations or constants sheet: create an empty list
-                if sheetname!='Populations': 
+                if sheettype not in ['meta', 'constant']: 
                     try:
-                        thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
+                        thispar = subparlist.pop(0) # Get the name of this parameter, e.g. 'popsize'
                     except:
                         errormsg = 'Incorrect number of headings found for sheet "%s"\n' % sheetname
                         errormsg += 'Check that there is no extra text in the first two columns'
                         raise OptimaException(errormsg)
                     data[thispar] = [] # Initialize to empty list
             
-            elif subparam != '': # The first column is blank: it's time for the data
+            elif subparam != '': # The second column isn't blank: it's time for the data
                 printv('Parameter: %s' % subparam, 4, verbose)
                 
                 # It's pops-data, split into pieces
@@ -288,6 +286,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                 
                 # It's a constant, create a new dictionary entry
                 elif sheettype=='constant':
+                    thispar = subparlist.pop(0) # Get the first item in this list
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=5)) # Data starts in 3rd column, finishes in 5th column
                     validatedata(thesedata, sheetname, thispar, row)
                     data[thispar] = thesedata # Store data
@@ -317,7 +316,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
             for key in ['reg', 'cas', 'com', 'inj']:
                 if data['part'+key][row][col]: data['pships'][key].append((popkeys[row],popkeys[col]))
     
-
     return data
 
 
