@@ -413,7 +413,7 @@ def addpropsandcosttx(project, **kwargs):
 
 
 
-def redoparameters(project, **kwargs):
+def redoparameters(project, die=False, **kwargs):
     """
     Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
@@ -425,7 +425,7 @@ def redoparameters(project, **kwargs):
     # Loop over all parsets
     for ps in project.parsets.values():
         oldpars = ps.pars[0]
-        newpars = op.makepars(data = project.data, verbose=0, die=False) # Remake parameters using data, forging boldly ahead come hell or high water
+        newpars = op.makepars(data = project.data, verbose=0, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
         
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()
@@ -578,13 +578,16 @@ def migrate(project, verbose=2, die=False):
         upgrader = migrations[str(project.version)]
 
         op.printv("Migrating from %s ->" % project.version, 2, verbose, newline=False)
-        upgrader(project, verbose=verbose) # Actually easier to debug if don't catch exception
+        upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
         op.printv("%s" % project.version, 2, verbose, indent=False)
     
     op.printv('Migration successful!', 3, verbose)
     
     # If any warnings were generated during the migration, print them now
-    project.getwarnings()
+    warnings = project.getwarnings()
+    if warnings and die: 
+        errormsg = 'Please resolve warnings in projects before continuing'
+        raise op.OptimaException(errormsg)
 
     return project
 
