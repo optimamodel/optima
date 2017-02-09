@@ -850,7 +850,7 @@ def slacknotification(message=None, channel=None, user=None, token=None, verbose
     if user is None: user = getuser()+'-bot'
     if message is None: message = 'This is an automated notification: your script is finished running'
     
-    
+    # Print details of what's being sent
     printv('Channel: %s\nUser: %s\nMessage: %s\n' % (channel, user, message), 3, verbose)
     
     # Try opening token file    
@@ -861,23 +861,15 @@ def slacknotification(message=None, channel=None, user=None, token=None, verbose
         if die: raise
         else: return None
     
-    payload = {'text':dumps(message), 'channel':dumps(channel), 'username':dumps(user)}
-    payload1 = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(channel), dumps(user))
-    payload2 = dumps(payload)
-    printv('Full command: %s' % payload1, 4, verbose)
-    printv('Full command: %s' % payload2, 4, verbose)
-#    command = 'curl -X POST --data-urlencode ''payload={"text": %s, "channel": %s, "username": %s}'' %s' % (dumps(message), dumps(channel), dumps(user), slackurl)
-#    printv('Full command: %s' % command, 4, verbose)
+    # Package payload
+    payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(channel), dumps(user))
+    printv('Full command: %s' % payload, 4, verbose)
     
-    r = post(url=slackurl, data=payload1)
-    print(r)
-    print(dir(r))
+    # Post it
+    r = post(url=slackurl, data=payload)
+    printv(r, 3, verbose) # Optionally print response
 
-#    try: runcommand(command, printinput=True, printoutput=True)
-#    except Exception as E:
-#        print('Could not send message :( Because "%s"' % E.message)
-#        if die: raise
-#        else: return None
+    # We're done
     printv('Message sent.', 2, verbose)
     return None
 
