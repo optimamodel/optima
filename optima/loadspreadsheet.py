@@ -211,8 +211,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     data['pships']['com'] = [] # Store commercial partnerships
     data['pships']['inj'] = [] # Store injecting partnerships
     
-    data['const'] = odict()
-    print('TEMP')
 
     ##################################################################
     ## Now, actually load the data
@@ -267,8 +265,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                     blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                     data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
-                    if thispar=='hivprev': validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=True)  # Make sure at least the best estimate isn't blank
-                    else:                  validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'))
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=(thispar=='hivprev'))  # Make sure at least the best estimate isn't blank
                     
                 # It's basic data, append the data and check for programs
                 elif sheettype=='time': 
@@ -293,13 +290,12 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                 elif sheettype=='constant':
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=5)) # Data starts in 3rd column, finishes in 5th column
                     validatedata(thesedata, sheetname, thispar, row)
-                    data['const'][thispar] = thesedata # Store data
+                    data[thispar] = thesedata # Store data
                 
                 # It's not recognized: throw an error
                 else: 
                     errormsg = 'Sheet type "%s" not recognized: please do not change the names of the sheets!' % sheettype
                     raise OptimaException(errormsg)
-    
     
     # Check that matrices have correct shape
     data['npops'] = len(data['pops']['short'])
@@ -314,18 +310,12 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
             errormsg += 'Check for missing rows or added text'
             raise OptimaException(errormsg)
     
-    
     # Store tuples of partnerships
+    popkeys = data['pops']['short']
     for row in range(data['npops']):
         for col in range(data['npops']):
-            if data['partreg'][row][col]:
-                data['pships']['reg'].append((data['pops']['short'][row],data['pops']['short'][col]))
-            if data['partcas'][row][col]:
-                data['pships']['cas'].append((data['pops']['short'][row],data['pops']['short'][col]))
-            if data['partcom'][row][col]:
-                data['pships']['com'].append((data['pops']['short'][row],data['pops']['short'][col]))
-            if data['partinj'][row][col]:
-                data['pships']['inj'].append((data['pops']['short'][row],data['pops']['short'][col]))
+            for key in ['reg', 'cas', 'com', 'inj']:
+                if data['part'+key][row][col]: data['pships'][key].append((popkeys[row],popkeys[col]))
     
 
     return data
