@@ -523,9 +523,10 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     ('undx',     ('.','o')), 
     ('dx',       ('*','*')), 
     ('care',     ('O','o')), 
+    ('lost',     ('O','o')),
     ('usvl',     ('-','|')), 
     ('svl',      ('x','|')), 
-    ('lost',     ('O','o'))])
+    ])
     
     hatchstyles = []
     linestyles = []
