@@ -460,7 +460,28 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             birthrates = birthtransit[p1, p2] * birth[p1, :]
             if birthrates.any():
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
-                
+    
+    
+    ##################################################################################################################
+    ### Define error checking
+    ##################################################################################################################
+    
+    def checkfornegativepeople(people, tind=None):
+        if tind is None: 
+            tind = Ellipsis
+            tvec = simpars['tvec']
+        else:
+            tvec = [tind]            
+        if not((people[:,:,tind]>=0).all()): # If not every element is a real number >0, throw an error
+            for t in range(len(tvec)):
+                for errstate in range(nstates): # Loop over all heath states
+                    for errpop in range(npops): # Loop over all populations
+                        if not(people[errstate,errpop,t]>=0):
+                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t], errstate, thistransit[errstate])
+                            if die: raise OptimaException(errormsg)
+                            else: 
+                                printv(errormsg, 1, verbose=verbose)
+                                people[errstate,errpop,t] = 0.0 # Reset
                 
 
     ##################################################################################################################
@@ -781,7 +802,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
                         if isnan(propsupp[t+1]) and people[usvl,:,t+1].sum()>eps:
-                            newlysuppressed = raw_newtreat[:,t].sum()*dt*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
+                            unsuppressed = people[usvl,:,t+1] # To make sure it doesn't go negative
+                            suppressedprop = minimum(1.0, (raw_newtreat[:,t].sum())*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
+                            newlysuppressed = suppressedprop*unsuppressed # Calculate actual number of people suppressed
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
@@ -801,14 +824,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                         movingdistribution = ppltomoveup/(eps+ppltomoveup.sum())
 
-
                     # Figure out how many people we want and initialise new movers
                     if not isnan(prop[t+1]): # If the prop value is finite, we use it
                         wanted = prop[t+1]*available
                     new_movers      = zeros((ncd4,npops)) 
 
                     # Reconcile the differences between the number we have and the number we want
-                    diff = wanted - actual # Wanted number less actual number 
+                    diff = wanted - actual # Wanted number minus actual number 
                     if diff>0.: # We need to move people UP the cascade 
                         for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
                             if diff>eps: # Move people until you have the right proportions
@@ -828,20 +850,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
 
-            # Check no negative people
-            if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
-                for errstate in range(nstates): # Loop over all heath states
-                    for errpop in range(npops): # Loop over all populations
-                        if not(people[errstate,errpop,t+1]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
-                            if die: raise OptimaException(errormsg)
-                            else: 
-                                printv(errormsg, 1, verbose=verbose)
-                                people[errstate,errpop,t+1] = 0.0 # Reset
-                                
-        raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
-                
-    
+            # Check no negative people -- this is inside the t<npts statement, so doesn't check the last point
+            if debug: checkfornegativepeople(people, tind=t+1)
+        
     raw                 = odict()    # Sim output structure
     raw['tvec']         = tvec
     raw['popkeys']      = popkeys
@@ -857,6 +868,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['death']        = raw_death
     raw['otherdeath']   = raw_otherdeath
     
+    if not debug: checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
     return raw # Return raw results
 
@@ -874,9 +886,9 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
-    if start is None: start = project.settings.start
-    if end is None: end = project.settings.end
-    if dt is None: dt = project.settings.dt
+    if start is None: start = settings.start
+    if end is None: end = settings.end
+    if dt is None: dt = settings.dt
     if simpars is None:
         if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
         simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)

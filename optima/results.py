@@ -64,7 +64,7 @@ class Resultset(object):
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
-        self.project = project # ...and just store the whole project
+        self.projectinfo = project.getinfo() # Extract info from the project
         self.parset = dcp(parset) # Store parameters
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
@@ -116,7 +116,7 @@ class Resultset(object):
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
         output = '============================================================\n'
-        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
+        output += '      Project name: %s\n'    % self.projectinfo['name']
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
@@ -309,29 +309,31 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        upperagelims = array(self.data['pops']['age'])[:,1]
-        adultpops = findinds(upperagelims>=15)
-        childpops = findinds(upperagelims<15)
-        if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        if data is not None:
+            upperagelims = array(self.data['pops']['age'])[:,1]
+            adultpops = findinds(upperagelims>=15)
+            childpops = findinds(upperagelims<15)
+            if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+            if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         
-        # Calculate DALYs
-        yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
-        disutiltx = data['const']['disutiltx'][0]
-        disutils = [data['const']['disutil'+key][0] for key in self.settings.hivstates]
-        dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
-        dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
-        dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
-        dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
-        notonart = set(self.settings.notonart)
-        for h,key in enumerate(self.settings.hivstates): # Loop over health states
-            hivstateindices = set(getattr(self.settings,key))
-            healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
-            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-        self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles)
-        self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles)
+        # Calculate DALYs -- WARNING, shouldn't rely on data, but does
+        if data is not None:
+            yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
+            disutiltx = data['const']['disutiltx'][0]
+            disutils = [data['const']['disutil'+key][0] for key in self.settings.hivstates]
+            dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
+            dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
+            dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
+            dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
+            notonart = set(self.settings.notonart)
+            for h,key in enumerate(self.settings.hivstates): # Loop over health states
+                hivstateindices = set(getattr(self.settings,key))
+                healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
+                dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+                dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+            self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles)
+            self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles)
         
         return None # make()
         

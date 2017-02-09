@@ -4,6 +4,7 @@ from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscena
 from optima import defaultobjectives, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
+from numpy.random import seed, randint
 import os
 
 #######################################################################################################
@@ -68,6 +69,7 @@ class Project(object):
         self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
+        self.warnings = None # Place to store information about warnings (mostly used during migrations)
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -95,8 +97,28 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
+        output += self.getwarnings(doprint=False) # Don't print since print later
         return output
+    
+    def getinfo(self):
+        ''' Return an odict with basic information about the project '''
+        info = odict()
+        for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
+            info[attr] = getattr(self, attr) # Populate the dictionary
+        info['parsetkeys'] = self.parsets.keys()
+        info['progsetkeys'] = self.parsets.keys()
+        return info
 
+    def getwarnings(self, doprint=True):
+        ''' Tiny method to print the warnings in the project, if any '''
+        if hasattr(self, 'warnings') and self.warnings: # There are warnings
+            output = '\nWARNING: This project contains the following warnings:'
+            output += str(self.warnings)
+        else: # There are no warnings
+            output = ''
+        if output and doprint: # Print warnings if requested
+            print(output)
+        return output
 
     #######################################################################################################
     ### Methods for I/O and spreadsheet loading
@@ -341,8 +363,9 @@ class Project(object):
     
     
     def cleanresults(self):
-        ''' Remove all results '''
-        self.results = odict() # Just replace with an empty odict, as at initialization
+        ''' Remove all results except for BOCs '''
+        for key,result in self.results.items():
+            if type(result)!=BOC: self.results.pop(key)
         self.modified = today()
         return None
     
@@ -449,7 +472,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -465,8 +488,10 @@ class Project(object):
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
+            if randseed is not None: seed(randseed) # Reset the random seed, if specified
             for i in range(n):
-                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample))
+                sampleseed = randint(0,2**32-1)
+                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
@@ -495,7 +520,7 @@ class Project(object):
         return results
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, **kwargs): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
         '''
         Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
         
@@ -505,7 +530,7 @@ class Project(object):
         P.sensitivity(n=5, tosample='force')
         '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, **kwargs)
+        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, randseed=randseed, **kwargs)
         self.modified = today()
         return results
 
@@ -625,11 +650,13 @@ class Project(object):
         self.modified = today()
         return None        
     
-    def getBOC(self, objectives):
+    def getBOC(self, objectives=None):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
+        
         for x in self.results:
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
+                if objectives is None: return boc
                 same = True
                 for y in boc.objectives:
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False

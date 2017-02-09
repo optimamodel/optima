@@ -322,10 +322,11 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     '''
     from numpy import array, isnan
     data = array(data)
+    if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = array(filterdata)
     if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
     else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
-    if sum(validindices): # There's at least one data point entered
+    if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
             validdata = array(array(data)[validindices]) # Store each year
         elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
@@ -804,6 +805,67 @@ def compareversions(version1=None, version2=None):
         raise Exception('Failed to compare %s and %s' % (version1, version2))
 
 
+
+
+
+
+def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=2, die=False):
+    ''' 
+    Send a Slack notification when something is finished.
+    
+    Arguments:
+        to:
+            The Slack channel or user to post to. Note that channels begin with #, while users begin with @.
+        message:
+            The message to be posted.
+        fromuser:
+            The pseudo-user the message will appear from.
+        token:
+            This must be a plain text file containing a single line which is the Slack API URL token.
+            Tokens are effectively passwords and must be kept secure. If you need one, contact me.
+        verbose:
+            How much detail to display.
+        die:
+            If false, prints warnings. If true, raises exceptions.
+    
+    Example usage:
+        slacknotification('#athena', 'Long process is finished')
+        slacknotification(token='/.slackurl', channel='@cliffk', message='Hi, how are you going?')
+    
+    What's the point? Add this to the end of a very long-running script to notify
+    your loved ones that the script has finished.
+        
+    Version: 2017feb09 by cliffk    
+    '''
+    
+    # Imports
+    from requests import post # Simple way of posting data to a URL
+    from json import dumps # For sanitizing the message
+    from getpass import getuser # In case username is left blank
+    
+    # Validate input arguments
+    printv('Sending Slack message...', 2, verbose)
+    if token is None: token = '/.slackurl'
+    if to is None: to = '#athena'
+    if fromuser is None: fromuser = getuser()+'-bot'
+    if message is None: message = 'This is an automated notification: your notifier is notifying you.'
+    printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
+    
+    # Try opening token file    
+    try:
+        with open(token) as f: slackurl = f.read()
+    except:
+        print('Could not open Slack URL/token file "%s"' % token)
+        if die: raise
+        else: return None
+    
+    # Package and post payload
+    payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
+    printv('Full payload: %s' % payload, 4, verbose)
+    response = post(url=slackurl, data=payload)
+    printv(response, 3, verbose) # Optionally print response
+    printv('Message sent.', 1, verbose) # We're done
+    return None
 
 
 
