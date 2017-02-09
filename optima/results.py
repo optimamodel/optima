@@ -14,9 +14,8 @@ from numbers import Number
 
 class Result(object):
     ''' Class to hold overall and by-population results '''
-    def __init__(self, name=None, projectname=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None, estimate=False, defaultplot=None):
+    def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None, estimate=False, defaultplot=None):
         self.name = name # Name of this parameter
-        self.projectname = name # Name of the project
         self.ispercentage = ispercentage # Whether or not the result is a percentage
         self.pops = pops # The model result by population, if available
         self.tot = tot # The model result total, if available
@@ -334,8 +333,7 @@ class Resultset(object):
     def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, writetofile=True, verbose=2):
         ''' Method for exporting results to a CSV file '''
         if filestem is None:  # Doesn't include extension, hence filestem
-            if self.name is not None: filestem = self.projectname+'-'+self.name
-            else: filestem = str(self.uid)
+            filestem = self.projectinfo['name']+'-'+self.name
         filename = filestem + '.csv'
         npts = len(self.tvec)
         keys = self.main.keys()
@@ -468,7 +466,7 @@ class Multiresultset(Resultset):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = '============================================================\n'
-        output += '      Project name: %s\n'    % self.projectname
+        output += '      Project name: %s\n'    % self.projectinfo['name'
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '      Results sets: %s\n'    % self.keys
@@ -480,8 +478,7 @@ class Multiresultset(Resultset):
     def export(self, filestem=None, ind=None, writetofile=True, verbose=2, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         if filestem is None: # Filestem rather than filename since doesn't include extension
-            if self.name is not None: filestem = self.projectname+'-'+self.name
-            else: filestem = str(self.uid)
+            filestem = self.projectinfo['name']+'-'+self.name
         output = ''
         for k,key in enumerate(self.keys):
             thisfilestem = filestem+'-'+key

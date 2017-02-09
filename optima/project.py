@@ -98,6 +98,15 @@ class Project(object):
         output += '============================================================\n'
         output += self.getwarnings(doprint=False) # Don't print since print later
         return output
+    
+    def getinfo(self):
+        ''' Return an odict with basic information about the project '''
+        info = odict()
+        for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
+            info[attr] = getattr(self, attr) # Populate the dictionary
+        info['parsetkeys'] = self.parsets.keys()
+        info['progsetkeys'] = self.parsets.keys()
+        return info
 
     def getwarnings(self, doprint=True):
         ''' Tiny method to print the warnings in the project, if any '''
