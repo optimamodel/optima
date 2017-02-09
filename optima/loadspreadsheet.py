@@ -3,7 +3,7 @@
 ###########################################################################
 
 from optima import OptimaException, odict, printv, today, isnumber
-from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
+from numpy import nan, isnan, array, nonzero, shape # For reading in empty values
 from xlrd import open_workbook # For opening Excel workbooks
 from os import path, sep
 

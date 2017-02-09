@@ -6,7 +6,7 @@ Version: 2016jan18 by robyns
 """
 
 import xlsxwriter
-from xlsxwriter.utility import re, xl_rowcol_to_cell
+from xlsxwriter.utility import xl_rowcol_to_cell
 from utils import printv, isnumber
 from numpy import isnan
 from optima import __version__, odict, getdate, today, loadpartable
@@ -24,12 +24,14 @@ def makespreadsheet(filename=None, pops=None, datastart=default_datastart, datae
             pops = []
             npops = len(data['pops']['short'])
             for pop in range(npops):
-                pops.append({'short':data['pops']['short'][pop],
-                         'name':data['pops']['long'][pop],
-                         'male':bool(data['pops']['male'][pop]),
-                         'female':bool(data['pops']['female'][pop]),
-                         'age_from':data['pops']['age'][pop][0],
-                         'age_to':data['pops']['age'][pop][1]})
+                pops.append({
+                         'short':    data['pops']['short'][pop],
+                         'name':     data['pops']['long'][pop],
+                         'male':     data['pops']['male'][pop],
+                         'female':   data['pops']['female'][pop],
+                         'age_from': data['pops']['age'][pop][0],
+                         'age_to':   data['pops']['age'][pop][1]
+                         })
         
     if isnumber(pops):
         npops = pops
@@ -213,7 +215,7 @@ class OptimaFormats:
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
-    DECIMAL_PERCENTAGE = 'decimal_percentage'
+    DECIMAL = 'decimal'
     SCIENTIFIC = 'scientific'
     NUMBER = 'number'
     GENERAL = 'general'
@@ -229,25 +231,17 @@ class OptimaFormats:
         self.formats['rc_title']['right'] = self.book.add_format({'bold':1, 'align':'right'})
         self.formats['rc_title']['left'] = self.book.add_format({'bold':1, 'align':'left'})
         # unlocked formats
-        self.formats['unlocked'] = self.book.add_format({'locked':0, \
-        'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['percentage'] = self.book.add_format({'locked':0, 'num_format':0x09, \
-        'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['decimal_percentage'] = self.book.add_format({'locked':0, 'num_format':0x0a, \
-        'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['scientific'] = self.book.add_format({'locked':0, 'num_format':0x0b, \
-        'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['number'] = self.book.add_format({'locked':0, 'num_format':0x04, \
-        'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['general'] = self.book.add_format({'locked':0, 'num_format':0x00, \
-        'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['optional'] = self.book.add_format({'locked':0, 'num_format':0x00, \
-        'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['info_header'] = self.book.add_format({'align':'center','valign':'vcenter', \
-            'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
-        self.formats['grey'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
-        self.formats['info_url'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
-        self.formats['grey_bold'] = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
+        self.formats['unlocked']     = self.book.add_format({'locked':0, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['percentage']   = self.book.add_format({'locked':0, 'num_format':0x09, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['decimal']      = self.book.add_format({'locked':0, 'num_format':0x0a, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['scientific']   = self.book.add_format({'locked':0, 'num_format':0x0b, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['number']       = self.book.add_format({'locked':0, 'num_format':0x04, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['general']      = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['optional']     = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['info_header']  = self.book.add_format({'align':'center','valign':'vcenter', 'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
+        self.formats['grey']         = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
+        self.formats['info_url']     = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
+        self.formats['grey_bold']    = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
         self.formats['merge_format'] = self.book.add_format({'bold': 1,'align': 'center','text_wrap':True})
 
 
@@ -541,7 +535,7 @@ class OptimaSpreadsheet:
             data = self.formatkeydata(self.data.get('hivprev'))['data']
             assumption_data = self.formatkeydata(self.data.get('hivprev'))['assumption_data']
         current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
-            row_format=OptimaFormats.DECIMAL_PERCENTAGE, assumption=True, row_levels=row_levels, data=data, assumption_data=assumption_data)
+            row_format=OptimaFormats.DECIMAL, assumption=True, row_levels=row_levels, data=data, assumption_data=assumption_data)
 
     def generate_popsize(self, data=None, assumption_data=None):
         row_levels = ['high', 'best', 'low']
@@ -563,7 +557,7 @@ class OptimaSpreadsheet:
                 assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
                 
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
-                row_format=OptimaFormats.DECIMAL_PERCENTAGE, assumption=True, data=data, assumption_data=assumption_data)
+                row_format=OptimaFormats.DECIMAL, assumption=True, data=data, assumption_data=assumption_data)
 
     def generate_txrx(self, data=None, assumption_data=None):
         current_row = 0
@@ -680,7 +674,7 @@ class OptimaSpreadsheet:
             [0.0004, 0.0008, 0.0011, 0.0138, 0.0080, 0.367, 0.205],
             [0.0001, 0.0006, 0.0004, 0.0102, 0.0063, 0.294, 0.14],
             [0.0014, 0.0011, 0.0028, 0.0186, 0.0240, 0.440, 0.270], 
-            OptimaFormats.DECIMAL_PERCENTAGE),
+            OptimaFormats.DECIMAL),
         ('Relative disease-related transmissibility',
             ['Acute infection',
             'CD4(>500)',
@@ -740,7 +734,7 @@ class OptimaSpreadsheet:
             [0.0036, 0.0036, 0.0058, 0.0088, 0.059, 0.3230, 0.2300, 0.4878, 2.17], 
             [0.0029, 0.0029, 0.0048, 0.0075, 0.0540, 0.2960, 0.1500, 0.2835, 1.27],
             [0.0044, 0.0044, 0.0071, 0.0101, 0.079, 0.4320, 0.3000, 0.8417, 3.71], 
-            OptimaFormats.DECIMAL_PERCENTAGE),
+            OptimaFormats.DECIMAL),
         ('Changes in transmissibility (%)',
             ['Condom use',
             'Circumcision',
