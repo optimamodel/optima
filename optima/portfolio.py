@@ -261,7 +261,7 @@ class Portfolio(object):
         return optbudgets
         
         
-    def fullGA(self, objectives=None, budgetratio=None, minbound=None, maxtime=None, doplotBOCs=False, verbose=2, die=True):
+    def fullGA(self, objectives=None, budgetratio=None, minbound=None, maxtime=None, doplotBOCs=False, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         printv('Performing full geospatial analysis', 1, verbose)
         
