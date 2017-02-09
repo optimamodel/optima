@@ -520,12 +520,12 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     plotstyles = odict([
     ('susreg',   ('|','|')), 
     ('progcirc', ('+','|')), 
-    ('undx',     ('*','*')), 
+    ('undx',     ('O','o')), 
     ('dx',       ('.','o')), 
-    ('care',     ('O','o')), 
+    ('care',     ('*','*')), 
     ('lost',     ('X','|')),
-    ('usvl',     ('*','*')), 
-    ('svl',      ('.','o')), 
+    ('usvl',     ('.','o')), 
+    ('svl',      ('*','*')), 
     ])
     
     hatchstyles = []
