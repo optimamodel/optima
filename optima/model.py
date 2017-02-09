@@ -473,7 +473,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         else:
             tvec = [tind]            
         if not((people[:,:,tind]>=0).all()): # If not every element is a real number >0, throw an error
-            for t in tvec:
+            for t in range(len(tvec)):
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
@@ -798,16 +798,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 # If any of the prop parameters are non-nan, that means that we've got some proportion target.
                 # However, treatment and VL monitoring are special because it is always set by shifting numbers.
                 if name in ['proptx','propsupp'] or ~isnan(prop[t+1]): 
-                    
-                    # Figure out how many people we currently have...
-                    actual          = people[num,:,t+1].sum() # ... in the higher cascade state
-                    available       = people[denom,:,t+1].sum() # ... waiting to move up
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
                         if isnan(propsupp[t+1]) and people[usvl,:,t+1].sum()>eps:
                             unsuppressed = people[usvl,:,t+1] # To make sure it doesn't go negative
-                            suppressedprop = minimum(1.0, raw_newtreat[:,t].sum()*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
+                            suppressedprop = minimum(1.0, (raw_newtreat[:,t].sum())*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
                             newlysuppressed = suppressedprop*unsuppressed # Calculate actual number of people suppressed
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
@@ -816,6 +812,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     # We figure out how many people should be moved to suppressed based on how many VL tests were done
                     if name is 'propsupp' and isnan(prop[t+1]):
                         wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
+
+                    # Figure out how many people we currently have...
+                    actual          = people[num,:,t+1].sum() # ... in the higher cascade state
+                    available       = people[denom,:,t+1].sum() # ... waiting to move up
 
                     # Figure out how many people waiting to move up the cascade, and what distribution should we use to move them
                     ppltomoveup     = people[lowerstate,:,t+1]
@@ -830,7 +830,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     new_movers      = zeros((ncd4,npops)) 
 
                     # Reconcile the differences between the number we have and the number we want
-                    diff = wanted - actual # Wanted number less actual number 
+                    diff = wanted - actual # Wanted number minus actual number 
                     if diff>0.: # We need to move people UP the cascade 
                         for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
                             if diff>eps: # Move people until you have the right proportions
