@@ -850,8 +850,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
 
-        # Check no negative people
-        if debug: checkfornegativepeople(people, tind=t+1)
+            # Check no negative people -- this is inside the t<npts statement, so doesn't check the last point
+            if debug: checkfornegativepeople(people, tind=t+1)
     raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
         
     raw                 = odict()    # Sim output structure
