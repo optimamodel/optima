@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
+from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import __version__ # Get current version
 from numpy import argmin, array
@@ -559,6 +559,11 @@ class Project(object):
         multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
         self.addresult(result=multires)
         self.modified = today()
+        return None
+    
+    def defaultscenarios(self, **kwargs):
+        ''' Wrapper for default scenarios '''
+        defaultscenarios(self, **kwargs)
         return None
     
 
