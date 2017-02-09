@@ -809,26 +809,29 @@ def compareversions(version1=None, version2=None):
 
 
 
-def slacknotification(token=None, channel=None, message=None, verbose=2, die=False):
+def slacknotification(message=None, channel=None, user=None, token=None, verbose=2, die=False):
     ''' 
     Send a Slack notification when something is finished.
     
     Arguments:
+        message:
+            The message to be posted.
+        channel:
+            The Slack channel to post to.
+        user:
+            The pseudo-user the message will appear from.
         token:
             This must be a plain text file containing a single line which is the Slack API token.
             You can get this token from https://api.slack.com/docs/oauth-test-tokens.
             WARNING, this is a type of password, do NOT put it in a public place!!!!!
-        channel:
-            The Slack channel to post to.
-        message:
-            The message to be posted.
         verbose:
             How much detail to display.
         die:
             If false, prints warnings. If true, raises exceptions.
     
     Example usage:
-        slacknotification(token='/u/cliffk/.slack-api-token', message='Long process is finished')
+        slacknotification('#athena', 'Long process is finished')
+        slacknotification(token='/.slackurl', channel='@cliffk', message='Hi, how are you going?')
     
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
@@ -836,43 +839,35 @@ def slacknotification(token=None, channel=None, message=None, verbose=2, die=Fal
     Version: 2017feb09 by cliffk    
     '''
     
-    # Try importing slacker
-    try:
-        from slacker import Slacker
-    except:
-        errormsg = 'Could not import slacker; try "pip install slacker"'
-        if die: raise Exception(errormsg)
-        else: 
-            print(errormsg)
-            return None
+    printv('Sending Slack message...', 2, verbose)
     
     # Validate input arguments
+    from json import dumps # For sanitizing the message
+    from getpass import getuser # In case username is left blank
+    if token is None: token = '/.slackurl'
     if channel is None: channel = '#athena'
-    if channel[0] is not '#': channel = '#'+channel # Make sure it starts with an...octothorpe
+    if user is None: user = getuser()+'-bot'
     if message is None: message = 'This is an automated notification: your script is finished running'
-    if token is None:
-        errormsg = 'Slack token must be supplied; see function help'
-        if die: raise Exception(errormsg)
-        else:
-            print(errormsg)
-            return None
+    
+    
+    printv('Channel: %s\nUser: %s\nMessage: %s\n' % (channel, user, message), 3, verbose)
     
     # Try opening token file    
     try:
-        with open(token) as f: slacktoken = f.read()
+        with open(token) as f: slackurl = f.read()
     except:
         print('Could not open Slack token file "%s"' % token)
         if die: raise
         else: return None
     
-    printv('Connecting to Slack...', 2, verbose)
-    
-    command = 'curl -X POST --data-urlencode ''payload={"text": "%s", "channel": "@cliffk", "username": "monkey-bot"}'' %s' % (message, channel, token)
-#    runcommand(command)
-    
-    # Send a message to #general channel
-    printv('Sending message...', 3, verbose)
-    slack.chat.post_message(channel, message)
+    command = 'curl -X POST --data-urlencode ''payload={"text": %s, "channel": %s, "username": %s}'' %s' % (dumps(message), dumps(channel), dumps(user), slackurl)
+    printv('Full command: %s' % command, 4, verbose)
+
+    try: runcommand(command)
+    except Exception as E:
+        print('Could not send message :( Because "%s"' % E.message)
+        if die: raise
+        else: return None
     printv('Message sent.', 2, verbose)
     return None
 
