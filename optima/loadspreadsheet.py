@@ -9,7 +9,7 @@ from os import path, sep
 
 
 def loadpardefitions(filename='model-inputs.xlsx', verbose=2):
-    '''  Function to parse the data parameter definitions '''
+    ''' Function to parse the data parameter definitions '''
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     
     printv('Loading parameter definitions from %s...' % filename, 3, verbose)
@@ -34,7 +34,7 @@ def loadpardefitions(filename='model-inputs.xlsx', verbose=2):
 
     
 def forcebool(entry, location=''):
-    """ Convert an entry to be Boolean """
+    ''' Convert an entry to be Boolean '''
     if entry in [1, 'TRUE', 'true', 'True', 't', 'T']:
         return 1
     elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']:
@@ -60,17 +60,14 @@ def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklowe
     # Now check integrity of data itself
     validdata = array(thesedata)[~isnan(thesedata)]
     if len(validdata):
-        invalid = array([False]*len(validdata)) # By default, set everything to valid
-        if checkupper and checklower: invalid = logical_or(array(validdata)>1, array(validdata)<0) # If upper & lower check specified
-        if checkupper and not checklower: invalid = array(validdata)>1
-        if not checkupper and checklower: invalid = array(validdata)<0
-        if any(invalid):
-            column = nonzero(invalid)[0]
+        valid = array([True]*len(validdata)) # By default, set everything to valid
+        if checklower: valid *= array(validdata)>=0
+        if checkupper: valid *= array(validdata)<=1
+        if not valid.all():
+            column = nonzero(valid==False)[0]
             errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
             errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
-            if checkupper and checklower: errormsg += 'Be sure that all values are >=0 and <=1'
-            elif checkupper and not checklower: errormsg += 'Be sure that all values are <=1'
-            elif not checkupper and checklower: errormsg += 'Be sure that all values are >=0'
+            errormsg += 'Be sure that all values are >=0 (and <=1 if a probability)'
             raise OptimaException(errormsg)
     
     # No data entered
@@ -106,33 +103,26 @@ def getyears(sheetdata):
 ###########################################################################################################
         
 def loadspreadsheet(filename='simple.xlsx', verbose=2):
-    """
+    '''
     Loads the spreadsheet (i.e. reads its contents into the data).
     This data sheet is used in the next step to update the corresponding model.
     
-    Note: to add a new sheet, add it to the definition of "sheets" below, but also
-    make sure it's being handled appropriately in the main loop.
-    
-    Version: 1.4 (2016feb07)
-    """
-    
-    pardefinitions = loadpardefitions(filename='model-inputs.xlsx', verbose=verbose)
+    Version: 1.5 (2017feb09)
+    '''
     
     printv('Loading data from %s...' % filename, 1, verbose)
     
     # Create dictionary of parameters to load
-    sheets = odict()
-    sheettypes = odict()
+    pardefinitions = loadpardefitions(filename='model-inputs.xlsx', verbose=verbose)
+    sheets = odict() # Lists of parameters in each sheet
+    sheettypes = odict() # The type of each sheet -- e.g. time parameters or matrices
+    checkupper = odict() # Whether or not the upper limit of the parameter should be checked
     for par in pardefinitions['Data inputs']:
         if par['sheet'] not in sheets.keys(): # Create new list if sheet not encountered yet
             sheets[par['sheet']] = []
-        sheets[par['sheet']].append(par['short'])
-        if par['sheet'] not in sheettypes.keys():
-            sheettypes[par['sheet']] = par['type'] # Figure out why kind of sheet this is
-        else:
-            if sheettypes[par['sheet']] != par['type']:
-                errormsg = 'All parameters on a sheet must have the same type, not %s and %s' % (sheettypes[par['sheet']], par['type'])
-                raise OptimaException(errormsg)
+        sheets[par['sheet']].append(par['short']) # All-important: append the parameter name
+        sheettypes[par['sheet']] = par['type'] # Figure out why kind of sheet this is
+        checkupper[par['short']] = par['checkupper'] # Whether or not to check the upper limit
     
     # Handle constants separately
     sheets['Constants'] = []
@@ -140,61 +130,11 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
         sheets['Constants'].append(par['short'])
     sheettypes['Constants'] = 'constant' # Hard-code this
     
-    
-#    # Metadata -- population names -- array size is (# populations)
-#    sheets['Populations'] = ['pops']
-#    
-#    # HIV prevalence data -- array sizes are time x population x uncertainty
-#    sheets['HIV prevalence'] =  ['hivprev']
-#    
-#    # Population size data -- array sizes are time x population x uncertainty
-#    sheets['Population size'] =  ['popsize']
-#    
-#    # Time data -- array sizes are time x population
-#    sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
-#    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'costtx', 'prep', 'numpmtct', 'birth', 'breast']
-#    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'optpropdx', 'optpropcare', 'optproptx', 'optproppmtct', 'optpropsupp']
-#    sheets['Cascade']             = ['linktocare', 'aidslinktocare', 'leavecare', 'aidsleavecare', 'numvlmon']
-#    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc']
-#    sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
-#    
-#    # Matrix data -- array sizes are population x population
-#    sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','birthtransit','agetransit','risktransit']
-#    
-#    # Constants -- array sizes are scalars x uncertainty
-#    sheets['Constants'] = [
-#                           ['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
-#                           ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
-#                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
-#                           ['svlrecovgt350', 'svlrecovgt200', 'svlrecovgt50', 'svlrecovlt50','treatvs','requiredvl'],
-#                           ['usvlproggt500', 'usvlrecovgt350', 'usvlproggt350', 'usvlrecovgt200', 'usvlproggt200', 'usvlrecovgt50', 'usvlproggt50',  'usvlrecovlt50', 'treatfail'],
-#                           ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathsvl', 'deathusvl', 'deathtb'],
-#                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp'],
-#                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx'],
-#                          ]
-    
-    
-    ###########################################################################
-    ## Load data sheets
-    ###########################################################################
-    
-
-    ## Basic setup
+    ## Initialize dictionaries
     data = odict() # Create sheetsure for holding data
     data['meta'] = odict()
     data['meta']['date'] = today()
     data['meta']['sheets'] = sheets # Store parameter names
-    try: 
-        workbook = open_workbook(filename) # Open workbook
-    except: 
-        errormsg = 'Failed to load spreadsheet: file "%s" not found or other problem' % filename
-        raise OptimaException(errormsg)
-    
-    
-    ## Calculate columns for which data are entered, and store the year ranges
-    sheetdata = workbook.sheet_by_name('Population size') # Load this workbook
-    lastdatacol, data['years'] = getyears(sheetdata)
-    assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
     
     ## Initialize populations
     data['pops'] = odict() # Initialize to empty list
@@ -210,6 +150,17 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     data['pships']['cas'] = [] # Store casual partnerships
     data['pships']['com'] = [] # Store commercial partnerships
     data['pships']['inj'] = [] # Store injecting partnerships
+    
+    ## Actually open workbook
+    try:  workbook = open_workbook(filename) # Open workbook
+    except Exception as E: 
+        errormsg = 'Failed to load spreadsheet "%s": %s' % (filename, E.message)
+        raise OptimaException(errormsg)
+    
+    ## Open workbook and calculate columns for which data are entered, and store the year ranges
+    sheetdata = workbook.sheet_by_name('Population size') # Load this workbook
+    lastdatacol, data['years'] = getyears(sheetdata)
+    assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
     
 
     ##################################################################
@@ -263,7 +214,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                     blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                     data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
-                    validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=(thispar=='hivprev'))  # Make sure at least the best estimate isn't blank
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=checkupper[thispar])  # Make sure at least the best estimate isn't blank
                     
                 # It's basic data, append the data and check for programs
                 elif sheettype=='time': 
@@ -273,9 +224,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                         thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
                     checkblank = False if sheetname in ['Optional indicators', 'Cascade'] or thispar=='numcirc' else True # Don't check optional indicators, check everything else
-                    validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank)
-                    if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'propcirc',  'sharing']: # All probabilities
-                        validatedata(thesedata, sheetname, thispar, row, checkupper=True)                        
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank, checkupper=checkupper[thispar])
 
                 # It's a matrix, append the data                                     
                 elif sheettype=='matrix':
@@ -326,10 +275,10 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
 ###########################################################################################################
         
 def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
-    """
+    '''
     Loads the spreadsheet (i.e. reads its contents into the data).
     Version: 1.0 (2016sep30)
-    """
+    '''
     
     printv('Loading data from %s...' % filename, 1, verbose)
     sheets = odict()
