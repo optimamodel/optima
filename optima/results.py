@@ -64,7 +64,7 @@ class Resultset(object):
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
-        self.project = project # ...and just store the whole project
+        self.projectinfo = project.getinfo() # Extract info from the project
         self.parset = dcp(parset) # Store parameters
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data

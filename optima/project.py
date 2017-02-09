@@ -98,6 +98,15 @@ class Project(object):
         output += '============================================================\n'
         output += self.getwarnings(doprint=False) # Don't print since print later
         return output
+    
+    def getinfo(self):
+        ''' Return an odict with basic information about the project '''
+        info = odict()
+        for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
+            info[attr] = getattr(self, attr) # Populate the dictionary
+        info['parsetkeys'] = self.parsets.keys()
+        info['progsetkeys'] = self.parsets.keys()
+        return info
 
     def getwarnings(self, doprint=True):
         ''' Tiny method to print the warnings in the project, if any '''
@@ -462,7 +471,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -479,7 +488,7 @@ class Project(object):
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
             for i in range(n):
-                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample))
+                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=randseed))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
@@ -508,7 +517,7 @@ class Project(object):
         return results
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, **kwargs): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
         '''
         Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
         
@@ -518,7 +527,7 @@ class Project(object):
         P.sensitivity(n=5, tosample='force')
         '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, **kwargs)
+        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, randseed=randseed, **kwargs)
         self.modified = today()
         return results
 
