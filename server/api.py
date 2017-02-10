@@ -98,8 +98,6 @@ def run_remote_procedure():
     return jsonify(fn(*args, **kwargs))
 
 
-<<<<<<< HEAD
-=======
 from flask import helpers
 @app.route('/api/download', methods=['POST'])
 @report_exception_decorator
@@ -124,7 +122,6 @@ def get_remote_file():
     return helpers.send_from_directory(dirname, filename)
 
 
->>>>>>> develop
 
 def init_db():
     print("Loading DB...")
