@@ -10,7 +10,7 @@ import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from utils import printv, isnumber
 from numpy import isnan
-from optima import __version__, odict, getdate, today, loadpartable, loaddatapars, Settings
+from optima import __version__, odict, getdate, today, loadpartable, loaddatapars, Settings, tic, toc
 
 settings = Settings()
 default_datastart = settings.start
@@ -107,7 +107,8 @@ class OptimaContent:
 def make_years_range(name=None, row_names=None, ref_range=None, data_start=None, data_end=None, data=None):
     if ref_range is not None:
         row_names = ref_range.param_refs()
-    return OptimaContent(name, row_names, range(data_start, data_end+1), data=data)
+    output = OptimaContent(name, row_names, range(data_start, data_end+1), data=data)
+    return output
 
 def make_populations_range(name, items):
     """ 
@@ -485,6 +486,7 @@ class OptimaSpreadsheet:
 
 
     def generate_sheets(self, sheetname):
+        
         if self.verbose>2: print('Generating %s' % sheetname)
         current_row = 0
         pardefs = self.pardefinitions['sheetcontent'][sheetname]
