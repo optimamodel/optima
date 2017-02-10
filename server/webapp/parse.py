@@ -305,10 +305,14 @@ def get_parameters_from_parset(parset, advanced=False):
     """
     mflists = parset.manualfitlists(advanced=advanced)
     parameters = []
-    for p in range(len(mflists['key'])):
-        parameters.append({})
-        for k in ['key', 'subkey', 'type', 'value', 'label']:
-            parameters[-1][k] = mflists[k][p]
+    for p in range(len(mflists['keys'])):
+        parameters.append({ # WARNING, stupid name inconsistencies
+            'key':    mflists['keys'][p],
+            'subkey': mflists['subkeys'][p],
+            'type':   mflists['types'][p],
+            'value':  mflists['values'][p],
+            'label':  mflists['labels'][p],
+            })
 
     return parameters
 
