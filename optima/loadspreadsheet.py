@@ -4,7 +4,7 @@
 
 from optima import OptimaException, loaddatapars, odict, printv, today, isnumber
 from numpy import nan, isnan, array, nonzero, shape # For reading in empty values
-import xlrd # For opening Excel workbooks
+from xlrd import open_workbook # For opening Excel workbooks
 
 
 def forcebool(entry, location=''):
@@ -83,21 +83,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     
     # Create dictionary of parameters to load
     pardefinitions = loaddatapars(verbose=verbose)
-    sheets = odict() # Lists of parameters in each sheet
-    sheettypes = odict() # The type of each sheet -- e.g. time parameters or matrices
-    checkupper = odict() # Whether or not the upper limit of the parameter should be checked
-    for par in pardefinitions['Data inputs']:
-        if par['sheet'] not in sheets.keys(): # Create new list if sheet not encountered yet
-            sheets[par['sheet']] = []
-        sheets[par['sheet']].append(par['short']) # All-important: append the parameter name
-        sheettypes[par['sheet']] = par['type'] # Figure out why kind of sheet this is
-        checkupper[par['short']] = par['checkupper'] # Whether or not to check the upper limit
-    
-    # Handle constants separately
-    sheets['Constants'] = []
-    for par in pardefinitions['Data constants']:
-        sheets['Constants'].append(par['short'])
-    sheettypes['Constants'] = 'constant' # Hard-code this
+    sheets     = pardefinitions['sheets']
+    sheettypes = pardefinitions['sheettypes']
+    checkupper = pardefinitions['checkupper']
     
     ## Initialize dictionaries
     data = odict() # Create sheetsure for holding data
@@ -121,7 +109,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     data['pships']['inj'] = [] # Store injecting partnerships
     
     ## Actually open workbook
-    try:  workbook = xlrd.open_workbook(filename) # Open workbook
+    try:  workbook = open_workbook(filename) # Open workbook
     except Exception as E: 
         errormsg = 'Failed to load spreadsheet "%s": %s' % (filename, E.message)
         raise OptimaException(errormsg)

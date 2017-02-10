@@ -9,7 +9,7 @@ import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from utils import printv, isnumber
 from numpy import isnan
-from optima import __version__, odict, getdate, today, loadpartable
+from optima import __version__, odict, getdate, today, loadpartable, loaddatapars
 
 default_datastart = 2000
 default_dataend = 2020
@@ -777,10 +777,11 @@ class OptimaSpreadsheet:
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
     def create(self, path):
+        
+        pardefinitions = loaddatapars(verbose=self.verbose)
+        
         if self.verbose >=1: 
-            print("""Creating spreadsheet %s with parameters:
-            npops = %s, data_start = %s, data_end = %s""" % \
-            (path, self.npops, self.data_start, self.data_end))
+            print('Creating spreadsheet %s with parameters: npops = %s, datastart = %s, dataend = %s' % (path, self.npops, self.data_start, self.data_end))
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
         self.sheets = {}

@@ -33,34 +33,16 @@ def loadobj(filename, verbose=True):
     with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
-
-
-def dumps(obj):
-    ''' Save an object to a string in gzip-compatible way'''
-    result = None
-    with closing(StringIO()) as output:
-        with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
-            pickle.dump(obj, fileobj, protocol=2)
-        output.seek(0)
-        result = output.read()
-    return result
-
-
-def loads(source):
-    ''' Load an object from a string in gzip-compatible way'''
-    with closing(StringIO(source)) as output:
-        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
-            obj = pickle.load(fileobj)
-    return obj
     
-
 
 
 #############################################################################################################################
 ### Functions to load the parameters and transitions
 #############################################################################################################################
 
+# Default filename for all the functions that read this spreadsheet
 default_filename = 'model-inputs.xlsx'
+
 
 def loadpartable(filename=default_filename, sheetname='Model parameters'):
     '''  Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters '''
@@ -76,6 +58,7 @@ def loadpartable(filename=default_filename, sheetname='Model parameters'):
             if sheet.cell_value(0,colnum) in ['limits']:
                 rawpars[rownum][attr] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
     return rawpars
+
 
 
 def loadtranstable(filename=default_filename, sheetname='Transitions', npops=None):
@@ -96,6 +79,7 @@ def loadtranstable(filename=default_filename, sheetname='Transitions', npops=Non
     return rawtransit
 
 
+
 def loaddatapars(filename=default_filename, verbose=2):
     ''' Function to parse the data parameter definitions '''
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
@@ -114,4 +98,26 @@ def loaddatapars(filename=default_filename, verbose=2):
                 if type(cellval)==unicode: cellval = str(cellval)
                 rawpars[rownum][attr] = cellval
         pardefinitions[sheetname] = rawpars
+    
+    sheets = odict() # Lists of parameters in each sheet
+    sheettypes = odict() # The type of each sheet -- e.g. time parameters or matrices
+    checkupper = odict() # Whether or not the upper limit of the parameter should be checked
+    for par in pardefinitions['Data inputs']:
+        if par['sheet'] not in sheets.keys(): # Create new list if sheet not encountered yet
+            sheets[par['sheet']] = []
+        sheets[par['sheet']].append(par['short']) # All-important: append the parameter name
+        sheettypes[par['sheet']] = par['type'] # Figure out why kind of sheet this is
+        checkupper[par['short']] = par['checkupper'] # Whether or not to check the upper limit
+    
+    # Handle constants separately
+    sheets['Constants'] = []
+    for par in pardefinitions['Data constants']:
+        sheets['Constants'].append(par['short'])
+    sheettypes['Constants'] = 'constant' # Hard-code this
+    
+    # Store useful derivative information
+    pardefinitions['sheets'] = sheets
+    pardefinitions['sheettypes'] = sheettypes
+    pardefinitions['checkupper'] = checkupper
+    
     return pardefinitions
