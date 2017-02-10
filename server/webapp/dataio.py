@@ -778,8 +778,14 @@ def resolve_project(project):
 def load_result(
         project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
         name=None, which=None):
-    result_records = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type)
+    kwargs = {
+        'calculation_type': calculation_type
+    }
+    if parset_id is not None:
+        kwargs['parset_id'] = parset_id
+    if project_id is not None:
+        kwargs['project_id'] = project_id
+    result_records = db.session.query(ResultsDb).filter_by(**kwargs)
     if result_records is None:
         return None
     for result_record in result_records:
@@ -1379,6 +1385,9 @@ def create_portfolio(name, db_session=None):
 
 
 def load_data_spreadsheet(project_id, is_template=True):
+    """
+    Returns (dirname, basename) of the the template data spreadsheet
+    """
     project = load_project(project_id)
     fname = secure_filename('{}.xlsx'.format(project.name))
     server_fname = templatepath(fname)
