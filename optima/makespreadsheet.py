@@ -77,12 +77,12 @@ def years_range(data_start, data_end):
 
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
-    def __init__(self, name, row_names, column_names, data=None, assumption_data=None):
+    def __init__(self, name, row_names, column_names, assumption=True, data=None, assumption_data=None):
         self.name = name
         self.row_names = row_names
         self.column_names = column_names
         self.data = data
-        self.assumption = True
+        self.assumption = assumption
         self.row_levels = None
         self.row_format = OptimaFormats.GENERAL
         self.row_formats = None
@@ -106,11 +106,6 @@ class OptimaContent:
                 return [self.row_format for name in self.row_names for level in self.row_levels]
 
 """ It's not truly pythonic, they say, to have class methods """ # <- historic comment from Anna Nachesa
-
-
-def make_matrix_range(name, params, data=None):
-    return OptimaContent(name, params, params, data=data)
-
 
 def make_years_range(name=None, row_names=None, ref_range=None, data_start=None, data_end=None, data=None):
     if ref_range is not None:
@@ -339,8 +334,7 @@ class TitledRange:
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
             if self.content.assumption:
-                formats.write_option(self.sheet, current_row, self.data_range.last_col+1, \
-                    name = self.content.assumption_properties['connector'])
+                formats.write_option(self.sheet, current_row, self.data_range.last_col+1, name = self.content.assumption_properties['connector'])
                 for index, col_name in enumerate(self.content.assumption_properties['columns']):
                     if self.content.assumption_data is not None:
                         formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[i], row_format)
@@ -646,7 +640,7 @@ class OptimaSpreadsheet:
                     data = None
                     assumption_data = None
                 
-                current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), col_names=self.getrange(pd['colnames']), data=data, assumption_data=assumption_data)
+                current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), col_names=self.getrange(pd['colnames']), row_format=pd['rowformat'], data=data, assumption_data=assumption_data)
             else:
                 print('not implemented')
         return None
