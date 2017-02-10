@@ -661,8 +661,7 @@ class OptimaSpreadsheet:
         self.current_sheet.set_column(1,1,40)
         current_row = 0
         
-        print('HIiiiiiii')
-        
+        # Parse data
         constdata = odict()
         constdefs = self.pardefinitions['Data constants'] # Shorten name
         for const in constdefs:
@@ -672,112 +671,10 @@ class OptimaSpreadsheet:
             for key in ['name', 'best' ,'low', 'high']:
                 constdata[sub][key].append(const[key])
             constdata[sub]['format'] = const['format'] # Same for all
-
-#        names_rows_data_format = [
-#        ('Interaction-related transmissibility (% per act)',
-#            ['Insertive penile-vaginal intercourse', 
-#            'Receptive penile-vaginal intercourse', 
-#            'Insertive penile-anal intercourse', 
-#            'Receptive penile-anal intercourse',
-#            'Intravenous injection', 
-#            'Mother-to-child (breastfeeding)',
-#            'Mother-to-child (non-breastfeeding)'],
-#            [0.0004, 0.0008, 0.0011, 0.0138, 0.0080, 0.367, 0.205],
-#            [0.0001, 0.0006, 0.0004, 0.0102, 0.0063, 0.294, 0.14],
-#            [0.0014, 0.0011, 0.0028, 0.0186, 0.0240, 0.440, 0.270], 
-#            OptimaFormats.DECIMAL),
-#        ('Relative disease-related transmissibility',
-#            ['Acute infection',
-#            'CD4(>500)',
-#            'CD4(500) to CD4(350-500)',
-#            'CD4(200-350)',
-#            'CD4(50-200)',
-#            'CD4(<50)'],
-#            [5.6,1,1,1,3.49,7.17], 
-#            [3.3,1,1,1,1.76,3.9], 
-#            [9.1,1,1,1,6.92,12.08], 
-#            OptimaFormats.NUMBER),
-#        ('Disease progression (average years to move)',
-#            ['Acute to CD4(>500)',
-#            'CD4(500) to CD4(350-500)',
-#            'CD4(350-500) to CD4(200-350)',
-#            'CD4(200-350) to CD4(50-200)',
-#            'CD4(50-200) to CD4(<50)'], 
-#            [0.24, 0.95, 3.00, 3.74, 1.50], 
-#            [0.10, 0.62, 2.83, 3.48, 1.13], 
-#            [0.50, 1.16, 3.16, 4.00, 2.25],
-#            OptimaFormats.NUMBER),
-#        ('Treatment recovery due to suppressive ART (average years to move)',
-#            ['CD4(350-500) to CD4(>500)',
-#            'CD4(200-350) to CD4(350-500)',
-#            'CD4(50-200) to CD4(200-350)',
-#            'CD4(<50) to CD4(50-200)',
-#            'Time after initiating ART to achieve viral suppression (years)',
-#            'Number of VL tests recommended per person per year'],
-#            [2.20, 1.42, 2.14, 0.66, 0.20, 2.0], 
-#            [1.07, 0.90, 1.39, 0.51, 0.10, 1.5], 
-#            [7.28, 3.42, 3.58, 0.94, 0.30, 2.5], 
-#            OptimaFormats.NUMBER),     
-#        ('CD4 change due to non-suppressive ART (%/year)',
-#            ['CD4(500) to CD4(350-500)',
-#             'CD4(350-500) to CD4(>500)',
-#             'CD4(350-500) to CD4(200-350)',
-#             'CD4(200-350) to CD4(350-500)',
-#             'CD4(200-350) to CD4(50-200)',
-#             'CD4(50-200) to CD4(200-350)',
-#             'CD4(50-200) to CD4(<50)',
-#             'CD4(<50) to CD4(50-200)',
-#             'Treatment failure rate'],
-#            [0.026, 0.150, 0.100, 0.053, 0.162, 0.117, 0.090, 0.111, 0.16],
-#            [0.005, 0.038, 0.022, 0.008, 0.050, 0.032, 0.019, 0.047, 0.05],
-#            [0.275, 0.885, 0.870, 0.827, 0.869, 0.686, 0.723, 0.563, 0.26],
-#            OptimaFormats.PERCENTAGE),
-#        ('Death rate (% mortality per year)',
-#            ['Acute infection',
-#            'CD4(>500)',
-#            'CD4(350-500)',
-#            'CD4(200-350)',
-#            'CD4(50-200)',
-#            'CD4(<50)',
-#            'Relative death rate on suppressive ART',
-#            'Relative death rate on non-suppressive ART',
-#            'Tuberculosis cofactor'],
-#            [0.0036, 0.0036, 0.0058, 0.0088, 0.059, 0.3230, 0.2300, 0.4878, 2.17], 
-#            [0.0029, 0.0029, 0.0048, 0.0075, 0.0540, 0.2960, 0.1500, 0.2835, 1.27],
-#            [0.0044, 0.0044, 0.0071, 0.0101, 0.079, 0.4320, 0.3000, 0.8417, 3.71], 
-#            OptimaFormats.DECIMAL),
-#        ('Changes in transmissibility (%)',
-#            ['Condom use',
-#            'Circumcision',
-#            'Diagnosis behavior change',
-#            'STI cofactor increase',
-#            'Opiate substitution therapy',
-#            'PMTCT',
-#            'Pre-exposure prophylaxis',
-#            'Unsuppressive ART',
-#            'Suppressive ART'],
-#            [0.95, 0.58, 0.0, 2.65, 0.54, 0.9, 0.73, 0.5, 0.92],
-#            [0.8, 0.47, 0.0, 1.35, 0.33, 0.82, 0.65, 0.3, 0.8],
-#            [0.98, 0.67, 0.68, 5.19, 0.68, 0.93, 0.8, 0.8, 0.95],
-#            OptimaFormats.PERCENTAGE),
-#        ('Disutility weights',
-#            ['Untreated HIV, acute',
-#            'Untreated HIV, CD4(>500)',
-#            'Untreated HIV, CD4(350-500)',
-#            'Untreated HIV, CD4(200-350)',
-#            'Untreated HIV, CD4(50-200)',
-#            'Untreated HIV, CD4(<50)',
-#            'Treated HIV'], 
-#            [0.146, 0.008, 0.020, 0.070, 0.265, 0.547, 0.053], 
-#            [0.096, 0.005, 0.013, 0.048, 0.114, 0.382, 0.034], 
-#            [0.205, 0.011, 0.029, 0.094, 0.474, 0.715, 0.079], 
-#            OptimaFormats.NUMBER),
-#        ]
-
-
+            
+        # Generate spreadsheet by subheading
         for (thisname, thisdata) in constdata.items():
             current_row = self.emit_constants_block(thisname, current_row, thisdata)
-            print('suuuuup', thisname)
 
 
     def create(self, path):
