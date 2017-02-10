@@ -9,10 +9,11 @@ import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from utils import printv, isnumber
 from numpy import isnan
-from optima import __version__, odict, getdate, today, loadpartable, loaddatapars
+from optima import __version__, odict, getdate, today, loadpartable, loaddatapars, Settings
 
-default_datastart = 2000
-default_dataend = 2020
+settings = Settings()
+default_datastart = settings.start
+default_dataend = settings.dataend
 
 def makespreadsheet(filename=None, pops=None, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
     """ Generate the Optima spreadsheet """
@@ -264,16 +265,16 @@ class OptimaFormats:
     def write_empty_unlocked(self, sheet, row, col, row_format = 'unlocked'):
         sheet.write_blank(row, col, None, self.formats[row_format])
 
-    def write_info_line(self, sheet, row, row_format='grey'):
+    def writeline(self, sheet, row, row_format='grey'):
         sheet.write_blank(row, 0, None, self.formats[row_format])
         return row+1
 
-    def write_info_block(self, sheet, row, text, row_format = 'grey', row_height = None, add_line = True):
+    def writeblock(self, sheet, row, text, row_format = 'grey', row_height = None, add_line = True):
         if row_height:
             sheet.set_row(row, row_height)
         sheet.write(row, 0, text, self.formats[row_format])
         if add_line:
-            return self.write_info_line(sheet, row+1)
+            return self.writeline(sheet, row+1)
         else:
             return row+1
 
@@ -498,11 +499,11 @@ class OptimaSpreadsheet:
         self.current_sheet.set_column('A:A',80)
         self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
         current_row = 3
-        current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % __version__)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
+        current_row = self.formats.writeline(self.current_sheet, current_row)
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % __version__)
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
 
     def generate_populations(self):
@@ -761,9 +762,9 @@ class OptimaProgramSpreadsheet:
         self.current_sheet.set_column('A:A',80)
         self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
         current_row = 3
-        current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 program data entry spreadsheet. This is where all program data will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+        current_row = self.formats.writeline(self.current_sheet, current_row)
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 program data entry spreadsheet. This is where all program data will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
 
 
     def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL,
