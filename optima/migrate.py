@@ -406,14 +406,14 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
     kwargs['datashort'] = 'fixpropsupp'
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
-
+    
     project.version = "2.1.10"
     return None
 
 
 
 
-def redoparameters(project, die=False, **kwargs):
+def redoparameters(project, die=True, **kwargs):
     """
     Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
@@ -425,7 +425,9 @@ def redoparameters(project, die=False, **kwargs):
     # Loop over all parsets
     for ps in project.parsets.values():
         oldpars = ps.pars[0]
-        newpars = op.makepars(data = project.data, verbose=0, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
+        tmpdata = op.dcp(project.data)
+        for key,val in tmpdata['const'].items(): tmpdata[key] = val # Parameters were moved from 'const' to main data
+        newpars = op.makepars(data = tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
         
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()

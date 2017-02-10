@@ -318,6 +318,8 @@ def makepars(data=None, verbose=2, die=True):
                 
             elif partype=='yearpar': # Years to fix proportions of people at different cascade stages
                 pars[parname] = Yearpar(t=nan, **rawpar)
+            
+            raise OptimaException('where am i!?')
         
         except Exception as E:
             errormsg = 'Failed to convert parameter %s:\n%s' % (parname, E.message)
