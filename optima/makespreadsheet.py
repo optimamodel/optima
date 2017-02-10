@@ -420,7 +420,7 @@ class OptimaSpreadsheet:
 
     def emit_constants_block(self, subheading, current_row, data):
         content = make_constant_range(subheading, data['name'], data['best'], data['low'], data['high'])
-        content.set_row_format(data['format'])
+        content.set_row_format(data['rowformat'])
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats, rc_row_align = 'left')
         return current_row
@@ -657,7 +657,19 @@ class OptimaSpreadsheet:
             if self.data is not None: data = self.getdata(name)
             if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range, data=data)
             else:              current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range, data=data)
-
+    
+    
+    def generate_sheets(self, sheetname):
+        current_row = 0
+        contents = self.pardefinitions['Data inputs']['sheetcontent']
+        for content in contents:
+            name = content['name']
+            rowformat = content['rowformat']
+            (name, row_format, row_range) in names_formats_ranges:
+            self.emit
+        return None
+    
+    
     def generate_constants(self):
         self.current_sheet = self.sheets['Constants'] # OK to hard-code since function is hardcoded itself
         self.current_sheet.set_column(1,1,40)
@@ -672,11 +684,12 @@ class OptimaSpreadsheet:
                 constdata[sub] = {'name':[], 'best':[], 'low':[], 'high':[], 'format':None} # Initialize -- parameter names, values, and format
             for key in ['name', 'best' ,'low', 'high']:
                 constdata[sub][key].append(const[key])
-            constdata[sub]['format'] = const['format'] # Same for all
+            constdata[sub]['rowformat'] = const['rowformat'] # Same for all
             
         # Generate spreadsheet by subheading
         for (thisname, thisdata) in constdata.items():
             current_row = self.emit_constants_block(thisname, current_row, thisdata)
+        return None
 
 
     def create(self, path):
@@ -714,6 +727,7 @@ class OptimaSpreadsheet:
 #            self.generate_sheets(sheetname)
         self.generate_constants() # Handle constants
         self.book.close()
+        return None
 
 
 

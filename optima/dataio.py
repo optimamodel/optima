@@ -102,13 +102,13 @@ def loaddatapars(filename=default_filename, verbose=2):
     sheets = odict() # Lists of parameters in each sheet
     sheettypes = odict() # The type of each sheet -- e.g. time parameters or matrices
     checkupper = odict() # Whether or not the upper limit of the parameter should be checked
-    sheetdata = odict()
+    sheetcontent = odict()
     for par in pardefinitions['Data inputs']:
         if par['sheet'] not in sheets.keys(): # Create new list if sheet not encountered yet
             sheets[par['sheet']] = [] # Simple structure for storing a list of parameter names, used in loadspreadsheet
-            sheetdata[par['sheet']] = [] # Complex structure for storing all information, used in makespreadsheet
+            sheetcontent[par['sheet']] = [] # Complex structure for storing all information, used in makespreadsheet
         sheets[par['sheet']].append(par['short']) # All-important: append the parameter name
-        sheetdata[par['sheet']].append(par) # Append entire dictionary
+        sheetcontent[par['sheet']].append(par) # Append entire dictionary
         sheettypes[par['sheet']] = par['type'] # Figure out why kind of sheet this is
         checkupper[par['short']] = par['checkupper'] # Whether or not to check the upper limit
     
@@ -120,7 +120,7 @@ def loaddatapars(filename=default_filename, verbose=2):
     
     # Store useful derivative information
     pardefinitions['sheets'] = sheets
-    pardefinitions['sheetdata'] = sheetdata
+    pardefinitions['sheetcontent'] = sheetcontent
     pardefinitions['sheettypes'] = sheettypes
     pardefinitions['checkupper'] = checkupper
     
