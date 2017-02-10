@@ -33,7 +33,25 @@ def loadobj(filename, verbose=True):
     with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
-    
+
+
+def dumps(obj):
+    ''' Save an object to a string in gzip-compatible way -- used on the FE '''
+    result = None
+    with closing(StringIO()) as output:
+        with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
+            pickle.dump(obj, fileobj, protocol=2)
+        output.seek(0)
+        result = output.read()
+    return result
+
+
+def loads(source):
+    ''' Load an object from a string in gzip-compatible way'''
+    with closing(StringIO(source)) as output:
+        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
+            obj = pickle.load(fileobj)
+    return obj
 
 
 #############################################################################################################################
