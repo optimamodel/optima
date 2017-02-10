@@ -1191,7 +1191,7 @@ class Parameterset(object):
                         typelist.append(par.manual)
                         valuelist.append(par.m)
                         labellist.append('%s -- meta' % par.name)
-                elif par.manual in ['const', 'advanced']:
+                elif par.manual in 'const':
                     keylist.append(key)
                     subkeylist.append(None)
                     typelist.append(par.manual)
