@@ -375,7 +375,7 @@ def makepars(data=None, verbose=2, die=True):
 
     # Fix treatment from final data year
     pars['fixproptx'].t = pars['numtx'].t['tot'][-1]
-    pars['fixpropsupp'].t = pars['numvlmon'].t['tot'][-1]
+    pars['fixpropsupp'].t = pars['fixproptx'].t # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
     for key in ['fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
 
