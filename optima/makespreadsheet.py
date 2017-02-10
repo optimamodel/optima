@@ -70,8 +70,10 @@ def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, d
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
     return filename
 
+
 def years_range(data_start, data_end):
     return [x for x in range(data_start, data_end+1)]
+
 
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
@@ -127,7 +129,7 @@ class OptimaContent:
             else:
                 return [self.row_format for name in self.row_names for level in self.row_levels]
 
-""" It's not truly pythonic, they say, to have class methods """
+""" It's not truly pythonic, they say, to have class methods """ # <- historic comment from Anna Nachesa
 
 def make_matrix_range(name, params, data=None):
     return OptimaContent(name, params, params, data=data)
