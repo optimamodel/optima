@@ -1,8 +1,9 @@
 """
-OptimaSpreadsheet and related classes
-Created by: SSQ
+Functions and classes for generating Excel spreadsheets.
 
-Version: 2016jan18 by robyns
+Originally created by Anna Nachesa + StarterSquad
+
+Version: 2017feb10
 """
 
 import xlsxwriter
@@ -71,10 +72,6 @@ def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, d
     return filename
 
 
-def years_range(data_start, data_end):
-    return [x for x in range(data_start, data_end+1)]
-
-
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
     def __init__(self, name, row_names, column_names, assumption=True, data=None, assumption_data=None):
@@ -110,7 +107,7 @@ class OptimaContent:
 def make_years_range(name=None, row_names=None, ref_range=None, data_start=None, data_end=None, data=None):
     if ref_range is not None:
         row_names = ref_range.param_refs()
-    return OptimaContent(name, row_names, years_range(data_start, data_end), data=data)
+    return OptimaContent(name, row_names, range(data_start, data_end+1), data=data)
 
 def make_populations_range(name, items):
     """ 
@@ -364,7 +361,7 @@ class OptimaSpreadsheet:
         self.current_sheet = None
         self.pop_range = None
         self.ref_pop_range = None
-        self.years_range = years_range(self.data_start, self.data_end)
+        self.years_range = range(self.data_start, self.data_end+1)
         self.npops = len(pops)
             
     #############################################################################################################################
@@ -445,15 +442,7 @@ class OptimaSpreadsheet:
             raise Exception(errormsg)
         return None
     
-    def getmethod(self, method):
-        ''' Get the method used to generate the data '''
-        if   method=='matrix': return self.emit_matrix_block
-        elif method=='years':  return self.emit_years_block
-        else:
-            errormsg = 'Method name "%s" not found' % method
-            raise Exception(errormsg)
-        return None
-    
+
     #############################################################################################################################
     ### Actually make the sheets
     #############################################################################################################################
@@ -491,9 +480,7 @@ class OptimaSpreadsheet:
         self.ref_child_range = filter_by_properties(self.ref_pop_range, self.pops, {'age_from':0})
     
     
-
 ################## START CUT HERE ###########################
-
 
     def generate_key(self, data=None, assumption_data=None):
         row_levels = ['high', 'best', 'low']
@@ -514,62 +501,6 @@ class OptimaSpreadsheet:
             assumption_data = self.formatkeydata(self.getdata(name))['assumption_data']
         current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
                             row_format=OptimaFormats.GENERAL, assumption=True, row_levels=row_levels, data=data, assumption_data=assumption_data)
-            
-    def generate_epi(self, data=None, assumption_data=None):
-        current_row = 0
-
-        for name in ['Percentage of people who die from non-HIV-related causes per year',
-        'Prevalence of any ulcerative STIs', 'Tuberculosis prevalence']:
-            if self.data is not None:
-                data = self.formattimedata(self.getdata(name))['data']
-                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
-                
-            current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
-                row_format=OptimaFormats.DECIMAL, assumption=True, data=data, assumption_data=assumption_data)
-
-    def generate_txrx(self, data=None, assumption_data=None):
-        current_row = 0
-        methods_names_formats_ranges = [
-        ('emit_ref_years_block',    'Percentage of population tested for HIV in the last 12 months',    OptimaFormats.PERCENTAGE,   self.pop_range),
-        ('emit_years_block',        'Probability of a person with CD4 <200 being tested per year',      OptimaFormats.GENERAL,      ['Average']),
-        ('emit_years_block',        'Number of people on treatment',                                    OptimaFormats.GENERAL,      ['Total']),
-        ('emit_years_block',        'Unit cost of treatment',                                           OptimaFormats.GENERAL,      ['Total']),
-        ('emit_ref_years_block',    'Percentage of people covered by pre-exposure prophylaxis',         OptimaFormats.PERCENTAGE,   self.pop_range),
-        ('emit_years_block',        'Number of women on PMTCT (Option B/B+)',                           OptimaFormats.GENERAL,      ['Total']),
-        ('emit_years_block',        'Birth rate (births per woman per year)',                           OptimaFormats.NUMBER,       self.ref_females_range),
-        ('emit_years_block',        'Percentage of HIV-positive women who breastfeed',                  OptimaFormats.PERCENTAGE,   ['Total']),
-        ]
-        for (method, name, row_format, row_range) in methods_names_formats_ranges:
-            if self.data is not None:
-                data = self.formattimedata(self.getdata(name))['data']
-                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
-            current_row = getattr(self, method)(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
-
-    def generate_opt(self, data=None, assumption_data=None):
-        current_row = 0
-        names_formats_ranges = [
-        ('Number of HIV tests per year',                    OptimaFormats.NUMBER,       ['Total']),
-        ('Number of HIV diagnoses per year',                OptimaFormats.NUMBER,       ['Total']),
-        ('Modeled estimate of new HIV infections per year', OptimaFormats.NUMBER,       ['Total']),
-        ('Modeled estimate of HIV prevalence',              OptimaFormats.NUMBER,       ['Total']),
-        ('Modeled estimate of number of PLHIV',             OptimaFormats.NUMBER,       ['Total']),
-        ('Number of HIV-related deaths',                    OptimaFormats.NUMBER,       ['Total']),
-        ('Number of people initiating ART each year',       OptimaFormats.NUMBER,       ['Total']),
-        ('PLHIV aware of their status (%)',                 OptimaFormats.PERCENTAGE,   ['Average']),
-        ('Diagnosed PLHIV in care (%)',                     OptimaFormats.PERCENTAGE,   ['Average']),
-        ('PLHIV in care on treatment (%)',                  OptimaFormats.PERCENTAGE,   ['Average']),
-        ('Pregnant women on PMTCT (%)',                     OptimaFormats.PERCENTAGE,   ['Average']),
-        ('People on ART with viral suppression (%)',        OptimaFormats.PERCENTAGE,   ['Average'])
-        ]
-        
-        for (name, row_format, row_range) in names_formats_ranges:
-            if self.data is not None:
-                data = self.formattimedata(self.getdata(name))['data']
-                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
-            current_row = self.emit_years_block(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
-    
-              
-
 
 ################## END CUT HERE ###########################
 
@@ -588,7 +519,8 @@ class OptimaSpreadsheet:
         # Loop over each parameter in this sheet
         for pd in pardefs:
             if pd['method']:
-                emitmethod = self.getmethod(pd['method'])
+                if pd['type']=='matrix': emitmethod = self.emit_matrix_block
+                else:                    emitmethod = self.emit_years_block
                 
                 if self.data is not None:
                     data = self.formattimedata(self.data.get(pd['short']))['data']
@@ -674,7 +606,7 @@ class OptimaProgramSpreadsheet:
         self.current_sheet = None
         self.prog_range = None
         self.ref_pop_range = None
-        self.years_range = years_range(self.data_start, self.data_end)
+        self.years_range = range(self.data_start, self.data_end+1)
 
         self.npops = len(pops)
         self.nprogs = len(progs)
