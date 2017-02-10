@@ -387,7 +387,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
         
         # "Calibrate"
-        P.pars()['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
+        P.pars()['force'].y[:] = [3.5, 1.5, 1.5, 1.7, 3.0, 0.4]
         if dorun: P.runsim() # Run after calibration
     
         # Get a default progset 

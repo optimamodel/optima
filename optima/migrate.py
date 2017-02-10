@@ -548,6 +548,12 @@ def redoparameterattributes(project, **kwargs):
     ''' Change the names of the parameter attributes, and change transnorm from being a setting to being a parameter '''
     
     # Change parameter attributes
+    for ps in project.parsets.values():
+        for par in ps.pars:
+            if isinstance(par, op.Par): # Loop over the parameters and adjust their properties
+                par.targetable = par.visible # Rename this property
+                for attr in ['dataname', 'datashort', 'auto', 'visible', 'proginteract']: 
+                    delattr(par, attr) # Remove outdated properties
     
     # Add transnorm
     short = 'transnorm'
@@ -559,7 +565,7 @@ def redoparameterattributes(project, **kwargs):
     kwargs['prior'] = {'dist':'uniform', 'pars':project.settings.transnorm*array([ 0.9,  1.1])}
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     
-    project.version = '2.2.3'
+    project.version = '2.3'
     
     return None
 
