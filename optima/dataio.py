@@ -81,25 +81,22 @@ def loadtranstable(filename=default_filename, sheetname='Transitions', npops=Non
 
 
 def loaddatapars(filename=default_filename, verbose=2):
-    ''' Function to parse the data parameter definitions -- organize by sheet '''
+    ''' Function to parse the data parameter definitions '''
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     
     inputsheets = ['Data inputs', 'Data constants']
     pardefinitions = odict()
     for inputsheet in inputsheets:
         sheet = workbook.sheet_by_name(inputsheet)
-        rawpars = odict()
+        rawpars = []
         for rownum in range(sheet.nrows-1):
-            for c,colnum in enumerate(range(sheet.ncols)):
+            rawpars.append({})
+            for colnum in range(sheet.ncols):
                 attr = str(sheet.cell_value(0,colnum))
                 cellval = sheet.cell_value(rownum+1,colnum)
-                if c==0: 
-                    thissheet = cellval
-                    if thissheet not in rawpars.keys(): rawpars[thissheet] = [] # It's a new sheet: create an entry for a new parameter
-                    rawpars[thissheet].append(dict())
                 if cellval=='None': cellval = None
                 if type(cellval)==unicode: cellval = str(cellval)
-                rawpars[thissheet][-1][attr] = cellval
+                rawpars[rownum][attr] = cellval
         pardefinitions[inputsheet] = rawpars
     
     sheets = odict() # Lists of parameters in each sheet
@@ -123,6 +120,7 @@ def loaddatapars(filename=default_filename, verbose=2):
     
     # Store useful derivative information
     pardefinitions['sheets'] = sheets
+    pardefinitions['sheetdata'] = sheetdata
     pardefinitions['sheettypes'] = sheettypes
     pardefinitions['checkupper'] = checkupper
     
