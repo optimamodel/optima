@@ -112,10 +112,10 @@ def make_matrix_range(name, params, data=None):
     return OptimaContent(name, params, params, data=data)
 
 
-def make_years_range(name=None, params=None, ref_range=None, data_start=None, data_end=None, data=None):
+def make_years_range(name=None, row_names=None, ref_range=None, data_start=None, data_end=None, data=None):
     if ref_range is not None:
-        params = ref_range.param_refs()
-    return OptimaContent(name, params, years_range(data_start, data_end), data=data)
+        row_names = ref_range.param_refs()
+    return OptimaContent(name, row_names, years_range(data_start, data_end), data=data)
 
 def make_populations_range(name, items):
     """ 
@@ -167,9 +167,6 @@ def make_constant_range(name, row_names, best_data, low_data, high_data):
     column_names = ['best', 'low', 'high']
     range_data = [[best, low, high] for (best, low, high) in zip(best_data, low_data, high_data)]
     return OptimaContent(name, row_names, column_names, range_data)
-
-
-
 
 
 def filter_by_properties(param_refs, base_params, the_filter):
@@ -380,7 +377,7 @@ class OptimaSpreadsheet:
     ### Helper methods
     #############################################################################################################################
 
-    def emit_years_block(self, name, current_row, row_names=None, ref_range=None, row_format=None, row_levels=None, row_formats=None, data=None, assumption_data=None):
+    def emit_years_block(self, name, current_row, row_names=None, ref_range=None, row_format=None, row_levels=None, row_formats=None, data=None, assumption_data=None, **kwargs):
         content = make_years_range(name=name, row_names=row_names, ref_range=ref_range, data_start=self.data_start, data_end=self.data_end, data=data)
         content.row_format = row_format
         content.assumption_data = assumption_data
@@ -448,6 +445,7 @@ class OptimaSpreadsheet:
         elif  rangename=='children': return self.ref_child_range
         elif  rangename=='average':  return ['Average']
         elif  rangename=='total':    return ['Total']
+        elif  rangename=='.':        return None
         else: 
             errormsg = 'Range name %s not found' % rangename
             raise Exception(errormsg)
@@ -458,7 +456,7 @@ class OptimaSpreadsheet:
         if   method=='matrix': return self.emit_matrix_block
         elif method=='years':  return self.emit_years_block
         else:
-            errormsg = 'Method name %s not found' % method
+            errormsg = 'Method name "%s" not found' % method
             raise Exception(errormsg)
         return None
     
@@ -631,26 +629,26 @@ class OptimaSpreadsheet:
         pardefs = self.pardefinitions['sheetcontent'][sheetname]
         sheettype = pardefs[0]['type']
         
-        # Handle exceptions
-        
-        ## For matrices, change the column width
+        # For matrices, change the column width
         if sheettype=='matrix':
-            print('milestone2')
             for ind in range(len(self.pops)):
                 self.current_sheet.set_column(2+ind,2+ind,12)
         
         # Loop over each parameter in this sheet
         for pd in pardefs:
-            emitmethod = self.getmethod(pd['method'])
-            
-            if self.data is not None:
-                data = self.formattimedata(self.data.get(pd['short']))['data']
-                assumption_data = self.formattimedata(self.data.get(pd['short']))['assumption_data']
-            else: 
-                data = None
-                assumption_data = None
-            
-            current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), col_names=self.getrange(pd['colnames']), data=data, assumption_data=assumption_data)
+            if pd['method']:
+                emitmethod = self.getmethod(pd['method'])
+                
+                if self.data is not None:
+                    data = self.formattimedata(self.data.get(pd['short']))['data']
+                    assumption_data = self.formattimedata(self.data.get(pd['short']))['assumption_data']
+                else: 
+                    data = None
+                    assumption_data = None
+                
+                current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), col_names=self.getrange(pd['colnames']), data=data, assumption_data=assumption_data)
+            else:
+                print('not implemented')
         return None
     
     
