@@ -660,25 +660,18 @@ class Par(object):
     
     Version: 2016nov06 by cliffk    
     '''
-    def __init__(self, name=None, dataname=None, short=None, datashort=None, m=1., limits=(0.,1.), prior=None, by=None, manual='', auto='', coverage=None, visible=0, proginteract=None, fromdata=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', targetable=0, coverage=None, fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
+        self.targetable = targetable # Whether or not it can be targed by programs, be visible in scenarios, etc.
         self.coverage = coverage # Whether or not this is a coverage parameter
         self.fromdata = fromdata # Whether or not the parameter is made from data
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
-
-        
-        self.dataname = dataname # The name used in the spreadsheet, e.g. "Percentage of population tested for HIV in the last 12 months"
-        self.datashort = datashort # The short name used for the data, e.g. "numactsreg" (which may be different to the paramter name, e.g. "actsreg")
-        self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
-        self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
-        self.proginteract = proginteract # How multiple programs with this parameter interact
-        
         if prior is None:             self.prior = Dist() # Not supplied, create default distribution
         elif isinstance(prior, dict): self.prior = Dist(**prior) # Supplied as a dict, use it to create a distribution
         elif isinstance(prior, Dist): self.prior = prior # Supplied as a distribution, use directly
