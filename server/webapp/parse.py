@@ -439,7 +439,7 @@ def get_parameters_for_scenarios(project):
         pars = []
         result[parset_id] = pars
         for par in parset.pars.values():
-            if not hasattr(par, 'y') or not par.visible:
+            if not hasattr(par, 'y') or not par.targetable:
                 continue
             for pop in par.y.keys():
                 pars.append({
@@ -456,7 +456,7 @@ def get_startval_for_parameter(project, parset_id, par_short, pop, year):
     print(">> Get parameters for scenarios")
     parset = get_parset_from_project(project, parset_id)
     for par in parset.pars.values():
-        if not hasattr(par, 'y') or not par.visible:
+        if not hasattr(par, 'y') or not par.targetable:
             continue
         if par.short != par_short:
             continue
@@ -488,7 +488,7 @@ def get_parameters_for_edit_program(project):
             par = pars[par_key]
             if not isinstance(pars[par_key], op.Par):
                 continue
-            if not par.visible == 1 or not par.y.keys():
+            if not par.targetable == 1 or not par.y.keys():
                 continue
             parameters.append({
                 'name': par.name,
@@ -518,7 +518,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
             'name': pars[par_short].name,
             'coverage': pars[par_short].coverage,
             'limits': get_par_limits(project, pars[par_short]),
-            'interact': pars[par_short].proginteract,
+            'interact': 'additive', # WARNING, temporary fix
             'populations': [
                 {
                     'pop': popKey,
