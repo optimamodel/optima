@@ -413,20 +413,23 @@ class OptimaSpreadsheet:
                     assumption.append('')
         return {'data':newdata,'assumption_data':assumption}
 
-    def formattimedata(self, data):
+    def formattimedata(self, data=None):
         ''' Return standard time data in a format that can be written to spreadsheet'''
-        newdata = []
-        assumption = []
-        npops = len(data) # Data in projects is formatted as [pop1, pop2, ... ]
-        npts = self.data_end-self.data_start+1
-        for pop in range(npops):
-            if len(data[pop])==1: # It's an assumption
-                newdata.append(['']*npts)
-                assumption.append(nan2blank(data[pop])[0])
-            elif len(data[pop])==npts: # It's data
-                newdata.append(nan2blank(data[pop]))                
-                assumption.append('')
-        return {'data':newdata,'assumption_data':assumption}
+        if data is not None: 
+            newdata = []
+            assumption = []
+            npops = len(data) # Data in projects is formatted as [pop1, pop2, ... ]
+            npts = self.data_end-self.data_start+1
+            for pop in range(npops):
+                if len(data[pop])==1: # It's an assumption
+                    newdata.append(['']*npts)
+                    assumption.append(nan2blank(data[pop])[0])
+                elif len(data[pop])==npts: # It's data
+                    newdata.append(nan2blank(data[pop]))                
+                    assumption.append('')
+            return (newdata, assumption)
+        else:
+            return (None, None)
     
     def getrange(self, rangename):
         ''' Little helper function to make range names more palatable '''
@@ -478,32 +481,6 @@ class OptimaSpreadsheet:
         self.ref_females_range = filter_by_properties(self.ref_pop_range, self.pops, {'female':True})
         self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
         self.ref_child_range = filter_by_properties(self.ref_pop_range, self.pops, {'age_from':0})
-    
-    
-################## START CUT HERE ###########################
-
-    def generate_key(self, data=None, assumption_data=None):
-        row_levels = ['high', 'best', 'low']
-        current_row = 0
-        name = 'HIV prevalence'
-        if self.data is not None:
-            data = self.formatkeydata(self.data.get('hivprev'))['data']
-            assumption_data = self.formatkeydata(self.data.get('hivprev'))['assumption_data']
-        current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
-            row_format=OptimaFormats.DECIMAL, assumption=True, row_levels=row_levels, data=data, assumption_data=assumption_data)
-
-    def generate_popsize(self, data=None, assumption_data=None):
-        row_levels = ['high', 'best', 'low']
-        current_row = 0
-        name = 'Population size'
-        if self.data is not None:
-            data = self.formatkeydata(self.getdata(name))['data']
-            assumption_data = self.formatkeydata(self.getdata(name))['assumption_data']
-        current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
-                            row_format=OptimaFormats.GENERAL, assumption=True, row_levels=row_levels, data=data, assumption_data=assumption_data)
-
-################## END CUT HERE ###########################
-
 
     def generate_sheets(self, sheetname):
         if self.verbose>2: print('Generating %s' % sheetname)
@@ -518,20 +495,10 @@ class OptimaSpreadsheet:
         
         # Loop over each parameter in this sheet
         for pd in pardefs:
-            if pd['method']:
-                if pd['type']=='matrix': emitmethod = self.emit_matrix_block
-                else:                    emitmethod = self.emit_years_block
-                
-                if self.data is not None:
-                    data = self.formattimedata(self.data.get(pd['short']))['data']
-                    assumption_data = self.formattimedata(self.data.get(pd['short']))['assumption_data']
-                else: 
-                    data = None
-                    assumption_data = None
-                
-                current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), col_names=self.getrange(pd['colnames']), row_format=pd['rowformat'], data=data, assumption_data=assumption_data)
-            else:
-                print('not implemented')
+            emitmethod = self.emit_matrix_block if pd['type']=='matrix' else self.emit_years_block
+            row_levels = ['high', 'best', 'low'] if pd['type']=='key' else None
+            (data, assumption_data) = self.formattimedata(self.data.get(pd['short']))
+            current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), row_format=pd['rowformat'], row_levels=row_levels, data=data, assumption_data=assumption_data)
         return None
     
     
