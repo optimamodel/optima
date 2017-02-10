@@ -379,7 +379,7 @@ class OptimaSpreadsheet:
         return current_row
         
     def emit_matrix_block(self, name, current_row, row_names=None, column_names=None, data=None, **kwargs):
-        if column_names is None: column_names = row_names
+        if column_names is None: column_names = self.getrange('allpops') # WARNING, not great to hardcode this, but this is always the case!
         content = OptimaContent(name, row_names, column_names, data=data)
         content.assumption = False
         the_range = TitledRange(self.current_sheet, current_row, content)
@@ -413,23 +413,24 @@ class OptimaSpreadsheet:
                     assumption.append('')
         return {'data':newdata,'assumption_data':assumption}
 
-    def formattimedata(self, data=None):
+    def formattimedata(self, parname=None):
         ''' Return standard time data in a format that can be written to spreadsheet'''
-        if data is not None: 
-            newdata = []
-            assumption = []
-            npops = len(data) # Data in projects is formatted as [pop1, pop2, ... ]
-            npts = self.data_end-self.data_start+1
-            for pop in range(npops):
-                if len(data[pop])==1: # It's an assumption
-                    newdata.append(['']*npts)
-                    assumption.append(nan2blank(data[pop])[0])
-                elif len(data[pop])==npts: # It's data
-                    newdata.append(nan2blank(data[pop]))                
-                    assumption.append('')
-            return (newdata, assumption)
-        else:
-            return (None, None)
+        if self.data is not None:
+            data = self.data.get(parname)
+            if data is not None: 
+                newdata = []
+                assumption = []
+                npops = len(data) # Data in projects is formatted as [pop1, pop2, ... ]
+                npts = self.data_end-self.data_start+1
+                for pop in range(npops):
+                    if len(data[pop])==1: # It's an assumption
+                        newdata.append(['']*npts)
+                        assumption.append(nan2blank(data[pop])[0])
+                    elif len(data[pop])==npts: # It's data
+                        newdata.append(nan2blank(data[pop]))                
+                        assumption.append('')
+                return (newdata, assumption)
+        return (None, None) # By default, return None
     
     def getrange(self, rangename):
         ''' Little helper function to make range names more palatable '''
@@ -482,6 +483,7 @@ class OptimaSpreadsheet:
         self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
         self.ref_child_range = filter_by_properties(self.ref_pop_range, self.pops, {'age_from':0})
 
+
     def generate_sheets(self, sheetname):
         if self.verbose>2: print('Generating %s' % sheetname)
         current_row = 0
@@ -497,7 +499,7 @@ class OptimaSpreadsheet:
         for pd in pardefs:
             emitmethod = self.emit_matrix_block if pd['type']=='matrix' else self.emit_years_block
             row_levels = ['high', 'best', 'low'] if pd['type']=='key' else None
-            (data, assumption_data) = self.formattimedata(self.data.get(pd['short']))
+            (data, assumption_data) = self.formattimedata(pd['short'])
             current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), row_format=pd['rowformat'], row_levels=row_levels, data=data, assumption_data=assumption_data)
         return None
     
