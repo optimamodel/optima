@@ -1,13 +1,21 @@
+#############################################################################################################################
+### Imports
+#############################################################################################################################
+
 try: import cPickle as pickle # For Python 2 compatibility
 except: import pickle
 from gzip import GzipFile
 from cStringIO import StringIO
 from contextlib import closing
-import xlrd
 from os import path, sep
 from numpy import array, ones
 from optima import odict
+from xlrd import open_workbook
 
+
+#############################################################################################################################
+### Basic I/O functions
+#############################################################################################################################
 
 def saveobj(filename, obj, verbose=True):
     ''' Save an object to file '''
@@ -52,11 +60,11 @@ def loads(source):
 ### Functions to load the parameters and transitions
 #############################################################################################################################
 
-def loadpartable(filename='model-inputs.xlsx', sheetname='Model parameters'):
-    ''' 
-    Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters
-    '''
-    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+default_filename = 'model-inputs.xlsx'
+
+def loadpartable(filename=default_filename, sheetname='Model parameters'):
+    '''  Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters '''
+    workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     sheet = workbook.sheet_by_name(sheetname)
 
     rawpars = []
@@ -70,11 +78,9 @@ def loadpartable(filename='model-inputs.xlsx', sheetname='Model parameters'):
     return rawpars
 
 
-def loadtranstable(filename='model-inputs.xlsx', sheetname='Transitions', npops=None):
-    ''' 
-    Function to load the allowable transitions from the spreadsheet
-    '''
-    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+def loadtranstable(filename=default_filename, sheetname='Transitions', npops=None):
+    ''' Function to load the allowable transitions from the spreadsheet '''
+    workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     sheet = workbook.sheet_by_name(sheetname)
 
     if npops is None: npops = 1 # Use just one population if not told otherwise
@@ -90,9 +96,9 @@ def loadtranstable(filename='model-inputs.xlsx', sheetname='Transitions', npops=
     return rawtransit
 
 
-def loaddatapars(filename='model-inputs.xlsx', verbose=2):
+def loaddatapars(filename=default_filename, verbose=2):
     ''' Function to parse the data parameter definitions '''
-    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     
     sheetnames = ['Data inputs', 'Data constants']
     pardefinitions = odict()
