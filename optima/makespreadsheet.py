@@ -45,7 +45,7 @@ def makespreadsheet(filename=None, pops=None, datastart=default_datastart, datae
     
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
 
-    book = OptimaSpreadsheet(filename, pops, datastart, dataend, data=data)
+    book = OptimaSpreadsheet(filename, pops, datastart, dataend, data=data, verbose=verbose)
     book.create(filename)
 
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
@@ -666,26 +666,36 @@ class OptimaSpreadsheet:
 
 
     def generate_sheets(self, sheetname):
+        if self.verbose>2: print('Generating %s' % sheetname)
         current_row = 0
-        pardefs = self.pardefinitions['Data inputs']['sheetcontent'][sheetname]
+        pardefs = self.pardefinitions['sheetcontent'][sheetname]
         sheettype = pardefs[0]['type']
+        
+        print('milestone1')
         
         # Handle exceptions
         
         ## For matrices, change the column width
         if sheettype=='matrix':
+            print('milestone2')
             for ind in range(len(self.pops)):
                 self.current_sheet.set_column(2+ind,2+ind,12)
         
         # Loop over each parameter in this sheet
         for pd in pardefs:
+            print('milestone3')
             if self.data is not None:
                 data = self.formattimedata(self.data.get(pd['short']))['data']
                 assumption_data = self.formattimedata(self.data.get(pd['short']))['assumption_data']
+            else: 
+                data = None
+                assumption_data = None
             
             # It's a matrix
             if sheettype=='matrix':
-                current_row = self.emit_matrix_block(pd['name'], current_row, pd['range1'], pd['range2'], data=data)
+                print('milestone4')
+                print(pd)
+                current_row = self.emit_matrix_block(pd['name'], current_row, self.getrange(pd['range1']), self.getrange(pd['range2']), data=data)
         return None
     
     
