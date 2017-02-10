@@ -9,7 +9,7 @@ Version: 2016mar20
 from multiprocessing import Process, Queue
 from numpy import empty
 from glob import glob
-from optima import loadproj, saveobj, loadbalancer
+from optima import loadproj, loadbalancer, printv
 from os import path
 
 
@@ -49,14 +49,15 @@ def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
 
 def autofit_task(
         project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters,
-        verbose):
+        verbose, maxload):
     """Kick off the autofit task for a given project file."""
-    loadbalancer(index=ind)
+    loadbalancer(index=ind, maxload=maxload)
     print('Running autofitting...')
     # Run automatic fitting and update calibration
     project.autofit(
         name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, 
         maxiters=maxiters, verbose=verbose)
+    project.save()
     outputqueue.put(project)
     print('...done.')
     return None
@@ -64,41 +65,51 @@ def autofit_task(
 
 def batchautofit(
         folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None, 
-        maxiters=200, verbose=2):
+        maxiters=200, verbose=2, maxload=0.5):
     ''' Perform batch autofitting '''
     
-    filelist = glob(path.join(folder, '*.prj'))
+    filelist = sorted(glob(path.join(folder, '*.prj')))
     nfiles = len(filelist)
 
     outputqueue = Queue()
     outputlist = empty(nfiles, dtype=object)
     processes = []
     for i in range(nfiles):
-        loadbalancer(0.5)
+        printv('Calibrating file "%s"' % filelist[i], 3, verbose)
         project = loadproj(filelist[i])
+        project.filename = filelist[i]
         prc = Process(
             target=autofit_task, 
             args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, 
-                  maxiters, verbose))
+                  maxiters, verbose, maxload))
         prc.start()
         processes.append(prc)
-    for i in range(nfiles):
-        outputlist[i] = outputqueue.get()
-        outputlist[i].save(filename=filelist[i])
     
     return outputlist
 
 
 def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
              progsetname, objectives, constraints, maxiters, maxtime,
-             verbose, stoppingfunc, method):
-    loadbalancer(index=ind)
-    print('Running BOC generation...')
+             verbose, stoppingfunc, method, maxload, prerun):
+    loadbalancer(index=ind, maxload=maxload)
+    printv('Running BOC generation...', 1, verbose)
+    if prerun:
+        if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
+        rerun = False
+        try:
+            results = project.parsets[parsetname].getresults() # First, try getting results 
+            if results is None: rerun = True
+        except:
+            rerun = True
+        if rerun: 
+            printv('No results set found, so rerunning model...', 2, verbose)
+            project.runsim(parsetname) # Rerun if exception or if results is None
     project.genBOC(
         budgetlist=budgetlist, name=name, parsetname=parsetname,
         progsetname=progsetname, objectives=objectives, 
         constraints=constraints, maxiters=maxiters, maxtime=maxtime,
         verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+    project.save(filename=project.tmpfilename)
     outputqueue.put(project)
     print('...done.')
     return None
@@ -108,7 +119,7 @@ def batchBOC(
         folder='.', budgetlist=None, name=None, parsetname=None, 
         progsetname=None, objectives=None, constraints=None, 
         maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-        method='asd'):
+        method='asd', maxload=0.5, prerun=True):
     """
     Perform batch BOC calculation.
 
@@ -147,9 +158,10 @@ def batchBOC(
         stoppingfunc - appears to not be functional
         method - optimization algorithm to use for optimization runs that
                 comprise the BOC
+        maxload - how much of the CPU to use
     """
     
-    filelist = glob(path.join(folder, '*.prj'))
+    filelist = sorted(glob(path.join(folder, '*.prj')))
     nfiles = len(filelist)
     
     outputqueue = Queue()
@@ -166,11 +178,8 @@ def batchBOC(
             target=boc_task,
             args=(project, i, outputqueue, budgetlist, name, parsetname, 
                   progsetname, prjobjectives, prjconstraints, maxiters, 
-                  maxtime, verbose, stoppingfunc, method))
+                  maxtime, verbose, stoppingfunc, method, maxload, prerun))
         prc.start()
         processes.append(prc)
-    for i in range(nfiles):
-        outputlist[i] = outputqueue.get()
-        saveobj(outputlist[i].tmpfilename, outputlist[i])
     
     return outputlist
