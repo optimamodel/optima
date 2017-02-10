@@ -74,7 +74,7 @@ def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, d
 
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
-    def __init__(self, name, row_names, column_names, assumption=True, data=None, assumption_data=None):
+    def __init__(self, name, row_names, column_names, data=None, assumption_data=None, assumption=True):
         self.name = name
         self.row_names = row_names
         self.column_names = column_names
@@ -491,8 +491,6 @@ class OptimaSpreadsheet:
         self.pop_range = TitledRange(self.current_sheet, current_row, pop_content) # we'll need it for references
         current_row = self.pop_range.emit(self.formats, rc_title_align = 'left')
         
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
         self.ref_pop_range = self.pop_range.param_refs()
         self.ref_females_range = filter_by_properties(self.ref_pop_range, self.pops, {'female':True})
         self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
