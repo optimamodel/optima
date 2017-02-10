@@ -595,7 +595,7 @@ migrations = {
 '2.1.10': redoparameters,
 '2.2': redovlmon,
 '2.2.1': addprojectinfotoresults,
-'2.2.2': movetransnorm,
+'2.2.2': redoparameterattributes,
 #'2.2': redoprograms,
 }
 

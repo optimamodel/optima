@@ -231,12 +231,12 @@ class OptimaFormats:
         self.formats['rc_title']['right'] = self.book.add_format({'bold':1, 'align':'right'})
         self.formats['rc_title']['left'] = self.book.add_format({'bold':1, 'align':'left'})
         # unlocked formats
-        self.formats['unlocked']     = self.book.add_format({'locked':0, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['percentage']   = self.book.add_format({'locked':0, 'num_format':0x09, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['decimal']      = self.book.add_format({'locked':0, 'num_format':0x0a, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['scientific']   = self.book.add_format({'locked':0, 'num_format':0x0b, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['number']       = self.book.add_format({'locked':0, 'num_format':0x04, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['general']      = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['unlocked']     = self.book.add_format({'locked':0,                    'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['percentage']   = self.book.add_format({'locked':0, 'num_format':0x09, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['decimal']      = self.book.add_format({'locked':0, 'num_format':0x0a, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['scientific']   = self.book.add_format({'locked':0, 'num_format':0x0b, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['number']       = self.book.add_format({'locked':0, 'num_format':0x04, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['general']      = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['optional']     = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['info_header']  = self.book.add_format({'align':'center','valign':'vcenter', 'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
         self.formats['grey']         = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
@@ -339,7 +339,6 @@ class TitledRange:
             for index, col_name in enumerate(self.content.assumption_properties['columns']):
                 formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2+index, col_name)
 
-
         current_row = self.data_range.first_row
         num_levels = len(self.content.row_levels) if self.content.has_row_levels() else 1
 
@@ -377,20 +376,20 @@ class TitledRange:
 
 
 class OptimaSpreadsheet:
-    def __init__(self, name, pops, data_start = default_datastart, data_end = default_dataend, data = None, verbose = 0):
-        self.sheet_names = odict([
-            ('instr', 'Instructions'),
-            ('meta','Populations'),
-            ('popsize', 'Population size'),
-            ('key', 'HIV prevalence'),
-            ('epi', 'Other epidemiology'),
-            ('txrx', 'Testing & treatment'),
-            ('opt', 'Optional indicators'),
-            ('casc', 'Cascade'),
-            ('sex', 'Sexual behavior'),
-            ('inj', 'Injecting behavior'),
-            ('ptrans', 'Partnerships & transitions'),
-            ('const', 'Constants')])
+    def __init__(self, name, pops, data_start=default_datastart, data_end=default_dataend, data=None, verbose=0):
+#        self.sheet_names = odict([
+#            ('instr', 'Instructions'),
+#            ('meta','Populations'),
+#            ('popsize', 'Population size'),
+#            ('key', 'HIV prevalence'),
+#            ('epi', 'Other epidemiology'),
+#            ('txrx', 'Testing & treatment'),
+#            ('opt', 'Optional indicators'),
+#            ('casc', 'Cascade'),
+#            ('sex', 'Sexual behavior'),
+#            ('inj', 'Injecting behavior'),
+#            ('ptrans', 'Partnerships & transitions'),
+#            ('const', 'Constants')])
         self.name = name
         self.pops = pops
         self.data_start = data_start
@@ -506,7 +505,6 @@ class OptimaSpreadsheet:
         for par in self.rawpars:
             if par['dataname']==name:
                 shortname = par['dataname']
-#        return [par['datashort']  if ][0]
         return self.data.get(shortname)
 
     def generate_meta(self):
@@ -656,7 +654,7 @@ class OptimaSpreadsheet:
         for name in names:
             if self.data is not None: data = self.getdata(name)
             if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range, data=data)
-            else: current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range, data=data)
+            else:              current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range, data=data)
 
     def generate_const(self):
         self.current_sheet.set_column(1,1,40)

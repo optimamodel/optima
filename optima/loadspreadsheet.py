@@ -2,33 +2,9 @@
 ## Preliminaries
 ###########################################################################
 
-from optima import OptimaException, odict, printv, today, isnumber
+from optima import OptimaException, loaddatapars, odict, printv, today, isnumber
 from numpy import nan, isnan, array, nonzero, shape # For reading in empty values
-from xlrd import open_workbook # For opening Excel workbooks
-from os import path, sep
-
-
-def loadpardefitions(filename='model-inputs.xlsx', verbose=2):
-    ''' Function to parse the data parameter definitions '''
-    workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
-    
-    printv('Loading parameter definitions from %s...' % filename, 3, verbose)
-    
-    sheetnames = ['Data inputs', 'Data constants']
-    pardefinitions = odict()
-    for sheetname in sheetnames:
-        sheet = workbook.sheet_by_name(sheetname)
-        rawpars = []
-        for rownum in range(sheet.nrows-1):
-            rawpars.append({})
-            for colnum in range(sheet.ncols):
-                attr = str(sheet.cell_value(0,colnum))
-                cellval = sheet.cell_value(rownum+1,colnum)
-                if cellval=='None': cellval = None
-                if type(cellval)==unicode: cellval = str(cellval)
-                rawpars[rownum][attr] = cellval
-        pardefinitions[sheetname] = rawpars
-    return pardefinitions
+import xlrd # For opening Excel workbooks
 
 
 def forcebool(entry, location=''):
@@ -106,7 +82,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     printv('Loading data from %s...' % filename, 1, verbose)
     
     # Create dictionary of parameters to load
-    pardefinitions = loadpardefitions(filename='model-inputs.xlsx', verbose=verbose)
+    pardefinitions = loaddatapars(verbose=verbose)
     sheets = odict() # Lists of parameters in each sheet
     sheettypes = odict() # The type of each sheet -- e.g. time parameters or matrices
     checkupper = odict() # Whether or not the upper limit of the parameter should be checked
@@ -145,7 +121,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     data['pships']['inj'] = [] # Store injecting partnerships
     
     ## Actually open workbook
-    try:  workbook = open_workbook(filename) # Open workbook
+    try:  workbook = xlrd.open_workbook(filename) # Open workbook
     except Exception as E: 
         errormsg = 'Failed to load spreadsheet "%s": %s' % (filename, E.message)
         raise OptimaException(errormsg)

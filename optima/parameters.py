@@ -6,56 +6,16 @@ parameters, the Parameterset class.
 Version: 2.1 (2017jan31)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, ones
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, Link, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
-from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
-import xlrd
-from os import path, sep
+from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'rawtransit'] # General parameter keys that are just copied
 staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
 
-#############################################################################################################################
-### Functions to load the parameters and transitions
-#############################################################################################################################
 
-def loadpartable(filename='model-inputs.xlsx', sheetname='Model parameters'):
-    ''' 
-    Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters
-    '''
-    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
-    sheet = workbook.sheet_by_name(sheetname)
-
-    rawpars = []
-    for rownum in range(sheet.nrows-1):
-        rawpars.append({})
-        for colnum in range(sheet.ncols):
-            attr = sheet.cell_value(0,colnum)
-            rawpars[rownum][attr] = sheet.cell_value(rownum+1,colnum) if sheet.cell_value(rownum+1,colnum)!='None' else None
-            if sheet.cell_value(0,colnum) in ['limits']:
-                rawpars[rownum][attr] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
-    return rawpars
-
-def loadtranstable(filename='model-inputs.xlsx', sheetname='Transitions', npops=None):
-    ''' 
-    Function to load the allowable transitions from the spreadsheet
-    '''
-    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
-    sheet = workbook.sheet_by_name(sheetname)
-
-    if npops is None: npops = 1 # Use just one population if not told otherwise
-
-    rawtransit = []
-    for rownum in range(sheet.nrows-1):
-        rawtransit.append([[],[]])
-        for colnum in range(sheet.ncols-1):
-            if sheet.cell_value(rownum+1,colnum+1):
-                rawtransit[rownum][0].append(colnum)
-                rawtransit[rownum][1].append(ones(npops))
-        rawtransit[rownum][1] = array(rawtransit[rownum][1])
-    return rawtransit
 
 #############################################################################################################################
 ### Functions for handling the parameters
@@ -276,7 +236,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
+def makepars(data=None, verbose=2, die=True):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -287,7 +247,6 @@ def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
     """
     
     printv('Converting data to parameters...', 1, verbose)
-    
     
     ###############################################################################
     ## Loop over quantities
@@ -309,13 +268,12 @@ def makepars(data=None, filename='model-inputs.xlsx', verbose=2, die=True):
     
     # Read in parameters automatically
     try: 
-        rawpars = loadpartable(filename) # Read the parameters structure
+        rawpars = loadpartable() # Read the parameters structure
     except OptimaException as E: 
-        errormsg = 'Could not load parameter table from "%s"' % filename
-        errormsg += 'Error: "%s"' % E.message
+        errormsg = 'Could not load parameter table: "%s"' % E.message
         raise OptimaException(errormsg)
         
-    pars['rawtransit'] = loadtranstable(filename, sheetname='Transitions', npops=len(popkeys)) # Read the transitions
+    pars['rawtransit'] = loadtranstable(sheetname='Transitions', npops=len(popkeys)) # Read the transitions
     
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)

@@ -3,6 +3,10 @@ except: import pickle
 from gzip import GzipFile
 from cStringIO import StringIO
 from contextlib import closing
+import xlrd
+from os import path, sep
+from numpy import array, ones
+from optima import odict
 
 
 def saveobj(filename, obj, verbose=True):
@@ -40,3 +44,68 @@ def loads(source):
         with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
             obj = pickle.load(fileobj)
     return obj
+    
+
+
+
+#############################################################################################################################
+### Functions to load the parameters and transitions
+#############################################################################################################################
+
+def loadpartable(filename='model-inputs.xlsx', sheetname='Model parameters'):
+    ''' 
+    Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters
+    '''
+    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    sheet = workbook.sheet_by_name(sheetname)
+
+    rawpars = []
+    for rownum in range(sheet.nrows-1):
+        rawpars.append({})
+        for colnum in range(sheet.ncols):
+            attr = sheet.cell_value(0,colnum)
+            rawpars[rownum][attr] = sheet.cell_value(rownum+1,colnum) if sheet.cell_value(rownum+1,colnum)!='None' else None
+            if sheet.cell_value(0,colnum) in ['limits']:
+                rawpars[rownum][attr] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
+    return rawpars
+
+
+def loadtranstable(filename='model-inputs.xlsx', sheetname='Transitions', npops=None):
+    ''' 
+    Function to load the allowable transitions from the spreadsheet
+    '''
+    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    sheet = workbook.sheet_by_name(sheetname)
+
+    if npops is None: npops = 1 # Use just one population if not told otherwise
+
+    rawtransit = []
+    for rownum in range(sheet.nrows-1):
+        rawtransit.append([[],[]])
+        for colnum in range(sheet.ncols-1):
+            if sheet.cell_value(rownum+1,colnum+1):
+                rawtransit[rownum][0].append(colnum)
+                rawtransit[rownum][1].append(ones(npops))
+        rawtransit[rownum][1] = array(rawtransit[rownum][1])
+    return rawtransit
+
+
+def loaddatapars(filename='model-inputs.xlsx', verbose=2):
+    ''' Function to parse the data parameter definitions '''
+    workbook = xlrd.open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    
+    sheetnames = ['Data inputs', 'Data constants']
+    pardefinitions = odict()
+    for sheetname in sheetnames:
+        sheet = workbook.sheet_by_name(sheetname)
+        rawpars = []
+        for rownum in range(sheet.nrows-1):
+            rawpars.append({})
+            for colnum in range(sheet.ncols):
+                attr = str(sheet.cell_value(0,colnum))
+                cellval = sheet.cell_value(rownum+1,colnum)
+                if cellval=='None': cellval = None
+                if type(cellval)==unicode: cellval = str(cellval)
+                rawpars[rownum][attr] = cellval
+        pardefinitions[sheetname] = rawpars
+    return pardefinitions
