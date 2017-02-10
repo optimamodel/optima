@@ -426,7 +426,7 @@ def makepars(data=None, verbose=2, die=True):
 
 
 
-def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, onlyvisible=False, verbose=2, name=None, uid=None):
+def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, onlytargetable=False, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -459,7 +459,7 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
             if tosample is not None and pars[key].auto not in list(tosample): thissample = False # Don't sample from unselected parameters
             simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             try: 
-                if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
+                if pars[key].targetable or not(onlytargetable): # Optionally only show user-visible parameters
                     simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed) # WARNING, want different smoothness for ART
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
@@ -1060,7 +1060,7 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, onlyvisible=False, verbose=2):
+    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, onlytargetable=False, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
 
@@ -1068,7 +1068,7 @@ class Parameterset(object):
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
         if samples is None: samples = [None]
         for sample in samples:
-            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
+            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, onlytargetable=onlytargetable, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
         return simparslist
