@@ -10,7 +10,7 @@ import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from utils import printv, isnumber
 from numpy import isnan
-from optima import __version__, odict, getdate, today, loadpartable, loaddatapars, Settings, tic, toc
+from optima import __version__, odict, getdate, today, loaddatapars, Settings
 
 settings = Settings()
 default_datastart = settings.start
@@ -85,7 +85,6 @@ class OptimaContent:
         self.row_formats = None
         self.assumption_properties = {'title':None, 'connector':'OR', 'columns':['Assumption']}
         self.assumption_data = assumption_data
-        self.rawpars = loadpartable()
 
     def get_row_names(self):
         if not self.row_levels is not None:
