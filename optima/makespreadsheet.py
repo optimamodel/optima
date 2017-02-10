@@ -377,19 +377,6 @@ class TitledRange:
 
 class OptimaSpreadsheet:
     def __init__(self, name, pops, data_start=default_datastart, data_end=default_dataend, data=None, verbose=0):
-#        self.sheet_names = odict([
-#            ('instr', 'Instructions'),
-#            ('meta','Populations'),
-#            ('popsize', 'Population size'),
-#            ('key', 'HIV prevalence'),
-#            ('epi', 'Other epidemiology'),
-#            ('txrx', 'Testing & treatment'),
-#            ('opt', 'Optional indicators'),
-#            ('casc', 'Cascade'),
-#            ('sex', 'Sexual behavior'),
-#            ('inj', 'Injecting behavior'),
-#            ('ptrans', 'Partnerships & transitions'),
-#            ('const', 'Constants')])
         self.name = name
         self.pops = pops
         self.data_start = data_start
@@ -506,8 +493,22 @@ class OptimaSpreadsheet:
             if par['dataname']==name:
                 shortname = par['dataname']
         return self.data.get(shortname)
+    
+    def generate_instructions(self):
+        self.current_sheet = self.sheets['Instructions'] # OK to hard-code since function is hardcoded itself
+        current_row = 0
+        self.current_sheet.set_column('A:A',80)
+        self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
+        current_row = 3
+        current_row = self.formats.write_info_line(self.current_sheet, current_row)
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % __version__)
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
-    def generate_meta(self):
+
+    def generate_populations(self):
+        self.current_sheet = self.sheets['Populations'] # OK to hard-code since function is hardcoded itself
         self.current_sheet.set_column(2,2,15)
         self.current_sheet.set_column(3,3,40)
         self.current_sheet.set_column(6,6,12)
@@ -656,9 +657,11 @@ class OptimaSpreadsheet:
             if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range, data=data)
             else:              current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range, data=data)
 
-    def generate_const(self):
+    def generate_constants(self):
         self.current_sheet.set_column(1,1,40)
         current_row = 0
+        
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         names_rows_data_format = [
         ('Interaction-related transmissibility (% per act)',
@@ -765,30 +768,44 @@ class OptimaSpreadsheet:
         for (name, row_names, best, low, high, format) in names_rows_data_format:
             current_row = self.emit_constants_block(name, current_row, row_names, best, low, high, format)
 
-    def generate_instr(self):
-        current_row = 0
-        self.current_sheet.set_column('A:A',80)
-        self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
-        current_row = 3
-        current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % __version__)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
     def create(self, path):
         
-        pardefinitions = loaddatapars(verbose=self.verbose)
+        # Load definitions
+        self.pardefinitions = loaddatapars(verbose=self.verbose)
         
+        # Preliminaries
         if self.verbose >=1: 
             print('Creating spreadsheet %s with parameters: npops = %s, datastart = %s, dataend = %s' % (path, self.npops, self.data_start, self.data_end))
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
         self.sheets = {}
-        for name in self.sheet_names:
-            self.sheets[name] = self.book.add_worksheet(self.sheet_names[name])
-            self.current_sheet = self.sheets[name]
-            getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
+        
+        #        self.sheet_names = odict([
+#            ('instr', 'Instructions'),
+#            ('meta','Populations'),
+#            ('popsize', 'Population size'),
+#            ('key', 'HIV prevalence'),
+#            ('epi', 'Other epidemiology'),
+#            ('txrx', 'Testing & treatment'),
+#            ('opt', 'Optional indicators'),
+#            ('casc', 'Cascade'),
+#            ('sex', 'Sexual behavior'),
+#            ('inj', 'Injecting behavior'),
+#            ('ptrans', 'Partnerships & transitions'),
+#            ('const', 'Constants')])
+        
+        # Actually generate workbooks
+        self.sheet_names = self.pardefinitions['sheets'].keys()
+        for sheetname in ['Instructions']+self.sheet_names:
+            self.sheets[sheetname] = self.book.add_worksheet(sheetname)
+        for key in ['Populations', 'Constants']: self.sheet_names.remove(key) # Remove keys that are handled separately
+        self.generate_instructions() # Instructions
+        self.generate_populations() # Population metadata
+        for sheetname in self.sheet_names:
+            self.current_sheet = self.sheets[sheetname]
+#            self.generate_sheets(sheetname)
+        self.generate_constants() # Handle constants
         self.book.close()
 
 
