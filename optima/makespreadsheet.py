@@ -487,8 +487,11 @@ class OptimaSpreadsheet:
         current_row = 0
 
         pop_content = make_populations_range('Populations', self.pops)
+        
         self.pop_range = TitledRange(self.current_sheet, current_row, pop_content) # we'll need it for references
         current_row = self.pop_range.emit(self.formats, rc_title_align = 'left')
+        
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         self.ref_pop_range = self.pop_range.param_refs()
         self.ref_females_range = filter_by_properties(self.ref_pop_range, self.pops, {'female':True})
