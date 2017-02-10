@@ -41,6 +41,7 @@ print(optimalicense)
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 from ._version import __version__
+version = __version__ # Make it accessible via from optima import *
 
 # Create an empty list to stored failed imports
 _failed = [] 
@@ -91,7 +92,7 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 
 ## Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
 from . import parameters as _parameters
-from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Parameterset, makepars, makesimpars, partable, loadpartable, transtable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
+from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Parameterset, makepars, makesimpars, loadpartable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
 
 ## Create a blank spreadsheet
 try:
@@ -176,7 +177,7 @@ from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultp
 # And really finally, load other random things that don't matter
 try:
     import migrate as _migrate
-    from .migrate import migrate, loadproj
+    from .migrate import migrate, loadproj, optimaversion
 except:
     _failed.append('migrate')
 

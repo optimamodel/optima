@@ -737,19 +737,47 @@ def resolve_project(project):
 ########
 # RESULT
 
-def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE):
-    result_record = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
-    if result_record is None:
+def load_result(
+        project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
+        name=None, which=None):
+    result_records = db.session.query(ResultsDb).filter_by(
+        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type)
+    if result_records is None:
         return None
-    return result_record.load()
+    for result_record in result_records:
+        if name is None:
+            result = result_record.load()
+            break
+        else:
+            result = result_record.load()
+            if result.name == name:
+                break
+            else:
+                result = None
+    else:
+        result = None
+    if result is not None:
+        if which is not None:
+            result.which = which
+            print(">> Saving which options")
+            result_record.save_obj(result)
+    if result is None:
+        print(">> No result found")
+    else:
+        print(">> Result %s" % str(result.name))
+    return result
 
 
-def load_result_by_id(result_id):
+def load_result_by_id(result_id, which=None):
     result_record = db.session.query(ResultsDb).get(result_id)
     if result_record is None:
         raise Exception("Results '%s' does not exist" % result_id)
-    return result_record.load()
+    result = result_record.load()
+    if which is not None:
+        result.which = which
+        print(">> Saving which options")
+        result_record.save_obj(result)
+    return result
 
 
 def update_or_create_result_record_by_id(
@@ -902,6 +930,18 @@ def create_parset(project_id, new_parset_name):
     update_project_with_fn(project_id, update_project_fn)
 
 
+def refresh_parset(project_id, parset_id):
+
+    def update_project_fn(project):
+        parset = parse.get_parset_from_project(project, parset_id)
+        parset_name = parset.name
+        print(">> Resetting parset %s to match default" % parset_name)
+        project.refreshparset(name=parset_name)
+
+    update_project_with_fn(project_id, update_project_fn)
+    delete_result_by_parset_id(project_id, parset_id)
+
+
 def load_parset_summaries(project_id):
     print(">> Get parset summaries")
     project = load_project(project_id)
@@ -977,55 +1017,8 @@ def load_parset_graphs(
     }
 
 
-<<<<<<< HEAD
 ########
 ## PROGRAMS
-=======
-# RESULT
-
-
-def load_result(
-        project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
-        name=None, which=None):
-    result_records = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type)
-    if result_records is None:
-        return None
-    for result_record in result_records:
-        if name is None:
-            result = result_record.load()
-            break
-        else:
-            result = result_record.load()
-            if result.name == name:
-                break
-            else:
-                result = None
-    else:
-        result = None
-    if result is not None:
-        if which is not None:
-            result.which = which
-            print(">> Saving which options")
-            result_record.save_obj(result)
-    if result is None:
-        print(">> No result found")
-    else:
-        print(">> Result %s" % str(result.name))
-    return result
-
-
-def load_result_by_id(result_id, which=None):
-    result_record = db.session.query(ResultsDb).get(result_id)
-    if result_record is None:
-        raise Exception("Results '%s' does not exist" % result_id)
-    result = result_record.load()
-    if which is not None:
-        result.which = which
-        print(">> Saving which options")
-        result_record.save_obj(result)
-    return result
->>>>>>> develop
 
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     """
@@ -1102,7 +1095,6 @@ def copy_progset(project_id, progset_id, new_progset_name):
         project.copyprogset(orig=original_progset.name, new=new_progset_name)
         project.progsets[new_progset_name].uid = op.uuid()
 
-<<<<<<< HEAD
     update_project_with_fn(project_id, update_project_fn)
     return load_progset_summaries(project_id)
 
@@ -1124,11 +1116,6 @@ def delete_progset(project_id, progset_id):
     project.progsets.pop(progset.name)
 
     project_record.save_obj(project)
-=======
-def load_result_mpld3_graphs(result_id, which):
-    result = load_result_by_id(result_id, which)
-    return make_mpld3_graph_dict(result, which)
->>>>>>> develop
 
 
 def load_progset_outcome_summaries(project_id, progset_id):
@@ -1138,7 +1125,6 @@ def load_progset_outcome_summaries(project_id, progset_id):
     return outcomes
 
 
-<<<<<<< HEAD
 def save_outcome_summaries(project_id, progset_id, outcome_summaries):
     """
     Returns all outcome summarries
@@ -1211,12 +1197,9 @@ def reconcile_progset(project_id, progset_id, parset_id, year):
 ########
 ## SCENARIOS
 
-def make_scenarios_graphs(project_id, is_run=False, start=None, end=None):
-    result = load_result(project_id, None, "scenarios")
-=======
 def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=None):
     result = load_result(project_id, None, "scenarios", which)
->>>>>>> develop
+
     if result is None:
         if not is_run:
             print(">> No pre-calculated scenarios results found")
@@ -1339,6 +1322,7 @@ def create_portfolio(name, db_session=None):
     """
     Returns the portfolio summary of the portfolio
     """
+
     if db_session is None:
         db_session = db.session
     print("> Create portfolio %s" % name)
@@ -1354,6 +1338,26 @@ def create_portfolio(name, db_session=None):
     db_session.add(record)
     db_session.commit()
     return parse.get_portfolio_summary(portfolio)
+
+
+def load_data_spreadsheet(project_id, is_template=True):
+    project = load_project(project_id)
+    fname = secure_filename('{}.xlsx'.format(project.name))
+    server_fname = templatepath(fname)
+    data = None
+    datastart = project.settings.start
+    dataend = project.settings.dataend
+    if not is_template:
+        data = project.data
+        datastart = int(project.data["years"][0])
+        dataend = int(project.data["years"][-1])
+    op.makespreadsheet(
+        server_fname,
+        pops=parse.get_populations_from_project(project),
+        datastart=datastart,
+        dataend=dataend,
+        data=data)
+    return upload_dir_user(TEMPLATEDIR), fname
 
 
 def delete_portfolio(portfolio_id, db_session=None):

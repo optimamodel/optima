@@ -14,7 +14,7 @@ tests = [
 #'autocalib',
 #'manualcalib',
 #'reconcile',
-#'runscenarios',
+'runscenarios',
 #'optimize',
 #'dosave',
 ]
@@ -26,6 +26,7 @@ ind = -1 # Default index
 ## Housekeeping
 
 if 'doplot' not in locals(): doplot = True
+if 'runsensitivity' not in locals(): runsensitivity = False
 
 def done(t=0):
     print('Done.')
@@ -49,8 +50,8 @@ T = tic()
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
     P.runsim(debug=False, start=2000, end=2030)
-    P.sensitivity()
-    pygui(P)
+    if runsensitivity: P.sensitivity()
+    if doplot: pygui(P)
 
 ## Calibration
 if 'autocalib' in tests: 
@@ -71,11 +72,12 @@ if 'runscenarios' in tests:
     for key in maxbudget: maxbudget[key] += 1e14
     nobudget = dcp(defaultbudget)
     for key in nobudget: nobudget[key] *= 1e-6
+    testprog = 'Tracing' # Try zero & infinite budgets for one test program
     scenlist = [
-        Parscen(name='Current conditions', parsetname=ind, pars=[]),
         Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
-        Budgetscen(name='No FSW budget', parsetname=ind, progsetname=ind, t=[2016], budget={'FSW programs': 0.}),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
+        Budgetscen(name='No '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 0.}),
+        Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 1e9}),
         Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
     
@@ -84,7 +86,6 @@ if 'runscenarios' in tests:
     P.runscenarios() 
     if doplot:
         plotpeople(P, P.results[ind].raw[ind][0]['people'])
-        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[ind], toplot='default')
 
 

@@ -287,7 +287,7 @@ if '90-90-90' in tests:
 
     # Store these in the project
     P.addscenlist(scenlist)
-    P.scens[0].active = True # Turn off 90-90-90 scenario
+    P.scens[2].active = False # Turn off 90-90-90 scenario
 
     # Run the scenarios
     P.runscenarios(debug=True) 
