@@ -209,7 +209,6 @@ class OptimaFormats:
     darkgray = '#413839'
     originalblue = '#18C1FF'
     optionalorange = '#FFA500'
-    hotpink = '#FFC0CB'
     BG_COLOR = originalblue
     OPT_COLOR = optionalorange
     BORDER_COLOR = 'white'
@@ -690,8 +689,6 @@ class OptimaSpreadsheet:
         self.sheets = {}
         
         #        self.sheet_names = odict([
-#            ('instr', 'Instructions'),
-#            ('meta','Populations'),
 #            ('popsize', 'Population size'),
 #            ('key', 'HIV prevalence'),
 #            ('epi', 'Other epidemiology'),
@@ -701,7 +698,6 @@ class OptimaSpreadsheet:
 #            ('sex', 'Sexual behavior'),
 #            ('inj', 'Injecting behavior'),
 #            ('ptrans', 'Partnerships & transitions'),
-#            ('const', 'Constants')])
         
         # Actually generate workbooks
         self.sheet_names = self.pardefinitions['sheets'].keys()
