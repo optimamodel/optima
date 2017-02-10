@@ -454,9 +454,9 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
-        if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
+        if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
-            if tosample is not None and pars[key].auto not in list(tosample): thissample = False # Don't sample from unselected parameters
+            if tosample is not None and key not in tosample: thissample = False # Don't sample from unselected parameters
             simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             try: 
                 if pars[key].targetable or not(onlytargetable): # Optionally only show user-visible parameters

@@ -340,7 +340,7 @@ def browser(results, toplot=None, doplot=True):
 
 
 
-def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=2, **kwargs):
+def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=2, advancedpars=False, **kwargs):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -349,6 +349,8 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     parsubset=['initprev','force']
     
     maxrows is the number of rows (i.e. parameters) to display in each column.
+    
+    Note: to get advanced parameters, set advancedpars=True. To get advanced plot selections, set advanced=True.
     
     Version: 1.1 (2016aug30) by robyns
     '''
@@ -370,7 +372,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     tmppars = parset.pars
     origpars = dcp(tmppars)
     
-    mflists = parset.manualfitlists(parsubset=parsubset)
+    mflists = parset.manualfitlists(parsubset=parsubset, advanced=advancedpars)
     fullkeylist    = mflists['keys']
     fullsubkeylist = mflists['subkeys']
     fulltypelist   = mflists['types']
