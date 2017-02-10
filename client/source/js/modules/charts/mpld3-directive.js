@@ -396,7 +396,7 @@ define(
               }
             }
           }
-          return null;
+          return [];
         }
 
         scope.updateGraphs = function() {
@@ -405,13 +405,18 @@ define(
             return;
           }
           console.log('fetching graphs reusltId', scope.graphs.resultId);
-          $http.post(
-            '/api/results/' + resultId,
-            {which: getSelectors()})
-          .success(function (response) {
-            scope.graphs = response.graphs;
-            toastr.success('Graphs updated');
-          });
+          var which = getSelectors();
+          if (scope.graphs.advanced) {
+            which.push("advanced");
+          }
+          $http
+            .post(
+              '/api/results/' + resultId,
+              { which: which })
+            .success(function (response) {
+              scope.graphs = response.graphs;
+              toastr.success('Graphs updated');
+            });
         };
 
         function isChecked(iGraph) {
@@ -448,6 +453,12 @@ define(
             }
           }
         );
+
+        scope.toggleAdvanced = function() {
+          scope.graphs.advanced = !scope.graphs.advanced;
+          console.log('toggleAdvanced', scope.graphs.advanced);
+          scope.updateGraphs();
+        };
 
         scope.clearSelectors = function() {
             _.each(scope.graphs.selectors, function (selector) {

@@ -96,20 +96,27 @@ def make_mpld3_graph_dict(result, which=None):
               }
         }
     """
+    advanced = False
+    which = []
+    if hasattr(result, 'which'):
+        print ">> Loading saved which options"
+        which = result.which
+        if 'advanced' in result.which:
+            advanced = True
+            which.remove("advanced")
 
-    graph_selectors = op.getplotselections(result, advanced=False) # BOSCO MODIFY
+    graph_selectors = op.getplotselections(result, advanced=advanced) # BOSCO MODIFY
     keys = graph_selectors['keys']
     names = graph_selectors['names']
     checks = graph_selectors['defaults']
+    print "defaults", checks
+    which = [w for w in which if w in keys]
+    print "which", which
     selectors = [
         {'key': key, 'name': name, 'checked': checked}
          for (key, name, checked) in zip(keys, names, checks)]
 
-    if which is None and hasattr(result, 'which'):
-        print ">> Loading saved which options"
-        which = result.which
-
-    if which is None:
+    if not which:
         which = [s["key"] for s in selectors if s["checked"]]
     else:
         for selector in selectors:
@@ -130,6 +137,7 @@ def make_mpld3_graph_dict(result, which=None):
 
     return {
         'graphs': {
+            "advanced": advanced,
             "mpld3_graphs": mpld3_graphs,
             "selectors": selectors,
             'graph_selectors': graph_selectors,
