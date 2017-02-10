@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append, array
-from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
+from optima import OptimaException, Link, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
 
 
 class Scen(object):
@@ -21,8 +21,8 @@ class Scen(object):
 
     def getresults(self):
         ''' Returns the results '''
-        if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
+        if self.resultsref is not None and self.projectref() is not None:
+            results = getresults(project=self.projectref(), pointer=self.resultsref)
             return results
         else:
             print('WARNING, no results associated with this scenario')
@@ -114,7 +114,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
         
         try: 
             thisparset = dcp(project.parsets[scen.parsetname])
-            thisparset.project = project # Replace copy of project with pointer -- WARNING, hacky
+            thisparset.projectref = Link(project) # Replace copy of project with pointer -- WARNING, hacky
         except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
         npops = len(thisparset.popkeys)
 
@@ -127,7 +127,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                 # Parse inputs to figure out which population(s) are affected
                 if type(scenpar['for'])==tuple: # If it's a partnership...
-                    if not scenpar['for'] in thispar.y.keys():
+                    if not scenpar['for'] in thispar.keys():
                         errormsg = 'Partnership %s not associated with parameter %s' % (scenpar['for'],thispar.short)
                         raise OptimaException(errormsg)
                     else: pops = [scenpar['for']] 
@@ -139,7 +139,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     pops = scenpar['for']
 
                 elif type(scenpar['for'])==str: 
-                    if not scenpar['for'] in thispar.y.keys():
+                    if not scenpar['for'] in thispar.keys():
                         errormsg = 'Population %s not associated with parameter %s' % (scenpar['for'],thispar.short)
                         raise OptimaException(errormsg)
                     else: pops = [scenpar['for']] 
@@ -157,7 +157,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                     # Get the index of the population
                     if isnumber(pop): popind = pop
-                    else: popind = thispar.y.keys().index(pop)
+                    else: popind = thispar.keys().index(pop)
                     
                     # Find or set new value 
                     if scenpar.get('startval'):
@@ -286,7 +286,7 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
         if startyear is None: startyear = parset.pars[parname].t[forwhom][-1]
         startval = parset.pars[parname].interp(startyear,asarray=False)[forwhom][0]
     else:
-        if startyear is None: startyear = parset.project.settings.now
+        if startyear is None: startyear = parset.projectref().settings.now
         startval = parset.getprop(proptype=parname,year=startyear)[0]
 
     

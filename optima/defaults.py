@@ -4,25 +4,41 @@ Defines the default parameters for each program.
 Version: 2016jan28
 """
 import os
+from numpy import array
 import optima as op
 from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
 try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
 except: pass
 
 
+
 def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
     ''' Make some default programs'''
     
     # Shorten variable names
-    pops = project.data['pops']['short']
+    pops = project.pars()['popkeys']
     hivstates = project.settings.hivstates
-    malelist = [pop for popno,pop in enumerate(pops) if project.data['pops']['male'][popno]]
-    pwidlist = [pop for popno,pop in enumerate(pops) if project.pars()['injects'][popno]]
-    fswlist = [pop for popno,pop in enumerate(pops) if project.pars()['sexworker'][popno]]
+    malelist   = array(pops)[project.pars()['male']].tolist()
+    femalelist = array(pops)[project.pars()['female']].tolist()
+    pwidlist   = array(pops)[project.pars()['injects']].tolist()
+    regpships = project.pars()['condreg'].keys()
+    caspships = project.pars()['condcas'].keys()
+    compships = project.pars()['condcom'].keys()
+    
+    # Extract female sex workers
+    fswlist = []
+    for pship in compships:
+        for pop in pship:
+            if pop in femalelist:
+                fswlist.append(pop)
+    fswlist = list(set(fswlist))
 
-    regpships = project.pars()['condreg'].y.keys()
-    caspships = project.pars()['condcas'].y.keys()
-    compships = project.pars()['condcom'].y.keys()
+    # Extract men who have sex with men
+    msmlist = []
+    for pship in regpships+caspships+compships:
+        if pship[0] in malelist and pship[1] in malelist:
+            msmlist += list(pship) # Add both populations
+    msmlist = list(set(msmlist))
     
     # Extract casual partnerships that include at least one female sex worker
     fsw_caspships = []
@@ -37,13 +53,6 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         for compship in compships:
             if fsw in compship:
                 fsw_compships.append(compship)
-
-    # Extract men who have sex with men
-    msmlist = []
-    for pship in regpships+caspships+compships:
-        if pship[0] in malelist and pship[1] in malelist:
-            msmlist.append(pship[0])
-    msmlist = list(set(msmlist))
 
     # Extract casual partnerships that include at least one man who has sex with men
     msm_caspships = []
@@ -159,7 +168,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     Lab = Program(short='Lab',
                   name='Lab monitoring',
                   category='Care and treatment',
-                  targetpars=[{'param': 'freqvlmon', 'pop': 'tot'}],# for pop in pops],
+                  targetpars=[{'param': 'numvlmon', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
                   criteria = {'hivstatus': hivstates, 'pregnant': False})
     
@@ -411,7 +420,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
     
         R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
-        R.covout['freqvlmon']['tot'].addccopar({'intercept': (0.5,0.6), 't': 2016.0, 'Lab': (1.6,1.8)})
+        R.covout['numvlmon']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
         
         R.covout['leavecare']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
         R.covout['leavecare']['Clients'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
@@ -551,7 +560,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
 
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-        R.covout['freqvlmon']['tot'].addccopar({'intercept': (0.5,0.6), 't': 2016.0, 'Lab': (1.6,1.8)})
+        R.covout['numvlmon']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
         R.covout['numcirc']['MSM'].addccopar({'intercept': (0,0), 't': 2016.0})
         R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})

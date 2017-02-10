@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest
+from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 
@@ -14,14 +14,15 @@ from numbers import Number
 
 class Result(object):
     ''' Class to hold overall and by-population results '''
-    def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None):
+    def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None, estimate=False, defaultplot=None):
         self.name = name # Name of this parameter
         self.ispercentage = ispercentage # Whether or not the result is a percentage
         self.pops = pops # The model result by population, if available
         self.tot = tot # The model result total, if available
         self.datapops = datapops # The input data by population, if available
         self.datatot = datatot # The input data total, if available
-        self.estimate = False # If the input data is an estimate rather than real data
+        self.estimate = estimate # Whether or not the "data" is actually a model-based output
+        self.defaultplot = defaultplot if defaultplot is not None else 'stacked'
     
     def __repr__(self):
         ''' Print out useful information when called '''
@@ -63,12 +64,13 @@ class Resultset(object):
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
-        self.project = project # ...and just store the whole project
+        self.projectref = Link(project) # ...and just store the whole project
+        self.projectinfo = project.getinfo() # Store key info from the project separately in case the link breaks
         self.parset = dcp(parset) # Store parameters
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
-        if self.parset is not None:  self.parset.project  = project # Replace copy of project with reference to project
-        if self.progset is not None: self.progset.project = project # Replace copy of project with reference to project
+        if self.parset is not None:  self.parset.projectref  = Link(project) # Replace copy of project with reference to project
+        if self.progset is not None: self.progset.projectref = Link(project) # Replace copy of project with reference to project
         self.budget = budget if budget is not None else odict() # Store budget
         self.coverage = coverage if coverage is not None else odict()  # Store coverage
         self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
@@ -89,21 +91,20 @@ class Resultset(object):
         self.main['numtreat']       = Result('PLHIV on treatment')
         self.main['numsuppressed']  = Result('Virally suppressed PLHIV')
         
-        self.main['costtreat']      = Result('Annual treatment spend')
-
-        self.main['propdiag']       = Result('Diagnosed PLHIV (%)', ispercentage=True)
-        self.main['propevercare']   = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True)
-        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True)
-        self.main['proptreat']      = Result('PLHIV in care who are on treatment (%)', ispercentage=True)
-        self.main['propsuppressed'] = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True)
+        self.main['propdiag']       = Result('Diagnosed PLHIV (%)', ispercentage=True, defaultplot='total')
+        self.main['propevercare']   = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True, defaultplot='total')
+        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True, defaultplot='total')
+        self.main['proptreat']      = Result('PLHIV in care who are on treatment (%)', ispercentage=True, defaultplot='total')
+        self.main['propsuppressed'] = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True, defaultplot='total')
         
-        self.main['prev']           = Result('HIV prevalence (%)', ispercentage=True)
-        self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True)
+        self.main['prev']           = Result('HIV prevalence (%)', ispercentage=True, defaultplot='population')
+        self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
         self.main['numnewdiag']     = Result('New diagnoses')
         self.main['nummtct']        = Result('HIV+ births')
         self.main['numhivbirths']   = Result('Births to HIV+ women')
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
+        self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
 
         self.other = odict() # For storing other results -- not available in the interface
@@ -115,12 +116,7 @@ class Resultset(object):
     
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
-        output = '============================================================\n'
-        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
+        output = defaultrepr(self) # WARNING, could print out basic stats, e.g. number of PLHIV, prevalence, etc...?
         return output
         
     
@@ -309,29 +305,31 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        upperagelims = array(self.data['pops']['age'])[:,1]
-        adultpops = findinds(upperagelims>=15)
-        childpops = findinds(upperagelims<15)
-        if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        if data is not None:
+            upperagelims = array(self.data['pops']['age'])[:,1]
+            adultpops = findinds(upperagelims>=15)
+            childpops = findinds(upperagelims<15)
+            if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+            if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         
-        # Calculate DALYs
-        yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
-        disutiltx = data['const']['disutiltx'][0]
-        disutils = [data['const']['disutil'+key][0] for key in self.settings.hivstates]
-        dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
-        dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
-        dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
-        dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
-        notonart = set(self.settings.notonart)
-        for h,key in enumerate(self.settings.hivstates): # Loop over health states
-            hivstateindices = set(getattr(self.settings,key))
-            healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
-            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-        self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles)
-        self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles)
+        # Calculate DALYs -- WARNING, shouldn't rely on data, but does
+        if data is not None:
+            yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
+            disutiltx = data['const']['disutiltx'][0]
+            disutils = [data['const']['disutil'+key][0] for key in self.settings.hivstates]
+            dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
+            dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
+            dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
+            dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
+            notonart = set(self.settings.notonart)
+            for h,key in enumerate(self.settings.hivstates): # Loop over health states
+                hivstateindices = set(getattr(self.settings,key))
+                healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
+                dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+                dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+            self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles)
+            self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles)
         
         return None # make()
         
@@ -339,8 +337,7 @@ class Resultset(object):
     def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, writetofile=True, verbose=2):
         ''' Method for exporting results to a CSV file '''
         if filestem is None:  # Doesn't include extension, hence filestem
-            if self.name is not None: filestem = self.project.name+'-'+self.name
-            else: filestem = str(self.uid)
+            filestem = self.projectinfo['name']+'-'+self.name
         filename = filestem + '.csv'
         npts = len(self.tvec)
         keys = self.main.keys()
@@ -388,7 +385,7 @@ class Resultset(object):
         '''
         # If year isn't specified, use now
         if year is None: 
-            year = self.project.settings.now
+            year = self.projectref().settings.now
         
         # Use either total (by default) or a given population
         if pop=='tot':
@@ -429,7 +426,7 @@ class Multiresultset(Resultset):
         
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
-        commonattrs = ['project', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
+        commonattrs = ['projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
         diffattrs = ['parset', 'progset', 'raw', 'simpars'] # Things that differ between between results sets
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
@@ -473,7 +470,7 @@ class Multiresultset(Resultset):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = '============================================================\n'
-        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
+        output += '      Project name: %s\n'    % (self.projectref().name if self.projectref() is not None else None)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '      Results sets: %s\n'    % self.keys
@@ -485,8 +482,7 @@ class Multiresultset(Resultset):
     def export(self, filestem=None, ind=None, writetofile=True, verbose=2, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         if filestem is None: # Filestem rather than filename since doesn't include extension
-            if self.name is not None: filestem = self.project.name+'-'+self.name
-            else: filestem = str(self.uid)
+            filestem = self.projectinfo['name']+'-'+self.name
         output = ''
         for k,key in enumerate(self.keys):
             thisfilestem = filestem+'-'+key

@@ -9,8 +9,10 @@ from optima import tic, toc, blank, pd # analysis:ignore
 
 ## Options
 tests = [
-'migrations',
+'basicmigration',
 ]
+
+oldprojectname = 'concentrated_v2.0.4.prj' # Options are concentrated_v2.0.4.prj and concentrated_v2.1.prj
 
 ## Housekeeping
 
@@ -34,17 +36,14 @@ blank()
 
 T = tic()
 
-if 'migrations' in tests:
+if 'basicmigration' in tests:
     
     # Figure out the path 
     import os
     optimapath = os.path.dirname(op.__file__)
     spreadsheetpath = os.path.join(optimapath, '..', 'tests', '') # Empty last part puts a /
 
-    oldprojectfile = spreadsheetpath+'concentrated_v2.1.prj'
+    oldprojectfile = spreadsheetpath+oldprojectname
     P = op.loadproj(filename=oldprojectfile)
     P.runsim()
     if doplot: op.pygui(P)
-
-
-    

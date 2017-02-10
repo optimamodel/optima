@@ -12,20 +12,16 @@ Version: 2016jul06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, sum as npsum
+from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
-epiformatslist = [ # WARNING, definition requires each of these to start with the same letter!
-                  ['t', 'tot', 'total'], 
-                  ['p', 'pop', 'per population', 'pops', 'per', 'population'], 
-                  ['s', 'sta', 'stacked']
-                 ]
+epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = 'none' # Color of estimates rather than real data
-defaultplots = ['cascade', 'budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numnewdiag-tot', 'prev-pop', 'popsize-sta'] # Default epidemiological plots
-defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numnewdiag-tot', 'prev-tot'] # Default epidemiological plots
+defaultplots = ['budget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+defaultmultiplots = ['budget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
@@ -61,13 +57,13 @@ def commaticks(figure, axis='y'):
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 
-def getplotselections(results):
+def getplotselections(results, advanced=False):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
     plots such as the cascade.
     
-    Version: 2016jan28
+    Version: 2017jan20
     '''
     
     # Figure out what kind of result it is -- WARNING, copied from below
@@ -103,32 +99,38 @@ def getplotselections(results):
     plotselections['names'] += ['Treatment cascade']
     
     ## Deaths by CD4
-    plotselections['keys'] += ['deathbycd4']
-    plotselections['names'] += ['Deaths by CD4']
+    if advanced:
+        plotselections['keys'] += ['deathbycd4']
+        plotselections['names'] += ['Deaths by CD4']
     
     ## People by CD4
-    plotselections['keys'] += ['plhivbycd4']
-    plotselections['names'] += ['PLHIV by CD4']
+    if advanced:
+        plotselections['keys'] += ['plhivbycd4']
+        plotselections['names'] += ['PLHIV by CD4']
     
     ## Get plot selections for plotepi
     plotepikeys = list()
     plotepinames = list()
     
     epikeys = results.main.keys() # e.g. 'prev'
-    epinames = [thing.name for thing in results.main.values()]
-    episubkeys = [sublist[1] for sublist in epiformatslist] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
-    episubnames = [sublist[2] for sublist in epiformatslist] # e.g. 'per population'
+    epinames = [result.name for result in results.main.values()]
     
-    for key in epikeys: # e.g. 'prev'
-        for subkey in episubkeys: # e.g. 'tot'
-            if not(ismultisim and subkey=='sta'): # Stacked multisim plots don't make sense
-                plotepikeys.append(key+'-'+subkey)
-    for name in epinames: # e.g. 'HIV prevalence'
-        for subname in episubnames: # e.g. 'total'
-            if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
-                plotepinames.append(name+' -- '+subname)
+    if advanced: # Loop has to be written this way so order is correct
+        for key in epikeys: # e.g. 'prev'
+            for subkey in epiplottypes: # e.g. 'total'
+                if not(ismultisim and subkey=='stacked'): # Stacked multisim plots don't make sense
+                    plotepikeys.append(key+'-'+subkey)
+        for name in epinames: # e.g. 'HIV prevalence'
+            for subname in epiplottypes: # e.g. 'total'
+                if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
+                    plotepinames.append(name+' -- '+subname)
+    else:
+        plotepikeys = dcp(epikeys)
+        plotepinames = dcp(epinames)
     
-    
+    if not advanced:
+        for i in range(len(defaultplots)): defaultplots[i] = defaultplots[i].split('-')[0] # Discard second half of plot name
+        for i in range(len(defaultmultiplots)): defaultmultiplots[i] = defaultmultiplots[i].split('-')[0] # Discard second half of plot name
     plotselections['keys'] += plotepikeys
     plotselections['names'] += plotepinames
     for key in plotselections['keys']: # Loop over each key
@@ -266,29 +268,34 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
 
 
         ## Validate plot keys
-        for pk,plotkey in enumerate(toplot):
-            datatype, plotformat = None, None
-            if type(plotkey) not in [str, list, tuple]: 
-                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numplhiv","tot"]' % str(plotkey)
+        for pk,plotkeys in enumerate(toplot):
+            epikey = None # By default, don't make any assumptions
+            plottype = 'stacked' # Assume stacked by default
+            if type(plotkeys)!=str: 
+                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv" or "numplhiv-stacked"' % str(plotkeys)
                 raise OptimaException(errormsg)
             else:
-                try:
-                    if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
-                    elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
-                except:
-                    errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
-                    if die: raise OptimaException(errormsg)
-                    else: printv(errormsg, 2, verbose)
-            if datatype not in results.main.keys():
-                errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
+                plotkeys = plotkeys.split('-') # Try splitting if it's a string, e.g. numplhiv-stacked
+                epikey = plotkeys[0] # This must always exist, e.g. numplhiv
+                if len(plotkeys)==2: plottype = plotkeys[1] # Use the one specified
+                elif len(plotkeys)==1: # Otherwise, try to use the default
+                    try: plottype = results.main[epikey].defaultplot # If it's just e.g. numplhiv, then use the default plotting type
+                    except: 
+                        errormsg = 'Unable to retrieve default plot type (total/population/stacked); falling back on %s'% plottype
+                        if die: raise OptimaException(errormsg)
+                        else: printv(errormsg, 2, verbose)
+                else: # Give up
+                    errormsg = 'Plotkeys must have length 1 or 2, but you have %s' % plotkeys
+                    raise OptimaException(errormsg)
+            if epikey not in results.main.keys():
+                errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (epikey, results.main.keys())
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
-            plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
-            if plotformat not in npsum(epiformatslist): # Sum flattens a list of lists. Stupid.
-                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
+            if plottype not in epiplottypes: # Sum flattens a list of lists. Stupid.
+                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plottype, epiplottypes)
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 2, verbose)
-            toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
+            toplot[pk] = (epikey, plottype) # Convert to tuple for this index
         
         # Remove failed ones
         toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
@@ -306,9 +313,10 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
             isestimate = results.main[datatype].estimate # Indicate whether result is a percentage
             factor = 100.0 if ispercentage else 1.0 # Swap between number and percent
             datacolor = estimatecolor if isestimate else realdatacolor # Light grey for
-            istotal   = (plotformat=='t') # Only using first letter, see above...
-            isperpop  = (plotformat=='p')
-            isstacked = (plotformat=='s')
+            istotal   = (plotformat=='total')
+            isstacked = (plotformat=='stacked')
+            isperpop  = (plotformat=='population')
+            
             
             
             ################################################################################################################
@@ -451,8 +459,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))
                 if not ismultisim:
-                    if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
-                    if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
+#                    if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total" # Feedback is that this isn't so useful, but keeping as placeholder for now
+#                    if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
                     if isstacked: 
                         handles, labels = ax.get_legend_handles_labels()
                         ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
@@ -862,7 +870,8 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
     fig = figure(figsize=figsize)
     
     titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
-    hivstates = results.project.settings.hivstates
+    settings = results.projectref().settings
+    hivstates = settings.hivstates
     indices = arange(0, len(results.raw[ind]['tvec']), int(round(1.0/(results.raw[ind]['tvec'][1]-results.raw[ind]['tvec'][0]))))
     colors = gridcolormap(len(hivstates))
     
@@ -873,8 +882,8 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
         ## Do the plotting
         subplot(nsims,1,plt+1)
         for s,state in enumerate(reversed(hivstates)): # Loop backwards so correct ordering -- first one at the top, not bottom
-            if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
-            else:          thisdata += results.raw[ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
+            if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata += results.raw[ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
             plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order

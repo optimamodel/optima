@@ -48,7 +48,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_incibypop   = zeros((npops, npts))          # Total incidence caused by each population
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
-    raw_mtctfrom    = zeros((npops, npts))      # Number of mother-to-child transmissions from each population
+    raw_mtctfrom    = zeros((npops, npts))          # Number of mother-to-child transmissions from each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
     raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
@@ -59,7 +59,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
     
     # Biological and failure parameters
-    prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'],simpars['deathlt50']]) ))
+    prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'], 1./simpars['deathlt50']]) ))
     svlrecov        = maximum(eps,1-exp(-dt/array([inf,inf,simpars['svlrecovgt350'], simpars['svlrecovgt200'], simpars['svlrecovgt50'], simpars['svlrecovlt50']])))
     deathhiv        = array([simpars['deathacute'],simpars['deathgt500'],simpars['deathgt350'],simpars['deathgt200'],simpars['deathgt50'],simpars['deathlt50']])
     deathsvl        = simpars['deathsvl']           # Death rate whilst on suppressive ART
@@ -69,9 +69,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     deathprob       = zeros((nstates))              # Initialise death probability array
 
     # Cascade-related parameters
+    requiredvl      = simpars['requiredvl']                               # Number of VL tests required per year
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
     treatfail       = simpars['treatfail']*dt                             # Probability of treatment failure in 1 time step
-    freqvlmon       = 1.-exp(-dt*simpars['freqvlmon'])                    # Probability of getting virally monitored in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
     aidslinktocare  = 1.-exp(-dt/(maximum(eps,simpars['aidslinktocare'])))# Probability of being linked to care in 1 time step for people with AIDS
     leavecare       = simpars['leavecare']*dt                             # Proportion of people lost to follow-up per year
@@ -170,6 +170,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     # Intervention uptake (P=proportion, N=number)
     sharing   = simpars['sharing']      # Sharing injecting equiptment (P)
     numtx     = simpars['numtx']        # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
+    numvlmon  = simpars['numvlmon']     # Number of viral load tests done per year (N)
     hivtest   = simpars['hivtest']*dt   # HIV testing (P) [npop,npts]
     aidstest  = simpars['aidstest']*dt  # HIV testing in AIDS stage (P) [npts]
     numcirc   = simpars['numcirc']      # Number of programmatic circumcisions performed (N)
@@ -388,6 +389,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             initpeople[initpeople<0] = 0.0
             
     people[:,:,0] = initpeople
+
     
     ##################################################################################################################
     ### Compute the effective numbers of acts outside the time loop
@@ -458,7 +460,28 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             birthrates = birthtransit[p1, p2] * birth[p1, :]
             if birthrates.any():
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
-                
+    
+    
+    ##################################################################################################################
+    ### Define error checking
+    ##################################################################################################################
+    
+    def checkfornegativepeople(people, tind=None):
+        if tind is None: 
+            tind = Ellipsis
+            tvec = simpars['tvec']
+        else:
+            tvec = [tind]            
+        if not((people[:,:,tind]>=0).all()): # If not every element is a real number >0, throw an error
+            for t in range(len(tvec)):
+                for errstate in range(nstates): # Loop over all heath states
+                    for errpop in range(npops): # Loop over all populations
+                        if not(people[errstate,errpop,t]>=0):
+                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t], errstate, thistransit[errstate])
+                            if die: raise OptimaException(errormsg)
+                            else: 
+                                printv(errormsg, 1, verbose=verbose)
+                                people[errstate,errpop,t] = 0.0 # Reset
                 
 
     ##################################################################################################################
@@ -610,15 +633,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                 else: # Probability of being lost
                     thistransit[fromstate][prob][ts] *= lossprob[cd4]
     
-        # USVL to SVL
-        svlprob = freqvlmon[t] if isnan(propsupp[t]) else 0.
-        for fromstate in usvl:
-            for ts, tostate in enumerate(thistransit[fromstate][to]):
-                if tostate in usvl: # Probability of remaining unsuppressed
-                    thistransit[fromstate][prob][ts] *= (1.-svlprob)
-                elif tostate in svl: # Probability of becoming suppressed
-                    thistransit[fromstate][prob][ts] *= svlprob
-                                
         # SVL to USVL
         usvlprob = treatfail if isnan(propsupp[t]) else 0.
         for fromstate in svl:
@@ -782,16 +796,22 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     
                 # In this section, we shift people around the cascade until we meet some targeted number/proportion.
                 # If any of the prop parameters are non-nan, that means that we've got some proportion target.
-                # However, treatment is special because it is always set by shifting numbers.
-                if name is 'proptx' or ~isnan(prop[t+1]): 
+                # However, treatment and VL monitoring are special because it is always set by shifting numbers.
+                if name in ['proptx','propsupp'] or ~isnan(prop[t+1]): 
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
                         if isnan(propsupp[t+1]) and people[usvl,:,t+1].sum()>eps:
-                            newlysuppressed = raw_newtreat[:,t].sum()*dt*treatvs/people[usvl,:,t+1].sum()*people[usvl,:,t+1]
+                            unsuppressed = people[usvl,:,t+1] # To make sure it doesn't go negative
+                            suppressedprop = minimum(1.0, (raw_newtreat[:,t].sum())*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
+                            newlysuppressed = suppressedprop*unsuppressed # Calculate actual number of people suppressed
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
                             people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
+
+                    # We figure out how many people should be moved to suppressed based on how many VL tests were done
+                    if name is 'propsupp' and isnan(prop[t+1]):
+                        wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
 
                     # Figure out how many people we currently have...
                     actual          = people[num,:,t+1].sum() # ... in the higher cascade state
@@ -810,7 +830,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                     new_movers      = zeros((ncd4,npops)) 
 
                     # Reconcile the differences between the number we have and the number we want
-                    diff = wanted - actual # Wanted number less actual number 
+                    diff = wanted - actual # Wanted number minus actual number 
                     if diff>0.: # We need to move people UP the cascade 
                         for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
                             if diff>eps: # Move people until you have the right proportions
@@ -830,20 +850,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
                                 people[lowerstate,:,t+1] -= new_movers # Shift people into the lower state... 
                                 people[state,:,t+1] += new_movers # ... and out of the higher state
 
-            # Check no negative people
-            if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
-                for errstate in range(nstates): # Loop over all heath states
-                    for errpop in range(npops): # Loop over all populations
-                        if not(people[errstate,errpop,t+1]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1], errstate, thistransit[errstate])
-                            if die: raise OptimaException(errormsg)
-                            else: 
-                                printv(errormsg, 1, verbose=verbose)
-                                people[errstate,errpop,t+1] = 0.0 # Reset
-                                
-        raw_diag[:,-1] = raw_diag[:,-2] # Stop new diagnoses being zero in the final year... 
-                
-    
+            # Check no negative people -- this is inside the t<npts statement, so doesn't check the last point
+            if debug: checkfornegativepeople(people, tind=t+1)
+        
     raw                 = odict()    # Sim output structure
     raw['tvec']         = tvec
     raw['popkeys']      = popkeys
@@ -859,6 +868,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     raw['death']        = raw_death
     raw['otherdeath']   = raw_otherdeath
     
+    if not debug: checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
     return raw # Return raw results
 
@@ -876,9 +886,9 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
-    if start is None: start = project.settings.start
-    if end is None: end = project.settings.end
-    if dt is None: dt = project.settings.dt
+    if start is None: start = settings.start
+    if end is None: end = settings.end
+    if dt is None: dt = settings.dt
     if simpars is None:
         if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
         simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
