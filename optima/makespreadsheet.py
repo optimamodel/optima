@@ -437,6 +437,13 @@ class OptimaSpreadsheet:
                 return (newdata, assumption)
         return (None, None) # By default, return None
     
+    def getmatrixdata(self, parname=None):
+        ''' Get matrix data -- stored directly so just have to retrieve'''
+        if self.data is not None:
+            data = self.data.get(parname)
+            return (data, None)
+        return (None, None) # By default, return None
+    
     def getrange(self, rangename):
         ''' Little helper function to make range names more palatable '''
         if    rangename=='allpops':  return self.ref_pop_range
@@ -503,13 +510,18 @@ class OptimaSpreadsheet:
         
         # Loop over each parameter in this sheet
         for pd in pardefs:
-            emitmethod = self.emit_matrix_block if pd['type']=='matrix' else self.emit_years_block
-            if pd['type']=='key':
+            if pd['type']=='matrix': # Handle matrix special case
+                row_levels = None
+                datamethod = self.getmatrixdata
+                emitmethod = self.emit_matrix_block
+            elif pd['type']=='key': # Handle key data (population size, prevalence) special case
                 row_levels = ['high', 'best', 'low']
                 datamethod = self.formatkeydata
-            else:
+                emitmethod = self.emit_years_block
+            else: # Everything else
               row_levels = None
               datamethod = self.formattimedata
+              emitmethod = self.emit_years_block
             (data, assumption_data) = datamethod(pd['short'])
             current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), row_format=pd['rowformat'], row_levels=row_levels, data=data, assumption_data=assumption_data)
         return None
