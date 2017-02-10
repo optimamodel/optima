@@ -81,31 +81,37 @@ def loadtranstable(filename=default_filename, sheetname='Transitions', npops=Non
 
 
 def loaddatapars(filename=default_filename, verbose=2):
-    ''' Function to parse the data parameter definitions '''
+    ''' Function to parse the data parameter definitions -- organize by sheet '''
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     
-    sheetnames = ['Data inputs', 'Data constants']
+    inputsheets = ['Data inputs', 'Data constants']
     pardefinitions = odict()
-    for sheetname in sheetnames:
-        sheet = workbook.sheet_by_name(sheetname)
-        rawpars = []
+    for inputsheet in inputsheets:
+        sheet = workbook.sheet_by_name(inputsheet)
+        rawpars = odict()
         for rownum in range(sheet.nrows-1):
-            rawpars.append({})
-            for colnum in range(sheet.ncols):
+            for c,colnum in enumerate(range(sheet.ncols)):
                 attr = str(sheet.cell_value(0,colnum))
                 cellval = sheet.cell_value(rownum+1,colnum)
+                if c==0: 
+                    thissheet = cellval
+                    if thissheet not in rawpars.keys(): rawpars[thissheet] = [] # It's a new sheet: create an entry for a new parameter
+                    rawpars[thissheet].append(dict())
                 if cellval=='None': cellval = None
                 if type(cellval)==unicode: cellval = str(cellval)
-                rawpars[rownum][attr] = cellval
-        pardefinitions[sheetname] = rawpars
+                rawpars[thissheet][-1][attr] = cellval
+        pardefinitions[inputsheet] = rawpars
     
     sheets = odict() # Lists of parameters in each sheet
     sheettypes = odict() # The type of each sheet -- e.g. time parameters or matrices
     checkupper = odict() # Whether or not the upper limit of the parameter should be checked
+    sheetdata = odict()
     for par in pardefinitions['Data inputs']:
         if par['sheet'] not in sheets.keys(): # Create new list if sheet not encountered yet
-            sheets[par['sheet']] = []
+            sheets[par['sheet']] = [] # Simple structure for storing a list of parameter names, used in loadspreadsheet
+            sheetdata[par['sheet']] = [] # Complex structure for storing all information, used in makespreadsheet
         sheets[par['sheet']].append(par['short']) # All-important: append the parameter name
+        sheetdata[par['sheet']].append(par) # Append entire dictionary
         sheettypes[par['sheet']] = par['type'] # Figure out why kind of sheet this is
         checkupper[par['short']] = par['checkupper'] # Whether or not to check the upper limit
     
