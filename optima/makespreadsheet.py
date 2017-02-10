@@ -568,50 +568,7 @@ class OptimaSpreadsheet:
                 assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
             current_row = self.emit_years_block(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
     
-    def generate_casc(self, data=None, assumption_data=None):
-        current_row = 0
-        methods_names_formats_ranges = [
-        ('emit_ref_years_block',    'Average time taken to be linked to care (years)',                  OptimaFormats.NUMBER,       self.pop_range),
-        ('emit_years_block',        'Average time taken to be linked to care for people with CD4<200 (years)',     OptimaFormats.PERCENTAGE,           ['Average']),
-        ('emit_ref_years_block',    'Percentage of people in care who are lost to follow-up per year (%/year)',    OptimaFormats.PERCENTAGE,   self.pop_range),
-        ('emit_years_block',        'Percentage of people with CD4<200 lost to follow-up (%/year)',     OptimaFormats.PERCENTAGE,           ['Average']),
-        ('emit_years_block',        'Viral load monitoring (number/year)',                              OptimaFormats.NUMBER,           ['Average']),
-        ]
-        for (method, name, row_format, row_range) in methods_names_formats_ranges:
-            if self.data is not None:
-                data = self.formattimedata(self.getdata(name))['data']
-                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
-            current_row = getattr(self, method)(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
-
-    def generate_sex(self, data=None, assumption_data=None):
-        current_row = 0
-        names_formats_ranges = [
-        ('Average number of acts with regular partners per person per year', OptimaFormats.GENERAL, self.ref_pop_range),
-        ('Average number of acts with casual partners per person per year', OptimaFormats.GENERAL, self.ref_pop_range),
-        ('Average number of acts with commercial partners per person per year', OptimaFormats.GENERAL, self.ref_pop_range),
-        ('Percentage of people who used a condom at last act with regular partners', OptimaFormats.PERCENTAGE, self.ref_pop_range),
-        ('Percentage of people who used a condom at last act with casual partners', OptimaFormats.PERCENTAGE, self.ref_pop_range),
-        ('Percentage of people who used a condom at last act with commercial partners', OptimaFormats.PERCENTAGE, self.ref_pop_range),
-        ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE, self.ref_males_range)]
-
-        for (name, row_format, row_range) in names_formats_ranges:
-            if self.data is not None:
-                data = self.formattimedata(self.getdata(name))['data']
-                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
-            current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True, data=data, assumption_data=assumption_data)
-
-    def generate_inj(self, data=None, assumption_data=None):
-        current_row = 0
-        names_formats_ranges = [
-        ('Average number of injections per person per year', OptimaFormats.GENERAL, self.ref_pop_range),
-        ('Average percentage of people who receptively shared a needle/syringe at last injection', OptimaFormats.PERCENTAGE, self.ref_pop_range),
-        ('Number of people who inject drugs who are on opiate substitution therapy', OptimaFormats.GENERAL, ['Average'])]
-
-        for (name, row_format, row_range) in names_formats_ranges:
-            if self.data is not None:
-                data = self.formattimedata(self.getdata(name))['data']
-                assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
-                
+              
 
 
 ################## END CUT HERE ###########################
