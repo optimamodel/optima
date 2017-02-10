@@ -110,7 +110,7 @@ def loaddatapars(filename=default_filename, verbose=2):
         sheets[par['sheet']].append(par['short']) # All-important: append the parameter name
         sheetcontent[par['sheet']].append(par) # Append entire dictionary
         sheettypes[par['sheet']] = par['type'] # Figure out why kind of sheet this is
-        checkupper[par['short']] = par['checkupper'] # Whether or not to check the upper limit
+        checkupper[par['short']] = True if par['rowformat'] in ['decimal', 'percentage'] else False # Whether or not to check the upper limit
     
     # Handle constants separately
     sheets['Constants'] = []

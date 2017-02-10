@@ -82,7 +82,7 @@ class OptimaContent:
         self.row_names = row_names
         self.column_names = column_names
         self.data = data
-        self.assumption = False
+        self.assumption = True
         self.row_levels = None
         self.row_format = OptimaFormats.GENERAL
         self.row_formats = None
@@ -112,9 +112,10 @@ def make_matrix_range(name, params, data=None):
     return OptimaContent(name, params, params, data=data)
 
 
-def make_years_range(name, params, data_start, data_end, data=None):
+def make_years_range(name=None, params=None, ref_range=None, data_start=None, data_end=None, data=None):
+    if ref_range is not None:
+        params = ref_range.param_refs()
     return OptimaContent(name, params, years_range(data_start, data_end), data=data)
-
 
 def make_populations_range(name, items):
     """ 
@@ -168,9 +169,7 @@ def make_constant_range(name, row_names, best_data, low_data, high_data):
     return OptimaContent(name, row_names, column_names, range_data)
 
 
-def make_ref_years_range(name, ref_range, data_start, data_end, data=None):
-    params = ref_range.param_refs()
-    return make_years_range(name, params, data_start, data_end, data=data)
+
 
 
 def filter_by_properties(param_refs, base_params, the_filter):
@@ -375,31 +374,26 @@ class OptimaSpreadsheet:
         self.pop_range = None
         self.ref_pop_range = None
         self.years_range = years_range(self.data_start, self.data_end)
-
         self.npops = len(pops)
             
     #############################################################################################################################
-    ### Helper functions
+    ### Helper methods
     #############################################################################################################################
 
-    def emit_content_block(self, name, current_row, row_names, column_names, data = None,
-        row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None,
-        assumption_properties = None):
-        content = OptimaContent(name, row_names, column_names, data)
+    def emit_years_block(self, name, current_row, row_names=None, ref_range=None, row_format=None, row_levels=None, row_formats=None, data=None, assumption_data=None):
+        content = make_years_range(name=name, row_names=row_names, ref_range=ref_range, data_start=self.data_start, data_end=self.data_end, data=data)
         content.row_format = row_format
-        content.assumption = assumption
-        if assumption_properties:
-            content.assumption_properties = assumption_properties
-        if row_levels is not None:
-            content.row_levels = row_levels
+        content.assumption_data = assumption_data
+        if row_levels is not None:  content.row_levels = row_levels
+        if row_formats is not None: content.row_formats = row_formats
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats)
         return current_row
-
-
-    def emit_matrix_block(self, name, current_row, row_names, column_names=None, data=None):
+        
+    def emit_matrix_block(self, name, current_row, row_names=None, column_names=None, data=None, **kwargs):
         if column_names is None: column_names = row_names
         content = OptimaContent(name, row_names, column_names, data=data)
+        content.assumption = False
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats)
         return current_row
@@ -411,34 +405,6 @@ class OptimaSpreadsheet:
         current_row = the_range.emit(self.formats, rc_row_align = 'left')
         return current_row
 
-    def emit_years_block(self, name, current_row, row_names, row_format=OptimaFormats.GENERAL,
-        assumption=False, row_levels=None, row_formats=None, data=None, assumption_data=None):
-        content = make_years_range(name, row_names, self.data_start, self.data_end, data=data)
-        content.row_format = row_format
-        content.assumption = assumption
-        content.assumption_data = assumption_data
-        if row_levels is not None:
-            content.row_levels = row_levels
-        if row_formats is not None:
-            content.row_formats = row_formats
-        the_range = TitledRange(self.current_sheet, current_row, content)
-        current_row = the_range.emit(self.formats)
-        return current_row
-
-    def emit_ref_years_block(self, name, current_row, ref_range, row_format = OptimaFormats.GENERAL,
-        assumption = None, row_levels = None, row_formats = None, data = None, assumption_data=None):
-        content = make_ref_years_range(name, ref_range, self.data_start, self.data_end, data=data)
-        content.row_format = row_format
-        content.assumption = assumption
-        content.assumption_data = assumption_data
-        if row_levels is not None:
-            content.row_levels = row_levels
-        if row_formats is not None:
-            content.row_formats = row_formats
-        the_range = TitledRange(self.current_sheet, current_row, content)
-        current_row = the_range.emit(self.formats)
-        return current_row
-        
     def formatkeydata(self, data):
         '''
         Return key data in a format that can be written to spreadsheet
@@ -474,6 +440,27 @@ class OptimaSpreadsheet:
                 assumption.append('')
         return {'data':newdata,'assumption_data':assumption}
     
+    def getrange(self, rangename):
+        ''' Little helper function to make range names more palatable '''
+        if    rangename=='allpops':  return self.ref_pop_range
+        elif  rangename=='females':  return self.ref_females_range
+        elif  rangename=='males':    return self.ref_males_range
+        elif  rangename=='children': return self.ref_child_range
+        elif  rangename=='average':  return ['Average']
+        elif  rangename=='total':    return ['Total']
+        else: 
+            errormsg = 'Range name %s not found' % rangename
+            raise Exception(errormsg)
+        return None
+    
+    def getmethod(self, method):
+        ''' Get the method used to generate the data '''
+        if   method=='matrix': return self.emit_matrix_block
+        elif method=='years':  return self.emit_years_block
+        else:
+            errormsg = 'Method name %s not found' % method
+            raise Exception(errormsg)
+        return None
     
     #############################################################################################################################
     ### Actually make the sheets
@@ -512,20 +499,6 @@ class OptimaSpreadsheet:
         self.ref_child_range = filter_by_properties(self.ref_pop_range, self.pops, {'age_from':0})
     
     
-    def getrange(self, rangename):
-        ''' Little helper function to make range names more palatable '''
-        if    rangename=='allpops':  return self.ref_pop_range
-        elif  rangename=='females':  return self.ref_females_range
-        elif  rangename=='males':    return self.ref_males_range
-        elif  rangename=='children': return self.ref_child_range
-        else: 
-            errormsg = 'Range name %s not found' % rangename
-            raise Exception(errormsg)
-        return None
-
-
-
-
 
 ################## START CUT HERE ###########################
 
@@ -646,21 +619,8 @@ class OptimaSpreadsheet:
             if self.data is not None:
                 data = self.formattimedata(self.getdata(name))['data']
                 assumption_data = self.formattimedata(self.getdata(name))['assumption_data']
-            current_row = self.emit_years_block(name, current_row, row_range, row_format=row_format, assumption=True, data=data, assumption_data=assumption_data)
+                
 
-    def generate_ptrans(self, data=None):
-        current_row = 0
-        names = ['Interactions between regular partners', 'Interactions between casual partners',
-        'Interactions between commercial partners', 'Interactions between people who inject drugs',
-        'Births', 'Aging', 'Risk-related population transitions (average number of years before movement)']
-
-        for ind in range(len(self.pops)):
-            self.current_sheet.set_column(2+ind,2+ind,12)
-        for name in names:
-            if self.data is not None: data = self.getdata(name)
-            if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range, data=data)
-            else:              current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range, data=data)
-    
 
 ################## END CUT HERE ###########################
 
@@ -670,8 +630,6 @@ class OptimaSpreadsheet:
         current_row = 0
         pardefs = self.pardefinitions['sheetcontent'][sheetname]
         sheettype = pardefs[0]['type']
-        
-        print('milestone1')
         
         # Handle exceptions
         
@@ -683,7 +641,8 @@ class OptimaSpreadsheet:
         
         # Loop over each parameter in this sheet
         for pd in pardefs:
-            print('milestone3')
+            emitmethod = self.getmethod(pd['method'])
+            
             if self.data is not None:
                 data = self.formattimedata(self.data.get(pd['short']))['data']
                 assumption_data = self.formattimedata(self.data.get(pd['short']))['assumption_data']
@@ -691,11 +650,7 @@ class OptimaSpreadsheet:
                 data = None
                 assumption_data = None
             
-            # It's a matrix
-            if sheettype=='matrix':
-                print('milestone4')
-                print(pd)
-                current_row = self.emit_matrix_block(pd['name'], current_row, self.getrange(pd['range1']), self.getrange(pd['range2']), data=data)
+            current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), col_names=self.getrange(pd['colnames']), data=data, assumption_data=assumption_data)
         return None
     
     
