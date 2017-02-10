@@ -290,7 +290,7 @@ def get_project_summary_from_project(project):
 
 # PARSETS
 
-def get_parameters_from_parset(parset):
+def get_parameters_from_parset(parset, advanced=False):
     """
     Returns a flat dictionary of parameters for the calibration
     page from an optima parameter set object. Extracts subkey's
@@ -302,61 +302,13 @@ def get_parameters_from_parset(parset):
             subkey: Males 15-49,
             key: popsize,
             label: Population size -- Males 15-49
-        -
-            value: 0.7,
-            type: const,
-            subkey: null,
-            key: recovgt350,
-            label: Treatment recovery rate into CD4>350 (%/year)
-        - ...
     """
+    mflists = parset.manualfitlists(advanced=advanced)
     parameters = []
-    for key, par in parset.pars.items():
-        if hasattr(par, 'fittable') and par.fittable != 'no':
-            if par.fittable == 'meta':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.m,
-                    "label": '%s -- meta' % par.name,
-                })
-            elif par.fittable == 'const':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.y,
-                    "label": par.name,
-                })
-            elif par.fittable == 'year':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.t,
-                    "label": par.name,
-                })
-            elif par.fittable in ['pop', 'pship']:
-                for subkey in par.y.keys():
-                    parameters.append({
-                        "key": key,
-                        "subkey": subkey,
-                        "type": par.fittable,
-                        "value": par.y[subkey],
-                        "label": '%s -- %s' % (par.name, str(subkey)),
-                    })
-            elif par.fittable == 'exp':
-                for subkey in par.i.keys():
-                    parameters.append({
-                        "key": key,
-                        "subkey": subkey,
-                        "type": par.fittable,
-                        "value": par.i[subkey],
-                        "label": '%s -- %s' % (par.name, str(subkey)),
-                    })
-            else:
-                print('>> Parameter type "%s" not implemented!' % par.fittable)
+    for p in range(len(mflists['key'])):
+        parameters.append({})
+        for k in ['key', 'subkey', 'type', 'value', 'label']:
+            parameters[-1][k] = mflists[k][p]
 
     return parameters
 
