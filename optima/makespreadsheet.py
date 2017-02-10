@@ -158,7 +158,7 @@ def make_programs_range(name, popnames, items):
 def make_constant_range(name, row_names, best_data, low_data, high_data):
     column_names = ['best', 'low', 'high']
     range_data = [[best, low, high] for (best, low, high) in zip(best_data, low_data, high_data)]
-    return OptimaContent(name, row_names, column_names, range_data)
+    return OptimaContent(name, row_names=row_names, column_names=column_names, data=range_data)
 
 
 def filter_by_properties(param_refs, base_params, the_filter):
@@ -388,30 +388,35 @@ class OptimaSpreadsheet:
 
     def emit_constants_block(self, subheading, current_row, data):
         content = make_constant_range(subheading, data['name'], data['best'], data['low'], data['high'])
+        content.assumption = False
         content.row_format = data['rowformat']
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats, rc_row_align = 'left')
         return current_row
 
-    def formatkeydata(self, data):
+    def formatkeydata(self, parname=None):
         '''
         Return key data in a format that can be written to spreadsheet
         Data in projects is formatted as [[best-pop1, best-pop2,... ], [low-pop1, low-pop2,... ], [high-pop1, high-pop2,... ]]
         This method reformats the key data so it's arranged as [high-pop1, best-pop1, low-pop1, high-pop1, best-pop2, low-pop2, ... ]
         '''
-        newdata = []
-        assumption = []
-        npops = len(data[0]) 
-        npts = self.data_end-self.data_start+1
-        for pop in range(npops):
-            for est in [2,0,1]: # Looping though best/low/high
-                if len(data[est][pop])==1: # It's an assumption
-                    newdata.append(['']*npts)
-                    assumption.append(data[est][pop])
-                elif len(data[est][pop])==npts: # It's data
-                    newdata.append(nan2blank(data[est][pop]))
-                    assumption.append('')
-        return {'data':newdata,'assumption_data':assumption}
+        if self.data is not None:
+            data = self.data.get(parname)
+            if data is not None: 
+                newdata = []
+                assumption = []
+                npops = len(data[0]) 
+                npts = self.data_end-self.data_start+1
+                for pop in range(npops):
+                    for est in [2,0,1]: # Looping though best/low/high
+                        if len(data[est][pop])==1: # It's an assumption
+                            newdata.append(['']*npts)
+                            assumption.append(data[est][pop])
+                        elif len(data[est][pop])==npts: # It's data
+                            newdata.append(nan2blank(data[est][pop]))
+                            assumption.append('')
+                return (newdata, assumption)
+        return (None, None) # By default, return None
 
     def formattimedata(self, parname=None):
         ''' Return standard time data in a format that can be written to spreadsheet'''
@@ -499,8 +504,13 @@ class OptimaSpreadsheet:
         # Loop over each parameter in this sheet
         for pd in pardefs:
             emitmethod = self.emit_matrix_block if pd['type']=='matrix' else self.emit_years_block
-            row_levels = ['high', 'best', 'low'] if pd['type']=='key' else None
-            (data, assumption_data) = self.formattimedata(pd['short'])
+            if pd['type']=='key':
+                row_levels = ['high', 'best', 'low']
+                datamethod = self.formatkeydata
+            else:
+              row_levels = None
+              datamethod = self.formattimedata
+            (data, assumption_data) = datamethod(pd['short'])
             current_row = emitmethod(pd['name'], current_row, row_names=self.getrange(pd['rownames']), row_format=pd['rowformat'], row_levels=row_levels, data=data, assumption_data=assumption_data)
         return None
     
