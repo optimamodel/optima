@@ -419,6 +419,28 @@ define(
             });
         };
 
+        scope.switchGraphs = function() {
+          scope.graphs.advanced = !scope.graphs.advanced;
+          console.log('toggleAdvanced', scope.graphs.advanced);
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('fetching graphs reusltId', scope.graphs.resultId);
+          var which = ["default"];
+          if (scope.graphs.advanced) {
+            which.push("advanced");
+          }
+          $http
+            .post(
+              '/api/results/' + resultId,
+              { which: which })
+            .success(function (response) {
+              scope.graphs = response.graphs;
+              toastr.success('Graphs updated');
+            });
+        };
+
         function isChecked(iGraph) {
           var graph_selector = scope.graphs.graph_selectors[iGraph];
           var selector = _.findWhere(scope.graphs.selectors, { key: graph_selector });
@@ -455,9 +477,7 @@ define(
         );
 
         scope.toggleAdvanced = function() {
-          scope.graphs.advanced = !scope.graphs.advanced;
-          console.log('toggleAdvanced', scope.graphs.advanced);
-          scope.updateGraphs();
+          scope.switchGraphs();
         };
 
         scope.clearSelectors = function() {

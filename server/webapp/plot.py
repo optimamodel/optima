@@ -104,7 +104,6 @@ def make_mpld3_graph_dict(result, which=None):
         if 'advanced' in result.which:
             advanced = True
             which.remove("advanced")
-
     graph_selectors = op.getplotselections(result, advanced=advanced) # BOSCO MODIFY
     keys = graph_selectors['keys']
     names = graph_selectors['names']
@@ -122,7 +121,10 @@ def make_mpld3_graph_dict(result, which=None):
         for selector in selectors:
             selector['checked'] = selector['key'] in which
 
-    graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
+    try:
+        graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
+    except:
+        graphs = op.plotting.makeplots(result, toplot="default", figsize=(4, 3))
 
     graph_selectors = []
     mpld3_graphs = []
