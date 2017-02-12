@@ -312,7 +312,8 @@ class Project(object):
     def cleanresults(self):
         ''' Remove all results except for BOCs '''
         for key,result in self.results.items():
-            if type(result)!=BOC: self.results.pop(key)
+            if type(result)!=BOC and not result.name.startswith('BOC'):
+                self.results.pop(key)
         self.modified = today()
         return None
     
