@@ -290,7 +290,7 @@ def get_project_summary_from_project(project):
 
 # PARSETS
 
-def get_parameters_from_parset(parset):
+def get_parameters_from_parset(parset, advanced=False):
     """
     Returns a flat dictionary of parameters for the calibration
     page from an optima parameter set object. Extracts subkey's
@@ -302,61 +302,17 @@ def get_parameters_from_parset(parset):
             subkey: Males 15-49,
             key: popsize,
             label: Population size -- Males 15-49
-        -
-            value: 0.7,
-            type: const,
-            subkey: null,
-            key: recovgt350,
-            label: Treatment recovery rate into CD4>350 (%/year)
-        - ...
     """
+    mflists = parset.manualfitlists(advanced=advanced)
     parameters = []
-    for key, par in parset.pars.items():
-        if hasattr(par, 'fittable') and par.fittable != 'no':
-            if par.fittable == 'meta':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.m,
-                    "label": '%s -- meta' % par.name,
-                })
-            elif par.fittable == 'const':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.y,
-                    "label": par.name,
-                })
-            elif par.fittable == 'year':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.t,
-                    "label": par.name,
-                })
-            elif par.fittable in ['pop', 'pship']:
-                for subkey in par.y.keys():
-                    parameters.append({
-                        "key": key,
-                        "subkey": subkey,
-                        "type": par.fittable,
-                        "value": par.y[subkey],
-                        "label": '%s -- %s' % (par.name, str(subkey)),
-                    })
-            elif par.fittable == 'exp':
-                for subkey in par.i.keys():
-                    parameters.append({
-                        "key": key,
-                        "subkey": subkey,
-                        "type": par.fittable,
-                        "value": par.i[subkey],
-                        "label": '%s -- %s' % (par.name, str(subkey)),
-                    })
-            else:
-                print('>> Parameter type "%s" not implemented!' % par.fittable)
+    for p in range(len(mflists['keys'])):
+        parameters.append({ # WARNING, stupid name inconsistencies
+            'key':    mflists['keys'][p],
+            'subkey': mflists['subkeys'][p],
+            'type':   mflists['types'][p],
+            'value':  mflists['values'][p],
+            'label':  mflists['labels'][p],
+            })
 
     return parameters
 
@@ -439,41 +395,37 @@ def get_parameters_for_scenarios(project):
         pars = []
         result[parset_id] = pars
         for par in parset.pars.values():
-            if not hasattr(par, 'y') or not par.visible:
-                continue
-            for pop in par.y.keys():
-                pars.append({
-                    'name': par.name,
-                    'short': par.short,
-                    'pop': pop,
-                    'popLabel': make_pop_label(pop),
-                    'limits': get_par_limits(project, par),
-                })
+            if isinstance(par, op.Timepar): # Targetable parameters are timepars
+                for pop in par.y.keys():
+                    pars.append({
+                        'name': par.name,
+                        'short': par.short,
+                        'pop': pop,
+                        'popLabel': make_pop_label(pop),
+                        'limits': get_par_limits(project, par),
+                    })
     print(">> Finished calculating startvals for parameters")
     return result
 
 def get_startval_for_parameter(project, parset_id, par_short, pop, year):
     print(">> Get parameters for scenarios")
     parset = get_parset_from_project(project, parset_id)
+    if isinstance(pop, list):
+        pop = tuple(pop)
     for par in parset.pars.values():
-        if not hasattr(par, 'y') or not par.visible:
-            continue
-        if par.short != par_short:
-            continue
-        if isinstance(pop, list):
-            pop = tuple(pop)
-        print(">> Compare pops %s -> %s" % (pop, par.y.keys()))
-        for par_pop in par.y.keys():
-            if par_pop == pop:
-                try:
-                    par_defaults = op.setparscenvalues(
-                        parset, par.short, pop, year)
-                    startval = par_defaults['startval']
-                    if not np.isnan(startval):
-                        return startval
-                except:
-                    return None
-                break
+        if isinstance(par, op.Timepar) and par.short==par_short:
+            print(">> Compare pops %s -> %s" % (pop, par.y.keys()))
+            for par_pop in par.y.keys():
+                if par_pop == pop:
+                    try:
+                        par_defaults = op.setparscenvalues(
+                            parset, par.short, pop, year)
+                        startval = par_defaults['startval']
+                        if not np.isnan(startval):
+                            return startval
+                    except:
+                        return None
+                    break
     return None
 
 def get_parameters_for_edit_program(project):
@@ -483,20 +435,16 @@ def get_parameters_for_edit_program(project):
     for parset in project.parsets.values():
         pars = parset.pars
         for par_key in default_par_keys:
-            if par_key is None or par_key in added_par_keys or par_key not in pars:
-                continue
-            par = pars[par_key]
-            if not isinstance(pars[par_key], op.Par):
-                continue
-            if not par.visible == 1 or not par.y.keys():
-                continue
-            parameters.append({
-                'name': par.name,
-                'param': par.short,
-                'by': par.by,
-                'pships': par.y.keys() if par.by == 'pship' else []
-            })
-            added_par_keys.add(par_key)
+            if par_key is not None and par_key not in added_par_keys and par_key in pars:
+                par = pars[par_key]
+                if isinstance(par, op.Timepar):
+                    parameters.append({
+                        'name': par.name,
+                        'param': par.short,
+                        'by': par.by,
+                        'pships': par.y.keys() if par.by == 'pship' else []
+                    })
+                    added_par_keys.add(par_key)
     return parameters
 
 
@@ -518,7 +466,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
             'name': pars[par_short].name,
             'coverage': pars[par_short].coverage,
             'limits': get_par_limits(project, pars[par_short]),
-            'interact': pars[par_short].proginteract,
+            'interact': 'additive', # WARNING, temporary fix
             'populations': [
                 {
                     'pop': popKey,

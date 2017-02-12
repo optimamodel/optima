@@ -44,7 +44,6 @@ print(optimalicense)
 _failed = [] 
 
 
-
 #####################################################################################################################
 ### Load helper functions/modules
 #####################################################################################################################
@@ -72,7 +71,7 @@ from .utils import blank, checkmem, compareversions, dataindex, dataframe, defau
 
 ## Data I/O
 from . import dataio
-from .dataio import loadobj, saveobj # CK: may want to tidy up
+from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 
 
 #####################################################################################################################
@@ -89,13 +88,13 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 
 ## Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
 from . import parameters as _parameters
-from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset, makepars, makesimpars, loadpartable, loadtranstable, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
+from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset, makepars, makesimpars, applylimits, comparepars, comparesimpars # Parameter and Parameterset classes
 
 ## Create a blank spreadsheet
 try:
     from . import makespreadsheet as _makespreadsheet
     from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
-except: _failed.append('makespreadsheet')
+except Exception as E: _failed.append('makespreadsheet: %s' % E.message)
 
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
@@ -115,7 +114,7 @@ from .calibration import autofit
 
 ## Scenario analyses
 from . import scenarios as _scenarios 
-from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, setparscenvalues
+from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios
 
 ## Optimization analyses
 from . import optimization as _optimization
@@ -138,19 +137,19 @@ from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotal
 
 ## Load high level GUI module
 try: from . import gui
-except: _failed.append('gui')
+except Exception as E: _failed.append('gui: %s' % E.message)
 
 ## Load simple function for displaying results
 try: from .gui import plotresults, pygui, plotpeople, plotpars
-except: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars')
+except Exception as E: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars: %s' % E.message)
 
 ## Handle the browser-based plotting -- relies on browser so might fail
 try: from .gui import browser 
-except: _failed.append('browser')
+except Exception as E: _failed.append('browser: %s' % E.message)
 
 # Do manual fitting -- relies on PyQt4 so might fail
 try: from .gui import manualfit 
-except: _failed.append('manualfit')
+except Exception as E: _failed.append('manualfit: %s' % E.message)
 
 
 
@@ -164,14 +163,11 @@ from .project import Project
 
 # Finally, load defaults
 from . import defaults
-from .defaults import defaultproject, defaultscenarios, defaultprogset, defaultprograms, demo
+from .defaults import defaultproject, defaultprogset, defaultprograms, demo
 
 # And really finally, load other random things that don't matter
-try:
-    import migrate as _migrate
-    from .migrate import migrate, loadproj, loadportfolio, optimaversion
-except:
-    _failed.append('migrate')
+import migrate as _migrate
+from .migrate import migrate, loadproj, loadportfolio, optimaversion
 
 # Really really finally, load the portfolio class (container of Projects), relies on loadproj, hence is here
 import portfolio as _portfolio
@@ -184,8 +180,7 @@ try:
     from .batchtools import batchautofit
     from .batchtools import batchBOC
     from .geospatial import geogui # Import GUI tools for geospatial analysis
-except: 
-    _failed.append('geospatial')
+except Exception as E: _failed.append('geospatial: %s' % E.message)
 
 
 if not len(_failed): del _failed # If it's empty, don't bother keeping it
