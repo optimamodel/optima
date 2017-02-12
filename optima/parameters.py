@@ -658,14 +658,13 @@ class Par(object):
     
     Version: 2016nov06 by cliffk    
     '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', coverage=None, fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
-        self.coverage = coverage # Whether or not this is a coverage parameter
         self.fromdata = fromdata # Whether or not the parameter is made from data
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
