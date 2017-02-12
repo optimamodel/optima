@@ -651,6 +651,7 @@ class Project(object):
     def getBOC(self, objectives=None):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         
+        boc = None
         for x in self.results:
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
@@ -660,8 +661,10 @@ class Project(object):
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
                     return boc
-        print('No BOC with the required objectives can be found in project: %s' % self.name)
-        return None
+        print('No BOC with the required objectives can be found in project: %s; using first BOC found' % self.name)
+        if boc is None:
+            print('WARNING, no BOCs found!')
+        return boc
         
         
     def delBOC(self, objectives):
