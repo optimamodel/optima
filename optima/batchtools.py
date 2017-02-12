@@ -57,6 +57,7 @@ def autofit_task(
     project.autofit(
         name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, 
         maxiters=maxiters, inds=inds, verbose=verbose)
+    project.save()
     outputqueue.put(project)
     print('...done.')
     return None
@@ -67,7 +68,7 @@ def batchautofit(
         maxiters=200, inds=None, verbose=2):
     ''' Perform batch autofitting '''
     
-    filelist = glob(path.join(folder, '*.prj'))
+    filelist = sorted(glob(path.join(folder, '*.prj')))
     nfiles = len(filelist)
 
     outputqueue = Queue()
@@ -76,15 +77,13 @@ def batchautofit(
     for i in range(nfiles):
         loadbalancer(0.5)
         project = loadobj(filelist[i])
+        project.filename = filelist[i]
         prc = Process(
             target=autofit_task, 
             args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, 
                   maxiters, inds, verbose))
         prc.start()
         processes.append(prc)
-    for i in range(nfiles):
-        outputlist[i] = outputqueue.get()
-        outputlist[i].save(filename=filelist[i])
     
     return outputlist
 
@@ -99,6 +98,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
         progsetname=progsetname, inds=inds, objectives=objectives, 
         constraints=constraints, maxiters=maxiters, maxtime=maxtime,
         verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+    project.save(filename=project.tmpfilename)
     outputqueue.put(project)
     print('...done.')
     return None
@@ -149,7 +149,7 @@ def batchBOC(
                 comprise the BOC
     """
     
-    filelist = glob(path.join(folder, '*.prj'))
+    filelist = sorted(glob(path.join(folder, '*.prj')))
     nfiles = len(filelist)
     
     outputqueue = Queue()
@@ -169,8 +169,5 @@ def batchBOC(
                   maxtime, verbose, stoppingfunc, method))
         prc.start()
         processes.append(prc)
-    for i in range(nfiles):
-        outputlist[i] = outputqueue.get()
-        saveobj(outputlist[i].tmpfilename, outputlist[i])
     
     return outputlist

@@ -112,10 +112,11 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
     if which in ['outcome', 'outcomes']:
         objectives['base'] = None # "Baseline year to compare outcomes to"
-        objectives['start'] = 2017 # "Year to begin optimization"
+        objectives['start'] = 2016 # "Year to begin optimization"
         objectives['end'] = 2030 # "Year to project outcomes to"
         objectives['budget'] = defaultbudget # "Annual budget to optimize"
-        objectives['deathweight'] = 5 # "Relative weight per death"
+        objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"
+        objectives['deathweight'] = 0 # "Relative weight per death"
         objectives['inciweight'] = 1 # "Relative weight per new infection"
         objectives['deathfrac'] = None # Fraction of deaths to get to
         objectives['incifrac'] = None # Fraction of incidence to get to
@@ -148,7 +149,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     if type(progset)==Programset: pass
     elif type(project)==Programset: progset = project
     elif project is not None:
-        if progset is None: progset = 0
+        if progset is None: progset = -1
         progset = project.progsets[progset]
         printv('defaultconstraints() did not get a progset input, so using default', 2, verbose)
 
