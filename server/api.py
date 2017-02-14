@@ -98,6 +98,29 @@ def run_remote_procedure():
     return jsonify(fn(*args, **kwargs))
 
 
+from flask import helpers
+@app.route('/api/download', methods=['POST'])
+@report_exception_decorator
+@login_required
+def get_remote_file():
+    """
+    url-args:
+        'procedure': string name of function in dataio
+        'args': list of arguments for the function
+    """
+    json = get_post_data_json()
+
+    fn_name = json['name']
+    print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
+    fn = getattr(dataio, fn_name)
+
+    args = json.get('args', [])
+    kwargs = json.get('kwargs', {})
+    full_filename = fn(*args, **kwargs)
+    dirname, filename = os.path.split(full_filename)
+    print(">> Get remote filen %s %s" % (dirname, filename))
+    return helpers.send_from_directory(dirname, filename)
+
 
 def init_db():
     print("Loading DB...")
