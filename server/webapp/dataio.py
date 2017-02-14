@@ -1073,6 +1073,9 @@ def load_parset_graphs(
     }
 
 
+########
+## PROGRAMS
+
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     """
     Returns a dictionary containing
@@ -1394,6 +1397,9 @@ def create_portfolio(name, db_session=None):
 
 
 def load_data_spreadsheet(project_id, is_template=True):
+    """
+    Returns (dirname, basename) of the the template data spreadsheet
+    """
     project = load_project(project_id)
     fname = secure_filename('{}.xlsx'.format(project.name))
     server_fname = templatepath(fname)
