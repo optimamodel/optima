@@ -392,10 +392,6 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
     Version: 1.2 (2016feb07)
     '''
-    
-    print('TEMP')
-    warnmsg = 'This is an intended crash'
-    raise OptimaException(warnmsg)
 
     ## Input validation
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here

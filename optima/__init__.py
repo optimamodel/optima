@@ -75,7 +75,7 @@ from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars
 
 
 #####################################################################################################################
-### Define debugging information
+### Define debugging and exception functions/classes
 #####################################################################################################################
 
 ## Debugging information
