@@ -13,7 +13,12 @@ app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
 import matplotlib
-matplotlib.use(app.config["MATPLOTLIB_BACKEND"])
+try:
+    matplotlib.use(app.config["MATPLOTLIB_BACKEND"])
+except:
+    errormsg = 'Could not load Optima configuration file\n'
+    errormsg += 'Please ensure that you have copied config.py -- this is NOT done automatically'
+    raise Exception(errormsg)
 
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
