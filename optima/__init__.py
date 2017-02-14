@@ -74,6 +74,13 @@ from . import dataio
 from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 
 
+from warnings import warn
+warnmsg = '\nOptima debugging info:\n'
+warnmsg += 'Version: %s\n' % gitinfo()[0]
+warnmsg += 'SHA: %s\n' % gitinfo()[1]
+warn(warnmsg)
+
+
 #####################################################################################################################
 ### Load Optima functions and classes
 #####################################################################################################################
