@@ -387,7 +387,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
         
         # "Calibrate"
-        P.pars()['force'].y[:] = [3.50, 1.50, 1.50, 2.00, 3.00, 1.00]
+        P.pars()['force'].y[:] = [3.5, 1.5, 1.5, 1.7, 3.0, 0.4]
         if dorun: P.runsim() # Run after calibration
     
         # Get a default progset 
@@ -583,71 +583,6 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     
     return P
 
-
-
-def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020, parset=-1, progset=-1):
-    ''' Add default scenarios to a project...examples include min-max budgets and 90-90-90 '''
-    
-    if which=='budgets':
-        defaultbudget = project.progsets[progset].getdefaultbudget()
-        maxbudget = dcp(defaultbudget)
-        nobudget = dcp(defaultbudget)
-        for key in maxbudget: maxbudget[key] += 1e14
-        for key in nobudget: nobudget[key] *= 1e-6
-        scenlist = [
-            Parscen(name='Current conditions', parsetname='default', pars=[]),
-            Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[startyear], budget=nobudget),
-            Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[startyear], budget=defaultbudget),
-            Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[startyear], budget=maxbudget),
-            ]
-    
-    # WARNING, this may not entirely work
-    if which=='90-90-90':
-        project.runsim(parset) # Temporary, to get baseline
-        res = project.parsets[parset].getresults()
-        curryearind = findinds(res.tvec, startyear)
-        currnumplhiv = res.main['numplhiv'].tot[0][curryearind]
-        currnumdx =    res.main['numdiag'].tot[0][curryearind]
-        currnumtx =    res.main['numtreat'].tot[0][curryearind]
-        currpropdx = currnumdx/currnumplhiv
-        currproptx = currnumtx/currnumdx
-        currvs = project.pars()['treatvs'].interp(startyear)
-        
-        scenlist = [
-            Parscen(name='Current conditions', parsetname='default', pars=[]),
-            Parscen(name='90-90-90',
-                  parsetname='default',
-                  pars=[
-                  {'name': 'propdx',
-                  'for': ['tot'],
-                  'startyear': startyear,
-                  'endyear': endyear,
-                  'startval': currpropdx,
-                  'endval': 0.9,
-                  },
-                  
-                  {'name': 'proptx',
-                  'for': ['tot'],
-                  'startyear': startyear,
-                  'endyear': endyear,
-                  'startval': currproptx,
-                  'endval': 0.9,
-                  },
-                  
-                  {'name': 'treatvs',
-                  'for': ['tot'],
-                  'startyear': startyear,
-                  'endyear': endyear,
-                  'startval': currvs,
-                  'endval': .9,
-                  },
-                    ]),]
-
-    
-    # Run the scenarios
-    project.addscenlist(scenlist)
-    project.runscenarios()
-    return scenlist # Return it as well
 
 
 def demo(doplot=True, **kwargs):

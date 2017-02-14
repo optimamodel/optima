@@ -406,14 +406,14 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
     kwargs['datashort'] = 'fixpropsupp'
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
-
+    
     project.version = "2.1.10"
     return None
 
 
 
 
-def redoparameters(project, die=False, **kwargs):
+def redoparameters(project, die=True, **kwargs):
     """
     Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
@@ -425,7 +425,9 @@ def redoparameters(project, die=False, **kwargs):
     # Loop over all parsets
     for ps in project.parsets.values():
         oldpars = ps.pars[0]
-        newpars = op.makepars(data = project.data, verbose=0, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
+        tmpdata = op.dcp(project.data)
+        for key,val in tmpdata['const'].items(): tmpdata[key] = val # Parameters were moved from 'const' to main data
+        newpars = op.makepars(data = tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
         
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()
@@ -528,15 +530,54 @@ def redovlmon(project, **kwargs):
     return None
         
 
-
-
-def redoprograms(project, **kwargs):
-    """
-    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
-    """
-    project.version = "2.2"
-    print('NOT IMPLEMENTED')
+def addprojectinfotoresults(project, verbose=2, **kwargs):
+    ''' Add project info to resultsets so they can be loaded '''
+    
+    for item in project.parsets.values()+project.progsets.values()+project.optims.values()+project.results.values():
+        item.projectref = op.Link(project)
+        try:    del item.project
+        except: op.printv('No project attribute found for %s' % item.name, 3, verbose)
+            
+    for result in project.results.values():
+        result.projectinfo = project.getinfo()
+    
+    project.version = '2.2.2'
+    
     return None
+
+
+def redoparameterattributes(project, **kwargs):
+    ''' Change the names of the parameter attributes, and change transnorm from being a setting to being a parameter '''
+    
+    # Change parameter attributes
+    for ps in project.parsets.values():
+        for par in ps.pars:
+            if isinstance(par, op.Par): # Loop over the parameters and adjust their properties
+                for attr in ['dataname', 'datashort', 'auto', 'visible', 'proginteract', 'coverage']: 
+                    delattr(par, attr) # Remove outdated properties
+    
+    # Add transnorm
+    short = 'transnorm'
+    copyfrom = 'transmfi'
+    kwargs['name'] = 'Normalization factor for transmissibility'
+    kwargs['y'] = project.settings.transnorm
+    kwargs['fromdata'] = 0
+    kwargs['limits'] = (0, 'maxmeta')
+    kwargs['prior'] = {'dist':'uniform', 'pars':project.settings.transnorm*array([ 0.9,  1.1])}
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    
+    project.version = '2.3'
+    
+    return None
+
+
+#def redoprograms(project, **kwargs):
+#    """
+#    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
+#    """
+#    project.version = "2.2"
+#    print('NOT IMPLEMENTED')
+#    return None
 
 
 
@@ -560,6 +601,8 @@ migrations = {
 '2.1.9': addpropsandcosttx,
 '2.1.10': redoparameters,
 '2.2': redovlmon,
+'2.2.1': addprojectinfotoresults,
+'2.2.2': redoparameterattributes,
 #'2.2': redoprograms,
 }
 
