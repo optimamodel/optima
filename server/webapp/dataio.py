@@ -778,8 +778,14 @@ def resolve_project(project):
 def load_result(
         project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
         name=None, which=None):
-    result_records = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type)
+    kwargs = {
+        'calculation_type': calculation_type
+    }
+    if parset_id is not None:
+        kwargs['parset_id'] = parset_id
+    if project_id is not None:
+        kwargs['project_id'] = project_id
+    result_records = db.session.query(ResultsDb).filter_by(**kwargs)
     if result_records is None:
         return None
     for result_record in result_records:
@@ -803,6 +809,18 @@ def load_result(
         print(">> No result found")
     else:
         print(">> Result %s" % str(result.name))
+    return result
+
+
+def load_result_by_id(result_id, which=None):
+    result_record = db.session.query(ResultsDb).get(result_id)
+    if result_record is None:
+        raise Exception("Results '%s' does not exist" % result_id)
+    result = result_record.load()
+    if which is not None:
+        result.which = which
+        print(">> Saving which options")
+        result_record.save_obj(result)
     return result
 
 
@@ -1054,58 +1072,6 @@ def load_parset_graphs(
         "graphs": graph_dict["graphs"]
     }
 
-
-# RESULT
-
-
-def load_result(
-        project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
-        name=None, which=None):
-    kwargs = {
-        'calculation_type': calculation_type
-    }
-    if parset_id is not None:
-        kwargs['parset_id'] = parset_id
-    if project_id is not None:
-        kwargs['project_id'] = project_id
-    result_records = db.session.query(ResultsDb).filter_by(**kwargs)
-    if result_records is None:
-        return None
-    for result_record in result_records:
-        if name is None:
-            result = result_record.load()
-            break
-        else:
-            result = result_record.load()
-            if result.name == name:
-                break
-            else:
-                result = None
-    else:
-        result = None
-    if result is not None:
-        if which is not None:
-            result.which = which
-            print(">> Saving which options")
-            result_record.save_obj(result)
-    if result is None:
-        print(">> No result found")
-    else:
-        print(">> Result %s" % str(result.name))
-    return result
-
-
-def load_result_by_id(result_id, which=None):
-    result_record = db.session.query(ResultsDb).get(result_id)
-    if result_record is None:
-        raise Exception("Results '%s' does not exist" % result_id)
-    result = result_record.load()
-    if which is not None:
-        result.which = which
-        print(">> Saving which options")
-        result_record.save_obj(result)
-    return result
->>>>>>> develop
 
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     """
