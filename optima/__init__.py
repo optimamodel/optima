@@ -75,20 +75,33 @@ from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars
 
 
 #####################################################################################################################
-### Load Optima functions and classes
+### Define debugging information
 #####################################################################################################################
+
+## Debugging information
+def debuginfo(dooutput=False):
+    output = '\nOptima debugging info:\n'
+    output += '   Version: %s\n' % version
+    output += '   Branch:  %s\n' % gitinfo()[0]
+    output += '   SHA:     %s\n' % gitinfo()[1][:7]
+    output += '   Path:    %s\n' % __file__
+    if dooutput: 
+        return output
+    else: 
+        print(output)
+        return None
 
 class OptimaException(Exception):
     ''' A tiny class to allow for Optima-specific exceptions -- define this here to allow for Optima-specific info '''
     def __init__(self, errormsg, *args, **kwargs):
-        if isinstance(errormsg, basestring): # If it's not a string, not sure what it is, but don't bother with this
-            debuginfo = '\nOptima debugging info:\n'
-            debuginfo += '   Version: %s\n' % version
-            debuginfo += '   Branch:  %s\n' % gitinfo()[0]
-            debuginfo += '   SHA:     %s\n' % gitinfo()[1][:7]
-            debuginfo += '   Path:    %s\n' % __file__
-            errormsg = errormsg+debuginfo
+        if isinstance(errormsg, basestring): errormsg = errormsg+debuginfo(dooutput=True) # If it's not a string, not sure what it is, but don't bother with this
         Exception.__init__(self, errormsg, *args, **kwargs)
+
+#####################################################################################################################
+### Load Optima functions and classes
+#####################################################################################################################
+
+
 
 ## Project settings
 from . import settings as _settings # Inter-project definitions, e.g. health states
