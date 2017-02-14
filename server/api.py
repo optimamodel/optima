@@ -2,22 +2,30 @@
 import os
 import sys
 import logging
-
+import matplotlib
 import redis
 
 from flask import Flask, redirect, abort, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 
+# Create Flask app that does everything
 app = Flask(__name__)
-app.config.from_pyfile('config.py')
 
-import matplotlib
+
+# Try to load the config file -- this often fails, so predefine a warning message
+errormsg = 'Could not load Optima configuration file\n'
+errormsg += 'Please ensure that you have copied server/config.example.py to server/config.py\n'
+errormsg += ' -- this is NOT done automatically'
+try: # File exists
+    app.config.from_pyfile('config.py')
+except: # File doesn't exist
+    raise Exception(errormsg)
+
+# This might also fail if configuration is old or misspecified
 try:
     matplotlib.use(app.config["MATPLOTLIB_BACKEND"])
 except:
-    errormsg = 'Could not load Optima configuration file\n'
-    errormsg += 'Please ensure that you have copied config.py -- this is NOT done automatically'
     raise Exception(errormsg)
 
 if os.environ.get('OPTIMA_TEST_CFG'):
