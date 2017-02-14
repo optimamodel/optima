@@ -31,6 +31,11 @@ except:
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
+# Import Optima for the first time, and print debugging info
+import optima
+optima.debuginfo()
+
+# Load the database
 from server.webapp import dbconn
 dbconn.db = SQLAlchemy(app)
 dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
