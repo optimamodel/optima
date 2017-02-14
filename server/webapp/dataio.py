@@ -27,7 +27,7 @@ import shutil
 from pprint import pprint
 
 from flask import helpers, current_app, abort, request, session, make_response, jsonify
-from flask.ext.login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from validate_email import validate_email
 
