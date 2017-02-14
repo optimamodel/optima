@@ -393,11 +393,8 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
     Version: 1.2 (2016feb07)
     '''
     
-    from optima import gitinfo
     print('TEMP')
-    warnmsg = '\nOptima debugging info:\n'
-    warnmsg += 'Version: %s\n' % gitinfo()[0]
-    warnmsg += 'SHA: %s\n' % gitinfo()[1]
+    warnmsg = 'This is an intended crash'
     raise OptimaException(warnmsg)
 
     ## Input validation

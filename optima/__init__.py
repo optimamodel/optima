@@ -67,7 +67,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -77,6 +77,18 @@ from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars
 #####################################################################################################################
 ### Load Optima functions and classes
 #####################################################################################################################
+
+class OptimaException(Exception):
+    ''' A tiny class to allow for Optima-specific exceptions -- define this here to allow for Optima-specific info '''
+    def __init__(self, errormsg, *args, **kwargs):
+        if isinstance(errormsg, basestring): # If it's not a string, not sure what it is, but don't bother with this
+            debuginfo = '\nOptima debugging info:\n'
+            debuginfo += '   Version: %s\n' % version
+            debuginfo += '   Branch:  %s\n' % gitinfo()[0]
+            debuginfo += '   SHA:     %s\n' % gitinfo()[1][:7]
+            debuginfo += '   Path:    %s\n' % __file__
+            errormsg = errormsg+debuginfo
+        Exception.__init__(self, errormsg, *args, **kwargs)
 
 ## Project settings
 from . import settings as _settings # Inter-project definitions, e.g. health states
