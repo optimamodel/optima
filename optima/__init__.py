@@ -80,11 +80,12 @@ from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars
 
 ## Debugging information
 def debuginfo(dooutput=False):
+    import os
     output = '\nOptima debugging info:\n'
     output += '   Version: %s\n' % version
     output += '   Branch:  %s\n' % gitinfo()[0]
     output += '   SHA:     %s\n' % gitinfo()[1][:7]
-    output += '   Path:    %s\n' % __file__
+    output += '   Path:    %s\n' % os.path.abspath(__file__)
     if dooutput: 
         return output
     else: 
