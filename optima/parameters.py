@@ -8,7 +8,7 @@ Version: 2.1 (2017jan31)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
+from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -814,6 +814,27 @@ class Timepar(Par):
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
+    
+    def df(self, key=None, data=None):
+        '''
+        Return t,y data as a data frame; or if data is supplied, replace current t,y values.
+        Example: use df() to export data, work with it as a dataframe, and then import it back in:
+        aidstest = P.pars()['aidstest'].df()
+        aidstest.addrow([2005, 0.3])
+        P.pars()['aidstest'].df(data=aidstest)
+        '''
+        if key is None: key = self.keys()[0] # Pull out first key if not specified -- e.g., 'tot'
+        output = dataframe(['t','y'], [self.t[key], self.y[key]])
+        if data is not None:
+            if isinstance(data, dataframe):
+                self.t[key] = array(data['t'],dtype=float)
+                self.y[key] = array(data['y'],dtype=float)
+            else:
+                errormsg = 'Data argument must be a dataframe, not "%s"' % type(data)
+                raise OptimaException(errormsg)
+            return None
+        else:
+            return output
     
     def sample(self, randseed=None):
         ''' Recalculate msample '''

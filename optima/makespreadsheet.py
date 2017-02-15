@@ -188,6 +188,7 @@ class OptimaFormats:
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
+    RATE = 'rate'
     DECIMAL = 'decimal'
     SCIENTIFIC = 'scientific'
     NUMBER = 'number'
@@ -206,6 +207,7 @@ class OptimaFormats:
         # unlocked formats
         self.formats['unlocked']     = self.book.add_format({'locked':0,                    'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['percentage']   = self.book.add_format({'locked':0, 'num_format':0x09, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['rate']         = self.book.add_format({'locked':0, 'num_format':0x09, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['decimal']      = self.book.add_format({'locked':0, 'num_format':0x0a, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['scientific']   = self.book.add_format({'locked':0, 'num_format':0x0b, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['number']       = self.book.add_format({'locked':0, 'num_format':0x04, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
