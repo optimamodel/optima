@@ -59,7 +59,6 @@ class Resultset(object):
             if settings is None: settings = project.settings
         
         # Fundamental quantities -- populated by project.runsim()
-        self.raw = raw
         self.pars = pars # Keep pars
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
@@ -111,7 +110,7 @@ class Resultset(object):
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
         
-        if domake: self.make()
+        if domake: self.make(raw)
     
     
     def __repr__(self):
@@ -161,7 +160,7 @@ class Resultset(object):
     
     
     
-    def make(self, quantiles=None, annual=True, verbose=2):
+    def make(self, raw, quantiles=None, annual=True, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         # WARNING: Should use indexes retrieved from project settings!
         
@@ -186,7 +185,7 @@ class Resultset(object):
         
         # Initialize
         if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
-        tvec = dcp(self.raw[0]['tvec'])
+        tvec = dcp(raw[0]['tvec'])
         eps = self.settings.eps
         if annual is False: # Decide what to do with the time vector
             indices = arange(len(tvec)) # Use all indices
@@ -195,15 +194,15 @@ class Resultset(object):
             indices = arange(0, len(tvec), int(round(1.0/(tvec[1]-tvec[0])))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
             self.tvec = tvec[indices] # Subsample time vector too
         self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
-        nraw = len(self.raw) # Number of raw results sets
-        allpeople    = dcp(array([self.raw[i]['people']    for i in range(nraw)]))
-        allinci      = dcp(array([self.raw[i]['inci']      for i in range(nraw)]))
-        allincibypop = dcp(array([self.raw[i]['incibypop'] for i in range(nraw)]))
-        alldeaths    = dcp(array([self.raw[i]['death']     for i in range(nraw)]))
-        alldiag      = dcp(array([self.raw[i]['diag']      for i in range(nraw)]))
-        allmtct      = dcp(array([self.raw[i]['mtct']      for i in range(nraw)]))
-        allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(nraw)]))
-        allpmtct     = dcp(array([self.raw[i]['pmtct']     for i in range(nraw)]))
+        nraw = len(raw) # Number of raw results sets
+        allpeople    = dcp(array([raw[i]['people']    for i in range(nraw)]))
+        allinci      = dcp(array([raw[i]['inci']      for i in range(nraw)]))
+        allincibypop = dcp(array([raw[i]['incibypop'] for i in range(nraw)]))
+        alldeaths    = dcp(array([raw[i]['death']     for i in range(nraw)]))
+        alldiag      = dcp(array([raw[i]['diag']      for i in range(nraw)]))
+        allmtct      = dcp(array([raw[i]['mtct']      for i in range(nraw)]))
+        allhivbirths = dcp(array([raw[i]['hivbirths'] for i in range(nraw)]))
+        allpmtct     = dcp(array([raw[i]['pmtct']     for i in range(nraw)]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -426,7 +425,7 @@ class Multiresultset(Resultset):
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
         commonattrs = ['projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
-        diffattrs = ['parset', 'progset', 'raw', 'simpars'] # Things that differ between between results sets
+        diffattrs = ['parset', 'progset', 'simpars'] # Things that differ between between results sets
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
 
@@ -448,7 +447,7 @@ class Multiresultset(Resultset):
             
             # Loop over different attributes and append to the odict
             for attr in diffattrs:
-                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. self.raw['foo'] = rset.raw -- WARNING, does this even work?
+                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
             
             # Now, the real deal: fix self.main
             for key2 in self.main.keys():

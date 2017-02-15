@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, concatenate as cat, array
+from numpy import nan, isnan, concatenate as cat, array
 
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
@@ -496,9 +496,11 @@ def redovlmon(project, **kwargs):
     Migration between Optima 2.2 and 2.2.1 -- update the VL monitoring parameter
     """
     
-    oldvldata = op.dcp(project.data['freqvlmon']) # Get out old VL data
-    project.data['numvlmon'] = [[oldvldata[0][-1]*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
     requiredvldata = [2.0, 1.5, 2.5]
+    oldvldata = op.dcp(project.data['freqvlmon'][0][-1]) # Get out old VL data -- last entry
+    if isnan(oldvldata): oldvldata = requiredvldata[0]/2. # No data? Assume coverage of 50%
+    project.data['numvlmon'] = [[oldvldata*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
+    
     project.data['const']['requiredvl'] = requiredvldata
     
     removeparameter(project, short='freqvlmon', datashort='freqvlmon')

@@ -1362,12 +1362,6 @@ class dataframe(object):
 ## OTHER CLASSES
 ##############################################################################
 
-class OptimaException(Exception):
-    ''' A tiny class to allow for Optima-specific exceptions '''
-    def __init(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
 
 class LinkException(Exception):
         ''' An exception to raise when links are broken -- note, can't define classes inside classes :( '''
