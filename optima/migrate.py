@@ -553,8 +553,7 @@ def redoparameterattributes(project, **kwargs):
     for ps in project.parsets.values():
         for par in ps.pars:
             if isinstance(par, op.Par): # Loop over the parameters and adjust their properties
-                par.targetable = par.visible # Rename this property
-                for attr in ['dataname', 'datashort', 'auto', 'visible', 'proginteract']: 
+                for attr in ['dataname', 'datashort', 'auto', 'visible', 'proginteract', 'coverage']: 
                     delattr(par, attr) # Remove outdated properties
     
     # Add transnorm

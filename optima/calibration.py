@@ -58,7 +58,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         for parname in pars: # Just use first one, since all the same
             par = pars[parname]
             if issubclass(type(par), Par): # Check if it's a parameter
-                if par.auto in fitwhat: # It's in the list of things to fit
+                if par.manual in fitwhat: # It's in the list of things to fit
                     if par.fittable=='meta':
                         parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':None})
                     elif par.fittable=='pop':

@@ -79,11 +79,12 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
 
 def closegui(event=None):
     ''' Close all GUI windows '''
-    global plotfig, panelfig
+    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results
     try: close(plotfig)
     except: pass
     try: close(panelfig)
     except: pass
+    return None
 
 
 
@@ -145,9 +146,8 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     Version: 1.3 (2017feb07)
     '''
     
-    global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
+    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results
     results = sanitizeresults(tmpresults)
-            
     
     ## Define options for selection
     plotselections = getplotselections(results, advanced=advanced)
@@ -340,7 +340,7 @@ def browser(results, toplot=None, doplot=True):
 
 
 
-def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=2, **kwargs):
+def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=2, advanced=False, **kwargs):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -350,7 +350,9 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     
     maxrows is the number of rows (i.e. parameters) to display in each column.
     
-    Version: 1.1 (2016aug30) by robyns
+    Note: to get advanced parameters and plots, set advanced=True.
+    
+    Version: 1.2 (2017feb10)
     '''
     
     # For edit boxes, we need this -- but import it here so only this function will fail
@@ -370,7 +372,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     tmppars = parset.pars
     origpars = dcp(tmppars)
     
-    mflists = parset.manualfitlists(parsubset=parsubset)
+    mflists = parset.manualfitlists(parsubset=parsubset, advanced=advanced)
     fullkeylist    = mflists['keys']
     fullsubkeylist = mflists['subkeys']
     fulltypelist   = mflists['types']

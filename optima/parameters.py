@@ -426,7 +426,7 @@ def makepars(data=None, verbose=2, die=True):
 
 
 
-def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, onlyvisible=False, verbose=2, name=None, uid=None):
+def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -454,13 +454,11 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
-        if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
+        if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
-            if tosample is not None and pars[key].auto not in list(tosample): thissample = False # Don't sample from unselected parameters
-            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
-            try: 
-                if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
-                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed) # WARNING, want different smoothness for ART
+            if tosample is not None and key not in tosample: thissample = False # Don't sample from unselected parameters
+            try:
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -660,15 +658,13 @@ class Par(object):
     
     Version: 2016nov06 by cliffk    
     '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', targetable=0, coverage=None, fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
-        self.targetable = targetable # Whether or not it can be targed by programs, be visible in scenarios, etc.
-        self.coverage = coverage # Whether or not this is a coverage parameter
         self.fromdata = fromdata # Whether or not the parameter is made from data
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
@@ -1060,7 +1056,7 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, onlyvisible=False, verbose=2):
+    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
 
@@ -1068,7 +1064,7 @@ class Parameterset(object):
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
         if samples is None: samples = [None]
         for sample in samples:
-            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
+            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
         return simparslist
@@ -1191,7 +1187,7 @@ class Parameterset(object):
                         typelist.append(par.manual)
                         valuelist.append(par.m)
                         labellist.append('%s -- meta' % par.name)
-                elif par.manual in ['const', 'advanced']:
+                elif par.manual in 'const':
                     keylist.append(key)
                     subkeylist.append(None)
                     typelist.append(par.manual)
