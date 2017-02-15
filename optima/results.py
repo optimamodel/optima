@@ -36,7 +36,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True, keepraw=False, verbose=2):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -59,6 +59,7 @@ class Resultset(object):
             if settings is None: settings = project.settings
         
         # Fundamental quantities -- populated by project.runsim()
+        if keepraw: self.raw = raw
         self.pars = pars # Keep pars
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
@@ -110,7 +111,7 @@ class Resultset(object):
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
         
-        if domake: self.make(raw)
+        if domake: self.make(raw, verbose=verbose)
     
     
     def __repr__(self):
