@@ -3,18 +3,10 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2016oct05
+Version: 2017feb15
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits, loadprogramspreadsheet, CCOpar
-from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, argsort, concatenate as cat, transpose, mean
-from random import uniform
-
-# WARNING, this should not be hard-coded!!! Available from
-# [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
-# ...though would be nice to have an easier way!
-coveragepars=['numtx','numpmtct','numost','numcirc','numvlmon'] 
-
+from optima import Project, OptimaException, Link, odict, objrepr
 
 class Programset(object):
     """
@@ -22,21 +14,22 @@ class Programset(object):
     while cost-coverage data/functions belong to the individual programs.
     """
 
-    def __init__(self, name='default', programs=None, project=None):
+    def __init__(self, name='default', parsetname=-1, project=None, programs=None):
         """ Initialize """
+        if not isinstance(project, Project):
+            errormsg = 'To create a program set, you must supply a project as an argument'
+            raise OptimaException(errormsg)
         self.name = name
-        self.uid = uuid()
         self.programs = odict()
+        self.covout = odict()
+        self.parsetname = parsetname # Store the parset name
         if programs is not None: self.addprograms(programs)
-        else: self.updateprogset()
-        self.defaultbudget = odict()
-        self.created = today()
-        self.modified = today()
         self.projectref = Link(project) # Store pointer for the project, if available
+        self.setdenominators() # Calculate the denominators for different coverage values
 
     def __repr__(self):
         """ Print out useful information"""
-        output = defaultrepr(self)
+        output = objrepr(self)
         output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog for prog in self.programs]
         output += 'Targeted populations: %s\n'    % self.targetpops
