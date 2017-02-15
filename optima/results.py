@@ -116,8 +116,7 @@ class Resultset(object):
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
         output = objrepr(self)
-        output += '============================================================\n'
-        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
+        output += '      Project name: %s\n'    % self.projectinfo['name']
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '              Name: %s\n'    % self.name
