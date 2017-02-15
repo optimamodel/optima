@@ -470,7 +470,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None, keepraw=False):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -509,7 +509,7 @@ class Project(object):
 
         # Store results -- WARNING, is this correct in all cases?
         resultname = 'parset-'+self.parsets[name].name 
-        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             self.parsets[name].resultsref = keyname # If linked to a parset, store the results
@@ -656,6 +656,7 @@ class Project(object):
     def getBOC(self, objectives=None):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         
+        boc = None
         for x in self.results:
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
@@ -665,8 +666,10 @@ class Project(object):
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
                     return boc
-        print('No BOC with the required objectives can be found in project: %s' % self.name)
-        return None
+        print('No BOC with the required objectives can be found in project: %s; using first BOC found' % self.name)
+        if boc is None:
+            print('WARNING, no BOCs found!')
+        return boc
         
         
     def delBOC(self, objectives):

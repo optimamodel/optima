@@ -879,7 +879,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, debug=False, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, debug=False, keepraw=False, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -901,5 +901,5 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     except: 
         printv('Running model failed; running again with debugging...', 1, verbose)
         raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests
-    results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True) # Create structure for storing results
+    results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose) # Create structure for storing results
     return results
