@@ -34,9 +34,9 @@ Version: 2016nov03 by cliffk
 
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
-from ._version import __version__
-version = __version__ # Make it accessible via from optima import *
+from .version import version
 
+# Print the license
 optimalicense = 'Optima HIV %s -- (c) 2017 by the Optima Consortium' % version
 print(optimalicense)
 
@@ -67,7 +67,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -75,8 +75,34 @@ from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars
 
 
 #####################################################################################################################
+### Define debugging and exception functions/classes
+#####################################################################################################################
+
+## Debugging information
+def debuginfo(dooutput=False):
+    import os
+    output = '\nOptima debugging info:\n'
+    output += '   Version: %s\n' % version
+    output += '   Branch:  %s\n' % gitinfo()[0]
+    output += '   SHA:     %s\n' % gitinfo()[1][:7]
+    output += '   Path:    %s\n' % os.path.abspath(__file__)
+    if dooutput: 
+        return output
+    else: 
+        print(output)
+        return None
+
+class OptimaException(Exception):
+    ''' A tiny class to allow for Optima-specific exceptions -- define this here to allow for Optima-specific info '''
+    def __init__(self, errormsg, *args, **kwargs):
+        if isinstance(errormsg, basestring): errormsg = errormsg+debuginfo(dooutput=True) # If it's not a string, not sure what it is, but don't bother with this
+        Exception.__init__(self, errormsg, *args, **kwargs)
+
+#####################################################################################################################
 ### Load Optima functions and classes
 #####################################################################################################################
+
+
 
 ## Project settings
 from . import settings as _settings # Inter-project definitions, e.g. health states

@@ -2,7 +2,7 @@ from optima import OptimaException, Settings, Parameterset, Programset, Resultse
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
-from optima import __version__ # Get current version
+from optima import version # Get current version
 from numpy import argmin, array
 from numpy.random import seed, randint
 import os
@@ -65,7 +65,7 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
         self.warnings = None # Place to store information about warnings (mostly used during migrations)
