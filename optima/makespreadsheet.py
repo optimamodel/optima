@@ -10,7 +10,7 @@ import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from utils import printv, isnumber
 from numpy import isnan
-from optima import __version__, odict, getdate, today, loaddatapars, Settings
+from optima import version, odict, getdate, today, loaddatapars, Settings
 
 settings = Settings()
 default_datastart = settings.start
@@ -474,7 +474,7 @@ class OptimaSpreadsheet:
         current_row = self.formats.writeline(self.current_sheet, current_row)
         current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
-        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % __version__)
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
 
