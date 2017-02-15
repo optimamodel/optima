@@ -12,7 +12,7 @@ There should be no references to the database or web-handlers.
 """
 
 from collections import defaultdict, OrderedDict
-from pprint import pprint, pformat
+from pprint import pformat
 from uuid import UUID
 
 import numpy as np
@@ -464,7 +464,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
         {
             'short': par_short,
             'name': pars[par_short].name,
-            'coverage': pars[par_short].coverage,
+            'coverage': (pars[par_short].limits[1]=='maxpopsize'), # Replaces "coverage" by testing if the upper limit is maxpopsize
             'limits': get_par_limits(project, pars[par_short]),
             'interact': 'additive', # WARNING, temporary fix
             'populations': [
