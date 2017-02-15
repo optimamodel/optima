@@ -65,7 +65,6 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.spreadsheet = None # Binary version of the spreadsheet file
         self.version = version
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
