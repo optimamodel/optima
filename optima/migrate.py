@@ -573,13 +573,13 @@ def redoparameterattributes(project, **kwargs):
     return None
 
 
-#def redoprograms(project, **kwargs):
-#    """
-#    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
-#    """
-#    project.version = "2.2"
-#    print('NOT IMPLEMENTED')
-#    return None
+def redoprograms(project, **kwargs):
+    """
+    Migration between Optima 2.3 and 2.4 -- convert CCO objects from simple dictionaries to parameters.
+    """
+    project.version = "2.4"
+    print('NOT IMPLEMENTED')
+    return None
 
 
 
@@ -601,11 +601,11 @@ migrations = {
 '2.1.7': fixsettings,
 '2.1.8': addoptimscaling,
 '2.1.9': addpropsandcosttx,
-'2.1.10': redoparameters,
-'2.2': redovlmon,
+'2.1.10':redoparameters,
+'2.2':   redovlmon,
 '2.2.1': addprojectinfotoresults,
 '2.2.2': redoparameterattributes,
-#'2.2': redoprograms,
+'2.3':   redoprograms,
 }
 
 

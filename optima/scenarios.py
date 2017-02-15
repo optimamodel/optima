@@ -347,7 +347,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
 
     
     # Run the scenarios
-    project.addscenlist(scenlist)
+    project.addscens(scenlist)
     if dorun: project.runscenarios()
     if doplot: 
         from optima import pygui
