@@ -33,8 +33,6 @@ class Programset(object):
         output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog for prog in self.programs]
         output += 'Targeted populations: %s\n'    % self.targetpops
-        output += '        Date created: %s\n'    % getdate(self.created)
-        output += '       Date modified: %s\n'    % getdate(self.modified)
         output += '                 UID: %s\n'    % self.uid
         output += '============================================================\n'
         return output
