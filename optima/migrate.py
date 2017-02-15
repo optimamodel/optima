@@ -616,9 +616,9 @@ def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
-    while str(project.version) != str(op.__version__):
+    while str(project.version) != str(op.version):
         if not str(project.version) in migrations:
-            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.__version__))
+            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.version))
 
         upgrader = migrations[str(project.version)]
 
@@ -709,7 +709,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         errormsg = 'Please call this function like this: optimaversion(__file__)'
         if die: raise op.OptimaException(errormsg)
         else: print(errormsg); return None
-    currversion = op.__version__ # Get Optima version info
+    currversion = op.version # Get Optima version info
     currbranch,currsha = op.gitinfo(die=die) # Get git info, dying on failure if requested
     if version is not None and version!=currversion: # Optionally check that versions match
         errormsg = 'Actual version does not match requested version (%s vs. %s)' % (currversion, version)
