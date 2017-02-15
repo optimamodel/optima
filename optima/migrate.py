@@ -573,6 +573,12 @@ def redoparameterattributes(project, **kwargs):
     return None
 
 
+def removespreadsheet(project, **kwargs):
+    ''' Remove the binary spreadsheet (it's big, and unnecessary now that you can write data) '''
+    delattr(project, 'spreadsheet')
+    project.version = '2.3.1'
+    return None
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -605,6 +611,7 @@ migrations = {
 '2.2':   redovlmon,
 '2.2.1': addprojectinfotoresults,
 '2.2.2': redoparameterattributes,
+'2.3':   removespreadsheet,
 #'2.2': redoprograms,
 }
 
@@ -654,6 +661,9 @@ def loadproj(filename=None, verbose=2, die=False):
 #    op.programs.CCOF = CCOF
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
+    
+    class Spreadsheet(object): pass
+    op.project.Spreadsheet = Spreadsheet
 
     P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose, die=die)
     
