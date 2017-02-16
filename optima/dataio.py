@@ -17,9 +17,11 @@ from xlrd import open_workbook
 ### Basic I/O functions
 #############################################################################################################################
 
-def saveobj(filename, obj, verbose=True):
-    ''' Save an object to file '''
-    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
+def saveobj(filename, obj, compresslevel=5, verbose=True):
+    ''' Save an object to file -- use compression 5, since more is much slower but not much smaller '''
+    fileobj = GzipFile(filename, 'wb', compresslevel=compresslevel)
+    fileobj.write(pickle.dumps(obj))
+    fileobj.close()
     if verbose: print('Object saved to "%s"' % filename)
     return None
 
@@ -30,7 +32,10 @@ def loadobj(filename, verbose=True):
     if isinstance(filename, basestring): argtype='filename'
     else: argtype = 'fileobj'
     kwargs = {'mode': 'rb', argtype: filename}
-    with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
+    fileobj = GzipFile(**kwargs)
+    data = fileobj.read()
+    obj = pickle.loads(data)
+    fileobj.close()
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
