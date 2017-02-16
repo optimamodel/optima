@@ -38,7 +38,7 @@ def loadobj(filename, verbose=True):
 
 
 def dumps(obj):
-    ''' Save an object to a string in gzip-compatible way -- used on the FE '''
+    ''' Write data to a fake file object,then read from it -- used on the FE '''
     result = None
     with closing(StringIO()) as output:
         with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
@@ -49,7 +49,7 @@ def dumps(obj):
 
 
 def loads(source):
-    ''' Load an object from a string in gzip-compatible way'''
+    ''' Load data from a fake file object -- also used on the FE '''
     with closing(StringIO(source)) as output:
         with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
             obj = pickle.loads(fileobj.read())
