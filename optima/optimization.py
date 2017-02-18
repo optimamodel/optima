@@ -88,14 +88,14 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     printv('Defining default objectives...', 3, verbose=verbose)
 
     if type(progset)==Programset:
-        try: defaultbudget = sum(progset.getdefaultbudget()[:])
+        try: defaultbudget = sum(progset.defaultbudget()[:])
         except: raise OptimaException('Could not get default budget for optimization')
     elif type(project)==Programset: # Not actually a project, but proceed anyway
-        try: defaultbudget = sum(project.getdefaultbudget()[:])
+        try: defaultbudget = sum(project.defaultbudget()[:])
         except: raise OptimaException('Could not get default budget for optimization')
     elif project is not None:
         if progset is None: progset = 0
-        try: defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
+        try: defaultbudget = sum(project.progsets[progset].defaultbudget()[:])
         except: raise OptimaException('Could not get default budget for optimization')
         printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
     else:
@@ -411,7 +411,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?
-        try: optim.objectives['budget'] = sum(progset.getdefaultbudget()[:])
+        try: optim.objectives['budget'] = sum(progset.defaultbudget()[:])
         except:  raise OptimaException('Could not get default budget for optimization')
     tvec = project.settings.maketvec(end=optim.objectives['end']) # WARNING, this could be done better most likely
     if not progset.readytooptimize():
@@ -446,7 +446,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     if overwritebudget != None:
         origbudget = dcp(overwritebudget)
     else:
-        try: origbudget = dcp(progset.getdefaultbudget())
+        try: origbudget = dcp(progset.defaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
@@ -504,7 +504,7 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
-    try: origbudget = dcp(progset.getdefaultbudget())
+    try: origbudget = dcp(progset.defaultbudget())
     except: raise OptimaException('Could not get default budget for optimization')
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector

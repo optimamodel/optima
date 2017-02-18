@@ -638,11 +638,11 @@ class Project(object):
         
         if budgetlist == None:
             if not progsetname == None:
-                baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
+                baseline = self.progsets[progsetname].defaultbudget()
             else:
                 try:
-                    baseline = sum(self.progsets[0].getdefaultbudget().values())
-                    printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
+                    baseline = self.progsets[-1].defaultbudget()
+                    printv('\nWARNING: no progsetname specified. Using last saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
                 except:
                     OptimaException('Error: No progsets associated with project for which BOC is being generated!')
             budgetlist = [x*baseline for x in [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0]] # Start from original, go down, then go up
@@ -669,6 +669,7 @@ class Project(object):
         self.addresult(result=projectBOC)
         self.modified = today()
         return None        
+    
     
     def getBOC(self, objectives=None):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''

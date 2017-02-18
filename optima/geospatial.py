@@ -56,7 +56,7 @@ def resetbudget():
     global globalportfolio, objectiveinputs
     totalbudget = 0
     for project in globalportfolio.projects.values():
-        totalbudget += sum(project.progsets[0].getdefaultbudget().values())
+        totalbudget += project.progsets[0].defaultbudget()
     objectiveinputs['budget'].setText(str(totalbudget/budgetfactor))
     return None
 

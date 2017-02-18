@@ -27,7 +27,7 @@ class Programset(object):
         self.covout = odict()
         self.parsetname = parsetname # Store the parset name
         self.projectref = Link(project) # Store pointer for the project, if available
-        self.denominators = self.setdenominators() # Calculate the denominators for different coverage values
+#        self.denominators = self.setdenominators() # Calculate the denominators for different coverage values
         if programs is not None: self.addprograms(programs)
 
 
@@ -82,9 +82,14 @@ class Programset(object):
         ''' add coverage-outcome parameter '''
         pass
 
-    def defaultbudget(self):
-        ''' get default budget '''
-        pass
+    def defaultbudget(self, total=True):
+        ''' Get default budget -- either per program or total '''
+        if total:      budget = 0
+        else: budget = odict()
+        for prog in self.programs.values():
+            if total: budget += prog.spend
+            else:     budget[prog.short] = prog.spend
+        return budget
 
     def coverage2budget(self):
         ''' get budget from coverage '''

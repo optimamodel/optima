@@ -200,7 +200,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             if isinstance(scen, Budgetscen):
                 
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
-                tmpbudget = dcp(thisprogset.getdefaultbudget())
+                tmpbudget = dcp(thisprogset.defaultbudget(total=False))
                 if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
                     scen.budget = vec2obj(orig=tmpbudget, newvec=scen.budget) # It seems to be a vector: convert to odict
                 if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
@@ -221,11 +221,11 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             elif isinstance(scen, Coveragescen):
                 
                 # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
-                tmpbudget = dcp(thisprogset.getdefaultbudget())
+                tmpbudget = dcp(thisprogset.defaultbudget(total=False))
                 tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # WARNING, IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
 
                 if isinstance(scen.coverage, list) or isinstance(scen.coverage, type(array([]))):
-                    scen.coverage = vec2obj(scen.progset.getdefaultbuget(), newvec=scen.coverage) # It seems to be a vector: convert to odict -- WARNING, super dangerous!!
+                    scen.coverage = vec2obj(scen.progset.defaultbuget(total=False), newvec=scen.coverage) # It seems to be a vector: convert to odict -- WARNING, super dangerous!!
                 if not isinstance(scen.coverage,dict): raise OptimaException('Currently only accepting coverage as dictionaries.')
                 if not isinstance(scen.coverage,odict): scen.coverage = odict(scen.coverage)
 
@@ -298,7 +298,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
     ''' Add default scenarios to a project...examples include min-max budgets and 90-90-90 '''
     
     if which=='budgets':
-        defaultbudget = project.progsets[progset].getdefaultbudget()
+        defaultbudget = project.progsets[progset].defaultbudget(total=False)
         maxbudget = dcp(defaultbudget)
         nobudget = dcp(defaultbudget)
         for key in maxbudget: maxbudget[key] += 1e14
