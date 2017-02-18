@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2017feb15
 """
 
-from optima import Project, OptimaException, Link, odict, objrepr
-
+from optima import Project, OptimaException, Link, odict, objrepr, promotetoarray
+from numpy.random import uniform, seed, get_state
 
 class Programset(object):
     """
@@ -95,16 +95,123 @@ class Covout(object):
     ''' A coverage-outcome object -- cost-outcome objects are incorporated in programs '''
     
     def __init__(self, lowerlim=None, upperlim=None, progs=None):
-        self.lowerlim = lowerlim
-        self.upperlim = upperlim
+        self.lowerlim = Val(lowerlim)
+        self.upperlim = Val(upperlim)
         self.progs = odict()
+        if isinstance(progs, dict):
+            for key,val in progs.items():
+                self.progs[key] = Val(val)
+        return None
+    
+    def add(self, prog=None, val=None):
+        ''' 
+        Accepts either
+        self.add({'FSW':[0.3,0.1,0.4]})
+        or
+        self.add('FSW', 0.3)
+        '''
+        if isinstance(prog, dict):
+            if isinstance(prog, dict):
+                for key,val in prog.items():
+                    self.progs[key] = Val(val)
+        elif isinstance(prog, basestring) and val is not None:
+            self.progs[prog] = Val(val)
+        else:
+            errormsg = 'Could not understand prog=%s and val=%s' % (prog, val)
+            raise OptimaException(errormsg)
+        return None
+            
+
+
 
 
 class Val(object):
-    ''' A single value for a coverage-outcome curve '''
+    ''' A single value for a coverage-outcome curve -- seems insanely complicated, I know! '''
     
-    def __init__(self, best=None, low=None, high=None):
+    def __init__(self, best=None, low=None, high=None, dist=None):
+        ''' Allow the object to be initialized, but keep the same infrastructure for updating '''
+        self.best = None
+        self.low = None
+        self.high = None
+        self.dist = None
+        self.setvals(best=best, low=low, high=high, dist=dist)
+        return None
+    
+    
+    def __call__(self, *args, **kwargs):
+        ''' Convenience function for both setvals and get '''
+        
+        # If it's None or if the key is a string (e.g. 'best'), get the values:
+        if len(args)+len(kwargs)==0 or 'what' in kwargs or (len(args) and type(args[0])==str):
+            return self.get(*args, **kwargs)
+        else: # Otherwise, try to set the values
+            self.setvals(*args, **kwargs)
+    
+    
+    def setvals(self, best=None, low=None, high=None, dist=None):
+        ''' Actually set the values -- very convoluted, but should be flexible and work :)'''
+        
+        # Reset these values if already supplied
+        if best is None and self.best is not None: best = self.best
+        if low  is None and self.low  is not None: low  = self.low 
+        if high is None and self.high is not None: high = self.high 
+        if dist is None and self.dist is not None: dist = self.dist
+        
+        # Handle values
+        if best is None: # Best is not supplied, so use high and low, e.g. Val(low=0.2, high=0.4)
+            if low is None or high is None:
+                errormsg = 'If not supplying a best value, you must supply both low and high values'
+                raise OptimaException(errormsg)
+            else:
+                best = (low+high)/2. # Take the average
+        elif isinstance(best, dict):
+            self.setvals(**best) # Assume it's a dict of args, e.g. Val({'best':0.3, 'low':0.2, 'high':0.4})
+        else: # Best is supplied
+            best = promotetoarray(best)
+            if len(best)==1: # Only a single value supplied, e.g. Val(0.3)
+                best = best[0] # Convert back to number
+                if low is None: low = best # If these are missing, just replace them with best
+                if high is None: high = best
+            elif len(best)==2: # If length 2, assume high-low supplied, e.g. Val([0.2, 0.4])
+                if low is not None and high is not None:
+                    errormsg = 'If first argument has length 2, you cannot supply high and low values'
+                    raise OptimaException(errormsg)
+                low = best[0]
+                high = best[1]
+                best = (low+high)/2.
+            elif len(best)==3: # Assume it's called like Val([0.3, 0.2, 0.4])
+                low, best, high = sorted(best) # Allows values to be provided in any order
+            else:
+                errormsg = 'Could not understand input of best=%s, low=%s, high=%s' % (best, low, high)
+                raise OptimaException(errormsg)
+        
+        # Handle distributions
+        validdists = ['uniform']
+        if dist is None: dist = 'uniform'
+        if dist not in validdists:
+            errormsg = 'Distribution "%s" not valid; choices are: %s' % (dist, validdists)
+            raise OptimaException(errormsg) 
+        
+        # Store values
         self.best = best
-        self.low = low
+        self.low  = low
         self.high = high
-        self.dist = 
+        self.dist = dist
+        
+        return None
+    
+    
+    def get(self, what=None, n=1):
+        ''' Get the value from this distribution '''
+        if what is None or what is 'best': # Haha this is funny but works
+            val = self.best
+        elif what is 'low':
+            val = self.low
+        elif what is 'high':
+            val = self.high
+        elif what in ['rand','random']:
+            seed(get_state()[1][0]) # Reset the random seed, if specified -- WARNING, will affect rest of Optima!
+            val = uniform(low=self.low, high=self.high, size=n)
+        return val
+    
+    

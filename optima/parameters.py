@@ -742,10 +742,8 @@ class Yearpar(Par):
 class Dist(object):
     ''' Define a distribution object for drawing samples from, usually to create a prior '''
     def __init__(self, dist=None, pars=None):
-        defaultdist = 'uniform'
-        defaultpars = array([0.9, 1.1]) # This is arbitrary, of course
-        self.dist = dist if dist is not None else defaultdist
-        self.pars = promotetoarray(pars) if pars is not None else defaultpars
+        self.dist = dist if dist is not None else 'uniform'
+        self.pars = promotetoarray(pars) if pars is not None else array([0.9, 1.1]) # This is arbitrary, of course
     
     def __repr__(self):
         ''' Print out useful information when called'''
