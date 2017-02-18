@@ -98,11 +98,11 @@ class OptimaException(Exception):
         if isinstance(errormsg, basestring): errormsg = errormsg+debuginfo(dooutput=True) # If it's not a string, not sure what it is, but don't bother with this
         Exception.__init__(self, errormsg, *args, **kwargs)
 
+
+
 #####################################################################################################################
 ### Load Optima functions and classes
 #####################################################################################################################
-
-
 
 ## Project settings
 from . import settings as _settings # Inter-project definitions, e.g. health states
@@ -162,21 +162,10 @@ from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotal
 #####################################################################################################################
 
 ## Load high level GUI module
-try: from . import gui
+try: 
+    from . import gui
+    from .gui import plotresults, pygui, plotpeople, plotpars, browser, manualfit
 except Exception as E: _failed.append('gui: %s' % E.message)
-
-## Load simple function for displaying results
-try: from .gui import plotresults, pygui, plotpeople, plotpars
-except Exception as E: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars: %s' % E.message)
-
-## Handle the browser-based plotting -- relies on browser so might fail
-try: from .gui import browser 
-except Exception as E: _failed.append('browser: %s' % E.message)
-
-# Do manual fitting -- relies on PyQt4 so might fail
-try: from .gui import manualfit 
-except Exception as E: _failed.append('manualfit: %s' % E.message)
-
 
 
 #####################################################################################################################
@@ -206,7 +195,8 @@ try:
     from .batchtools import batchautofit
     from .batchtools import batchBOC
     from .geospatial import geogui # Import GUI tools for geospatial analysis
-except Exception as E: _failed.append('geospatial: %s' % E.message)
+except Exception as E: _failed.append('geospatial, batchtools: %s' % E.message)
 
 
-if not len(_failed): del _failed # If it's empty, don't bother keeping it
+if len(_failed): print('The following import errors were encountered:\n%s' % _failed)
+else: del _failed # If it's empty, don't bother keeping it

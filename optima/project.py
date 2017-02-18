@@ -1,11 +1,14 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr, promotetolist # Import utilities
-from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
+from optima import loadspreadsheet, model, gitinfo, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
+try: from optima import manualfit # This is optional
+except: pass
 from optima import version # Get current version
 from numpy import argmin, array
 from numpy.random import seed, randint
 import os
+
 
 #######################################################################################################
 ## Project class -- this contains everything else!
