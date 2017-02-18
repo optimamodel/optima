@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2016jul06
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
@@ -263,7 +263,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
             raise OptimaException(errormsg)
 
         # Initialize
-        if type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
+        toplot = promotetolist(toplot) # If single value, put inside list
         epiplots = odict()
 
 

@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr, promotetolist # Import utilities
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
@@ -337,7 +337,7 @@ class Project(object):
     def addscens(self, scenlist, overwrite=True): 
         ''' Function to make it slightly easier to add scenarios all in one go '''
         if overwrite: self.scens = odict() # Remove any existing scenarios
-        if type(scenlist)!=list: scenlist = [scenlist] # Allow adding a single scenario
+        scenlist = promotetolist(scenlist) # Allow adding a single scenario
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
         self.modified = today()
         return None
@@ -421,7 +421,7 @@ class Project(object):
         '''
         
         if name is None: name = self.parsets.keys() # If none is given, use all
-        if type(name)!=list: name = [name] # Make sure it's a list
+        name = promotetolist(name) # Make sure it's a list
         origpars = self.parsets[orig].pars # "Original" parameters to copy from (based on data)
         for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
             keys = parset.pars.keys() # Assume all pars structures have the same keys
@@ -506,8 +506,7 @@ class Project(object):
                 sampleseed = randint(0,2**32-1)
                 simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
-            if type(simpars)==list: simparslist = simpars
-            else: simparslist = [simpars]
+            simparslist = promotetolist(simpars)
 
         # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
         rawlist = []

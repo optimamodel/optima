@@ -182,6 +182,18 @@ def isnumber(x):
     return isinstance(x, Number)
 
 
+def isiterable(obj):
+    '''
+    Simply determine whether or not the input is iterable, since it's too hard to remember this otherwise.
+    From http://stackoverflow.com/questions/1952464/in-python-how-do-i-determine-if-an-object-is-iterable
+    '''
+    try:
+        iter(obj)
+        return True
+    except:
+        return False
+    
+
 def promotetoarray(x):
     ''' Small function to ensure consistent format for things that should be arrays '''
     from numpy import ndarray, shape
@@ -196,6 +208,18 @@ def promotetoarray(x):
             return array([x]) # e.g. array(3)
     else: # e.g. 'foo'
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
+
+
+def promotetolist(obj=None, objtype=None):
+    ''' Make sure object is iterable -- used so functions can handle inputs like 'FSW' or ['FSW', 'MSM'] '''
+    if type(obj)!=list:
+        if objtype is not None: # Check that the types match
+            if isinstance(obj, objtype): # Types match, yay
+                obj = [obj] # Listify it
+            else:
+                errormsg = 'Type of object does not match that requested: %s vs.%s' % (type(obj), objtype)
+                raise Exception(errormsg)
+    return obj
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):

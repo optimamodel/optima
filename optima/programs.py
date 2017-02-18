@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2017feb15
 """
 
-from optima import Project, OptimaException, Link, odict, objrepr, promotetoarray
+from optima import Project, OptimaException, Link, odict, objrepr, promotetoarray, promotetolist
 from numpy.random import uniform, seed, get_state
 
 class Programset(object):
@@ -29,6 +29,7 @@ class Programset(object):
         self.denominators = self.setdenominators() # Calculate the denominators for different coverage values
         if programs is not None: self.addprograms(programs)
 
+
     def __repr__(self):
         """ Print out useful information"""
         output = objrepr(self)
@@ -37,13 +38,40 @@ class Programset(object):
         output += '============================================================\n'
         return output
     
-    def addprograms(self):
-        ''' add a list of programs '''
-        pass
+    
+    def addprograms(self, progs=None, replace=False):
+        ''' Add a list of programs '''
+        if progs is not None:
+            progs = promotetolist(progs)
+        else:
+            errormsg = 'Programs to add should not be None'
+            raise OptimaException(errormsg)
+        if replace:
+            self.programs = odict()
+        for prog in progs:
+            if isinstance(prog, dict):
+                prog = Program(**prog)
+            if type(prog)!=Program:
+                errormsg = 'Programs to add must be either dicts or program projects, not %s' % type(prog)
+                raise OptimaException(errormsg)
+            self.programs[prog.short] = prog
+        return None
 
-    def rmprogram(self):
-        ''' remove a program '''
-        pass
+
+    def rmprograms(self, progs=None, die=True):
+        ''' Remove one or more programs '''
+        if progs is None:
+            self.programs = odict() # Remove them all
+        progs = promotetolist(progs)
+        for prog in progs:
+            try:
+                self.programs.pop[prog]
+            except:
+                errormsg = 'Could not remove program named %s' % prog
+                if die: raise OptimaException(errormsg)
+                else: print(errormsg)
+        return None
+    
     
     def addcovout(self):
         ''' add coverage-outcome parameter '''

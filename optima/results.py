@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest
+from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 
@@ -44,8 +44,8 @@ class Resultset(object):
         
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
-        if type(simpars)!=list: simpars = [simpars] # Force into being a list
-        if type(raw)!=list: raw = [raw] # Force into being a list
+        simpars = promotetolist(simpars) # Force into being a list
+        raw = promotetolist(raw) # Force into being a list
         
         # Read things in from the project if defined
         if project is not None:
@@ -426,7 +426,6 @@ class Multiresultset(Resultset):
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise OptimaException('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
-                
         
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets

@@ -1,5 +1,4 @@
-from optima import gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj # Import utilities
-from optima import OptimaException, BOC # Import classes
+from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj, promotetolist # Import utilities
 from optima import version # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
@@ -77,15 +76,12 @@ class Portfolio(object):
     def addprojects(self, projects=None, replace=False, verbose=2):
         ''' Store a project within portfolio '''
         printv('Adding project to portfolio...', 2, verbose)
-        if type(projects)==Project: projects = [projects]
-        if type(projects)==list:
-            if replace: self.projects = odict() # Wipe clean before adding new projects
-            for project in projects:
-                project.uid = uuid() # TEMPPPP WARNING overwrite UUID
-                self.projects[str(project.uid)] = project        
-                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
-        else:
-            raise OptimaException('Could not understand project list of type %s' % type(projects))
+        projects = promotetolist(projects, objtype=Project) # Make sure it's a list, but confirm type first
+        if replace: self.projects = odict() # Wipe clean before adding new projects
+        for project in projects:
+            project.uid = uuid() # TEMPPPP WARNING overwrite UUID
+            self.projects[str(project.uid)] = project        
+            printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         return None
     
     
