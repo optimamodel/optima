@@ -6,8 +6,9 @@ set of programs, respectively.
 Version: 2017feb15
 """
 
-from optima import Project, OptimaException, Link, odict, objrepr, promotetoarray, promotetolist
+from optima import OptimaException, Link, odict, objrepr, promotetoarray, promotetolist
 from numpy.random import uniform, seed, get_state
+
 
 class Programset(object):
     """
@@ -17,7 +18,7 @@ class Programset(object):
 
     def __init__(self, name='default', parsetname=-1, project=None, programs=None):
         """ Initialize """
-        if not isinstance(project, Project):
+        if project is None:
             errormsg = 'To create a program set, you must supply a project as an argument'
             raise OptimaException(errormsg)
         
@@ -52,7 +53,7 @@ class Programset(object):
             if isinstance(prog, dict):
                 prog = Program(**prog)
             if type(prog)!=Program:
-                errormsg = 'Programs to add must be either dicts or program projects, not %s' % type(prog)
+                errormsg = 'Programs to add must be either dicts or program objects, not %s' % type(prog)
                 raise OptimaException(errormsg)
             self.programs[prog.short] = prog
         return None
@@ -70,6 +71,10 @@ class Programset(object):
                 errormsg = 'Could not remove program named %s' % prog
                 if die: raise OptimaException(errormsg)
                 else: print(errormsg)
+            for co in self.covout.values(): # Remove from coverage-outcome functions too
+                co.progs.pop(prog, None)
+        
+        
         return None
     
     
@@ -81,11 +86,11 @@ class Programset(object):
         ''' get default budget '''
         pass
 
-    def getbudget(self):
+    def coverage2budget(self):
         ''' get budget from coverage '''
         pass
 
-    def getcoverage(self):
+    def budget2coverage(self):
         ''' get coverage from budget '''
         pass
 
@@ -122,7 +127,9 @@ class Program(object):
 class Covout(object):
     ''' A coverage-outcome object -- cost-outcome objects are incorporated in programs '''
     
-    def __init__(self, lowerlim=None, upperlim=None, progs=None):
+    def __init__(self, par=None, pop=None, lowerlim=None, upperlim=None, progs=None):
+        self.par = par
+        self.pop = pop
         self.lowerlim = Val(lowerlim)
         self.upperlim = Val(upperlim)
         self.progs = odict()
