@@ -3,11 +3,12 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2017feb15
+Version: 2017feb19
 """
 
 from optima import OptimaException, Link, Settings, odict, dataframe, objrepr, promotetoarray, promotetolist, defaultrepr, checktype, isnumber
-from numpy.random import uniform, seed, get_state, array
+from numpy.random import uniform, seed, get_state
+from numpy import array
 
 
 class Programset(object):

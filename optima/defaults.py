@@ -324,38 +324,33 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Lab', 'Adherence', 'Tracing', 'Other'])
         
         # Add program effects
-        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.2,0.25), year=year, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
-        R.covout['condcas'][('Clients','F 15+')].addccopar({'intercept': (0.25,0.3), year=year, 'Condoms':(0.85,0.95)})
-        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.3,0.35), year=year, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
-        R.covout['condcas'][('M 15+','F 15+')].addccopar({'intercept':  (0.30,0.35), year=year, 'Condoms':(0.45,0.50)})
-        R.covout['condcas'][('PWID','F 15+')].addccopar({'intercept':   (0.15,0.2), year=year, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.1,0.15), year=year, 'Condoms':(0.55,0.65)})
-    
-        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), year=year, 'FSW programs':(0.9,0.95)})
-    
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.30,0.40), year=year, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
-        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.10,0.15), year=year, 'HTC': (0.40,0.60)})
-        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), year=year, 'HTC': (0.20,0.30)})
-        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), year=year, 'HTC': (0.20,0.30)})
-        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), year=year, 'HTC': (0.80,0.90)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), year=year, 'HTC': (0.80,0.90)})
-    
-        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), year=year})
-        R.covout['numvlmon']['tot'].addccopar({'intercept': (10.0,15.0), year=year})
-        
-        R.covout['leavecare']['FSW'].addccopar({'intercept': (0.30,0.40), year=year, 'Adherence': (0.05,0.1)})
-        R.covout['leavecare']['Clients'].addccopar({'intercept': (0.30,0.40), year=year, 'Adherence': (0.05,0.1)})
-        R.covout['leavecare']['M 15+'].addccopar({'intercept': (0.30,0.40), year=year, 'Adherence': (0.05,0.1)})
-        R.covout['leavecare']['F 15+'].addccopar({'intercept': (0.30,0.40), year=year, 'Adherence': (0.05,0.1)})
-        R.covout['leavecare']['PWID'].addccopar({'intercept': (0.50,0.60), year=year, 'Adherence': (0.3,0.4)})
-        R.covout['leavecare']['MSM'].addccopar({'intercept': (0.30,0.40), year=year, 'Adherence': (0.05,0.1)})
-    
-        R.covout['linktocare']['FSW'].addccopar({'intercept': (1.40,1.60), year=year, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['Clients'].addccopar({'intercept': (1.40,1.60), year=year, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['M 15+'].addccopar({'intercept': (1.40,1.60), year=year, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['F 15+'].addccopar({'intercept': (1.40,1.60), year=year, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['PWID'].addccopar({'intercept': (1.40,1.60), year=year, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['MSM'].addccopar({'intercept': (1.40,1.60), year=year, 'Tracing': (0.1,0.3)})
+        R.addcovout(par='condcas',    pop=('Clients', 'FSW'),  lowerlim=(0.20,0.25), upperlim=0.95, progs={'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
+        R.addcovout(par='condcas',    pop=('Clients','F 15+'), lowerlim=(0.25,0.30), upperlim=0.95, progs={'Condoms':(0.85,0.95)})
+        R.addcovout(par='condcas',    pop=('M 15+', 'FSW'),    lowerlim=(0.30,0.35), upperlim=0.95, progs={'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
+        R.addcovout(par='condcas',    pop=('M 15+','F 15+'),   lowerlim=(0.30,0.35), upperlim=0.95, progs={'Condoms':(0.45,0.50)})
+        R.addcovout(par='condcas',    pop=('PWID','F 15+'),    lowerlim=(0.15,0.20), upperlim=0.95, progs={'Condoms':(0.35,0.45)})
+        R.addcovout(par='condcas',    pop=('MSM', 'MSM'),      lowerlim=(0.10,0.15), upperlim=0.95, progs={'Condoms':(0.55,0.65)})
+        R.addcovout(par='condcom',    pop=('Clients', 'FSW'),  lowerlim=(0.30,0.35), upperlim=0.95, progs={'FSW programs':(0.9,0.95)})
+        R.addcovout(par='hivtest',    pop='FSW',               lowerlim=(0.30,0.40), upperlim=0.95, progs={'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
+        R.addcovout(par='hivtest',    pop='Clients',           lowerlim=(0.10,0.15), upperlim=0.95, progs={'HTC': (0.40,0.60)})
+        R.addcovout(par='hivtest',    pop='M 15+',             lowerlim=(0.01,0.02), upperlim=0.95, progs={'HTC': (0.20,0.30)})
+        R.addcovout(par='hivtest',    pop='F 15+',             lowerlim=(0.01,0.02), upperlim=0.95, progs={'HTC': (0.20,0.30)})
+        R.addcovout(par='hivtest',    pop='PWID',              lowerlim=(0.10,0.15), upperlim=0.95, progs={'HTC': (0.80,0.90)})
+        R.addcovout(par='hivtest',    pop='MSM',               lowerlim=(0.12,0.20), upperlim=0.95, progs={'HTC': (0.80,0.90)})
+        R.addcovout(par='leavecare',  pop='FSW',               lowerlim=(0.30,0.40), upperlim=0.95, progs={'Adherence': (0.05,0.1)})
+        R.addcovout(par='leavecare',  pop='Clients',           lowerlim=(0.30,0.40), upperlim=0.95, progs={'Adherence': (0.05,0.1)})
+        R.addcovout(par='leavecare',  pop='M 15+',             lowerlim=(0.30,0.40), upperlim=0.95, progs={'Adherence': (0.05,0.1)})
+        R.addcovout(par='leavecare',  pop='F 15+',             lowerlim=(0.30,0.40), upperlim=0.95, progs={'Adherence': (0.05,0.1)})
+        R.addcovout(par='leavecare',  pop='PWID',              lowerlim=(0.50,0.60), upperlim=0.95, progs={'Adherence': (0.3,0.4)})
+        R.addcovout(par='leavecare',  pop='MSM',               lowerlim=(0.30,0.40), upperlim=0.95, progs={'Adherence': (0.05,0.1)})
+        R.addcovout(par='linktocare', pop='FSW',               lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='Clients',           lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='M 15+',             lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='F 15+',             lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='PWID',              lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='MSM',               lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='numtx',      pop='tot')
+        R.addcovout(par='numvlmon',   pop='tot')
     
         # Store this program set in the project
         P.addprogset(R)
@@ -363,138 +358,138 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     
     
     
-    ##########################################################################################################################
-    ## Generalized
-    ##########################################################################################################################
-    elif which=='generalized':
-        printv('Creating generalized epidemic project...', 2, verbose)
-        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', verbose=verbose, **kwargs)
-
-        # Get a default progset 
-        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'Lab', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
-
-        pops = P.data['pops']['short']
-        adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
-        
-        # Fix up costs
-        R.programs['ART'].update(saturation=(0.9,0.9),
-                         year=year,
-                         unitcost=(1000,2000)}, overwrite=True)
-                         
-        R.programs['PMTCT'].update(saturation=(0.9,0.9),
-                         year=year,
-                         unitcost=(5000,8000)}, overwrite=True)
-
-        # Add different modalities of testing
-        HTC_workplace = Program(short='HTC workplace',
-                      targetpars=[{'param': 'hivtest', 'pop': pop} for pop in ['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients']],
-                      targetpops=['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients'],
-                      category='Care and treatment',
-                      name='HIV testing and counseling - workplace programs',
-                      criteria = {'hivstatus': 'allstates', 'pregnant': False})
-        
-        HTC_mobile = Program(short='HTC mobile',
-                      targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
-                      targetpops=adultlist,
-                      category='Care and treatment',
-                      name='HIV testing and counseling - mobile clinics',
-                      criteria = {'hivstatus': 'allstates', 'pregnant': False})
-        
-        HTC_medical = Program(short='HTC medical',
-                      targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
-                      targetpops=adultlist,
-                      category='Care and treatment',
-                      name='HIV testing and counseling - medical facilities',
-                      criteria = {'hivstatus': 'allstates', 'pregnant': False})
-
-
-        HTC_workplace.update(saturation=(0.2,0.3),
-                                 year=year,
-                                 unitcost=(10,12)})
-        HTC_mobile.update(saturation=(0.5,0.6),
-                                 year=year,
-                                 unitcost=(6,10)})
-        HTC_medical.update(saturation=(0.4,0.6),
-                                 year=year,
-                                 unitcost=(4,8)})
-
-        HTC_workplace.update(spend=1e7,coverage=9e6})
-        HTC_mobile.update(spend=1e6,coverage=2e5})
-        HTC_medical.update(spend=1e6,coverage=4e5})
-        
-        R.addprograms(newprograms=[HTC_workplace, HTC_mobile, HTC_medical])
-
-        R.addcovout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), year=year, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
-        R.addcovout['condcas'][('Clients','F 50+')].addccopar({'intercept': (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
-        R.addcovout['condcas'][('Clients','F 15-49')].addccopar({'intercept': (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
-        R.addcovout['condcas'][('M 15-49', 'FSW')].addccopar({'intercept': (0.3,0.35), year=year, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
-        R.addcovout['condcas'][('M 15-49','F 15-49')].addccopar({'intercept': (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
-        R.addcovout['condcas'][('M 15-49','F 50+')].addccopar({'intercept': (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
-        R.addcovout['condcas'][('M 50+', 'FSW')].addccopar({'intercept': (0.2,0.3), year=year, 'Condoms':(0.35,0.45), 'FSW programs':(0.55,0.65)})
-        R.addcovout['condcas'][('M 50+', 'F 15-49')].addccopar({'intercept': (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
-        R.addcovout['condcas'][('M 50+','F 50+')].addccopar({'intercept': (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
-        R.addcovout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), year=year, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
-
-        R.addcovout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), year=year, 'FSW programs':(0.9,0.95)})
-    
-        R.addcovout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 
-                                              year=year,
-                                              'HTC mobile': (0.85,0.9),
-                                              'HTC medical': (0.65,0.75),
-                                              'FSW programs':(0.95,0.99)})
-                                                
-        R.addcovout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1),
-                                              year=year,
-                                              'HTC mobile': (0.85,0.9),
-                                              'HTC medical': (0.65,0.75),
-                                              'MSM programs':(0.95,0.99)})
-                                              
-        R.addcovout['hivtest']['Clients'].addccopar({'intercept': (0.05,0.1),
-                                                  year=year,
-                                                  'HTC workplace': (0.85,0.9),
-                                                  'HTC mobile': (0.85,0.9),
-                                                  'HTC medical': (0.65,0.75)})
-                                                  
-        R.addcovout['hivtest']['M 15-49'].addccopar({'intercept': (0.35,0.4),
-                                                  year=year,
-                                                  'HTC workplace': (0.85,0.9),
-                                                  'HTC mobile': (0.85,0.9),
-                                                  'HTC medical': (0.85,0.95)})
-
-        R.addcovout['hivtest']['F 15-49'].addccopar({'intercept': (0.35,0.4),
-                                                  year=year, 
-                                                  'HTC workplace': (0.85,0.9),
-                                                  'HTC mobile': (0.85,0.9),
-                                                  'HTC medical': (0.85,0.95)})
-
-        R.addcovout['hivtest']['M 50+'].addccopar({'intercept': (0.15,0.2), 
-                                                year=year,
-                                                  'HTC workplace': (0.85,0.9),
-                                                  'HTC mobile': (0.85,0.9),
-                                                  'HTC medical': (0.65,0.75)})
-
-        R.addcovout['hivtest']['F 50+'].addccopar({'intercept': (0.15,0.2),
-                                                year=year,
-                                                  'HTC workplace': (0.85,0.9),
-                                                  'HTC mobile': (0.85,0.9),
-                                                  'HTC medical': (0.65,0.75)})
-
-        R.addcovout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), year=year})
-        R.addcovout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), year=year})
-        R.covout['numvlmon']['tot'].addccopar({'intercept': (100.0,150.0), year=year})
-
-        R.addcovout['numcirc']['MSM'].addccopar({'intercept': (0,0), year=year})
-        R.addcovout['numcirc']['Clients'].addccopar({'intercept': (0,0), year=year})
-        R.addcovout['numcirc']['M 15-49'].addccopar({'intercept': (0,0), year=year})
-        R.addcovout['numcirc']['M 50+'].addccopar({'intercept': (0,0), year=year})
-        R.addcovout['numcirc']['M 0-14'].addccopar({'intercept': (0,0), year=year})
-
-
-        P.addprogset(name='default', progset=R)
-        
-        
-        # Do a super-manual calibration
-        P.pars()['inhomo'].y[:] = 0.2
+#    ##########################################################################################################################
+#    ## Generalized
+#    ##########################################################################################################################
+#    elif which=='generalized':
+#        printv('Creating generalized epidemic project...', 2, verbose)
+#        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', verbose=verbose, **kwargs)
+#
+#        # Get a default progset 
+#        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'Lab', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
+#
+#        pops = P.data['pops']['short']
+#        adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
+#        
+#        # Fix up costs
+#        R.programs['ART'].update(saturation=(0.9,0.9),
+#                         year=year,
+#                         unitcost=(1000,2000)}, overwrite=True)
+#                         
+#        R.programs['PMTCT'].update(saturation=(0.9,0.9),
+#                         year=year,
+#                         unitcost=(5000,8000)}, overwrite=True)
+#
+#        # Add different modalities of testing
+#        HTC_workplace = Program(short='HTC workplace',
+#                      targetpars=[{'param': 'hivtest', 'pop': pop} for pop in ['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients']],
+#                      targetpops=['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients'],
+#                      category='Care and treatment',
+#                      name='HIV testing and counseling - workplace programs',
+#                      criteria = {'hivstatus': 'allstates', 'pregnant': False})
+#        
+#        HTC_mobile = Program(short='HTC mobile',
+#                      targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
+#                      targetpops=adultlist,
+#                      category='Care and treatment',
+#                      name='HIV testing and counseling - mobile clinics',
+#                      criteria = {'hivstatus': 'allstates', 'pregnant': False})
+#        
+#        HTC_medical = Program(short='HTC medical',
+#                      targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
+#                      targetpops=adultlist,
+#                      category='Care and treatment',
+#                      name='HIV testing and counseling - medical facilities',
+#                      criteria = {'hivstatus': 'allstates', 'pregnant': False})
+#
+#
+#        HTC_workplace.update(saturation=(0.2,0.3),
+#                                 year=year,
+#                                 unitcost=(10,12)})
+#        HTC_mobile.update(saturation=(0.5,0.6),
+#                                 year=year,
+#                                 unitcost=(6,10)})
+#        HTC_medical.update(saturation=(0.4,0.6),
+#                                 year=year,
+#                                 unitcost=(4,8)})
+#
+#        HTC_workplace.update(spend=1e7,coverage=9e6})
+#        HTC_mobile.update(spend=1e6,coverage=2e5})
+#        HTC_medical.update(spend=1e6,coverage=4e5})
+#        
+#        R.addprograms(newprograms=[HTC_workplace, HTC_mobile, HTC_medical])
+#
+#        R.addcovout['condcas'][('Clients', 'FSW'), lowerlim= (0.3,0.35), year=year, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+#        R.addcovout['condcas'][('Clients','F 50+'), lowerlim= (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
+#        R.addcovout['condcas'][('Clients','F 15-49'), lowerlim= (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
+#        R.addcovout['condcas'][('M 15-49', 'FSW'), lowerlim= (0.3,0.35), year=year, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+#        R.addcovout['condcas'][('M 15-49','F 15-49'), lowerlim= (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
+#        R.addcovout['condcas'][('M 15-49','F 50+'), lowerlim= (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
+#        R.addcovout['condcas'][('M 50+', 'FSW'), lowerlim= (0.2,0.3), year=year, 'Condoms':(0.35,0.45), 'FSW programs':(0.55,0.65)})
+#        R.addcovout['condcas'][('M 50+', 'F 15-49'), lowerlim= (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
+#        R.addcovout['condcas'][('M 50+','F 50+'), lowerlim= (0.2,0.3), year=year, 'Condoms':(0.35,0.45)})
+#        R.addcovout['condcas'][('MSM', 'MSM'), lowerlim= (0.5,0.55), year=year, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
+#
+#        R.addcovout['condcom'][('Clients', 'FSW'), lowerlim= (0.6,0.65), year=year, 'FSW programs':(0.9,0.95)})
+#    
+#        R.addcovout['hivtest']['FSW', lowerlim= (0.35,0.45), 
+#                                              year=year,
+#                                              'HTC mobile': (0.85,0.9),
+#                                              'HTC medical': (0.65,0.75),
+#                                              'FSW programs':(0.95,0.99)})
+#                                                
+#        R.addcovout['hivtest']['MSM', lowerlim= (0.05,0.1),
+#                                              year=year,
+#                                              'HTC mobile': (0.85,0.9),
+#                                              'HTC medical': (0.65,0.75),
+#                                              'MSM programs':(0.95,0.99)})
+#                                              
+#        R.addcovout['hivtest']['Clients', lowerlim= (0.05,0.1),
+#                                                  year=year,
+#                                                  'HTC workplace': (0.85,0.9),
+#                                                  'HTC mobile': (0.85,0.9),
+#                                                  'HTC medical': (0.65,0.75)})
+#                                                  
+#        R.addcovout['hivtest']['M 15-49', lowerlim= (0.35,0.4),
+#                                                  year=year,
+#                                                  'HTC workplace': (0.85,0.9),
+#                                                  'HTC mobile': (0.85,0.9),
+#                                                  'HTC medical': (0.85,0.95)})
+#
+#        R.addcovout['hivtest']['F 15-49', lowerlim= (0.35,0.4),
+#                                                  year=year, 
+#                                                  'HTC workplace': (0.85,0.9),
+#                                                  'HTC mobile': (0.85,0.9),
+#                                                  'HTC medical': (0.85,0.95)})
+#
+#        R.addcovout['hivtest']['M 50+', lowerlim= (0.15,0.2), 
+#                                                year=year,
+#                                                  'HTC workplace': (0.85,0.9),
+#                                                  'HTC mobile': (0.85,0.9),
+#                                                  'HTC medical': (0.65,0.75)})
+#
+#        R.addcovout['hivtest']['F 50+', lowerlim= (0.15,0.2),
+#                                                year=year,
+#                                                  'HTC workplace': (0.85,0.9),
+#                                                  'HTC mobile': (0.85,0.9),
+#                                                  'HTC medical': (0.65,0.75)})
+#
+#        R.addcovout['numtx']['tot', lowerlim= (100.0,150.0), year=year})
+#        R.addcovout['numpmtct']['tot', lowerlim= (100.0,150.0), year=year})
+#        R.addcovout('numvlmon']['tot', lowerlim= (100.0,150.0), year=year})
+#
+#        R.addcovout['numcirc']['MSM', lowerlim= (0,0), year=year})
+#        R.addcovout['numcirc']['Clients', lowerlim= (0,0), year=year})
+#        R.addcovout['numcirc']['M 15-49', lowerlim= (0,0), year=year})
+#        R.addcovout['numcirc']['M 50+', lowerlim= (0,0), year=year})
+#        R.addcovout['numcirc']['M 0-14', lowerlim= (0,0), year=year})
+#
+#
+#        P.addprogset(name='default', progset=R)
+#        
+#        
+#        # Do a super-manual calibration
+#        P.pars()['inhomo'].y[:] = 0.2
     
     
     
