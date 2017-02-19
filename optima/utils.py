@@ -194,6 +194,32 @@ def isiterable(obj):
         return False
     
 
+def checktype(obj=None, objtype=None, die=True):
+    from numbers import Number
+    from numpy import array
+    
+    # Handle "objtype" input
+    if   objtype in ['str','string']:  objtype = basestring
+    elif objtype in ['num', 'number']: objtype = Number
+    elif objtype in ['arr', 'array']:  objtype = array([])
+    elif type(objtype)==type:          pass # Don't need to do anything
+    elif objtype is None:              return None # If not supplied, exit
+    else:
+        errormsg = 'Could not understand what type you want to check: should be either a string or a type, not "%s"' % objtype
+        raise Exception(errormsg)
+    
+    # Figure out it if's an instance
+    result = isinstance(obj, objtype)
+    if die: # Either raise an exception or do nothing
+        if not result: # It's not an instance
+            errormsg = 'Incorrect type: object is %s, but %s is required' % (type(obj), objtype)
+            raise Exception(errormsg)
+        else:
+            return None # It's fine
+    else: # Return the result of the comparison
+        return result
+            
+
 def promotetoarray(x):
     ''' Small function to ensure consistent format for things that should be arrays '''
     from numpy import ndarray, shape
@@ -210,15 +236,13 @@ def promotetoarray(x):
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
 
 
-def promotetolist(obj=None, objtype=None):
+def promotetolist(obj=None, objtype=None, die=True):
     ''' Make sure object is iterable -- used so functions can handle inputs like 'FSW' or ['FSW', 'MSM'] '''
     if type(obj)!=list:
-        if objtype is not None: # Check that the types match
-            if isinstance(obj, objtype): # Types match, yay
-                obj = [obj] # Listify it
-            else:
-                errormsg = 'Type of object does not match that requested: %s vs.%s' % (type(obj), objtype)
-                raise Exception(errormsg)
+        obj = [obj] # Listify it
+    if objtype is not None:  # Check that the types match -- now that we know it's a list, we can iterate over it
+        for item in obj:
+            checktype(obj=item, objtype=objtype, die=die)
     return obj
 
 

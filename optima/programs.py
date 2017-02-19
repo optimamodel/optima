@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2017feb15
 """
 
-from optima import OptimaException, Link, odict, objrepr, promotetoarray, promotetolist
+from optima import OptimaException, Link, odict, objrepr, promotetoarray, promotetolist, defaultrepr, checktype
 from numpy.random import uniform, seed, get_state
 
 
@@ -116,16 +116,37 @@ class Programset(object):
 class Program(object):
     ''' Defines a single program. '''
     
-    def __init__(self, short=None, name=None, spend=None, basespend=None, coverage=None, unitcost=None, saturation=None, targetpops=None, targetpars=None):
-        self.short = short # short name
-        self.name = name # full name
-        self.spend = spend # latest or estimated expenditure
-        self.basespend = basespend # non-optimizable spending
-        self.coverage = coverage # latest or estimated coverage (? -- not used)
-        self.unitcost = unitcost # dataframe of [t, best, low, high]
-        self.saturation = saturation # saturation coverage value
-        self.targetpops = targetpops # key(s) for targeted populations
-        self.targetpars = targetpars # which parameters are targeted
+    def __init__(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, unitcost=None, saturation=None, targetpops=None, targetpars=None):
+        self.short      = None # short name
+        self.name       = None # full name
+        self.category   = None # spending category
+        self.spend      = None # latest or estimated expenditure
+        self.basespend  = None # non-optimizable spending
+        self.coverage   = None # latest or estimated coverage (? -- not used)
+        self.unitcost   = None # dataframe of [t, best, low, high]
+        self.saturation = None # saturation coverage value
+        self.targetpops = None # key(s) for targeted populations
+        self.targetpars = None # which parameters are targeted
+        self.update(short=short, name=name, category=category, spend=spend, basespend=basespend, coverage=coverage, unitcost=unitcost, saturation=saturation, targetpops=targetpops, targetpars=targetpars)
+#        self.denominators = self.setdenominators()
+    
+    def __repr__(self):
+        output = defaultrepr(self)
+        return output
+    
+    
+    def update(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, unitcost=None, saturation=None, targetpops=None, targetpars=None):
+        ''' Add data to a program '''
+        if short      is not None: self.short      = checktype(short,    'string') # short name
+        if name       is not None: self.name       = checktype(name,     'string') # full name
+        if category   is not None: self.category   = checktype(category, 'string') # spending category
+        if spend      is not None: self.spend      = None # latest or estimated expenditure
+        if basespend  is not None: self.basespend  = None # non-optimizable spending
+        if coverage   is not None: self.coverage   = None # latest or estimated coverage (? -- not used)
+        if unitcost   is not None: self.unitcost   = None # dataframe of [t, best, low, high]
+        if saturation is not None: self.saturation = None # saturation coverage value
+        if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
+        if targetpars is not None: self.targetpars = None # which parameters are targeted
 
 
 
@@ -174,21 +195,21 @@ class Val(object):
         self.low = None
         self.high = None
         self.dist = None
-        self.setvals(best=best, low=low, high=high, dist=dist)
+        self.update(best=best, low=low, high=high, dist=dist)
         return None
     
     
     def __call__(self, *args, **kwargs):
-        ''' Convenience function for both setvals and get '''
+        ''' Convenience function for both update and get '''
         
         # If it's None or if the key is a string (e.g. 'best'), get the values:
         if len(args)+len(kwargs)==0 or 'what' in kwargs or (len(args) and type(args[0])==str):
             return self.get(*args, **kwargs)
         else: # Otherwise, try to set the values
-            self.setvals(*args, **kwargs)
+            self.update(*args, **kwargs)
     
     
-    def setvals(self, best=None, low=None, high=None, dist=None):
+    def update(self, best=None, low=None, high=None, dist=None):
         ''' Actually set the values -- very convoluted, but should be flexible and work :)'''
         
         # Reset these values if already supplied
@@ -205,7 +226,7 @@ class Val(object):
             else:
                 best = (low+high)/2. # Take the average
         elif isinstance(best, dict):
-            self.setvals(**best) # Assume it's a dict of args, e.g. Val({'best':0.3, 'low':0.2, 'high':0.4})
+            self.update(**best) # Assume it's a dict of args, e.g. Val({'best':0.3, 'low':0.2, 'high':0.4})
         else: # Best is supplied
             best = promotetoarray(best)
             if len(best)==1: # Only a single value supplied, e.g. Val(0.3)

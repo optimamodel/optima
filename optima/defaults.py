@@ -5,7 +5,6 @@ Version: 2016jan28
 """
 import os
 from numpy import array
-import optima as op
 from optima import OptimaException, Project, Program, Programset, printv
 try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
 except: pass
@@ -73,36 +72,31 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Condom promotion and distribution',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pops)
     
     SBCC = Program(short='SBCC',
                   name='Social and behavior change communication',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pops)
                   
     STI = Program(short='STI',
                   name='Diagnosis and treatment of sexually transmissible infections',
                   category='Prevention',
                   targetpars=[{'param': 'stiprev', 'pop': pop} for pop in pops],
-                  targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pops)
     
     VMMC = Program(short='VMMC',
                   name='Voluntary medical male circumcision',
                   category='Prevention',
                   targetpars=[{'param': 'numcirc', 'pop': male} for male in malelist],
-                  targetpops=malelist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})              
+                  targetpops=malelist)              
                   
     FSW_programs = Program(short='FSW programs',
                   name='Programs for female sex workers and clients',
                   category='Prevention',
                   targetpars=[{'param': 'condcom', 'pop': compship} for compship in fsw_compships] + [{'param': 'condcas', 'pop': caspship} for caspship in fsw_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in fswlist],
-                  targetpops=fswlist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=fswlist)
                  
     MSM_programs = Program(short='MSM programs',
                   name='Programs for men who have sex with men',
@@ -115,93 +109,79 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Programs for people who inject drugs',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in pwid_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in pwidlist] + [{'param': 'sharing', 'pop': pop} for pop in pwidlist],
-                  targetpops=pwidlist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pwidlist)
                   
     OST = Program(short='OST',
                   name='Opiate substitution therapy',
                   category='Prevention',
                   targetpars=[{'param': 'numost', 'pop': 'tot'}],
-                  targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pops)
                   
     NSP = Program(short='NSP',
                   name='Needle-syringe programs',
                   category='Prevention',
                   targetpars=[{'param': 'sharing', 'pop': pop} for pop in pwidlist],
-                  targetpops=pwidlist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pwidlist)
                   
     Cash = Program(short='Cash transfers',
                   name='Cash transfers for HIV risk reduction',
                   category='Prevention',
                   targetpars=[{'param': 'actscas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pops)
                   
     PrEP = Program(short='PrEP',
                   name='Pre-exposure prophylaxis',
                   category='Prevention',
                   targetpars=[{'param': 'prep', 'pop':  pop} for pop in pops],
-                  targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pops)
                   
     PEP = Program(short='PEP',
                   name='Post-exposure prophylaxis',
-                  category='Care and treatment',
-                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
+                  category='Care and treatment')
                   
     HTC = Program(short='HTC',
                   name='HIV testing and counseling',
                   category='Care and treatment',
                   targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
-                  targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=pops)
     
     ART = Program(short='ART',
                   name='Antiretroviral therapy',
                   category='Care and treatment',
-                  targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
-                  targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+                  targetpars=[{'param': 'numtx', 'pop': 'tot'}],
+                  targetpops=pops)
     
     Lab = Program(short='Lab',
                   name='Lab monitoring',
                   category='Care and treatment',
-                  targetpars=[{'param': 'numvlmon', 'pop': 'tot'}],# for pop in pops],
-                  targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+                  targetpars=[{'param': 'numvlmon', 'pop': 'tot'}],
+                  targetpops=pops)
     
     Adherence = Program(short='Adherence',
                   name='Adherence support',
                   category='Care and treatment',
-                  targetpars=[{'param': 'leavecare', 'pop': pop} for pop in pops],# for pop in pops],
-                  targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+                  targetpars=[{'param': 'leavecare', 'pop': pop} for pop in pops],
+                  targetpops=pops)
     
     Tracing = Program(short='Tracing',
                   name='Pre-ART tracing',
                   category='Care and treatment',
-                  targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops],# for pop in pops],
-                  targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+                  targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops],
+                  targetpops=pops)
     
     PMTCT = Program(short='PMTCT',
                   name='Prevention of mother-to-child transmission',
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
-                  targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': True})
+                  targetpops=pops)
                   
     OVC = Program(short='OVC',
                   name='Orphans and vulnerable children',
-                  category='Care and treatment',
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  category='Care and treatment')
     
     Other_care = Program(short='Other care',
                   name='Other HIV care',
-                  category='Care and treatment',
-                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200'], 'pregnant': False})
+                  category='Care and treatment')
     
     MGMT = Program(short='MGMT',
                   name='Management',
