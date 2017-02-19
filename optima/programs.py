@@ -16,8 +16,8 @@ class Programset(object):
     while cost-coverage data/functions belong to the individual programs.
     """
 
-    def __init__(self, name='default', parsetname=-1, project=None, programs=None):
-        """ Initialize """
+    def __init__(self, name='default', parsetname=-1, project=None, programs=None, covout=None):
+        ''' Initialize '''
         if project is None:
             errormsg = 'To create a program set, you must supply a project as an argument'
             raise OptimaException(errormsg)
@@ -27,15 +27,18 @@ class Programset(object):
         self.covout = odict()
         self.parsetname = parsetname # Store the parset name
         self.projectref = Link(project) # Store pointer for the project, if available
-#        self.denominators = self.setdenominators() # Calculate the denominators for different coverage values
         if programs is not None: self.addprograms(programs)
-
+        if covout is not None: self.addcovout(covout)
+#        self.denominators = self.setdenominators() # Calculate the denominators for different coverage values
+        return None
 
     def __repr__(self):
         """ Print out useful information"""
         output = objrepr(self)
         output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % self.programs.keys()
+        output += '      Programs valid: %s\n'    % self.checkprograms()
+        output += '        Covout valid: %s\n'    % self.checkcovout()
         output += '============================================================\n'
         return output
     
@@ -200,7 +203,7 @@ class Program(object):
                         raise OptimaException(errormsg)
                 elif isinstance(targetpar, basestring): # It's a single string: assume only the parameter is specified
                     targetpars[tp] = {'param':targetpar, 'pop':'tot'} # Assume 'tot'
-                elif isinstance(targetpar, (list, tuple)): # 
+                elif isinstance(targetpar, (list, tuple)): # It's a list, assume it's in the usual order
                     if len(targetpar)==2:
                         targetpars[tp] = {'param':targetpar[0], 'pop':targetpar[1]} # If a list or tuple, assume this order
                     else:
@@ -211,7 +214,7 @@ class Program(object):
                     raise OptimaException(errormsg)
         
         # Handle the unit cost
-        unitcostkeys = ['year', 'val']
+        unitcostkeys = ['year', 'best', 'low', 'high']
         if unitcost is not None:
             
             self.unitcost   = None # dataframe of [t, best, low, high]
@@ -368,20 +371,32 @@ class Val(object):
     
     
     def get(self, what=None, n=1):
-        ''' Get the value from this distribution '''
-        if what is None or what is 'best': # Haha this is funny but works
-            val = self.best
-        elif what is 'low':
-            val = self.low
-        elif what is 'high':
-            val = self.high
+        '''
+        Get the value from this distribution. Examples (with best=0.3, low=0.2, high=0.4):
+        
+        val.get() # returns 0.3
+        val.get('best') # returns 0.3
+        val.get(['low', 'best',' high']) # returns [0.2, 0.3, 0.4]
+        val.get('rand') # returns, say, 0.3664
+        val.get('all') # returns [0.3, 0.2, 0.4]
+        
+        The seed() call should ensure pseudorandomness.
+        '''
+        
+        if what is None or what is 'best': val = self.best# Haha this is funny but works
+        elif what is 'low':                val = self.low
+        elif what is 'high':               val = self.high
+        elif what is 'all':                val = [self.best, self.low, self.high]
         elif what in ['rand','random']:
-            seed(get_state()[1][0]) # Reset the random seed, if specified -- WARNING, will affect rest of Optima!
-            if self.dist=='uniform':
-                val = uniform(low=self.low, high=self.high, size=n)
+            seed(get_state()[1][0])
+            if self.dist=='uniform':       val = uniform(low=self.low, high=self.high, size=n)
             else:
                 errormsg = 'Distribution %s is not implemented, sorry' % self.dist
                 raise OptimaException(errormsg)
+        elif type(what)==list:             val = [self.get(wh) for wh in what]# Allow multiple values to be used
+        else:
+            errormsg = 'Could not understand %s, expecting a string or list' % what
+            raise OptimaException(errormsg)
         return val
     
     
