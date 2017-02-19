@@ -71,19 +71,19 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Condom promotion and distribution',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops)
+                  )
     
     SBCC = Program(short='SBCC',
                   name='Social and behavior change communication',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops)
+                  )
                   
     STI = Program(short='STI',
                   name='Diagnosis and treatment of sexually transmissible infections',
                   category='Prevention',
                   targetpars=[{'param': 'stiprev', 'pop': pop} for pop in pops],
-                  targetpops=pops)
+                  )
     
     VMMC = Program(short='VMMC',
                   name='Voluntary medical male circumcision',
@@ -101,8 +101,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Programs for men who have sex with men',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in msm_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in msmlist],
-                  targetpops=msmlist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  targetpops=msmlist)
                   
     PWID = Program(short='PWID programs',
                   name='Programs for people who inject drugs',
@@ -113,8 +112,8 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     OST = Program(short='OST',
                   name='Opiate substitution therapy',
                   category='Prevention',
-                  targetpars=[{'param': 'numost', 'pop': 'tot'}],
-                  targetpops=pops)
+                  targetpars='numost',
+                  )
                   
     NSP = Program(short='NSP',
                   name='Needle-syringe programs',
@@ -126,13 +125,13 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Cash transfers for HIV risk reduction',
                   category='Prevention',
                   targetpars=[{'param': 'actscas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops)
+                  )
                   
     PrEP = Program(short='PrEP',
                   name='Pre-exposure prophylaxis',
                   category='Prevention',
                   targetpars=[{'param': 'prep', 'pop':  pop} for pop in pops],
-                  targetpops=pops)
+                  )
                   
     PEP = Program(short='PEP',
                   name='Post-exposure prophylaxis',
@@ -142,37 +141,37 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='HIV testing and counseling',
                   category='Care and treatment',
                   targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
-                  targetpops=pops)
+                  )
     
     ART = Program(short='ART',
                   name='Antiretroviral therapy',
                   category='Care and treatment',
-                  targetpars=[{'param': 'numtx', 'pop': 'tot'}],
-                  targetpops=pops)
+                  targetpars='numtx',
+                  )
     
     Lab = Program(short='Lab',
                   name='Lab monitoring',
                   category='Care and treatment',
-                  targetpars=[{'param': 'numvlmon', 'pop': 'tot'}],
-                  targetpops=pops)
+                  targetpars='numvlmon',
+                  )
     
     Adherence = Program(short='Adherence',
                   name='Adherence support',
                   category='Care and treatment',
                   targetpars=[{'param': 'leavecare', 'pop': pop} for pop in pops],
-                  targetpops=pops)
+                  )
     
     Tracing = Program(short='Tracing',
                   name='Pre-ART tracing',
                   category='Care and treatment',
                   targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops],
-                  targetpops=pops)
+                  )
     
     PMTCT = Program(short='PMTCT',
                   name='Prevention of mother-to-child transmission',
                   category='Care and treatment',
-                  targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
-                  targetpops=pops)
+                  targetpars=['numtx', 'numpmtct'],
+                  )
                   
     OVC = Program(short='OVC',
                   name='Orphans and vulnerable children',
@@ -231,41 +230,42 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         PMTCT.update(    saturation=0.9,         year=year, unitcost=(100,200))
                                  
     if addcostcovdata:
-        
-        Condoms.update(  spend=1e7, coverage=3e5)
-        SBCC.update(     spend=1e7, coverage=3e5)
-        STI.update(      spend=1e7, coverage=3e5)
-        VMMC.update(     spend=1e7, coverage=3e5)
-        FSW.update(      spend=8e6, coverage=240000)
-        MSM.update(      spend=8e6, coverage=240000)
-        PWID.update(     spend=2e6, coverage=25000)
-        OST.update(      spend=2e6, coverage=25000)
-        NSP.update(      spend=2e6, coverage=25000)
-        Cash.update(     spend=2e6, coverage=25000)
-        PrEP.update(     spend=2e6, coverage=25000)
-        HTC.update(      spend=2e7, coverage=1.3e6)
-        ART.update(      spend=1e6, coverage=3308)
-        Lab.update(      spend=1e5, coverage=2000)
-        Adherence.update(spend=1e5, coverage=2000)
-        Tracing.update(  spend=2e1, coverage=2000)
-        PMTCT.update(    spend=4e6, coverage=5500)
+        datayear = 2014
+        Condoms.update(  datayear=datayear, spend=1e7, coverage=3e5)
+        SBCC.update(     datayear=datayear, spend=1e7, coverage=3e5)
+        STI.update(      datayear=datayear, spend=1e7, coverage=3e5)
+        VMMC.update(     datayear=datayear, spend=1e7, coverage=3e5)
+        FSW.update(      datayear=datayear, spend=8e6, coverage=240000)
+        MSM.update(      datayear=datayear, spend=8e6, coverage=240000)
+        PWID.update(     datayear=datayear, spend=2e6, coverage=25000)
+        OST.update(      datayear=datayear, spend=2e6, coverage=25000)
+        NSP.update(      datayear=datayear, spend=2e6, coverage=25000)
+        Cash.update(     datayear=datayear, spend=2e6, coverage=25000)
+        PrEP.update(     datayear=datayear, spend=2e6, coverage=25000)
+        HTC.update(      datayear=datayear, spend=2e7, coverage=1.3e6)
+        ART.update(      datayear=datayear, spend=1e6, coverage=3308)
+        Lab.update(      datayear=datayear, spend=1e5, coverage=2000)
+        Adherence.update(datayear=datayear, spend=1e5, coverage=2000)
+        Tracing.update(  datayear=datayear, spend=2e1, coverage=2000)
+        PMTCT.update(    datayear=datayear, spend=4e6, coverage=5500)
 
-        OVC.update(spend=1e7)
-        Other_care.update(spend=1e7)
-        MGMT.update(spend=1e7)
-        HR.update(spend=5e5)
-        ENV.update(spend=1e7)
-        SP.update(spend=1e7)
-        ME.update(spend=1e7)
-        INFR.update(spend=1e7)
-        Other.update(spend=5e5)
+        OVC.update(       datayear=datayear, spend=1e7)
+        MGMT.update(      datayear=datayear, spend=1e7)
+        HR.update(        datayear=datayear, spend=5e5)
+        ENV.update(       datayear=datayear, spend=1e7)
+        SP.update(        datayear=datayear, spend=1e7)
+        ME.update(        datayear=datayear, spend=1e7)
+        INFR.update(      datayear=datayear, spend=1e7)
+        Other_care.update(datayear=datayear, spend=1e7)
+        Other.update(     datayear=datayear, spend=5e5)
         
     allprograms = [Condoms, SBCC, STI, VMMC, FSW, MSM, PWID, OST, NSP, Cash, PrEP, PEP, HTC, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
     if filterprograms: # Only select those programs in filterprograms
         finalprograms = [program for program in allprograms if program.short in filterprograms]
+        return finalprograms
     
-    return finalprograms if filterprograms else allprograms
+    return allprograms
     
 
 

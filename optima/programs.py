@@ -123,6 +123,7 @@ class Program(object):
     FSW = Program(short='FSW', 
                name='FSW programs', 
                category='Prevention', 
+               datayear=2016,
                spend=1.34e6, 
                basespend=0, 
                coverage=67000, 
@@ -152,7 +153,7 @@ class Program(object):
     Version: 2017feb18 by cliffk  
     '''
     
-    def __init__(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, unitcost=None, year=None, saturation=None, targetpops=None, targetpars=None):
+    def __init__(self, short=None, name=None, category=None, datayear=None, spend=None, basespend=None, coverage=None, unitcost=None, year=None, saturation=None, targetpops=None, targetpars=None):
         
         # Initialize all values so you can see what the structure is
         self.short      = None # short name
@@ -161,14 +162,14 @@ class Program(object):
         self.spend      = None # latest or estimated expenditure
         self.basespend  = None # non-optimizable spending
         self.coverage   = None # latest or estimated coverage (? -- not used)
-        self.year       = None # Year for which spending and coverage data are available
-        self.unitcost   = None # dataframe
+        self.datayear   = None # Year for which spending and coverage data are available
+        self.unitcost   = None # dataframe -- note, 'year' if supplied (not necessary) is stored inside here
         self.saturation = None # saturation coverage value
         self.targetpops = None # key(s) for targeted populations
         self.targetpars = None # which parameters are targeted
         
         # Actually populate the values
-        self.update(short=short, name=name, category=category, spend=spend, basespend=basespend, coverage=coverage, unitcost=unitcost, year=year, saturation=saturation, targetpops=targetpops, targetpars=targetpars)
+        self.update(short=short, name=name, category=category, datayear=datayear, spend=spend, basespend=basespend, coverage=coverage, unitcost=unitcost, year=year, saturation=saturation, targetpops=targetpops, targetpars=targetpars)
         return None
     
     
@@ -178,7 +179,7 @@ class Program(object):
         return output
     
     
-    def update(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, saturation=None, unitcost=None, year=None, targetpops=None, targetpars=None):
+    def update(self, short=None, name=None, category=None, datayear=None, spend=None, basespend=None, coverage=None, saturation=None, unitcost=None, year=None, targetpops=None, targetpars=None):
         ''' Add data to a program, or otherwise update the values. Same syntax as init(). '''
         
         def settargetpars(targetpars=None):
@@ -195,14 +196,14 @@ class Program(object):
                         raise OptimaException(errormsg)
                 elif isinstance(targetpar, basestring): # It's a single string: assume only the parameter is specified
                     targetpars[tp] = {'param':targetpar, 'pop':'tot'} # Assume 'tot'
-                elif isinstance(targetpar, (list, tuple)): # It's a list, assume it's in the usual order
+                elif isinstance(targetpar, tuple): # It's a list, assume it's in the usual order
                     if len(targetpar)==2:
                         targetpars[tp] = {'param':targetpar[0], 'pop':targetpar[1]} # If a list or tuple, assume this order
                     else:
                         errormsg = 'When supplying a targetpar as a list or tuple, it must have length 2, not %s' % len(targetpar)
                         raise OptimaException(errormsg)
                 else:
-                    errormsg = 'Targetpar must be string, list/tuple, or dict, not %s' % type(targetpar)
+                    errormsg = 'Targetpar must be string, tuple, or dict, not %s' % type(targetpar)
                     raise OptimaException(errormsg)
             self.targetpars = targetpars # Actually set it
             return None
@@ -239,7 +240,7 @@ class Program(object):
         if spend      is not None: self.spend      = checktype(spend,     'number') # latest or estimated expenditure
         if basespend  is not None: self.basespend  = checktype(basespend, 'number') # non-optimizable spending
         if coverage   is not None: self.coverage   = checktype(coverage,  'number') # latest or estimated coverage (? -- not used)
-        if year       is not None: self.year       = checktype(year,      'number') # latest or estimated coverage (? -- not used)
+        if datayear   is not None: self.datayear   = checktype(datayear,  'number') # latest or estimated coverage (? -- not used)
         if saturation is not None: self.saturation = Val(saturation) # saturation coverage value
         if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
         if targetpars is not None: settargetpars(targetpars) # targeted parameters
