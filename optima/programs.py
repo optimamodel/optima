@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2017feb15
 """
 
-from optima import OptimaException, Link, Settings, odict, dataframe, objrepr, promotetoarray, promotetolist, defaultrepr, checktype
+from optima import OptimaException, Link, Settings, odict, dataframe, objrepr, promotetoarray, promotetolist, defaultrepr, checktype, isnumber
 from numpy.random import uniform, seed, get_state
 
 
@@ -181,7 +181,7 @@ class Program(object):
         ''' Add data to a program, or otherwise update the values. Same syntax as init(). '''
         
         # Handle targetpars -- a little complicated since it's a list of dicts
-        def settargetpars(targetpars):
+        def settargetpars(targetpars=None):
             targetparkeys = ['param', 'pop']
             if targetpars is not None:
                 targetpars = promotetolist(targetpars) # Let's make sure it's a list before going further
@@ -207,16 +207,26 @@ class Program(object):
                 self.targetpars = targetpars # Actually set it
         
         # Handle the unit cost, also complicated since have to convert to a dataframe
-        def setunitcost():
+        def setunitcost(unitcost=None):
             unitcostkeys = ['year', 'best', 'low', 'high']
             if self.unitcost is None: self.unitcost = dataframe(cols=unitcostkeys) # Create dataframe
             if unitcost is not None:
                 if isinstance(unitcost, dataframe): self.unitcost = unitcost # Right format already: use directly
-                elif isinstance(unitcost, (list, tuple)):
-                    year = Settings().now
-                    best,low,high = Val(unitcost).get('all')
-                
-                 # dataframe of [t, best, low, high]
+                elif isinstance(unitcost, (list, tuple, array([]))): # It's a list of....something, either a single year with uncertainty bounds or multiple years
+                    if isnumber(unitcost[0]): # It's a number: convert to values and use
+                        year = Settings().now
+                        best,low,high = Val(unitcost).get('all') # Convert it to a 
+                        self.unitcost.addrow([year, best, low, high])
+                    else:
+                        for uc in unitcost: # Actually a list of unit costs
+                            if isinstance(uc, dict): setunitcost(uc) # It's a dict: iterate recursively to add unit costs
+                            else:
+                                errormsg = 'Could not understand list of unit costs: expecting list of floats or list of dicts, not list containing %s' % uc
+                elif isinstance(unitcost, dict):
+                    if sorted(unitcostkeys)==sorted(unitcost.keys()):
+                        
+                else:
+                    
                 
         if short      is not None: self.short      = checktype(short,    'string') # short name
         if name       is not None: self.name       = checktype(name,     'string') # full name

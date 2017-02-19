@@ -404,7 +404,7 @@ def findinds(val1, val2=None, eps=1e-6):
     if val2==None: # Check for equality
         output = nonzero(val1) # If not, just check the truth condition
     else:
-        if isinstance(val2, (str, unicode)):
+        if isinstance(val2, basestring):
             output = nonzero(array(val1)==val2)
         else:
             output = nonzero(abs(array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
@@ -1284,12 +1284,12 @@ class dataframe(object):
     def _sanitizecol(self, col):
         ''' Take None or a string and return the index of the column '''
         if col is None: output = 0 # If not supplied, assume first column is control
-        elif isinstance(col, (str, unicode)): output = self.cols.index(col) # Convert to index
+        elif isinstance(col, basestring): output = self.cols.index(col) # Convert to index
         else: output = col
         return output
         
     def __getitem__(self, key):
-        if isinstance(key, (str, unicode)):
+        if isinstance(key, basestring):
             colindex = self.cols.index(key)
             output = self.data[colindex,:]
         elif isinstance(key, Number):
@@ -1302,7 +1302,7 @@ class dataframe(object):
         return output
         
     def __setitem__(self, key, value):
-        if isinstance(key, (str, unicode)):
+        if isinstance(key, basestring):
             if len(value) != self.nrows(): 
                 raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows()))
             try:
