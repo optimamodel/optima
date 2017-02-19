@@ -152,7 +152,7 @@ class Program(object):
     Version: 2017feb18 by cliffk  
     '''
     
-    def __init__(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, unitcost=None, saturation=None, targetpops=None, targetpars=None):
+    def __init__(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, unitcost=None, year=None, saturation=None, targetpops=None, targetpars=None):
         
         # Initialize all values so you can see what the structure is
         self.short      = None # short name
@@ -167,7 +167,7 @@ class Program(object):
         self.targetpars = None # which parameters are targeted
         
         # Actually populate the values
-        self.update(short=short, name=name, category=category, spend=spend, basespend=basespend, coverage=coverage, unitcost=unitcost, saturation=saturation, targetpops=targetpops, targetpars=targetpars)
+        self.update(short=short, name=name, category=category, spend=spend, basespend=basespend, coverage=coverage, unitcost=unitcost, year=year, saturation=saturation, targetpops=targetpops, targetpars=targetpars)
         return None
     
     
@@ -177,7 +177,7 @@ class Program(object):
         return output
     
     
-    def update(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, saturation=None, unitcost=None, targetpops=None, targetpars=None):
+    def update(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, saturation=None, unitcost=None, year=None, targetpops=None, targetpars=None):
         ''' Add data to a program, or otherwise update the values. Same syntax as init(). '''
         
         def settargetpars(targetpars=None):
@@ -206,14 +206,14 @@ class Program(object):
             self.targetpars = targetpars # Actually set it
             return None
         
-        def setunitcost(unitcost=None):
+        def setunitcost(unitcost=None, year=None):
             ''' Handle the unit cost, also complicated since have to convert to a dataframe '''
             unitcostkeys = ['year', 'best', 'low', 'high']
             if self.unitcost is None: self.unitcost = dataframe(cols=unitcostkeys) # Create dataframe
             if isinstance(unitcost, dataframe): self.unitcost = unitcost # Right format already: use directly
             elif isinstance(unitcost, (list, tuple, array([]))): # It's a list of....something, either a single year with uncertainty bounds or multiple years
                 if isnumber(unitcost[0]): # It's a number (or at least the first entry is): convert to values and use
-                    year = Settings().now
+                    if year is None: year = Settings().now # If no year is supplied, reset it
                     best,low,high = Val(unitcost).get('all') # Convert it to a Val to do proper error checking and set best, low, high correctly
                     self.unitcost.addrow([year, best, low, high])
                 else: # It's not a list of numbers, so have to iterate
@@ -225,7 +225,7 @@ class Program(object):
             elif isinstance(unitcost, dict): # Other main usage case -- it's a dict
                 blh = [unitcost.get(key) for key in ['best', 'low', 'high']] # Get an array of values...
                 best,low,high = Val(blh).get('all') # ... then sanitize them via Val
-                self.unitcost.addrow([unitcost.get(year), best, low, high]) # Actually add to dataframe
+                self.unitcost.addrow([unitcost.get('year',year), best, low, high]) # Actually add to dataframe
             else:
                 errormsg = 'Expecting unit cost of type dataframe, list/tuple/array, or dict, not %s' % type(unitcost)
                 raise OptimaException(errormsg)
@@ -241,7 +241,7 @@ class Program(object):
         if saturation is not None: self.saturation = Val(saturation) # saturation coverage value
         if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
         if targetpars is not None: settargetpars(targetpars) # targeted parameters
-        if unitcost   is not None: setunitcost(unitcost) # unit cost(s)
+        if unitcost   is not None: setunitcost(unitcost, year) # unit cost(s)
         
         return None
         
