@@ -349,8 +349,6 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.addcovout(par='linktocare', pop='F 15+',             lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
         R.addcovout(par='linktocare', pop='PWID',              lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
         R.addcovout(par='linktocare', pop='MSM',               lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
-        R.addcovout(par='numtx',      pop='tot')
-        R.addcovout(par='numvlmon',   pop='tot')
     
         # Store this program set in the project
         P.addprogset(R)
