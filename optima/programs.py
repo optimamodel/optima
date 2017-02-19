@@ -132,7 +132,7 @@ class Program(object):
                coverage=67000, 
                sauration=0.9, 
                unitcost={'year':2015, 'val':21.43}, 
-               targetpops='FSW', # NB, can be a list
+               targetpops='FSW', # NB, can be a list as well
                targetpars=('condcom', ('Clients', 'FSW'))
                )
     

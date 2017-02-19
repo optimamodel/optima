@@ -249,15 +249,15 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         Tracing.update(  datayear=datayear, spend=2e1, coverage=2000)
         PMTCT.update(    datayear=datayear, spend=4e6, coverage=5500)
 
-        OVC.update(       datayear=datayear, spend=1e7)
-        MGMT.update(      datayear=datayear, spend=1e7)
-        HR.update(        datayear=datayear, spend=5e5)
-        ENV.update(       datayear=datayear, spend=1e7)
-        SP.update(        datayear=datayear, spend=1e7)
-        ME.update(        datayear=datayear, spend=1e7)
-        INFR.update(      datayear=datayear, spend=1e7)
-        Other_care.update(datayear=datayear, spend=1e7)
-        Other.update(     datayear=datayear, spend=5e5)
+        OVC.update(       datayear=datayear, basespend=1e7)
+        MGMT.update(      datayear=datayear, basespend=1e7)
+        HR.update(        datayear=datayear, basespend=5e5)
+        ENV.update(       datayear=datayear, basespend=1e7)
+        SP.update(        datayear=datayear, basespend=1e7)
+        ME.update(        datayear=datayear, basespend=1e7)
+        INFR.update(      datayear=datayear, basespend=1e7)
+        Other_care.update(datayear=datayear, basespend=1e7)
+        Other.update(     datayear=datayear, basespend=5e5)
         
     allprograms = [Condoms, SBCC, STI, VMMC, FSW, MSM, PWID, OST, NSP, Cash, PrEP, PEP, HTC, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
