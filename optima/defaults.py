@@ -323,15 +323,6 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         # Get a default progset 
         R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Lab', 'Adherence', 'Tracing', 'Other'])
         
-        R.programs['Condoms'].costcovdata =      {'t':[2014],spend=[1.3e7],coverage=[3e5]}
-        R.programs['FSW programs'].costcovdata = {'t':[2014],spend=[2.5e6],coverage=[1e9]}
-        R.programs['HTC'].costcovdata =          {'t':[2014],spend=[1e7],coverage=[1.3e6]}
-        R.programs['ART'].costcovdata =          {'t':[2014],spend=[5e7],coverage=[4.81e4]}
-        R.programs['Lab'].costcovdata =          {'t':[2014],spend=[1.3e6],coverage=[1e4]}
-        R.programs['Adherence'].costcovdata =    {'t':[2014],spend=[1e6],coverage=[1e4]}
-        R.programs['Tracing'].costcovdata =      {'t':[2014],spend=[8e5],coverage=[1e4]}
-        R.programs['Other'].costcovdata =        {'t':[2014],spend=[1.5e7],coverage=[None]}
-        
         # Add program effects
         R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.2,0.25), year=year, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
         R.covout['condcas'][('Clients','F 15+')].addccopar({'intercept': (0.25,0.3), year=year, 'Condoms':(0.85,0.95)})
