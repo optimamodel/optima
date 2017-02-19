@@ -114,9 +114,44 @@ class Programset(object):
 
 
 class Program(object):
-    ''' Defines a single program. '''
+    '''
+    Defines a single program. Example:
+    
+    FSW = Program(short='FSW', 
+               name='FSW programs', 
+               category='Prevention', 
+               spend=1.34e6, 
+               basespend=0, 
+               coverage=67000, 
+               sauration=0.9, 
+               unitcost={'year':2015, 'val':21.43}, 
+               targetpops='FSW', # NB, can be a list
+               targetpars=('condcom', ('Clients', 'FSW'))
+               )
+    
+    Values can be set later using the update() method, e.g.:
+        FSW.update(spend=1.34e6, coverage=67000)       
+    
+    There is considerable flexibility in how the unitcost and targetpars are specified. For example, with targetpars:
+        targetpars = 'numtx' # Sets numtx, assumes 'tot'
+        targetpars = ('numtx', 'tot')
+        targetpars = {'param':'numtx', 'pop':tot}
+        targetpars = ['numtx', 'numpmtct'] # Assumes 'tot' population for both
+        targetpars = ['numtx', 'pop'] # NOT valid since assumes a list is a list of parameters
+    
+    With unitcost:
+        unitcost = 21.43 # Assumes current year and no uncertainty
+        unitcost = (11.43, 31.43) # Assumes current year, calculates uncertainty
+        unitcost = {'year':2017, 'val':(21.43, 11.43, 31.43)} # Sets everything (order doesn't matter)
+        unitcost = {'year':2017, 'val':{'best':21.43, 'low':11.43, 'high':31.43}} # Sets everything another way
+        unitcost = [{'year':2017, 'val':21.43}, {'year':2018, 'val':16.22}] # Can supply multiple years
+    
+    Version: 2017feb18 by cliffk  
+    '''
     
     def __init__(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, unitcost=None, saturation=None, targetpops=None, targetpars=None):
+        
+        # Initialize all values so you can see what the structure is
         self.short      = None # short name
         self.name       = None # full name
         self.category   = None # spending category
@@ -127,16 +162,21 @@ class Program(object):
         self.saturation = None # saturation coverage value
         self.targetpops = None # key(s) for targeted populations
         self.targetpars = None # which parameters are targeted
+        
+        # Actually populate the values
         self.update(short=short, name=name, category=category, spend=spend, basespend=basespend, coverage=coverage, unitcost=unitcost, saturation=saturation, targetpops=targetpops, targetpars=targetpars)
-#        self.denominators = self.setdenominators()
+        return None
+    
     
     def __repr__(self):
+        ''' Print the object nicely '''
         output = defaultrepr(self)
         return output
     
     
-    def update(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, unitcost=None, saturation=None, targetpops=None, targetpars=None):
-        ''' Add data to a program '''
+    def update(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, saturation=None, unitcost=None, targetpops=None, targetpars=None):
+        ''' Add data to a program, or otherwise update the values. Same syntax as init(). '''
+        
         if short      is not None: self.short      = checktype(short,    'string') # short name
         if name       is not None: self.name       = checktype(name,     'string') # full name
         if category   is not None: self.category   = checktype(category, 'string') # spending category
@@ -160,7 +200,7 @@ class Program(object):
                         raise OptimaException(errormsg)
                 elif isinstance(targetpar, basestring): # It's a single string: assume only the parameter is specified
                     targetpars[tp] = {'param':targetpar, 'pop':'tot'} # Assume 'tot'
-                elif isinstance(targetpar, [list, tuple]): # 
+                elif isinstance(targetpar, (list, tuple)): # 
                     if len(targetpar)==2:
                         targetpars[tp] = {'param':targetpar[0], 'pop':targetpar[1]} # If a list or tuple, assume this order
                     else:
@@ -179,7 +219,20 @@ class Program(object):
 
 
 class Covout(object):
-    ''' A coverage-outcome object -- cost-outcome objects are incorporated in programs '''
+    '''
+    A coverage-outcome object -- cost-outcome objects are incorporated in programs. Example:
+    
+    Covout(par='condcom',
+           pop=('Clients','FSW'),
+           lowerlim=0.4,
+           upperlim=[0.95,0.9,0.99],
+           progs={'FSW':0.9, 'SBCC':0.5}
+           )
+    
+    Generally, progset-level methods would be used to manipulate these objects, rather than directly.
+    
+    Version: 2017feb18 by cliffk
+    '''
     
     def __init__(self, par=None, pop=None, lowerlim=None, upperlim=None, progs=None):
         self.par = par
@@ -187,22 +240,22 @@ class Covout(object):
         self.lowerlim = Val(lowerlim)
         self.upperlim = Val(upperlim)
         self.progs = odict()
-        if isinstance(progs, dict):
-            for key,val in progs.items():
-                self.progs[key] = Val(val)
+        if progs is not None: self.add(progs)
         return None
     
     def add(self, prog=None, val=None):
         ''' 
         Accepts either
-        self.add({'FSW':[0.3,0.1,0.4]})
+        self.add([{'FSW':[0.3,0.1,0.4]}, {'SBCC':[0.1,0.05,0.15]}])
         or
         self.add('FSW', 0.3)
         '''
         if isinstance(prog, dict):
-            if isinstance(prog, dict):
-                for key,val in prog.items():
-                    self.progs[key] = Val(val)
+            for key,val in prog.items():
+                self.progs[key] = Val(val)
+        elif isinstance(prog, (list, tuple)):
+            for key,val in prog:
+                self.progs[key] = Val(val)
         elif isinstance(prog, basestring) and val is not None:
             self.progs[prog] = Val(val)
         else:
