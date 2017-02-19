@@ -7,7 +7,7 @@ Version: 2017feb15
 """
 
 from optima import OptimaException, Link, Settings, odict, dataframe, objrepr, promotetoarray, promotetolist, defaultrepr, checktype, isnumber
-from numpy.random import uniform, seed, get_state
+from numpy.random import uniform, seed, get_state, array
 
 
 class Programset(object):
@@ -180,54 +180,58 @@ class Program(object):
     def update(self, short=None, name=None, category=None, spend=None, basespend=None, coverage=None, saturation=None, unitcost=None, targetpops=None, targetpars=None):
         ''' Add data to a program, or otherwise update the values. Same syntax as init(). '''
         
-        # Handle targetpars -- a little complicated since it's a list of dicts
         def settargetpars(targetpars=None):
+            ''' Handle targetpars -- a little complicated since it's a list of dicts '''
             targetparkeys = ['param', 'pop']
-            if targetpars is not None:
-                targetpars = promotetolist(targetpars) # Let's make sure it's a list before going further
-                for tp,targetpar in enumerate(targetpars):
-                    if isinstance(targetpar, dict): # It's a dict, as it needs to be
-                        thesekeys = sorted(targetpar.keys())
-                        if thesekeys==targetparkeys: # Keys are correct -- main usage case!!
-                            targetpars[tp] = targetpar
-                        else:
-                            errormsg = 'Keys for a target parameter must be %s, not %s' % (targetparkeys, thesekeys)
-                            raise OptimaException(errormsg)
-                    elif isinstance(targetpar, basestring): # It's a single string: assume only the parameter is specified
-                        targetpars[tp] = {'param':targetpar, 'pop':'tot'} # Assume 'tot'
-                    elif isinstance(targetpar, (list, tuple)): # It's a list, assume it's in the usual order
-                        if len(targetpar)==2:
-                            targetpars[tp] = {'param':targetpar[0], 'pop':targetpar[1]} # If a list or tuple, assume this order
-                        else:
-                            errormsg = 'When supplying a targetpar as a list or tuple, it must have length 2, not %s' % len(targetpar)
-                            raise OptimaException(errormsg)
+            targetpars = promotetolist(targetpars) # Let's make sure it's a list before going further
+            for tp,targetpar in enumerate(targetpars):
+                if isinstance(targetpar, dict): # It's a dict, as it needs to be
+                    thesekeys = sorted(targetpar.keys())
+                    if thesekeys==targetparkeys: # Keys are correct -- main usage case!!
+                        targetpars[tp] = targetpar
                     else:
-                        errormsg = 'Targetpar must be string, list/tuple, or dict, not %s' % type(targetpar)
+                        errormsg = 'Keys for a target parameter must be %s, not %s' % (targetparkeys, thesekeys)
                         raise OptimaException(errormsg)
-                self.targetpars = targetpars # Actually set it
+                elif isinstance(targetpar, basestring): # It's a single string: assume only the parameter is specified
+                    targetpars[tp] = {'param':targetpar, 'pop':'tot'} # Assume 'tot'
+                elif isinstance(targetpar, (list, tuple)): # It's a list, assume it's in the usual order
+                    if len(targetpar)==2:
+                        targetpars[tp] = {'param':targetpar[0], 'pop':targetpar[1]} # If a list or tuple, assume this order
+                    else:
+                        errormsg = 'When supplying a targetpar as a list or tuple, it must have length 2, not %s' % len(targetpar)
+                        raise OptimaException(errormsg)
+                else:
+                    errormsg = 'Targetpar must be string, list/tuple, or dict, not %s' % type(targetpar)
+                    raise OptimaException(errormsg)
+            self.targetpars = targetpars # Actually set it
+            return None
         
-        # Handle the unit cost, also complicated since have to convert to a dataframe
         def setunitcost(unitcost=None):
+            ''' Handle the unit cost, also complicated since have to convert to a dataframe '''
             unitcostkeys = ['year', 'best', 'low', 'high']
             if self.unitcost is None: self.unitcost = dataframe(cols=unitcostkeys) # Create dataframe
-            if unitcost is not None:
-                if isinstance(unitcost, dataframe): self.unitcost = unitcost # Right format already: use directly
-                elif isinstance(unitcost, (list, tuple, array([]))): # It's a list of....something, either a single year with uncertainty bounds or multiple years
-                    if isnumber(unitcost[0]): # It's a number: convert to values and use
-                        year = Settings().now
-                        best,low,high = Val(unitcost).get('all') # Convert it to a 
-                        self.unitcost.addrow([year, best, low, high])
-                    else:
-                        for uc in unitcost: # Actually a list of unit costs
-                            if isinstance(uc, dict): setunitcost(uc) # It's a dict: iterate recursively to add unit costs
-                            else:
-                                errormsg = 'Could not understand list of unit costs: expecting list of floats or list of dicts, not list containing %s' % uc
-                elif isinstance(unitcost, dict):
-                    if sorted(unitcostkeys)==sorted(unitcost.keys()):
-                        
-                else:
+            if isinstance(unitcost, dataframe): self.unitcost = unitcost # Right format already: use directly
+            elif isinstance(unitcost, (list, tuple, array([]))): # It's a list of....something, either a single year with uncertainty bounds or multiple years
+                if isnumber(unitcost[0]): # It's a number (or at least the first entry is): convert to values and use
+                    year = Settings().now
+                    best,low,high = Val(unitcost).get('all') # Convert it to a Val to do proper error checking and set best, low, high correctly
+                    self.unitcost.addrow([year, best, low, high])
+                else: # It's not a list of numbers, so have to iterate
+                    for uc in unitcost: # Actually a list of unit costs
+                        if isinstance(uc, dict): setunitcost(uc) # It's a dict: iterate recursively to add unit costs
+                        else:
+                            errormsg = 'Could not understand list of unit costs: expecting list of floats or list of dicts, not list containing %s' % uc
+                            raise OptimaException(errormsg)
+            elif isinstance(unitcost, dict): # Other main usage case -- it's a dict
+                blh = [unitcost.get(key) for key in ['best', 'low', 'high']] # Get an array of values...
+                best,low,high = Val(blh).get('all') # ... then sanitize them via Val
+                self.unitcost.addrow([unitcost.get(year), best, low, high]) # Actually add to dataframe
+            else:
+                errormsg = 'Expecting unit cost of type dataframe, list/tuple/array, or dict, not %s' % type(unitcost)
+                raise OptimaException(errormsg)
+            return None
                     
-                
+        # Actually set everything
         if short      is not None: self.short      = checktype(short,    'string') # short name
         if name       is not None: self.name       = checktype(name,     'string') # full name
         if category   is not None: self.category   = checktype(category, 'string') # spending category
@@ -236,8 +240,8 @@ class Program(object):
         if coverage   is not None: self.coverage   = checktype(coverage,  'number') # latest or estimated coverage (? -- not used)
         if saturation is not None: self.saturation = Val(saturation) # saturation coverage value
         if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
-        if targetpars is not None: self.targetpars = settargetpars(targetpars) # targeted parameters
-        if unitcost   is not None: self.unitcost   = setunitcost(unitcost) # unit cost(s)
+        if targetpars is not None: settargetpars(targetpars) # targeted parameters
+        if unitcost   is not None: setunitcost(unitcost) # unit cost(s)
         
         return None
         
