@@ -161,6 +161,7 @@ class Program(object):
         self.spend      = None # latest or estimated expenditure
         self.basespend  = None # non-optimizable spending
         self.coverage   = None # latest or estimated coverage (? -- not used)
+        self.year       = None # Year for which spending and coverage data are available
         self.unitcost   = None # dataframe
         self.saturation = None # saturation coverage value
         self.targetpops = None # key(s) for targeted populations
@@ -238,6 +239,7 @@ class Program(object):
         if spend      is not None: self.spend      = checktype(spend,     'number') # latest or estimated expenditure
         if basespend  is not None: self.basespend  = checktype(basespend, 'number') # non-optimizable spending
         if coverage   is not None: self.coverage   = checktype(coverage,  'number') # latest or estimated coverage (? -- not used)
+        if year       is not None: self.year       = checktype(year,      'number') # latest or estimated coverage (? -- not used)
         if saturation is not None: self.saturation = Val(saturation) # saturation coverage value
         if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
         if targetpars is not None: settargetpars(targetpars) # targeted parameters

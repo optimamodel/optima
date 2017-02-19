@@ -91,20 +91,20 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   targetpars=[{'param': 'numcirc', 'pop': male} for male in malelist],
                   targetpops=malelist)              
                   
-    FSW_programs = Program(short='FSW programs',
+    FSW = Program(short='FSW programs',
                   name='Programs for female sex workers and clients',
                   category='Prevention',
                   targetpars=[{'param': 'condcom', 'pop': compship} for compship in fsw_compships] + [{'param': 'condcas', 'pop': caspship} for caspship in fsw_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in fswlist],
                   targetpops=fswlist)
                  
-    MSM_programs = Program(short='MSM programs',
+    MSM = Program(short='MSM programs',
                   name='Programs for men who have sex with men',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in msm_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in msmlist],
                   targetpops=msmlist,
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    PWID_programs = Program(short='PWID programs',
+    PWID = Program(short='PWID programs',
                   name='Programs for people who inject drugs',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in pwid_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in pwidlist] + [{'param': 'sharing', 'pop': pop} for pop in pwidlist],
@@ -212,79 +212,55 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   
     if addcostcovpars:
         year = 2016.
-        Condoms.update(saturation=0.74,    year=year, unitcost=(3,7))
-        SBCC.update(   saturation=0.6,     year=year, unitcost=(8,12))
-        STI.update(    saturation=0.6,     year=year, unitcost=(15,20))
-        VMMC.update(   saturation=(.5,.6), year=year, unitcost=(15,25))
-        FSW.update(    saturation=0.9,     year=year, unitcost=(25,35))
-        MSM.update(    saturation=0.9,     year=year, unitcost=(25,35))
-        PWID.update(   saturation=0.3,     year=year, unitcost=(25,35))
-        OST.update(    saturation=0.3,     year=year, unitcost=(100,200))
-        NSP.update(    saturation=0.3,     year=year, unitcost=(10,20))
-                                 
-        Cash.update(saturation=(0.3,0.3),
-                                 year=year,
-                                 unitcost=(50,80)})
-                                 
-        PrEP.update(saturation=(0.3,0.3),
-                                 year=year,
-                                 unitcost=(100,200)})
-                                 
-        HTC.update(saturation=(0.85,0.95),
-                                 year=year,
-                                 unitcost=(5,10)})
-                                 
-        ART.update(saturation=(0.99,0.99),
-                                 year=year,
-                                 unitcost=(400,800)})
-                                 
-        Lab.update(saturation=(0.99,0.99),
-                                 year=year,
-                                 unitcost=(40,80)})
-                                 
-        Adherence.update(saturation=(0.99,0.99),
-                                 year=year,
-                                 unitcost=(20,50)})
-                                 
-        Tracing.update(saturation=(0.99,0.99),
-                                 year=year,
-                                 unitcost=(20,50)})
-                                 
-        PMTCT.update(saturation=(0.9,0.9),
-                                 year=year,
-                                 unitcost=(100,200)})
+        Condoms.update(  saturation=0.74,        year=year, unitcost=(3,7))
+        SBCC.update(     saturation=0.6,         year=year, unitcost=(8,12))
+        STI.update(      saturation=0.6,         year=year, unitcost=(15,20))
+        VMMC.update(     saturation=(.5,.6),     year=year, unitcost=(15,25))
+        FSW.update(      saturation=0.9,         year=year, unitcost=(25,35))
+        MSM.update(      saturation=0.9,         year=year, unitcost=(25,35))
+        PWID.update(     saturation=0.3,         year=year, unitcost=(25,35))
+        OST.update(      saturation=0.3,         year=year, unitcost=(100,200))
+        NSP.update(      saturation=0.3,         year=year, unitcost=(10,20))
+        Cash.update(     saturation=0.3,         year=year, unitcost=(50,80))
+        PrEP.update(     saturation=0.3,         year=year, unitcost=(100,200))
+        HTC.update(      saturation=(0.85,0.95), year=year, unitcost=(5,10))
+        ART.update(      saturation=0.99,        year=year, unitcost=(400,800))
+        Lab.update(      saturation=0.99,        year=year, unitcost=(40,80))
+        Adherence.update(saturation=0.99,        year=year, unitcost=(20,50))
+        Tracing.update(  saturation=0.99,        year=year, unitcost=(20,50))
+        PMTCT.update(    saturation=0.9,         year=year, unitcost=(100,200))
                                  
     if addcostcovdata:
         
-        Condoms.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
-        SBCC.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
-        STI.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
-        VMMC.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
-        FSW_programs.addcostcovdatum({'t':2014,'cost':8e6,'coverage':240000})
-        MSM_programs.addcostcovdatum({'t':2014,'cost':8e6,'coverage':240000})
-        PWID_programs.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
-        OST.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
-        NSP.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
-        Cash.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
-        PrEP.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
-        HTC.addcostcovdatum({'t':2014,'cost':2e7,'coverage':1.3e6})
-        ART.addcostcovdatum({'t':2014,'cost':1e6,'coverage':3308.})
-        Lab.addcostcovdatum({'t':2014,'cost':1e5,'coverage':2000.})
-        Adherence.addcostcovdatum({'t':2014,'cost':1e5,'coverage':2000.})
-        Tracing.addcostcovdatum({'t':2014,'cost':2e1,'coverage':2000.})
-        PMTCT.addcostcovdatum({'t':2014,'cost':4e6,'coverage':5500})
+        Condoms.update(  spend=1e7, coverage=3e5)
+        SBCC.update(     spend=1e7, coverage=3e5)
+        STI.update(      spend=1e7, coverage=3e5)
+        VMMC.update(     spend=1e7, coverage=3e5)
+        FSW.update(      spend=8e6, coverage=240000)
+        MSM.update(      spend=8e6, coverage=240000)
+        PWID.update(     spend=2e6, coverage=25000)
+        OST.update(      spend=2e6, coverage=25000)
+        NSP.update(      spend=2e6, coverage=25000)
+        Cash.update(     spend=2e6, coverage=25000)
+        PrEP.update(     spend=2e6, coverage=25000)
+        HTC.update(      spend=2e7, coverage=1.3e6)
+        ART.update(      spend=1e6, coverage=3308)
+        Lab.update(      spend=1e5, coverage=2000)
+        Adherence.update(spend=1e5, coverage=2000)
+        Tracing.update(  spend=2e1, coverage=2000)
+        PMTCT.update(    spend=4e6, coverage=5500)
 
-        OVC.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
-        Other_care.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
-        MGMT.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
-        HR.addcostcovdatum({'t':2014,'cost':5e5,'coverage':None})
-        ENV.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
-        SP.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
-        ME.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
-        INFR.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
-        Other.addcostcovdatum({'t':2014,'cost':5e5,'coverage':None})
+        OVC.update(spend=1e7)
+        Other_care.update(spend=1e7)
+        MGMT.update(spend=1e7)
+        HR.update(spend=5e5)
+        ENV.update(spend=1e7)
+        SP.update(spend=1e7)
+        ME.update(spend=1e7)
+        INFR.update(spend=1e7)
+        Other.update(spend=5e5)
         
-    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTC, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
+    allprograms = [Condoms, SBCC, STI, VMMC, FSW, MSM, PWID, OST, NSP, Cash, PrEP, PEP, HTC, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
     if filterprograms: # Only select those programs in filterprograms
         finalprograms = [program for program in allprograms if program.short in filterprograms]
@@ -347,14 +323,14 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         # Get a default progset 
         R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Lab', 'Adherence', 'Tracing', 'Other'])
         
-        R.programs['Condoms'].costcovdata =      {'t':[2014],'cost':[1.3e7],'coverage':[3e5]}
-        R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
-        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
-        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[5e7],'coverage':[4.81e4]}
-        R.programs['Lab'].costcovdata =          {'t':[2014],'cost':[1.3e6],'coverage':[1e4]}
-        R.programs['Adherence'].costcovdata =    {'t':[2014],'cost':[1e6],'coverage':[1e4]}
-        R.programs['Tracing'].costcovdata =      {'t':[2014],'cost':[8e5],'coverage':[1e4]}
-        R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
+        R.programs['Condoms'].costcovdata =      {'t':[2014],spend=[1.3e7],coverage=[3e5]}
+        R.programs['FSW programs'].costcovdata = {'t':[2014],spend=[2.5e6],coverage=[1e9]}
+        R.programs['HTC'].costcovdata =          {'t':[2014],spend=[1e7],coverage=[1.3e6]}
+        R.programs['ART'].costcovdata =          {'t':[2014],spend=[5e7],coverage=[4.81e4]}
+        R.programs['Lab'].costcovdata =          {'t':[2014],spend=[1.3e6],coverage=[1e4]}
+        R.programs['Adherence'].costcovdata =    {'t':[2014],spend=[1e6],coverage=[1e4]}
+        R.programs['Tracing'].costcovdata =      {'t':[2014],spend=[8e5],coverage=[1e4]}
+        R.programs['Other'].costcovdata =        {'t':[2014],spend=[1.5e7],coverage=[None]}
         
         # Add program effects
         R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.2,0.25), year=year, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
@@ -451,9 +427,9 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
                                  year=year,
                                  unitcost=(4,8)})
 
-        HTC_workplace.addcostcovdatum({'t':2014,'cost':1e7,'coverage':9e6})
-        HTC_mobile.addcostcovdatum({'t':2014,'cost':1e6,'coverage':2e5})
-        HTC_medical.addcostcovdatum({'t':2014,'cost':1e6,'coverage':4e5})
+        HTC_workplace.update(spend=1e7,coverage=9e6})
+        HTC_mobile.update(spend=1e6,coverage=2e5})
+        HTC_medical.update(spend=1e6,coverage=4e5})
         
         R.addprograms(newprograms=[HTC_workplace, HTC_mobile, HTC_medical])
 
