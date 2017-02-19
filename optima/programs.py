@@ -82,9 +82,11 @@ class Programset(object):
         return None
     
     
-    def addcovout(self):
+    def addcovout(self, par=None, pop=None, lowerlim=None, upperlim=None, progs=None):
         ''' add coverage-outcome parameter '''
-        pass
+        self.covout[(par, pop)] = Covout(par=par, pop=pop, lowerlim=lowerlim, upperlim=upperlim, progs=progs)
+        return None
+
 
     def defaultbudget(self, total=True):
         ''' Get default budget -- either per program or total '''
