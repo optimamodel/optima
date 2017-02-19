@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2017feb15
 """
 
-from optima import OptimaException, Link, odict, objrepr, promotetoarray, promotetolist, defaultrepr, checktype
+from optima import OptimaException, Link, odict, dataframe, objrepr, promotetoarray, promotetolist, defaultrepr, checktype
 from numpy.random import uniform, seed, get_state
 
 
@@ -140,13 +140,41 @@ class Program(object):
         if short      is not None: self.short      = checktype(short,    'string') # short name
         if name       is not None: self.name       = checktype(name,     'string') # full name
         if category   is not None: self.category   = checktype(category, 'string') # spending category
-        if spend      is not None: self.spend      = None # latest or estimated expenditure
-        if basespend  is not None: self.basespend  = None # non-optimizable spending
-        if coverage   is not None: self.coverage   = None # latest or estimated coverage (? -- not used)
-        if unitcost   is not None: self.unitcost   = None # dataframe of [t, best, low, high]
-        if saturation is not None: self.saturation = None # saturation coverage value
+        if spend      is not None: self.spend      = checktype(spend,     'number') # latest or estimated expenditure
+        if basespend  is not None: self.basespend  = checktype(basespend, 'number') # non-optimizable spending
+        if coverage   is not None: self.coverage   = checktype(coverage,  'number') # latest or estimated coverage (? -- not used)
+        if saturation is not None: self.saturation = Val(saturation) # saturation coverage value
         if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
-        if targetpars is not None: self.targetpars = None # which parameters are targeted
+        
+        # Handle targetpars -- a little complicated since it's a list of dicts
+        targetparkeys = ['param', 'pop']
+        if targetpars is not None:
+            targetpars = promotetolist(targetpars) # Let's make sure it's a list before going further
+            for tp,targetpar in enumerate(targetpars):
+                if isinstance(targetpar, dict): # It's a dict, as it needs to be
+                    thesekeys = sorted(targetpar.keys())
+                    if thesekeys==targetparkeys: # Keys are correct -- main usage case!!
+                        targetpars[tp] = targetpar
+                    else:
+                        errormsg = 'Keys for a target parameter must be %s, not %s' % (targetparkeys, thesekeys)
+                        raise OptimaException(errormsg)
+                elif isinstance(targetpar, basestring): # It's a single string: assume only the parameter is specified
+                    targetpars[tp] = {'param':targetpar, 'pop':'tot'} # Assume 'tot'
+                elif isinstance(targetpar, [list, tuple]): # 
+                    if len(targetpar)==2:
+                        targetpars[tp] = {'param':targetpar[0], 'pop':targetpar[1]} # If a list or tuple, assume this order
+                    else:
+                        errormsg = 'When supplying a targetpar as a list or tuple, it must have length 2, not %s' % len(targetpar)
+                        raise OptimaException(errormsg)
+                else:
+                    errormsg = 'Targetpar must be string, list/tuple, or dict, not %s' % type(targetpar)
+                    raise OptimaException(errormsg)
+        
+        # Handle the unit cost
+        unitcostkeys = ['year', 'val']
+        if unitcost is not None:
+            
+            self.unitcost   = None # dataframe of [t, best, low, high]
 
 
 
@@ -187,7 +215,28 @@ class Covout(object):
 
 
 class Val(object):
-    ''' A single value for a coverage-outcome curve -- seems insanely complicated, I know! '''
+    '''
+    A single value including uncertainty -- seems insanely complicated for what it does, I know!
+    
+    Can be set the following ways:
+    v = Val(0.3)
+    v = Val([0.2, 0.4])
+    v = Val([0.3, 0.2, 0.4])
+    v = Val(best=0.3, low=0.2, high=0.4)
+    
+    Can be called the following ways:
+    v() # returns 0.3
+    v('best') # returns 0.3
+    v(what='best') # returns 0.3
+    v('rand') # returns value between low and high (assuming uniform distribution)
+    
+    Can be updated the following ways:
+    v(0.33) # resets best
+    v([0.22, 0.44]) # resets everything
+    v(best=0.33) # resets best
+    
+    Version: 2017feb18 by cliffk
+    '''
     
     def __init__(self, best=None, low=None, high=None, dist=None):
         ''' Allow the object to be initialized, but keep the same infrastructure for updating '''
@@ -248,7 +297,7 @@ class Val(object):
         
         # Handle distributions
         validdists = ['uniform']
-        if dist is None: dist = 'uniform'
+        if dist is None: dist = validdists[0]
         if dist not in validdists:
             errormsg = 'Distribution "%s" not valid; choices are: %s' % (dist, validdists)
             raise OptimaException(errormsg) 
@@ -258,6 +307,9 @@ class Val(object):
         self.low  = low
         self.high = high
         self.dist = dist
+        if not low<=best<=high:
+            errormsg = 'Values are out of order (check that low=%s <= best=%s <= high=%s)' % (low, best, high)
+            raise OptimaException(errormsg) 
         
         return None
     
@@ -272,7 +324,11 @@ class Val(object):
             val = self.high
         elif what in ['rand','random']:
             seed(get_state()[1][0]) # Reset the random seed, if specified -- WARNING, will affect rest of Optima!
-            val = uniform(low=self.low, high=self.high, size=n)
+            if self.dist=='uniform':
+                val = uniform(low=self.low, high=self.high, size=n)
+            else:
+                errormsg = 'Distribution %s is not implemented, sorry' % self.dist
+                raise OptimaException(errormsg)
         return val
     
     
