@@ -125,13 +125,10 @@ class Program(object):
     
     FSW = Program(short='FSW', 
                name='FSW programs', 
-               category='Prevention', 
-               datayear=2016,
-               spend=1.34e6, 
-               basespend=0, 
-               coverage=67000, 
-               sauration=0.9, 
-               unitcost={'year':2015, 'val':21.43}, 
+               category='Prevention',
+               data={'year':2016, 'spend':1.34e6, 'basespend':0, 'coverage':67000}, 
+               unitcost={'year':2015, 'val':(25, 35)},
+               sauration=[0.9,0.85,0.95], # NB, can be a single value
                targetpops='FSW', # NB, can be a list as well
                targetpars=('condcom', ('Clients', 'FSW'))
                )
@@ -156,23 +153,20 @@ class Program(object):
     Version: 2017feb18 by cliffk  
     '''
     
-    def __init__(self, short=None, name=None, category=None, datayear=None, spend=None, basespend=None, coverage=None, unitcost=None, year=None, saturation=None, targetpops=None, targetpars=None):
+    def __init__(self, short=None, name=None, category=None, data=None, unitcost=None, year=None, saturation=None, targetpops=None, targetpars=None):
         
         # Initialize all values so you can see what the structure is
         self.short      = None # short name
         self.name       = None # full name
         self.category   = None # spending category
-        self.spend      = None # latest or estimated expenditure
-        self.basespend  = None # non-optimizable spending
-        self.coverage   = None # latest or estimated coverage (? -- not used)
-        self.datayear   = None # Year for which spending and coverage data are available
+        self.data       = None # latest or estimated expenditure
         self.unitcost   = None # dataframe -- note, 'year' if supplied (not necessary) is stored inside here
         self.saturation = None # saturation coverage value
         self.targetpops = None # key(s) for targeted populations
         self.targetpars = None # which parameters are targeted
         
         # Actually populate the values
-        self.update(short=short, name=name, category=category, datayear=datayear, spend=spend, basespend=basespend, coverage=coverage, unitcost=unitcost, year=year, saturation=saturation, targetpops=targetpops, targetpars=targetpars)
+        self.update(short=short, name=name, category=category, data=data, unitcost=unitcost, year=year, saturation=saturation, targetpops=targetpops, targetpars=targetpars)
         return None
     
     
@@ -182,7 +176,7 @@ class Program(object):
         return output
     
     
-    def update(self, short=None, name=None, category=None, datayear=None, spend=None, basespend=None, coverage=None, saturation=None, unitcost=None, year=None, targetpops=None, targetpars=None):
+    def update(self, short=None, name=None, category=None, data=None, saturation=None, unitcost=None, year=None, targetpops=None, targetpars=None):
         ''' Add data to a program, or otherwise update the values. Same syntax as init(). '''
         
         def settargetpars(targetpars=None):
@@ -214,11 +208,11 @@ class Program(object):
         def setunitcost(unitcost=None, year=None):
             ''' Handle the unit cost, also complicated since have to convert to a dataframe '''
             unitcostkeys = ['year', 'best', 'low', 'high']
+            if year is None: year = Settings().now # If no year is supplied, reset it; not used if supplied in unitcost dict
             if self.unitcost is None: self.unitcost = dataframe(cols=unitcostkeys) # Create dataframe
             if isinstance(unitcost, dataframe): self.unitcost = unitcost # Right format already: use directly
             elif isinstance(unitcost, (list, tuple, array([]))): # It's a list of....something, either a single year with uncertainty bounds or multiple years
                 if isnumber(unitcost[0]): # It's a number (or at least the first entry is): convert to values and use
-                    if year is None: year = Settings().now # If no year is supplied, reset it
                     best,low,high = Val(unitcost).get('all') # Convert it to a Val to do proper error checking and set best, low, high correctly
                     self.unitcost.addrow([year, best, low, high])
                 else: # It's not a list of numbers, so have to iterate
@@ -235,19 +229,47 @@ class Program(object):
                 errormsg = 'Expecting unit cost of type dataframe, list/tuple/array, or dict, not %s' % type(unitcost)
                 raise OptimaException(errormsg)
             return None
+        
+        def setdata(data=None, year=None):
+            ''' Handle the spend-coverage, data, also complicated since have to convert to a dataframe '''
+            datakeys = ['year', 'spend', 'basespend', 'coverage']
+            if self.data is None: self.data = dataframe(cols=datakeys) # Create dataframe
+            if year is None: year = Settings().now # If no year is supplied, reset it
+            
+            if isinstance(data, dataframe): self.data = data # Right format already: use directly
+            elif isinstance(data, dict):
+                ysbc = [data.get(key,0) for key in datakeys]
+                self.data.addrow(data)
+            
+            elif isinstance(data, (list, tuple, array([]))): # It's a list of....something, either a single year with uncertainty bounds or multiple years
+                if isnumber(data[0]): # It's a number (or at least the first entry is): convert to values and use
+                    
+                    best,low,high = Val(data).get('all') # Convert it to a Val to do proper error checking and set best, low, high correctly
+                    self.data.addrow([year, best, low, high])
+                else: # It's not a list of numbers, so have to iterate
+                    for uc in data: # Actually a list of unit costs
+                        if isinstance(uc, dict): setdata(uc) # It's a dict: iterate recursively to add unit costs
+                        else:
+                            errormsg = 'Could not understand list of unit costs: expecting list of floats or list of dicts, not list containing %s' % uc
+                            raise OptimaException(errormsg)
+            elif isinstance(data, dict): # Other main usage case -- it's a dict
+                blh = [data.get(key) for key in ['best', 'low', 'high']] # Get an array of values...
+                best,low,high = Val(blh).get('all') # ... then sanitize them via Val
+                self.data.addrow([data.get('year',year), best, low, high]) # Actually add to dataframe
+            else:
+                errormsg = 'Expecting unit cost of type dataframe, list/tuple/array, or dict, not %s' % type(data)
+                raise OptimaException(errormsg)
+            return None
                     
         # Actually set everything
         if short      is not None: self.short      = checktype(short,    'string') # short name
         if name       is not None: self.name       = checktype(name,     'string') # full name
         if category   is not None: self.category   = checktype(category, 'string') # spending category
-        if spend      is not None: self.spend      = checktype(spend,     'number') # latest or estimated expenditure
-        if basespend  is not None: self.basespend  = checktype(basespend, 'number') # non-optimizable spending
-        if coverage   is not None: self.coverage   = checktype(coverage,  'number') # latest or estimated coverage (? -- not used)
-        if datayear   is not None: self.datayear   = checktype(datayear,  'number') # latest or estimated coverage (? -- not used)
         if saturation is not None: self.saturation = Val(saturation) # saturation coverage value
         if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
         if targetpars is not None: settargetpars(targetpars) # targeted parameters
         if unitcost   is not None: setunitcost(unitcost, year) # unit cost(s)
+        if data       is not None: setdata(data, year) # unit cost(s)
         
         return None
         

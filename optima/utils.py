@@ -1192,7 +1192,7 @@ class odict(OrderedDict):
 ##############################################################################
 
 # These are repeated to make this frationally more self-contained
-from numpy import array, zeros, vstack, hstack, matrix, argsort # analysis:ignore
+from numpy import array, zeros, empty, vstack, hstack, matrix, argsort # analysis:ignore
 from numbers import Number # analysis:ignore
 
 class dataframe(object):
@@ -1268,7 +1268,7 @@ class dataframe(object):
             
             return output
     
-    def _val2row(self, value):
+    def _val2row(self, value=None):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
             output = zeros(self.ncols(), dtype=object)
@@ -1278,6 +1278,8 @@ class dataframe(object):
                 except: 
                     raise Exception('Entry for column %s not found; keys you supplied are: %s' % (col, value.keys()))
             return array(output, dtype=object)
+        elif value is None:
+            return empty(self.ncols(),dtype=object)
         else: # Not sure what it is, just make it an array
             return array(value, dtype=object)
     
@@ -1324,28 +1326,6 @@ class dataframe(object):
             self.data[colindex,rowindex] = value
         return None
     
-    def ncols(self):
-        ''' Get the number of columns in the data frame '''
-        return len(self.cols)
-
-    def nrows(self):
-        ''' Get the number of rows in the data frame '''
-        try:    return self.data.shape[1]
-        except: return 0 # If it didn't work, probably because it's empty
-    
-    def addcol(self, key, value):
-        ''' Add a new colun to the data frame -- for consistency only '''
-        self.__setitem__(key, value)
-    
-    def rmcol(self, key, returnval=True):
-        ''' Remove a column from the data frame '''
-        colindex = self.cols.index(key)
-        self.cols.pop(colindex)
-        thiscol = self.data[colindex,:]
-        self.data = vstack((self.data[:colindex,:], self.data[colindex+1:,:]))
-        if returnval: return thiscol
-        else: return None
-    
     def pop(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
@@ -1360,27 +1340,60 @@ class dataframe(object):
         self.data = hstack((self.data, array(matrix(value).transpose(), dtype=object)))
         return None
     
-    def addrow(self, value, overwrite=True, col=None, reverse=False):
+    def ncols(self):
+        ''' Get the number of columns in the data frame '''
+        return len(self.cols)
+
+    def nrows(self):
+        ''' Get the number of rows in the data frame '''
+        try:    return self.data.shape[1]
+        except: return 0 # If it didn't work, probably because it's empty
+    
+    def addcol(self, key, value):
+        ''' Add a new colun to the data frame -- for consistency only '''
+        self.__setitem__(key, value)
+    
+    def rmcol(self, key):
+        ''' Remove a column from the data frame '''
+        colindex = self.cols.index(key)
+        self.cols.pop(colindex) # Remove from list of columns
+        self.data = vstack((self.data[:colindex,:], self.data[colindex+1:,:])) # Remove from data
+        return None
+    
+    def addrow(self, value=None, overwrite=True, col=None, reverse=False):
         ''' Like append, but removes duplicates in the first column and resorts '''
         value = self._val2row(value) # Make sure it's in the correct format
-        col = self._sanitizecol(col)
-        try:    index = self.data[col,:].tolist().index(value[col]) # Try to find duplicates
-        except: index = None
+        col   = self._sanitizecol(col)
+        index = self._rowindex(key=value[col], col=col, die=False) # Return None if not found
         if index is None or not overwrite: self.append(value)
         else: self.data[:,index] = value # If it exists already, just replace it
         self.sort(col=col, reverse=reverse) # Sort
         return None
     
-    def rmrow(self, key=None, col=None, returnval=False):
-        ''' Like pop, but removes by matching the first column instead of the index '''
+    def _rowindex(self, key=None, col=None, die=False):
+        ''' Get the sanitized row index for a given key and column '''
         col = self._sanitizecol(col)
-        if key is None: key = self.data[col,-1] # If not supplied, pick the last element
-        try:    index = self.data[col,:].tolist().index(key) # Try to find duplicates
-        except: raise Exception('Item %s not found; choices are: %s' % (key, self.data[col,:]))
-        thisrow = self.pop(index)
-        if returnval: return thisrow
-        else:         return None
+        coldata = self.data[col,:] # Get data for this column
+        if key is None: key = coldata[-1] # If not supplied, pick the last element
+        try:    index = coldata.tolist().index(key) # Try to find duplicates
+        except: 
+            if die: raise Exception('Item %s not found; choices are: %s' % (key, coldata))
+            else:   return None
+        return index
+        
+    def rmrow(self, key=None, col=None, returnval=False, die=True):
+        ''' Like pop, but removes by matching the first column instead of the index '''
+        index = self._rowindex(key=key, col=col, die=die)
+        if index is not None: self.pop(index)
+        return None
     
+    def getrow(self, key=None, col=None, die=True):
+        ''' Get a row by value, e.g. getrow(2016) will get the data corresponding to row 2016 '''
+        index = self._rowindex(key=key, col=col, die=die)
+        if index is not None: thisrow = self.data[:,index]
+        else:                 thisrow = None
+        return thisrow
+        
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
         rowindex = int(row)
