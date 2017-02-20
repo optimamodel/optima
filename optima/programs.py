@@ -8,7 +8,7 @@ Version: 2017feb19
 
 from optima import OptimaException, Link, Settings, odict, dataframe # Classes
 from optima import objrepr, promotetoarray, promotetolist, checktype, isnumber # Utilities
-from numpy.random import uniform, seed, get_state
+from numpy.random import uniform
 
 
 class Programset(object):
@@ -119,20 +119,20 @@ class Programset(object):
         missingdata = []
         missingunit = []
         missingsat  = []
-        for program in self.programs:
+        for program in self.programs.values():
             if program.getspend()    is None: missingdata.append(program.short)
             if program.getunitcost() is None: missingunit.append(program.short)
             if program.saturation is None:    missingsat.append(program.short)
         if len(missingdata):
-            datastring = 'The following programs are missing spending data: %s\n' % missingdata
+            datastring = 'The following programs are missing spending data: %s' % missingdata
             if doprint: print(datastring)
             else: output = datastring
         if len(missingunit):
-            unitstring = 'The following programs are missing unit costs: %s\n' % missingunit
+            unitstring = 'The following programs are missing unit costs: %s' % missingunit
             if doprint: print(unitstring)
             else: output += unitstring
         if len(missingsat):
-            satstring = 'The following programs are missing saturation values: %s\n' % missingsat
+            satstring = 'The following programs are missing saturation values: %s' % missingsat
             if doprint: print(satstring)
             else: output += satstring
         return output
@@ -312,7 +312,6 @@ class Program(object):
             
                     
         # Actually set everything
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         if short      is not None: self.short      = short # short name
         if name       is not None: self.name       = name # full name
         if category   is not None: self.category   = category # spending category
@@ -534,7 +533,6 @@ class Val(object):
         elif what is 'high':               val = self.high
         elif what is 'all':                val = [self.best, self.low, self.high]
         elif what in ['rand','random']:
-            seed(get_state()[1][0])
             if self.dist=='uniform':       val = uniform(low=self.low, high=self.high, size=n)
             else:
                 errormsg = 'Distribution %s is not implemented, sorry' % self.dist
