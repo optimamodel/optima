@@ -317,10 +317,6 @@ class Program(object):
 
             return None
         
-        # Lastly, deal with targetpops
-#        if targetpops is not None: targetpops = 
-#        else:                      targetpops = self.projectref().pars()['popkeys']  # Set default -- all populations
-            
         # Actually set everything
         if short      is not None: self.short      = short # short name
         if name       is not None: self.name       = name # full name
@@ -331,6 +327,15 @@ class Program(object):
         if unitcost   is not None: setunitcost(unitcost, year) # unit cost(s)
         if data       is not None: setdata(data, year) # unit cost(s)
         
+        # Finally, check everything
+        if self.short is None: # self.short must exist
+            errormsg = 'You must supply a short name for a program'
+            raise OptimaException(errormsg)
+        if self.name is None:       self.name = self.short # If name not supplied, use short
+        if self.category is None:   self.category = 'Unspecified'
+        if self.targetpops is None: self.targetpops = [] # Empty list
+        if self.targetpars is None: self.targetpars = [] # Empty list
+            
         return None
     
     def adddata(self, data=None, year=None, spend=None, basespend=None, coverage=None):
