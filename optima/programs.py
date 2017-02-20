@@ -316,14 +316,18 @@ class Program(object):
                 raise OptimaException(errormsg)
 
             return None
+        
+        # Lastly, deal with targetpops
+        targetpars = promotetolist(targetpops, 'string') # key(s) for targeted populations
+        if self.targetpops is None:
+            self.targetpops = self.projectref().pars()['popkeys']  # Set default -- all populations
             
-                    
         # Actually set everything
         if short      is not None: self.short      = short # short name
         if name       is not None: self.name       = name # full name
         if category   is not None: self.category   = category # spending category
         if saturation is not None: self.saturation = Val(saturation) # saturation coverage value
-        if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
+        if targetpops is not None: self.targetpops = targetpops # target populations
         if targetpars is not None: settargetpars(targetpars) # targeted parameters
         if unitcost   is not None: setunitcost(unitcost, year) # unit cost(s)
         if data       is not None: setdata(data, year) # unit cost(s)

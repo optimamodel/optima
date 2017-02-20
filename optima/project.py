@@ -149,7 +149,19 @@ class Project(object):
         if filename[-5:]!='.xlsx': filename += '.xlsx'
         makespreadsheet(filename=filename, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
         return None
-
+    
+    
+    def makeprogramspreadsheet(self, filename=None, progset=-1, verbose=2):
+        '''
+        Create a spreadsheet for entering program data. Example:
+            from optima import defaultproject; P = defaultproject()
+            P.makeprogramspreadsheet(filename='defaultprogamspreadsheet.xlsx', progset='default')
+        '''
+        if filename is None: filename = self.name+'-programspreadsheet.xlsx'
+        pops = self.data['pops']['short']
+        progs = [{'short':p.short, 'name':p.name, 'targetpops': p.targetpops} for p in self.progsets[progset].programs.values()]
+        makeprogramspreadsheet(filename=filename, pops=pops, progs=progs, datastart=self.settings.start, dataend=self.settings.end, verbose=verbose)
+        return None
 
     
     def reorderpops(self, poporder=None):
@@ -380,19 +392,6 @@ class Project(object):
         return None
     
 
-    def makeprogramspreadsheet(self, filename=None, progset=-1, verbose=2):
-        '''
-        Create a spreadsheet for entering program data. Example:
-            from optima import defaultproject; P = defaultproject()
-            P.makeprogramspreadsheet(filename='defaultprogamspreadsheet.xlsx', progset='default')
-        '''
-        if filename is None: filename = self.name+'-programspreadsheet.xlsx'
-        pops = self.data['pops']['short']
-        progs = [{'short':p.short, 'name':p.name, 'targetpops': p.targetpops} for p in self.progsets[progset].programs.values()]
-        makeprogramspreadsheet(filename=filename, pops=pops, progs=progs, datastart=self.settings.start, dataend=self.settings.end, verbose=verbose)
-        return None
-    
-    
     def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename

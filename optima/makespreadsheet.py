@@ -601,7 +601,7 @@ class OptimaProgramSpreadsheet:
         self.current_sheet = None
         self.prog_range = None
         self.ref_pop_range = None
-        self.years_range = range(self.data_start, self.data_end+1)
+        self.years_range = range(int(self.data_start), int(self.data_end+1))
 
         self.npops = len(pops)
         self.nprogs = len(progs)

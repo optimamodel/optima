@@ -246,6 +246,8 @@ def promotetolist(obj=None, objtype=None):
     if objtype is not None:  # Check that the types match -- now that we know it's a list, we can iterate over it
         for item in obj:
             checktype(obj=item, objtype=objtype, die=True)
+    if obj is None:
+        raise Exception('YOU FOOL')
     return obj
 
 
