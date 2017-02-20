@@ -115,12 +115,20 @@ class Programset(object):
         ''' compare textually '''
         pass
     
-    def optimizableprograms(self, doprint=False):
-        ''' Get a list of which programs are optimizable '''
+    def optimizableprograms(self, doprint=False, boolean=False):
+        '''
+        Get a list of which programs are optimizable. Returns
+        either a list of optimizable program keys (default), or
+        else a Boolean list for all programs for whether or not
+        they're optimizable.        
+        '''
         optimizable = []
         for key,program in self.programs.items():
             if program.optimizable():
-                optimizable.append(key)
+                if boolean: optimizable.append(True)
+                else:       optimizable.append(key)
+            else:
+                if boolean: optimizable.append(False)
         return optimizable
     
     def readytooptimize(self, doprint=True):

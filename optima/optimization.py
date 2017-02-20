@@ -448,7 +448,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     else:
         try: origbudget = dcp(progset.defaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
-    optiminds = findinds(progset.optimizable())
+    optiminds = findinds(progset.optimizableprograms(boolean=True))
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
 
