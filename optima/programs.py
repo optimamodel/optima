@@ -131,18 +131,82 @@ class Programset(object):
                 if boolean: optimizable.append(False)
         return optimizable
     
-    def readytooptimize(self, doprint=True):
+    
+    def programsready(self, doprint=False, detail=False):
+        ''' 
+        Check that the program has saturation and unit cost data, and that it 
+        has target populations/parameters.
+        '''
+        message = ''
         ready = True
         notready = []
         for key,program in self.programs.items():
             if not program.optimizable(partial=True, doprint=doprint):
                 notready.append(key)
         if len(notready):
-            if doprint:
-                print('The following programs are not ready to optimize: %s' % notready)
+            message = 'The following programs are not ready to optimize: %s' % notready
+            if doprint: print(message)
             ready = False
+        
+        if detail: return message
+        else:      return ready
+    
+    
+    def covoutready(self, doprint=False, detail=False):
+        '''
+        Check to make sure that the covout keys match the program targetpars exactly,
+        and also check that every program is represented in its corresponding covout
+        function.
+        '''
+        message = ''
+        actualkeys = self.covout.keys()
+        wantedkeys = [] # List of all coverage-outcome keys
+        prognotdefined = []
+        for progkey,program in self.programs.items():
+            for targetpar in program.targetpars:
+                covoutkey = (targetpar['param'], targetpar['pop']) # Append tuple to make key
+                
+                # Make sure the covout function exists
+                try: 
+                    actualkeys.pop(covoutkey)
+                    try: self.covout[covoutkey].progs[progkey] # If that worked, ake sure this program exists in the covout function
+                    except: prognotdefined.append((covoutkey, progkey))
+                except:
+                    wantedkeys.append(covoutkey)
+        
+        if len(actualkeys):
+            ready = False
+            message = 'The following covout functions are defined, but not referred to by any programs: %s' % actualkeys
+        if len(wantedkeys):
+            ready = False
+            message += 'The following covout functions are not defined: %s' % wantedkeys
+        if len(prognotdefined):
+            ready = False
+            message += 'The following program effects are not defined: %s' % prognotdefined
+        
+        if doprint: print(message)
+        if detail: return message
+        else:      return ready
+        
+        
+                
+                
+        
+        
+        return ready
+    
+    def ready(self, doprint=False, detail=False):
+        ''' Figure out if the programset is ready for use in scenarios, optimization, etc. '''
+        programsready = self.programsready(doprint=doprint, detail=detail)
+        covoutready   = self.covoutready(doprint=doprint, detail=detail)
+        if detail: 
+            message = programsready + covoutready
+            return message
         else:
+            ready = (programsready and covoutready)
             return ready
+        
+        
     
 #    def checkprograms(self, doprint=True):
 #        ''' checks that all costcov data are entered '''

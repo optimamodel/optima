@@ -413,10 +413,8 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
         try: optim.objectives['budget'] = progset.defaultbudget()
         except:  raise OptimaException('Could not get default budget for optimization')
     tvec = project.settings.maketvec(end=optim.objectives['end']) # WARNING, this could be done better most likely
-    if not progset.readytooptimize():
-        detail_costcov = progset.hasallcostcovpars(detail=True)
-        detail_covout = progset.hasallcovoutpars(detail=True)
-        errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Parameters are missing from:\n%s' % ((detail_costcov+detail_covout))
+    if not progset.ready():
+        errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Errors include:\n%s' % (progset.ready(detail=True))
         raise OptimaException(errormsg)
 
     # Run outcomes minimization
