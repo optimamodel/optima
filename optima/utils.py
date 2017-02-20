@@ -138,7 +138,7 @@ def printarr(arr, arrformat='%0.2f  '):
     
 
 
-def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, replace_whitespace=False, width=70, **kwargs):
+def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
     '''
     Small wrapper to make textwrap more user friendly.
     
@@ -171,18 +171,18 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, replace_white
     else:      text = str(text)
     
     # Generate output
-#    if simple: # Don't use the fancy textwrap() methods, just add an indent to each line -- useful if objects have their own line breaks
-#        splitstring = []
-#        tmpsplit = text.split('\n') # Split up based on newlines
-#        
-#    else:
+    if simple: # Don't use the fancy textwrap() methods, just add an indent to each line -- useful if objects have their own line breaks
+        splitstring = []
+        lines = text.splitlines() # Split up based on newlines
+        output = prefix
+        for line in lines:
+            tmp = fill(line, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)
+            tmp = tmp[len(prefix):]
+            splitstring.append(tmp)
+        output += '\n'.join(splitstring) + suffix
+    else:
+        output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
     
-    
-    output = prefix
-    for line in text.splitlines():
-        thisline = fill(line, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, replace_whitespace=replace_whitespace, **kwargs)+'\n'
-        output += thisline[len(prefix):]
-    output += suffix
     if n: output = output[n:] # Need to remove the fake prefix
     return output
     
