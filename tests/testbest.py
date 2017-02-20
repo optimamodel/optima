@@ -17,11 +17,11 @@ spreadsheetpath = os.sep.join(testdir)
 ## Options
 tests = [
 'standardrun',
-'autocalib',
-'manualcalib',
-'reconcile',
-'runscenarios',
-'optimize',
+#'autocalib',
+#'manualcalib',
+#'reconcile',
+#'runscenarios',
+#'optimize',
 'dosave',
 ]
 
