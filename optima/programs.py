@@ -440,7 +440,7 @@ class Covout(object):
         self.pop = pop
         self.lowerlim = Val(lowerlim)
         self.upperlim = Val(upperlim)
-        self.progs = odict().get('all')
+        self.progs = odict()
         if progs is not None: self.add(progs)
         return None
     
@@ -450,7 +450,7 @@ class Covout(object):
         output += indent('  Population: ', self.pop)
         output += indent(' Lower limit: ', self.lowerlim.get('all'))
         output += indent(' Upper limit: ', self.upperlim.get('all'))
-        output += indent('    Programs: ', ['%s: %s' % (key,val.get('all')) for key,val in self.progs.items()])
+        output += indent('    Programs: ', ', '.join(['%s: %s' % (key,val.get('all')) for key,val in self.progs.items()]))
         output += '\n'
         return output
         
