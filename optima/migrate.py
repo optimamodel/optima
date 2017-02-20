@@ -654,22 +654,26 @@ def migrate(project, verbose=2, die=False):
 def loadproj(filename=None, verbose=2, die=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
-    # Create legacy classes for compatibility -- FOR FUTURE
-#    class CCOF(): pass
-#    class Costcov(): pass
-#    class Covout(): pass
-#    op.programs.CCOF = CCOF
-#    op.programs.Costcov = Costcov
-#    op.programs.Covout = Covout
-    
+    # Migration to 2.3.1 -- Spreadsheet class
     class Spreadsheet(object): pass
     op.project.Spreadsheet = Spreadsheet
+    
+    # Migration to 2.4 -- program classes
+    class CCOF(object): pass
+    class Costcov(object): pass
+    class Covout(object): pass
+    op.programs.CCOF = CCOF
+    op.programs.Costcov = Costcov
+    op.programs.Covout = Covout
 
+    # Do the actual migration
     P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose, die=die)
     
-#    del op.programs.CCOF
-#    del op.programs.Costcov
-#    del op.programs.Covout
+    # Tidy up
+    del op.project.Spreadsheet
+    del op.programs.CCOF
+    del op.programs.Costcov
+    del op.programs.Covout
     
     return P
 
