@@ -123,34 +123,47 @@ class Programset(object):
                 optimizable.append(key)
         return optimizable
     
-    def checkprograms(self, doprint=True):
-        ''' checks that all costcov data are entered '''
-        output = None
-        missingdata = []
-        missingunit = []
-        missingsat  = []
-        for program in self.programs.values():
-            if program.getspend()    is None: missingdata.append(program.short)
-            if program.getunitcost() is None: missingunit.append(program.short)
-            if program.saturation is None:    missingsat.append(program.short)
-        if len(missingdata):
-            datastring = 'The following programs are missing spending data: %s' % missingdata
-            if doprint: print(datastring)
-            else: output = datastring
-        if len(missingunit):
-            unitstring = 'The following programs are missing unit costs: %s' % missingunit
-            if doprint: print(unitstring)
-            else: output += unitstring
-        if len(missingsat):
-            satstring = 'The following programs are missing saturation values: %s' % missingsat
-            if doprint: print(satstring)
-            else: output += satstring
-        return 'NOT IMPLEMENTED'
+    def readytooptimize(self, doprint=True):
+        ready = True
+        notready = []
+        for key,program in self.programs.items():
+            if not program.optimizable(partial=True, doprint=doprint):
+                notready.append(key)
+        if len(notready):
+            if doprint:
+                print('The following programs are not ready to optimize: %s' % notready)
+            ready = False
+        else:
+            return ready
     
-    def checkcovout(self):
-        ''' checks that all covout data is entered '''
-        output = 'NOT IMPLEMENTED'
-        return output
+#    def checkprograms(self, doprint=True):
+#        ''' checks that all costcov data are entered '''
+#        output = None
+#        missingdata = []
+#        missingunit = []
+#        missingsat  = []
+#        for program in self.programs.values():
+#            if program.getspend()    is None: missingdata.append(program.short)
+#            if program.getunitcost() is None: missingunit.append(program.short)
+#            if program.saturation is None:    missingsat.append(program.short)
+#        if len(missingdata):
+#            datastring = 'The following programs are missing spending data: %s' % missingdata
+#            if doprint: print(datastring)
+#            else: output = datastring
+#        if len(missingunit):
+#            unitstring = 'The following programs are missing unit costs: %s' % missingunit
+#            if doprint: print(unitstring)
+#            else: output += unitstring
+#        if len(missingsat):
+#            satstring = 'The following programs are missing saturation values: %s' % missingsat
+#            if doprint: print(satstring)
+#            else: output += satstring
+#        return 'NOT IMPLEMENTED'
+#    
+#    def checkcovout(self):
+#        ''' checks that all covout data is entered '''
+#        output = 'NOT IMPLEMENTED'
+#        return output
 
 
 
@@ -397,9 +410,15 @@ class Program(object):
             else: # If not found, don't die, just return None
                 return None
     
-    def optimizable(self, doprint=False):
-        ''' Return whether or not a program can be optimized '''
-        valid = True
+    def optimizable(self, doprint=False, partial=False):
+        '''
+        Return whether or not a program can be optimized.
+        
+        Arguments:
+            doprint = whether or not to print out why a program can't be optimized
+            partial = flag programs that are only partially ready for optimization (some data entered), skipping those that have no data entered
+        '''
+        valid = True # Assume the best
         tests = {}
         try:
             tests['targetpops invalid'] = len(self.targetpops)<1
@@ -407,9 +426,11 @@ class Program(object):
             tests['unitcost invalid']   = not(isnumber(self.getunitcost()))
             tests['saturation invalid'] = self.saturation is None
             if any(tests.values()):
-                valid = False
-                if doprint:
+                valid = False # It's looking like it can't be optimized
+                if partial and all(tests.values()): valid = True # ...but it's probably just an other program, so skip it
+                if not valid and doprint:
                     print('Program not optimizable for the following reasons: %s' % '\n'.join([key for key,val in tests.items() if val]))
+                
         except Exception as E:
             valid = False
             if doprint:
