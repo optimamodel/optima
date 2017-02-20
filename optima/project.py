@@ -529,7 +529,9 @@ class Project(object):
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             self.parsets[name].resultsref = keyname # If linked to a parset, store the results
-
+        
+        print "HIIIIII222222222222222"
+        print keepraw
         self.modified = today()
         return results
 

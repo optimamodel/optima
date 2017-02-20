@@ -85,12 +85,12 @@ if 'treatment' in tests:
     from optima import Project
     
     P = Project(spreadsheet='simple.xlsx')
-    results1 = P.runsim('default')
+    results1 = P.runsim('default', keepraw=True)
     
     P.copyparset('default', 'treatment')
     treatpar = P.parsets['treatment'].pars['numtx']
     treatpar.y['tot'][treatpar.t['tot']>=2010] *= 3
-    results2 = P.runsim('treatment')
+    results2 = P.runsim('treatment', keepraw=True)
     
     if doplot:
         from optima import plotpeople
