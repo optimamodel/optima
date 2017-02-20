@@ -61,12 +61,12 @@ if 'force' in tests:
     print('Running force-of-infection test...')
     from optima import Project
     
-    P = Project(spreadsheet='simple.xlsx')
-    results1 = P.runsim('default')
+    P = Project(spreadsheet='simple.xlsx', dorun=False)
+    results1 = P.runsim('default', keepraw=True)
     
     P.copyparset('default', 'forcetest')
     P.parsets['forcetest'].pars['force'].y[:] *= 3
-    results2 = P.runsim('forcetest')
+    results2 = P.runsim('forcetest', keepraw=True)
     
     if doplot:
         from optima import plotpeople
@@ -84,7 +84,7 @@ if 'treatment' in tests:
     print('Running force-of-infection test...')
     from optima import Project
     
-    P = Project(spreadsheet='simple.xlsx')
+    P = Project(spreadsheet='simple.xlsx', dorun=False)
     results1 = P.runsim('default', keepraw=True)
     
     P.copyparset('default', 'treatment')

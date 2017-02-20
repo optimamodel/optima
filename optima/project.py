@@ -493,6 +493,7 @@ class Project(object):
         
         Version: 2016nov07
         '''
+        
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
@@ -530,8 +531,6 @@ class Project(object):
             keyname = self.addresult(result=results, overwrite=overwrite)
             self.parsets[name].resultsref = keyname # If linked to a parset, store the results
         
-        print "HIIIIII222222222222222"
-        print keepraw
         self.modified = today()
         return results
 

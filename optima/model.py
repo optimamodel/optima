@@ -886,9 +886,6 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     
     Version: 2016jan23 by cliffk    
     '''
-    print "HIIIIII"
-    print keepraw
-    
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
