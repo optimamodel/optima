@@ -7,6 +7,7 @@ Version: 2016feb08
 
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet, __file__ as optimapath # analysis:ignore
 from optima import tic, toc, blank, pd # analysis:ignore
+import os
 
 # Figure out the path 
 parentdir = optimapath.split(os.sep)[:-2] # exclude /optima/__init__.pyc
@@ -16,18 +17,17 @@ spreadsheetpath = os.sep.join(testdir)
 ## Options
 tests = [
 'standardrun',
-#'autocalib',
-#'manualcalib',
-#'reconcile',
-#'runscenarios',
-#'optimize',
+'autocalib',
+'manualcalib',
+'reconcile',
+'runscenarios',
+'optimize',
 'dosave',
 ]
 
 filename = 'best.prj'
 ind = -1 # Default index
-programdatafile = 'concentratedprogramdata.xlsx'
-R.loadspreadsheet(spreadsheetpath+programdatafile)    
+programdatafile = 'concentratedprogramdata.xlsx'   
 
 
 ## Housekeeping
@@ -56,6 +56,7 @@ T = tic()
 ## Make or load&migrate a project
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
+#    P.loadspreadsheet(spreadsheetpath+programdatafile) 
     P.runsim(die=True, start=2000, end=2020)
     if runsensitivity: P.sensitivity()
     if doplot: pygui(P)

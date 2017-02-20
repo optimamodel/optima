@@ -300,7 +300,6 @@ class Program(object):
                 newdata = [data.get(key) for key in datakeys] # Get full row
                 year = newdata[0] if newdata[0] is not None else year # Probably a simpler way of doing this, but use the year if it's supplied, else use the default
                 currentdata = self.data.getrow(year, asdict=True) # Get current row as a dictionary
-                if currentdata['basespend'] is None: currentdata['basespend'] = 0.0 # Assume 0 by default
                 if currentdata:
                     for i,key in enumerate(data.keys()):
                         if newdata[i] is None: newdata[i] = currentdata[key] # Replace with old data if new data is None
