@@ -6,7 +6,8 @@ set of programs, respectively.
 Version: 2017feb19
 """
 
-from optima import OptimaException, Link, Settings, odict, dataframe, objrepr, promotetoarray, promotetolist, defaultrepr, checktype, isnumber
+from optima import OptimaException, Link, Settings, odict, dataframe # Classes
+from optima import objrepr, promotetoarray, promotetolist, defaultrepr, checktype, isnumber, isarraylike # Utilities
 from numpy.random import uniform, seed, get_state
 from numpy import array
 
@@ -113,9 +114,19 @@ class Programset(object):
         ''' compare textually '''
         pass
     
-    def check(self):
-        ''' checks that all costcov and covout data is entered '''
-        pass
+    def checkprograms(self):
+        ''' checks that all costcov data are entered '''
+        output = 'NOT IMPLEMENTED'
+        valid = True
+        for program in self.programs:
+            if program.data['spend']:
+                print('uhuh')
+        return output
+    
+    def checkcovout(self):
+        ''' checks that all covout data is entered '''
+        output = 'NOT IMPLEMENTED'
+        return output
 
 
 
@@ -128,13 +139,13 @@ class Program(object):
                category='Prevention',
                data={'year':2016, 'spend':1.34e6, 'basespend':0, 'coverage':67000}, 
                unitcost={'year':2015, 'val':(25, 35)},
-               sauration=[0.9,0.85,0.95], # NB, can be a single value
+               saturation=[0.9,0.85,0.95], # NB, can be a single value
                targetpops='FSW', # NB, can be a list as well
                targetpars=('condcom', ('Clients', 'FSW'))
                )
     
     Values can be set later using the update() method, e.g.:
-        FSW.update(spend=1.34e6, coverage=67000)       
+        FSW.update(spend=1.34e6, coverage=67000)
     
     There is considerable flexibility in how the unitcost and targetpars are specified. For example, with targetpars:
         targetpars = 'numtx' # Sets numtx, assumes 'tot'
@@ -149,6 +160,8 @@ class Program(object):
         unitcost = {'year':2017, 'val':(21.43, 11.43, 31.43)} # Sets everything (order doesn't matter)
         unitcost = {'year':2017, 'val':{'best':21.43, 'low':11.43, 'high':31.43}} # Sets everything another way
         unitcost = [{'year':2017, 'val':21.43}, {'year':2018, 'val':16.22}] # Can supply multiple years
+    
+    Note: the 'year' keyword can be used when specifying data or unitcost without specifying it in the data structure.
     
     Version: 2017feb18 by cliffk  
     '''
@@ -172,7 +185,8 @@ class Program(object):
     
     def __repr__(self):
         ''' Print the object nicely '''
-        output = defaultrepr(self)
+        output = objrepr(self)
+        output += '\nWARNING, NEEDS UPDATE'
         return output
     
     
@@ -207,17 +221,23 @@ class Program(object):
         
         def setunitcost(unitcost=None, year=None):
             ''' Handle the unit cost, also complicated since have to convert to a dataframe '''
+            
+            # Preprocessing
             unitcostkeys = ['year', 'best', 'low', 'high']
             if year is None: year = Settings().now # If no year is supplied, reset it; not used if supplied in unitcost dict
             if self.unitcost is None: self.unitcost = dataframe(cols=unitcostkeys) # Create dataframe
-            if isinstance(unitcost, dataframe): self.unitcost = unitcost # Right format already: use directly
-            elif isinstance(unitcost, (list, tuple, array([]))): # It's a list of....something, either a single year with uncertainty bounds or multiple years
+            
+            # Handle cases
+            if isinstance(unitcost, dataframe): 
+                self.unitcost = unitcost # Right format already: use directly
+            elif isarraylike(unitcost): # It's a list of....something, either a single year with uncertainty bounds or multiple years
                 if isnumber(unitcost[0]): # It's a number (or at least the first entry is): convert to values and use
                     best,low,high = Val(unitcost).get('all') # Convert it to a Val to do proper error checking and set best, low, high correctly
                     self.unitcost.addrow([year, best, low, high])
                 else: # It's not a list of numbers, so have to iterate
                     for uc in unitcost: # Actually a list of unit costs
-                        if isinstance(uc, dict): setunitcost(uc) # It's a dict: iterate recursively to add unit costs
+                        if isinstance(uc, dict): 
+                            setunitcost(uc) # It's a dict: iterate recursively to add unit costs
                         else:
                             errormsg = 'Could not understand list of unit costs: expecting list of floats or list of dicts, not list containing %s' % uc
                             raise OptimaException(errormsg)
@@ -236,30 +256,29 @@ class Program(object):
             if self.data is None: self.data = dataframe(cols=datakeys) # Create dataframe
             if year is None: year = Settings().now # If no year is supplied, reset it
             
-            if isinstance(data, dataframe): self.data = data # Right format already: use directly
+            if isinstance(data, dataframe): 
+                self.data = data # Right format already: use directly
             elif isinstance(data, dict):
-                ysbc = [data.get(key,0) for key in datakeys]
-                self.data.addrow(data)
-            
-            elif isinstance(data, (list, tuple, array([]))): # It's a list of....something, either a single year with uncertainty bounds or multiple years
-                if isnumber(data[0]): # It's a number (or at least the first entry is): convert to values and use
-                    
-                    best,low,high = Val(data).get('all') # Convert it to a Val to do proper error checking and set best, low, high correctly
-                    self.data.addrow([year, best, low, high])
-                else: # It's not a list of numbers, so have to iterate
-                    for uc in data: # Actually a list of unit costs
-                        if isinstance(uc, dict): setdata(uc) # It's a dict: iterate recursively to add unit costs
-                        else:
-                            errormsg = 'Could not understand list of unit costs: expecting list of floats or list of dicts, not list containing %s' % uc
-                            raise OptimaException(errormsg)
-            elif isinstance(data, dict): # Other main usage case -- it's a dict
-                blh = [data.get(key) for key in ['best', 'low', 'high']] # Get an array of values...
-                best,low,high = Val(blh).get('all') # ... then sanitize them via Val
-                self.data.addrow([data.get('year',year), best, low, high]) # Actually add to dataframe
+                newdata = [data.get(key) for key in datakeys] # Get full row
+                year = newdata[0] if newdata[0] is not None else year # Probably a simpler way of doing this, but use the year if it's supplied, else use the default
+                currentdata = self.data.getrow(year)
+                if currentdata:
+                    for i in range(len(newdata)):
+                        if newdata[i] is None: newdata[i] = currentdata[i] # Replace with old data if new data is None
+                self.data.addrow(newdata) # Add new data
+            elif isinstance(data, list): # Assume it's a list of dicts
+                for datum in data:
+                    if isinstance(datum, dict):
+                        setdata(datum) # It's a dict: iterate recursively to add unit costs
+                    else:
+                        errormsg = 'Could not understand list of data: expecting list of dicts, not list containing %s' % datum
+                        raise OptimaException(errormsg)
             else:
-                errormsg = 'Expecting unit cost of type dataframe, list/tuple/array, or dict, not %s' % type(data)
+                errormsg = 'Can only add data as a dataframe, dict, or list of dicts; this is not valid: %s' % data
                 raise OptimaException(errormsg)
+
             return None
+            
                     
         # Actually set everything
         if short      is not None: self.short      = checktype(short,    'string') # short name
@@ -271,6 +290,18 @@ class Program(object):
         if unitcost   is not None: setunitcost(unitcost, year) # unit cost(s)
         if data       is not None: setdata(data, year) # unit cost(s)
         
+        return None
+    
+    def adddata(self, data=None, year=None, spend=None, basespend=None, coverage=None):
+        ''' Convenience function for adding data. Use either data as a dict/dataframe, or use kwargs, but not both '''
+        if data is None:
+            data = {'year':year, 'spend':spend, 'basespend':basespend, 'coverage':coverage}
+        self.update(data=data)
+        return None
+        
+    def addpars(self, unitcost=None, saturation=None, year=None):
+        ''' Convenience function for adding saturation and unit cost. year is ignored if supplied in unitcost. '''
+        self.update(unitcost=unitcost, saturation=saturation, year=year)
         return None
         
         

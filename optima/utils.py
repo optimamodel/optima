@@ -192,6 +192,11 @@ def isiterable(obj):
         return True
     except:
         return False
+
+def isarraylike(obj):
+    ''' Determine whether something is suitable as a numerical array -- a list, tuple, or array '''
+    validtypes = (list, tuple, type(array([])))
+    return isinstance(obj, validtypes)
     
 
 def checktype(obj=None, objtype=None, die=True):
@@ -1191,8 +1196,8 @@ class odict(OrderedDict):
 ## DATA FRAME CLASS
 ##############################################################################
 
-# These are repeated to make this frationally more self-contained
-from numpy import array, zeros, empty, vstack, hstack, matrix, argsort # analysis:ignore
+# Some of these are repeated to make this frationally more self-contained
+from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin # analysis:ignore
 from numbers import Number # analysis:ignore
 
 class dataframe(object):
@@ -1215,6 +1220,7 @@ class dataframe(object):
         a.sort(); print a # Sort by the first column
         a.sort('y'); print a # Sort by the second column
         a.addrow([1,44]); print a # Replace the previous row and sort
+        a.getrow(1) # Return the row starting with value '1'
         a.rmrow(); print a # Remove last row
         a.rmrow(3); print a # Remove the row starting with element '3'
     
@@ -1241,7 +1247,7 @@ class dataframe(object):
             nrows = self.nrows()
             for c,col in enumerate(self.cols):
                 outputlist[col] = list()
-                maxlen = -1
+                maxlen = len(col) # Start with length of column name
                 if nrows:
                     for val in self.data[c,:]:
                         output = str(val)
@@ -1249,10 +1255,10 @@ class dataframe(object):
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY
+            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY, but easier to do explicitly than to find the general solution!
             elif nrows<100:  indformat = '%3s'
             elif nrows<1000: indformat = '%4s'
-            else:            indformat = '%5s'
+            else:            indformat = '%6s'
             
             # Assemble output
             output = indformat % '' # Empty column for index
@@ -1387,11 +1393,31 @@ class dataframe(object):
         if index is not None: self.pop(index)
         return None
     
-    def getrow(self, key=None, col=None, die=True):
-        ''' Get a row by value, e.g. getrow(2016) will get the data corresponding to row 2016 '''
-        index = self._rowindex(key=key, col=col, die=die)
+    def getrow(self, key=None, col=None, default=None, closest=False, die=False):
+        '''
+        Get a row by value.
+        
+        Arguments:
+            key = the value to look for
+            col = the column to look for this value in
+            default = the value to return if key is not found (overrides die)
+            closest = whether or not to return the closest row (overrides default and die)
+            die = whether to raise an exception if the value is not found
+        
+        Example:
+            df = dataframe(cols=['year','val'],data=[[2016,2017],[0.3,0.5]])
+            df.getrow(2016) # returns array([2016, 0.3], dtype=object)
+            df.getrow(2013) # returns None, or exception if die is True
+            df.getrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
+        '''
+        if not closest: # Usual case, get 
+            index = self._rowindex(key=key, col=col, die=(die and default is None))
+        else:
+            col = self._sanitizecol(col)
+            coldata = self.data[col,:] # Get data for this column
+            index = argmin(abs(coldata-key)) # Find the closest match to the key
         if index is not None: thisrow = self.data[:,index]
-        else:                 thisrow = None
+        else:                 thisrow = default
         return thisrow
         
     def insert(self, row=0, value=None):
