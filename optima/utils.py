@@ -191,7 +191,7 @@ def isiterable(obj):
         return False
     
 
-def checktype(obj=None, objtype=None, die=True):
+def checktype(obj=None, objtype=None, die=False):
     from numbers import Number
     from numpy import array
     
@@ -216,10 +216,12 @@ def checktype(obj=None, objtype=None, die=True):
             return None # It's fine
     else: # Return the result of the comparison
         return result      
-            
+   
+         
 def isnumber(obj):
     ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
     return checktype(obj, 'number')
+    
 
 def promotetoarray(x):
     ''' Small function to ensure consistent format for things that should be arrays '''
@@ -237,13 +239,13 @@ def promotetoarray(x):
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
 
 
-def promotetolist(obj=None, objtype=None, die=True):
+def promotetolist(obj=None, objtype=None):
     ''' Make sure object is iterable -- used so functions can handle inputs like 'FSW' or ['FSW', 'MSM'] '''
     if type(obj)!=list:
         obj = [obj] # Listify it
     if objtype is not None:  # Check that the types match -- now that we know it's a list, we can iterate over it
         for item in obj:
-            checktype(obj=item, objtype=objtype, die=die)
+            checktype(obj=item, objtype=objtype, die=True)
     return obj
 
 
