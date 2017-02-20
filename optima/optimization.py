@@ -446,7 +446,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     if overwritebudget != None:
         origbudget = dcp(overwritebudget)
     else:
-        try: origbudget = dcp(progset.defaultbudget())
+        try: origbudget = dcp(progset.defaultbudget(asdict=True))
         except: raise OptimaException('Could not get default budget for optimization')
     optiminds = findinds(progset.optimizableprograms(boolean=True))
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
@@ -504,7 +504,7 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
-    try: origbudget = dcp(progset.defaultbudget())
+    try: origbudget = dcp(progset.defaultbudget(asdict=True))
     except: raise OptimaException('Could not get default budget for optimization')
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
