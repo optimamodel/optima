@@ -89,17 +89,18 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def defaultrepr(obj, maxlen=55):
+def defaultrepr(obj, maxlen=300):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
-    keys = sorted(obj.__dict__.keys())
-    maxkeylen = max([len(key) for key in keys])
-    if maxkeylen<maxlen: maxlen = maxlen - maxkeylen
-    formatstr = '%'+ '%i'%maxkeylen + 's'
-    output  = objrepr(obj, showatt=False)
-    for key in keys:
-        thisattr = str(getattr(obj, key))
-        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]'
-        output += formatstr%key + ': ' + thisattr + '\n'
+    keys = sorted(obj.__dict__.keys()) # Get the attribute keys
+    maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
+    if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
+    formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
+    output  = objrepr(obj, showatt=False) # Get the methods
+    for key in keys: # Loop over each attribute
+        thisattr = str(getattr(obj, key)) # Get the string representation of the attribute
+        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]' # Shorten it
+        prefix = formatstr%key + ': ' # The format key
+        output += indent(prefix, thisattr)
     output += '============================================================\n'
 
     return output
@@ -137,7 +138,7 @@ def printarr(arr, arrformat='%0.2f  '):
     
 
 
-def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, **kwargs):
+def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, replace_whitespace=False, width=70, **kwargs):
     '''
     Small wrapper to make textwrap more user friendly.
     
@@ -170,7 +171,18 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, **kwargs):
     else:      text = str(text)
     
     # Generate output
-    output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), **kwargs)+suffix
+#    if simple: # Don't use the fancy textwrap() methods, just add an indent to each line -- useful if objects have their own line breaks
+#        splitstring = []
+#        tmpsplit = text.split('\n') # Split up based on newlines
+#        
+#    else:
+    
+    
+    output = prefix
+    for line in text.splitlines():
+        thisline = fill(line, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, replace_whitespace=replace_whitespace, **kwargs)+'\n'
+        output += thisline[len(prefix):]
+    output += suffix
     if n: output = output[n:] # Need to remove the fake prefix
     return output
     

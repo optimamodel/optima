@@ -210,13 +210,13 @@ class Program(object):
     def __repr__(self):
         ''' Print the object nicely '''
         output = objrepr(self)
-        output += '          Short name: %s\n'  % self.short
-        output += '           Full name: %s\n'  % self.name
-        output += '  Target populations: %s\n'  % self.targetpops
-        output += '   Target parameters: %s\n'  % list(set([targetpar['param'] for targetpar in self.targetpars])) # Get only parameters, and remove duplicates
-        output += '       Default spend: %s\n'  % self.getspend()
-        output += '   Default unit cost: %s\n'  % self.getunitcost()
-        output += ' Saturation coverage: %s\n'  % self.saturation('best')
+        output += indent('          Short name: ', self.short)
+        output += indent('           Full name: ', self.name)
+        output += indent('  Target populations: ', self.targetpops)
+        output += indent('   Target parameters: ', list(set([targetpar['param'] for targetpar in self.targetpars]))) # Get only parameters, and remove duplicates
+        output += indent('       Default spend: ', self.getspend())
+        output += indent('   Default unit cost: ', self.getunitcost())
+        output += indent(' Saturation coverage: ', self.saturation('best'))
         output += '\n'
         return output
     
