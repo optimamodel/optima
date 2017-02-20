@@ -171,17 +171,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     else:      text = str(text)
     
     # Generate output
-    if simple: # Don't use the fancy textwrap() methods, just add an indent to each line -- useful if objects have their own line breaks
-        splitstring = []
-        lines = text.splitlines() # Split up based on newlines
-        output = prefix
-        for line in lines:
-            tmp = fill(line, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)
-            tmp = tmp[len(prefix):]
-            splitstring.append(tmp)
-        output += '\n'.join(splitstring) + suffix
-    else:
-        output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
+    output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
     
     if n: output = output[n:] # Need to remove the fake prefix
     return output
