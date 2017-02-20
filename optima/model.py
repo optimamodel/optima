@@ -894,7 +894,7 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if dt is None: dt = settings.dt
     if simpars is None:
         if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
-        simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
+        simpars = makesimpars(pars, name=name, start=start, end=end, dt=dt, tvec=tvec)
 
     try:
         raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
