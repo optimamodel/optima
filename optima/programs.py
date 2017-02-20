@@ -7,7 +7,7 @@ Version: 2017feb19
 """
 
 from optima import OptimaException, Link, Settings, odict, dataframe # Classes
-from optima import objrepr, promotetoarray, promotetolist, checktype, isnumber # Utilities
+from optima import objrepr, defaultrepr, promotetoarray, promotetolist, checktype, isnumber # Utilities
 from numpy.random import uniform
 
 
@@ -38,7 +38,7 @@ class Programset(object):
         output = objrepr(self)
         output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % self.programs.keys()
-        output += '      Programs valid: %s\n'    % self.checkprograms()
+        output += '      Programs valid: %s\n'    % self.checkprograms(doprint=False)
         output += '        Covout valid: %s\n'    % self.checkcovout()
         output += '============================================================\n'
         return output
@@ -135,7 +135,7 @@ class Programset(object):
             satstring = 'The following programs are missing saturation values: %s' % missingsat
             if doprint: print(satstring)
             else: output += satstring
-        return output
+        return 'NOT IMPLEMENTED'
     
     def checkcovout(self):
         ''' checks that all covout data is entered '''
@@ -200,7 +200,14 @@ class Program(object):
     def __repr__(self):
         ''' Print the object nicely '''
         output = objrepr(self)
-        output += '\nWARNING, NEEDS UPDATE'
+        output += '          Short name: %s\n'  % self.short
+        output += '           Full name: %s\n'  % self.name
+        output += '  Target populations: %s\n'  % self.targetpops
+        output += '   Target parameters: %s\n'  % [targetpar['param'] for targetpar in self.targetpars]
+        output += '       Default spend: %s\n'  % self.getspend()
+        output += '   Default unit cost: %s\n'  % self.getunitcost()
+        output += ' Saturation coverage: %s\n'  % self.saturation('best')
+        output += '\n'
         return output
     
     
@@ -449,6 +456,12 @@ class Val(object):
         return None
     
     
+    def __repr__(self):
+        ''' Just use the basic unless I think of something better... '''
+        output = defaultrepr(self)
+        return output
+    
+    
     def __call__(self, *args, **kwargs):
         ''' Convenience function for both update and get '''
         
@@ -457,6 +470,10 @@ class Val(object):
             return self.get(*args, **kwargs)
         else: # Otherwise, try to set the values
             self.update(*args, **kwargs)
+    
+    def __getitem__(self, *args, **kwargs):
+        ''' Allows you to call e.g. val['best'] instead of val('best') '''
+        return self.get(*args, **kwargs)
     
     
     def update(self, best=None, low=None, high=None, dist=None):
@@ -539,7 +556,7 @@ class Val(object):
                 raise OptimaException(errormsg)
         elif type(what)==list:             val = [self.get(wh) for wh in what]# Allow multiple values to be used
         else:
-            errormsg = 'Could not understand %s, expecting a string or list' % what
+            errormsg = 'Could not understand %s, expecting a valid string (e.g. "best") or list' % what
             raise OptimaException(errormsg)
         return val
     
