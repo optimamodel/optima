@@ -62,11 +62,13 @@ class Programset(object):
             if type(prog)!=Program:
                 errormsg = 'Programs to add must be either dicts or program objects, not %s' % type(prog)
                 raise OptimaException(errormsg)
-            self.programs[prog.short] = prog
             
             # Populate any missing target populations if a target parameter exists
-            if prog.targetpops is None and prog.targetpars is not None:
-                self.programs[prog.short].targetpops = self.projectref().pars()['popkeys']
+            if prog.targetpars and not prog.targetpops:
+                prog.targetpops = self.projectref().pars()['popkeys']
+            
+            # Save it
+            self.programs[prog.short] = prog
         return None
 
 
