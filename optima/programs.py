@@ -88,13 +88,14 @@ class Programset(object):
         return None
 
 
-    def defaultbudget(self, total=True):
+    def defaultbudget(self, asdict=False, includebase=False):
         ''' Get default budget -- either per program or total '''
-        if total:      budget = 0
-        else: budget = odict()
-        for prog in self.programs.values():
-            if total: budget += prog.spend
-            else:     budget[prog.short] = prog.spend
+        if asdict: budget = odict()
+        else:      budget = 0.0
+        for prog in self.programs.values(): # Loop over each program
+            thisspend = prog.getspend(total=includebase) # Get the spending for this program
+            if asdict: budget[prog.short] = thisspend # Assign it to the dictionary
+            else:      budget += thisspend # Or, just sum
         return budget
 
     def coverage2budget(self):
@@ -356,7 +357,11 @@ class Program(object):
         try:
             thisdata = self.data.getrow(year, closest=True, asdict=True) # Get data
             spend = thisdata['spend']
-            if total: spend += thisdata['basespend'] # Add baseline spending
+            if spend is None: spend = 0 # If not specified, assume 0
+            if total: 
+                basespend = thisdata['basespend'] # Add baseline spending
+                if basespend is None: basespend = 0 # Likewise assume 0
+                spend += basespend
             return spend
         except Exception as E:
             if die:
