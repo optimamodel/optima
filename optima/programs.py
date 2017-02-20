@@ -7,7 +7,7 @@ Version: 2017feb19
 """
 
 from optima import OptimaException, Link, Settings, odict, dataframe # Classes
-from optima import objrepr, promotetoarray, promotetolist, checktype, isnumber, isarraylike # Utilities
+from optima import objrepr, promotetoarray, promotetolist, checktype, isnumber # Utilities
 from numpy.random import uniform, seed, get_state
 
 
@@ -256,7 +256,7 @@ class Program(object):
             # Handle cases
             if isinstance(unitcost, dataframe): 
                 self.unitcost = unitcost # Right format already: use directly
-            elif isarraylike(unitcost): # It's a list of....something, either a single year with uncertainty bounds or multiple years
+            elif checktype(unitcost, 'arraylike'): # It's a list of....something, either a single year with uncertainty bounds or multiple years
                 if isnumber(unitcost[0]): # It's a number (or at least the first entry is): convert to values and use
                     best,low,high = Val(unitcost).get('all') # Convert it to a Val to do proper error checking and set best, low, high correctly
                     self.unitcost.addrow([year, best, low, high])
@@ -312,9 +312,10 @@ class Program(object):
             
                     
         # Actually set everything
-        if short      is not None: self.short      = checktype(short,    'string') # short name
-        if name       is not None: self.name       = checktype(name,     'string') # full name
-        if category   is not None: self.category   = checktype(category, 'string') # spending category
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        if short      is not None: self.short      = short # short name
+        if name       is not None: self.name       = name # full name
+        if category   is not None: self.category   = category # spending category
         if saturation is not None: self.saturation = Val(saturation) # saturation coverage value
         if targetpops is not None: self.targetpops = promotetolist(targetpops, 'string') # key(s) for targeted populations
         if targetpars is not None: settargetpars(targetpars) # targeted parameters

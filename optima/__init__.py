@@ -67,7 +67,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, isarraylike, isiterable, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, promotetoarray, promotetolist, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, isiterable, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, promotetoarray, promotetolist, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio

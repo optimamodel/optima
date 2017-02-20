@@ -261,9 +261,13 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         
     allprograms = [Condoms, SBCC, STI, VMMC, FSW, MSM, PWID, OST, NSP, Cash, PrEP, PEP, HTC, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
     if filterprograms: # Only select those programs in filterprograms
         finalprograms = [program for program in allprograms if program.short in filterprograms]
         return finalprograms
+    
+    
     
     return allprograms
     

@@ -176,10 +176,7 @@ def sigfig(X, sigfigs=5):
 
 
 
-def isnumber(x):
-    ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
-    from numbers import Number
-    return isinstance(x, Number)
+
 
 
 def isiterable(obj):
@@ -192,11 +189,6 @@ def isiterable(obj):
         return True
     except:
         return False
-
-def isarraylike(obj):
-    ''' Determine whether something is suitable as a numerical array -- a list, tuple, or array '''
-    validtypes = (list, tuple, type(array([])))
-    return isinstance(obj, validtypes)
     
 
 def checktype(obj=None, objtype=None, die=True):
@@ -207,6 +199,7 @@ def checktype(obj=None, objtype=None, die=True):
     if   objtype in ['str','string']:  objtype = basestring
     elif objtype in ['num', 'number']: objtype = Number
     elif objtype in ['arr', 'array']:  objtype = array([])
+    elif objtype is 'arraylike':       objtype = (list, tuple, type(array([]))) # Anything suitable as a numerical array
     elif type(objtype)==type:          pass # Don't need to do anything
     elif objtype is None:              return None # If not supplied, exit
     else:
@@ -222,8 +215,11 @@ def checktype(obj=None, objtype=None, die=True):
         else:
             return None # It's fine
     else: # Return the result of the comparison
-        return result
+        return result      
             
+def isnumber(obj):
+    ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
+    return checktype(obj, 'number')
 
 def promotetoarray(x):
     ''' Small function to ensure consistent format for things that should be arrays '''
