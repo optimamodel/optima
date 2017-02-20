@@ -203,7 +203,7 @@ class Program(object):
         output += '          Short name: %s\n'  % self.short
         output += '           Full name: %s\n'  % self.name
         output += '  Target populations: %s\n'  % self.targetpops
-        output += '   Target parameters: %s\n'  % [targetpar['param'] for targetpar in self.targetpars]
+        output += '   Target parameters: %s\n'  % list(set([targetpar['param'] for targetpar in self.targetpars])) # Get only parameters, and remove duplicates
         output += '       Default spend: %s\n'  % self.getspend()
         output += '   Default unit cost: %s\n'  % self.getunitcost()
         output += ' Saturation coverage: %s\n'  % self.saturation('best')
@@ -299,10 +299,11 @@ class Program(object):
             elif isinstance(data, dict):
                 newdata = [data.get(key) for key in datakeys] # Get full row
                 year = newdata[0] if newdata[0] is not None else year # Probably a simpler way of doing this, but use the year if it's supplied, else use the default
-                currentdata = self.data.getrow(year)
+                currentdata = self.data.getrow(year, asdict=True) # Get current row as a dictionary
+                if currentdata['basespend'] is None: currentdata['basespend'] = 0.0 # Assume 0 by default
                 if currentdata:
-                    for i in range(len(newdata)):
-                        if newdata[i] is None: newdata[i] = currentdata[i] # Replace with old data if new data is None
+                    for i,key in enumerate(data.keys()):
+                        if newdata[i] is None: newdata[i] = currentdata[key] # Replace with old data if new data is None
                 self.data.addrow(newdata) # Add new data
             elif isinstance(data, list): # Assume it's a list of dicts
                 for datum in data:
