@@ -47,6 +47,8 @@ class Programset(object):
     
     def addprograms(self, progs=None, replace=False):
         ''' Add a list of programs '''
+        
+        # Process programs
         if progs is not None:
             progs = promotetolist(progs)
         else:
@@ -61,6 +63,10 @@ class Programset(object):
                 errormsg = 'Programs to add must be either dicts or program objects, not %s' % type(prog)
                 raise OptimaException(errormsg)
             self.programs[prog.short] = prog
+            
+            # Populate any missing target populations if a target parameter exists
+            if prog.targetpops is None and prog.targetpars is not None:
+                self.programs[prog.short].targetpops = self.projectref().pars()['popkeys']
         return None
 
 

@@ -71,19 +71,19 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Condom promotion and distribution',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops)
+                  )
     
     SBCC = Program(short='SBCC',
                   name='Social and behavior change communication',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops)
+                  )
                   
     STI = Program(short='STI',
                   name='Diagnosis and treatment of sexually transmissible infections',
                   category='Prevention',
                   targetpars=[{'param': 'stiprev', 'pop': pop} for pop in pops],
-                  targetpops=pops)
+                  )
     
     VMMC = Program(short='VMMC',
                   name='Voluntary medical male circumcision',
@@ -113,7 +113,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Opiate substitution therapy',
                   category='Prevention',
                   targetpars='numost',
-                  targetpops=pops)
+                  )
                   
     NSP = Program(short='NSP',
                   name='Needle-syringe programs',
@@ -125,13 +125,13 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='Cash transfers for HIV risk reduction',
                   category='Prevention',
                   targetpars=[{'param': 'actscas', 'pop': caspship} for caspship in caspships],
-                  targetpops=pops)
+                  )
                   
     PrEP = Program(short='PrEP',
                   name='Pre-exposure prophylaxis',
                   category='Prevention',
                   targetpars=[{'param': 'prep', 'pop':  pop} for pop in pops],
-                  targetpops=pops)
+                  )
                   
     PEP = Program(short='PEP',
                   name='Post-exposure prophylaxis',
@@ -141,37 +141,37 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   name='HIV testing and counseling',
                   category='Care and treatment',
                   targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
-                  targetpops=pops)
+                  )
     
     ART = Program(short='ART',
                   name='Antiretroviral therapy',
                   category='Care and treatment',
                   targetpars='numtx',
-                  targetpops=pops)
+                  )
     
     Lab = Program(short='Lab',
                   name='Lab monitoring',
                   category='Care and treatment',
                   targetpars='numvlmon',
-                  targetpops=pops)
+                  )
     
     Adherence = Program(short='Adherence',
                   name='Adherence support',
                   category='Care and treatment',
                   targetpars=[{'param': 'leavecare', 'pop': pop} for pop in pops],
-                  targetpops=pops)
+                  )
     
     Tracing = Program(short='Tracing',
                   name='Pre-ART tracing',
                   category='Care and treatment',
                   targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops],
-                  targetpops=pops)
+                  )
     
     PMTCT = Program(short='PMTCT',
                   name='Prevention of mother-to-child transmission',
                   category='Care and treatment',
                   targetpars=['numtx', 'numpmtct'],
-                  targetpops=pops)
+                  )
                   
     OVC = Program(short='OVC',
                   name='Orphans and vulnerable children',
