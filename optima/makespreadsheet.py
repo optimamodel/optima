@@ -106,7 +106,7 @@ class OptimaContent(object):
 def make_years_range(name=None, row_names=None, ref_range=None, data_start=None, data_end=None, data=None):
     if ref_range is not None:
         row_names = ref_range.param_refs()
-    output = OptimaContent(name=name, row_names=row_names, column_names=range(data_start, data_end+1), data=data)
+    output = OptimaContent(name=name, row_names=row_names, column_names=range(int(data_start), int(data_end+1)), data=data)
     return output
 
 def make_populations_range(name, items):
@@ -634,7 +634,7 @@ class OptimaProgramSpreadsheet:
 
     def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL,
         assumption = False, row_levels = None, row_formats = None):
-        content = make_years_range(name=name, row_names=row_names, self.data_start, self.data_end)
+        content = make_years_range(name=name, row_names=row_names, data_start=self.data_start, data_end=self.data_end)
         content.row_format = row_format
         content.assumption = assumption
         if row_levels is not None:
