@@ -440,9 +440,20 @@ class Covout(object):
         self.pop = pop
         self.lowerlim = Val(lowerlim)
         self.upperlim = Val(upperlim)
-        self.progs = odict()
+        self.progs = odict().get('all')
         if progs is not None: self.add(progs)
         return None
+    
+    def __repr__(self):
+        output = objrepr(self, showatt=False)
+        output += indent('   Parameter: ', self.par)
+        output += indent('  Population: ', self.pop)
+        output += indent(' Lower limit: ', self.lowerlim.get('all'))
+        output += indent(' Upper limit: ', self.upperlim.get('all'))
+        output += indent('    Programs: ', ['%s: %s' % (key,val.get('all')) for key,val in self.progs.items()])
+        output += '\n'
+        return output
+        
     
     def add(self, prog=None, val=None):
         ''' 
