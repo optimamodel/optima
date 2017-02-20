@@ -137,6 +137,44 @@ def printarr(arr, arrformat='%0.2f  '):
     
 
 
+def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, **kwargs):
+    '''
+    Small wrapper to make textwrap more user friendly.
+    
+    Arguments:
+        prefix = text to begin with (optional)
+        text = text to wrap
+        suffix = what to put on the end (by default, a newline)
+        n = if prefix is not specified, the size of the indent
+        prettify = whether to use pprint to format the text
+        kwargs = anything to pass to textwrap.fill() (e.g., linewidth)
+    
+    Examples:
+        prefix = 'and then they said:'
+        text = 'blah '*100
+        print(indent(prefix, text))
+        
+        print('my fave is: ' + indent(text=rand(100), n=14))
+    
+    Version: 2017feb20
+    '''
+    # Imports
+    from textwrap import fill
+    from pprint import pformat
+    
+    # Handle no prefix
+    if prefix is None: prefix = ' '*n
+    
+    # Get text in the right format -- i.e. a string
+    if pretty: text = pformat(text)
+    else:      text = str(text)
+    
+    # Generate output
+    output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), **kwargs)+suffix
+    if n: output = output[n:] # Need to remove the fake prefix
+    return output
+    
+
 
 
 

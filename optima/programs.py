@@ -7,7 +7,7 @@ Version: 2017feb19
 """
 
 from optima import OptimaException, Link, Settings, odict, dataframe # Classes
-from optima import objrepr, defaultrepr, promotetoarray, promotetolist, checktype, isnumber # Utilities
+from optima import objrepr, defaultrepr, promotetoarray, promotetolist, checktype, isnumber, indent # Utilities
 from numpy.random import uniform
 
 
@@ -36,10 +36,11 @@ class Programset(object):
     def __repr__(self):
         """ Print out useful information"""
         output = objrepr(self)
-        output += '    Program set name: %s\n'    % self.name
-        output += '            Programs: %s\n'    % self.programs.keys()
-        output += '      Programs valid: %s\n'    % self.checkprograms(doprint=False)
-        output += '        Covout valid: %s\n'    % self.checkcovout()
+        output += indent('    Program set name: ', self.name)
+        output += indent('            Programs: ', self.programs.keys())
+        output += indent('Optimizable programs: ', self.optimizableprograms())
+#        output += '      Programs valid: %s\n'    % self.checkprograms(doprint=False)
+#        output += '        Covout valid: %s\n'    % self.checkcovout()
         output += '============================================================\n'
         return output
     
@@ -113,6 +114,14 @@ class Programset(object):
     def compareoutcomes(self):
         ''' compare textually '''
         pass
+    
+    def optimizableprograms(self, doprint=False):
+        ''' Get a list of which programs are optimizable '''
+        optimizable = []
+        for key,program in self.programs.items():
+            if program.optimizable():
+                optimizable.append(key)
+        return optimizable
     
     def checkprograms(self, doprint=True):
         ''' checks that all costcov data are entered '''
@@ -339,6 +348,7 @@ class Program(object):
             
         return None
     
+    
     def adddata(self, data=None, year=None, spend=None, basespend=None, coverage=None):
         ''' Convenience function for adding data. Use either data as a dict/dataframe, or use kwargs, but not both '''
         if data is None:
@@ -346,10 +356,12 @@ class Program(object):
         self.update(data=data)
         return None
         
+        
     def addpars(self, unitcost=None, saturation=None, year=None):
         ''' Convenience function for adding saturation and unit cost. year is ignored if supplied in unitcost. '''
         self.update(unitcost=unitcost, saturation=saturation, year=year)
         return None
+    
     
     def getspend(self, year=None, total=False, die=False):
         ''' Convenience function for getting the current spending '''
@@ -370,6 +382,7 @@ class Program(object):
             else:
                 return None
     
+    
     def getunitcost(self, year=None, die=False):
         ''' Convenience function for getting the current unit cost '''
         if year is None: year = Settings().now
@@ -383,6 +396,26 @@ class Program(object):
                 raise OptimaException(errormsg)
             else: # If not found, don't die, just return None
                 return None
+    
+    def optimizable(self, doprint=False):
+        ''' Return whether or not a program can be optimized '''
+        valid = True
+        tests = {}
+        try:
+            tests['targetpops invalid'] = len(self.targetpops)<1
+            tests['targetpars invalid'] = len(self.targetpars)<1
+            tests['unitcost invalid']   = not(isnumber(self.getunitcost()))
+            tests['saturation invalid'] = self.saturation is None
+            if any(tests.values()):
+                valid = False
+                if doprint:
+                    print('Program not optimizable for the following reasons: %s' % '\n'.join([key for key,val in tests.items() if val]))
+        except Exception as E:
+            valid = False
+            if doprint:
+                print('Program not optimizable because an exception was encountered: %s' % E.message)
+        
+        return valid
         
         
 
