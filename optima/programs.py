@@ -7,9 +7,8 @@ Version: 2017feb19
 """
 
 from optima import OptimaException, Link, Settings, odict, dataframe # Classes
-from optima import objrepr, promotetoarray, promotetolist, defaultrepr, checktype, isnumber, isarraylike # Utilities
+from optima import objrepr, promotetoarray, promotetolist, checktype, isnumber, isarraylike # Utilities
 from numpy.random import uniform, seed, get_state
-from numpy import array
 
 
 class Programset(object):
@@ -114,13 +113,28 @@ class Programset(object):
         ''' compare textually '''
         pass
     
-    def checkprograms(self):
+    def checkprograms(self, doprint=True):
         ''' checks that all costcov data are entered '''
-        output = 'NOT IMPLEMENTED'
-        valid = True
+        output = None
+        missingdata = []
+        missingunit = []
+        missingsat  = []
         for program in self.programs:
-            if program.data['spend']:
-                print('uhuh')
+            if program.getspend()    is None: missingdata.append(program.short)
+            if program.getunitcost() is None: missingunit.append(program.short)
+            if program.saturation is None:    missingsat.append(program.short)
+        if len(missingdata):
+            datastring = 'The following programs are missing spending data: %s\n' % missingdata
+            if doprint: print(datastring)
+            else: output = datastring
+        if len(missingunit):
+            unitstring = 'The following programs are missing unit costs: %s\n' % missingunit
+            if doprint: print(unitstring)
+            else: output += unitstring
+        if len(missingsat):
+            satstring = 'The following programs are missing saturation values: %s\n' % missingsat
+            if doprint: print(satstring)
+            else: output += satstring
         return output
     
     def checkcovout(self):
@@ -138,7 +152,7 @@ class Program(object):
                name='FSW programs', 
                category='Prevention',
                data={'year':2016, 'spend':1.34e6, 'basespend':0, 'coverage':67000}, 
-               unitcost={'year':2015, 'val':(25, 35)},
+               unitcost={'year':2015, 'best':(25, 35)},
                saturation=[0.9,0.85,0.95], # NB, can be a single value
                targetpops='FSW', # NB, can be a list as well
                targetpars=('condcom', ('Clients', 'FSW'))
@@ -220,7 +234,19 @@ class Program(object):
             return None
         
         def setunitcost(unitcost=None, year=None):
-            ''' Handle the unit cost, also complicated since have to convert to a dataframe '''
+            '''
+            Handle the unit cost, also complicated since have to convert to a dataframe. 
+            
+            Unit costs can be specified as a number, a tuple, or a dict. If a dict, they can be 
+            specified with val as a tuple, or best, low, high as keys. Examples:
+            
+            setunitcost(21) # Assumes current year and that this is the best value
+            setunitcost(21, year=2014) # Specifies year
+            setunitcost(year=2014, unitcost=(11, 31)) # Specifies year, low, and high
+            setunitcost({'year':2014', 'best':21}) # Specifies year and best
+            setunitcost({'year':2014', 'val':(21, 11, 31)}) # Specifies year, best, low, and high
+            setunitcost({'year':2014', 'best':21, 'low':11, 'high':31) # Specifies year, best, low, and high
+            '''
             
             # Preprocessing
             unitcostkeys = ['year', 'best', 'low', 'high']
@@ -242,8 +268,13 @@ class Program(object):
                             errormsg = 'Could not understand list of unit costs: expecting list of floats or list of dicts, not list containing %s' % uc
                             raise OptimaException(errormsg)
             elif isinstance(unitcost, dict): # Other main usage case -- it's a dict
-                blh = [unitcost.get(key) for key in ['best', 'low', 'high']] # Get an array of values...
-                best,low,high = Val(blh).get('all') # ... then sanitize them via Val
+                if any([key not in unitcostkeys+['val'] for key in unitcost.keys()]):
+                    errormsg = 'Mismatch between supplied keys %s and key options %s' % (unitcost.keys(), unitcostkeys)
+                    raise OptimaException(errormsg)
+                val = unitcost.get('val') # First try to get 'val'
+                if val is None: # If that fails, get other arguments
+                    val = [unitcost.get(key) for key in ['best', 'low', 'high']] # Get an array of values...
+                best,low,high = Val(val).get('all') # ... then sanitize them via Val
                 self.unitcost.addrow([unitcost.get('year',year), best, low, high]) # Actually add to dataframe
             else:
                 errormsg = 'Expecting unit cost of type dataframe, list/tuple/array, or dict, not %s' % type(unitcost)
@@ -303,6 +334,35 @@ class Program(object):
         ''' Convenience function for adding saturation and unit cost. year is ignored if supplied in unitcost. '''
         self.update(unitcost=unitcost, saturation=saturation, year=year)
         return None
+    
+    def getspend(self, year=None, total=False, die=False):
+        ''' Convenience function for getting the current spending '''
+        if year is None: year = Settings().now
+        try:
+            thisdata = self.data.getrow(year, closest=True, asdict=True) # Get data
+            spend = thisdata['spend']
+            if total: spend += thisdata['basespend'] # Add baseline spending
+            return spend
+        except Exception as E:
+            if die:
+                errormsg = 'Retrieving spending failed: %s' % E.message
+                raise OptimaException(errormsg)
+            else:
+                return None
+    
+    def getunitcost(self, year=None, die=False):
+        ''' Convenience function for getting the current unit cost '''
+        if year is None: year = Settings().now
+        try:
+            thisdata = self.unitcost.getrow(year, closest=True, asdict=True) # Get data
+            unitcost = thisdata['best']
+            return unitcost
+        except Exception as E:
+            if die:
+                errormsg = 'Retrieving unit cost failed: %s' % E.message
+                raise OptimaException(errormsg)
+            else: # If not found, don't die, just return None
+                return None
         
         
 
@@ -444,9 +504,9 @@ class Val(object):
             raise OptimaException(errormsg) 
         
         # Store values
-        self.best = best
-        self.low  = low
-        self.high = high
+        self.best = float(best)
+        self.low  = float(low)
+        self.high = float(high)
         self.dist = dist
         if not low<=best<=high:
             errormsg = 'Values are out of order (check that low=%s <= best=%s <= high=%s)' % (low, best, high)

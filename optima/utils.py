@@ -1393,7 +1393,15 @@ class dataframe(object):
         if index is not None: self.pop(index)
         return None
     
-    def getrow(self, key=None, col=None, default=None, closest=False, die=False):
+    def _todict(self, row):
+        ''' Return row as a dict rather than as an array '''
+        if len(row)!=len(self.cols): 
+            errormsg = 'Length mismatch between "%s" and "%s"' % (row, self.cols)
+            raise Exception(errormsg)
+        rowdict = dict(zip(self.cols, row))
+        return rowdict
+    
+    def getrow(self, key=None, col=None, default=None, closest=False, die=False, asdict=False):
         '''
         Get a row by value.
         
@@ -1403,12 +1411,14 @@ class dataframe(object):
             default = the value to return if key is not found (overrides die)
             closest = whether or not to return the closest row (overrides default and die)
             die = whether to raise an exception if the value is not found
+            asdict = whether to return results as dict rather than list
         
         Example:
             df = dataframe(cols=['year','val'],data=[[2016,2017],[0.3,0.5]])
             df.getrow(2016) # returns array([2016, 0.3], dtype=object)
             df.getrow(2013) # returns None, or exception if die is True
             df.getrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
+            df.getrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
         '''
         if not closest: # Usual case, get 
             index = self._rowindex(key=key, col=col, die=(die and default is None))
@@ -1416,8 +1426,12 @@ class dataframe(object):
             col = self._sanitizecol(col)
             coldata = self.data[col,:] # Get data for this column
             index = argmin(abs(coldata-key)) # Find the closest match to the key
-        if index is not None: thisrow = self.data[:,index]
-        else:                 thisrow = default
+        if index is not None:
+            thisrow = self.data[:,index]
+            if asdict:
+                thisrow = self._todict(thisrow)
+        else:
+            thisrow = default # If not found, return as default
         return thisrow
         
     def insert(self, row=0, value=None):
