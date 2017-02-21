@@ -171,23 +171,22 @@ class Programset(object):
         wantedkeys = [] # List of all coverage-outcome keys as requested by the programs
         prognotdefined = []
         for progkey,program in self.programs.items():
-            wantedkeys.append(progkey)
             for targetpar in program.targetpars:
                 covoutkey = (targetpar['param'], targetpar['pop']) # Append tuple to make key
-                
+                wantedkeys.append(covoutkey)
                 # Make sure the covout function exists
                 try: self.covout[covoutkey].progs[progkey] # Make sure this program exists in the covout function
                 except: prognotdefined.append((covoutkey, progkey))
         
-        if len(actualkeys):
+        if len(set(actualkeys)-set(wantedkeys)):
             ready = False
-            message = 'The following covout functions are defined, but not referred to by any programs: %s' % actualkeys
-        if len(wantedkeys):
+            message = 'The following covout functions are defined, but not referred to by any programs: %s\n' % list(set(actualkeys)-set(wantedkeys))
+        if len(set(wantedkeys)-set(actualkeys)):
             ready = False
-            message += 'The following covout functions are required by programs but not defined: %s' % wantedkeys
+            message += 'The following covout functions are required by programs but not defined: %s\n' % list(set(wantedkeys)-set(actualkeys))
         if len(prognotdefined):
             ready = False
-            message += 'The following program effects are not defined: %s' % prognotdefined
+            message += 'The following program effects are not defined: %s\n' % prognotdefined
         
         if doprint: print(message)
         if detail: return message
