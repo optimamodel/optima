@@ -231,31 +231,58 @@ def isiterable(obj):
         return False
     
 
-def checktype(obj=None, objtype=None, die=False):
+def checktype(obj=None, objtype=None, subtype=None, die=False):
+    ''' 
+    A convenience function for checking instances. If objtype is a type,
+    then this function works exactly like isinstance(). But, it can also
+    be a string, e.g. 'array'.
+    
+    If subtype is not None, then checktype will iterate over obj and check
+    recursively that each element matches the subtype.
+    
+    Arguments:
+        obj     = the object to check the type of
+        objtype = the type to confirm the object belongs to
+        subtype = optionally check the subtype if the object is iterable
+        die     = whether or not to raise an exception if the object is the wrong type.
+    
+    Examples:
+        checktype(rand(10), 'array', 'number') # Returns true
+        checktype(['a','b','c'], 'arraylike') # Returns false
+        checktype([{'a':3}], list, dict) # Returns True
+    '''
     from numbers import Number
     from numpy import array
     
     # Handle "objtype" input
-    if   objtype in ['str','string']:  objtype = basestring
-    elif objtype in ['num', 'number']: objtype = Number
-    elif objtype in ['arr', 'array']:  objtype = array([])
-    elif objtype is 'arraylike':       objtype = (list, tuple, type(array([]))) # Anything suitable as a numerical array
-    elif type(objtype)==type:          pass # Don't need to do anything
+    if   objtype in ['str','string']:  objinstance = basestring
+    elif objtype in ['num', 'number']: objinstance = Number
+    elif objtype in ['arr', 'array']:  objinstance = type(array([]))
+    elif objtype is 'arraylike':       objinstance = (list, tuple, type(array([]))) # Anything suitable as a numerical array
+    elif type(objtype)==type:          objinstance = objtype  # Don't need to do anything
     elif objtype is None:              return None # If not supplied, exit
     else:
         errormsg = 'Could not understand what type you want to check: should be either a string or a type, not "%s"' % objtype
         raise Exception(errormsg)
     
-    # Figure out it if's an instance
-    result = isinstance(obj, objtype)
-    if die: # Either raise an exception or do nothing
+    # Do first-round checking
+    result = isinstance(obj, objinstance)
+    
+    # Do second round checking
+    if subtype is None and objtype is 'arraylike': subtype = 'number' # This is the default
+    if isiterable(obj) and subtype is not None:
+        for item in obj:
+            result = result and checktype(item, subtype)
+
+    # Decide what to do with the information thus gleaned
+    if die: # Either raise an exception or do nothing if die is True
         if not result: # It's not an instance
             errormsg = 'Incorrect type: object is %s, but %s is required' % (type(obj), objtype)
             raise Exception(errormsg)
         else:
-            return None # It's fine
+            return None # It's fine, do nothing
     else: # Return the result of the comparison
-        return result      
+        return result
    
          
 def isnumber(obj):

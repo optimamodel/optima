@@ -73,7 +73,7 @@ class Programset(object):
 
 
     def rmprograms(self, progs=None, die=True):
-        ''' Remove one or more programs '''
+        ''' Remove one or more programs from both the list of programs and also from the covout functions '''
         if progs is None:
             self.programs = odict() # Remove them all
         progs = promotetolist(progs)
@@ -205,11 +205,21 @@ class Programset(object):
             ready = (programsready and covoutready)
             return ready
     
-    def getcoverage(self, budget=None, year=None):
+    def getcoverage(self, budget=None, year=None, basespend=True, asarray=None):
         '''
         Get the coverage level for each program, either as an odict if budget is an odict 
         or list, or as a list of odicts if budget is a list of odicts. If budget is a list of
         odicts, then year must be a list of years of the same length.
+        
+        Arguments:
+            budget     = an odict or list/array of budget values, or a list of odicts/arrays. If an array, 
+                         it must have the same length as either all programs, or all optimizable programs.
+                         If a list of odicts/arrays, then it corresponds to one for each year.
+            year       = either a single year or a list/array of years. If None, use Settings().now.
+            basespend  = whether or not to include basespend when calculating coverage. By default true.
+            asarray    = whether or not to return the result as an array; by default, same as budget
+        
+        Returns an array or odict of coverage.
         '''
         
         # Define things that will be needed
@@ -242,7 +252,7 @@ class Programset(object):
         
         # Handle year and budget
         if year is None: year = Settings().now
-        year = promotetolist(year)
+        year = promotetoarray(year)
         budget = promotetolist(odictifybudget(budget)) # This double call is needed so budgets supplied as lists don't get mistaken for multi-year budgets
         if len(budget)!=len(year):
             errormsg = 'Number of years of budget (%i) supplied must match length of year (%i)' % (len(budget), len(year))
@@ -251,6 +261,8 @@ class Programset(object):
         for y in range(len(years)):
             thisyear = year[y]
             thisbudget = budget[y]
+            
+            
         
         
         
