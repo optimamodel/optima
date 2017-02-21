@@ -345,13 +345,13 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.addcovout(par='leavecare',  pop='F 15+',             lowerlim=(0.30,0.40), upperlim=0.95, progs={'Adherence': (0.05,0.1)})
         R.addcovout(par='leavecare',  pop='PWID',              lowerlim=(0.50,0.60), upperlim=0.95, progs={'Adherence': (0.3,0.4)})
         R.addcovout(par='leavecare',  pop='MSM',               lowerlim=(0.30,0.40), upperlim=0.95, progs={'Adherence': (0.05,0.1)})
-        R.addcovout(par='linktocare', pop='FSW',               lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
-        R.addcovout(par='linktocare', pop='Clients',           lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
-        R.addcovout(par='linktocare', pop='M 15+',             lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
-        R.addcovout(par='linktocare', pop='F 15+',             lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
-        R.addcovout(par='linktocare', pop='PWID',              lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
-        R.addcovout(par='linktocare', pop='MSM',               lowerlim=(1.40,1.60), upperlim=0.95, progs={'Tracing': (0.1,0.3)})
-    
+        R.addcovout(par='linktocare', pop='FSW',               lowerlim=(1.40,1.60), upperlim=2.00, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='Clients',           lowerlim=(1.40,1.60), upperlim=2.00, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='M 15+',             lowerlim=(1.40,1.60), upperlim=2.00, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='F 15+',             lowerlim=(1.40,1.60), upperlim=2.00, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='PWID',              lowerlim=(1.40,1.60), upperlim=2.00, progs={'Tracing': (0.1,0.3)})
+        R.addcovout(par='linktocare', pop='MSM',               lowerlim=(1.40,1.60), upperlim=2.00, progs={'Tracing': (0.1,0.3)})
+        
         # Store this program set in the project
         P.addprogset(R)
     

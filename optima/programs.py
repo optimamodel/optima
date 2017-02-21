@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2017feb19
 """
 
-from optima import OptimaException, Link, Settings, odict, dataframe # Classes
+from optima import OptimaException, Link, Settings, Par, odict, dataframe # Classes
 from optima import objrepr, defaultrepr, promotetoarray, promotetolist, checktype, isnumber, indent # Utilities
 from numpy.random import uniform
 
@@ -166,21 +166,25 @@ class Programset(object):
         and also check that every program is represented in its corresponding covout
         function.
         '''
-        message = ''
+        coveragepars = self.projectref().parset().coveragepars() # Get the list of coverage parameters
+        message = '' # Detailed message to show if required
         actualkeys = self.covout.keys() # The actual covout functions that are defined
         wantedkeys = [] # List of all coverage-outcome keys as requested by the programs
-        prognotdefined = []
+        prognotdefined = [] # List of program effects that aren't defined
+        ready = True # Assume true
         for progkey,program in self.programs.items():
             for targetpar in program.targetpars:
-                covoutkey = (targetpar['param'], targetpar['pop']) # Append tuple to make key
-                wantedkeys.append(covoutkey)
-                # Make sure the covout function exists
-                try: self.covout[covoutkey].progs[progkey] # Make sure this program exists in the covout function
-                except: prognotdefined.append((covoutkey, progkey))
+                parkey = targetpar['param']
+                popkey = targetpar['pop']
+                if parkey not in coveragepars: # These aren't supposed to have covout relationships
+                    covoutkey = (parkey, popkey) # Append tuple to make key
+                    wantedkeys.append(covoutkey) # Make sure the covout function exists
+                    try:    self.covout[covoutkey].progs[progkey] # Make sure this program exists in the covout function
+                    except: prognotdefined.append((covoutkey, progkey))
         
         if len(set(actualkeys)-set(wantedkeys)):
             ready = False
-            message = 'The following covout functions are defined, but not referred to by any programs: %s\n' % list(set(actualkeys)-set(wantedkeys))
+            message += 'The following covout functions are defined, but not referred to by any programs: %s\n' % list(set(actualkeys)-set(wantedkeys))
         if len(set(wantedkeys)-set(actualkeys)):
             ready = False
             message += 'The following covout functions are required by programs but not defined: %s\n' % list(set(wantedkeys)-set(actualkeys))

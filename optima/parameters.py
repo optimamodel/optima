@@ -131,6 +131,27 @@ class Parameterset(object):
             self.pars[key].updateprior()
         return None
         
+        
+    def coveragepars(self, key=None):
+        '''
+        Get a list of coverage parameters -- i.e., ones without coverage-outcome functions.
+        This depends only on the parameters, but only affects the programs. If an input argument
+        is supplied, it returns True or False about whether that parameter is a coverage
+        parameter.
+        
+        Usage:
+        list_of_coverage_pars = P.parset().coveragepars() # Returns ['numtx', 'numvlmon', etc.]
+        amicoverage = P.parset().coveragepars('numtx') # Returns True
+        '''
+        output = []
+        for parkey in self.parkeys():
+            if self.pars[parkey].limits[1]=='maxpopsize': # This is the critical test of coverageness
+                output.append(parkey)
+        if key is not None:
+            if key in output: return True
+            else:             return False
+        return output
+    
     
     def printpars(self, output=False):
         outstr = ''
