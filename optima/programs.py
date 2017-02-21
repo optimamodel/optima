@@ -86,8 +86,6 @@ class Programset(object):
                 else: print(errormsg)
             for co in self.covout.values(): # Remove from coverage-outcome functions too
                 co.progs.pop(prog, None)
-        
-        
         return None
     
     
@@ -107,13 +105,6 @@ class Programset(object):
             else:      budget += thisspend # Or, just sum
         return budget
 
-    def coverage2budget(self):
-        ''' get budget from coverage '''
-        pass
-
-    def budget2coverage(self):
-        ''' get coverage from budget '''
-        pass
 
     def reconcile(self):
         ''' reconcile with parset '''
@@ -213,37 +204,71 @@ class Programset(object):
         else:
             ready = (programsready and covoutready)
             return ready
+    
+    def getcoverage(self, budget=None, year=None):
+        '''
+        Get the coverage level for each program, either as an odict if budget is an odict 
+        or list, or as a list of odicts if budget is a list of odicts. If budget is a list of
+        odicts, then year must be a list of years of the same length.
+        '''
         
+        # Define things that will be needed
+        progkeys = self.programs.keys() # All program keys
+        optimkeys = self.optimizableprograms() # Optimizable programs
+        nprogs = len(progkeys) # All programs
+        noptim = len(optimkeys) # Optimizable programs
+        
+        def odictifybudget(budget):
+            ''' Make sure budget is in odict format '''
+            
+            # Handle budgets that are supplied as arrays
+            if isinstance(budget, odict):
+                pass # Don't need to do anything
+            elif checktype(budget, 'arraylike') and isnumber(budget[0]):
+                if len(budget)==len(progkeys):
+                    budget = odict(zip(progkeys, budget)) # Convert to an odict
+                elif len(budget)==len(optimkeys):
+                    budget = odict(zip(optimkeys, budget)) # Convert to an odict
+                else:
+                    errormsg = 'If supplying a budget as an array, it must have length %i (number of programs) or %i (number of optimizable programs), not %i. The budget you spplied was: %s' % (nprogs, noptim, len(budget), budget)
+                    raise OptimaException(errormsg)
+            elif checktype(budget, 'arraylike') and not(isnumber(budget[0])):
+                pass # Assume, for now, that it's a list of odicts
+            else:
+                errormsg = 'Budget should be a numerical list or an odict, but you supplied: %s' % budget
+                raise OptimaException(errormsg)
+            return budget
+            
+        
+        # Handle year and budget
+        if year is None: year = Settings().now
+        year = promotetolist(year)
+        budget = promotetolist(odictifybudget(budget)) # This double call is needed so budgets supplied as lists don't get mistaken for multi-year budgets
+        if len(budget)!=len(year):
+            errormsg = 'Number of years of budget (%i) supplied must match length of year (%i)' % (len(budget), len(year))
+            raise OptimaException(errormsg)
+        
+        for y in range(len(years)):
+            thisyear = year[y]
+            thisbudget = budget[y]
+        
+        
+        
+            
+                
+        
+        
+                
+            
+        
+        return coverage
+    
+    
+    def getpars(self, budget=None, coverage=None, year=None):
+        
+        return pars
         
     
-#    def checkprograms(self, doprint=True):
-#        ''' checks that all costcov data are entered '''
-#        output = None
-#        missingdata = []
-#        missingunit = []
-#        missingsat  = []
-#        for program in self.programs.values():
-#            if program.getspend()    is None: missingdata.append(program.short)
-#            if program.getunitcost() is None: missingunit.append(program.short)
-#            if program.saturation is None:    missingsat.append(program.short)
-#        if len(missingdata):
-#            datastring = 'The following programs are missing spending data: %s' % missingdata
-#            if doprint: print(datastring)
-#            else: output = datastring
-#        if len(missingunit):
-#            unitstring = 'The following programs are missing unit costs: %s' % missingunit
-#            if doprint: print(unitstring)
-#            else: output += unitstring
-#        if len(missingsat):
-#            satstring = 'The following programs are missing saturation values: %s' % missingsat
-#            if doprint: print(satstring)
-#            else: output += satstring
-#        return 'NOT IMPLEMENTED'
-#    
-#    def checkcovout(self):
-#        ''' checks that all covout data is entered '''
-#        output = 'NOT IMPLEMENTED'
-#        return output
 
 
 

@@ -287,7 +287,7 @@ def promotetolist(obj=None, objtype=None):
         for item in obj:
             checktype(obj=item, objtype=objtype, die=True)
     if obj is None:
-        raise Exception('YOU FOOL')
+        raise Exception('This is mathematically impossible')
     return obj
 
 
