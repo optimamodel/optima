@@ -3,36 +3,33 @@ import requests
 import sys
 import os.path
 import json
-
 from hashlib import sha224
 
 
 @click.command()
 @click.argument('savelocation')
 @click.option('--server', default="http://hiv.optimamodel.com",
-              help="Optima 2.0 server. Default: http://hive.optimamode.com")
+              help="Optima 2.0 server. Default: http://hiv.optimamodel.com")
 @click.option('--username', default='admin',
               help="Username for logging on to the server. Default: admin")
 @click.option('--password',
               help="Password for logging on to the server.")
-@click.option('--overwrite', default=False, type=bool,
-              help="Whether or not to overwrite local projects with server ones. Default: False.")
+@click.option('--overwrite', default=True, type=bool,
+              help="Whether or not to overwrite local projects with server ones. Default: True.")
 def main(server, username, password, overwrite, savelocation):
     """
     A utility for downloading all projects from an Optima 2.0+ server for an admin account.
 
     An example:
-
-    \b
          python backup.py --username=batman --password=batcar! --server http://athena.optimamodel.com batprojects
 
     The command above will log into http://athena.optimamodel.com as the user
     'batman' with the password 'batcar!', and download all of that user's
     projects into the folder 'batprojects' in the current directory.
 
-    Here's the defaults for 'admin' at hiv.optimamodel.com
+    Here's how to use it with the defaults for 'admin' at hiv.optimamodel.com, saving to folder optimaprojects:
 
-         python backup.py --password=<secret> batprojects
+         python backup.py --password=<secret> optimaprojects
 
     """
 
