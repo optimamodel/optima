@@ -6,75 +6,82 @@ import json
 
 from hashlib import sha224
 
+
 @click.command()
-@click.argument('server')
 @click.argument('savelocation')
-@click.option('--username', default='test',
-              help="Username for logging on to the server. Default: test")
-@click.option('--password', default='test',
-              help="Password for logging on to the server. Default: test")
+@click.option('--server', default="http://hiv.optimamodel.com",
+              help="Optima 2.0 server. Default: http://hive.optimamode.com")
+@click.option('--username', default='admin',
+              help="Username for logging on to the server. Default: admin")
+@click.option('--password',
+              help="Password for logging on to the server.")
 @click.option('--overwrite', default=False, type=bool,
               help="Whether or not to overwrite local projects with server ones. Default: False.")
 def main(server, username, password, overwrite, savelocation):
     """
-    A utility for downloading projects from Optima 2.0+ servers, per user.
+    A utility for downloading all projects from an Optima 2.0+ server for an admin account.
 
     An example:
 
     \b
-         python export.py --username=batman --password=batcar! http://athena.optimamodel.com batprojects
+         python backup.py --username=batman --password=batcar! --server http://athena.optimamodel.com batprojects
 
     The command above will log into http://athena.optimamodel.com as the user
     'batman' with the password 'batcar!', and download all of that user's
     projects into the folder 'batprojects' in the current directory.
+
+    Here's the defaults for 'admin' at hiv.optimamodel.com
+
+         python backup.py --password=<secret> batprojects
+
     """
+
     # Make sure that we don't send duplicate /s
     if server[-1:] == "/":
         server = server[:-1]
 
-    old_session = requests.Session()
+    session = requests.Session()
 
     click.echo('Logging in as %s...' % (username,))
     hashed_password = sha224()
-    hashed_password.update("admin")
+    hashed_password.update(password)
     password = hashed_password.hexdigest()
 
-    # Old server login
-    old_login = old_session.post(server + "/api/user/login",
-                                 json={'username': username,
-                                       'password': password})
-    if not old_login.status_code == 200:
-        click.echo("Failed login:\n%s" % (old_login.content,))
+    # login to servers
+    response = session.post(
+        server + "/api/user/login", json={'username': username, 'password': password})
+    if not response.status_code == 200:
+        click.echo("Failed login:\n%s" % (response.content,))
         sys.exit(1)
-    click.echo("Logged in as %s on %s" % (old_login.json()["username"], server))
+    click.echo("Logged in as %s on %s" % (response.json()["username"], server))
 
     try:
         os.makedirs(savelocation)
     except:
         pass
 
-    users = old_session.get(server + "/api/user").json()["users"]
+    users = session.get(server + "/api/user").json()["users"]
     f = open(os.path.join(savelocation, 'users.json'), "w")
     json.dump(users, f, indent=2)
     username_by_id = {}
     for user in users:
         username_by_id[user["id"]] = user["username"]
 
-    old_projects = old_session.get(server + "/api/project/all").json()["projects"]
     click.echo("Downloading projects...")
+    projects = session.get(server + "/api/project/all").json()["projects"]
 
-    for project in old_projects:
-        click.echo("Downloading user '%s' project '%s'" % (project["userId"], project["name"],))
-        url = server + "/api/project/" + project["id"] + "/data"
-
+    for project in projects:
         username = username_by_id[project["userId"]]
-        dirname = savelocation +  "/" + username + "/"
+
+        click.echo("Downloading user '%s' project '%s'" % (username, project["name"],))
+
+        dirname = os.path.join(savelocation, username)
         try:
             os.makedirs(dirname)
         except:
             pass
 
-        fname = dirname + project["name"] + ".prj"
+        fname = os.path.join(dirname, project["name"] + ".prj")
         if os.path.isfile(fname):
             if overwrite:
                 click.echo("Downloaded already, overwriting...")
@@ -82,12 +89,17 @@ def main(server, username, password, overwrite, savelocation):
                 click.echo("Downloaded already, skipping (set --overwrite=True if you want to overwrite)")
                 continue
 
-        download = old_session.get(url)
+        url = server + '/api/download'
+        payload = {
+            'name': 'download_project_with_result',
+            'args': [project["id"]]
+        }
+        response = session.post(url, data=json.dumps(payload))
         with open(fname, 'wb') as f:
-            f.write(download.content)
+            f.write(response.content)
 
+    click.echo("All downloaded in folder %s" % (savelocation,))
 
-    click.echo("All downloaded! In folder %s" % (savelocation,))
 
 if __name__ == '__main__':
     main()
