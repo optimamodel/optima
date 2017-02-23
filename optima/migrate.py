@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, concatenate as cat, array
+from numpy import nan, isnan, concatenate as cat, array
 
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
@@ -20,6 +20,39 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
                 for kwargkey,kwargval in kwargs.items():
                     setattr(ps.pars[i][short], kwargkey, kwargval)
     project.data[short] = [[nan]*len(project.data['years'])]
+    return None
+
+
+def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False):
+    ''' 
+    Remove a parameter from a parset
+    '''
+    if short is not None:
+        for ps in project.parsets.values():
+            if op.compareversions(project.version, '2.2')>=0: # Newer project, pars is dict
+                try: ps.pars.pop(short) # Fail loudly
+                except:
+                    if verbose: print('Failed to remove parameter %s' % short)
+                    if die: raise
+            else: # Older project, pars is list of dicts
+                for i in range(len(ps.pars)):
+                    try: ps.pars[i].pop(short) # Fail loudly
+                    except:
+                        if verbose: print('Failed to remove parameter %s' % short)
+                        if die: raise
+    if datashort is not None:
+        try: project.data.pop(datashort) # Fail loudly
+        except:
+            if verbose: print('Failed to remove data parameter %s' % datashort)
+            if die: raise
+    return None
+
+
+def addwarning(project=None, message=None):
+    ''' Add a warning to the project, which is printed when migrated or loaded '''
+    if not hasattr(project, 'warnings') or type(project.warnings)!=str: # If no warnings attribute, create it
+        project.warnings = ''
+    project.warnings += '\n'*3+str(message) # # Add this warning
     return None
 
 
@@ -56,10 +89,7 @@ def delimmediatecare(project, **kwargs):
     """
     Migration between Optima 2.0.2 and 2.0.3 -- WARNING, will this work for scenarios etc.?
     """
-    for ps in project.parsets.values():
-        for i in range(len(ps.pars)):
-            ps.pars[i].pop('immediatecare', None)
-    project.data.pop('immediatecare', None)
+    removeparameter(project, short='immediatecare', datashort='immediatecare')
     project.version = "2.0.3"
     return None
 
@@ -91,18 +121,20 @@ def redotransitions(project, dorun=False, **kwargs):
     project.settings.nstates   = len(project.settings.allstates) 
     project.settings.statelabels = project.settings.statelabels[:project.settings.nstates]
     project.settings.nhealth = len(project.settings.healthstates)
-    project.settings.transnorm = 0.9 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being close to the inverse of that, value determined empirically)
+    project.settings.transnorm = 0.85 # Warning: should NOT match default since should reflect previous versions, which were hard-coded as 1.2 (this being close to the inverse of that, value determined empirically)
 
     if hasattr(project.settings, 'usecascade'): del project.settings.usecascade
     if hasattr(project.settings, 'tx'):         del project.settings.tx
     if hasattr(project.settings, 'off'):        del project.settings.off
 
     # Update variables in data
-    project.data.pop('immediatecare', None)
-    project.data.pop('biofailure', None)
-    project.data.pop('restarttreat', None)
-    project.data.pop('stoprate', None)
-    project.data.pop('treatvs', None)
+    oldtimepars = ['immediatecare', 'biofailure', 'restarttreat','stoprate', 'treatvs']
+    for oldpar in oldtimepars:
+        project.data.pop(oldpar, None)
+        for key,progset in project.progsets.items():
+            if oldpar in progset.covout.keys():
+                msg = 'Project includes a program in program set "%s" that affects "%s", but this parameter has been removed' % (key, oldpar)
+                addwarning(project, msg)
 
     # Add new constants
     project.data['const']['deathsvl']       = [0.23,    0.15,   0.3]
@@ -297,7 +329,7 @@ def fixsettings(project, **kwargs):
         try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
         except: pass # But don't worry if they don't exist
     
-    project.settings = op.Settings() # Completely refresh
+    project.settings = op.Settings() # Completely refresh -- WARNING, will mean future migrations to settings aren't necessary!
     
     # Replace with original settings
     for settingkey,settingval in oldsettings.items(): 
@@ -374,55 +406,65 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['dataname'] = 'Year to fix people on ART with viral suppression'
     kwargs['datashort'] = 'fixpropsupp'
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
-
+    
     project.version = "2.1.10"
     return None
 
 
 
 
-def redoparameters(project, **kwargs):
+def redoparameters(project, die=True, **kwargs):
     """
     Migration between Optima 2.1.10 and 2.2 -- update the way parameters are handled.
     """
     
-    tmpproj = op.defaultproject(addprogset=False, addcostcovdata=False, usestandardcostcovdata=False, addcostcovpars=False, usestandardcostcovpars=False, addcovoutpars=False, dorun=False, verbose=0) # Create a new project with refreshed parameters
     verbose = 0 # Usually fine to ignore warnings
-    
     if verbose>1:
         print('\n\n\nRedoing parameters...\n\n')
     
     # Loop over all parsets
     for ps in project.parsets.values():
         oldpars = ps.pars[0]
-        newpars = op.dcp(tmpproj.pars())
+        tmpdata = op.dcp(project.data)
+        for key,val in tmpdata['const'].items(): tmpdata[key] = val # Parameters were moved from 'const' to main data
+        newpars = op.makepars(data = tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
         
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()
-        
-        oldparnames.remove('label') # Never used
-        oldparnames.remove('sexworker') # Was removed also
+        matchingnames = [parname for parname in oldparnames if parname in newparnames] # Find matches only
+        if verbose:
+            newonly = list(set(newparnames) - set(oldparnames))
+            oldonly = list(set(oldparnames) - set(newparnames))
+            if len(oldonly): print('The following parameters are old and not processed: %s' % oldonly)
+            if len(newonly): print('The following parameters are new and not processed: %s' % newonly)
         
         # Loop over everything else
-        count = 0
-        maxcount = 1000 # Arbitrary, just to avoid not hanging indefinitely with no warning
-        while len(newparnames)+len(oldparnames): # Keep going until everything is dealt with in both
-            parname = (newparnames+oldparnames)[0] # Get the first parameter name
+        for parname in matchingnames: # Keep going until everything is dealt with in both
             if verbose>1: print('Working on %s' % parname)
             
-            if parname in newparnames and parname in oldparnames:
-                if isinstance(newpars[parname], op.Timepar):
-                    for attr in ['y','t','m']: # Need to copy y value, year points, and metaparameter
+            # These can all be copied directly
+            if parname in op._parameters.generalkeys+op._parameters.staticmatrixkeys: 
+                if verbose>1: print('    Directly copying %s' % parname)
+                newpars[parname] = oldpars[parname]
+            
+            # These require a bit more work
+            else:
+                # Re-populate as many attributes as possible
+                for attr in oldpars[parname].__dict__.keys():
+                    if hasattr(newpars[parname], attr):
                         oldattr = getattr(oldpars[parname], attr)
                         setattr(newpars[parname], attr, oldattr)
-                elif isinstance(newpars[parname], (op.Constant, op.Metapar)): # Just copy y
-                    newpars[parname].y = oldpars[parname].y
+                        if verbose>2: print('     Set %s' % attr)
+                
+                # Handle specific changes
+                if isinstance(newpars[parname], op.Metapar): # Get priors right
                     newpars[parname].prior = op.odict()
-                    if newpars[parname].keys() is not None:
-                        newpars[parname].prior = op.odict()
-                        for popkey in newpars[parname].keys():
-                            newpars[parname].prior[popkey] = op.Dist() # Initialise with defaults
-                            newpars[parname].prior[popkey].pars *= newpars[parname].y[popkey]
+                    for popkey in newpars[parname].keys():
+                        newpars[parname].prior[popkey] = op.Dist() # Initialise with defaults
+                        newpars[parname].prior[popkey].pars *= newpars[parname].y[popkey]
+                if isinstance(newpars[parname], op.Constant): # Get priors right, if required
+                    if all(newpars['treatvs'].prior.pars==op.Dist().pars): # See if defaults are used
+                        newpars[parname].prior.pars *= newpars[parname].y # If so, rescale
                 elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
                     newpars['popsize'].i = op.odict()
                     newpars['popsize'].e = op.odict()
@@ -431,25 +473,16 @@ def redoparameters(project, **kwargs):
                         newpars['popsize'].e[popkey] = oldpars['popsize'].p[popkey][1]
                 elif isinstance(newpars[parname], op.Yearpar): # y attribute is renamed t
                     newpars[parname].t = oldpars[parname].y
-                elif parname in op._parameters.generalkeys+op._parameters.staticmatrixkeys: # These can all be copied directly
-                    if verbose>1: print('    Directly copying %s' % parname)
-                    newpars[parname] = oldpars[parname]
-            else:
-                if verbose: 
-                    print('WARNING, parameter %s does not exist in both sets' % parname)
+                else: # Nothing to do
+                    if verbose>2: print('  Nothing special to do with %s' % parname)
                 
-            if parname in oldparnames: oldparnames.remove(parname) # We're dealing with it, so remove it
-            if parname in newparnames: newparnames.remove(parname) # We're dealing with it, so remove it
-            
-            count += 1
-            if count>maxcount: raise op.OptimaException('Seem to be stuck in an infinite loop updating parameters')
-        
         # Just a bug I noticed -- I think the definition of this parameter got inverted at some point
+        resetleavecare = False
         for key in newpars['leavecare'].y:
             for i,val in enumerate(newpars['leavecare'].y[key]):
                 if val>0.5:
                     newpars['leavecare'].y[key][i] = 0.2
-                    if verbose: print('Leave care rate for %s seems too high (%0.1f), resetting to 0.2' % (key, val))
+        if verbose and resetleavecare: print('Leave care rate seemed too high (%0.1f), resetting to 0.2' % (val))
         
         ps.pars = newpars # Keep the new version
     
@@ -458,14 +491,101 @@ def redoparameters(project, **kwargs):
 
 
 
+def redovlmon(project, **kwargs):
+    """
+    Migration between Optima 2.2 and 2.2.1 -- update the VL monitoring parameter
+    """
+    
+    requiredvldata = [2.0, 1.5, 2.5]
+    oldvldata = op.dcp(project.data['freqvlmon'][0][-1]) # Get out old VL data -- last entry
+    if isnan(oldvldata): oldvldata = requiredvldata[0]/2. # No data? Assume coverage of 50%
+    project.data['numvlmon'] = [[oldvldata*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
+    
+    project.data['const']['requiredvl'] = requiredvldata
+    
+    removeparameter(project, short='freqvlmon', datashort='freqvlmon')
+    for key,progset in project.progsets.items():
+        if 'freqvlmon' in progset.covout.keys():
+            msg = 'Project includes a program in programset "%s" that affects "freqvlmon", but this parameter has been removed' % key
+            addwarning(project, msg)
+    
+    short = 'numvlmon'
+    copyfrom = 'numtx'
+    kwargs['name'] = 'Viral load monitoring (number/year)'
+    kwargs['dataname'] = 'Viral load monitoring (number/year)'
+    kwargs['datashort'] = 'numvlmon'
+    kwargs['t'] = op.odict([('tot',op.getvaliddata(project.data['years'], project.data['numvlmon'][0]))])
+    kwargs['y'] = op.odict([('tot',op.getvaliddata(project.data['numvlmon'][0]))])
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    
+    short = 'requiredvl'
+    copyfrom = 'treatvs'
+    kwargs['name'] = 'Number of VL tests recommended per person per year'
+    kwargs['dataname'] = 'Number of VL tests recommended per person per year'
+    kwargs['datashort'] = 'requiredvl'
+    kwargs['y'] = requiredvldata[0]
+    kwargs['prior'] = {'dist':'uniform', 'pars':(requiredvldata[1], requiredvldata[2])}
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
-def redoprograms(project, **kwargs):
-    """
-    Migration between Optima 2.1.11 and 2.2 -- convert CCO objects from simple dictionaries to parameters.
-    """
-    project.version = "2.2"
-    print('NOT IMPLEMENTED')
+    project.version = "2.2.1"
+
     return None
+        
+
+def addprojectinfotoresults(project, verbose=2, **kwargs):
+    ''' Add project info to resultsets so they can be loaded '''
+    
+    for item in project.parsets.values()+project.progsets.values()+project.optims.values()+project.results.values():
+        item.projectref = op.Link(project)
+        try:    del item.project
+        except: op.printv('No project attribute found for %s' % item.name, 3, verbose)
+            
+    for result in project.results.values():
+        result.projectinfo = project.getinfo()
+    
+    project.version = '2.2.2'
+    
+    return None
+
+
+def redoparameterattributes(project, **kwargs):
+    ''' Change the names of the parameter attributes, and change transnorm from being a setting to being a parameter '''
+    
+    # Change parameter attributes
+    for ps in project.parsets.values():
+        for par in ps.pars:
+            if isinstance(par, op.Par): # Loop over the parameters and adjust their properties
+                for attr in ['dataname', 'datashort', 'auto', 'visible', 'proginteract', 'coverage']: 
+                    delattr(par, attr) # Remove outdated properties
+    
+    # Add transnorm
+    short = 'transnorm'
+    copyfrom = 'transmfi'
+    kwargs['name'] = 'Normalization factor for transmissibility'
+    kwargs['y'] = project.settings.transnorm
+    kwargs['fromdata'] = 0
+    kwargs['limits'] = (0, 'maxmeta')
+    kwargs['prior'] = {'dist':'uniform', 'pars':project.settings.transnorm*array([ 0.9,  1.1])}
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    
+    project.version = '2.3'
+    
+    return None
+
+
+def removespreadsheet(project, **kwargs):
+    ''' Remove the binary spreadsheet (it's big, and unnecessary now that you can write data) '''
+    delattr(project, 'spreadsheet')
+    project.version = '2.3.1'
+    return None
+
+#def redoprograms(project, **kwargs):
+#    """
+#    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
+#    """
+#    project.version = "2.2"
+#    print('NOT IMPLEMENTED')
+#    return None
 
 
 
@@ -487,7 +607,11 @@ migrations = {
 '2.1.7': fixsettings,
 '2.1.8': addoptimscaling,
 '2.1.9': addpropsandcosttx,
-'2.1.10': redoparameters,
+'2.1.10':redoparameters,
+'2.2':   redovlmon,
+'2.2.1': addprojectinfotoresults,
+'2.2.2': redoparameterattributes,
+'2.3':   removespreadsheet,
 #'2.2': redoprograms,
 }
 
@@ -495,21 +619,27 @@ migrations = {
 
 
 
-def migrate(project, verbose=2):
+def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
-    while str(project.version) != str(op.__version__):
+    while str(project.version) != str(op.version):
         if not str(project.version) in migrations:
-            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.__version__))
+            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.version))
 
         upgrader = migrations[str(project.version)]
 
         op.printv("Migrating from %s ->" % project.version, 2, verbose, newline=False)
-        upgrader(project, verbose=verbose) # Actually easier to debug if don't catch exception
+        upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
         op.printv("%s" % project.version, 2, verbose, indent=False)
     
     op.printv('Migration successful!', 3, verbose)
+    
+    # If any warnings were generated during the migration, print them now
+    warnings = project.getwarnings()
+    if warnings and die: 
+        errormsg = 'Please resolve warnings in projects before continuing'
+        raise op.OptimaException(errormsg)
 
     return project
 
@@ -521,7 +651,7 @@ def migrate(project, verbose=2):
 
 
 
-def loadproj(filename, verbose=2):
+def loadproj(filename=None, verbose=2, die=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     # Create legacy classes for compatibility -- FOR FUTURE
@@ -531,16 +661,36 @@ def loadproj(filename, verbose=2):
 #    op.programs.CCOF = CCOF
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
+    
+    class Spreadsheet(object): pass
+    op.project.Spreadsheet = Spreadsheet
 
-    proj = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose)
+    P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose, die=die)
     
 #    del op.programs.CCOF
 #    del op.programs.Costcov
 #    del op.programs.Covout
     
-    return proj
+    return P
 
 
+
+
+
+def loadportfolio(filename=None, verbose=2):
+    ''' Load a saved portfolio, migrating constituent projects -- NB, portfolio itself is not migrated (no need yet), only the projects '''
+    
+    op.printv('Loading portfolio %s...' % filename, 2, verbose)
+    F = op.loadobj(filename, verbose=verbose) # Load portfolio
+    
+    
+    for i in range(len(F.projects)): # Migrate projects one by one
+        op.printv('Loading project %s...' % F.projects[i].name, 3, verbose)
+        F.projects[i] = migrate(F.projects[i], verbose=verbose)
+    
+    F.version = op.version # Update version number
+    
+    return F
 
 
 
@@ -564,11 +714,12 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
     '''
     
     # Preliminaries
+    shalength = 6 # Don't use the whole thing, it's ugly and unnecessary
     if filename is None: # Check to make sure a file name is given
         errormsg = 'Please call this function like this: optimaversion(__file__)'
         if die: raise op.OptimaException(errormsg)
         else: print(errormsg); return None
-    currversion = op.__version__ # Get Optima version info
+    currversion = op.version # Get Optima version info
     currbranch,currsha = op.gitinfo(die=die) # Get git info, dying on failure if requested
     if version is not None and version!=currversion: # Optionally check that versions match
         errormsg = 'Actual version does not match requested version (%s vs. %s)' % (currversion, version)
@@ -576,10 +727,12 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
     if branch is not None and branch!=currbranch: # Optionally check that versions match
         errormsg = 'Actual branch does not match requested branch (%s vs. %s)' % (currbranch, branch)
         raise op.OptimaException(errormsg)
-    if sha is not None and sha!=currsha: # Optionally check that versions match
-        errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha, sha)
-        raise op.OptimaException(errormsg)
-    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha) # Create string to write
+    if sha is not None:
+        validshalength = min(len(sha), shalength)
+        if sha[:validshalength+1]!=currsha[:validshalength+1]: # Optionally check that versions match
+            errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha[:validshalength+1], sha[:validshalength+1])
+            raise op.OptimaException(errormsg)
+    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha[:shalength+1]) # Create string to write
     strtofind = 'optimaversion(' # String to look for -- note, must exactly match function call!
 
     # Read script file

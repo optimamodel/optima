@@ -4,7 +4,7 @@ CALIBRATION
 Function(s) to perform calibration.
 """
 
-from optima import OptimaException, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
+from optima import OptimaException, Link, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
 from numpy import zeros, array, mean
 
 
@@ -33,7 +33,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set
-    parset.project = project # Try to link the parset back to the project -- WARNING, seems fragile
+    parset.projectref = Link(project) # Try to link the parset back to the project
     pars = dcp(parset.pars) # Just get a copy of the pars for parsing
     if fitwhat is None: fitwhat = ['force'] # By default, automatically fit force-of-infection only
     if type(fitwhat)==str: fitwhat = [fitwhat]
@@ -58,7 +58,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         for parname in pars: # Just use first one, since all the same
             par = pars[parname]
             if issubclass(type(par), Par): # Check if it's a parameter
-                if par.auto in fitwhat: # It's in the list of things to fit
+                if par.manual in fitwhat: # It's in the list of things to fit
                     if par.fittable=='meta':
                         parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':None})
                     elif par.fittable=='pop':

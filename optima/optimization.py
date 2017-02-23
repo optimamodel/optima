@@ -4,9 +4,9 @@ Functions for running optimizations.
 Version: 2016apr11
 """
 
-from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions
+from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
-from numpy import zeros, arange, maximum, array, inf
+from numpy import zeros, arange, maximum, array, inf, isfinite
 
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
@@ -26,7 +26,7 @@ class Optim(object):
         if constraints is None: constraints = defaultconstraints(project=project, progset=progsetname, verbose=0)
         self.name         = name # Name of the parameter set, e.g. 'default'
         self.uid          = uuid() # ID
-        self.project      = project # Store pointer for the project, if available
+        self.projectref   = Link(project) # Store pointer for the project, if available
         self.created      = today() # Date created
         self.modified     = today() # Date modified
         self.parsetname   = parsetname # Parameter set name
@@ -52,8 +52,8 @@ class Optim(object):
 
     def getresults(self):
         ''' A method for getting the results '''
-        if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
+        if self.resultsref is not None and self.projectref() is not None:
+            results = getresults(project=self.projectref(), pointer=self.resultsref)
             return results
         else:
             print('WARNING, no results associated with this parameter set')
@@ -63,7 +63,7 @@ class Optim(object):
     def optimize(self, name=None, parsetname=None, progsetname=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
         if name is None: name='default'
-        multires = optimize(which=self.objectives['which'], project=self.project, optim=self, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
+        multires = optimize(which=self.objectives['which'], project=self.projectref(), optim=self, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
         multires.name = 'optim-'+name # Multires might be None if couldn't meet targets
         return multires
 
@@ -223,8 +223,9 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if abslimits['max'][pind] is None: abslimits['max'][pind] = inf
     for oi,oind in enumerate(optiminds): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
         # Fully-relative limits (i.e. scale according to total spend).
-        abslimits['min'][oind] *= rescaledbudget[oind]
-        abslimits['max'][oind] *= rescaledbudget[oind]
+        if isfinite(abslimits['min'][oind]): abslimits['min'][oind] *= rescaledbudget[oind]
+        if isfinite(abslimits['max'][oind]): abslimits['max'][oind] *= rescaledbudget[oind]
+        
 
 #        # Semi-relative limits. Note: Has issues, but is left here for posterity.
 #        if scaleratio<1:

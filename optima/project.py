@@ -1,9 +1,10 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
-from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, makesimpars, makespreadsheet
+from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
-from optima import __version__ # Get current version
+from optima import version # Get current version
 from numpy import argmin, array
+from numpy.random import seed, randint
 import os
 
 #######################################################################################################
@@ -44,7 +45,7 @@ class Project(object):
     ### Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2):
+    def __init__(self, name='default', spreadsheet=None, dorun=True, makedefaults=True, verbose=2, **kwargs):
         ''' Initialize the project '''
 
         ## Define the structure sets
@@ -64,14 +65,14 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.spreadsheet = None # Binary version of the spreadsheet file
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
+        self.warnings = None # Place to store information about warnings (mostly used during migrations)
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
-            self.loadspreadsheet(spreadsheet, dorun=dorun)
+            self.loadspreadsheet(spreadsheet, dorun=dorun, makedefaults=makedefaults, verbose=verbose, **kwargs)
 
         return None
 
@@ -95,8 +96,28 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
+        output += self.getwarnings(doprint=False) # Don't print since print later
         return output
+    
+    def getinfo(self):
+        ''' Return an odict with basic information about the project '''
+        info = odict()
+        for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
+            info[attr] = getattr(self, attr) # Populate the dictionary
+        info['parsetkeys'] = self.parsets.keys()
+        info['progsetkeys'] = self.parsets.keys()
+        return info
 
+    def getwarnings(self, doprint=True):
+        ''' Tiny method to print the warnings in the project, if any '''
+        if hasattr(self, 'warnings') and self.warnings: # There are warnings
+            output = '\nWARNING: This project contains the following warnings:'
+            output += str(self.warnings)
+        else: # There are no warnings
+            output = ''
+        if output and doprint: # Print warnings if requested
+            print(output)
+        return output
 
     #######################################################################################################
     ### Methods for I/O and spreadsheet loading
@@ -107,7 +128,6 @@ class Project(object):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
-        self.spreadsheet = Spreadsheet(filename) # Load spreadsheet binary file into project -- WARNING, only partly implemented since not sure how to read from
         self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
@@ -224,7 +244,7 @@ class Project(object):
                 if overwrite==False:
                     raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
                 else:
-                    printv('Structure list already has item named "%s"' % (checkabsent), 2, self.settings.verbose)
+                    printv('Structure list already has item named "%s"' % (checkabsent), 3, self.settings.verbose)
                 
         if checkexists is not None:
             if not checkexists in structlist:
@@ -246,8 +266,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
-        if hasattr(structlist[name],'project'): structlist[name].project = self # Refresh link to parent project
-        printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
+        printv('Item "%s" added to "%s"' % (name, what), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -258,7 +277,7 @@ class Project(object):
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
-        printv('%s "%s" removed' % (what, name), 2, self.settings.verbose)
+        printv('%s "%s" removed' % (what, name), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -272,8 +291,7 @@ class Project(object):
         structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
-        if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
-        printv('%s "%s" copied to "%s"' % (what, orig, new), 2, self.settings.verbose)
+        printv('%s "%s" copied to "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -284,7 +302,7 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
-        printv('%s "%s" renamed "%s"' % (what, orig, new), 2, self.settings.verbose)
+        printv('%s "%s" renamed "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None
         
@@ -341,8 +359,9 @@ class Project(object):
     
     
     def cleanresults(self):
-        ''' Remove all results '''
-        self.results = odict() # Just replace with an empty odict, as at initialization
+        ''' Remove all results except for BOCs '''
+        for key,result in self.results.items():
+            if type(result)!=BOC: self.results.pop(key)
         self.modified = today()
         return None
     
@@ -449,7 +468,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None, keepraw=False):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -458,15 +477,17 @@ class Project(object):
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
-        if name is None and simpars is None: name = -1 # Set default name
+        if name is None: name = -1 # Set default name
         if verbose is None: verbose = self.settings.verbose
         
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
+            if randseed is not None: seed(randseed) # Reset the random seed, if specified
             for i in range(n):
-                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample))
+                sampleseed = randint(0,2**32-1)
+                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
@@ -486,7 +507,7 @@ class Project(object):
 
         # Store results -- WARNING, is this correct in all cases?
         resultname = 'parset-'+self.parsets[name].name 
-        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             self.parsets[name].resultsref = keyname # If linked to a parset, store the results
@@ -495,7 +516,7 @@ class Project(object):
         return results
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, **kwargs): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
         '''
         Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
         
@@ -505,7 +526,7 @@ class Project(object):
         P.sensitivity(n=5, tosample='force')
         '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, **kwargs)
+        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, randseed=randseed, **kwargs)
         self.modified = today()
         return results
 
@@ -536,6 +557,11 @@ class Project(object):
         multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
         self.addresult(result=multires)
         self.modified = today()
+        return None
+    
+    def defaultscenarios(self, **kwargs):
+        ''' Wrapper for default scenarios '''
+        defaultscenarios(self, **kwargs)
         return None
     
 
@@ -625,18 +651,23 @@ class Project(object):
         self.modified = today()
         return None        
     
-    def getBOC(self, objectives):
+    def getBOC(self, objectives=None):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
+        
+        boc = None
         for x in self.results:
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
+                if objectives is None: return boc
                 same = True
                 for y in boc.objectives:
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
                     return boc
-        print('No BOC with the required objectives can be found in project: %s' % self.name)
-        return None
+        print('No BOC with the required objectives can be found in project: %s; using first BOC found' % self.name)
+        if boc is None:
+            print('WARNING, no BOCs found!')
+        return boc
         
         
     def delBOC(self, objectives):
@@ -665,31 +696,4 @@ class Project(object):
         if returnplot: return ax
         else: show()
         return None
-
-
-
-class Spreadsheet(object):
-    ''' A class for reading and writing spreadsheet data in binary format, so a project contains the spreadsheet loaded '''
-    
-    def __init__(self, filename=None):
-        self.data = None
-        self.filename = None
-        if filename is not None: self.load(filename)
-        return None
-    
-    def __repr__(self):
-        output = defaultrepr(self)
-        return output
-    
-    def load(self, filename=None):
-        if filename is not None:
-            self.filename = filename
-            with open(filename, mode='rb') as f: self.data = f.read()
-    
-    def save(self, filename=None, verbose=2):
-        if filename is None:
-            if self.filename is not None: filename = self.filename
-        if filename is not None:
-            with open(filename, mode='wb') as f: f.write(self.data)
-        printv('Spreadsheet "%s" saved.' % filename, 2, verbose)
     

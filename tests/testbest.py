@@ -14,9 +14,9 @@ tests = [
 #'autocalib',
 #'manualcalib',
 #'reconcile',
-'runscenarios',
+#'runscenarios',
 #'optimize',
-#'dosave',
+'dosave',
 ]
 
 filename = 'best.prj'
@@ -49,7 +49,7 @@ T = tic()
 ## Make or load&migrate a project
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
-    P.runsim(debug=False, start=2000, end=2030)
+    P.runsim(die=True, start=2000, end=2020)
     if runsensitivity: P.sensitivity()
     if doplot: pygui(P)
 
