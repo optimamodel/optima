@@ -360,8 +360,8 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     
     
     # Figure out the path 
-    optimapath = os.path.dirname(op.__file__)
-    spreadsheetpath = os.path.join(optimapath, '..', 'tests', '') # Empty last part puts a /
+    parentfolder = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    spreadsheetpath = os.path.join(parentfolder, 'tests', '') # Empty last part puts a /
     
     
     ##########################################################################################################################
