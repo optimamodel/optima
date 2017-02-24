@@ -653,7 +653,7 @@ def migrate(project, verbose=2, die=False):
 
 def loadproj(filename=None, verbose=2, die=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
-    
+
     # Create legacy classes for compatibility -- FOR FUTURE
 #    class CCOF(): pass
 #    class Costcov(): pass
@@ -661,7 +661,7 @@ def loadproj(filename=None, verbose=2, die=False):
 #    op.programs.CCOF = CCOF
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
-    
+
     class Spreadsheet(object): pass
     op.project.Spreadsheet = Spreadsheet
 
@@ -669,11 +669,11 @@ def loadproj(filename=None, verbose=2, die=False):
     except: origP = op.loads(filename) # Alternate usage case: load from some other source
 
     P = migrate(origP, verbose=verbose, die=die)
-    
+
 #    del op.programs.CCOF
 #    del op.programs.Costcov
 #    del op.programs.Covout
-    
+
     return P
 
 

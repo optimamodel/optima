@@ -69,6 +69,16 @@ class PyObjectDb(db.Model):
         redis.delete(self.id.hex)
 
 
+def loads_with_migrate(project_str):
+    ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
+    class Spreadsheet(object):
+        pass
+    optima.project.Spreadsheet = Spreadsheet
+    orig_project = optima.dataio.loads(project_str)
+    project = optima.migrate(orig_project)
+    return project
+
+
 @swagger.model
 class ProjectDb(db.Model):
 
@@ -84,7 +94,13 @@ class ProjectDb(db.Model):
     def load(self):
         print(">> Load project " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        project = optima.dataio.loads(redis_entry)
+
+        # tried with this line but it doesn't work
+        # project = optima.loadproj(redis_entry)
+
+        # try with this which seems to work
+        project = loads_with_migrate(redis_entry)
+
         if isinstance(project, optima.Project):
             for progset in project.progsets.values():
                 if not hasattr(progset, 'inactive_programs'):
