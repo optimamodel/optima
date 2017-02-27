@@ -5,7 +5,7 @@ which is an outdated version of the same thing!
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
+from optima import defaults, pygui, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 from optima import tic, toc, blank, pd # analysis:ignore
 
 ## Options
@@ -16,7 +16,7 @@ tests = [
 #'reconcile',
 #'runscenarios',
 #'optimize',
-'dosave',
+#'dosave',
 ]
 
 filename = 'best.prj'
@@ -72,11 +72,11 @@ if 'runscenarios' in tests:
     for key in maxbudget: maxbudget[key] += 1e14
     nobudget = dcp(defaultbudget)
     for key in nobudget: nobudget[key] *= 1e-6
-    testprog = 'Tracing' # Try zero & infinite budgets for one test program
+    testprog = 'ART' # Try zero & infinite budgets for one test program
     scenlist = [
         Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
-        Budgetscen(name='No '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 0.}),
+        Coveragescen(name='No '+testprog+' coverage', parsetname=ind, progsetname=ind, t=[2016], coverage={testprog: 0.}),
         Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 1e9}),
         Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
@@ -85,7 +85,6 @@ if 'runscenarios' in tests:
     P.addscenlist(scenlist)
     P.runscenarios() 
     if doplot:
-        plotpeople(P, P.results[ind].raw[ind][0]['people'])
         pygui(P.results[ind], toplot='default')
 
 
