@@ -956,6 +956,7 @@ def set_program_summary_on_progset(progset, summary):
     else:
         costcov = None
 
+    print(">> set_program_summary_on_progset", summary)
     program = op.Program(
         short=summary["short"],
         name=summary["name"],

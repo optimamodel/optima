@@ -76,7 +76,7 @@
             return !population.active;
           })
         } else {
-          $scope.state.program.populatons = [];
+          $scope.state.program.populations = [];
         }
       }
 
@@ -375,6 +375,7 @@
 
           });
 
+        console.log('submit', $scope.state.program);
         $modalInstance.close($scope.state.program);
       }
     };

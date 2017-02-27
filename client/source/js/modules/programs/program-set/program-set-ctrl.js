@@ -200,7 +200,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         msg = 'Changes saved';
       }
       var programSet = $scope.state.activeProgramSet;
-      console.log('saving', programSet);
+      console.log('saveActiveProgramSet saving', programSet);
       if (!programSet || !programSet.name) {
         modalService.inform(
           function (){ },
@@ -270,6 +270,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             program, project, $scope.state.activeProgramSet.programs, parameters, $scope.getCategories())
         .result
         .then(function (newProgram) {
+          console.log('openAddProgramModal', newProgram);
           $scope.state.activeProgramSet.programs.push(newProgram);
           $scope.saveActiveProgramSet("Program added");
         });
