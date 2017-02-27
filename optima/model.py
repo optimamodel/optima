@@ -360,7 +360,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
         incaredist = dxfrac*linktocarefrac*(1.-lostfrac)
         lostdist = dxfrac*linktocarefrac*lostfrac
 
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()        
         # Set initial distributions within treated & untreated 
         untxdist    = (1./prog) / sum(1./prog) # Normalize progression rates to get initial distribution
         txdist      = cat([[1.,1.], svlrecov[2:]]) # Use 1s for the first two entries so that the proportion of people on tx with acute infection is v small
