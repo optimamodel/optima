@@ -651,9 +651,9 @@ def migrate(project, verbose=2, die=False):
 
 
 
-def loadproj(filename=None, verbose=2, die=False):
+def loadproj(filename=None, verbose=2, die=False, fromdb=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
-
+    
     # Create legacy classes for compatibility -- FOR FUTURE
 #    class CCOF(): pass
 #    class Costcov(): pass
@@ -661,19 +661,19 @@ def loadproj(filename=None, verbose=2, die=False):
 #    op.programs.CCOF = CCOF
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
-
+    
     class Spreadsheet(object): pass
     op.project.Spreadsheet = Spreadsheet
 
-    try:    origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
-    except: origP = op.loads(filename) # Alternate usage case: load from some other source
+    if fromdb:    origP = op.loads(filename) # Load from database
+    else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
 
     P = migrate(origP, verbose=verbose, die=die)
-
+    
 #    del op.programs.CCOF
 #    del op.programs.Costcov
 #    del op.programs.Covout
-
+    
     return P
 
 

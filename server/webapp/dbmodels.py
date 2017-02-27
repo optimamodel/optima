@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import deferred
 from sqlalchemy.dialects.postgresql import JSON
 
-import optima
+import optima as op
 
 from .dbconn import db, redis
 
@@ -58,25 +58,15 @@ class PyObjectDb(db.Model):
     def load(self):
         print(">> Load pyobject " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        return optima.dataio.loads(redis_entry)
+        return op.dataio.loads(redis_entry)
 
     def save_obj(self, obj):
         print(">> Save pyobject " + self.id.hex)
-        redis.set(self.id.hex, optima.dataio.dumps(obj))
+        redis.set(self.id.hex, op.dataio.dumps(obj))
 
     def cleanup(self):
         print(">> Cleanup " + self.id.hex)
         redis.delete(self.id.hex)
-
-
-def loads_with_migrate(project_str):
-    ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
-    class Spreadsheet(object):
-        pass
-    optima.project.Spreadsheet = Spreadsheet
-    orig_project = optima.dataio.loads(project_str)
-    project = optima.migrate(orig_project)
-    return project
 
 
 @swagger.model
@@ -95,35 +85,31 @@ class ProjectDb(db.Model):
         print(">> Load project " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
 
-        # tried with this line but it doesn't work
-        # project = optima.loadproj(redis_entry)
+        project = op.loadproj(redis_entry)
 
-        # try with this which seems to work
-        project = loads_with_migrate(redis_entry)
-
-        if isinstance(project, optima.Project):
+        if isinstance(project, op.Project):
             for progset in project.progsets.values():
                 if not hasattr(progset, 'inactive_programs'):
-                    progset.inactive_programs = optima.odict()
+                    progset.inactive_programs = op.odict()
         return project
 
     def save_obj(self, obj, is_skip_result=False):
         print(">> Save project " + self.id.hex)
-        if isinstance(obj, optima.Project):
+        if isinstance(obj, op.Project):
             # Copy the project, only save what we want...
-            new_project = optima.dcp(obj)
+            new_project = op.dcp(obj)
             new_project.spreadsheet = None
             if is_skip_result:
-                new_project.results = optima.odict()
-            redis.set(self.id.hex, optima.dataio.dumps(new_project))
+                new_project.results = op.odict()
+            redis.set(self.id.hex, op.dataio.dumps(new_project))
         else:
-            redis.set(self.id.hex, optima.dataio.dumps(obj))
+            redis.set(self.id.hex, op.dataio.dumps(obj))
         print("Saved " + self.id.hex)
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
         filename = os.path.join(loaddir, project.name + ".prj")
-        optima.saveobj(filename, project)
+        op.saveobj(filename, project)
         return project.name + ".prj"
 
     def delete_dependent_objects(self, synchronize_session=False):
@@ -180,11 +166,11 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
-        return optima.dataio.loads(redis.get("result-" + self.id.hex))
+        return op.dataio.loads(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> Save result-" + self.id.hex)
-        redis.set("result-" + self.id.hex, optima.dataio.dumps(obj))
+        redis.set("result-" + self.id.hex, op.dataio.dumps(obj))
 
     def cleanup(self):
         print(">> Cleanup result-" + self.id.hex)
@@ -212,11 +198,11 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     def load(self):
         print(">> Load working-" + self.id.hex)
-        return optima.dataio.loads(redis.get("working-" + self.id.hex))
+        return op.dataio.loads(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> Save working-" + self.id.hex)
-        redis.set("working-" + self.id.hex, optima.dataio.dumps(obj))
+        redis.set("working-" + self.id.hex, op.dataio.dumps(obj))
 
     def cleanup(self):
         print(">> Cleanup working-" + self.id.hex)
