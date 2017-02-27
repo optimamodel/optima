@@ -665,7 +665,7 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False):
     class Spreadsheet(object): pass
     op.project.Spreadsheet = Spreadsheet
 
-    if fromdb:    origP = op.loads(filename) # Load from database
+    if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
 
     P = migrate(origP, verbose=verbose, die=die)

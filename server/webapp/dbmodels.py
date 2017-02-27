@@ -58,11 +58,11 @@ class PyObjectDb(db.Model):
     def load(self):
         print(">> Load pyobject " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        return op.dataio.loads(redis_entry)
+        return op.loadstr(redis_entry)
 
     def save_obj(self, obj):
         print(">> Save pyobject " + self.id.hex)
-        redis.set(self.id.hex, op.dataio.dumps(obj))
+        redis.set(self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
         print(">> Cleanup " + self.id.hex)
@@ -84,8 +84,8 @@ class ProjectDb(db.Model):
     def load(self):
         print(">> Load project " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-
-        project = op.loadproj(redis_entry)
+        
+        project = op.loadproj(redis_entry, fromdb=True)
 
         if isinstance(project, op.Project):
             for progset in project.progsets.values():
@@ -101,9 +101,9 @@ class ProjectDb(db.Model):
             new_project.spreadsheet = None
             if is_skip_result:
                 new_project.results = op.odict()
-            redis.set(self.id.hex, op.dataio.dumps(new_project))
+            redis.set(self.id.hex, op.dumpstr(new_project))
         else:
-            redis.set(self.id.hex, op.dataio.dumps(obj))
+            redis.set(self.id.hex, op.dumpstr(obj))
         print("Saved " + self.id.hex)
 
     def as_file(self, loaddir, filename=None):
@@ -166,11 +166,11 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
-        return op.dataio.loads(redis.get("result-" + self.id.hex))
+        return op.loadstr(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> Save result-" + self.id.hex)
-        redis.set("result-" + self.id.hex, op.dataio.dumps(obj))
+        redis.set("result-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
         print(">> Cleanup result-" + self.id.hex)
@@ -198,11 +198,11 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     def load(self):
         print(">> Load working-" + self.id.hex)
-        return op.dataio.loads(redis.get("working-" + self.id.hex))
+        return op.loadstr(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> Save working-" + self.id.hex)
-        redis.set("working-" + self.id.hex, op.dataio.dumps(obj))
+        redis.set("working-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
         print(">> Cleanup working-" + self.id.hex)
