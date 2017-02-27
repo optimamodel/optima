@@ -12,12 +12,12 @@ from optima import geospatial as geo
 ## Options
 tests = [
 'standardrun',
-'autocalib',
+#'autocalib',
 #'manualcalib',
 #'reconcile',
 #'runscenarios',
 #'optimize',
-#'ga',
+'ga',
 #'dosave',
 ]
 

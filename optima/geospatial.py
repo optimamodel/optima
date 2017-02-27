@@ -86,8 +86,10 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
     bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
     
     if len(project.parsets) > 0:
-        try: project.parsets[-1].getresults()
-        except: project.runsim(name=project.parsets[-1].name)
+        try:
+            results = project.parsets[-1].getresults()
+        except:
+            results = project.runsim(name=project.parsets[-1].name)
         
         if usegui:
             copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
@@ -99,10 +101,11 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
         refind = -1            
         try: refyear = int(refyear)
         except: raise OptimaException('Input (reference year) cannot be converted into an integer.')
-        if not refyear in [int(x) for x in project.parsets[-1].getresults().tvec]:
+        if not refyear in [int(x) for x in results.tvec]:
             raise OptimaException("Input not within range of years used by aggregate project's last stored calibration.")
         else:
-            refind = [int(x) for x in project.parsets[-1].getresults().tvec].index(refyear)
+            refind = [int(x) for x in results.tvec].index(refyear)
+
         colwidth = 20
             
         ## 2. Get destination filename
@@ -184,11 +187,11 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
             wsprev.write(row, col, 'Project Cal. %i' % refyear)
             for popname in project.data['pops']['short']:
                 col += 1
-                wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].pops[bestindex][col-1][refind])
-                wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].pops[bestindex][col-1][refind])
+                wspopsize.write(row, col, results.main['popsize'].pops[bestindex][col-1][refind])
+                wsprev.write(row, col, results.main['prev'].pops[bestindex][col-1][refind])
             col += 2
-            wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].tot[bestindex][refind])
-            wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].tot[bestindex][refind])
+            wspopsize.write(row, col, results.main['popsize'].tot[bestindex][refind])
+            wsprev.write(row, col, results.main['prev'].tot[bestindex][refind])
             col += 1
             wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)))
             wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
