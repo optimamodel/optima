@@ -16,6 +16,7 @@ Version: 2016feb05
 
 ## Define tests to run here!!!
 tests = [
+'spreadsheet',
 #'forcerefresh',
 #'makeprojects',
 #'makeportfolio',
@@ -23,6 +24,8 @@ tests = [
 #'rungui',
 #'runbackend'
 ]
+
+dosave = False # Whether or not to keep generated spreadsheets
 
 ##############################################################################
 ## Initialization -- same for every test script
@@ -53,6 +56,15 @@ filename2 = 'test2.prj'
 T = tic()
 
 
+
+## Make spreadsheet test
+if 'spreadsheet' in tests:
+    from optima import geospatial as geo, demo
+    from os import remove
+    spreadsheetpath = 'best-ga-division-template.xlsx'
+    P = demo(0)
+    geo.makesheet(P, spreadsheetpath=spreadsheetpath, copies=2, refyear=2015)
+    if not dosave: remove(spreadsheetpath)
    
 
 

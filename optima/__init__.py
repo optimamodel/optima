@@ -71,21 +71,31 @@ from .utils import blank, checkmem, checktype, compareversions, dataindex, dataf
 
 ## Data I/O
 from . import dataio
-from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+from .dataio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 
 
 #####################################################################################################################
 ### Define debugging and exception functions/classes
 #####################################################################################################################
 
+## Optima Path
+def optimapath(subdir=None, trailingsep=True):
+    ''' Returns the parent path of the Optima module. If subdir is not None, include it in the path '''
+    import os
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    if subdir is not None:
+        tojoin = [path, subdir]
+        if trailingsep: tojoin.append('') # This ensures it ends with a separator
+        path = os.path.join(*tojoin) # e.g. ['/home/optima', 'tests', '']
+    return path
+
 ## Debugging information
 def debuginfo(dooutput=False):
-    import os
     output = '\nOptima debugging info:\n'
     output += '   Version: %s\n' % version
     output += '   Branch:  %s\n' % gitinfo()[0]
     output += '   SHA:     %s\n' % gitinfo()[1][:7]
-    output += '   Path:    %s\n' % os.path.abspath(__file__)
+    output += '   Path:    %s\n' % optimapath()
     if dooutput: 
         return output
     else: 

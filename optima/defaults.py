@@ -5,7 +5,7 @@ Version: 2016jan28
 """
 import os
 from numpy import array
-from optima import OptimaException, Project, Program, Programset, printv
+from optima import OptimaException, Project, Program, Programset, printv, optimapath
 try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
 except: pass
 
@@ -290,10 +290,8 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     Version: 2016mar24
     '''
     
-    
     # Figure out the path 
-    parentfolder = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-    spreadsheetpath = os.path.join(parentfolder, 'tests', '') # Empty last part puts a /
+    spreadsheetpath = optimapath('tests')
     
     
     ##########################################################################################################################

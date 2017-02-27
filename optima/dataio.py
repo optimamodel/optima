@@ -37,7 +37,7 @@ def loadobj(filename, verbose=True):
     return obj
 
 
-def dumps(obj):
+def dumpstr(obj):
     ''' Write data to a fake file object,then read from it -- used on the FE '''
     result = None
     with closing(StringIO()) as output:
@@ -48,7 +48,7 @@ def dumps(obj):
     return result
 
 
-def loads(source):
+def loadstr(source):
     ''' Load data from a fake file object -- also used on the FE '''
     with closing(StringIO(source)) as output:
         with GzipFile(fileobj = output, mode = 'rb') as fileobj: 

@@ -651,7 +651,7 @@ def migrate(project, verbose=2, die=False):
 
 
 
-def loadproj(filename=None, verbose=2, die=False):
+def loadproj(filename=None, verbose=2, die=False, fromdb=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     # Migration to 2.3.1 -- Spreadsheet class
@@ -665,9 +665,13 @@ def loadproj(filename=None, verbose=2, die=False):
     op.programs.CCOF = CCOF
     op.programs.Costcov = Costcov
     op.programs.Covout = Covout
+    
+    # Load project file
+    if fromdb:    origP = op.loadstr(filename) # Load from database
+    else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
 
     # Do the actual migration
-    P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose, die=die)
+    P = migrate(origP, verbose=verbose, die=die)
     
     # Tidy up
     del op.project.Spreadsheet
