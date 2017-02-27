@@ -16,7 +16,7 @@
     }
 
     function isNonemptyList(l) {
-      return (!_.isUndefined(l.length) && l.length > 0);
+      return (!_.isUndefined(l) && !_.isUndefined(l.length) && l.length > 0);
     }
 
     function initialize() {
@@ -65,15 +65,18 @@
         $scope.state.selectAll = true;
         $scope.clickAllTargetPopulations();
       } else {
-        if (isNonemptyList(program.populations)) {
+        console.log('program', $scope.state.program);
+        if (isNonemptyList($scope.state.program.populations)) {
           _.forEach($scope.state.populations, function(population) {
             population.active = (
-              program.populations.length === 0)
-               || (program.populations.indexOf(population.short) > -1);
+              $scope.state.program.populations.length === 0)
+               || ($scope.state.program.populations.indexOf(population.short) > -1);
           });
           $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
             return !population.active;
           })
+        } else {
+          $scope.state.program.populatons = [];
         }
       }
 
@@ -297,6 +300,7 @@
 
     // Function to add additional data
     $scope.addHistoricalYearCostcovData = function () {
+      console.log('addHistoricalYearCostcovData');
       if(!$scope.state.program.costcov) {
         $scope.state.program.costcov = [];
       }
