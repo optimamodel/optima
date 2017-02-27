@@ -71,7 +71,7 @@ from .utils import blank, checkmem, compareversions, dataindex, dataframe, defau
 
 ## Data I/O
 from . import dataio
-from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+from .dataio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 
 
 #####################################################################################################################
