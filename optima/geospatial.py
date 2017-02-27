@@ -79,7 +79,8 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
     ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
     
     ## 1. Load a project file
-    project = _loadproj(projectpath, usegui)
+    if type(projectpath)==Project: project = projectpath # It's actually a project, not a path
+    else:                          project = _loadproj(projectpath, usegui) # No, it's a project path, load it
     if project is None:
         raise OptimaException('No project loaded.')
     

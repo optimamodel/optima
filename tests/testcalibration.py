@@ -13,7 +13,7 @@ tests = [
 #'attributes',
 'sensitivity',
 #'manualfit',
-#'autofit',
+'autofit',
 #'autofitmulti',
 # 'longfit',
 # 'debugautofit',

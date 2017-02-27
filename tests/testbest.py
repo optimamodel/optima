@@ -7,7 +7,6 @@ Version: 2016feb08
 
 from optima import defaults, pygui, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 from optima import tic, toc, blank, pd # analysis:ignore
-from optima import geospatial as geo
 
 ## Options
 tests = [
@@ -17,7 +16,6 @@ tests = [
 #'reconcile',
 #'runscenarios',
 #'optimize',
-'ga',
 #'dosave',
 ]
 
@@ -96,10 +94,6 @@ if 'optimize' in tests:
     if doplot: pygui(P.results[ind])
     
 
-if 'ga' in tests:
-    P.save(filename)
-    geo.makesheet(projectpath=filename, spreadsheetpath='best-ga-division-template.xlsx', copies=2, refyear=2015)
-    
 if 'dosave' in tests:
     P.save(filename)
     
