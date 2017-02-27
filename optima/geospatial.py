@@ -263,8 +263,8 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     project = _loadproj(projectpath, usegui)
     if project is None:
         raise OptimaException('No project loaded.')
-    try: project.parsets[-1].getresults()
-    except: project.runsim(name=project.parsets[-1].name)
+    try: results = project.parsets[-1].getresults()
+    except: results = project.runsim(name=project.parsets[-1].name)
     
     ## 2. Load a spreadsheet file
     if usegui:
@@ -402,8 +402,9 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
             for progid in newproject.progsets[-1].programs:
                 program = newproject.progsets[-1].programs[progid]
                 program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
-                if not program.costcovdata['coverage'] == [None]:
-                    program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
+                if program.costcovdata.get('coverage') is not None:
+                    if not program.costcovdata['coverage'] == [None]:
+                        program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
             
         ### -----------------------------------------------------------------------------------------
 
@@ -421,7 +422,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         datayears = len(newproject.data['years'])
 #            psetname = newproject.parsets[-1].name
         # WARNING: Converting results to data assumes that results is already in yearly-dt form.
-        newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.parsets[-1].getresults().main['prev'].pops]
+        newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in results.main['prev'].pops]
 #            newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
 #            
 #            newproject.data['hivprev'] = tempprev    
@@ -433,8 +434,8 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     ## 6. Save each project file into the directory
 #        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
     if checkplots: 
-        plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
-        plotresults(project.parsets[-1].getresults(), toplot=['prev-tot', 'prev-pops'])
+        plotresults(results , toplot=['popsize-tot', 'popsize-pops'])
+        plotresults(results , toplot=['prev-tot', 'prev-pops'])
     for subproject in projlist:
 #            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
         if checkplots:
