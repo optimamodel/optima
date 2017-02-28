@@ -99,7 +99,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             { newName: name })
           .success(function(response) {
             $scope.state.activeProgramSet.name = name;
-            $scope.saveActiveProgramSet('Progset renamed');
           });
         }
         var name = $scope.state.activeProgramSet.name;
