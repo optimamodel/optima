@@ -1408,11 +1408,20 @@ def upload_progset(project_id, progset_id, progset_summary):
     return parse.get_progset_summary(project, progset_summary["name"])
 
 
+def rename_progset(project_id, progset_id, new_name):
+    def update_project_fn(project):
+        progset = parse.get_progset_from_project(project, progset_id)
+        project.renameprogset(orig=progset.name, new=new_name)
+    update_project_with_fn(project_id, update_project_fn)
+
+
 def copy_progset(project_id, progset_id, new_progset_name):
 
     def update_project_fn(project):
         original_progset = parse.get_progset_from_project(project, progset_id)
         project.copyprogset(orig=original_progset.name, new=new_progset_name)
+        print ">> copy_progset copied progset:", project.progsets[-1].name, ", hasallcovoutpars", project.progsets[-1].hasallcovoutpars()
+        print ">> copy_progset copied progset.covout\n", project.progsets[-1].covout
         project.progsets[new_progset_name].uid = op.uuid()
 
     update_project_with_fn(project_id, update_project_fn)

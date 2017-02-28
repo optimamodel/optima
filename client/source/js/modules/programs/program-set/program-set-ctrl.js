@@ -90,8 +90,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         function rename(name) {
-          $scope.state.activeProgramSet.name = name;
-          $scope.saveActiveProgramSet('Progset renamed');
+        // Load parameters that can be used to set custom programs
+        $http
+          .put(
+            '/api/project/' + project.id
+              + '/progset/' + $scope.state.activeProgramSet.id
+              + '/rename',
+            { newName: name })
+          .success(function(response) {
+            $scope.state.activeProgramSet.name = name;
+            $scope.saveActiveProgramSet('Progset renamed');
+          });
         }
         var name = $scope.state.activeProgramSet.name;
         var otherNames = _.pluck($scope.programSetList, 'name');
