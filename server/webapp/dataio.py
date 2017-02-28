@@ -27,7 +27,7 @@ import shutil
 from pprint import pprint
 
 from flask import helpers, current_app, abort, request, session, make_response, jsonify
-from flask.ext.login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from validate_email import validate_email
 
@@ -559,10 +559,7 @@ def create_project_from_prj(prj_filename, project_name, user_id):
             - 'parset-' - calibration/autofit results
             - 'optim-' - optimization results
     """
-    project = op.dataio.loadobj(prj_filename)
-    print('>> Migrating project from version %s' % project.version)
-    project = op.migrate(project)
-    print('>> ...to version %s' % project.version)
+    project = op.loadproj(prj_filename)
     project.name = project_name
     resolve_project(project)
     save_project_as_new(project, user_id)
@@ -574,7 +571,6 @@ def create_project_from_spreadsheet(prj_filename, project_name, user_id):
     Returns the project id of the new project.
     """
     project = op.Project(spreadsheet=prj_filename)
-    project = op.migrate(project)
     project.name = project_name
     resolve_project(project)
     save_project_as_new(project, user_id)
@@ -617,10 +613,7 @@ def download_project_with_result(project_id):
 
 
 def update_project_from_prj(project_id, prj_filename):
-    project = op.dataio.loadobj(prj_filename)
-    print('>> Migrating project from version %s' % project.version)
-    project = op.migrate(project)
-    print('>> ...to version %s' % project.version)
+    project = op.loadproj(prj_filename)
     project_record = load_project_record(project_id)
     project_record.save_obj(project)
     db.session.add(project_record)
@@ -747,6 +740,18 @@ def resolve_project(project):
         del project.optimis[optim_key]
 
     is_change = is_change or len(del_optim_keys) > 0
+
+    query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
+    portfolios = []
+    for record in query:
+        print(">> Portfolio id %s" % record.id)
+        portfolio = record.load()
+        if len(portfolio.gaoptims) == 0:
+            objectives = op.portfolio.defaultobjectives(verbose=0)
+            gaoptim = op.portfolio.GAOptim(objectives=objectives)
+            portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
+            record.save_obj(portfolio)
+        portfolios.append(portfolio)
 
     # ensure constraints set to None are given a default
     for optim in project.optims.values():

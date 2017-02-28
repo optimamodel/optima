@@ -1,6 +1,6 @@
 from optima import gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj # Import utilities
 from optima import OptimaException, BOC # Import classes
-from optima import __version__ # Get current version
+from optima import version # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
@@ -45,7 +45,7 @@ class Portfolio(object):
         self.uid = uuid()
         self.created = today()
         self.modified = today()
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
 
         return None
@@ -151,9 +151,7 @@ class Portfolio(object):
         else:
             tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
             for p in range(len(self.projects.values())):
-                for r,result in enumerate(self.projects[p].results.values()):
-                    if type(result)!=BOC:
-                        self.projects[p].results.pop(r) # Remove results that aren't BOCs
+                tmpportfolio.projects[p].cleanresults() # Get rid of all results
             saveobj(filename, tmpportfolio, verbose=verbose) # Save it to file
             del tmpportfolio # Don't need it hanging around any more
         return None
@@ -219,36 +217,7 @@ class Portfolio(object):
         for pno,p in enumerate(self.projects.values()):
             
             if p.getBOC(objectives) is None:
-
-                # Crash if any project doesn't have progsets
-                if not p.progsets or not p.parsets: 
-                    errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
-                    raise OptimaException(errormsg)
-    
-                # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-                if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
-                    printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 3, verbose)
-                    pno=0
-                elif isinstance(progsetnames[pno],int) and len(p.progsets)<=progsetnames[pno]:
-                    printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
-                    pno=0
-                else: 
-                    printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 3, verbose)
-                    pno=0            
-    
-                # Check that the parsets that were specified are indeed valid. They could be a string or a list index, so must check both
-                if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets]:
-                    printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
-                    pno=0
-                elif isinstance(parsetnames[pno],int) and len(p.parsets)<=parsetnames[pno]:
-                    printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
-                    pno=0
-                else: 
-                    printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 3, verbose)
-                    pno=0
-                
-                    printv('WARNING, project "%s", parset "%s" does not have BOC. Generating one using parset %s and progset %s... ' % (p.name, pno, p.parsets[0].name, p.progsets[0].name), 1, verbose)
-                errormsg = 'GA FAILED: Would require BOCs to be calculated again'
+                errormsg = 'GA FAILED: Project %s has no BOC' % p.name
                 errormsg += str(objectives)
                 errormsg += str(p.getBOC())
                 errormsg += 'Debugging information above'
@@ -398,7 +367,7 @@ class GAOptim(object):
         self.uid = uuid()
         self.created = today()
         self.modified = today()
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
 
         return None

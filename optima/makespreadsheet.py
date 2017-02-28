@@ -10,7 +10,7 @@ import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from utils import printv, isnumber
 from numpy import isnan
-from optima import __version__, odict, getdate, today, loaddatapars, Settings
+from optima import version, odict, getdate, today, loaddatapars, Settings
 
 settings = Settings()
 default_datastart = settings.start
@@ -188,6 +188,7 @@ class OptimaFormats:
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
+    RATE = 'rate'
     DECIMAL = 'decimal'
     SCIENTIFIC = 'scientific'
     NUMBER = 'number'
@@ -206,6 +207,7 @@ class OptimaFormats:
         # unlocked formats
         self.formats['unlocked']     = self.book.add_format({'locked':0,                    'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['percentage']   = self.book.add_format({'locked':0, 'num_format':0x09, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+        self.formats['rate']         = self.book.add_format({'locked':0, 'num_format':0x09, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['decimal']      = self.book.add_format({'locked':0, 'num_format':0x0a, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['scientific']   = self.book.add_format({'locked':0, 'num_format':0x0b, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['number']       = self.book.add_format({'locked':0, 'num_format':0x04, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
@@ -472,7 +474,7 @@ class OptimaSpreadsheet:
         current_row = self.formats.writeline(self.current_sheet, current_row)
         current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
-        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % __version__)
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
 

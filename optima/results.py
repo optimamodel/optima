@@ -36,7 +36,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True, keepraw=False, verbose=2):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -59,14 +59,19 @@ class Resultset(object):
             if settings is None: settings = project.settings
         
         # Fundamental quantities -- populated by project.runsim()
-        self.raw = raw
-        self.pars = pars # Keep pars
+        if keepraw: self.raw = raw
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.projectref = Link(project) # ...and just store the whole project
         self.projectinfo = project.getinfo() # Store key info from the project separately in case the link breaks
         self.parset = dcp(parset) # Store parameters
+        if pars is not None:
+            self.pars = pars # Keep pars
+        else: # Try various other ways of getting pars
+            if parset is not None:
+                self.pars = self.parset.pars
+            else: raise OptimaException('To generate results, you must feed in a parset or pardict: none provided')
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
         if self.parset is not None:  self.parset.projectref  = Link(project) # Replace copy of project with reference to project
@@ -111,12 +116,17 @@ class Resultset(object):
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
         
-        if domake: self.make()
+        if domake: self.make(raw, verbose=verbose)
     
     
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
-        output = defaultrepr(self) # WARNING, could print out basic stats, e.g. number of PLHIV, prevalence, etc...?
+        output = objrepr(self)
+        output += '      Project name: %s\n'    % self.projectinfo['name']
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '               UID: %s\n'    % self.uid
+        output += '              Name: %s\n'    % self.name
+        output += '============================================================\n'
         return output
         
     
@@ -161,7 +171,7 @@ class Resultset(object):
     
     
     
-    def make(self, quantiles=None, annual=True, verbose=2):
+    def make(self, raw, quantiles=None, annual=True, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         # WARNING: Should use indexes retrieved from project settings!
         
@@ -186,7 +196,7 @@ class Resultset(object):
         
         # Initialize
         if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
-        tvec = dcp(self.raw[0]['tvec'])
+        tvec = dcp(raw[0]['tvec'])
         eps = self.settings.eps
         if annual is False: # Decide what to do with the time vector
             indices = arange(len(tvec)) # Use all indices
@@ -195,15 +205,15 @@ class Resultset(object):
             indices = arange(0, len(tvec), int(round(1.0/(tvec[1]-tvec[0])))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
             self.tvec = tvec[indices] # Subsample time vector too
         self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
-        nraw = len(self.raw) # Number of raw results sets
-        allpeople    = dcp(array([self.raw[i]['people']    for i in range(nraw)]))
-        allinci      = dcp(array([self.raw[i]['inci']      for i in range(nraw)]))
-        allincibypop = dcp(array([self.raw[i]['incibypop'] for i in range(nraw)]))
-        alldeaths    = dcp(array([self.raw[i]['death']     for i in range(nraw)]))
-        alldiag      = dcp(array([self.raw[i]['diag']      for i in range(nraw)]))
-        allmtct      = dcp(array([self.raw[i]['mtct']      for i in range(nraw)]))
-        allhivbirths = dcp(array([self.raw[i]['hivbirths'] for i in range(nraw)]))
-        allpmtct     = dcp(array([self.raw[i]['pmtct']     for i in range(nraw)]))
+        nraw = len(raw) # Number of raw results sets
+        allpeople    = dcp(array([raw[i]['people']    for i in range(nraw)]))
+        allinci      = dcp(array([raw[i]['inci']      for i in range(nraw)]))
+        allincibypop = dcp(array([raw[i]['incibypop'] for i in range(nraw)]))
+        alldeaths    = dcp(array([raw[i]['death']     for i in range(nraw)]))
+        alldiag      = dcp(array([raw[i]['diag']      for i in range(nraw)]))
+        allmtct      = dcp(array([raw[i]['mtct']      for i in range(nraw)]))
+        allhivbirths = dcp(array([raw[i]['hivbirths'] for i in range(nraw)]))
+        allpmtct     = dcp(array([raw[i]['pmtct']     for i in range(nraw)]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -212,6 +222,7 @@ class Resultset(object):
         alltx = self.settings.alltx
         svl = self.settings.svl
         data = self.data
+
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
@@ -306,17 +317,17 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round()
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        upperagelims = self.parset.pars['age'][:,1] # All populations, but upper range
+        upperagelims = self.pars['age'][:,1] # All populations, but upper range
         adultpops = findinds(upperagelims>=15)
         childpops = findinds(upperagelims<15)
         if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-
         
         # Calculate DALYs
         yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
-        disutiltx = self.parset.pars['disutiltx'].y
-        disutils = [self.parset.pars['disutil'+key].y for key in self.settings.hivstates]
+        disutiltx = self.pars['disutiltx'].y
+        disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
+
         dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
         dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
         dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
@@ -426,7 +437,7 @@ class Multiresultset(Resultset):
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
         commonattrs = ['projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
-        diffattrs = ['parset', 'progset', 'raw', 'simpars'] # Things that differ between between results sets
+        diffattrs = ['parset', 'progset', 'simpars'] # Things that differ between between results sets
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
 
@@ -448,7 +459,7 @@ class Multiresultset(Resultset):
             
             # Loop over different attributes and append to the odict
             for attr in diffattrs:
-                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. self.raw['foo'] = rset.raw -- WARNING, does this even work?
+                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
             
             # Now, the real deal: fix self.main
             for key2 in self.main.keys():

@@ -1175,7 +1175,7 @@ class dataframe(object):
 
     def __init__(self, cols=None, data=None):
         if cols is None: cols = list()
-        if data is None: data = zeros((len(cols),0), dtype=object)
+        if data is None: data = zeros((len(cols),0), dtype=object) # Object allows more than just numbers to be stored
         self.cols = cols
         self.data = array(data, dtype=object)
         return None
@@ -1361,12 +1361,6 @@ class dataframe(object):
 ##############################################################################
 ## OTHER CLASSES
 ##############################################################################
-
-class OptimaException(Exception):
-    ''' A tiny class to allow for Optima-specific exceptions '''
-    def __init(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
 
 
 class LinkException(Exception):

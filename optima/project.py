@@ -2,7 +2,7 @@ from optima import OptimaException, Settings, Parameterset, Programset, Resultse
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
-from optima import __version__ # Get current version
+from optima import version # Get current version
 from numpy import argmin, array
 from numpy.random import seed, randint
 import os
@@ -65,8 +65,7 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.spreadsheet = None # Binary version of the spreadsheet file
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
         self.warnings = None # Place to store information about warnings (mostly used during migrations)
@@ -129,7 +128,6 @@ class Project(object):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
-        self.spreadsheet = Spreadsheet(filename) # Load spreadsheet binary file into project -- WARNING, only partly implemented since not sure how to read from
         self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
@@ -470,7 +468,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None, keepraw=False):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -509,7 +507,7 @@ class Project(object):
 
         # Store results -- WARNING, is this correct in all cases?
         resultname = 'parset-'+self.parsets[name].name 
-        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             self.parsets[name].resultsref = keyname # If linked to a parset, store the results
@@ -656,6 +654,7 @@ class Project(object):
     def getBOC(self, objectives=None):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         
+        boc = None
         for x in self.results:
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
@@ -665,8 +664,10 @@ class Project(object):
                     if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
                     return boc
-        print('No BOC with the required objectives can be found in project: %s' % self.name)
-        return None
+        print('No BOC with the required objectives can be found in project: %s; using first BOC found' % self.name)
+        if boc is None:
+            print('WARNING, no BOCs found!')
+        return boc
         
         
     def delBOC(self, objectives):
@@ -695,31 +696,4 @@ class Project(object):
         if returnplot: return ax
         else: show()
         return None
-
-
-
-class Spreadsheet(object):
-    ''' A class for reading and writing spreadsheet data in binary format, so a project contains the spreadsheet loaded '''
-    
-    def __init__(self, filename=None):
-        self.data = None
-        self.filename = None
-        if filename is not None: self.load(filename)
-        return None
-    
-    def __repr__(self):
-        output = defaultrepr(self)
-        return output
-    
-    def load(self, filename=None):
-        if filename is not None:
-            self.filename = filename
-            with open(filename, mode='rb') as f: self.data = f.read()
-    
-    def save(self, filename=None, verbose=2):
-        if filename is None:
-            if self.filename is not None: filename = self.filename
-        if filename is not None:
-            with open(filename, mode='wb') as f: f.write(self.data)
-        printv('Spreadsheet "%s" saved.' % filename, 2, verbose)
     

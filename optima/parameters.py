@@ -8,12 +8,761 @@ Version: 2.1 (2017jan31)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
+from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'rawtransit'] # General parameter keys that are just copied
 staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
+
+
+#################################################################################################################################
+### Define the parameter set
+#################################################################################################################################
+
+
+
+class Parameterset(object):
+    ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
+    
+    def __init__(self, name='default', project=None, progsetname=None, budget=None):
+        self.name = name # Name of the parameter set, e.g. 'default'
+        self.uid = uuid() # ID
+        self.projectref = Link(project) # Store pointer for the project, if available
+        self.created = today() # Date created
+        self.modified = today() # Date modified
+        self.pars = None
+        self.popkeys = [] # List of populations
+        self.posterior = odict() # an odict, comparable to pars, for storing posterior values of m -- WARNING, not used yet
+        self.resultsref = None # Store pointer to results
+        self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
+        self.budget = budget # Store the budget that generated the parset, if any
+        
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output  = defaultrepr(self)
+        output += 'Parameter set name: %s\n'    % self.name
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        return output
+    
+    
+    def getresults(self, die=True):
+        ''' Method for getting the results '''
+        if self.resultsref is not None and self.projectref() is not None:
+            results = getresults(project=self.projectref(), pointer=self.resultsref, die=die)
+            return results
+        else:
+            raise OptimaException('No results associated with this parameter set')
+    
+    
+    def parkeys(self):
+        ''' Return a list of the keys in pars that are actually parameter objects '''
+        parslist = []
+        for key,par in self.pars.items():
+            if issubclass(type(par), Par):
+                parslist.append(key)
+        return parslist
+    
+    
+    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
+        ''' Method for getting proportions'''
+
+        # Get results
+        try:
+            results = getresults(project=self.projectref(), pointer=self.resultsref, die=die)
+            assert(results is not None) # Might return something empty
+        except:
+            if die: # Give up
+                raise OptimaException('No results associated with this parameter set')
+            else: # Or, just rerun
+                results = self.projectref().runsim(name=self.name)
+
+        # Interpret inputs
+        if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
+        elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
+        elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
+        elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
+        elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
+        else:
+            raise OptimaException('Unknown proportion type %s' % proptype)
+    
+        if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
+        elif ind in ['lower','l','low',1]: ind=1
+        elif ind in ['upper','u','up','high','h',2]: ind=2
+        else: ind=0 # Return best estimate if can't understand whichone was requested
+        
+        timeindex = findinds(results.tvec,year) if year else Ellipsis
+
+        if bypop:
+            return results.main[proptype].pops[ind][:][timeindex]
+        else:
+            return results.main[proptype].tot[ind][timeindex]
+                
+            
+    
+    
+    def makepars(self, data=None, verbose=2):
+        self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
+        self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
+        return None
+
+
+    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
+        """ Prepares model parameters to run the simulation. """
+        printv('Making model parameters...', 1, verbose),
+
+        simparslist = []
+        if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
+        if samples is None: samples = [None]
+        for sample in samples:
+            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, verbose=verbose, name=self.name, uid=self.uid)
+            simparslist.append(simpars) # Wrap up
+        
+        return simparslist
+    
+    
+    def updateprior(self):
+        ''' Update the prior for all of the variables '''
+        for key in self.parkeys():
+            self.pars[key].updateprior()
+        return None
+        
+    
+    def printpars(self, output=False):
+        outstr = ''
+        count = 0
+        for par in self.pars.values():
+            if hasattr(par,'p'): print('WARNING, population size not implemented!')
+            if hasattr(par,'y'):
+                if hasattr(par.y, 'keys'):
+                    count += 1
+                    if len(par.keys())>1:
+                        outstr += '%3i: %s\n' % (count, par.name)
+                        for key in par.keys():
+                            outstr += '     %s = %s\n' % (key, par.y[key])
+                    elif len(par.keys())==1:
+                        outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y[0])
+                    elif len(par.keys())==0:
+                        outstr += '%3i: %s = (empty)' % (count, par.name)
+                    else:
+                        print('WARNING, not sure what to do with %s: %s' % (par.name, par.y))
+                else:
+                    count += 1
+                    outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y)
+        print(outstr)
+        if output: return outstr
+        else: return None
+
+
+    def listattributes(self):
+        ''' Go through all the parameters and make a list of their possible attributes '''
+        
+        maxlen = 20
+        pars = self.pars
+        
+        print('\n\n\n')
+        print('CONTENTS OF PARS, BY TYPE:')
+        partypes = []
+        for key in pars: partypes.append(type(pars[key]))
+        partypes = set(partypes)
+        count1 = 0
+        count2 = 0
+        for partype in set(partypes): 
+            count1 += 1
+            print('  %i..%s' % (count1, str(partype)))
+            for key in pars:
+                if type(pars[key])==partype:
+                    count2 += 1
+                    print('      %i.... %s' % (count2, str(key)))
+        
+        print('\n\n\n')
+        print('ATTRIBUTES:')
+        attributes = {}
+        for key in self.parkeys():
+            theseattr = pars[key].__dict__.keys()
+            for attr in theseattr:
+                if attr not in attributes.keys(): attributes[attr] = []
+                attributes[attr].append(getattr(pars[key], attr))
+        for key in attributes:
+            print('  ..%s' % key)
+        print('\n\n')
+        for key in attributes:
+            count = 0
+            print('  ..%s' % key)
+            items = []
+            for item in attributes[key]:
+                try: 
+                    string = str(item)
+                    if string not in items: 
+                        if len(string)>maxlen: string = string[:maxlen]
+                        items.append(string) 
+                except: 
+                    items.append('Failed to append item')
+            for item in items:
+                count += 1
+                print('      %i....%s' % (count, str(item)))
+        return None
+
+
+    def manualfitlists(self, parsubset=None, advanced=False):
+        ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
+        if not self.pars:
+            raise OptimaException("No parameters available!")
+    
+        # Check parname subset is valid
+        if parsubset is None:
+            tmppars = self.pars
+        else:
+            if type(parsubset)==str: parsubset=[parsubset]
+            if parsubset and type(parsubset) not in (list, str):
+                raise OptimaException("Expecting parsubset to be a list or a string!")
+            for item in parsubset:
+                if item not in [par.short for par in self.pars.values() if hasattr(par,'manual') and par.manual!='no']:
+                    raise OptimaException("Parameter %s is not a manual parameter.")
+            tmppars = {par.short:par for par in self.pars.values() if hasattr(par,'manual') and par.manual!='no' and par.short in parsubset}
+            
+        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
+        keylist = mflists['keys']
+        subkeylist = mflists['subkeys']
+        typelist = mflists['types']
+        valuelist = mflists['values']
+        labellist = mflists['labels']
+
+        for key in tmppars.keys():
+            par = tmppars[key]
+            if hasattr(par, 'manual') and par.manual != 'no':  # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+                if par.manual=='meta':
+                    if advanced: # By default, don't include these
+                        keylist.append(key)
+                        subkeylist.append(None)
+                        typelist.append(par.manual)
+                        valuelist.append(par.m)
+                        labellist.append('%s -- meta' % par.name)
+                elif par.manual in 'const':
+                    keylist.append(key)
+                    subkeylist.append(None)
+                    typelist.append(par.manual)
+                    valuelist.append(par.y)
+                    labellist.append(par.name)
+                elif par.manual=='advanced': # These are also constants, but skip by default
+                    if advanced:
+                        keylist.append(key)
+                        subkeylist.append(None)
+                        typelist.append(par.manual)
+                        valuelist.append(par.y)
+                        labellist.append(par.name)
+                elif par.manual=='year':
+                    keylist.append(key)
+                    subkeylist.append(None)
+                    typelist.append(par.manual)
+                    valuelist.append(par.t)
+                    labellist.append(par.name)
+                elif par.manual=='pop':
+                    for subkey in par.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.manual)
+                        valuelist.append(par.y[subkey])
+                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                elif par.manual=='exp':
+                    for subkey in par.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.manual)
+                        valuelist.append(par.i[subkey])
+                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                else:
+                    print('Parameter type "%s" not implemented!' % par.manual)
+    
+        return mflists
+    
+    
+    ## Define update step
+    def update(self, mflists):
+        ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
+        if not self.pars:
+            raise OptimaException("No parameters available!")
+    
+        tmppars = self.pars
+    
+        keylist = mflists['keys']
+        subkeylist = mflists['subkeys']
+        typelist = mflists['types']
+        valuelist = mflists['values']
+    
+        ## Loop over all parameters and update them
+        verbose = 0
+        for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
+            if ptype=='meta':  # Metaparameters
+                vtype = type(tmppars[key].m)
+                tmppars[key].m = vtype(value)
+                printv('%s.m = %s' % (key, value), 4, verbose)
+            elif ptype=='pop':  # Populations or partnerships
+                vtype = type(tmppars[key].y[subkey])
+                tmppars[key].y[subkey] = vtype(value)
+                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
+            elif ptype=='exp':  # Population growth
+                vtype = type(tmppars[key].i[subkey])
+                tmppars[key].i[subkey] = vtype(value)
+                printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
+            elif ptype in ['const', 'advanced']:  # Constants
+                vtype = type(tmppars[key].y)
+                tmppars[key].y = vtype(value)
+                printv('%s.y = %s' % (key, value), 4, verbose)
+            elif ptype=='year':  # Year parameters
+                vtype = type(tmppars[key].t)
+                tmppars[key].t = vtype(value)
+                printv('%s.t = %s' % (key, value), 4, verbose)
+            else:
+                errormsg = 'Parameter type "%s" not implemented!' % ptype
+                raise OptimaException(errormsg)
+    
+                # parset.interp() and calculate results are supposed to be called from the outside
+    
+    def export(self, filename=None, compare=None):
+        '''
+        Little function to export code for the current parameter set. To use, do something like:
+        
+        pars = P.pars()
+        
+        and then paste in the output of this function.
+        
+        If compare is not None, then only print out parameter values that differ. Most useful for
+        comparing to default, e.g.
+        P.parsets[-1].export(compare='default')
+        '''
+        cpars, cvalues = None, None
+        if compare is not None:
+            try: 
+                cpars = self.projectref().parsets[compare].pars
+            except: 
+                print('Could not compare parset %s to parset %s; printing all parameters' % (self.name, compare))
+                compare = None
+        
+        def oneline(values): return str(values).replace('\n',' ') 
+        
+        output = ''
+        for parname,par in self.pars.items():
+            prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
+            values2 = None
+            cvalues2 = None
+            if hasattr(par,'manual'):
+                if par.manual=='pop': 
+                    values = par.y[:].tolist()
+                    prefix = "pars['%s'].y[:] = " % parname
+                    if cpars is not None: cvalues = cpars[parname].y[:].tolist()
+                elif par.manual in ['const', 'advanced']: 
+                    values = par.y
+                    prefix = "pars['%s'].y = " % parname
+                    if cpars is not None: cvalues = cpars[parname].y
+                elif par.manual=='year': 
+                    values = par.t
+                    prefix = "pars['%s'].t = " % parname
+                    if cpars is not None: cvalues = cpars[parname].t
+                elif par.manual=='meta':
+                    values = par.m
+                    prefix = "pars['%s'].m = " % parname
+                    if cpars is not None: cvalues = cpars[parname].m
+                elif par.manual=='exp':
+                    values  = par.i[:].tolist()
+                    values2 = par.e[:].tolist()
+                    prefix  = "pars['%s'].i[:] = " % parname
+                    prefix2 = "pars['%s'].e[:] = " % parname
+                    if cpars is not None: 
+                        cvalues  = cpars[parname].i[:].tolist()
+                        cvalues2 = cpars[parname].e[:].tolist()
+                elif par.manual=='no':
+                    values = None
+                else: 
+                    print('Parameter manual type "%s" not implemented' % par.manual)
+                    values = None
+                if values is not None:
+                    if compare is None or (values!=cvalues) or (values2!=cvalues2):
+                        output += prefix+oneline(values)+'\n'
+                        if prefix2 is not None:
+                            output += prefix2+oneline(values2)+'\n'
+        
+        if filename is not None:
+            with open(filename, 'w') as f:
+                f.write(output)
+        else:
+            return output
+
+
+
+
+
+
+#################################################################################################################################
+### Define the other classes
+#################################################################################################################################
+
+class Par(object):
+    '''
+    The base class for epidemiological model parameters.
+    
+    There are four subclasses:
+        * Constant objects store a single scalar value in y and an uncertainty sample in ysample -- e.g., transmfi
+        * Metapar objects store an odict of y values, have a single metaparameter m, and an odict of ysample -- e.g., force
+        * Timepar objects store an odict of y values, have a single metaparameter m, and uncertainty scalar msample -- e.g., condcas
+        * Popsizepar objects are like Timepar objects except have odicts of i (intercept) and e (exponent) values
+        * Yearpar objects store a single time value -- e.g., fixpropdx
+    
+    These four thus have different structures (where [] denotes dict):
+        * Constants   have y, ysample
+        * Metapars    have y[], ysample[], m, msample
+        * Timepars    have y[], m, msample
+        * Popsizepars have i[], e[], m, msample
+        * Yearpars    have t
+    
+    Consequently, some of them have different sample(), updateprior(), and interp() methods; in brief:
+        * Constants have sample() = ysample, interp() = y
+        * Metapars have sample() = ysample[], interp() = m*y[]
+        * Timepars have sample() = msample, interp() = m*y[]
+        * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[])
+        * Yearpars have no sampling methods, and interp() = t
+    
+    Version: 2016nov06 by cliffk    
+    '''
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+        ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
+        self.short = short # The short name, e.g. "hivtest"
+        self.name = name # The full name, e.g. "HIV testing rate"
+        self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+        self.by = by # Whether it's by population, partnership, or total
+        self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
+        self.fromdata = fromdata # Whether or not the parameter is made from data
+        self.m = m # Multiplicative metaparameter, e.g. 1
+        self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
+        if prior is None:             self.prior = Dist() # Not supplied, create default distribution
+        elif isinstance(prior, dict): self.prior = Dist(**prior) # Supplied as a dict, use it to create a distribution
+        elif isinstance(prior, Dist): self.prior = prior # Supplied as a distribution, use directly
+        else:
+            errormsg = 'Prior must either be None, a Dist, or a dict with keys "dist" and "pars", not %s' % type(prior)
+            raise OptimaException(errormsg)
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = defaultrepr(self)
+        return output
+    
+
+
+class Constant(Par):
+    ''' The definition of a single constant parameter, which may or may not vary by population '''
+    
+    def __init__(self, y=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
+        del self.m # These don't exist for the Constant class
+        del self.msample 
+        self.y = y # y-value data, e.g. 0.3
+        self.ysample = None # y-value data generated from the prior, e.g. 0.24353
+    
+    def keys(self):
+        ''' Constants don't have any keys '''
+        return None 
+    
+    def sample(self, randseed=None):
+        ''' Recalculate ysample '''
+        self.ysample = self.prior.sample(n=1, randseed=randseed)[0]
+        return None
+    
+    def updateprior(self, verbose=2):
+        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
+        if self.prior.dist=='uniform':
+            tmppars = array(self.prior.pars) # Convert to array for numerical magic
+            self.prior.pars = tuple(self.y*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+        return None
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None): # Keyword arguments are for consistency but not actually used
+        """
+        Take parameters and turn them into model parameters -- here, just return a constant value at every time point
+        
+        There are however 3 options with the interpolation:
+            * False -- use existing y value
+            * 'old' -- use existing ysample value
+            * 'new' -- recalculate ysample value
+        """
+        # Figure out sample
+        if not sample: 
+            y = self.y
+        else:
+            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            y = self.ysample
+            
+        # Do interpolation
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
+        output = applylimits(par=self, y=y, limits=self.limits, dt=dt)
+        if not asarray: output = odict([('tot',output)])
+        return output
+
+
+
+class Metapar(Par):
+    ''' The definition of a single metaparameter, such as force of infection, which usually does vary by population '''
+
+    def __init__(self, y=None, prior=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
+        self.y = y # y-value data, e.g. {'FSW:'0.3, 'MSM':0.7}
+        self.ysample = None
+        if type(prior)==odict:
+            self.prior = prior
+        elif prior is None:
+            self.prior = odict()
+            for key in self.keys():
+                self.prior[key] = Dist() # Initialize with defaults
+        else:
+            errormsg = 'Prior for metaparameters must be an odict, not %s' % type(prior)
+            raise OptimaException(errormsg)
+            
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.y.keys()
+    
+    def sample(self, randseed=None):
+        ''' Recalculate ysample '''
+        self.ysample = odict()
+        for key in self.keys():
+            self.ysample[key] = self.prior[key].sample(randseed=randseed)[0]
+        return None
+    
+    def updateprior(self, verbose=2):
+        ''' Update the prior parameters to match the y values, so e.g. can recalibrate and then do uncertainty '''
+        for key in self.keys():
+            if self.prior[key].dist=='uniform':
+                tmppars = array(self.prior[key].pars) # Convert to array for numerical magic
+                self.prior[key].pars = tuple(self.y[key]*tmppars/tmppars.mean()) # Recenter the limits around the mean
+                printv('Priors updated for %s' % self.short, 3, verbose)
+            else:
+                errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+                raise OptimaException(errormsg)
+        return None
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # Keyword arguments are for consistency but not actually used
+        """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        
+        # Figure out sample
+        if not sample: 
+            y = self.y
+        else:
+            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            y = self.ysample
+                
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
+        if asarray: output = zeros(len(self.keys()))
+        else: output = odict()
+        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
+            yinterp = applylimits(par=self, y=y[key]*self.m, limits=self.limits, dt=dt)
+            if asarray: output[pop] = yinterp
+            else: output[key] = yinterp
+        return output
+    
+
+
+class Timepar(Par):
+    ''' The definition of a single time-varying parameter, which may or may not vary by population '''
+    
+    def __init__(self, t=None, y=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
+        if t is None: t = odict()
+        if y is None: y = odict()
+        self.t = t # Time data, e.g. [2002, 2008]
+        self.y = y # Value data, e.g. [0.3, 0.7]
+    
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.y.keys()
+    
+    def df(self, key=None, data=None):
+        '''
+        Return t,y data as a data frame; or if data is supplied, replace current t,y values.
+        Example: use df() to export data, work with it as a dataframe, and then import it back in:
+        aidstest = P.pars()['aidstest'].df()
+        aidstest.addrow([2005, 0.3])
+        P.pars()['aidstest'].df(data=aidstest)
+        '''
+        if key is None: key = self.keys()[0] # Pull out first key if not specified -- e.g., 'tot'
+        output = dataframe(['t','y'], [self.t[key], self.y[key]])
+        if data is not None:
+            if isinstance(data, dataframe):
+                self.t[key] = array(data['t'],dtype=float)
+                self.y[key] = array(data['y'],dtype=float)
+            else:
+                errormsg = 'Data argument must be a dataframe, not "%s"' % type(data)
+                raise OptimaException(errormsg)
+            return None
+        else:
+            return output
+    
+    def sample(self, randseed=None):
+        ''' Recalculate msample '''
+        self.msample = self.prior.sample(n=1, randseed=randseed)[0]
+        return None
+    
+    def updateprior(self, verbose=2):
+        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
+        if self.prior.dist=='uniform':
+            tmppars = array(self.prior.pars) # Convert to array for numerical magic
+            self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+        return None
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None):
+        """ Take parameters and turn them into model parameters """
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # Handle smoothness
+        
+        # Figure out sample
+        if not sample:
+            m = self.m
+        else:
+            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            m = self.msample
+        
+        # Set things up and do the interpolation
+        npops = len(self.keys())
+        if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
+        if asarray: output = zeros((npops,len(tvec)))
+        else: output = odict()
+        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
+            yinterp = m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[pop,:] = yinterp
+            else: output[key] = yinterp
+        if npops==1 and self.by=='tot' and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
+        else: return output
+
+
+
+class Popsizepar(Par):
+    ''' The definition of the population size parameter '''
+    
+    def __init__(self, i=None, e=None, m=1., start=2000., **defaultargs):
+        Par.__init__(self, **defaultargs)
+        if i is None: i = odict()
+        if e is None: e = odict()
+        self.i = i # Exponential fit intercept, e.g. 3.4e6
+        self.e = e # Exponential fit exponent, e.g. 0.03
+        self.m = m # Multiplicative metaparameter, e.g. 1
+        self.start = start # Year for which population growth start is calibrated to
+    
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.i.keys()
+    
+    def sample(self, randseed=None):
+        ''' Recalculate msample -- same as Timepar'''
+        self.msample = self.prior.sample(n=1, randseed=randseed)[0]
+        return None
+    
+    def updateprior(self, verbose=2):
+        ''' Update the prior parameters to match the metaparameter -- same as Timepar '''
+        if self.prior.dist=='uniform':
+            tmppars = array(self.prior.pars) # Convert to array for numerical magic
+            self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            printv('Priors updated for %s' % self.short, 3, verbose)
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
+            raise OptimaException(errormsg)
+        return None
+
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+        """ Take population size parameter and turn it into a model parameters """
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        
+        # Figure out sample
+        if not sample:
+            m = self.m
+        else:
+            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            m = self.msample
+        
+        # Do interpolation
+        keys = self.keys()
+        npops = len(keys)
+        if asarray: output = zeros((npops,len(tvec)))
+        else: output = odict()
+        for pop,key in enumerate(keys):
+            yinterp = m * self.i[key] * grow(self.e[key], array(tvec)-self.start)
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[pop,:] = yinterp
+            else: output[key] = yinterp
+        return output
+
+
+
+class Yearpar(Par):
+    ''' The definition of a single year parameter'''
+    
+    def __init__(self, t=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
+        del self.m # These don't exist for this class
+        del self.msample 
+        self.prior = None
+        self.t = t # y-value data, e.g. 0.3
+    
+    def keys(self):
+        return None 
+    
+    def sample(self, randseed=None):
+        ''' No sampling, so simply return the value '''
+        return self.t
+    
+    def updateprior(self, verbose=2):
+        '''No prior, so return nothing'''
+        return None
+    
+    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True): # Keyword arguments are for consistency but not actually used
+        '''No interpolation, so simply return the value'''
+        return self.t
+
+
+
+class Dist(object):
+    ''' Define a distribution object for drawing samples from, usually to create a prior '''
+    def __init__(self, dist=None, pars=None):
+        defaultdist = 'uniform'
+        defaultpars = array([0.9, 1.1]) # This is arbitrary, of course
+        self.dist = dist if dist is not None else defaultdist
+        self.pars = promotetoarray(pars) if pars is not None else defaultpars
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = defaultrepr(self)
+        return output
+    
+    def sample(self, n=1, randseed=None):
+        ''' Draw random samples from the specified distribution '''
+        if randseed is not None: seed(randseed) # Reset the random seed, if specified
+        if self.dist=='uniform':
+            samples = uniform(low=self.pars[0], high=self.pars[1], size=n)
+            return samples
+        if self.dist=='normal':
+            return normal(loc=self.pars[0], scale=self.pars[1], size=n)
+        else:
+            errormsg = 'Distribution "%s" not defined; available choices are: uniform, normal' % self.dist
+            raise OptimaException(errormsg)
 
 
 
@@ -601,357 +1350,6 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
 
 
 
-#################################################################################################################################
-### Define the classes
-#################################################################################################################################
-
-class Dist(object):
-    ''' Define a distribution object for drawing samples from, usually to create a prior '''
-    def __init__(self, dist=None, pars=None):
-        defaultdist = 'uniform'
-        defaultpars = array([0.9, 1.1]) # This is arbitrary, of course
-        self.dist = dist if dist is not None else defaultdist
-        self.pars = promotetoarray(pars) if pars is not None else defaultpars
-    
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = defaultrepr(self)
-        return output
-    
-    def sample(self, n=1, randseed=None):
-        ''' Draw random samples from the specified distribution '''
-        if randseed is not None: seed(randseed) # Reset the random seed, if specified
-        if self.dist=='uniform':
-            samples = uniform(low=self.pars[0], high=self.pars[1], size=n)
-            return samples
-        if self.dist=='normal':
-            return normal(loc=self.pars[0], scale=self.pars[1], size=n)
-        else:
-            errormsg = 'Distribution "%s" not defined; available choices are: uniform, normal' % self.dist
-            raise OptimaException(errormsg)
-
-
-class Par(object):
-    '''
-    The base class for epidemiological model parameters.
-    
-    There are four subclasses:
-        * Constant objects store a single scalar value in y and an uncertainty sample in ysample -- e.g., transmfi
-        * Metapar objects store an odict of y values, have a single metaparameter m, and an odict of ysample -- e.g., force
-        * Timepar objects store an odict of y values, have a single metaparameter m, and uncertainty scalar msample -- e.g., condcas
-        * Popsizepar objects are like Timepar objects except have odicts of i (intercept) and e (exponent) values
-        * Yearpar objects store a single time value -- e.g., fixpropdx
-    
-    These four thus have different structures (where [] denotes dict):
-        * Constants   have y, ysample
-        * Metapars    have y[], ysample[], m, msample
-        * Timepars    have y[], m, msample
-        * Popsizepars have i[], e[], m, msample
-        * Yearpars    have t
-    
-    Consequently, some of them have different sample(), updateprior(), and interp() methods; in brief:
-        * Constants have sample() = ysample, interp() = y
-        * Metapars have sample() = ysample[], interp() = m*y[]
-        * Timepars have sample() = msample, interp() = m*y[]
-        * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[])
-        * Yearpars have no sampling methods, and interp() = t
-    
-    Version: 2016nov06 by cliffk    
-    '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
-        ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
-        self.short = short # The short name, e.g. "hivtest"
-        self.name = name # The full name, e.g. "HIV testing rate"
-        self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
-        self.by = by # Whether it's by population, partnership, or total
-        self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
-        self.fromdata = fromdata # Whether or not the parameter is made from data
-        self.m = m # Multiplicative metaparameter, e.g. 1
-        self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
-        if prior is None:             self.prior = Dist() # Not supplied, create default distribution
-        elif isinstance(prior, dict): self.prior = Dist(**prior) # Supplied as a dict, use it to create a distribution
-        elif isinstance(prior, Dist): self.prior = prior # Supplied as a distribution, use directly
-        else:
-            errormsg = 'Prior must either be None, a Dist, or a dict with keys "dist" and "pars", not %s' % type(prior)
-            raise OptimaException(errormsg)
-    
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = defaultrepr(self)
-        return output
-    
-
-
-
-
-class Constant(Par):
-    ''' The definition of a single constant parameter, which may or may not vary by population '''
-    
-    def __init__(self, y=None, **defaultargs):
-        Par.__init__(self, **defaultargs)
-        del self.m # These don't exist for the Constant class
-        del self.msample 
-        self.y = y # y-value data, e.g. 0.3
-        self.ysample = None # y-value data generated from the prior, e.g. 0.24353
-    
-    def keys(self):
-        ''' Constants don't have any keys '''
-        return None 
-    
-    def sample(self, randseed=None):
-        ''' Recalculate ysample '''
-        self.ysample = self.prior.sample(n=1, randseed=randseed)[0]
-        return None
-    
-    def updateprior(self, verbose=2):
-        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
-        if self.prior.dist=='uniform':
-            tmppars = array(self.prior.pars) # Convert to array for numerical magic
-            self.prior.pars = tuple(self.y*tmppars/tmppars.mean()) # Recenter the limits around the mean
-            printv('Priors updated for %s' % self.short, 3, verbose)
-        else:
-            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
-            raise OptimaException(errormsg)
-        return None
-    
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None): # Keyword arguments are for consistency but not actually used
-        """
-        Take parameters and turn them into model parameters -- here, just return a constant value at every time point
-        
-        There are however 3 options with the interpolation:
-            * False -- use existing y value
-            * 'old' -- use existing ysample value
-            * 'new' -- recalculate ysample value
-        """
-        # Figure out sample
-        if not sample: 
-            y = self.y
-        else:
-            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
-            y = self.ysample
-            
-        # Do interpolation
-        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        output = applylimits(par=self, y=y, limits=self.limits, dt=dt)
-        if not asarray: output = odict([('tot',output)])
-        return output
-
-
-
-class Metapar(Par):
-    ''' The definition of a single metaparameter, such as force of infection, which usually does vary by population '''
-
-    def __init__(self, y=None, prior=None, **defaultargs):
-        Par.__init__(self, **defaultargs)
-        self.y = y # y-value data, e.g. {'FSW:'0.3, 'MSM':0.7}
-        self.ysample = None
-        if type(prior)==odict:
-            self.prior = prior
-        elif prior is None:
-            self.prior = odict()
-            for key in self.keys():
-                self.prior[key] = Dist() # Initialize with defaults
-        else:
-            errormsg = 'Prior for metaparameters must be an odict, not %s' % type(prior)
-            raise OptimaException(errormsg)
-            
-    def keys(self):
-        ''' Return the valid keys for using with this parameter '''
-        return self.y.keys()
-    
-    def sample(self, randseed=None):
-        ''' Recalculate ysample '''
-        self.ysample = odict()
-        for key in self.keys():
-            self.ysample[key] = self.prior[key].sample(randseed=randseed)[0]
-        return None
-    
-    def updateprior(self, verbose=2):
-        ''' Update the prior parameters to match the y values, so e.g. can recalibrate and then do uncertainty '''
-        for key in self.keys():
-            if self.prior[key].dist=='uniform':
-                tmppars = array(self.prior[key].pars) # Convert to array for numerical magic
-                self.prior[key].pars = tuple(self.y[key]*tmppars/tmppars.mean()) # Recenter the limits around the mean
-                printv('Priors updated for %s' % self.short, 3, verbose)
-            else:
-                errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
-                raise OptimaException(errormsg)
-        return None
-    
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # Keyword arguments are for consistency but not actually used
-        """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        
-        # Figure out sample
-        if not sample: 
-            y = self.y
-        else:
-            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
-            y = self.ysample
-                
-        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        if asarray: output = zeros(len(self.keys()))
-        else: output = odict()
-        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
-            yinterp = applylimits(par=self, y=y[key]*self.m, limits=self.limits, dt=dt)
-            if asarray: output[pop] = yinterp
-            else: output[key] = yinterp
-        return output
-    
-
-
-
-
-class Timepar(Par):
-    ''' The definition of a single time-varying parameter, which may or may not vary by population '''
-    
-    def __init__(self, t=None, y=None, **defaultargs):
-        Par.__init__(self, **defaultargs)
-        if t is None: t = odict()
-        if y is None: y = odict()
-        self.t = t # Time data, e.g. [2002, 2008]
-        self.y = y # Value data, e.g. [0.3, 0.7]
-    
-    def keys(self):
-        ''' Return the valid keys for using with this parameter '''
-        return self.y.keys()
-    
-    def sample(self, randseed=None):
-        ''' Recalculate msample '''
-        self.msample = self.prior.sample(n=1, randseed=randseed)[0]
-        return None
-    
-    def updateprior(self, verbose=2):
-        ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
-        if self.prior.dist=='uniform':
-            tmppars = array(self.prior.pars) # Convert to array for numerical magic
-            self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
-            printv('Priors updated for %s' % self.short, 3, verbose)
-        else:
-            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
-            raise OptimaException(errormsg)
-        return None
-    
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None):
-        """ Take parameters and turn them into model parameters """
-        
-        # Validate input
-        if tvec is None: 
-            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
-            raise OptimaException(errormsg)
-        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
-        if smoothness is None: smoothness = int(defaultsmoothness/dt) # Handle smoothness
-        
-        # Figure out sample
-        if not sample:
-            m = self.m
-        else:
-            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
-            m = self.msample
-        
-        # Set things up and do the interpolation
-        npops = len(self.keys())
-        if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
-        if asarray: output = zeros((npops,len(tvec)))
-        else: output = odict()
-        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
-            yinterp = m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
-            if asarray: output[pop,:] = yinterp
-            else: output[key] = yinterp
-        if npops==1 and self.by=='tot' and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
-        else: return output
-
-
-
-
-
-
-class Popsizepar(Par):
-    ''' The definition of the population size parameter '''
-    
-    def __init__(self, i=None, e=None, m=1., start=2000., **defaultargs):
-        Par.__init__(self, **defaultargs)
-        if i is None: i = odict()
-        if e is None: e = odict()
-        self.i = i # Exponential fit intercept, e.g. 3.4e6
-        self.e = e # Exponential fit exponent, e.g. 0.03
-        self.m = m # Multiplicative metaparameter, e.g. 1
-        self.start = start # Year for which population growth start is calibrated to
-    
-    def keys(self):
-        ''' Return the valid keys for using with this parameter '''
-        return self.i.keys()
-    
-    def sample(self, randseed=None):
-        ''' Recalculate msample -- same as Timepar'''
-        self.msample = self.prior.sample(n=1, randseed=randseed)[0]
-        return None
-    
-    def updateprior(self, verbose=2):
-        ''' Update the prior parameters to match the metaparameter -- same as Timepar '''
-        if self.prior.dist=='uniform':
-            tmppars = array(self.prior.pars) # Convert to array for numerical magic
-            self.prior.pars = tuple(self.m*tmppars/tmppars.mean()) # Recenter the limits around the mean
-            printv('Priors updated for %s' % self.short, 3, verbose)
-        else:
-            errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
-            raise OptimaException(errormsg)
-        return None
-
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
-        """ Take population size parameter and turn it into a model parameters """
-        
-        # Validate input
-        if tvec is None: 
-            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
-            raise OptimaException(errormsg)
-        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
-        
-        # Figure out sample
-        if not sample:
-            m = self.m
-        else:
-            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
-            m = self.msample
-        
-        # Do interpolation
-        keys = self.keys()
-        npops = len(keys)
-        if asarray: output = zeros((npops,len(tvec)))
-        else: output = odict()
-        for pop,key in enumerate(keys):
-            yinterp = m * self.i[key] * grow(self.e[key], array(tvec)-self.start)
-            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
-            if asarray: output[pop,:] = yinterp
-            else: output[key] = yinterp
-        return output
-
-
-
-class Yearpar(Par):
-    ''' The definition of a single year parameter'''
-    
-    def __init__(self, t=None, **defaultargs):
-        Par.__init__(self, **defaultargs)
-        del self.m # These don't exist for this class
-        del self.msample 
-        self.prior = None
-        self.t = t # y-value data, e.g. 0.3
-    
-    def keys(self):
-        return None 
-    
-    def sample(self, randseed=None):
-        ''' No sampling, so simply return the value '''
-        return self.t
-    
-    def updateprior(self, verbose=2):
-        '''No prior, so return nothing'''
-        return None
-    
-    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True): # Keyword arguments are for consistency but not actually used
-        '''No interpolation, so simply return the value'''
-        return self.t
 
 
 
@@ -966,375 +1364,5 @@ class Yearpar(Par):
 
 
 
-
-class Parameterset(object):
-    ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
-    
-    def __init__(self, name='default', project=None, progsetname=None, budget=None):
-        self.name = name # Name of the parameter set, e.g. 'default'
-        self.uid = uuid() # ID
-        self.projectref = Link(project) # Store pointer for the project, if available
-        self.created = today() # Date created
-        self.modified = today() # Date modified
-        self.pars = None
-        self.popkeys = [] # List of populations
-        self.posterior = odict() # an odict, comparable to pars, for storing posterior values of m -- WARNING, not used yet
-        self.resultsref = None # Store pointer to results
-        self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
-        self.budget = budget # Store the budget that generated the parset, if any
-        
-    
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output  = defaultrepr(self)
-        output += 'Parameter set name: %s\n'    % self.name
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        return output
-    
-    
-    def getresults(self, die=True):
-        ''' Method for getting the results '''
-        if self.resultsref is not None and self.projectref() is not None:
-            results = getresults(project=self.projectref(), pointer=self.resultsref, die=die)
-            return results
-        else:
-            raise OptimaException('No results associated with this parameter set')
-    
-    
-    def parkeys(self):
-        ''' Return a list of the keys in pars that are actually parameter objects '''
-        parslist = []
-        for key,par in self.pars.items():
-            if issubclass(type(par), Par):
-                parslist.append(key)
-        return parslist
-    
-    
-    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
-        ''' Method for getting proportions'''
-
-        # Get results
-        try:
-            results = getresults(project=self.projectref(), pointer=self.resultsref, die=die)
-            assert(results is not None) # Might return something empty
-        except:
-            if die: # Give up
-                raise OptimaException('No results associated with this parameter set')
-            else: # Or, just rerun
-                results = self.projectref().runsim(name=self.name)
-
-        # Interpret inputs
-        if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
-        elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
-        elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
-        elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
-        elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
-        else:
-            raise OptimaException('Unknown proportion type %s' % proptype)
-    
-        if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
-        elif ind in ['lower','l','low',1]: ind=1
-        elif ind in ['upper','u','up','high','h',2]: ind=2
-        else: ind=0 # Return best estimate if can't understand whichone was requested
-        
-        timeindex = findinds(results.tvec,year) if year else Ellipsis
-
-        if bypop:
-            return results.main[proptype].pops[ind][:][timeindex]
-        else:
-            return results.main[proptype].tot[ind][timeindex]
-                
-            
-    
-    
-    def makepars(self, data=None, verbose=2):
-        self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
-        self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
-        return None
-
-
-    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
-        """ Prepares model parameters to run the simulation. """
-        printv('Making model parameters...', 1, verbose),
-
-        simparslist = []
-        if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
-        if samples is None: samples = [None]
-        for sample in samples:
-            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, verbose=verbose, name=self.name, uid=self.uid)
-            simparslist.append(simpars) # Wrap up
-        
-        return simparslist
-    
-    
-    def updateprior(self):
-        ''' Update the prior for all of the variables '''
-        for key in self.parkeys():
-            self.pars[key].updateprior()
-        return None
-        
-    
-    def printpars(self, output=False):
-        outstr = ''
-        count = 0
-        for par in self.pars.values():
-            if hasattr(par,'p'): print('WARNING, population size not implemented!')
-            if hasattr(par,'y'):
-                if hasattr(par.y, 'keys'):
-                    count += 1
-                    if len(par.keys())>1:
-                        outstr += '%3i: %s\n' % (count, par.name)
-                        for key in par.keys():
-                            outstr += '     %s = %s\n' % (key, par.y[key])
-                    elif len(par.keys())==1:
-                        outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y[0])
-                    elif len(par.keys())==0:
-                        outstr += '%3i: %s = (empty)' % (count, par.name)
-                    else:
-                        print('WARNING, not sure what to do with %s: %s' % (par.name, par.y))
-                else:
-                    count += 1
-                    outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y)
-        print(outstr)
-        if output: return outstr
-        else: return None
-
-
-    def listattributes(self):
-        ''' Go through all the parameters and make a list of their possible attributes '''
-        
-        maxlen = 20
-        pars = self.pars
-        
-        print('\n\n\n')
-        print('CONTENTS OF PARS, BY TYPE:')
-        partypes = []
-        for key in pars: partypes.append(type(pars[key]))
-        partypes = set(partypes)
-        count1 = 0
-        count2 = 0
-        for partype in set(partypes): 
-            count1 += 1
-            print('  %i..%s' % (count1, str(partype)))
-            for key in pars:
-                if type(pars[key])==partype:
-                    count2 += 1
-                    print('      %i.... %s' % (count2, str(key)))
-        
-        print('\n\n\n')
-        print('ATTRIBUTES:')
-        attributes = {}
-        for key in self.parkeys():
-            theseattr = pars[key].__dict__.keys()
-            for attr in theseattr:
-                if attr not in attributes.keys(): attributes[attr] = []
-                attributes[attr].append(getattr(pars[key], attr))
-        for key in attributes:
-            print('  ..%s' % key)
-        print('\n\n')
-        for key in attributes:
-            count = 0
-            print('  ..%s' % key)
-            items = []
-            for item in attributes[key]:
-                try: 
-                    string = str(item)
-                    if string not in items: 
-                        if len(string)>maxlen: string = string[:maxlen]
-                        items.append(string) 
-                except: 
-                    items.append('Failed to append item')
-            for item in items:
-                count += 1
-                print('      %i....%s' % (count, str(item)))
-        return None
-
-
-    def manualfitlists(self, parsubset=None, advanced=False):
-        ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
-        if not self.pars:
-            raise OptimaException("No parameters available!")
-    
-        # Check parname subset is valid
-        if parsubset is None:
-            tmppars = self.pars
-        else:
-            if type(parsubset)==str: parsubset=[parsubset]
-            if parsubset and type(parsubset) not in (list, str):
-                raise OptimaException("Expecting parsubset to be a list or a string!")
-            for item in parsubset:
-                if item not in [par.short for par in self.pars.values() if hasattr(par,'manual') and par.manual!='no']:
-                    raise OptimaException("Parameter %s is not a manual parameter.")
-            tmppars = {par.short:par for par in self.pars.values() if hasattr(par,'manual') and par.manual!='no' and par.short in parsubset}
-            
-        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
-        keylist = mflists['keys']
-        subkeylist = mflists['subkeys']
-        typelist = mflists['types']
-        valuelist = mflists['values']
-        labellist = mflists['labels']
-
-        for key in tmppars.keys():
-            par = tmppars[key]
-            if hasattr(par, 'manual') and par.manual != 'no':  # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-                if par.manual=='meta':
-                    if advanced: # By default, don't include these
-                        keylist.append(key)
-                        subkeylist.append(None)
-                        typelist.append(par.manual)
-                        valuelist.append(par.m)
-                        labellist.append('%s -- meta' % par.name)
-                elif par.manual in 'const':
-                    keylist.append(key)
-                    subkeylist.append(None)
-                    typelist.append(par.manual)
-                    valuelist.append(par.y)
-                    labellist.append(par.name)
-                elif par.manual=='advanced': # These are also constants, but skip by default
-                    if advanced:
-                        keylist.append(key)
-                        subkeylist.append(None)
-                        typelist.append(par.manual)
-                        valuelist.append(par.y)
-                        labellist.append(par.name)
-                elif par.manual=='year':
-                    keylist.append(key)
-                    subkeylist.append(None)
-                    typelist.append(par.manual)
-                    valuelist.append(par.t)
-                    labellist.append(par.name)
-                elif par.manual=='pop':
-                    for subkey in par.keys():
-                        keylist.append(key)
-                        subkeylist.append(subkey)
-                        typelist.append(par.manual)
-                        valuelist.append(par.y[subkey])
-                        labellist.append('%s -- %s' % (par.name, str(subkey)))
-                elif par.manual=='exp':
-                    for subkey in par.keys():
-                        keylist.append(key)
-                        subkeylist.append(subkey)
-                        typelist.append(par.manual)
-                        valuelist.append(par.i[subkey])
-                        labellist.append('%s -- %s' % (par.name, str(subkey)))
-                else:
-                    print('Parameter type "%s" not implemented!' % par.manual)
-    
-        return mflists
-    
-    
-    ## Define update step
-    def update(self, mflists):
-        ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
-        if not self.pars:
-            raise OptimaException("No parameters available!")
-    
-        tmppars = self.pars
-    
-        keylist = mflists['keys']
-        subkeylist = mflists['subkeys']
-        typelist = mflists['types']
-        valuelist = mflists['values']
-    
-        ## Loop over all parameters and update them
-        verbose = 0
-        for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
-            if ptype=='meta':  # Metaparameters
-                vtype = type(tmppars[key].m)
-                tmppars[key].m = vtype(value)
-                printv('%s.m = %s' % (key, value), 4, verbose)
-            elif ptype=='pop':  # Populations or partnerships
-                vtype = type(tmppars[key].y[subkey])
-                tmppars[key].y[subkey] = vtype(value)
-                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
-            elif ptype=='exp':  # Population growth
-                vtype = type(tmppars[key].i[subkey])
-                tmppars[key].i[subkey] = vtype(value)
-                printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
-            elif ptype in ['const', 'advanced']:  # Constants
-                vtype = type(tmppars[key].y)
-                tmppars[key].y = vtype(value)
-                printv('%s.y = %s' % (key, value), 4, verbose)
-            elif ptype=='year':  # Year parameters
-                vtype = type(tmppars[key].t)
-                tmppars[key].t = vtype(value)
-                printv('%s.t = %s' % (key, value), 4, verbose)
-            else:
-                errormsg = 'Parameter type "%s" not implemented!' % ptype
-                raise OptimaException(errormsg)
-    
-                # parset.interp() and calculate results are supposed to be called from the outside
-    
-    def export(self, filename=None, compare=None):
-        '''
-        Little function to export code for the current parameter set. To use, do something like:
-        
-        pars = P.pars()
-        
-        and then paste in the output of this function.
-        
-        If compare is not None, then only print out parameter values that differ. Most useful for
-        comparing to default, e.g.
-        P.parsets[-1].export(compare='default')
-        '''
-        cpars, cvalues = None, None
-        if compare is not None:
-            try: 
-                cpars = self.projectref().parsets[compare].pars
-            except: 
-                print('Could not compare parset %s to parset %s; printing all parameters' % (self.name, compare))
-                compare = None
-        
-        def oneline(values): return str(values).replace('\n',' ') 
-        
-        output = ''
-        for parname,par in self.pars.items():
-            prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
-            values2 = None
-            cvalues2 = None
-            if hasattr(par,'manual'):
-                if par.manual=='pop': 
-                    values = par.y[:].tolist()
-                    prefix = "pars['%s'].y[:] = " % parname
-                    if cpars is not None: cvalues = cpars[parname].y[:].tolist()
-                elif par.manual in ['const', 'advanced']: 
-                    values = par.y
-                    prefix = "pars['%s'].y = " % parname
-                    if cpars is not None: cvalues = cpars[parname].y
-                elif par.manual=='year': 
-                    values = par.t
-                    prefix = "pars['%s'].t = " % parname
-                    if cpars is not None: cvalues = cpars[parname].t
-                elif par.manual=='meta':
-                    values = par.m
-                    prefix = "pars['%s'].m = " % parname
-                    if cpars is not None: cvalues = cpars[parname].m
-                elif par.manual=='exp':
-                    values  = par.i[:].tolist()
-                    values2 = par.e[:].tolist()
-                    prefix  = "pars['%s'].i[:] = " % parname
-                    prefix2 = "pars['%s'].e[:] = " % parname
-                    if cpars is not None: 
-                        cvalues  = cpars[parname].i[:].tolist()
-                        cvalues2 = cpars[parname].e[:].tolist()
-                elif par.manual=='no':
-                    values = None
-                else: 
-                    print('Parameter manual type "%s" not implemented' % par.manual)
-                    values = None
-                if values is not None:
-                    if compare is None or (values!=cvalues) or (values2!=cvalues2):
-                        output += prefix+oneline(values)+'\n'
-                        if prefix2 is not None:
-                            output += prefix2+oneline(values2)+'\n'
-        
-        if filename is not None:
-            with open(filename, 'w') as f:
-                f.write(output)
-        else:
-            return output
             
                 

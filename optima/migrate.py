@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, concatenate as cat, array
+from numpy import nan, isnan, concatenate as cat, array
 
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
@@ -496,9 +496,11 @@ def redovlmon(project, **kwargs):
     Migration between Optima 2.2 and 2.2.1 -- update the VL monitoring parameter
     """
     
-    oldvldata = op.dcp(project.data['freqvlmon']) # Get out old VL data
-    project.data['numvlmon'] = [[oldvldata[0][-1]*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
     requiredvldata = [2.0, 1.5, 2.5]
+    oldvldata = op.dcp(project.data['freqvlmon'][0][-1]) # Get out old VL data -- last entry
+    if isnan(oldvldata): oldvldata = requiredvldata[0]/2. # No data? Assume coverage of 50%
+    project.data['numvlmon'] = [[oldvldata*project.data['numtx'][0][j] for j in range(len(project.data['numtx'][0]))]] # Set new value
+    
     project.data['const']['requiredvl'] = requiredvldata
     
     removeparameter(project, short='freqvlmon', datashort='freqvlmon')
@@ -571,6 +573,12 @@ def redoparameterattributes(project, **kwargs):
     return None
 
 
+def removespreadsheet(project, **kwargs):
+    ''' Remove the binary spreadsheet (it's big, and unnecessary now that you can write data) '''
+    delattr(project, 'spreadsheet')
+    project.version = '2.3.1'
+    return None
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -599,10 +607,11 @@ migrations = {
 '2.1.7': fixsettings,
 '2.1.8': addoptimscaling,
 '2.1.9': addpropsandcosttx,
-'2.1.10': redoparameters,
-'2.2': redovlmon,
+'2.1.10':redoparameters,
+'2.2':   redovlmon,
 '2.2.1': addprojectinfotoresults,
 '2.2.2': redoparameterattributes,
+'2.3':   removespreadsheet,
 #'2.2': redoprograms,
 }
 
@@ -614,9 +623,9 @@ def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
-    while str(project.version) != str(op.__version__):
+    while str(project.version) != str(op.version):
         if not str(project.version) in migrations:
-            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.__version__))
+            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.version))
 
         upgrader = migrations[str(project.version)]
 
@@ -642,7 +651,7 @@ def migrate(project, verbose=2, die=False):
 
 
 
-def loadproj(filename=None, verbose=2, die=False):
+def loadproj(filename=None, verbose=2, die=False, fromdb=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     # Create legacy classes for compatibility -- FOR FUTURE
@@ -652,8 +661,14 @@ def loadproj(filename=None, verbose=2, die=False):
 #    op.programs.CCOF = CCOF
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
+    
+    class Spreadsheet(object): pass
+    op.project.Spreadsheet = Spreadsheet
 
-    P = migrate(op.loadobj(filename, verbose=verbose), verbose=verbose, die=die)
+    if fromdb:    origP = op.loadstr(filename) # Load from database
+    else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
+
+    P = migrate(origP, verbose=verbose, die=die)
     
 #    del op.programs.CCOF
 #    del op.programs.Costcov
@@ -707,7 +722,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         errormsg = 'Please call this function like this: optimaversion(__file__)'
         if die: raise op.OptimaException(errormsg)
         else: print(errormsg); return None
-    currversion = op.__version__ # Get Optima version info
+    currversion = op.version # Get Optima version info
     currbranch,currsha = op.gitinfo(die=die) # Get git info, dying on failure if requested
     if version is not None and version!=currversion: # Optionally check that versions match
         errormsg = 'Actual version does not match requested version (%s vs. %s)' % (currversion, version)
