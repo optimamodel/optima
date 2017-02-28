@@ -668,6 +668,20 @@ class Progset(Resource):
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
 
 
+class ProgsetRename(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Update progset with the given id.')
+    def put(self, project_id, progset_id):
+        """
+        data-json: progset_summary
+        """
+        new_name = get_post_data_json()['newName']
+        return dataio.rename_progset(project_id, progset_id, new_name)
+
+api.add_resource(ProgsetRename, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/rename')
+
+
 class ProgsetUploadDownload(Resource):
     method_decorators = [report_exception_decorator, login_required]
 

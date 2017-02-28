@@ -741,7 +741,7 @@ def resolve_project(project):
 
     is_change = is_change or len(del_optim_keys) > 0
 
-    query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
+    query = db.session.query(PyObjectDb).filter_by(user_id=current_user.id)
     portfolios = []
     for record in query:
         print(">> Portfolio id %s" % record.id)
@@ -1147,6 +1147,14 @@ def upload_progset(project_id, progset_id, progset_summary):
     parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
     return parse.get_progset_summary(project, progset_summary["name"])
+
+
+def rename_progset(project_id, progset_id, new_name):
+    def update_project_fn(project):
+        print(">> rename_progset", progset_id, new_name)
+        progset = parse.get_progset_from_project(project, progset_id)
+        project.renameprogset(orig=progset.name, new=new_name)
+    update_project_with_fn(project_id, update_project_fn)
 
 
 def copy_progset(project_id, progset_id, new_progset_name):
