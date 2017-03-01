@@ -148,10 +148,21 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     proptx      = simpars['proptx']
     propsupp    = simpars['propsupp']
     proppmtct   = simpars['proppmtct']
-    fixpropdx      = findinds(simpars['tvec']>=simpars['fixpropdx'])[0] if simpars['fixpropdx'] < simpars['tvec'][-1] else nan
-    fixpropcare    = findinds(simpars['tvec']>=simpars['fixpropcare'])[0] if simpars['fixpropcare'] < simpars['tvec'][-1] else nan
-    fixproptx      = findinds(simpars['tvec']>=simpars['fixproptx'])[0] if simpars['fixproptx'] < simpars['tvec'][-1] else nan
-    fixpropsupp    = findinds(simpars['tvec']>=simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] < simpars['tvec'][-1] else nan
+    
+    #  Years to fix proportions
+    def findfixind(fixyearname):
+        fixyearpar = simpars[fixyearname]
+        tvec = simpars['tvec']
+        if isnan(fixyearpar) or     fixyearpar is None: fixind = nan # It's not defined, skip
+        elif fixyearpar > tvec[-1]: fixind = nan # It's after the end, skip
+        elif fixyearpar < tvec[0]:  fixind = 0 # It's before the beginning, set to beginning
+        else:                       fixind = findinds(tvec>=fixyearpar)[0] # Main usage case
+        return fixind
+        
+    fixpropdx      = findfixind('fixpropdx')
+    fixpropcare    = findfixind('fixpropcare')# findinds(simpars['tvec']>=simpars['fixpropcare'])[0] if simpars['fixpropcare'] < simpars['tvec'][-1] else nan
+    fixproptx      = findfixind('fixproptx')# findinds(simpars['tvec']>=simpars['fixproptx'])[0] if simpars['fixproptx'] < simpars['tvec'][-1] else nan
+    fixpropsupp    = findfixind('fixpropsupp')# findinds(simpars['tvec']>=simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] < simpars['tvec'][-1] else nan
     
     # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
     propdx_list     = ('propdx',   propdx,   undx, dx,   dxstates,   alldx,   allplhiv, raw_diag,       fixpropdx)
