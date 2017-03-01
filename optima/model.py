@@ -9,6 +9,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     Version: 1.7 (2016sep14)
     """
     
+    from optima import saveobj
+    saveobj('tmppars.obj', simpars)
+    print('saved')
+    
     ##################################################################################################################
     ### Setup 
     ##################################################################################################################
