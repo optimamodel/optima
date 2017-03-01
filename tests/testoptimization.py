@@ -42,7 +42,7 @@ blank()
 
 from optima import defaults
 from pylab import seed
-seed(1) # Ensure consistency across runs
+seed(0) # Ensure consistency across runs
 
 T = tic()
 

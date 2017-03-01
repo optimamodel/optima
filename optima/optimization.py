@@ -94,7 +94,7 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
         try: defaultbudget = sum(project.getdefaultbudget()[:])
         except: raise OptimaException('Could not get default budget for optimization')
     elif project is not None:
-        if progset is None: progset = 0
+        if progset is None: progset = -1
         try: defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
         except: raise OptimaException('Could not get default budget for optimization')
         printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
@@ -147,8 +147,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     elif project is not None:
         if progset is None: progset = -1
         progset = project.progsets[progset]
-        printv('defaultconstraints() did not get a progset input, so using default', 2, verbose)
-
+        printv('defaultconstraints() did not get a progset input, so using default', 3, verbose)
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
