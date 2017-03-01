@@ -313,6 +313,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
     
     # Set parameters
     averagedurationinfected = 10.0/2.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
+    averagedurationdiagnosed = 1.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care. WARNING, KLUDGY
+    averagedurationincare = 3.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care. WARNING, KLUDGY
 
     # Check wither the initial distribution was specified
     if initpeople:
@@ -344,7 +346,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
         # Set initial distributions for cascade
         testingrates =  array([simpars['hivtest'][:,0]]*ncd4)
-        linkagerates = array([1.-exp(-averagedurationinfected/(maximum(eps,simpars['linktocare'][:,0])))]*ncd4)
+        linkagerates = array([1.-exp(-averagedurationdiagnosed/(maximum(eps,simpars['linktocare'][:,0])))]*ncd4)
         lossrates = array([simpars['leavecare'][:,0]]*ncd4)
         for cd4 in range(aidsind, ncd4):
             testingrates[cd4,:] = maximum(simpars['aidstest'][0],simpars['hivtest'][:,0])
@@ -352,12 +354,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
             lossrates[cd4,:] = minimum(simpars['aidsleavecare'][0],simpars['leavecare'][:,0])
         dxfrac = 1.-exp(-averagedurationinfected*testingrates)
         linktocarefrac = linkagerates
-        lostfrac = lossrates # WARNING, this is not technically correct, but seems to work ok in practice 
+        lostfrac = 1.-exp(-averagedurationincare*lossrates) # WARNING, this is not technically correct, but seems to work ok in practice 
         undxdist = 1.-dxfrac
         dxdist = dxfrac*(1.-linktocarefrac)
         incaredist = dxfrac*linktocarefrac*(1.-lostfrac)
         lostdist = dxfrac*linktocarefrac*lostfrac
-        
+
         # Set initial distributions within treated & untreated 
         untxdist    = (1./prog) / sum(1./prog) # Normalize progression rates to get initial distribution
         txdist      = cat([[1.,1.], svlrecov[2:]]) # Use 1s for the first two entries so that the proportion of people on tx with acute infection is v small
@@ -876,7 +878,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, debug=False, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, debug=False, keepraw=False, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -898,5 +900,5 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     except: 
         printv('Running model failed; running again with debugging...', 1, verbose)
         raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests
-    results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True) # Create structure for storing results
+    results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose) # Create structure for storing results
     return results

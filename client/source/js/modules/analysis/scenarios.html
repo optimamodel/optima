@@ -12,104 +12,123 @@
           flex-direction: column;
           align-items: flex-start;
           width: 100%;
-          height: calc(100vh - 160px)">
+          height: calc(100vh - 110px)">
 
-      <div style="flex: 0 0 auto; width: 100%">
+      <div
+        style="
+          flex: 0 0;
+          width: 100%">
 
-        <table
-            class="section table table-bordered"
-            style="width: 100%;">
+        <div style="
+              overflow: scroll;
+              border: 0px solid #AAA;
+              max-height: 300px;">
 
-          <tr>
-            <th style="width: 50px">Active</th>
-            <th>Scenario Name</th>
-            <th>Parameter Set</th>
-            <th>Program Set</th>
-            <th>Scenario Type</th>
-            <th style="width:200px; max-width:200px">Manage</th>
-          </tr>
+          <table
+              class="table table-bordered table-hover table-striped"
+              style="width: 100%;">
 
-          <tr ng-repeat="scenario in scenarios">
-            <td style="width: 50px" class="text-center">
-              <input
-                  type="checkbox"
-                  ng-model="scenario.active"
-                  ng-change="saveScenarios(scenarios, 'Saved changes')">
-            </td>
-            <td>{{ scenario.name }}</td>
-            <td>{{ getParsetName(scenario) }}</td>
-            <td>{{ getProgramSetName(scenario) }}</td>
-            <td>{{ scenario.scenario_type }}</td>
+            <tr>
+              <th style="width: 50px">Active</th>
+              <th>Scenario Name</th>
+              <th>Parameter Set</th>
+              <th>Program Set</th>
+              <th>Scenario Type</th>
+              <th style="width:200px; max-width:200px">Manage</th>
+            </tr>
 
-            <td style="white-space: nowrap; width:200px; max-width:200px">
-              <i class="fa fa-pencil"
-                 tp-text="Edit" tooltip tp-class="tooltip"
-                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                 ng-click="openModal(scenario, 'edit', $event)">
-              </i>
-              <i class="fa fa-copy"
-                 tp-text="Copy" tooltip tp-class="tooltip"
-                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                 ng-click="openModal(scenario, 'copy', $event)">
-              </i>
-              <i class="fa fa-trash-o"
-                 tp-text="Delete" tooltip tp-class="tooltip"
-                 tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                 ng-click="openModal(scenario, 'delete', $event)">
-              </i>
-            </td>
-          </tr>
+            <tr ng-repeat="scenario in scenarios">
+              <td style="width: 50px" class="text-center">
+                <input
+                    type="checkbox"
+                    ng-model="scenario.active"
+                    ng-change="saveScenarios(scenarios, 'Saved changes')">
+              </td>
+              <td>{{ scenario.name }}</td>
+              <td>{{ getParsetName(scenario) }}</td>
+              <td>{{ getProgramSetName(scenario) }}</td>
+              <td>{{ scenario.scenario_type }}</td>
 
-          <tr>
-            <td colspan="6" class="text-right">
-              <div style="float: left">
-                <button
-                    class="btn"
-                    ng-click="graphScenarios(true)"
-                    ng-disabled="!isRunnable()">
-                  Run scenarios
-                </button>
+              <td style="white-space: nowrap; width:200px; max-width:200px">
+                <i class="fa fa-pencil"
+                   tp-text="Edit" tooltip tp-class="tooltip"
+                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                   ng-click="openModal(scenario, 'edit', $event)">
+                </i>
+                <i class="fa fa-copy"
+                   tp-text="Copy" tooltip tp-class="tooltip"
+                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                   ng-click="openModal(scenario, 'copy', $event)">
+                </i>
+                <i class="fa fa-trash-o"
+                   tp-text="Delete" tooltip tp-class="tooltip"
+                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+                   ng-click="openModal(scenario, 'delete', $event)">
+                </i>
+              </td>
+            </tr>
+          </table>
+        </div>
 
-                &nbsp; from &nbsp;
+        <div
+          style="
+            width: 100%;
+            margin-top: 1em;
+            margin-bottom: 1.5em;">
 
-                <select
-                  ng-model="state.start"
-                  ng-options="year for year in years"></select>
+          <div style="float: left">
+            <button
+                class="btn"
+                ng-click="graphScenarios(true)"
+                ng-disabled="!isRunnable()">
+              Run scenarios
+            </button>
 
-                &nbsp; to &nbsp;
+            &nbsp; from &nbsp;
 
-                <select
-                  ng-model="state.end"
-                  ng-options="year for year in years"></select>
+            <select
+              ng-model="state.start"
+              ng-options="year for year in years"></select>
 
-              </div>
-              <button
-                  class="btn"
-                  ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
-                  ng-disabled="isMissingProgset || !isOptimizable">
-                + budget scenario
-              </button>
-              <button
-                  class="btn"
-                  ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
-                  ng-disabled="isMissingProgset || !isOptimizable">
-                + coverage scenario
-              </button>
-              <button
-                  class="btn"
-                  ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
-                + parameter scenario
-              </button>
-              <div class="error-hint" ng-show="isMissingProgset">
-                Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
-              </div>
-              <div class="error-hint" ng-show="!isMissingProgset && !isOptimizable">
-                Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
-              </div>
-            </td>
-          </tr>
+            &nbsp; to &nbsp;
 
-        </table>
+            <select
+              ng-model="state.end"
+              ng-options="year for year in years"></select>
+
+          </div>
+
+          <div style="float: right">
+            <button
+                class="btn"
+                ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
+                ng-disabled="isMissingProgset || !isOptimizable">
+              + budget scenario
+            </button>
+            <button
+                class="btn"
+                ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
+                ng-disabled="isMissingProgset || !isOptimizable">
+              + coverage scenario
+            </button>
+            <button
+                class="btn"
+                ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
+              + parameter scenario
+            </button>
+          </div>
+
+          <br clear="all">
+
+          <div class="error-hint" ng-show="isMissingProgset">
+            Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
+          </div>
+
+          <div class="error-hint" ng-show="!isMissingProgset && !isOptimizable">
+            Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
+          </div>
+
+        </div>
 
       </div>
 

@@ -36,7 +36,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True, keepraw=False, verbose=2):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -59,13 +59,19 @@ class Resultset(object):
             if settings is None: settings = project.settings
         
         # Fundamental quantities -- populated by project.runsim()
-        self.pars = pars # Keep pars
+        if keepraw: self.raw = raw
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.projectref = Link(project) # ...and just store the whole project
         self.projectinfo = project.getinfo() # Store key info from the project separately in case the link breaks
         self.parset = dcp(parset) # Store parameters
+        if pars is not None:
+            self.pars = pars # Keep pars
+        else: # Try various other ways of getting pars
+            if parset is not None:
+                self.pars = self.parset.pars
+            else: raise OptimaException('To generate results, you must feed in a parset or pardict: none provided')
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
         if self.parset is not None:  self.parset.projectref  = Link(project) # Replace copy of project with reference to project
@@ -110,12 +116,17 @@ class Resultset(object):
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
         
-        if domake: self.make(raw)
+        if domake: self.make(raw, verbose=verbose)
     
     
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
-        output = defaultrepr(self) # WARNING, could print out basic stats, e.g. number of PLHIV, prevalence, etc...?
+        output = objrepr(self)
+        output += '      Project name: %s\n'    % self.projectinfo['name']
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '               UID: %s\n'    % self.uid
+        output += '              Name: %s\n'    % self.name
+        output += '============================================================\n'
         return output
         
     
@@ -211,6 +222,7 @@ class Resultset(object):
         alltx = self.settings.alltx
         svl = self.settings.svl
         data = self.data
+
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
@@ -305,17 +317,17 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round()
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        upperagelims = self.parset.pars['age'][:,1] # All populations, but upper range
+        upperagelims = self.pars['age'][:,1] # All populations, but upper range
         adultpops = findinds(upperagelims>=15)
         childpops = findinds(upperagelims<15)
         if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-
         
         # Calculate DALYs
         yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
-        disutiltx = self.parset.pars['disutiltx'].y
-        disutils = [self.parset.pars['disutil'+key].y for key in self.settings.hivstates]
+        disutiltx = self.pars['disutiltx'].y
+        disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
+
         dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
         dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
         dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx

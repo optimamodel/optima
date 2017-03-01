@@ -34,9 +34,9 @@ Version: 2016nov03 by cliffk
 
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
-from ._version import __version__
-version = __version__ # Make it accessible via from optima import *
+from .version import version
 
+# Print the license
 optimalicense = 'Optima HIV %s -- (c) 2017 by the Optima Consortium' % version
 print(optimalicense)
 
@@ -71,7 +71,7 @@ from .utils import blank, checkmem, compareversions, dataindex, dataframe, defau
 
 ## Data I/O
 from . import dataio
-from .dataio import loadobj, saveobj, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+from .dataio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 
 
 #####################################################################################################################

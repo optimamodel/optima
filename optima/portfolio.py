@@ -1,6 +1,6 @@
 from optima import gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj # Import utilities
 from optima import OptimaException, BOC # Import classes
-from optima import __version__ # Get current version
+from optima import version # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
@@ -45,7 +45,7 @@ class Portfolio(object):
         self.uid = uuid()
         self.created = today()
         self.modified = today()
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
 
         return None
@@ -367,7 +367,7 @@ class GAOptim(object):
         self.uid = uuid()
         self.created = today()
         self.modified = today()
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
 
         return None
