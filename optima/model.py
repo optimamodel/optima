@@ -2,7 +2,7 @@
 from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, die=False, debug=False, initpeople=None):
+def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
@@ -878,7 +878,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False, ini
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, debug=False, keepraw=False, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, initpeople=None, debug=False, keepraw=False, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -896,7 +896,7 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
         simpars = makesimpars(pars, name=name, start=start, end=end, dt=dt, tvec=tvec)
 
     try:
-        raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
+        raw = model(simpars=simpars, settings=settings, initpeople=initpeople, debug=debug, verbose=verbose) # RUN OPTIMA!!
     except: 
         printv('Running model failed; running again with debugging...', 1, verbose)
         raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests

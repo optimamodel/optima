@@ -305,7 +305,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ### The main meat of the matter
 ################################################################################################################################################
 
-def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, outputresults=False, debug=False, verbose=2, ccsample='best'):
+def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, initpeople=None, outputresults=False, debug=False, verbose=2, ccsample='best'):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Validate input
@@ -323,7 +323,9 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
-    results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, verbose=0)
+    if initpeople is not None:
+        tvec = project.settings.maketvec(objectives['start'], objectives['end'])
+    results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, initpeople=initpeople, verbose=0)
 
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])
@@ -458,13 +460,8 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     ## Calculate original things
-    which = 'outcomes' # Define things to be used in the arg list below
-    objectives = optim.objectives
-    constraints = optim.constraints
-    totalbudget = dcp(origtotalbudget)
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-    arglist = ['which', 'project', 'parset', 'progset', 'objectives', 'constraints', 'totalbudget', 'optiminds', 'origbudget', 'tvec', 'ccsample', 'verbose', 'initpeople']
-    args = {arg:eval(arg) for arg in arglist}
+    args = {'which':'outcomes', 'project':project, 'parset':parset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':origtotalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose, 'initpeople':None}
     orig = objectivecalc(constrainedbudgetvecorig, outputresults=True, debug=False, **args)
     orig.name = 'Current'
     tmpresults = [orig]
@@ -478,11 +475,13 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
 
         ## Actually run the optimization
+        args['totalbudget'] = totalbudget
+        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
         budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
 
         ## Calculate outcomes
+        args['initpeople'] = None # Set to None to get full results, not just from strat year
         constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-        args['totalbudget'] = totalbudget
         new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
         if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
         else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
