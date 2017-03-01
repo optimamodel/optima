@@ -472,10 +472,12 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     orig = objectivecalc(constrainedbudgetvecorig, outputresults=True, debug=False, **args)
     orig.name = 'Current'
     tmpresults = [orig]
+    tmpimprovements = []
     
     # Set up extremes
     extremebudgets = odict()
-    extremebudgets['Current']       = constrainedbudgetvecorig
+    extremebudgets['Current']    = zeros(nprogs)
+    for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
     extremebudgets['nofunding']  = zeros(nprogs)
     extremebudgets['inffunding'] = origbudget[:]+infmoney
     for p,prog in zip(optiminds,optimkeys):
@@ -541,11 +543,12 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
         else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
         tmpresults.append(new)
+        tmpimprovements.append(asdresults[bestkey]['output'].fval)
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
-    multires.improvement = asdresults[bestkey]['output'].fval # Store full function evaluation information -- only use last one
+    multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     optim.resultsref = multires.name # Store the reference for this result
 
     return multires
