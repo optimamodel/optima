@@ -451,10 +451,20 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
+    
+    # Calculate the initial people distribution
+    results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0)
+    initialind = findinds(results.tvec, optim.objectives['start'])
+    initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     ## Calculate original things
+    which = 'outcomes' # Define things to be used in the arg list below
+    objectives = optim.objectives
+    constraints = optim.constraints
+    totalbudget = dcp(origtotalbudget)
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-    args = {'which':'outcomes', 'project':project, 'parset':parset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':origtotalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose}
+    arglist = ['which', 'project', 'parset', 'progset', 'objectives', 'constraints', 'totalbudget', 'optiminds', 'origbudget', 'tvec', 'ccsample', 'verbose', 'initpeople']
+    args = {arg:eval(arg) for arg in arglist}
     orig = objectivecalc(constrainedbudgetvecorig, outputresults=True, debug=False, **args)
     orig.name = 'Current'
     tmpresults = [orig]
