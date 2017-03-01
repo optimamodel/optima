@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan
+from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False):
@@ -317,7 +317,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     averagedurationincare = 3.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care. WARNING, KLUDGY
 
     # Check wither the initial distribution was specified
-    if initpeople:
+    if initpeople is not None:
+        initpeople = squeeze(initpeople)
         if debug and initpeople.shape != (nstates, npops):
             errormsg = 'Wrong shape of init distribution: should be (%i, %i) but is %s' % (nstates, npops, initpeople.shape)
             if die: raise OptimaException(errormsg)
@@ -326,7 +327,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 initpeople = None
     
     # If it wasn't specified, or if there's something wrong with it, determine what it should be here
-    if not initpeople:
+    if initpeople is None:
 
         initpeople = zeros((nstates, npops)) # Initialise
         allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
@@ -893,12 +894,13 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if dt is None: dt = settings.dt
     if simpars is None:
         if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
-        simpars = makesimpars(pars, name=name, start=start, end=end, dt=dt, tvec=tvec)
-
-    try:
-        raw = model(simpars=simpars, settings=settings, initpeople=initpeople, debug=debug, verbose=verbose) # RUN OPTIMA!!
-    except: 
-        printv('Running model failed; running again with debugging...', 1, verbose)
-        raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests
+        simpars = makesimpars(pars, name=name, start=start, end=end, dt=dt, tvec=tvec, settings=settings)
+        
+    # Actually run the model
+    print(simpars['popsize'][:,0])
+    try: print(simpars['popsize'][:,80])
+    except: pass
+    raw = model(simpars=simpars, settings=settings, initpeople=initpeople, debug=debug, verbose=verbose) # RUN OPTIMA!!
+    
     results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose) # Create structure for storing results
     return results

@@ -8,7 +8,7 @@ Version: 2.1 (2017jan31)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
+from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -1178,7 +1178,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016dec11
+    Version: 2017mar01
     '''
     
     # Handle inputs and initialization
@@ -1192,7 +1192,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
-    if isinstance(tosample, (str, unicode)): tosample = [tosample] # Convert to list
+    tosample = promotetolist(tosample) # Convert to list
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])

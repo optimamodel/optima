@@ -331,7 +331,6 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     finalind = findinds(results.tvec, objectives['end'])
     if which=='money': baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
     if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
-    print indices
 
     ## Here, we split depending on whether it's a outcomes or money minimization:
     if which=='outcomes':
