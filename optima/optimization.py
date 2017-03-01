@@ -391,7 +391,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
 
 
 
-def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, mc=False, **kwargs):
+def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, mc=3, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
 
@@ -524,13 +524,14 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
                 allbudgetvecs['Single program'] = extremebudgets[bestprogram] # Include all money going to one program, but only if it's better than the current allocation
             for i in range(mc): # For the remainder, do randomizations
                 randbudget = random(noptimprogs)
-                allbudgetvecs['Randomization %s' % i] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
+                allbudgetvecs['Randomization %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
         
         # Actually run the optimizations
         bestfval = inf # Value of outcome
         asdresults = odict()
-        for key,thisbudgetvec in allbudgetvecs.items():
-            budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
+        for k,key in enumerate(allbudgetvecs.keys()):
+            printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs)), 2, verbose, maxtime, maxiters)
+            budgetvecnew, fval, exitflag, output = asd(objectivecalc, allbudgetvecs[key], args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
             asdresults[key] = {'budgetvec':budgetvecnew, 'output':output}
             if fval<bestfval: 
                 bestkey = key # Reset key
