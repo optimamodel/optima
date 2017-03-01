@@ -924,9 +924,6 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
         simpars = makesimpars(pars, name=name, start=start, end=end, dt=dt, tvec=tvec, settings=settings)
         
     # Actually run the model
-    print(simpars['popsize'][:,0])
-    try: print(simpars['popsize'][:,80])
-    except: pass
     raw = model(simpars=simpars, settings=settings, initpeople=initpeople, debug=debug, verbose=verbose) # RUN OPTIMA!!
     
     results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose) # Create structure for storing results
