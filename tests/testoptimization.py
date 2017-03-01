@@ -70,7 +70,7 @@ if 'minimizeoutcomes' in tests:
     print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-total', 'prev-population', 'numinci-total'])
     
     done(t)
 
@@ -91,7 +91,7 @@ if 'investmentstaircase' in tests:
     
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'numinci-tot'])
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev', 'numinci'])
     
     done(t)
 
@@ -119,7 +119,7 @@ if 'minimizemoney' in tests:
     print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-total', 'prev-population', 'numinci'])
     
     done(t)
 
