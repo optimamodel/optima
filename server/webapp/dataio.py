@@ -355,6 +355,7 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
         db_session = db.session
     project_record = load_project_record(project_id, db_session=db_session)
     project = project_record.load()
+    resolve_project(project)
     update_project_fn(project)
     project.modified = datetime.now(dateutil.tz.tzutc())
     project_record.updated = project.modified
@@ -679,6 +680,18 @@ def resolve_project(project):
     """
     print(">> Resolve project")
     is_change = False
+
+    for attr in ['progsets', 'parsets', 'optims']:
+        structlist = getattr(project, attr)
+        for key, struct in structlist.iteritems():
+            if not hasattr(struct, 'Link'):
+                struct.projectref = op.Link(project)
+                print(">>> Check %s.link %s %s" % (attr, key, struct.projectref))
+                is_change = True
+
+    for parset_key, parset in project.parsets.items():
+        print(">>> Check parset.link %s %s" % (parset_key, parset.projectref))
+        parset.projectref = op.Link(project)
 
     del_scenario_keys = []
     for scenario_key, scenario in project.scens.items():
@@ -1238,8 +1251,7 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
 
 def load_reconcile_summary(project_id, progset_id, parset_id, t):
 
-    project_record = load_project_record(project_id)
-    project = project_record.load()
+    project = load_and_resolve_project(project_id)
     progset = parse.get_progset_from_project(project, progset_id)
     parset = parse.get_parset_from_project_by_id(project, parset_id)
 
@@ -1254,6 +1266,7 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
 def reconcile_progset(project_id, progset_id, parset_id, year):
 
     def update_project_fn(project):
+        print(">> reconcile_progset %s" % project.progsets)
         progset = parse.get_progset_from_project(project, progset_id)
         parset = parse.get_parset_from_project_by_id(project, parset_id)
         progset.reconcile(parset, year)
