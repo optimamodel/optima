@@ -492,7 +492,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, doconstrainbudget=False, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
-    bestprogram = argmin(extremeoutcomes[:][2:]) # Don't include no funding or infinite funding examples
+    bestprogram = argmin(extremeoutcomes[:][2:])+2 # Don't include no funding or infinite funding examples
     
     # Check extremes
     if extremeoutcomes['inffunding'] >= extremeoutcomes['nofunding']:
@@ -502,6 +502,10 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         if extremeoutcomes[key] > extremeoutcomes['nofunding']:
             errormsg = 'Infinite funding for %s has a worse outcome than no funding' % key
             raise OptimaException(errormsg)
+    
+    print('hafafh')
+    for key,outcome in extremeoutcomes.items():
+        print(key,outcome)
     
 
     ## Loop over budget scale factors
@@ -521,7 +525,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
             bvzeros = zeros(noptimprogs)
             allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
             if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
-                allbudgetvecs['Single program'] = extremebudgets[bestprogram] # Include all money going to one program, but only if it's better than the current allocation
+                allbudgetvecs['Single program'] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
             for i in range(mc): # For the remainder, do randomizations
                 randbudget = random(noptimprogs)
                 allbudgetvecs['Randomization %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
@@ -530,9 +534,11 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         bestfval = inf # Value of outcome
         asdresults = odict()
         for k,key in enumerate(allbudgetvecs.keys()):
-            printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs)), 2, verbose, maxtime, maxiters)
+            printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
             budgetvecnew, fval, exitflag, output = asd(objectivecalc, allbudgetvecs[key], args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
             asdresults[key] = {'budgetvec':budgetvecnew, 'output':output}
+            print('HIIII')
+            print fval
             if fval<bestfval: 
                 bestkey = key # Reset key
                 bestfval = fval # Reset fval

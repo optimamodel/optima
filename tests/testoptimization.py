@@ -64,7 +64,7 @@ if 'minimizeoutcomes' in tests:
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
+    P.optimize(name='minoutcome', maxtime=15, parsetname=-1, progsetname=-1, objectives=objectives, method='asd')
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
