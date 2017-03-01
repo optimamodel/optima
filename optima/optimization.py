@@ -450,7 +450,9 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
-    optiminds = findinds(progset.optimizable())
+    optimizable = progset.optimizable()
+    optiminds = findinds(optimizable)
+    optimkeys = [key for k,key in enumerate(origbudget.keys()) if optimizable[k]]
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
     
@@ -465,6 +467,22 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     orig = objectivecalc(constrainedbudgetvecorig, outputresults=True, debug=False, **args)
     orig.name = 'Current'
     tmpresults = [orig]
+    
+    # Set up extremes
+    extremebudgets = odict()
+    extremebudgets['nofunding']  = constrainedbudgetvecorig*0
+    extremebudgets['inffunding'] = constrainedbudgetvecorig+infmoney
+    for p,prog in enumerate(optimkeys):
+        extremebudgets[prog] = zeros(len(constrainedbudgetvecorig))
+        extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
+    
+    # Run extremes
+    print('running extremes...')
+    extremeoutcomes = odict()
+    for key,exbudget in extremebudgets.items():
+        extremeoutcomes[key] = objectivecalc(exbudget, outputresults=True, debug=False, **args)
+    
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     ## Loop over budget scale factors
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
