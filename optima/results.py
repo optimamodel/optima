@@ -50,10 +50,11 @@ class Resultset(object):
         # Read things in from the project if defined
         if project is not None:
             if parset is None:
-                parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
+                try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
+                except: pass # Don't really worry if the parset can't be populated
             if progset is None:
                 try: progset = project.progset[simpars[0]['progsetname']] # Get parset if not supplied -- WARNING, UGLY
-                except: progset = None # Should be OK to skip, not always supplied
+                except: pass # Don't really worry if the parset can't be populated
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
             if settings is None: settings = project.settings
         
