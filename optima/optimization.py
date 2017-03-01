@@ -6,7 +6,8 @@ Version: 2016apr11
 
 from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
-from numpy import zeros, arange, maximum, array, inf, isfinite
+from numpy import zeros, arange, maximum, array, inf, isfinite, argmin
+from numpy.random import random
 
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
@@ -304,7 +305,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ### The main meat of the matter
 ################################################################################################################################################
 
-def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, initpeople=None, outputresults=False, debug=False, verbose=2, ccsample='best'):
+def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, initpeople=None, outputresults=False, debug=False, verbose=2, ccsample='best', doconstrainbudget=True):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Validate input
@@ -317,8 +318,11 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         raise OptimaException(errormsg)
 
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
-    constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
-
+    if doconstrainbudget:
+        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
+    else:
+        constrainedbudget = budgetvec
+    
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
@@ -340,7 +344,6 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
-            print outcome
 
         # Output results
         if outputresults:
@@ -388,7 +391,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
 
 
 
-def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, mc=False, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
 
@@ -424,7 +427,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
     # Run outcomes minimization
     if which=='outcomes':
-        multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
+        multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, mc=mc, **kwargs)
 
     # Run money minimization
     elif which=='money':
@@ -437,7 +440,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
 
 
-def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, overwritebudget=None, ccsample='best', randseed=None, mc=3, **kwargs):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
@@ -454,7 +457,9 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     optiminds = findinds(optimizable)
     optimkeys = [key for k,key in enumerate(origbudget.keys()) if optimizable[k]]
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
-    xmin = zeros(len(budgetvec))
+    nprogs = len(origbudget[:]) # Number of programs total
+    noptimprogs = len(budgetvec) # Number of optimizable programs
+    xmin = zeros(noptimprogs)
     
     # Calculate the initial people distribution
     results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0)
@@ -470,36 +475,68 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     
     # Set up extremes
     extremebudgets = odict()
-    extremebudgets['nofunding']  = constrainedbudgetvecorig*0
-    extremebudgets['inffunding'] = constrainedbudgetvecorig+infmoney
-    for p,prog in enumerate(optimkeys):
-        extremebudgets[prog] = zeros(len(constrainedbudgetvecorig))
+    extremebudgets['Current']       = constrainedbudgetvecorig
+    extremebudgets['nofunding']  = zeros(nprogs)
+    extremebudgets['inffunding'] = origbudget[:]+infmoney
+    for p,prog in zip(optiminds,optimkeys):
+        extremebudgets[prog] = zeros(nprogs)
         extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
     
     # Run extremes
     print('running extremes...')
+    extremeresults  = odict()
     extremeoutcomes = odict()
     for key,exbudget in extremebudgets.items():
-        extremeoutcomes[key] = objectivecalc(exbudget, outputresults=True, debug=False, **args)
+        extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, doconstrainbudget=False, **args)
+        extremeresults[key].name = key
+        extremeoutcomes[key] = extremeresults[key].outcome
+    bestprogram = argmin(extremeoutcomes[:][2:]) # Don't include no funding or infinite funding examples
     
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    # Check extremes
+    if extremeoutcomes['inffunding'] >= extremeoutcomes['nofunding']:
+        errormsg = 'Infinite funding has a worse or identical outcome to no funding'
+        raise OptimaException(errormsg)
+    for k,key in enumerate(extremeoutcomes.keys()):
+        if extremeoutcomes[key] > extremeoutcomes['nofunding']:
+            errormsg = 'Infinite funding for %s has a worse outcome than no funding' % key
+            raise OptimaException(errormsg)
+    
 
     ## Loop over budget scale factors
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
     for scalefactor in scalefactors: 
 
-        ## Get the total budget & constrain it 
+        # Get the total budget & constrain it 
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-
-        ## Actually run the optimization
         args['totalbudget'] = totalbudget
         args['initpeople'] = None # initpeople # WARNING, TEMP, uncomment once the bug with initpeople is fixed # Set so only runs the part of the optimization required
-        budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
-
+        
+        # Set up budgets to run
+        allbudgetvecs = odict()
+        allbudgetvecs['Current'] = dcp(constrainedbudgetvec)
+        if mc: # If MC, run multiple
+            bvzeros = zeros(noptimprogs)
+            allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
+            if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
+                allbudgetvecs['Single program'] = extremebudgets[bestprogram] # Include all money going to one program, but only if it's better than the current allocation
+            for i in range(mc): # For the remainder, do randomizations
+                randbudget = random(noptimprogs)
+                allbudgetvecs['Randomization %s' % i] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
+        
+        # Actually run the optimizations
+        bestfval = inf # Value of outcome
+        asdresults = odict()
+        for key,thisbudgetvec in allbudgetvecs.items():
+            budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
+            asdresults[key] = {'budgetvec':budgetvecnew, 'output':output}
+            if fval<bestfval: 
+                bestkey = key # Reset key
+                bestfval = fval # Reset fval
+        
         ## Calculate outcomes
         args['initpeople'] = None # Set to None to get full results, not just from strat year
-        constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+        constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=asdresults[bestkey]['budgetvec'], totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
         if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
         else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
@@ -508,7 +545,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
-    multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
+    multires.improvement = asdresults[bestkey]['output'].fval # Store full function evaluation information -- only use last one
     optim.resultsref = multires.name # Store the reference for this result
 
     return multires
