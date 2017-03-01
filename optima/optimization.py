@@ -324,7 +324,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
     if initpeople is not None:
-        tvec = project.settings.maketvec(objectives['start'], objectives['end'])
+        tvec = project.settings.maketvec(start=objectives['start'], end=objectives['end'])
     results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, initpeople=initpeople, verbose=0)
 
     # Figure out which indices to use
@@ -332,6 +332,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     finalind = findinds(results.tvec, objectives['end'])
     if which=='money': baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
     if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
+    print indices
 
     ## Here, we split depending on whether it's a outcomes or money minimization:
     if which=='outcomes':
@@ -476,7 +477,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
 
         ## Actually run the optimization
         args['totalbudget'] = totalbudget
-        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
+        args['initpeople'] = None #initpeople # Set so only runs the part of the optimization required
         budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
 
         ## Calculate outcomes
