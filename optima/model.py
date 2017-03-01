@@ -9,9 +9,21 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     Version: 1.7 (2016sep14)
     """
     
-    from optima import saveobj
-    saveobj('tmppars.obj', simpars)
-    print('saved')
+    if initpeople is not None:
+        from optima import loadobj
+        oldpars = loadobj('tmppars.obj')
+        for key in simpars.keys():
+            try:
+                print(key, (simpars[key][:,:]-oldpars[key][:,80:]).sum())
+            except:
+                try:
+                    print(key, (simpars[key][:]-oldpars[key][80:]).sum())
+                except:
+                    try:
+                        print(key, (simpars[key]-oldpars[key]))
+                    except:
+                        print('could not print %s' % key)
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     ##################################################################################################################
     ### Setup 
