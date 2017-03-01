@@ -341,6 +341,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
+            print outcome
 
         # Output results
         if outputresults:
@@ -476,7 +477,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
 
         ## Actually run the optimization
         args['totalbudget'] = totalbudget
-        args['initpeople'] = None #initpeople # Set so only runs the part of the optimization required
+        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
         budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
 
         ## Calculate outcomes
