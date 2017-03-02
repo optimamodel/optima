@@ -1220,7 +1220,7 @@ class odict(OrderedDict):
     
     def insert(self, pos=None, key=None, value=None):
         '''
-        Stupid, slow function to do insert.
+        Stupid, slow function to do insert -- WARNING, should be able to use approach more like rename...
         
         Usage:
             z = odict()
@@ -1266,6 +1266,7 @@ class odict(OrderedDict):
 
         return None
         
+        
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
@@ -1284,10 +1285,11 @@ class odict(OrderedDict):
                 self.__setitem__(key, value)
         return None
     
-    def sort(self, sortby=None):
+    
+    def sort(self, sortby=None, copy=False):
         '''
-        Return a sorted copy of the odict. 
-        Sorts by order of sortby, if provided, otherwise alphabetical
+        Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
+        If copy is True, then returns a copy (like sorted())
         '''
         if not sortby: allkeys = sorted(self.keys())
         else:
@@ -1306,15 +1308,18 @@ class odict(OrderedDict):
                     raise Exception(errormsg)
                 else: allkeys = [y for (x,y) in sorted(zip(sortby,self.keys()))]
             else: raise Exception('Cannot figure out how to sort by "%s"' % sortby)
-        out = odict()
-        for key in allkeys: out[key] = self[key]
-        return out
+        tmpdict = odict()
+        if copy:
+            for key in allkeys: tmpdict[key] = self[key]
+            return tmpdict
+        else:
+            for key in allkeys: tmpdict.__setitem__(key, self.pop(key))
+            for key in allkeys: self.__setitem__(key, tmpdict.pop(key))
+            return None
     
-    def selfsort(self, sortby=None):
-        ''' Like sort, but replaces original '''
-        new = self.sort(sortby=sortby)
-        self.__dict__ = new.__dict__
-        return None
+    def sorted(self, sortby=None):
+        ''' Shortcut for making a copy of the sorted odict '''
+        return self.sort(sortby=sortby, copy=True)
 
 
 
