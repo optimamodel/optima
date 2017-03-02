@@ -13,7 +13,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     any size. 
     
     If fulloutput is False, then asd() returns x only. If it is true, then it returns
-    an output class with the following attributes:
+    a tuple with the following items:
         x          -- The parameter set that minimizes the objective function
         fval       -- The value of the objective function at each iteration (use fval[-1] for final)
         exitreason -- The reason the algorithm terminated
@@ -141,11 +141,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             s1[choice] = s1[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
-            flag = '✓'
+            flag = '✓' # Marks an improvement
         elif fvalnew >= fvalold: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
-            flag = '—'
+            flag = '—' # Marks no change
         else:
             exitreason = 'Objective function returned NaN'
             break
@@ -173,20 +173,12 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitreason = 'Stopping function called'
             break
 
-    # Create additional output
-    class makeoutput(object):
-        def __init__(self):
-            self.x = reshape(x,origshape) # Parameters
-            self.fval = fulloutputfval[:count] # Function evaluations
-            self.exitreason = exitreason
-    output = makeoutput()
-    
-    # Print reason for stopping
-    if verbose>=2: print('======== %s, terminating ========' % exitreason)
-    
     # Return
-    if fulloutput: return output
-    else:          return output.x
+    x = reshape(x,origshape) # Parameters
+    fval = fulloutputfval[:count] # Function evaluations
+    if verbose>=2: print('======== %s, terminating ========' % exitreason)
+    if fulloutput: return (x, fval, exitreason)
+    else:          return x
 
 
 

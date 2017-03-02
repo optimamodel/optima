@@ -265,7 +265,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Perform fit
     parvec = convert(pars, parlist)
     args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
-    parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
     
     # Save
     pars = convert(pars, parlist, parvecnew)        

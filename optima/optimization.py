@@ -440,7 +440,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
 
 
-def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, overwritebudget=None, ccsample='best', randseed=None, mc=3, **kwargs):
+def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, **kwargs):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
@@ -460,6 +460,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     nprogs = len(origbudget[:]) # Number of programs total
     noptimprogs = len(budgetvec) # Number of optimizable programs
     xmin = zeros(noptimprogs)
+    if label is None: label = ''
     
     # Calculate the initial people distribution
     results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0)
@@ -533,7 +534,9 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         asdresults = odict()
         for k,key in enumerate(allbudgetvecs.keys()):
             printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
-            budgetvecnew, fval, exitflag, output = asd(objectivecalc, allbudgetvecs[key], args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
+            if label: thislabel = label+'-'+key
+            else: thislabel = key
+            budgetvecnew, fval, exitflag, output = asd(objectivecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
             asdresults[key] = {'budgetvec':budgetvecnew, 'output':output}
             if fval<bestfval: 
                 bestkey = key # Reset key
@@ -635,7 +638,7 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     
         args['totalbudget'] = origtotalbudget # Calculate new total funding
         args['which'] = 'outcomes' # Switch back to outcome minimization -- WARNING, there must be a better way of doing this
-#        budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
+#        budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, **kwargs)
         budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
     
         # See if objectives are met
@@ -663,7 +666,7 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
         ##########################################################################################################################
         args['which'] = 'outcomes'
         newrandseed = None if randseed is None else 2*randseed+1 # Make the random seed different
-        budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=newrandseed, **kwargs) 
+        budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=newrandseed, **kwargs) 
         budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec3, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
     
         # Check that targets are still met
