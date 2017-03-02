@@ -596,6 +596,14 @@ def redotranstable(project, **kwargs):
     project.version = '2.3.3'
     return None
 
+
+def addinfmoney(project, **kwargs):
+    ''' Add infinite money to settings since used in several places '''
+    # Add transitions matrix
+    project.settings.infmoney = 1e9
+    project.version = '2.3.4'
+    return None
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -631,6 +639,7 @@ migrations = {
 '2.3':   removespreadsheet,
 '2.3.1': addagetopars,
 '2.3.2': redotranstable,
+'2.3.4': addinfmoney,
 #'2.2': redoprograms,
 }
 

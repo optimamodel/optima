@@ -90,6 +90,7 @@ class Settings(object):
         self.verbose = verbose # Default verbosity for how much to print out -- see definitions in utils.py:printv()
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
+        self.infmoney = 1e10 # A lot of money
         self.forcepopsize = True # Whether or not to force the population size to match the parameters
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     

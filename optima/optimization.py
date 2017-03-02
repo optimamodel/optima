@@ -9,9 +9,6 @@ from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, 
 from numpy import zeros, arange, maximum, array, inf, isfinite, argmin
 from numpy.random import random
 
-# Define global parameters that shouldn't really matter
-infmoney = 1e9 # Effectively infinite money
-
 
 ################################################################################################################################################
 ### The container class
@@ -477,7 +474,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     extremebudgets['Current']    = zeros(nprogs)
     for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
     extremebudgets['Zero']     = zeros(nprogs)
-    extremebudgets['Infinite'] = origbudget[:]+infmoney
+    extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
     if mc: # Only run these if MC is being run
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
@@ -603,7 +600,7 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     terminate = False
 
     # First, try infinite money
-    args['totalbudget'] = 1e9
+    args['totalbudget'] = project.settings.infmoney
     targetsmet, summary = objectivecalc(budgetvec, **args)
     if not(targetsmet): 
         terminate = True
