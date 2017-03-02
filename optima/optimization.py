@@ -525,10 +525,10 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
             bvzeros = zeros(noptimprogs)
             allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
             if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
-                allbudgetvecs['Single program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
+                allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
             for i in range(mc): # For the remainder, do randomizations
                 randbudget = random(noptimprogs)
-                allbudgetvecs['Randomization %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
+                allbudgetvecs['Random %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
         
         # Actually run the optimizations
         bestfval = inf # Value of outcome
@@ -556,6 +556,9 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
+    multires.outcomes = extremeoutcomes # Store all of these
+    for t,tmpresult in enumerate(tmpresults):
+        multires.outcomes[tmpresult.name] = tmpimprovements[t][-1] # Get best value
     optim.resultsref = multires.name # Store the reference for this result
 
     return multires
