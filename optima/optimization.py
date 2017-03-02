@@ -226,6 +226,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if isfinite(abslimits['min'][oind]): abslimits['min'][oind] *= rescaledbudget[oind]
         if isfinite(abslimits['max'][oind]): abslimits['max'][oind] *= rescaledbudget[oind]
         
+
 #        # Semi-relative limits. Note: Has issues, but is left here for posterity.
 #        if scaleratio<1:
 #            abslimits['min'][oind] *= rescaledbudget[oind] # If total budget is less, scale down the lower limit...
@@ -304,7 +305,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ### The main meat of the matter
 ################################################################################################################################################
 
-def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, initpeople=None, outputresults=False, debug=False, verbose=2, ccsample='best'):
+def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, initpeople=None, outputresults=False, debug=False, verbose=2, ccsample='best', doconstrainbudget=True):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Validate input
@@ -317,7 +318,11 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         raise OptimaException(errormsg)
 
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
-    constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
+    if doconstrainbudget:
+        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
+    else:
+        constrainedbudget = dcp(origbudget)
+        constrainedbudget[:] = budgetvec
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
@@ -468,7 +473,6 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     args = {'which':'outcomes', 'project':project, 'parset':parset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':origtotalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose, 'initpeople':None}
     
     # Set up extremes
-    optimbudgetsum = sum(constrainedbudgetvecorig)
     extremebudgets = odict()
     extremebudgets['Current']    = zeros(nprogs)
     for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
@@ -477,17 +481,13 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     if mc: # Only run these if MC is being run
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
-            extremebudgets[prog][p] = optimbudgetsum
+            extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
     
     # Run extremes
     extremeresults  = odict()
     extremeoutcomes = odict()
     for key,exbudget in extremebudgets.items():
-        tmpbudget = dcp(origbudget) # To avoid rescaling issues...
-        tmpbudget[:] = exbudget
-        args['totalbudget'] = sum(exbudget)
-        args['origbudget']  = tmpbudget
-        extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, **args)
+        extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, doconstrainbudget=False, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][3:])+3 # Don't include no funding or infinite funding examples
@@ -515,7 +515,6 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
-        args['origbudget'] = origbudget
         args['initpeople'] = None # initpeople # WARNING, TEMP, uncomment once the bug with initpeople is fixed # Set so only runs the part of the optimization required
         
         # Set up budgets to run
