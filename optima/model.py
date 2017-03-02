@@ -852,7 +852,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 print(name, round(tvec[t]*10)/10, prop[t+1]/(people[num,:,t+1].sum()/people[denom,:,t+1].sum()))
 
             # Check no negative people -- this is inside the t<npts statement, so doesn't check the last point
+            print('yep checking here', t)
+            if debug: 
+                print('am i a canary?')
+                checkfornegativepeople(people, tind=t)
             if debug: checkfornegativepeople(people, tind=t+1)
+        print('and yyyy checking here', t)
+        if debug: checkfornegativepeople(people, tind=t)
         
     raw                 = odict()    # Sim output structure
     raw['tvec']         = tvec
@@ -869,7 +875,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['death']        = raw_death
     raw['otherdeath']   = raw_otherdeath
     
-    if not debug: checkfornegativepeople(people) # Check only once for negative people, right before finishing
+    checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
     return raw # Return raw results
 
