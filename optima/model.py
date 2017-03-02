@@ -868,7 +868,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['death']        = raw_death
     raw['otherdeath']   = raw_otherdeath
     
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
