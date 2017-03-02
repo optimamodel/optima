@@ -8,7 +8,7 @@ from gzip import GzipFile
 from cStringIO import StringIO
 from contextlib import closing
 from os import path, sep
-from numpy import array, ones, zeros
+from numpy import ones, zeros
 from optima import odict, OptimaException
 from xlrd import open_workbook
 
@@ -94,13 +94,13 @@ def loadtranstable(filename=default_filename, sheetname='Transitions', npops=Non
     nstates = sheet.nrows
 
     fromto = []
-    transmatrix = zeros((nstates,nstates))
+    transmatrix = zeros((nstates,nstates,npops))
     for rownum in range(nstates-1): # Loop over each health state: the from state
         fromto.append([]) # Append two lists: the to state and the probability
         for colnum in range(nstates-1): # ...and again
             if sheet.cell_value(rownum+1,colnum+1):
                 fromto[rownum].append(colnum) # Append the to states
-                transmatrix[rownum,colnum] = 1.0 # Append the probabilities
+                transmatrix[rownum,colnum,:] = ones(npops) # Append the probabilities
     
     return fromto, transmatrix
 

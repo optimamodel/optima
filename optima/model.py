@@ -236,12 +236,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         for tostate in fromto[fromstate]: # Iterate over the states you could be going to  
             if fromstate not in lt50: # Cannot progress from this state
                 if any([(tostate in j) and (fromstate in j) for j in allcd4]):
-                    transmatrix[fromstate,tostate] *= 1.-prog[fromhealthstate]
+                    transmatrix[fromstate,tostate,:] *= 1.-prog[fromhealthstate]
                 else:
-                    transmatrix[fromstate,tostate] *= prog[fromhealthstate]
+                    transmatrix[fromstate,tostate,:] *= prog[fromhealthstate]
     
             # Death probabilities
-            transmatrix[fromstate,tostate] *= 1.-deathhiv[fromhealthstate]*dt 
+            transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*dt 
             deathprob[fromstate] = deathhiv[fromhealthstate]*dt
             
     ## Recovery and deaths for people on suppressive ART
@@ -250,17 +250,17 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         for tostate in fromto[fromstate]: # Iterate over the states you could be going to  
             if (fromstate not in acute) and (fromstate not in gt500): # You don't recover from these states
                 if any([(tostate in j) and (fromstate in j) for j in allcd4]):
-                    transmatrix[fromstate,tostate] = 1.-svlrecov[fromhealthstate]
+                    transmatrix[fromstate,tostate,:] = 1.-svlrecov[fromhealthstate]
                 else:
-                    transmatrix[fromstate,tostate] = svlrecov[fromhealthstate]
+                    transmatrix[fromstate,tostate,:] = svlrecov[fromhealthstate]
             if fromstate in acute: # You can progress from acute
                 if tostate in acute:
-                    transmatrix[fromstate,tostate] = 1.-prog[0]
+                    transmatrix[fromstate,tostate,:] = 1.-prog[0]
                 elif tostate in gt500:
-                    transmatrix[fromstate,tostate] = prog[0]
+                    transmatrix[fromstate,tostate,:] = prog[0]
     
             # Death probabilities
-            transmatrix[fromstate,tostate] *= (1.-deathhiv[fromhealthstate]*deathsvl*dt)    
+            transmatrix[fromstate,tostate,:] *= (1.-deathhiv[fromhealthstate]*deathsvl*dt)    
             deathprob[fromstate] = deathhiv[fromhealthstate]*deathsvl*dt
             
 
@@ -272,43 +272,43 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         for tostate in fromto[fromstate]:
             if fromstate in acute: # You can progress from acute
                 if tostate in acute:
-                    transmatrix[fromstate,tostate] = 1.-prog[0]
+                    transmatrix[fromstate,tostate,:] = 1.-prog[0]
                 elif tostate in gt500:
-                    transmatrix[fromstate,tostate] = prog[0]
+                    transmatrix[fromstate,tostate,:] = prog[0]
             elif fromstate in gt500: 
                 if tostate in gt500:
-                    transmatrix[fromstate,tostate] = 1.-simpars['usvlproggt500']*dt
+                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlproggt500']*dt
                 elif tostate in gt350:
-                    transmatrix[fromstate,tostate] = simpars['usvlproggt500']*dt
+                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt500']*dt
             elif fromstate in gt350:
                 if tostate in gt500:
-                    transmatrix[fromstate,tostate] = simpars['usvlrecovgt350']*dt
+                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt350']*dt
                 elif tostate in gt350:
-                    transmatrix[fromstate,tostate] = 1.-simpars['usvlrecovgt350']*dt-simpars['usvlproggt350']*dt
+                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt350']*dt-simpars['usvlproggt350']*dt
                 elif tostate in gt200:
-                    transmatrix[fromstate,tostate] = simpars['usvlproggt350']*dt
+                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt350']*dt
             elif fromstate in gt200:
                 if tostate in gt350:
-                    transmatrix[fromstate,tostate] = simpars['usvlrecovgt200']*dt
+                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt200']*dt
                 elif tostate in gt200:
-                    transmatrix[fromstate,tostate] = 1.-simpars['usvlrecovgt200']*dt-simpars['usvlproggt200']*dt
+                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt200']*dt-simpars['usvlproggt200']*dt
                 elif tostate in gt50:
-                    transmatrix[fromstate,tostate] = simpars['usvlproggt200']*dt
+                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt200']*dt
             elif fromstate in gt50:
                 if tostate in gt200:
-                    transmatrix[fromstate,tostate] = simpars['usvlrecovgt50']*dt
+                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt50']*dt
                 elif tostate in gt50:
-                    transmatrix[fromstate,tostate] = 1.-simpars['usvlrecovgt50']*dt-simpars['usvlproggt50']*dt
+                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt50']*dt-simpars['usvlproggt50']*dt
                 elif tostate in lt50:
-                    transmatrix[fromstate,tostate] = simpars['usvlproggt50']*dt
+                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt50']*dt
             elif fromstate in lt50:
                 if tostate in gt50:
-                    transmatrix[fromstate,tostate] = simpars['usvlrecovlt50']*dt
+                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovlt50']*dt
                 elif tostate in lt50:
-                    transmatrix[fromstate,tostate] = 1.-simpars['usvlrecovlt50']*dt
+                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovlt50']*dt
                                     
             # Death probabilities
-            transmatrix[fromstate,tostate] *= 1.-deathhiv[fromhealthstate]*deathusvl*dt
+            transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*deathusvl*dt
             deathprob[fromstate] = deathhiv[fromhealthstate]*deathusvl*dt
   
 
@@ -483,7 +483,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t], errstate, thistransit[errstate])
+                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t], errstate, thistransit[errstate,:,:])
                             if die: raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
@@ -495,7 +495,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##################################################################################################################
     
     # Preallocate here -- supposedly the most computationally efficient way to do this
-    alltransmatrices = zeros((npts, transmatrix.shape[0], transmatrix.shape[1]))
+    alltransmatrices = zeros((npts, transmatrix.shape[0], transmatrix.shape[1], transmatrix.shape[2]))
     alltransmatrices[:] = transmatrix
     
     for t in range(npts): # Loop over time
@@ -571,10 +571,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ii = undx[0]
         si = susreg[0] # susreg is a single element, but needs an index since can't index a list with an array
         pi = progcirc[0] # as above 
-        thistransit[si,si] = (1.-background[:,t]) - infections_to[si] # Index for moving from sus to sus
-        thistransit[si,ii] = infections_to[si] # Index for moving from sus to infection
-        thistransit[pi,pi] = (1.-background[:,t]) - infections_to[pi] # Index for moving from circ to circ
-        thistransit[pi,ii] = infections_to[pi] # Index for moving from circ to infection
+        thistransit[si,si,:] = (1.-background[:,t]) - infections_to[si] # Index for moving from sus to sus
+        thistransit[si,ii,:] = infections_to[si] # Index for moving from sus to infection
+        thistransit[pi,pi,:] = (1.-background[:,t]) - infections_to[pi] # Index for moving from circ to circ
+        thistransit[pi,ii,:] = infections_to[pi] # Index for moving from circ to infection
 
         # Calculate infections acquired and transmitted
         raw_inci[:,t]       = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
@@ -587,7 +587,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Adjust transition rates
         for state in range(nsus,nstates):
-            thistransit[state,:] *= (1.-background[:,t])
+            thistransit[state,:,:] *= (1.-background[:,t])
 
         # Store deaths
         raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
@@ -607,10 +607,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         for cd4, fromstate in enumerate(undx):
             for tostate in fromto[fromstate]:
                 if tostate in undx: # Probability of not being tested
-                    thistransit[fromstate,tostate] *= (1.-dxprob[cd4])
+                    thistransit[fromstate,tostate,:] *= (1.-dxprob[cd4])
                 else: # Probability of being tested
-                    thistransit[fromstate,tostate] *= dxprob[cd4]
-                    raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate,tostate]/dt
+                    thistransit[fromstate,tostate,:] *= dxprob[cd4]
+                    raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate,tostate,:]/dt
 
         # Diagnosed/lost to care
         if isnan(propcare[t]):
@@ -621,9 +621,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
             for tostate in fromto[fromstate]:
                 if tostate in dxnotincare: # Probability of not moving into care
-                    thistransit[fromstate,tostate] *= (1.-careprob[cd4])
+                    thistransit[fromstate,tostate,:] *= (1.-careprob[cd4])
                 else: # Probability of moving into care
-                    thistransit[fromstate,tostate] *= careprob[cd4]
+                    thistransit[fromstate,tostate,:] *= careprob[cd4]
 
         # Care/USVL/SVL to lost
         if isnan(propcare[t]):
@@ -634,18 +634,18 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
             for tostate in fromto[fromstate]:
                 if tostate in allcare: # Probability of not being lost and remaining in care
-                    thistransit[fromstate,tostate] *= (1.-lossprob[cd4])
+                    thistransit[fromstate,tostate,:] *= (1.-lossprob[cd4])
                 else: # Probability of being lost
-                    thistransit[fromstate,tostate] *= lossprob[cd4]
+                    thistransit[fromstate,tostate,:] *= lossprob[cd4]
     
         # SVL to USVL
         usvlprob = treatfail if isnan(propsupp[t]) else 0.
         for fromstate in svl:
             for tostate in fromto[fromstate]:
                 if tostate in svl: # Probability of remaining suppressed
-                    thistransit[fromstate,tostate] *= (1.-usvlprob)
+                    thistransit[fromstate,tostate,:] *= (1.-usvlprob)
                 elif tostate in usvl: # Probability of becoming unsuppressed
-                    thistransit[fromstate,tostate] *= usvlprob
+                    thistransit[fromstate,tostate,:] *= usvlprob
 
         # Check that probabilities all sum to 1
         if debug and not all([(abs(thistransit[j].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
@@ -665,9 +665,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             
         ## Shift people as required
         if t<npts-1:
-            for fromstate in fromto:
+            for fromstate in range(len(fromto)):
                 for tostate in fromto[fromstate]:
-                    people[tostate,:,t+1] += people[fromstate,:,t]*thistrans[fromstate,tostate]
+                    people[tostate,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostate,:]
 
         ##############################################################################################################
         ### Calculate births
