@@ -11,7 +11,9 @@ year = 2015.0
 print('####################DEMO###########################')    
 P = op.demo(0, debug=True, die=True)
 
-#P.pars()['numvlmon'].y[:] *= 0 # Uncomment this out to watch the discrepancy (almost) completely disappear...
+P.pars()['numvlmon'].y[:] *= 0 # Uncomment this out to watch the discrepancy (almost) completely disappear...
+P.pars()['numtx'].y[:] *= 0 # Uncomment this out to watch the discrepancy (almost) completely disappear...
+
 
 #P.settings.dt = 0.02 # If timestep is smaller, the discrepancy is proportionally smaller
 
