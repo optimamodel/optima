@@ -9,7 +9,7 @@ end = 2020.
 year = 2015.0
 
 print('####################DEMO###########################')
-P = op.demo(0)
+P = op.demo(0, debug=True, die=True)
 
 #P.pars()['numvlmon'].y[:] *= 0 # Uncomment this out to watch the discrepancy (almost) completely disappear...
 
@@ -17,7 +17,7 @@ P = op.demo(0)
 
 print('####################FIRST RUN###########################')
 t = op.tic()
-res1 = op.runmodel(project=P, pars=P.pars(), start=start, end=end, keepraw=True)
+res1 = op.runmodel(project=P, pars=P.pars(), start=start, end=end, keepraw=True, debug=True, die=True)
 op.toc(t)
 
 ind = op.findinds(res1.raw[0]['tvec'], year)
@@ -26,7 +26,7 @@ initpeople = res1.raw[0]['people'][:,:,ind]
 print('####################SECOND RUN###########################')
 
 t = op.tic()
-res2 = op.runmodel(project=P, pars=P.pars(), start=year, end=end, keepraw=True, initpeople=initpeople)
+res2 = op.runmodel(project=P, pars=P.pars(), start=year, end=end, keepraw=True, initpeople=initpeople, debug=True, die=True)
 op.toc(t)
 
 
