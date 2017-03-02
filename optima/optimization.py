@@ -492,7 +492,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, doconstrainbudget=False, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
-    bestprogram = argmin(extremeoutcomes[:][2:])+2 # Don't include no funding or infinite funding examples
+    bestprogram = argmin(extremeoutcomes[:][3:])+3 # Don't include no funding or infinite funding examples
     
     # Check extremes
     if extremeoutcomes['inffunding'] >= extremeoutcomes['nofunding']:
@@ -525,7 +525,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
             bvzeros = zeros(noptimprogs)
             allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
             if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
-                allbudgetvecs['Single program'] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
+                allbudgetvecs['Single program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
             for i in range(mc): # For the remainder, do randomizations
                 randbudget = random(noptimprogs)
                 allbudgetvecs['Randomization %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()

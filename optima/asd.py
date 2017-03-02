@@ -1,7 +1,7 @@
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None, MaxRangeIter=1000,
     MaxFunEvals=None, MaxIter=1e3, AbsTolFun=1e-6, RelTolFun=1e-2, TolX=None, StallIterLimit=100,
-    fulloutput=True, maxarraysize=1e6, timelimit=3600, stoppingfunc=None, randseed=None, verbose=2):
+    maxarraysize=1e6, timelimit=3600, stoppingfunc=None, randseed=None, verbose=2):
     """
     Optimization using the adaptive stochastic descent algorithm.
     
@@ -44,7 +44,6 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       RelTolFun      {1e-2}     -- Minimum relative change in objective function
       TolX           {N*1e-6}   -- Minimum change in parameters
       StallIterLimit {100}      -- Number of iterations over which to calculate TolFun
-      fulloutput     {True}     -- Whether or not to output the parameters and errors at each iteration
       maxarraysize   {1e6}      -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
       timelimit      {3600}     -- Maximum time allowed, in seconds
       stoppingfunc   {None}     -- External method that can be used to stop the calculation from the outside.
@@ -101,9 +100,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     exitflag = -1 # Set default exit flag
     abserrorhistory = zeros(int(StallIterLimit)) # Store previous error changes
     relerrorhistory = zeros(int(StallIterLimit)) # Store previous error changes
-    if fulloutput: # Include additional output structure
-        fulloutputfval = zeros(int(MaxIter)) # Store all objective function values
-        fulloutputx = zeros((int(MaxIter),int(nparams))) # Store all parameters
+    fulloutputfval = zeros(int(MaxIter)) # Store all objective function values
+    fulloutputx = zeros((int(MaxIter),int(nparams))) # Store all parameters
     
     ## Loop
     start = time()
@@ -168,10 +166,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         if verbose>=2: 
             print(offset + 'Step %i (%0.1f s): %s (orig: %s | best:%s | new:%s | diff:%s | ratio:%0.5f)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold]) + (fvalnew/fvalold,)))
         
-        # Optionally store output information
-        if fulloutput: # Include additional output structure
-            fulloutputfval[count-1] = fval # Store objective function evaluations
-            fulloutputx[count-1,:] = x # Store parameters
+        # Store output information
+        fulloutputfval[count-1] = fval # Store objective function evaluations
+        fulloutputx[count-1,:] = x # Store parameters
         
         # Stopping criteria
         if (count+1) >= MaxFunEvals: # Stop if the function evaluation limit is exceeded
@@ -211,15 +208,14 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     class makeoutput:
         iterations = count # Number of iterations
         funcCount = count+1 # Number of function evaluations
-        if fulloutput: # Include additional output structure
-            fval = fulloutputfval[:count] # Function evaluations
-            x = fulloutputx[:count,:] # Parameters
+        fval = fulloutputfval[:count] # Function evaluations
+        x = fulloutputx[:count,:] # Parameters
     output = makeoutput()
     
     # Return x to its original shape
     x = reshape(x,origshape)
 
-    return x, fval, exitflag, output
+    return x, fulloutputfval[-1], exitflag, output
 
 
 
