@@ -350,7 +350,7 @@ class Programset(object):
         if isinstance(budget, list) or isinstance(budget,type(array([]))):
             budget = vec2obj(orig=self.getdefaultbudget(), newvec=budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
-        budget = budget.sort([p.short for p in self.programs.values()])
+        budget.sort([p.short for p in self.programs.values()])
 
         # Get program-level coverage for each program
         for thisprog in self.programs.keys():
@@ -376,7 +376,7 @@ class Programset(object):
         if isnumber(t): t = [t]
         if not isinstance(coverage,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
         if not isinstance(coverage,odict): budget = odict(budget)
-        coverage = coverage.sort([p.short for p in self.programs.values()])
+        coverage.sort([p.short for p in self.programs.values()])
 
         # Get budget for each program
         for thisprog in self.programs.keys():
@@ -401,7 +401,7 @@ class Programset(object):
         # Validate inputs
         if not isinstance(budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
         if not isinstance(budget,odict): budget = odict(budget)
-        budget = budget.sort([p.short for p in self.programs.values()])
+        budget.sort([p.short for p in self.programs.values()])
 
         # Get population-level coverage for each program
         for thisprog in self.programs.keys():

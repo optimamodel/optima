@@ -851,8 +851,8 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         largestthatyear = largest_i*grow(largest_e, thisyear[key]-startyear)
         par.i[key] = largest_i*thispopsize[key]/largestthatyear # Scale population size
         par.e[key] = largest_e # Copy exponent
-    par.i = par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
-    par.e = par.e.sort(keys)
+    par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    par.e.sort(keys)
     
     if uniformgrowth:
         for key in keys:
@@ -1079,8 +1079,8 @@ def makepars(data=None, verbose=2, die=True):
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0.0])
         pars['birth'].t[key] = array([0.0])
-    pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['birth'].t = pars['birth'].t.sort(popkeys)
+    pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['birth'].t.sort(popkeys)
     
     # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
     npopkeys = len(popkeys)
@@ -1113,10 +1113,10 @@ def makepars(data=None, verbose=2, die=True):
         pars['propcirc'].t[key] = array([0.0])
         pars['numcirc'].y[key]  = array([0.0])
         pars['numcirc'].t[key]  = array([0.0])
-    pars['propcirc'].y = pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['propcirc'].t = pars['propcirc'].t.sort(popkeys)
-    pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
+    pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['propcirc'].t.sort(popkeys)
+    pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['numcirc'].t.sort(popkeys)
     for key in pars['numcirc'].keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
