@@ -90,7 +90,7 @@ if 'parametercheck' in tests:
     'condcas', 'condcom', 'condreg', 'numcirc',
     'female', 'force', 'inhomo', 'initprev', 
     'propdx','propcare','proptx','propsupp','proppmtct',
-    'injects', 'male', 'popkeys', 'rawtransit',
+    'injects', 'male', 'popkeys', 'fromto', 'transmatrix',
     'fixproppmtct', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproptx'])
     
     dataminuspars = set(datakeys) - set(parkeys)
