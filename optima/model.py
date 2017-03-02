@@ -849,8 +849,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 zprop = proptx
                 znum = array([26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37])
                 zdenom = array([14, 15, 16, 17, 18, 19, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37])
-                print('%10s %8.1f %8.4f %8.4f' % (zname, tvec[t+1], zprop[t+1], people[znum,:,t+1].sum()/people[zdenom,:,t+1].sum()))
-                print('%10s %8.1f %8.4f %8.4f' % (name,  tvec[t+1],  prop[t+1],  people[num,:,t+1].sum()/people[denom,:,t+1].sum()))
+                print('%10s %8.1f %8.4f %8.4f' % (name,        tvec[t+1],  prop[t+1],  people[num,:,t+1].sum()/people[denom,:,t+1].sum()))
+                print('%10s %8.1f %8.4f %8.4f' % ('zzzznumtx', tvec[t+1], zprop[t+1], people[znum,:,t+1].sum()/people[zdenom,:,t+1].sum()))
             if debug: checkfornegativepeople(people, tind=t+1)
         
     raw                 = odict()    # Sim output structure
