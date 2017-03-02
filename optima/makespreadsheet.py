@@ -72,9 +72,9 @@ def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, d
     return filename
 
 
-class OptimaContent:
+class OptimaContent(object):
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
-    def __init__(self, name, row_names, column_names, data=None, assumption_data=None, assumption=True):
+    def __init__(self, name=None, row_names=None, column_names=None, data=None, assumption_data=None, assumption=True):
         self.name = name
         self.row_names = row_names
         self.column_names = column_names
@@ -106,7 +106,7 @@ class OptimaContent:
 def make_years_range(name=None, row_names=None, ref_range=None, data_start=None, data_end=None, data=None):
     if ref_range is not None:
         row_names = ref_range.param_refs()
-    output = OptimaContent(name, row_names, range(data_start, data_end+1), data=data)
+    output = OptimaContent(name=name, row_names=row_names, column_names=range(int(data_start), int(data_end+1)), data=data)
     return output
 
 def make_populations_range(name, items):
@@ -134,10 +134,10 @@ def make_populations_range(name, items):
             age_from = 15
             age_to = 49
         coded_params.append([short_name, item_name, male, female, age_from, age_to])
-    return OptimaContent(name, row_names, column_names, coded_params)
+    return OptimaContent(name=name, row_names=row_names, column_names=column_names, data=coded_params)
 
 
-def make_programs_range(name, popnames, items):
+def make_programs_range(name=None, popnames=None, items=None):
     """ 
     every programs item is a dictionary is expected to have the following fields:
     short_name, name, targetpops
@@ -158,7 +158,7 @@ def make_programs_range(name, popnames, items):
 def make_constant_range(name, row_names, best_data, low_data, high_data):
     column_names = ['best', 'low', 'high']
     range_data = [[best, low, high] for (best, low, high) in zip(best_data, low_data, high_data)]
-    return OptimaContent(name, row_names=row_names, column_names=column_names, data=range_data)
+    return OptimaContent(name=name, row_names=row_names, column_names=column_names, data=range_data)
 
 
 def filter_by_properties(param_refs, base_params, the_filter):
@@ -382,7 +382,7 @@ class OptimaSpreadsheet:
         
     def emit_matrix_block(self, name, current_row, row_names=None, column_names=None, data=None, **kwargs):
         if column_names is None: column_names = self.getrange('allpops') # WARNING, not great to hardcode this, but this is always the case!
-        content = OptimaContent(name, row_names, column_names, data=data)
+        content = OptimaContent(name=name, row_names=row_names, column_names=column_names, data=data)
         content.assumption = False
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats)
@@ -601,7 +601,7 @@ class OptimaProgramSpreadsheet:
         self.current_sheet = None
         self.prog_range = None
         self.ref_pop_range = None
-        self.years_range = range(self.data_start, self.data_end+1)
+        self.years_range = range(int(self.data_start), int(self.data_end+1))
 
         self.npops = len(pops)
         self.nprogs = len(progs)
@@ -634,7 +634,7 @@ class OptimaProgramSpreadsheet:
 
     def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL,
         assumption = False, row_levels = None, row_formats = None):
-        content = make_years_range(name, row_names, self.data_start, self.data_end)
+        content = make_years_range(name=name, row_names=row_names, data_start=self.data_start, data_end=self.data_end)
         content.row_format = row_format
         content.assumption = assumption
         if row_levels is not None:
