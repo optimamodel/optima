@@ -92,3 +92,4 @@
 1.39 2017-Feb-07_18:32:09 e19d00d fix-programs-bug
 0.657 2017-Feb-07_18:40:05 b7b04cc fix-programs-bug
 0.664 2017-Mar-02_22:05:53 289c5d8 rethink-GA
+0.671 2017-Mar-02_23:22:55 66208c6 rethink-GA

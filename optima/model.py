@@ -665,9 +665,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             
         ## Shift people as required
         if t<npts-1:
-            for fromstate in range(len(fromto)):
-                for tostate in fromto[fromstate]:
-                    people[tostate,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostate,:]
+            for fromstate,tostates in enumerate(fromto):
+                people[tostates,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostates,:]
 
         ##############################################################################################################
         ### Calculate births
