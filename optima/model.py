@@ -41,7 +41,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     allpeople       = zeros((npops, npts))          # Population sizes
     effallprev      = zeros((nstates, npops))       # HIV effective prevalence (prevalence times infectiousness), by health state
     inhomo          = zeros(npops)                  # Inhomogeneity calculations
-    new_movers      = zeros((ncd4, npops))          # Initialise a place to store the number of people that shift into a new compartment (e.g. number of treatment initiators)
 
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
@@ -102,10 +101,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     lt50            = settings.lt50                 # <50
     aidsind         = settings.aidsind              # AIDS
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
-    dxstates        = [dx,care,usvl,svl,lost]
-    carestates      = [care,usvl,svl]
-    txstates        = [usvl,svl]
-    svlstates       = [svl] # Silly but makes it clearer below
     
     if debug and len(sus)!=2:
         errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
@@ -165,10 +160,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     fixpropsupp    = findfixind('fixpropsupp')# findinds(simpars['tvec']>=simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] < simpars['tvec'][-1] else nan
     
     # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
-    propdx_list     = ('propdx',   propdx,   undx, dx,   dxstates,   alldx,   allplhiv, raw_diag,       fixpropdx)
-    propcare_list   = ('propcare', propcare, dx,   care, carestates, allcare, alldx,    raw_newcare,    fixpropcare)
-    proptx_list     = ('proptx',   proptx,   care, usvl, txstates,   alltx,   allcare,  raw_newtreat,   fixproptx)
-    propsupp_list   = ('propsupp', propsupp, usvl, svl,  svlstates,  svl,     alltx,    raw_newsupp,    fixpropsupp)
+    #                  name,       prop,    lower, to,   num,      denom,   raw_new,        fixyear
+    propdx_list     = ('propdx',   propdx,   undx, dx,   alldx,   allplhiv, raw_diag,       fixpropdx)
+    propcare_list   = ('propcare', propcare, dx,   care, allcare, alldx,    raw_newcare,    fixpropcare)
+    proptx_list     = ('proptx',   proptx,   care, usvl, alltx,   allcare,  raw_newtreat,   fixproptx)
+    propsupp_list   = ('propsupp', propsupp, usvl, svl,  svl,     alltx,    raw_newsupp,    fixpropsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -797,7 +793,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             ## Proportions
             ###########################################################################
 
-            for name,prop,lowerstate,tostate,higherstates,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
+            for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
                 if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
                     calcprop = people[num,:,t+1].sum()/people[denom,:,t+1].sum() # This is the value we fix it at
@@ -815,43 +811,43 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 if isnan(prop[t+1]):
                     if   name is 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
                     elif name is 'propsupp': wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
-                    else:                    wanted = None
+                    else:                    wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
                     wanted = prop[t+1]*available
                 
                 # Reconcile the differences between the number we have and the number we want
                 if wanted is not None:
-                    # Figure out how many people waiting to move up the cascade, and what distribution should we use to move them
-                    
                     diff = wanted - actual # Wanted number minus actual number 
-                    
                     if diff>0.: # We need to move people UP the cascade 
                         ppltomoveup = people[lowerstate,:,t+1]
                         totalppltomoveup = ppltomoveup.sum()
-                        diff = min(diff, totalppltomoveup) # Make sure we don't move more people than are available
-                        if name == 'proptx': # For treatment, we move people in lower CD4 states first
-                            tmpdiff = diff
-                            newmovers = zeros((ncd4,npops))
-                            for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
-                                if tmpdiff>eps: # Move people until you have the right proportions
-                                    ppltomoveupcd4 = ppltomoveup[cd4,:]
-                                    totalppltomoveupcd4 = ppltomoveupcd4.sum()
-                                    tmpdiffcd4 = min(tmpdiff, totalppltomoveupcd4)
-                                    newmovers[cd4,:] = tmpdiffcd4*ppltomoveupcd4/totalppltomoveupcd4 # Pull out evenly from each population
-                                    tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
-                        else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
-                            newmovers = diff*ppltomoveup/(eps+ppltomoveup.sum())
-                        people[lowerstate,:,t+1] -= newmovers # Shift people out of the lower state... 
-                        people[tostate,:,t+1] += newmovers # ... and into the higher state
-                        raw_new[:,t+1] += newmovers.sum(axis=0)/dt # Save new movers
-    
+                        if totalppltomoveup>0:
+                            diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
+                            if name == 'proptx': # For treatment, we move people in lower CD4 states first
+                                tmpdiff = diff
+                                newmovers = zeros((ncd4,npops))
+                                for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
+                                    if tmpdiff>eps: # Move people until you have the right proportions
+                                        ppltomoveupcd4 = ppltomoveup[cd4,:]
+                                        totalppltomoveupcd4 = ppltomoveupcd4.sum()
+                                        if totalppltomoveupcd4:
+                                            tmpdiffcd4 = min(tmpdiff, totalppltomoveupcd4-eps)
+                                            newmovers[cd4,:] = tmpdiffcd4*ppltomoveupcd4/totalppltomoveupcd4 # Pull out evenly from each population
+                                            tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
+                            else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
+                                newmovers = diff*ppltomoveup/totalppltomoveup
+                            people[lowerstate,:,t+1] -= newmovers # Shift people out of the lower state... 
+                            people[tostate,:,t+1]    += newmovers # ... and into the higher state
+                            raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
                     elif diff<0.: # We need to move people DOWN the cascade
-                        diff = -diff # Flip it around so we have positive people, to keep my sanity...
                         ppltomovedown = people[state,:,t+1]
-                        newmovers = diff*ppltomovedown/(eps+ppltomovedown.sum())
-                        people[tostate,:,t+1]    -= newmovers # Shift people out of the higher state... 
-                        people[lowerstate,:,t+1] += newmovers # ... and into the lower state
-                        raw_new[:,t+1] -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+                        totalppltomovedown = ppltomovedown.sum()
+                        if totalppltomovedown>0: # To avoid having to add eps
+                            diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people, to keep my sanity...
+                            newmovers = diff*ppltomovedown/totalppltomovedown
+                            people[tostate,:,t+1]    -= newmovers # Shift people out of the higher state... 
+                            people[lowerstate,:,t+1] += newmovers # ... and into the lower state
+                            raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
                         
                 print(name, round(tvec[t]*10)/10, prop[t+1]/(people[num,:,t+1].sum()/people[denom,:,t+1].sum()))
 
