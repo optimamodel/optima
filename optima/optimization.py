@@ -478,8 +478,8 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     extremebudgets = odict()
     extremebudgets['Current']    = zeros(nprogs)
     for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
-    extremebudgets['nofunding']  = zeros(nprogs)
-    extremebudgets['inffunding'] = origbudget[:]+infmoney
+    extremebudgets['Zero']     = zeros(nprogs)
+    extremebudgets['Infinite'] = origbudget[:]+infmoney
     for p,prog in zip(optiminds,optimkeys):
         extremebudgets[prog] = zeros(nprogs)
         extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
@@ -494,13 +494,17 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     bestprogram = argmin(extremeoutcomes[:][3:])+3 # Don't include no funding or infinite funding examples
     
     # Check extremes -- not quite fair since not constrained but oh well
-    if extremeoutcomes['inffunding'] >= extremeoutcomes['nofunding']:
+    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
         errormsg = 'Infinite funding has a worse or identical outcome to no funding'
         raise OptimaException(errormsg)
     for k,key in enumerate(extremeoutcomes.keys()):
-        if extremeoutcomes[key] > extremeoutcomes['nofunding']:
-            errormsg = 'Infinite funding for %s has a worse outcome than no funding' % key
+        if extremeoutcomes[key] > extremeoutcomes['Zero']:
+            errormsg = 'Nonzero funding for %s has a worse outcome than no funding' % key
             raise OptimaException(errormsg)
+    printv('Outcome for current budget (starting point): %0.0f' % extremeoutcomes['Current'], 2, verbose)
+    printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
+    for key in extremeoutcomes.keys():
+        printv('Outcome for %s: %f' % (key,extremeoutcomes[key]), 3, verbose)
     
     ## Loop over budget scale factors
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
