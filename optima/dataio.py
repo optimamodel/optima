@@ -8,8 +8,8 @@ from gzip import GzipFile
 from cStringIO import StringIO
 from contextlib import closing
 from os import path, sep
-from numpy import array, ones
-from optima import odict
+from numpy import array, ones, zeros
+from optima import odict, OptimaException
 from xlrd import open_workbook
 
 
@@ -87,16 +87,22 @@ def loadtranstable(filename=default_filename, sheetname='Transitions', npops=Non
     sheet = workbook.sheet_by_name(sheetname)
 
     if npops is None: npops = 1 # Use just one population if not told otherwise
+    
+    if sheet.nrows != sheet.ncols:
+        errormsg = 'Transition matrix should have the same number of rows and columns (%i vs. %i)' % (sheet.nrows, sheet.ncols)
+        raise OptimaException(errormsg)
+    nstates = sheet.nrows
 
-    rawtransit = []
-    for rownum in range(sheet.nrows-1):
-        rawtransit.append([[],[]])
-        for colnum in range(sheet.ncols-1):
+    fromto = []
+    transmatrix = zeros((nstates,nstates))
+    for rownum in range(nstates-1): # Loop over each health state: the from state
+        fromto.append([]) # Append two lists: the to state and the probability
+        for colnum in range(nstates-1): # ...and again
             if sheet.cell_value(rownum+1,colnum+1):
-                rawtransit[rownum][0].append(colnum)
-                rawtransit[rownum][1].append(ones(npops))
-        rawtransit[rownum][1] = array(rawtransit[rownum][1])
-    return rawtransit
+                fromto[rownum].append(colnum) # Append the to states
+                transmatrix[rownum,colnum] = 1.0 # Append the probabilities
+    
+    return fromto, transmatrix
 
 
 

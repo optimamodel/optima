@@ -1020,7 +1020,7 @@ def makepars(data=None, verbose=2, die=True):
         errormsg = 'Could not load parameter table: "%s"' % E.message
         raise OptimaException(errormsg)
         
-    pars['rawtransit'] = loadtranstable(sheetname='Transitions', npops=len(popkeys)) # Read the transitions
+    pars['fromto'], pars['transmatrix'] = loadtranstable(sheetname='Transitions', npops=len(popkeys)) # Read the transitions
     
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
