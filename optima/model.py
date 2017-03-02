@@ -477,11 +477,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##################################################################################################################
     
     def checkfornegativepeople(people, tind=None):
-        if tind is None: 
-            tind = Ellipsis
-            tvec = simpars['tvec']
-        else:
-            tvec = array([tind])  
+        tvec = simpars['tvec']
+        if tind is None: tind = Ellipsis
         if not((people[:,:,tind]>=0).all()): # If not every element is a real number >0, throw an error
             for t in range(len(tvec)):
                 for errstate in range(nstates): # Loop over all heath states
@@ -850,11 +847,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
                         
                 print(name, round(tvec[t]*10)/10, prop[t+1]/(people[num,:,t+1].sum()/people[denom,:,t+1].sum()))
-
-            # Check no negative people -- this is inside the t<npts statement, so doesn't check the last point
-#            if debug: checkfornegativepeople(people)
-#            if debug: 
-#                checkfornegativepeople(people, tind=t)
             if debug: checkfornegativepeople(people, tind=t+1)
         
     raw                 = odict()    # Sim output structure
