@@ -804,7 +804,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 #                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
-                    calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
+                    calcprop = people[num,:,t+1].sum()/people[denom,:,t+1].sum() # This is the value we fix it at
                     
                     if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
@@ -812,37 +812,44 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     else: # If not, we will just use this value from now on
                         prop[t+1:] = calcprop
                 
-                if name=='propsupp': print('propsupp:', round(tvec[t]*10)/10, people[num,:,t].sum()/people[denom,:,t].sum())
+                if name=='propsupp': print('propsupp:', round(tvec[t]*10)/10, people[num,:,t+1].sum()/people[denom,:,t+1].sum())
                     
                 # In this section, we shift people around the cascade until we meet some targeted number/proportion.
                 # If any of the prop parameters are non-nan, that means that we've got some proportion target.
                 # However, treatment and VL monitoring are special because it is always set by shifting numbers.
                 if name in ['proptx','propsupp'] or ~isnan(prop[t+1]): 
 
-                    # Move the people who started treatment last timestep from usvl to svl
-                    if name is 'proptx':
-                        if isnan(propsupp[t+1]) and people[usvl,:,t].sum()>eps:
-                            unsuppressed = people[usvl,:,t] # To make sure it doesn't go negative
-                            suppressedprop = minimum(1.0, (raw_newtreat[:,t].sum())*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
-                            newlysuppressed = suppressedprop*unsuppressed # Calculate actual number of people suppressed
-                            people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
-                            people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
-                        if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
-
-                    # We figure out how many people should be moved to suppressed based on how many VL tests were done
-                    if t==0 or t==495: 
-                        print('supppp', t+1, name, prop[t+1])
-                    if name is 'propsupp' and isnan(prop[t+1]):
-                        wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
-                        if t==0 or t==495:
-                            print('hiiiii', t, wanted)
+                    
+#                    if name is 'proptx':
+#                        if isnan(propsupp[t+1]) and people[usvl,:,t].sum()>eps:
+#                            unsuppressed = people[usvl,:,t] # To make sure it doesn't go negative
+#                            suppressedprop = minimum(1.0, (raw_newtreat[:,t].sum())*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
+#                            newlysuppressed = suppressedprop*unsuppressed # Calculate actual number of people suppressed
+#                            people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
+#                            people[usvl,:,t+1] -= newlysuppressed # ... and out of USVL compartment, according to treatvs
+#                        if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
+#
+#                    # We figure out how many people should be moved to suppressed based on how many VL tests were done
+#                    if t==0 or t==495: 
+#                        print('supppp', t+1, name, prop[t+1])
+#                    if name is 'propsupp' and isnan(prop[t+1]):
+#                        wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
+#                        if t==0 or t==495:
+#                            print('hiiiii', t, wanted)
 
                     # Figure out how many people we currently have...
-                    actual          = people[num,:,t].sum() # ... in the higher cascade state
-                    available       = people[denom,:,t].sum() # ... waiting to move up
+                    actual          = people[num,:,t+1].sum() # ... in the higher cascade state
+                    available       = people[denom,:,t+1].sum() # ... waiting to move up
                     
-                    if t==0 or t==495: 
-                        print('actual-available', t+1, name, int(actual), int(available))
+                    # Move the people who started treatment last timestep from usvl to svl
+                    if isnan(prop[t+1]):
+                        if name is 'proptx': wanted = numtx[t+1] # If proptx is nan, we use numtx
+                        if name is 'propsupp': wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
+                    else: # If the prop value is finite, we use it
+                        wanted = prop[t+1]*available
+                    
+#                    if t==0 or t==495: 
+#                        print('actual-available', t+1, name, int(actual), int(available))
 
                     # Figure out how many people waiting to move up the cascade, and what distribution should we use to move them
                     ppltomoveup     = people[lowerstate,:,t+1]
@@ -851,13 +858,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                         movingdistribution = ppltomoveup/(eps+ppltomoveup.sum())
 
-                    # Figure out how many people we want and initialise new movers
-                    if not isnan(prop[t+1]): # If the prop value is finite, we use it
-                        wanted = prop[t+1]*available
+                    
                     new_movers      = zeros((ncd4,npops)) 
                     
-                    if t==0 or t==495: 
-                        print('kamaashi', t+1, name, int(wanted), int(actual))
+#                    if t==0 or t==495: 
+#                        print('kamaashi', t+1, name, int(wanted), int(actual))
 
                     # Reconcile the differences between the number we have and the number we want
                     diff = wanted - actual # Wanted number minus actual number 
