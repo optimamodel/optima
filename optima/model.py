@@ -800,14 +800,19 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for name,prop,lowerstate,tostate,higherstates,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
                 # Calculations to fix proportions from a particular year, if requested
+#                if t== and name=='propsupp':
+#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                
                 if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
                     calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    
                     if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
                         prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])
                     else: # If not, we will just use this value from now on
-                        for i in range(t+1,npts): prop[i] = calcprop
+                        prop[t+1:] = calcprop
+                
+                if name=='propsupp': print('propsupp:', round(tvec[t]*10)/10, people[num,:,t].sum()/people[denom,:,t].sum())
                     
                 # In this section, we shift people around the cascade until we meet some targeted number/proportion.
                 # If any of the prop parameters are non-nan, that means that we've got some proportion target.
@@ -816,8 +821,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
                     # Move the people who started treatment last timestep from usvl to svl
                     if name is 'proptx':
-                        if isnan(propsupp[t+1]) and people[usvl,:,t+1].sum()>eps:
-                            unsuppressed = people[usvl,:,t+1] # To make sure it doesn't go negative
+                        if isnan(propsupp[t+1]) and people[usvl,:,t].sum()>eps:
+                            unsuppressed = people[usvl,:,t] # To make sure it doesn't go negative
                             suppressedprop = minimum(1.0, (raw_newtreat[:,t].sum())*dt*treatvs/unsuppressed.sum()) # Calculate the proportion of each population suppressed
                             newlysuppressed = suppressedprop*unsuppressed # Calculate actual number of people suppressed
                             people[svl, :,t+1] += newlysuppressed # Shift last period's new initiators into SVL compartment... 
@@ -833,8 +838,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             print('hiiiii', t, wanted)
 
                     # Figure out how many people we currently have...
-                    actual          = people[num,:,t+1].sum() # ... in the higher cascade state
-                    available       = people[denom,:,t+1].sum() # ... waiting to move up
+                    actual          = people[num,:,t].sum() # ... in the higher cascade state
+                    available       = people[denom,:,t].sum() # ... waiting to move up
                     
                     if t==0 or t==495: 
                         print('actual-available', t+1, name, int(actual), int(available))
