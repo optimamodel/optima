@@ -534,8 +534,8 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         asdresults = odict()
         for k,key in enumerate(allbudgetvecs.keys()):
             printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
-            if label: thislabel = label+'-'+key
-            else: thislabel = key
+            if label: thislabel = '"'+label+'-'+key+'"'
+            else: thislabel = '"'+key+'"'
             budgetvecnew, fvals, exitreason = asd(objectivecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
             asdresults[key] = {'budgetvec':budgetvecnew, 'fvals':fvals}
             if fvals[-1]<bestfval: 
@@ -549,7 +549,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
         else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
         tmpresults.append(new)
-        tmpimprovements.append(asdresults[bestkey]['output'].fval)
+        tmpimprovements.append(asdresults[bestkey]['fvals'])
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % new.name)
