@@ -30,7 +30,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       sinitial       None    Set initial step sizes; if empty, calculated from stepsize instead
       xmin           None    Min value allowed for each parameter  
       xmax           None    Max value allowed for each parameter 
-      maxiters       1e3     Maximum number of iterations (1 iteration = 1 function evaluation)
+      maxiters       1000    Maximum number of iterations (1 iteration = 1 function evaluation)
       maxtime        3600    Maximum time allowed, in seconds
       abstol         1e-6    Minimum absolute change in objective function
       reltol         5e-3    Minimum relative change in objective function

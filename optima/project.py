@@ -642,7 +642,7 @@ class Project(object):
             projectBOC.y.append(results.improvement[-1][-1])
             projectBOC.budgets.append(tmpallocs[-1])
         projectBOC.x.insert(0, 0)
-        projectBOC.y.insert(0, results.outcomes['Zero'])
+        projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
         projectBOC.x.append(self.settings.infmoney)
         projectBOC.y.append(results.outcomes['Infinite'])
         self.addresult(result=projectBOC)
