@@ -64,8 +64,9 @@ def loadstr(source):
 default_filename = 'model-inputs.xlsx'
 
 
-def loadpartable(filename=default_filename, sheetname='Model parameters'):
+def loadpartable(filename=default_filename):
     '''  Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters '''
+    sheetname = 'Model parameters'
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     sheet = workbook.sheet_by_name(sheetname)
 
@@ -81,12 +82,12 @@ def loadpartable(filename=default_filename, sheetname='Model parameters'):
 
 
 
-def loadtranstable(filename=default_filename, sheetname='Transitions', npops=None):
+def loadtranstable(filename=default_filename, npops=None):
     ''' Function to load the allowable transitions from the spreadsheet '''
+    sheetname = 'Transitions' # This will only change between Optima versions, so OK to have in body of function
+    if npops is None: npops = 1 # Use just one population if not told otherwise
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     sheet = workbook.sheet_by_name(sheetname)
-
-    if npops is None: npops = 1 # Use just one population if not told otherwise
     
     if sheet.nrows != sheet.ncols:
         errormsg = 'Transition matrix should have the same number of rows and columns (%i vs. %i)' % (sheet.nrows, sheet.ncols)
@@ -108,9 +109,9 @@ def loadtranstable(filename=default_filename, sheetname='Transitions', npops=Non
 
 def loaddatapars(filename=default_filename, verbose=2):
     ''' Function to parse the data parameter definitions '''
+    inputsheets = ['Data inputs', 'Data constants']
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     
-    inputsheets = ['Data inputs', 'Data constants']
     pardefinitions = odict()
     for inputsheet in inputsheets:
         sheet = workbook.sheet_by_name(inputsheet)
