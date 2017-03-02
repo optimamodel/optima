@@ -1219,8 +1219,18 @@ class odict(OrderedDict):
         return None
     
     def insert(self, pos=None, key=None, value=None):
-        ''' Stupid, slow function to do insert that returns new odict :( '''
-        out = odict()
+        '''
+        Stupid, slow function to do insert.
+        
+        Usage:
+            z = odict()
+            z['foo'] = 1492
+            z.insert(1604)
+            z.insert(0, 'ganges', 1444)
+            z.insert(2, 'midway', 1234)
+        '''
+        
+        # Handle inputs
         realpos, realkey, realvalue = pos, key, value
         if key is None and value is None: # Assume it's called like odict.insert(666)
             realvalue = pos
@@ -1235,11 +1245,26 @@ class odict(OrderedDict):
         if realpos>len(self):
             errormsg = 'Cannot insert %s at position %i since length of odict is %i ' % (key, pos, len(self))
             raise Exception(errormsg)
-        for k,item in enumerate(self.items()):
-            if k==realpos:
-                out.__setitem__(realkey, realvalue)
-            out.__setitem__(item[0], item[1])
-        return out
+        
+        # Create a temporary dictionary to hold all of the items after the insertion point
+        tmpdict = odict()
+        origkeys = self.keys()
+        originds = range(len(origkeys))
+        if not len(originds) or realpos==len(originds): # It's empty or in the final position, just append
+            self.__setitem__(realkey, realvalue)
+        else: # Main usage case, it's not empty
+            try: insertind = originds.index(realpos) # Figure out which index we're inseting at
+            except:
+                errormsg = 'Could not insert item at position %i in odict with %i items' % (realpos, len(originds))
+                raise Exception(errormsg)
+            keystopop = origkeys[insertind:] # Pop these keys until we get far enough back
+            for keytopop in keystopop:
+                tmpdict.__setitem__(keytopop, self.pop(keytopop))
+            self.__setitem__(realkey, realvalue) # Insert the new item at the right location
+            for keytopop in keystopop: # Insert popped items back in
+                self.__setitem__(keytopop, tmpdict.pop(keytopop))
+
+        return None
         
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''

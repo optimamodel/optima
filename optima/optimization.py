@@ -552,7 +552,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         tmpimprovements[new.name] = asdresults[bestkey]['fvals']
 
     ## Output
-    tmpresults = tmpresults.insert(0,'Current',extremeresults['Current']) # Include un-optimized original -- WARNING, not how insert() is supposed to work!
+    tmpresults.insert(0, 'Current', extremeresults['Current']) # Include un-optimized original
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
