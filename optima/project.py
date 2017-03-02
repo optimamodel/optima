@@ -641,11 +641,13 @@ class Project(object):
                 closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
                 owbudget = tmpallocs[closest]
                 print('Using old allocation as new starting point.')
-            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
+            label = self.name+' budget %0.0f' % budget
+            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label)
             tmptotals.append(budget)
             tmpallocs.append(dcp(results.budget['Optimal']))
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
+            projectBOC.budgets.append(tmpallocs[-1])
         self.addresult(result=projectBOC)
         self.modified = today()
         return None        

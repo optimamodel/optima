@@ -391,7 +391,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
 
 
 
-def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, mc=3, **kwargs):
+def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
 
@@ -427,7 +427,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
     # Run outcomes minimization
     if which=='outcomes':
-        multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, mc=mc, **kwargs)
+        multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, **kwargs)
 
     # Run money minimization
     elif which=='money':
