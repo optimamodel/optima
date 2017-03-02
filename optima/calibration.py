@@ -252,11 +252,6 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         return mismatch
 
 
-
-
-
-
-    
     # Create the list of parameters to be fitted and set the limits
     parlist = makeparlist(pars, fitwhat)
     parlower  = array([item['limits'][0] for item in parlist])
@@ -265,11 +260,11 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Perform fit
     parvec = convert(pars, parlist)
     args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
-    parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
+    parvecnew, fval, exitreason = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
     
     # Save
     pars = convert(pars, parlist, parvecnew)        
     parset.pars = pars
-    parset.improvement.append(output.fval) # Store improvement history
+    parset.improvement.append(fval) # Store improvement history
     
     return parset

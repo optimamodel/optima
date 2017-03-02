@@ -294,12 +294,10 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=
         
     args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}    
     
-#    budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-    X, FVAL, EXITFLAG, OUTPUT = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-    X = constrainbudgets(X, grandtotal, minbound)
-#    assert sum(X)==grandtotal      # Commenting out assertion for the time being, as it doesn't handle floats.
+    budgetvecnew, fvals, exitreason = asd(objectivecalc, budgetvec, args=args, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
+    budgetvecnew = constrainbudgets(budgetvecnew, grandtotal, minbound)
 
-    return X
+    return budgetvecnew
 
 
 
