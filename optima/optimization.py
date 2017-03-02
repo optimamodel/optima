@@ -323,10 +323,6 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     else:
         constrainedbudget = budgetvec
     
-    print('hibudgetvec')
-    print constrainedbudget
-    print('bie')
-    
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
@@ -489,7 +485,6 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
     
     # Run extremes
-    print('running extremes...')
     extremeresults  = odict()
     extremeoutcomes = odict()
     for key,exbudget in extremebudgets.items():
@@ -498,7 +493,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         extremeoutcomes[key] = extremeresults[key].outcome
     bestprogram = argmin(extremeoutcomes[:][3:])+3 # Don't include no funding or infinite funding examples
     
-    # Check extremes
+    # Check extremes -- not quite fair since not constrained but oh well
     if extremeoutcomes['inffunding'] >= extremeoutcomes['nofunding']:
         errormsg = 'Infinite funding has a worse or identical outcome to no funding'
         raise OptimaException(errormsg)
@@ -507,11 +502,6 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
             errormsg = 'Infinite funding for %s has a worse outcome than no funding' % key
             raise OptimaException(errormsg)
     
-    print('hafafh')
-    for key,outcome in extremeoutcomes.items():
-        print(key,outcome)
-    
-
     ## Loop over budget scale factors
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
     for scalefactor in scalefactors: 
@@ -541,8 +531,6 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
             printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
             budgetvecnew, fval, exitflag, output = asd(objectivecalc, allbudgetvecs[key], args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose, randseed=randseed, **kwargs)
             asdresults[key] = {'budgetvec':budgetvecnew, 'output':output}
-            print('HIIII')
-            print fval
             if fval<bestfval: 
                 bestkey = key # Reset key
                 bestfval = fval # Reset fval
