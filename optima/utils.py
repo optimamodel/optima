@@ -1065,10 +1065,10 @@ class odict(OrderedDict):
             try:
                 output = OrderedDict.__getitem__(self, key)
                 return output
-            except: # WARNING, should be KeyError, but this can't print newlines!!!
+            except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
-                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
-                        '\n'.join([str(k) for k in self.keys()]))
+                    errormsg = E.__repr__()+'\n'
+                    errormsg += 'odict key "%s" not found; available keys are:\n%s' % (str(key), '\n'.join([str(k) for k in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
@@ -1197,20 +1197,39 @@ class odict(OrderedDict):
         print(self.__repr__())
     
     
-    def index(self, item):
+    def index(self, value):
         ''' Return the index of a given key '''
-        return self.keys().index(item)
+        return self.keys().index(value)
     
-    def valind(self, item):
+    def valind(self, value):
         ''' Return the index of a given value '''
-        return self.items().index(item)
+        return self.items().index(value)
     
-    def append(self, item):
+    def append(self, key=None, value=None):
         ''' Support an append method, like a list '''
-        keyname = str(len(self)) # Define the key just to be the current index
-        self.__setitem__(keyname, item)
+        needkey = False
+        if value is None: # Assume called with a single argument
+            value = key
+            needkey = True
+        if key is None or needkey:
+            keyname = 'key'+str(len(self))  # Define the key just to be the current index
+        else:
+            keyname = key
+        self.__setitem__(keyname, value)
         return None
     
+    def insert(self, pos=0, key=None, value=None):
+        ''' Stupid, slow function to do insert that returns new odict :( '''
+        out = odict()
+        if pos>len(self):
+            errormsg = 'Cannot insert %s at position %i since length of odict is %i ' % (key, pos, len(self))
+            raise Exception(errormsg)
+        for k,item in enumerate(self.items()):
+            if k==pos:
+                out.__setitem__(key, value)
+            out.__setitem__(item[0], item[1])
+        return out
+        
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
@@ -1230,8 +1249,10 @@ class odict(OrderedDict):
         return None
     
     def sort(self, sortby=None):
-        ''' Return a sorted copy of the odict. 
-        Sorts by order of sortby, if provided, otherwise alphabetical'''
+        '''
+        Return a sorted copy of the odict. 
+        Sorts by order of sortby, if provided, otherwise alphabetical
+        '''
         if not sortby: allkeys = sorted(self.keys())
         else:
             if not isinstance(sortby, list): raise Exception('Please provide a list to determine the sort order.')
@@ -1252,6 +1273,12 @@ class odict(OrderedDict):
         out = odict()
         for key in allkeys: out[key] = self[key]
         return out
+    
+    def selfsort(self, sortby=None):
+        ''' Like sort, but replaces original '''
+        new = self.sort(sortby=sortby)
+        self.__dict__ = new.__dict__
+        return None
 
 
 
