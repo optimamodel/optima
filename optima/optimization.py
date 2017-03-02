@@ -323,6 +323,10 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     else:
         constrainedbudget = budgetvec
     
+    print('hibudgetvec')
+    print constrainedbudget
+    print('bie')
+    
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
