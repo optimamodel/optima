@@ -1290,6 +1290,8 @@ class odict(OrderedDict):
         '''
         Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
         If copy is True, then returns a copy (like sorted())
+        
+        Note: very slow, do not use for serious computations!!
         '''
         if not sortby: allkeys = sorted(self.keys())
         else:
