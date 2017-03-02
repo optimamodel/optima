@@ -837,7 +837,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             people[tostate,:,t+1]    += newmovers # ... and into the higher state
                             raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
                     elif diff<0.: # We need to move people DOWN the cascade
-                        ppltomovedown = people[state,:,t+1]
+                        ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
                         if totalppltomovedown>0: # To avoid having to add eps
                             diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people, to keep my sanity...
@@ -845,8 +845,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             people[tostate,:,t+1]    -= newmovers # Shift people out of the higher state... 
                             people[lowerstate,:,t+1] += newmovers # ... and into the lower state
                             raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
-                        
-                print(name, round(tvec[t]*10)/10, prop[t+1]/(people[num,:,t+1].sum()/people[denom,:,t+1].sum()))
+
             if debug: checkfornegativepeople(people, tind=t+1)
         
     raw                 = odict()    # Sim output structure
