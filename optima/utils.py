@@ -1168,7 +1168,7 @@ class odict(OrderedDict):
                 raise Exception(errormsg)
     
     
-    def __repr__(self, maxlen=None, spaces=True, divider=True):
+    def __repr__(self, maxlen=None, spaces=True, divider=False):
         ''' Print a meaningful representation of the odict '''
          # Maximum length of string to display
         toolong = ' [...]'
