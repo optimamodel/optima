@@ -226,7 +226,6 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if isfinite(abslimits['min'][oind]): abslimits['min'][oind] *= rescaledbudget[oind]
         if isfinite(abslimits['max'][oind]): abslimits['max'][oind] *= rescaledbudget[oind]
         
-
 #        # Semi-relative limits. Note: Has issues, but is left here for posterity.
 #        if scaleratio<1:
 #            abslimits['min'][oind] *= rescaledbudget[oind] # If total budget is less, scale down the lower limit...
@@ -305,7 +304,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ### The main meat of the matter
 ################################################################################################################################################
 
-def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, initpeople=None, outputresults=False, debug=False, verbose=2, ccsample='best', doconstrainbudget=True):
+def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, initpeople=None, outputresults=False, debug=False, verbose=2, ccsample='best'):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Validate input
@@ -318,10 +317,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         raise OptimaException(errormsg)
 
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
-    if doconstrainbudget:
-        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
-    else:
-        constrainedbudget = budgetvec
+    constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
@@ -472,6 +468,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     args = {'which':'outcomes', 'project':project, 'parset':parset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':origtotalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose, 'initpeople':None}
     
     # Set up extremes
+    optimbudgetsum = sum(constrainedbudgetvecorig)
     extremebudgets = odict()
     extremebudgets['Current']    = zeros(nprogs)
     for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
@@ -480,13 +477,17 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     if mc: # Only run these if MC is being run
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
-            extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
+            extremebudgets[prog][p] = optimbudgetsum
     
     # Run extremes
     extremeresults  = odict()
     extremeoutcomes = odict()
     for key,exbudget in extremebudgets.items():
-        extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, doconstrainbudget=False, **args)
+        tmpbudget = dcp(origbudget) # To avoid rescaling issues...
+        tmpbudget[:] = exbudget
+        args['totalbudget'] = sum(exbudget)
+        args['origbudget']  = tmpbudget
+        extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][3:])+3 # Don't include no funding or infinite funding examples
@@ -514,6 +515,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
+        args['origbudget'] = origbudget
         args['initpeople'] = None # initpeople # WARNING, TEMP, uncomment once the bug with initpeople is fixed # Set so only runs the part of the optimization required
         
         # Set up budgets to run
@@ -551,13 +553,13 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         tmpimprovements[new.name] = asdresults[bestkey]['fvals']
 
     ## Output
-    tmpresults.insert(extremeresults['Current'],0) # Include un-optimized original
-    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % new.name)
+    tmpresults = tmpresults.insert(0,'Current',extremeresults['Current']) # Include un-optimized original -- WARNING, not how insert() is supposed to work!
+    multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.outcomes = extremeoutcomes # Store all of these
-    for t,tmpresult in enumerate(tmpresults):
-        multires.outcomes[tmpresult.name] = tmpimprovements[t][-1] # Get best value
+    for key in tmpimprovements.keys():
+        multires.outcomes[key] = tmpimprovements[key][-1] # Get best value
     optim.resultsref = multires.name # Store the reference for this result
 
     return multires

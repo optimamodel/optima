@@ -1218,15 +1218,26 @@ class odict(OrderedDict):
         self.__setitem__(keyname, value)
         return None
     
-    def insert(self, pos=0, key=None, value=None):
+    def insert(self, pos=None, key=None, value=None):
         ''' Stupid, slow function to do insert that returns new odict :( '''
         out = odict()
-        if pos>len(self):
+        realpos, realkey, realvalue = pos, key, value
+        if key is None and value is None: # Assume it's called like odict.insert(666)
+            realvalue = pos
+            realkey = 'key'+str(len(self))
+            realpos = 0
+        elif value is None: # Assume it's called like odict.insert('devil', 666)
+            realvalue = key
+            realkey = pos
+            realpos = 0
+        if pos is None:
+            realpos = 0
+        if realpos>len(self):
             errormsg = 'Cannot insert %s at position %i since length of odict is %i ' % (key, pos, len(self))
             raise Exception(errormsg)
         for k,item in enumerate(self.items()):
-            if k==pos:
-                out.__setitem__(key, value)
+            if k==realpos:
+                out.__setitem__(realkey, realvalue)
             out.__setitem__(item[0], item[1])
         return out
         
