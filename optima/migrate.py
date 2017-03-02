@@ -592,7 +592,7 @@ def redotranstable(project, **kwargs):
     # Add transitions matrix
     for ps in project.parsets.values():
         ps.pars['fromto'], ps.pars['transmatrix'] = op.loadtranstable(npops = project.data['npops'])
-        ps.pars.pop['rawtransit']
+        ps.pars.pop('rawtransit', None) # If it's really old, it won't actually have this
     project.version = '2.3.3'
     return None
 
