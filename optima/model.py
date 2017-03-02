@@ -793,7 +793,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
                 if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
-                    calcprop = people[num,:,t+1].sum()/people[denom,:,t+1].sum() # This is the value we fix it at
+                    calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
                     if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
                         prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])
@@ -867,6 +867,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['newtreat']     = raw_newtreat
     raw['death']        = raw_death
     raw['otherdeath']   = raw_otherdeath
+    
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
