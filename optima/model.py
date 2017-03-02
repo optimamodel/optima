@@ -142,12 +142,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     alltrans[svl] = cd4trans*dxfactor*efftxsupp
     alltrans[lost] = cd4trans*dxfactor
     
-    # Proportion aware and treated (for 90/90/90)
-    propdx      = simpars['propdx']
-    propcare    = simpars['propcare']
-    proptx      = simpars['proptx']
-    propsupp    = simpars['propsupp']
-    proppmtct   = simpars['proppmtct']
+    # Proportion aware and treated (for 90/90/90) -- these are the only arrays that get used directly, so have to be dcp'd
+    propdx      = dcp(simpars['propdx'])
+    propcare    = dcp(simpars['propcare'])
+    proptx      = dcp(simpars['proptx'])
+    propsupp    = dcp(simpars['propsupp'])
+    proppmtct   = dcp(simpars['proppmtct'])
     
     #  Years to fix proportions
     def findfixind(fixyearname):
@@ -802,6 +802,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Calculations to fix proportions from a particular year, if requested
                 if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
                     calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
                         prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])

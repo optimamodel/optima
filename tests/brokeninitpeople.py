@@ -5,12 +5,11 @@ import optima as op
 from pylab import *
 
 start = 2000.
-end = 2100.
-year = 2099.0
+end = 2099.
+year = 2098.0
 
 print('####################DEMO###########################')
 P = op.demo(0)
-print('####################END_DEMO###########################')
 
 #P.pars()['numvlmon'].y[:] *= 0 # Uncomment this out to watch the discrepancy (almost) completely disappear...
 
@@ -20,7 +19,6 @@ print('####################FIRST RUN###########################')
 t = op.tic()
 res1 = op.runmodel(project=P, pars=P.pars(), start=start, end=end, keepraw=True)
 op.toc(t)
-print('####################END FIRST RUN###########################')
 
 ind = op.findinds(res1.raw[0]['tvec'], year)
 initpeople = res1.raw[0]['people'][:,:,ind]
@@ -30,7 +28,6 @@ print('####################SECOND RUN###########################')
 t = op.tic()
 res2 = op.runmodel(project=P, pars=P.pars(), start=year, end=end, keepraw=True, initpeople=initpeople)
 op.toc(t)
-print('####################END SECOND RUN###########################')
 
 
 z=1

@@ -508,6 +508,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     ## Loop over budget scale factors
     tmpresults = odict()
     tmpimprovements = odict()
+    tmpresults['Current'] = extremeresults['Current'] # Include un-optimized original
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
     for scalefactor in scalefactors: 
 
@@ -518,41 +519,44 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         args['initpeople'] = None # initpeople # WARNING, TEMP, uncomment once the bug with initpeople is fixed # Set so only runs the part of the optimization required
         
         # Set up budgets to run
-        allbudgetvecs = odict()
-        allbudgetvecs['Current'] = dcp(constrainedbudgetvec)
-        if mc: # If MC, run multiple
-            bvzeros = zeros(noptimprogs)
-            allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
-            if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
-                allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
-            for i in range(mc): # For the remainder, do randomizations
-                randbudget = random(noptimprogs)
-                allbudgetvecs['Random %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
-        
-        # Actually run the optimizations
-        bestfval = inf # Value of outcome
-        asdresults = odict()
-        for k,key in enumerate(allbudgetvecs.keys()):
-            printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
-            if label: thislabel = '"'+label+'-'+key+'"'
-            else: thislabel = '"'+key+'"'
-            budgetvecnew, fvals, exitreason = asd(objectivecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
-            asdresults[key] = {'budgetvec':budgetvecnew, 'fvals':fvals}
-            if fvals[-1]<bestfval: 
-                bestkey = key # Reset key
-                bestfval = fvals[-1] # Reset fval
-        
-        ## Calculate outcomes
-        args['initpeople'] = None # Set to None to get full results, not just from strat year
-        constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=asdresults[bestkey]['budgetvec'], totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-        new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
-        if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
-        else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
-        tmpresults[new.name] = new
-        tmpimprovements[new.name] = asdresults[bestkey]['fvals']
+        if totalbudget: # Budget is nonzero, run
+            allbudgetvecs = odict()
+            allbudgetvecs['Current'] = dcp(constrainedbudgetvec)
+            if mc: # If MC, run multiple
+                bvzeros = zeros(noptimprogs)
+                allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
+                if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
+                    allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
+                for i in range(mc): # For the remainder, do randomizations
+                    randbudget = random(noptimprogs)
+                    allbudgetvecs['Random %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
+            
+            # Actually run the optimizations
+            bestfval = inf # Value of outcome
+            asdresults = odict()
+            for k,key in enumerate(allbudgetvecs.keys()):
+                printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
+                if label: thislabel = '"'+label+'-'+key+'"'
+                else: thislabel = '"'+key+'"'
+                budgetvecnew, fvals, exitreason = asd(objectivecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+                asdresults[key] = {'budgetvec':budgetvecnew, 'fvals':fvals}
+                if fvals[-1]<bestfval: 
+                    bestkey = key # Reset key
+                    bestfval = fvals[-1] # Reset fval
+            
+            ## Calculate outcomes
+            args['initpeople'] = None # Set to None to get full results, not just from strat year
+            constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=asdresults[bestkey]['budgetvec'], totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+            new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
+            if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
+            else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
+            tmpresults[new.name] = new
+            tmpimprovements[new.name] = asdresults[bestkey]['fvals']
+        else:
+            tmpresults['Optimal'] = dcp(tmpresults['Current']) # If zero budget, just copy current and rename
+            tmpresults['Optimal'].name = 'Optimal' # Rename name to named name
 
     ## Output
-    tmpresults.insert(0, 'Current', extremeresults['Current']) # Include un-optimized original
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
