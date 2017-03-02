@@ -481,9 +481,10 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
     extremebudgets['Zero']     = zeros(nprogs)
     extremebudgets['Infinite'] = origbudget[:]+infmoney
-    for p,prog in zip(optiminds,optimkeys):
-        extremebudgets[prog] = zeros(nprogs)
-        extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
+    if mc: # Only run these if MC is being run
+        for p,prog in zip(optiminds,optimkeys):
+            extremebudgets[prog] = zeros(nprogs)
+            extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
     
     # Run extremes
     extremeresults  = odict()
@@ -492,7 +493,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, doconstrainbudget=False, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
-    bestprogram = argmin(extremeoutcomes[:][3:])+3 # Don't include no funding or infinite funding examples
+    if mc: bestprogram = argmin(extremeoutcomes[:][3:])+3 # Don't include no funding or infinite funding examples
     
     # Check extremes -- not quite fair since not constrained but oh well
     if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
@@ -500,7 +501,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         raise OptimaException(errormsg)
     for k,key in enumerate(extremeoutcomes.keys()):
         if extremeoutcomes[key] > extremeoutcomes['Zero']:
-            errormsg = 'Nonzero funding for %s has a worse outcome than no funding' % key
+            errormsg = 'Funding for %s has a worse outcome than no funding' % key
             raise OptimaException(errormsg)
     printv('Outcome for current budget (starting point): %0.0f' % extremeoutcomes['Current'], 2, verbose)
     printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)

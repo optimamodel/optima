@@ -1172,14 +1172,14 @@ class odict(OrderedDict):
         ''' Print a meaningful representation of the odict '''
          # Maximum length of string to display
         toolong = ' [...]'
-        divider = '#############################################################\n'
+        dividerstr = '#############################################################\n'
         if len(self.keys())==0: 
             output = 'odict()'
         else: 
             output = ''
             hasspaces = 0
             for i in range(len(self)):
-                if divider and spaces and hasspaces: output += divider
+                if divider and spaces and hasspaces: output += dividerstr
                 thiskey = str(self.keys()[i]) # Probably don't need to cast to str, but just to be sure
                 thisval = str(self.values()[i])
                 if not(spaces):                    thisval = thisval.replace('\n','\\n') # Replace line breaks with characters
