@@ -12,7 +12,7 @@ from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uu
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
-generalkeys = ['male', 'female', 'popkeys', 'injects', 'rawtransit'] # General parameter keys that are just copied
+generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
 staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
 
 
