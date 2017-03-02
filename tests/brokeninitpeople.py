@@ -5,7 +5,7 @@ import optima as op
 from pylab import *
 
 start = 2000.
-end = 2020.
+end = 2030.
 year = 2015.0
 
 print('####################DEMO###########################')    
@@ -31,6 +31,6 @@ res2 = op.runmodel(project=P, pars=P.pars(), start=year, end=end, keepraw=True, 
 op.toc(t)
 
 
-z=1
+z=50
 print('max difference between model runs at first timestep, should be 0:')
 print((res1.raw[0]['people'][:,:,ind+z]-res2.raw[0]['people'][:,:,array([0+z])]).squeeze().max())
