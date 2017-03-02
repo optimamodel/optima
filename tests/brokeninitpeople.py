@@ -5,8 +5,8 @@ import optima as op
 from pylab import *
 
 start = 2000.
-end = 2099.
-year = 2098.0
+end = 2020.
+year = 2015.0
 
 print('####################DEMO###########################')
 P = op.demo(0)
