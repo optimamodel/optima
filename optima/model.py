@@ -824,12 +824,19 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if isnan(prop[t+1]): wanted = numtx[t+1] # If proptx is nan, we use numtx
 
                     # We figure out how many people should be moved to suppressed based on how many VL tests were done
+                    if t==0 or t==495: 
+                        print('supppp', t+1, name, prop[t+1])
                     if name is 'propsupp' and isnan(prop[t+1]):
                         wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
+                        if t==0 or t==495:
+                            print('hiiiii', t, wanted)
 
                     # Figure out how many people we currently have...
                     actual          = people[num,:,t+1].sum() # ... in the higher cascade state
                     available       = people[denom,:,t+1].sum() # ... waiting to move up
+                    
+                    if t==0 or t==495: 
+                        print('actual-available', t+1, name, int(actual), int(available))
 
                     # Figure out how many people waiting to move up the cascade, and what distribution should we use to move them
                     ppltomoveup     = people[lowerstate,:,t+1]
@@ -842,6 +849,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     if not isnan(prop[t+1]): # If the prop value is finite, we use it
                         wanted = prop[t+1]*available
                     new_movers      = zeros((ncd4,npops)) 
+                    
+                    if t==0 or t==495: 
+                        print('kamaashi', t+1, name, int(wanted), int(actual))
 
                     # Reconcile the differences between the number we have and the number we want
                     diff = wanted - actual # Wanted number minus actual number 
