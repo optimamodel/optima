@@ -579,6 +579,14 @@ def removespreadsheet(project, **kwargs):
     project.version = '2.3.1'
     return None
 
+
+def addagetopars(project, **kwargs):
+    ''' Make sure age is part of the pars object '''
+    for ps in project.parsets.values():
+        ps.pars['age'] = array(project.data['pops']['age'])
+    project.version = '2.3.2'
+    return None
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -612,6 +620,7 @@ migrations = {
 '2.2.1': addprojectinfotoresults,
 '2.2.2': redoparameterattributes,
 '2.3':   removespreadsheet,
+'2.3.1': addagetopars,
 #'2.2': redoprograms,
 }
 
@@ -629,9 +638,9 @@ def migrate(project, verbose=2, die=False):
 
         upgrader = migrations[str(project.version)]
 
-        op.printv("Migrating from %s ->" % project.version, 2, verbose, newline=False)
+        op.printv("Migrating from %6s ->" % project.version, 2, verbose, newline=False)
         upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
-        op.printv("%s" % project.version, 2, verbose, indent=False)
+        op.printv("%6s" % project.version, 2, verbose, indent=False)
     
     op.printv('Migration successful!', 3, verbose)
     

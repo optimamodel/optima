@@ -119,7 +119,7 @@ class Parameterset(object):
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
         if samples is None: samples = [None]
         for sample in samples:
-            simpars = makesimpars(pars=self.pars, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, verbose=verbose, name=self.name, uid=self.uid)
+            simpars = makesimpars(pars=self.pars, name=self.name, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, verbose=verbose)
             simparslist.append(simpars) # Wrap up
         
         return simparslist
@@ -742,10 +742,8 @@ class Yearpar(Par):
 class Dist(object):
     ''' Define a distribution object for drawing samples from, usually to create a prior '''
     def __init__(self, dist=None, pars=None):
-        defaultdist = 'uniform'
-        defaultpars = array([0.9, 1.1]) # This is arbitrary, of course
-        self.dist = dist if dist is not None else defaultdist
-        self.pars = promotetoarray(pars) if pars is not None else defaultpars
+        self.dist = dist if dist is not None else 'uniform'
+        self.pars = promotetoarray(pars) if pars is not None else array([0.9, 1.1]) # This is arbitrary, of course
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -1175,7 +1173,7 @@ def makepars(data=None, verbose=2, die=True):
 
 
 
-def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2, name=None, uid=None):
+def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -1186,7 +1184,6 @@ def makesimpars(pars, keys=None, start=None, end=None, dt=None, tvec=None, setti
     # Handle inputs and initialization
     simpars = odict() 
     simpars['parsetname'] = name
-    simpars['parsetuid'] = uid
     if keys is None: keys = pars.keys() # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
