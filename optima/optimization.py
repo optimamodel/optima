@@ -466,7 +466,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     # Calculate the initial people distribution
     results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0)
     initialind = findinds(results.tvec, optim.objectives['start'])
-    initpeople = results.raw[0]['people'][:,:,initialind] # WARNING, placeholder until initpeople is fixed # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     ## Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
@@ -516,7 +516,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
-        args['initpeople'] = None # initpeople # WARNING, TEMP, uncomment once the bug with initpeople is fixed # Set so only runs the part of the optimization required
+        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
         
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
