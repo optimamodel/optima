@@ -11,9 +11,9 @@ Version: 2016feb06 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'attributes',
-'sensitivity',
+#'sensitivity',
 #'manualfit',
-#'autofit',
+'autofit',
 #'autofitmulti',
 # 'longfit',
 # 'debugautofit',
@@ -75,7 +75,7 @@ if 'sensitivity' in tests:
     
     P = demo(doplot=False)
     P.parset().updateprior() # Make sure it's up to date with the calibration
-    results = P.sensitivity(orig='default', name='sensitivity', tosample=None, n=10) # tosample=['initprev','force']
+    results = P.sensitivity(orig='default', name='sensitivity', tosample=None, n=5, randseed=15000) # tosample=['initprev','force']
     
     if doplot:
         from optima import pygui
@@ -113,14 +113,14 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='generalized.xlsx')
-    P.autofit(name='autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=30) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
         from optima import plotresults
-        plotresults(P.parsets['default'].getresults(), toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-        plotresults(P.parsets['autofit'].getresults(), toplot=['improvement', 'prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(P.parsets['default'].getresults(), toplot=['prev-total', 'prev-population', 'numinci-population'])
+        plotresults(P.parsets['autofit'].getresults(), toplot=['improvement', 'prev-total', 'prev-population', 'numinci-population'])
     
     done(t)
 

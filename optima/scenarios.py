@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append, array
-from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
+from optima import OptimaException, Link, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
 
 
 class Scen(object):
@@ -21,8 +21,8 @@ class Scen(object):
 
     def getresults(self):
         ''' Returns the results '''
-        if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
+        if self.resultsref is not None and self.projectref() is not None:
+            results = getresults(project=self.projectref(), pointer=self.resultsref)
             return results
         else:
             print('WARNING, no results associated with this scenario')
@@ -70,8 +70,8 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
     # Make sure scenarios exist
     if project is None: raise OptimaException('First argument to runscenarios() must be a project')
     if len(project.scens)==0:  # Create scenario list if not existing
-        defaultscens = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
-        project.addscenlist(defaultscens)
+        baselinescen = baselinescenario(project.parsets[defaultparset], verbose=verbose)
+        project.addscenlist(baselinescen)
     scenlist = [scen for scen in project.scens.values() if scen.active==True]
     nscens = len(scenlist)
     
@@ -114,7 +114,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
         
         try: 
             thisparset = dcp(project.parsets[scen.parsetname])
-            thisparset.project = project # Replace copy of project with pointer -- WARNING, hacky
+            thisparset.projectref = Link(project) # Replace copy of project with pointer -- WARNING, hacky
         except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
         npops = len(thisparset.popkeys)
 
@@ -260,8 +260,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
 
 
-def defaultscenarios(parset=None, verbose=2):
-    """ Define a list of default scenarios -- only "Current conditions" by default """
+def baselinescenario(parset=None, verbose=2):
+    """ Define the baseline scenario -- "Current conditions" by default """
     if parset is None: raise OptimaException('You need to supply a parset to generate default scenarios')
     
     scenlist = [Parscen()]
@@ -286,10 +286,70 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
         if startyear is None: startyear = parset.pars[parname].t[forwhom][-1]
         startval = parset.pars[parname].interp(startyear,asarray=False)[forwhom][0]
     else:
-        if startyear is None: startyear = parset.project.settings.now
+        if startyear is None: startyear = parset.projectref().settings.now
         startval = parset.getprop(proptype=parname,year=startyear)[0]
 
     
     return {'startval':startval,'startyear':startyear}
 
 
+
+def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020, parset=-1, progset=-1, dorun=True, doplot=True):
+    ''' Add default scenarios to a project...examples include min-max budgets and 90-90-90 '''
+    
+    if which=='budgets':
+        defaultbudget = project.progsets[progset].getdefaultbudget()
+        maxbudget = dcp(defaultbudget)
+        nobudget = dcp(defaultbudget)
+        for key in maxbudget: maxbudget[key] += 1e14
+        for key in nobudget: nobudget[key] *= 1e-6
+        scenlist = [
+            Parscen(name='Current conditions', parsetname='default', pars=[]),
+            Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[startyear], budget=nobudget),
+            Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[startyear], budget=defaultbudget),
+            Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[startyear], budget=maxbudget),
+            ]
+    
+    # WARNING, this may not entirely work
+    elif which=='90-90-90':
+        scenlist = [
+            Parscen(name='Current conditions', parsetname='default', pars=[]),
+            Parscen(name='90-90-90',
+                  parsetname='default',
+                  pars=[
+                  {'name': 'propdx',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': None,
+                  'endval': 0.9,
+                  },
+                  
+                  {'name': 'proptx',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': None,
+                  'endval': 0.9,
+                  },
+                  
+                  {'name': 'propsupp',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': None,
+                  'endval': .9,
+                  },
+                  ]),]
+    else:
+        errormsg = 'Default scenario options are "budgets" and "90-90-90", not %s' % which
+        raise OptimaException(errormsg)
+
+    
+    # Run the scenarios
+    project.addscenlist(scenlist)
+    if dorun: project.runscenarios()
+    if doplot: 
+        from optima import pygui
+        pygui(project)
+    return None # Can get it from project.scens

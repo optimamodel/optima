@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2016jul06
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
@@ -263,7 +263,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
             raise OptimaException(errormsg)
 
         # Initialize
-        if type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
+        toplot = promotetolist(toplot) # If single value, put inside list
         epiplots = odict()
 
 
@@ -870,7 +870,8 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
     fig = figure(figsize=figsize)
     
     titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
-    hivstates = results.project.settings.hivstates
+    settings = results.projectref().settings
+    hivstates = settings.hivstates
     indices = arange(0, len(results.raw[ind]['tvec']), int(round(1.0/(results.raw[ind]['tvec'][1]-results.raw[ind]['tvec'][0]))))
     colors = gridcolormap(len(hivstates))
     
@@ -881,8 +882,8 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
         ## Do the plotting
         subplot(nsims,1,plt+1)
         for s,state in enumerate(reversed(hivstates)): # Loop backwards so correct ordering -- first one at the top, not bottom
-            if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
-            else:          thisdata += results.raw[ind][whattoplot][getattr(results.project.settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
+            if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata += results.raw[ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
             plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order

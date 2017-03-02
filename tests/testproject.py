@@ -74,20 +74,19 @@ if 'parametercheck' in tests:
     P = defaults.defaultproject()
 
     datakeys = P.data.keys()
-    datakeys += P.data['const'].keys()
     
     parkeys = P.pars().keys()
     
     dataonly = set([
     'condomcas', 'condomcom', 'condomreg', 
-    'const', 'hivprev', 'meta', 'npops', 
+    'hivprev', 'meta', 'npops', 
     'numactscas', 'numactscom', 'numactsinj', 'numactsreg', 
     'optdeath', 'optnewtreat', 'optnumdiag', 'optnuminfect', 'optnumtest', 'optplhiv', 'optprev','optpropdx','optpropcare','optproptx','optpropsupp','optproppmtct',
     'partcas', 'partcom', 'partinj', 'partreg', 
     'pops', 'pships', 'years'])
     
     parsonly = set([
-    'actscas', 'actscom', 'actsinj', 'actsreg', 
+    'actscas', 'actscom', 'actsinj', 'actsreg', 'age', 'transnorm',
     'condcas', 'condcom', 'condreg', 'numcirc',
     'female', 'force', 'inhomo', 'initprev', 
     'propdx','propcare','proptx','propsupp','proppmtct',
@@ -183,7 +182,7 @@ if 'loadspreadsheet' in tests:
     Q = Project()
     Q.loadspreadsheet('simple.xlsx')
     
-    assert Q.data['const']['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
+    assert Q.data['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
     
     done(t)
 

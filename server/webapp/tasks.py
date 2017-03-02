@@ -5,7 +5,7 @@ import dateutil.tz
 import server.webapp.parse
 
 from celery import Celery
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 import optima

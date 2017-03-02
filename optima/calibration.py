@@ -4,7 +4,7 @@ CALIBRATION
 Function(s) to perform calibration.
 """
 
-from optima import OptimaException, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
+from optima import OptimaException, Link, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
 from numpy import zeros, array, mean
 
 
@@ -33,7 +33,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set
-    parset.project = project # Try to link the parset back to the project -- WARNING, seems fragile
+    parset.projectref = Link(project) # Try to link the parset back to the project
     pars = dcp(parset.pars) # Just get a copy of the pars for parsing
     if fitwhat is None: fitwhat = ['force'] # By default, automatically fit force-of-infection only
     if type(fitwhat)==str: fitwhat = [fitwhat]
@@ -47,8 +47,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Populate lists of what to fit
     def makeparlist(pars, fitwhat):
         ''' 
-        This uses the "auto" attribute to decide whether or not to automatically calibrate it, and
-        if so, it uses the "fittable" attribute to decide what to calibrate (e.g., just the metaparameter
+        This uses the "manual" attribute to decide what to calibrate (e.g., just the metaparameter
         or all the values.
         
         "fitwhat" options (see parameters.py, especially listparattributes()): 
@@ -58,17 +57,17 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         for parname in pars: # Just use first one, since all the same
             par = pars[parname]
             if issubclass(type(par), Par): # Check if it's a parameter
-                if par.auto in fitwhat: # It's in the list of things to fit
-                    if par.fittable=='meta':
-                        parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':None})
-                    elif par.fittable=='pop':
-                        for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
-                    elif par.fittable=='exp':
-                        for i in range(len(par.i)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
-                    elif par.fittable=='const' or par.fittable=='year':
-                        parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':None})
+                if par.short in fitwhat: # It's in the list of things to fit
+                    if par.manual =='meta':
+                        parlist.append({'name':par.short, 'type':par.manual, 'limits':par.limits, 'ind':None})
+                    elif par.manual =='pop':
+                        for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.manual, 'limits':par.limits, 'ind':i})
+                    elif par.manual =='exp':
+                        for i in range(len(par.i)): parlist.append({'name':par.short, 'type':par.manual, 'limits':par.limits, 'ind':i})
+                    elif par.manual =='const' or par.manual =='year':
+                        parlist.append({'name':par.short, 'type':par.manual, 'limits':par.limits, 'ind':None})
                     else:
-                        raise OptimaException('Parameter "fittable" type "%s" not understood' % par.fittable)
+                        raise OptimaException('Parameter "manual" type "%s" not understood' % par.manual)
             else: pass # It's like popkeys or something -- don't worry, be happy
         return parlist
     
@@ -96,7 +95,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         
         # Do the loop
         for i in range(nfitpars):
-            thistype = parlist[i]['type'] # Should match up with par.fittable
+            thistype = parlist[i]['type'] # Should match up with par.manual
             thisname = parlist[i]['name']
             thisind = parlist[i]['ind']
             if thistype in ['force', 'pop']: 

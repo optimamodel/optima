@@ -9,7 +9,7 @@ from optima import tic, toc, blank, pd # analysis:ignore
 
 ## Options
 tests = [
-'migrations',
+'basicmigration',
 ]
 
 oldprojectname = 'concentrated_v2.0.4.prj' # Options are concentrated_v2.0.4.prj and concentrated_v2.1.prj
@@ -36,7 +36,7 @@ blank()
 
 T = tic()
 
-if 'migrations' in tests:
+if 'basicmigration' in tests:
     
     # Figure out the path 
     import os
@@ -47,6 +47,3 @@ if 'migrations' in tests:
     P = op.loadproj(filename=oldprojectfile)
     P.runsim()
     if doplot: op.pygui(P)
-
-
-    

@@ -1,11 +1,12 @@
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException, findinds # Import utilities
-from optima import gitinfo, tic, toc # Import functions
-from optima import __version__ # Get current version
+from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import version # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
 from numpy import arange, argsort
+from glob import glob
 import sys
+import os
 
 #######################################################################################################
 ## Portfolio class -- this contains Projects and GA optimisations
@@ -43,7 +44,7 @@ class Portfolio(object):
         self.uid = uuid()
         self.created = today()
         self.modified = today()
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
 
         return None
@@ -72,15 +73,31 @@ class Portfolio(object):
     ## Methods to handle common tasks
     #######################################################################################################
 
-    def addprojects(self, projects, verbose=2):
+    def addprojects(self, projects=None, replace=False, verbose=2):
         ''' Store a project within portfolio '''
         printv('Adding project to portfolio...', 2, verbose)
-        if type(projects)==Project: projects = [projects]
-        if type(projects)==list:
-            for project in projects:
-                project.uid = uuid() # TEMPPPP WARNING overwrite UUID
-                self.projects[str(project.uid)] = project        
-                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
+        projects = promotetolist(projects, objtype=Project) # Make sure it's a list, but confirm type first
+        if replace: self.projects = odict() # Wipe clean before adding new projects
+        for project in projects:
+            project.uid = uuid() # TEMPPPP WARNING overwrite UUID
+            self.projects[str(project.uid)] = project        
+            printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
+        return None
+    
+    
+    def addfolder(self, folder=None, replace=True, verbose=2):
+        ''' Add a folder of projects to a portfolio '''
+        filelist = sorted(glob(os.path.join(folder, '*.prj')))
+        projects = []
+        if replace: self.projects = odict() # Wipe clean before adding new projects
+        for f,filename in enumerate(filelist):
+            printv('Loading project %i/%i "%s"...' % (f+1, len(filelist), filename), 3, verbose)
+            project = loadproj(filename)
+            projects.append(project)
+        self.addprojects(projects)
+        return None
+        
+        
         
     def getdefaultbudgets(self, progsetnames=None, verbose=2):
         ''' Get the default allocation totals of each project, using the progset names or indices specified '''
@@ -96,28 +113,44 @@ class Portfolio(object):
             progsetnames = [0]*len(self.projects)
 
         # Loop over projects & get defaul budget for each, if you can
-        for pno, p in enumerate(self.projects.values()):
+        for pno, P in enumerate(self.projects.values()):
 
             # Crash if any project doesn't have progsets
-            if not p.progsets: 
+            if not P.progsets: 
                 errormsg = 'Project "%s" does not have a progset. Cannot get default budgets.'
                 raise OptimaException(errormsg)
 
             # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-            if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
-                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[progsetnames[0]].name), 3, verbose)
+            if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in P.progsets]:
+                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], P.name, P.progsets[progsetnames[0]].name), 3, verbose)
                 pno=0
-            elif isinstance(progsetnames[pno],int) and len(p.progsets)<=progsetnames[pno]:
-                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
+            elif isinstance(progsetnames[pno],int) and len(P.progsets)<=progsetnames[pno]:
+                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], P.name, len(P.progsets)), 1, verbose)
                 pno=0
             else: 
-                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 3, verbose)
+                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (P.name), 3, verbose)
                 pno=0            
                 
-            printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (p.progsets[progsetnames[pno]].name, p.name, self.name), 4, verbose)
-            budgets.append(sum(p.progsets[progsetnames[pno]].getdefaultbudget().values()))
+            printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (P.progsets[progsetnames[pno]].name, P.name, self.name), 4, verbose)
+            budgets.append(P.progsets[progsetnames[pno]].defaultbudget())
         
         return budgets
+        
+    
+    def save(self, filename=None, saveresults=False, verbose=2):
+        ''' Save the current portfolio, by default using its name, and without results '''
+        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
+        if filename is None: filename = self.name+'.prj'
+        self.filename = os.path.abspath(filename) # Store file path
+        if saveresults:
+            saveobj(filename, self, verbose=verbose)
+        else:
+            tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
+            for P in range(len(self.projects.values())):
+                tmpportfolio.projects[P].cleanresults() # Get rid of all results
+            saveobj(filename, tmpportfolio, verbose=verbose) # Save it to file
+            del tmpportfolio # Don't need it hanging around any more
+        return None
     
     
     #######################################################################################################
@@ -125,67 +158,6 @@ class Portfolio(object):
     #######################################################################################################
         
         
-    def genBOCs(self, objectives=None, progsetnames=None, parsetnames=None, maxtime=None, forceregen=False, verbose=2):
-        ''' Loop through stored projects and construct budget-outcome curves '''
-        printv('Generating BOCs...', 1, verbose)
-        
-        # Validate inputs
-        if objectives == None: 
-            printv('genBOCs(): WARNING, you have called genBOCs on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
-        if progsetnames==None:
-            printv('\ngenBOCs(): WARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 3, verbose)
-            progsetnames = [0]*len(self.projects)
-        if not len(progsetnames)==len(self.projects):
-            printv('genBOCs(): WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 1, verbose)
-            progsetnames = [0]*len(self.projects)
-        if parsetnames==None:
-            printv('\ngenBOCs(): WARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 3, verbose)
-            parsetnames = [0]*len(self.projects)
-        if not len(parsetnames)==len(self.projects):
-            printv('genBOCs(): WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 1, verbose)
-            parsetnames = [0]*len(self.projects)
-
-        for pno, p in enumerate(self.projects.values()):
-            getBOCtest = (p.getBOC(objectives) == None)
-            if getBOCtest or forceregen:
-                printv('genBOCs(): Regenerating BOC because getBOC=%s, forceregen=%s ' % (getBOCtest, forceregen), 2, verbose)
-
-                # Crash if any project doesn't have progsets
-                if not p.progsets or not p.parsets: 
-                    errormsg = 'genBOCs(): Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
-                    raise OptimaException(errormsg)
-    
-                # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-                if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets.values()]:
-                    printv('\ngenBOCs(): Cannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 1, verbose)
-                    pno=0
-                elif isinstance(progsetnames[pno],int) and len(p.progsets)<=progsetnames[pno]:
-                    printv('\ngenBOCs(): Cannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
-                    pno=0
-                else: 
-                    printv('\ngenBOCs(): Cannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 3, verbose)
-                    pno=0            
-
-                # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-                if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets.values()]:
-                    printv('\ngenBOCs(): Cannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
-                    pno=0
-                elif isinstance(parsetnames[pno],int) and len(p.parsets)<=parsetnames[pno]:
-                    printv('\ngenBOCs(): Cannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
-                    pno=0
-                else: 
-                    printv('\ngenBOCs(): Cannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 3, verbose)
-                    pno=0            
-
-                # Actually generate te BOCs
-                printv('genBOCs(): WARNING, project %s does not have BOC, or else it does but you want to regenerate it. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[parsetnames[pno]].name, p.progsets[progsetnames[pno]].name), 1, verbose)
-                p.delBOC(objectives)    # Delete BOCs in case forcing regeneration.
-                p.genBOC(parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=objectives, maxtime=maxtime)
-
-            else:
-                printv('genBOCs(): Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
-                
     # Note: Lists of lists extrax and extray allow for extra custom points to be plotted.
     def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2, extrax=None, extray=None, baseline=0):
         ''' Loop through stored projects and plot budget-outcome curves '''
@@ -202,8 +174,8 @@ class Portfolio(object):
             raise OptimaException(errormsg)
         
         # Loop for BOCs and then BOC derivatives.
-        for c,p in enumerate(self.projects.values()):
-            ax = p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot=True, baseline=baseline)
+        for c,P in enumerate(self.projects.values()):
+            ax = P.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot=True, baseline=baseline)
             if extrax != None:            
                 for k in xrange(len(extrax[c])):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
@@ -238,41 +210,16 @@ class Portfolio(object):
         if not seedbudgets == None:
             seedbudgets = scaleratio(seedbudgets, objectives['budget'])
             
-        for pno,p in enumerate(self.projects.values()):
+        for pno,P in enumerate(self.projects.values()):
             
-            if p.getBOC(objectives) is None:
+            if P.getBOC(objectives) is None:
+                errormsg = 'GA FAILED: Project %s has no BOC' % P.name
+                errormsg += str(objectives)
+                errormsg += str(P.getBOC())
+                errormsg += 'Debugging information above'
+                raise OptimaException(errormsg)
 
-                # Crash if any project doesn't have progsets
-                if not p.progsets or not p.parsets: 
-                    errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
-                    raise OptimaException(errormsg)
-    
-                # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-                if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
-                    printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 3, verbose)
-                    pno=0
-                elif isinstance(progsetnames[pno],int) and len(p.progsets)<=progsetnames[pno]:
-                    printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
-                    pno=0
-                else: 
-                    printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 3, verbose)
-                    pno=0            
-    
-                # Check that the parsets that were specified are indeed valid. They could be a string or a list index, so must check both
-                if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets]:
-                    printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
-                    pno=0
-                elif isinstance(parsetnames[pno],int) and len(p.parsets)<=parsetnames[pno]:
-                    printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
-                    pno=0
-                else: 
-                    printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 3, verbose)
-                    pno=0
-                
-                    printv('WARNING, project "%s", parset "%s" does not have BOC. Generating one using parset %s and progset %s... ' % (p.name, pno, p.parsets[0].name, p.progsets[0].name), 1, verbose)
-                p.genBOC(parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=objectives, maxtime=maxtime)
-
-            BOClist.append(p.getBOC(objectives))
+            BOClist.append(P.getBOC(objectives))
             
         optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, minbound=minbound, maxtime=maxtime)
             
@@ -301,11 +248,10 @@ class Portfolio(object):
         if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         
         gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
-        outputstring = gaoptim.printresults()
-        
-        self.outputstring = outputstring # Store the results as an output string
+        self.outputstring = gaoptim.printresults() # Store the results as an output string
         
         toc(GAstart)
+        return None
         
         
         
@@ -360,7 +306,7 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=
 #%% Geospatial analysis batch functions for multiprocessing.
 
 def batch_reopt(
-        gaoptim, p, pind, outputqueue, projects, initbudgets, optbudgets,
+        gaoptim, P, pind, outputqueue, projects, initbudgets, optbudgets,
         parsetnames, progsetnames, maxtime, parprogind, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
     loadbalancer(index=pind)
@@ -370,20 +316,20 @@ def batch_reopt(
     tmp = odict()
 
     # Crash if any project doesn't have progsets
-    if not p.progsets or not p.parsets:
+    if not P.progsets or not P.parsets:
         errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
         raise OptimaException(errormsg)
 
     initobjectives = dcp(gaoptim.objectives)
     initobjectives['budget'] = initbudgets[pind] + budgeteps
-    printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-    tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
+    printv("Generating initial-budget optimization for project '%s'." % P.name, 2, verbose)
+    tmp['init'] = P.optimize(name=P.name+' GA initial', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
     sys.stdout.flush()
 
     optobjectives = dcp(gaoptim.objectives)
     optobjectives['budget'] = optbudgets[pind] + budgeteps
-    printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-    tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+    printv("Generating optimal-budget optimization for project '%s'." % P.name, 2, verbose)
+    tmp['opt'] = P.optimize(name=P.name+' GA optimal', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
     sys.stdout.flush()
 
     outputqueue.put(tmp)
@@ -417,7 +363,7 @@ class GAOptim(object):
         self.uid = uuid()
         self.created = today()
         self.modified = today()
-        self.version = __version__
+        self.version = version
         self.gitbranch, self.gitversion = gitinfo()
 
         return None
@@ -467,16 +413,16 @@ class GAOptim(object):
         
         outputqueue = Queue()
         processes = []
-        for pind,p in enumerate(projects.values()):
+        for pind,P in enumerate(projects.values()):
             prc = Process(
                 target=batch_reopt,
-                args=(self, p, pind, outputqueue, projects, initbudgets,
+                args=(self, P, pind, outputqueue, projects, initbudgets,
                       optbudgets, parsetnames, progsetnames, maxtime,
                       parprogind, verbose))
             prc.start()
             processes.append(prc)
-        for pind,p in enumerate(projects.values()):
-            self.resultpairs[str(p.uid)] = outputqueue.get()
+        for pind,P in enumerate(projects.values()):
+            self.resultpairs[str(P.uid)] = outputqueue.get()
     
         return None
 
@@ -511,7 +457,7 @@ class GAOptim(object):
             final = findinds(tvector, self.objectives['end'])
             indices = arange(initial, final)
             
-            projectname = self.resultpairs[x]['init'].project.name
+            projectname = self.resultpairs[x]['init'].projectinfo['name']
             initalloc = self.resultpairs[x]['init'].budget['Current']
             gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal']
             initoutcome = self.resultpairs[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
