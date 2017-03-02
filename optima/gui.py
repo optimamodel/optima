@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
+from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -154,7 +154,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
     isselected = []
-    if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
+    toplot = promotetolist(toplot) # Ensure it's a list
     if toplot[0] is None or toplot[0]=='default': 
         toplot.pop(0) # Remove the first element
         defaultboxes = [checkboxes[i] for i,tf in enumerate(plotselections['defaults']) if tf] # WARNING, ugly -- back-convert defaults from true/false list to list of keys
@@ -608,7 +608,7 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     except:
         try: parslist = tmp.pars # If it's a parset
         except: pass
-    if type(parslist)!=list: parslist = [parslist] # Convert to list
+    parslist = promotetolist(parslist) # Convert to list
     try:
         for i in range(len(parslist)): parslist[i] = parslist[i].pars
     except: pass # Assume it's in the correct form -- a list of pars odicts

@@ -1,5 +1,4 @@
-from optima import gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj # Import utilities
-from optima import OptimaException, BOC # Import classes
+from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj, promotetolist # Import utilities
 from optima import version # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
@@ -77,15 +76,12 @@ class Portfolio(object):
     def addprojects(self, projects=None, replace=False, verbose=2):
         ''' Store a project within portfolio '''
         printv('Adding project to portfolio...', 2, verbose)
-        if type(projects)==Project: projects = [projects]
-        if type(projects)==list:
-            if replace: self.projects = odict() # Wipe clean before adding new projects
-            for project in projects:
-                project.uid = uuid() # TEMPPPP WARNING overwrite UUID
-                self.projects[str(project.uid)] = project        
-                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
-        else:
-            raise OptimaException('Could not understand project list of type %s' % type(projects))
+        projects = promotetolist(projects, objtype=Project) # Make sure it's a list, but confirm type first
+        if replace: self.projects = odict() # Wipe clean before adding new projects
+        for project in projects:
+            project.uid = uuid() # TEMPPPP WARNING overwrite UUID
+            self.projects[str(project.uid)] = project        
+            printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         return None
     
     
@@ -117,26 +113,26 @@ class Portfolio(object):
             progsetnames = [0]*len(self.projects)
 
         # Loop over projects & get defaul budget for each, if you can
-        for pno, p in enumerate(self.projects.values()):
+        for pno, P in enumerate(self.projects.values()):
 
             # Crash if any project doesn't have progsets
-            if not p.progsets: 
+            if not P.progsets: 
                 errormsg = 'Project "%s" does not have a progset. Cannot get default budgets.'
                 raise OptimaException(errormsg)
 
             # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-            if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
-                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[progsetnames[0]].name), 3, verbose)
+            if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in P.progsets]:
+                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], P.name, P.progsets[progsetnames[0]].name), 3, verbose)
                 pno=0
-            elif isinstance(progsetnames[pno],int) and len(p.progsets)<=progsetnames[pno]:
-                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
+            elif isinstance(progsetnames[pno],int) and len(P.progsets)<=progsetnames[pno]:
+                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], P.name, len(P.progsets)), 1, verbose)
                 pno=0
             else: 
-                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 3, verbose)
+                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (P.name), 3, verbose)
                 pno=0            
                 
-            printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (p.progsets[progsetnames[pno]].name, p.name, self.name), 4, verbose)
-            budgets.append(sum(p.progsets[progsetnames[pno]].getdefaultbudget().values()))
+            printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (P.progsets[progsetnames[pno]].name, P.name, self.name), 4, verbose)
+            budgets.append(P.progsets[progsetnames[pno]].defaultbudget())
         
         return budgets
         
@@ -150,8 +146,8 @@ class Portfolio(object):
             saveobj(filename, self, verbose=verbose)
         else:
             tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
-            for p in range(len(self.projects.values())):
-                tmpportfolio.projects[p].cleanresults() # Get rid of all results
+            for P in range(len(self.projects.values())):
+                tmpportfolio.projects[P].cleanresults() # Get rid of all results
             saveobj(filename, tmpportfolio, verbose=verbose) # Save it to file
             del tmpportfolio # Don't need it hanging around any more
         return None
@@ -178,8 +174,8 @@ class Portfolio(object):
             raise OptimaException(errormsg)
         
         # Loop for BOCs and then BOC derivatives.
-        for c,p in enumerate(self.projects.values()):
-            ax = p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot=True, baseline=baseline)
+        for c,P in enumerate(self.projects.values()):
+            ax = P.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot=True, baseline=baseline)
             if extrax != None:            
                 for k in xrange(len(extrax[c])):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
@@ -214,16 +210,16 @@ class Portfolio(object):
         if not seedbudgets == None:
             seedbudgets = scaleratio(seedbudgets, objectives['budget'])
             
-        for pno,p in enumerate(self.projects.values()):
+        for pno,P in enumerate(self.projects.values()):
             
-            if p.getBOC(objectives) is None:
-                errormsg = 'GA FAILED: Project %s has no BOC' % p.name
+            if P.getBOC(objectives) is None:
+                errormsg = 'GA FAILED: Project %s has no BOC' % P.name
                 errormsg += str(objectives)
-                errormsg += str(p.getBOC())
+                errormsg += str(P.getBOC())
                 errormsg += 'Debugging information above'
                 raise OptimaException(errormsg)
 
-            BOClist.append(p.getBOC(objectives))
+            BOClist.append(P.getBOC(objectives))
             
         optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, minbound=minbound, maxtime=maxtime)
             
@@ -310,7 +306,7 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=
 #%% Geospatial analysis batch functions for multiprocessing.
 
 def batch_reopt(
-        gaoptim, p, pind, outputqueue, projects, initbudgets, optbudgets,
+        gaoptim, P, pind, outputqueue, projects, initbudgets, optbudgets,
         parsetnames, progsetnames, maxtime, parprogind, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
     loadbalancer(index=pind)
@@ -320,20 +316,20 @@ def batch_reopt(
     tmp = odict()
 
     # Crash if any project doesn't have progsets
-    if not p.progsets or not p.parsets:
+    if not P.progsets or not P.parsets:
         errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
         raise OptimaException(errormsg)
 
     initobjectives = dcp(gaoptim.objectives)
     initobjectives['budget'] = initbudgets[pind] + budgeteps
-    printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-    tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
+    printv("Generating initial-budget optimization for project '%s'." % P.name, 2, verbose)
+    tmp['init'] = P.optimize(name=P.name+' GA initial', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
     sys.stdout.flush()
 
     optobjectives = dcp(gaoptim.objectives)
     optobjectives['budget'] = optbudgets[pind] + budgeteps
-    printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-    tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+    printv("Generating optimal-budget optimization for project '%s'." % P.name, 2, verbose)
+    tmp['opt'] = P.optimize(name=P.name+' GA optimal', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
     sys.stdout.flush()
 
     outputqueue.put(tmp)
@@ -417,16 +413,16 @@ class GAOptim(object):
         
         outputqueue = Queue()
         processes = []
-        for pind,p in enumerate(projects.values()):
+        for pind,P in enumerate(projects.values()):
             prc = Process(
                 target=batch_reopt,
-                args=(self, p, pind, outputqueue, projects, initbudgets,
+                args=(self, P, pind, outputqueue, projects, initbudgets,
                       optbudgets, parsetnames, progsetnames, maxtime,
                       parprogind, verbose))
             prc.start()
             processes.append(prc)
-        for pind,p in enumerate(projects.values()):
-            self.resultpairs[str(p.uid)] = outputqueue.get()
+        for pind,P in enumerate(projects.values()):
+            self.resultpairs[str(P.uid)] = outputqueue.get()
     
         return None
 

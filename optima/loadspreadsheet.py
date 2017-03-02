@@ -23,7 +23,7 @@ def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklowe
     for column,datum in enumerate(thesedata):
         if not isnumber(datum):
             errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
-            errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
+            errormsg += 'row=%i, column=%s, value=%s\n' % (row+1, column, datum)
             errormsg += 'Be sure all entries are numeric'
             raise OptimaException(errormsg)
     
