@@ -3,7 +3,10 @@ BATCHTOOLS
 
 Functions for doing things in batch...yeah, should make better.
 
-Version: 2016mar20
+Note - tasks have to be standalone functions or they break on windows, see
+http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
+
+Version: 2017mar2
 """
 
 from multiprocessing import Process, Queue
@@ -11,10 +14,6 @@ from numpy import empty
 from glob import glob
 from optima import loadproj, loadbalancer, printv
 from os import path
-
-
-# Note - tasks have to be standalone functions or they break on windows, see
-# http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
 
 
 def batchtest_task(obj, ind, outputqueue, nprocs, nrepeats, maxload):
@@ -36,9 +35,8 @@ def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
     processes = []
     for i in range(nprocs):
         obj = rand()
-        prc = Process(
-            target=batchtest_task, 
-            args=(obj, i, outputqueue, nprocs, nrepeats, maxload))
+        prc = Process(target=batchtest_task, 
+                      args=(obj, i, outputqueue, nprocs, nrepeats, maxload))
         prc.start()
         processes.append(prc)
     for i in range(nprocs):
@@ -47,27 +45,21 @@ def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
     return outputlist
 
 
-def autofit_task(
-        project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters,
-        verbose, maxload):
+def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload):
     """Kick off the autofit task for a given project file."""
     loadbalancer(index=ind, maxload=maxload)
     print('Running autofitting...')
-    # Run automatic fitting and update calibration
-    project.autofit(
-        name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, 
-        maxiters=maxiters, verbose=verbose)
+    project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
     project.save()
     outputqueue.put(project)
     print('...done.')
     return None
 
 
-def batchautofit(
-        folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None, 
-        maxiters=200, verbose=2, maxload=0.5):
+def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5):
     ''' Perform batch autofitting '''
     
+    if folder is None: folder = '.'
     filelist = sorted(glob(path.join(folder, '*.prj')))
     nfiles = len(filelist)
 
@@ -78,19 +70,16 @@ def batchautofit(
         printv('Calibrating file "%s"' % filelist[i], 3, verbose)
         project = loadproj(filelist[i])
         project.filename = filelist[i]
-        prc = Process(
-            target=autofit_task, 
-            args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, 
-                  maxiters, verbose, maxload))
+        prc = Process(target=autofit_task, 
+                      args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload))
         prc.start()
         processes.append(prc)
     
     return outputlist
 
 
-def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
-             progsetname, objectives, constraints, maxiters, maxtime,
-             verbose, stoppingfunc, method, maxload, prerun):
+def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetname, objectives, constraints,
+             maxiters, maxtime, verbose, stoppingfunc, method, maxload, prerun):
     loadbalancer(index=ind, maxload=maxload)
     printv('Running BOC generation...', 1, verbose)
     if prerun:
@@ -104,11 +93,10 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
         if rerun: 
             printv('No results set found, so rerunning model...', 2, verbose)
             project.runsim(parsetname) # Rerun if exception or if results is None
-    project.genBOC(
-        budgetlist=budgetlist, name=name, parsetname=parsetname,
-        progsetname=progsetname, objectives=objectives, 
-        constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-        verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+    project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname,
+                   progsetname=progsetname, objectives=objectives, 
+                   constraints=constraints, maxiters=maxiters, maxtime=maxtime,
+                   verbose=verbose, stoppingfunc=stoppingfunc, method=method)
     project.save(filename=project.tmpfilename)
     outputqueue.put(project)
     print('...done.')

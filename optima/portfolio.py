@@ -227,7 +227,6 @@ class Portfolio(object):
 #%% Functions for geospatial analysis
 
 def constrainbudgets(x, grandtotal, minbound):
-    
     # First make sure all values are not below the respective minimum bounds.
     for i in xrange(len(x)):
         if x[i] < minbound[i]:
@@ -273,13 +272,10 @@ def geooptimization(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters
 
 #%% Geospatial analysis batch functions for multiprocessing.
 
-def batch_reopt(
-        gaoptim, P, pind, outputqueue, projects, initbudgets, optbudgets,
-        parsetnames, progsetnames, maxtime, parprogind, verbose):
+def batch_reopt(gaoptim, P, pind, outputqueue, projects, initbudgets, optbudgets, maxtime, parprogind, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
     loadbalancer(index=pind)
     printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
-    sys.stdout.flush()
 
     tmp = odict()
 
@@ -354,28 +350,11 @@ class GAOptim(object):
 
 
 
-    def reoptimize(self, projects, initbudgets, optbudgets, parsetnames=None, progsetnames=None, maxtime=None, parprogind=0, verbose=2):
+    def reoptimize(self, projects, initbudgets, optbudgets, maxtime=None, parprogind=0, verbose=2):
         ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
         printv('Finalizing geospatial analysis...', 1, verbose)
         printv('Warning, using default programset/programset!', 2, verbose)
         
-        # Validate inputs
-        if not len(projects) == len(initbudgets) or not len(projects) == len(optbudgets):
-            errormsg = 'Cannot complete optimisations for %i projects given %i initial budgets (%i required) and %i optimal budgets (%i required).' % (len(self.projects), len(initbudgets), len(self.projects), len(optbudgets), len(self.projects))
-            raise OptimaException(errormsg)
-        if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using first saved progset for each project.', 3, verbose)
-            progsetnames = [0]*len(projects)
-        if not len(progsetnames)==len(projects):
-            printv('WARNING: %i program set names/indices were provided, but %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), len(self.projects)), 1, verbose)
-            progsetnames = [0]*len(projects)
-        if parsetnames==None:
-            printv('\nWARNING: no parsets specified. Using first saved parset for each project.', 3, verbose)
-            parsetnames = [0]*len(projects)
-        if not len(parsetnames)==len(projects):
-            printv('WARNING: %i parset names/indices were provided, but %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), len(self.projects)), 1, verbose)
-            parsetnames = [0]*len(projects)
-
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
         
