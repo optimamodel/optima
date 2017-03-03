@@ -819,7 +819,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if totalppltomoveup>0:
                             diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
                             if name == 'proptx': # For treatment, we move people in lower CD4 states first
-                                tmpdiff = diff
+                                tmpdiff = diff # TODO check if this should be deepcopied?
                                 newmovers = zeros((ncd4,npops))
                                 for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
                                     if tmpdiff>eps: # Move people until you have the right proportions
@@ -834,15 +834,17 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             people[lowerstate,:,t+1] -= newmovers # Shift people out of the lower state... 
                             people[tostate,:,t+1]    += newmovers # ... and into the higher state
                             raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
+
                     elif diff<0.: # We need to move people DOWN the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
                         if totalppltomovedown>0: # To avoid having to add eps
-                            diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people, to keep my sanity...
+                            diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
                             people[tostate,:,t+1]    -= newmovers # Shift people out of the higher state... 
                             people[lowerstate,:,t+1] += newmovers # ... and into the lower state
                             raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+
             if debug: checkfornegativepeople(people, tind=t+1)
         
     raw                 = odict()    # Sim output structure
