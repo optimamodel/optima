@@ -568,13 +568,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
 
         # Add these transition probabilities to the main array
-        ii = undx[0]
         si = susreg[0] # susreg is a single element, but needs an index since can't index a list with an array
         pi = progcirc[0] # as above 
-        thistransit[si,si,:] = (1.-background[:,t]) - infections_to[si] # Index for moving from sus to sus
-        thistransit[si,ii,:] = infections_to[si] # Index for moving from sus to infection
-        thistransit[pi,pi,:] = (1.-background[:,t]) - infections_to[pi] # Index for moving from circ to circ
-        thistransit[pi,ii,:] = infections_to[pi] # Index for moving from circ to infection
+        ui = undx[0]
+        thistransit[si,si,:] *= (1.-background[:,t]) - infections_to[si] # Index for moving from sus to sus
+        thistransit[si,ui,:] *= infections_to[si] # Index for moving from sus to infection
+        thistransit[pi,pi,:] *= (1.-background[:,t]) - infections_to[pi] # Index for moving from circ to circ
+        thistransit[pi,ui,:] *= infections_to[pi] # Index for moving from circ to infection
 
         # Calculate infections acquired and transmitted
         raw_inci[:,t]       = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
@@ -648,7 +648,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # Check that probabilities all sum to 1
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         if debug:
             transtest = array([(abs(thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))>eps).any() for j in range(nstates)])
             if any(transtest):
@@ -657,7 +656,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 wrongprobs = array([thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
                 errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
                 raise OptimaException(errormsg)
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
         # Check that no probabilities are less than 0
         if debug and any([(thistransit[k]<0).any() for k in range(nstates)]):
