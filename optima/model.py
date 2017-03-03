@@ -33,7 +33,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
     fromto          = simpars['fromto']             # States to and from
     transmatrix     = simpars['transmatrix']        # Raw transitions matrix
-		
+
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    
     # Initialize people array
     people          = zeros((nstates, npops, npts)) # Matrix to hold everything
 
@@ -586,8 +588,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ##############################################################################################################
 
         # Adjust transition rates
-        for state in range(nsus,nstates):
-            thistransit[state,:,:] *= (1.-background[:,t])
+        thistransit[nsus:,:,:] *= (1.-background[:,t])
 
         # Store deaths
         raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
