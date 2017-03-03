@@ -67,7 +67,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, isnumber, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, promotetoarray, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, promotetoarray, promotetolist, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
 
 ## Data I/O
 from . import dataio
@@ -78,14 +78,24 @@ from .dataio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranst
 ### Define debugging and exception functions/classes
 #####################################################################################################################
 
+## Optima Path
+def optimapath(subdir=None, trailingsep=True):
+    ''' Returns the parent path of the Optima module. If subdir is not None, include it in the path '''
+    import os
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    if subdir is not None:
+        tojoin = [path, subdir]
+        if trailingsep: tojoin.append('') # This ensures it ends with a separator
+        path = os.path.join(*tojoin) # e.g. ['/home/optima', 'tests', '']
+    return path
+
 ## Debugging information
 def debuginfo(dooutput=False):
-    import os
     output = '\nOptima debugging info:\n'
     output += '   Version: %s\n' % version
     output += '   Branch:  %s\n' % gitinfo()[0]
     output += '   SHA:     %s\n' % gitinfo()[1][:7]
-    output += '   Path:    %s\n' % os.path.abspath(__file__)
+    output += '   Path:    %s\n' % optimapath()
     if dooutput: 
         return output
     else: 
@@ -98,11 +108,11 @@ class OptimaException(Exception):
         if isinstance(errormsg, basestring): errormsg = errormsg+debuginfo(dooutput=True) # If it's not a string, not sure what it is, but don't bother with this
         Exception.__init__(self, errormsg, *args, **kwargs)
 
+
+
 #####################################################################################################################
 ### Load Optima functions and classes
 #####################################################################################################################
-
-
 
 ## Project settings
 from . import settings as _settings # Inter-project definitions, e.g. health states
@@ -162,21 +172,10 @@ from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotal
 #####################################################################################################################
 
 ## Load high level GUI module
-try: from . import gui
+try: 
+    from . import gui
+    from .gui import plotresults, pygui, plotpeople, plotpars, browser, manualfit
 except Exception as E: _failed.append('gui: %s' % E.message)
-
-## Load simple function for displaying results
-try: from .gui import plotresults, pygui, plotpeople, plotpars
-except Exception as E: _failed.append('plotresults, pygui, plotpeople, plotallocations, plotpars: %s' % E.message)
-
-## Handle the browser-based plotting -- relies on browser so might fail
-try: from .gui import browser 
-except Exception as E: _failed.append('browser: %s' % E.message)
-
-# Do manual fitting -- relies on PyQt4 so might fail
-try: from .gui import manualfit 
-except Exception as E: _failed.append('manualfit: %s' % E.message)
-
 
 
 #####################################################################################################################
@@ -206,7 +205,8 @@ try:
     from .batchtools import batchautofit
     from .batchtools import batchBOC
     from .geospatial import geogui # Import GUI tools for geospatial analysis
-except Exception as E: _failed.append('geospatial: %s' % E.message)
+except Exception as E: _failed.append('geospatial, batchtools: %s' % E.message)
 
 
-if not len(_failed): del _failed # If it's empty, don't bother keeping it
+if len(_failed): print('The following import errors were encountered:\n%s' % _failed)
+else: del _failed # If it's empty, don't bother keeping it
