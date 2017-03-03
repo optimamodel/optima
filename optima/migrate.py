@@ -588,20 +588,13 @@ def addagetopars(project, **kwargs):
 
 
 def redotranstable(project, **kwargs):
-    ''' Redo how the transition table is handled '''
+    ''' Redo how the transition table is handled and add infinite money '''
     # Add transitions matrix
     for ps in project.parsets.values():
         ps.pars['fromto'], ps.pars['transmatrix'] = op.loadtranstable(npops = project.data['npops'])
         ps.pars.pop('rawtransit', None) # If it's really old, it won't actually have this
-    project.version = '2.3.3'
-    return None
-
-
-def addinfmoney(project, **kwargs):
-    ''' Add infinite money to settings since used in several places '''
-    # Add transitions matrix
     project.settings.infmoney = 1e9
-    project.version = '2.3.4'
+    project.version = '2.3.3'
     return None
 
 #def redoprograms(project, **kwargs):
@@ -639,7 +632,6 @@ migrations = {
 '2.3':   removespreadsheet,
 '2.3.1': addagetopars,
 '2.3.2': redotranstable,
-'2.3.4': addinfmoney,
 #'2.2': redoprograms,
 }
 
