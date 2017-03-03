@@ -326,7 +326,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
     if initpeople is not None:
         tvec = project.settings.maketvec(start=objectives['start'], end=objectives['end'])
-    results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, initpeople=initpeople, verbose=0)
+    results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-objectivecalc')
 
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])
@@ -392,14 +392,30 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
 def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
+    
+    Arguments:
+        which = 'outcome' or 'money'
+        project = the project file
+        optim = the optimization object
+        maxiters = how many iterations to optimize for
+        maxtime = how many secons to optimize for
+        verbose = how much detail to provide
+        stoppingfunc = a function called to decide on stopping
+        method = 'asd', currently the only option
+        debug = whether or not to check things in detail
+        overwritebudget = used in GA somehow...
+        ccsample = which sample of the cost curves to use (deprecated)
+        randseed = optionally reset the seed
+        mc = how many Monte Carlo iterations to run for (if -1, run other starting points but not MC)
+        label = a string to append to error messages to make it clear where things went wrong
 
-    Version: 1.2 (2016feb07)
+    Version: 1.3 (2017mar02)
     '''
 
     ## Input validation
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
     if which not in ['outcomes','money']:
-        errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
+        errormsg = '"which" must be "outcomes" or "money"; you entered "%s"' % which
         raise OptimaException(errormsg)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     printv('Running %s optimization...' % which, 1, verbose)
@@ -461,7 +477,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     if label is None: label = ''
     
     # Calculate the initial people distribution
-    results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0)
+    results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
@@ -502,15 +518,6 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
     
-    # Check extremes -- not quite fair since not constrained but oh well
-    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
-        errormsg = 'Infinite funding has a worse or identical outcome to no funding'
-        raise OptimaException(errormsg)
-    for k,key in enumerate(extremeoutcomes.keys()):
-        if extremeoutcomes[key] > extremeoutcomes['Zero']:
-            errormsg = 'Funding for %s has a worse outcome than no funding' % key
-            raise OptimaException(errormsg)
-    
     # Print out results of the run
     if mc:
         printv('Outcomes for budget scenarios, from best to worst:', 2, verbose)
@@ -522,7 +529,17 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     else:
         printv('Outcome for current budget (starting point): %0.0f' % extremeoutcomes['Current'], 2, verbose)
         printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
+        printv('Outcome for zero budget (worst possible):    %0.0f' % extremeoutcomes['Zero'], 2, verbose)
     
+    # Check extremes -- not quite fair since not constrained but oh well
+    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
+        errormsg = 'Infinite funding has a worse or identical outcome to no funding: %s vs. %s' % (extremeoutcomes['Infinite'], extremeoutcomes['Zero'])
+        raise OptimaException(errormsg)
+    for k,key in enumerate(extremeoutcomes.keys()):
+        if extremeoutcomes[key] > extremeoutcomes['Zero']:
+            errormsg = 'Funding for %s has a worse outcome than no funding: %s vs. %s' % (key, extremeoutcomes[key], extremeoutcomes['Zero'])
+            raise OptimaException(errormsg)
+            
     ## Loop over budget scale factors
     tmpresults = odict()
     tmpimprovements = odict()
