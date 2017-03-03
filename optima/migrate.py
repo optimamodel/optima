@@ -593,7 +593,7 @@ def redotranstable(project, **kwargs):
     for ps in project.parsets.values():
         ps.pars['fromto'], ps.pars['transmatrix'] = op.loadtranstable(npops = project.data['npops'])
         ps.pars.pop('rawtransit', None) # If it's really old, it won't actually have this
-    project.settings.infmoney = 1e9
+    project.settings.infmoney = 1e10
     project.version = '2.3.3'
     return None
 
