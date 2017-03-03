@@ -92,7 +92,7 @@ def loadtranstable(filename=default_filename, npops=None):
     if sheet.nrows != sheet.ncols:
         errormsg = 'Transition matrix should have the same number of rows and columns (%i vs. %i)' % (sheet.nrows, sheet.ncols)
         raise OptimaException(errormsg)
-    nstates = sheet.nrows
+    nstates = sheet.nrows-1 # First row is header
 
     fromto = []
     transmatrix = zeros((nstates,nstates,npops))

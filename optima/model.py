@@ -483,7 +483,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t], errstate, thistransit[errstate,:,:])
+                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t])
                             if die: raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
@@ -646,15 +646,19 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= (1.-usvlprob)
                 elif tostate in usvl: # Probability of becoming unsuppressed
                     thistransit[fromstate,tostate,:] *= usvlprob
-
+        
         # Check that probabilities all sum to 1
-        if debug and not all([(abs(thistransit[j].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
-            wrongstatesindices = [j for j in range(nstates) if not (abs(thistransit[j].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all()]
-            wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
-            wrongprobs = array([thistransit[j].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
-            errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
-            raise OptimaException(errormsg)
-            
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        if debug:
+            transtest = array([(abs(thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))>eps).any() for j in range(nstates)])
+            if any(transtest):
+                wrongstatesindices = findinds(transtest)
+                wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
+                wrongprobs = array([thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
+                errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
+                raise OptimaException(errormsg)
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                
         # Check that no probabilities are less than 0
         if debug and any([(thistransit[k]<0).any() for k in range(nstates)]):
             wrongstatesindices = [k for k in range(nstates) if (thistransit[k]<0.).any()]
