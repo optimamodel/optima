@@ -153,11 +153,52 @@ class Portfolio(object):
         return None
     
     
+    
     #######################################################################################################
     ## Methods to perform major tasks
     #######################################################################################################
         
+    def runGA(self, objectives=None, budgetratio=None, minbound=None, maxtime=None, doplotBOCs=False, verbose=2):
+        ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
+        printv('Performing full geospatial analysis', 1, verbose)
         
+        GAstart = tic()
+        
+        # Check inputs
+        if objectives == None: 
+            printv('WARNING, you have called fullGA on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
+            objectives = defaultobjectives()
+        objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
+        
+        gaoptim = GAOptim(objectives = objectives)
+        self.gaoptims[str(gaoptim.uid)] = gaoptim
+        
+        if budgetratio == None: budgetratio = self.getdefaultbudgets()
+        initbudgets = scaleratio(budgetratio,objectives['budget'])
+        
+        # Gather the BOCs
+        BOClist = []
+        for pno,P in enumerate(self.projects.values()):
+            thisBOC = P.getBOC(objectives)
+            if thisBOC is None:
+                errormsg = 'GA FAILED: Project %s has no BOC' % P.name
+                raise OptimaException(errormsg)
+            BOClist.append(thisBOC)
+        
+        # Run actual geospatial analysis optimization
+        grandtotal = objectives['budget']
+        optbudgets = geooptimization(BOClist, grandtotal, budgetvec=initbudgets, minbound=minbound, maxtime=maxtime)
+        
+        # Reoptimize projects
+        gaoptim.reoptimize(self.projects, initbudgets, optbudgets, maxtime=maxtime)
+        
+        # Tidy up
+        self.outputstring = gaoptim.printresults() # Store the results as an output string
+        toc(GAstart)
+        if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
+        return None
+
+
     # Note: Lists of lists extrax and extray allow for extra custom points to be plotted.
     def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2, extrax=None, extray=None, baseline=0):
         ''' Loop through stored projects and plot budget-outcome curves '''
@@ -180,79 +221,6 @@ class Portfolio(object):
                 for k in xrange(len(extrax[c])):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
                     if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
-            
-    def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, minbound=None, maxtime=None, verbose=2):
-        ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
-        printv('Calculating minimum BOC outcomes...', 2, verbose)
-
-        # Check inputs
-        if objectives == None: 
-            printv('WARNING, you have called minBOCoutcomes on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
-        if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 3, verbose)
-            progsetnames = [-1]*len(self.projects)
-        if not len(progsetnames)==len(self.projects):
-            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 1, verbose)
-            progsetnames = [-1]*len(self.projects)
-        if parsetnames==None:
-            printv('\nWARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 3, verbose)
-            parsetnames = [-1]*len(self.projects)
-        if not len(parsetnames)==len(self.projects):
-            printv('WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 1, verbose)
-            parsetnames = [-1]*len(self.projects)
-        
-        # Initialise internal parameters
-        BOClist = []
-        grandtotal = objectives['budget']
-        
-        # Scale seedbudgets just in case they don't add up to the required total.
-        if not seedbudgets == None:
-            seedbudgets = scaleratio(seedbudgets, objectives['budget'])
-            
-        for pno,P in enumerate(self.projects.values()):
-            
-            if P.getBOC(objectives) is None:
-                errormsg = 'GA FAILED: Project %s has no BOC' % P.name
-                errormsg += str(objectives)
-                errormsg += str(P.getBOC())
-                errormsg += 'Debugging information above'
-                raise OptimaException(errormsg)
-
-            BOClist.append(P.getBOC(objectives))
-            
-        optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, minbound=minbound, maxtime=maxtime)
-            
-        return optbudgets
-        
-        
-    def fullGA(self, objectives=None, budgetratio=None, minbound=None, maxtime=None, doplotBOCs=False, verbose=2):
-        ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
-        printv('Performing full geospatial analysis', 1, verbose)
-        
-        GAstart = tic()
-
-		# Check inputs
-        if objectives == None: 
-            printv('WARNING, you have called fullGA on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
-        objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
-        
-        gaoptim = GAOptim(objectives = objectives)
-        self.gaoptims[str(gaoptim.uid)] = gaoptim
-        
-        if budgetratio == None: budgetratio = self.getdefaultbudgets()
-        initbudgets = scaleratio(budgetratio,objectives['budget'])
-        
-        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, minbound = minbound, maxtime = maxtime)
-        if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
-        
-        gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
-        self.outputstring = gaoptim.printresults() # Store the results as an output string
-        
-        toc(GAstart)
-        return None
-        
         
         
         
@@ -273,16 +241,18 @@ def constrainbudgets(x, grandtotal, minbound):
     
     return constrainedx
 
+
 def objectivecalc(x, BOClist, grandtotal, minbound):
     ''' Objective function. Sums outcomes from all projects corresponding to budget list x. '''
     x = constrainbudgets(x, grandtotal, minbound)
     
     totalobj = 0
-    for i in xrange(len(x)):
+    for i in range(len(x)):
         totalobj += BOClist[i].getoutcome([x[i]])[-1]     # Outcomes are currently passed to and from pchip as lists.
     return totalobj
     
-def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=2):
+    
+def geooptimization(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=2):
     ''' Actual runs geospatial optimisation across provided BOCs. '''
     printv('Calculating minimum outcomes for grand total budget of %f' % grandtotal, 2, verbose)
     
@@ -384,7 +354,7 @@ class GAOptim(object):
 
 
 
-    def complete(self, projects, initbudgets, optbudgets, parsetnames=None, progsetnames=None, maxtime=None, parprogind=0, verbose=2):
+    def reoptimize(self, projects, initbudgets, optbudgets, parsetnames=None, progsetnames=None, maxtime=None, parprogind=0, verbose=2):
         ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
         printv('Finalizing geospatial analysis...', 1, verbose)
         printv('Warning, using default programset/programset!', 2, verbose)

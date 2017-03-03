@@ -645,6 +645,8 @@ class Project(object):
         projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
         projectBOC.x.append(self.settings.infmoney)
         projectBOC.y.append(results.outcomes['Infinite'])
+        projectBOC.parsetname = parsetname
+        projectBOC.progsetname = progsetname
         self.addresult(result=projectBOC)
         self.modified = today()
         return None        
