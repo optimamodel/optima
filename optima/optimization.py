@@ -500,7 +500,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, doconstrainbudget=False, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
-    if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+firstkeys # Don't include no funding or infinite funding examples
+    if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
     
     # Check extremes -- not quite fair since not constrained but oh well
     if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
