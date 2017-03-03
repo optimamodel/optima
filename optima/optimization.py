@@ -487,6 +487,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
     extremebudgets['Zero']     = zeros(nprogs)
     extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
+    firstkeys = ['Current', 'Zero', 'Infinite'] # These are special, store them
     if mc: # Only run these if MC is being run
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
@@ -499,7 +500,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         extremeresults[key] = objectivecalc(exbudget, outputresults=True, debug=False, doconstrainbudget=False, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
-    if mc: bestprogram = argmin(extremeoutcomes[:][3:])+3 # Don't include no funding or infinite funding examples
+    if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+firstkeys # Don't include no funding or infinite funding examples
     
     # Check extremes -- not quite fair since not constrained but oh well
     if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
@@ -509,10 +510,12 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         if extremeoutcomes[key] > extremeoutcomes['Zero']:
             errormsg = 'Funding for %s has a worse outcome than no funding' % key
             raise OptimaException(errormsg)
+    
+    # Print out results of the run
     if mc:
+        printv('Outcomes for budget scenarios, from best to worst:', 2, verbose)
         besttoworst = argsort(extremeoutcomes[:])
         besttoworstkeys = [extremeoutcomes.keys()[i] for i in besttoworst]
-        firstkeys = ['Current', 'Zero', 'Infinite']
         for key in firstkeys: besttoworstkeys.remove(key) # Remove these from the list
         for key in firstkeys+besttoworstkeys:
             printv('Outcome for %s: %0.0f' % (key,extremeoutcomes[key]), 2, verbose)
