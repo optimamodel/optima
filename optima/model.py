@@ -880,10 +880,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
-    import optima as op
-    op.saveobj('transmatrix.obj', alltransmatrices)
-    print('TEMP')
-    
     return raw # Return raw results
 
 
