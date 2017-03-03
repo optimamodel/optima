@@ -79,8 +79,8 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
 
 
 def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetname, objectives, constraints,
-             maxiters, maxtime, verbose, stoppingfunc, method, maxload, prerun):
-    loadbalancer(index=ind, maxload=maxload)
+             maxiters, maxtime, verbose, stoppingfunc, method, maxload, prerun, batch):
+    if batch: loadbalancer(index=ind, maxload=maxload)
     printv('Running BOC generation...', 1, verbose)
     if prerun:
         if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
@@ -98,16 +98,15 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetnam
                    constraints=constraints, maxiters=maxiters, maxtime=maxtime,
                    verbose=verbose, stoppingfunc=stoppingfunc, method=method)
     project.save(filename=project.tmpfilename)
-    outputqueue.put(project)
+    if batch: outputqueue.put(project)
     print('...done.')
     return None
 
 
-def batchBOC(
-        folder='.', budgetlist=None, name=None, parsetname=None, 
-        progsetname=None, objectives=None, constraints=None, 
-        maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-        method='asd', maxload=0.5, prerun=True):
+def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, 
+             progsetname=None, objectives=None, constraints=None, 
+             maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
+             method='asd', maxload=0.5, prerun=True, batch=True):
     """
     Perform batch BOC calculation.
 
@@ -152,22 +151,23 @@ def batchBOC(
     filelist = sorted(glob(path.join(folder, '*.prj')))
     nfiles = len(filelist)
     
-    outputqueue = Queue()
+    if batch: outputqueue = Queue()
+    else: outputqueue = None
     outputlist = empty(nfiles, dtype=object)
     processes = []
     for i in range(nfiles):
         project = loadproj(filelist[i])
         project.tmpfilename = filelist[i]
-        prjobjectives = project.optims[-1].objectives \
-            if objectives == 'latest' else objectives
-        prjconstraints = project.optims[-1].constraints \
-            if constraints == 'latest' else constraints
-        prc = Process(
-            target=boc_task,
-            args=(project, i, outputqueue, budgetlist, name, parsetname, 
-                  progsetname, prjobjectives, prjconstraints, maxiters, 
-                  maxtime, verbose, stoppingfunc, method, maxload, prerun))
-        prc.start()
-        processes.append(prc)
+        prjobjectives = project.optims[-1].objectives if objectives == 'latest' else objectives
+        prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
+        args = (project, i, outputqueue, budgetlist, name, parsetname, 
+                progsetname, prjobjectives, prjconstraints, maxiters, 
+                maxtime, verbose, stoppingfunc, method, maxload, prerun, batch)
+        if batch:
+            prc = Process(target=boc_task, args=args)
+            prc.start()
+            processes.append(prc)
+        else:
+            boc_task(*args)
     
     return outputlist
