@@ -825,6 +825,7 @@ class Program(object):
         '''Add a model parameter to be targeted by this program'''
         if (targetpar['param'],targetpar['pop']) not in [(tp['param'],tp['pop']) for tp in self.targetpars]:
             self.targetpars.append(targetpar)
+            self.targetpartypes = list(set([thispar['param'] for thispar in self.targetpars]))
             printv('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.short, self.targetpars), 4, verbose)
         else:
             index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
