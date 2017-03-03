@@ -6,7 +6,7 @@ Version: 2016apr11
 
 from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
-from numpy import zeros, arange, maximum, array, inf, isfinite, argmin
+from numpy import zeros, arange, maximum, array, inf, isfinite, argmin, argsort
 from numpy.random import random
 
 
@@ -509,10 +509,16 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         if extremeoutcomes[key] > extremeoutcomes['Zero']:
             errormsg = 'Funding for %s has a worse outcome than no funding' % key
             raise OptimaException(errormsg)
-    printv('Outcome for current budget (starting point): %0.0f' % extremeoutcomes['Current'], 2, verbose)
-    printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
-    for key in extremeoutcomes.keys():
-        printv('Outcome for %s: %f' % (key,extremeoutcomes[key]), 3, verbose)
+    if mc:
+        besttoworst = argsort(extremeoutcomes[:])
+        besttoworstkeys = [extremeoutcomes.keys()[i] for i in besttoworst]
+        firstkeys = ['Current', 'Zero', 'Infinite']
+        for key in firstkeys: besttoworstkeys.remove(key) # Remove these from the list
+        for key in firstkeys+besttoworstkeys:
+            printv('Outcome for %s: %0.0f' % (key,extremeoutcomes[key]), 2, verbose)
+    else:
+        printv('Outcome for current budget (starting point): %0.0f' % extremeoutcomes['Current'], 2, verbose)
+        printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
     
     ## Loop over budget scale factors
     tmpresults = odict()

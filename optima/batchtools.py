@@ -79,7 +79,7 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
 
 
 def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetname, objectives, constraints,
-             maxiters, maxtime, verbose, stoppingfunc, method, maxload, prerun, batch):
+             maxiters, maxtime, verbose, stoppingfunc, method, maxload, prerun, batch, mc):
     if batch: loadbalancer(index=ind, maxload=maxload)
     printv('Running BOC generation...', 1, verbose)
     if prerun:
@@ -96,7 +96,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetnam
     project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname,
                    progsetname=progsetname, objectives=objectives, 
                    constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-                   verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+                   verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc)
     project.save(filename=project.tmpfilename)
     if batch: outputqueue.put(project)
     print('...done.')
@@ -106,7 +106,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetnam
 def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, 
              progsetname=None, objectives=None, constraints=None, 
              maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-             method='asd', maxload=0.5, prerun=True, batch=True):
+             method='asd', maxload=0.5, prerun=True, batch=True, mc=3):
     """
     Perform batch BOC calculation.
 
@@ -162,7 +162,7 @@ def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None,
         prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
         args = (project, i, outputqueue, budgetlist, name, parsetname, 
                 progsetname, prjobjectives, prjconstraints, maxiters, 
-                maxtime, verbose, stoppingfunc, method, maxload, prerun, batch)
+                maxtime, verbose, stoppingfunc, method, maxload, prerun, batch, mc)
         if batch:
             prc = Process(target=boc_task, args=args)
             prc.start()
