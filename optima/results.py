@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest
+from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 
@@ -44,8 +44,8 @@ class Resultset(object):
         
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
-        if type(simpars)!=list: simpars = [simpars] # Force into being a list
-        if type(raw)!=list: raw = [raw] # Force into being a list
+        simpars = promotetolist(simpars) # Force into being a list
+        raw = promotetolist(raw) # Force into being a list
         
         # Read things in from the project if defined
         if project is not None:
@@ -60,13 +60,18 @@ class Resultset(object):
         
         # Fundamental quantities -- populated by project.runsim()
         if keepraw: self.raw = raw
-        self.pars = pars # Keep pars
         self.simpars = simpars # ...and sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.projectref = Link(project) # ...and just store the whole project
         self.projectinfo = project.getinfo() # Store key info from the project separately in case the link breaks
         self.parset = dcp(parset) # Store parameters
+        if pars is not None:
+            self.pars = pars # Keep pars
+        else: # Try various other ways of getting pars
+            if parset is not None:
+                self.pars = self.parset.pars
+            else: raise OptimaException('To generate results, you must feed in a parset or pardict: none provided')
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
         if self.parset is not None:  self.parset.projectref  = Link(project) # Replace copy of project with reference to project
@@ -217,6 +222,7 @@ class Resultset(object):
         alltx = self.settings.alltx
         svl = self.settings.svl
         data = self.data
+
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
@@ -311,17 +317,17 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round()
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        upperagelims = self.parset.pars['age'][:,1] # All populations, but upper range
+        upperagelims = self.pars['age'][:,1] # All populations, but upper range
         adultpops = findinds(upperagelims>=15)
         childpops = findinds(upperagelims<15)
         if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-
         
         # Calculate DALYs
         yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
-        disutiltx = self.parset.pars['disutiltx'].y
-        disutils = [self.parset.pars['disutil'+key].y for key in self.settings.hivstates]
+        disutiltx = self.pars['disutiltx'].y
+        disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
+
         dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
         dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
         dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
@@ -426,7 +432,6 @@ class Multiresultset(Resultset):
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise OptimaException('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
-                
         
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets

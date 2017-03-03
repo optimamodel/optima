@@ -89,17 +89,18 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def defaultrepr(obj, maxlen=55):
+def defaultrepr(obj, maxlen=300):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
-    keys = sorted(obj.__dict__.keys())
-    maxkeylen = max([len(key) for key in keys])
-    if maxkeylen<maxlen: maxlen = maxlen - maxkeylen
-    formatstr = '%'+ '%i'%maxkeylen + 's'
-    output  = objrepr(obj, showatt=False)
-    for key in keys:
-        thisattr = str(getattr(obj, key))
-        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]'
-        output += formatstr%key + ': ' + thisattr + '\n'
+    keys = sorted(obj.__dict__.keys()) # Get the attribute keys
+    maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
+    if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
+    formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
+    output  = objrepr(obj, showatt=False) # Get the methods
+    for key in keys: # Loop over each attribute
+        thisattr = str(getattr(obj, key)) # Get the string representation of the attribute
+        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]' # Shorten it
+        prefix = formatstr%key + ': ' # The format key
+        output += indent(prefix, thisattr)
     output += '============================================================\n'
 
     return output
@@ -136,6 +137,45 @@ def printarr(arr, arrformat='%0.2f  '):
     return None
     
 
+
+def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
+    '''
+    Small wrapper to make textwrap more user friendly.
+    
+    Arguments:
+        prefix = text to begin with (optional)
+        text = text to wrap
+        suffix = what to put on the end (by default, a newline)
+        n = if prefix is not specified, the size of the indent
+        prettify = whether to use pprint to format the text
+        kwargs = anything to pass to textwrap.fill() (e.g., linewidth)
+    
+    Examples:
+        prefix = 'and then they said:'
+        text = 'blah '*100
+        print(indent(prefix, text))
+        
+        print('my fave is: ' + indent(text=rand(100), n=14))
+    
+    Version: 2017feb20
+    '''
+    # Imports
+    from textwrap import fill
+    from pprint import pformat
+    
+    # Handle no prefix
+    if prefix is None: prefix = ' '*n
+    
+    # Get text in the right format -- i.e. a string
+    if pretty: text = pformat(text)
+    else:      text = str(text)
+    
+    # Generate output
+    output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
+    
+    if n: output = output[n:] # Need to remove the fake prefix
+    return output
+    
 
 
 
@@ -176,11 +216,79 @@ def sigfig(X, sigfigs=5):
 
 
 
-def isnumber(x):
-    ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
-    from numbers import Number
-    return isinstance(x, Number)
 
+
+
+def isiterable(obj):
+    '''
+    Simply determine whether or not the input is iterable, since it's too hard to remember this otherwise.
+    From http://stackoverflow.com/questions/1952464/in-python-how-do-i-determine-if-an-object-is-iterable
+    '''
+    try:
+        iter(obj)
+        return True
+    except:
+        return False
+    
+
+def checktype(obj=None, objtype=None, subtype=None, die=False):
+    ''' 
+    A convenience function for checking instances. If objtype is a type,
+    then this function works exactly like isinstance(). But, it can also
+    be a string, e.g. 'array'.
+    
+    If subtype is not None, then checktype will iterate over obj and check
+    recursively that each element matches the subtype.
+    
+    Arguments:
+        obj     = the object to check the type of
+        objtype = the type to confirm the object belongs to
+        subtype = optionally check the subtype if the object is iterable
+        die     = whether or not to raise an exception if the object is the wrong type.
+    
+    Examples:
+        checktype(rand(10), 'array', 'number') # Returns true
+        checktype(['a','b','c'], 'arraylike') # Returns false
+        checktype([{'a':3}], list, dict) # Returns True
+    '''
+    from numbers import Number
+    from numpy import array
+    
+    # Handle "objtype" input
+    if   objtype in ['str','string']:  objinstance = basestring
+    elif objtype in ['num', 'number']: objinstance = Number
+    elif objtype in ['arr', 'array']:  objinstance = type(array([]))
+    elif objtype is 'arraylike':       objinstance = (list, tuple, type(array([]))) # Anything suitable as a numerical array
+    elif type(objtype)==type:          objinstance = objtype  # Don't need to do anything
+    elif objtype is None:              return None # If not supplied, exit
+    else:
+        errormsg = 'Could not understand what type you want to check: should be either a string or a type, not "%s"' % objtype
+        raise Exception(errormsg)
+    
+    # Do first-round checking
+    result = isinstance(obj, objinstance)
+    
+    # Do second round checking
+    if subtype is None and objtype is 'arraylike': subtype = 'number' # This is the default
+    if isiterable(obj) and subtype is not None:
+        for item in obj:
+            result = result and checktype(item, subtype)
+
+    # Decide what to do with the information thus gleaned
+    if die: # Either raise an exception or do nothing if die is True
+        if not result: # It's not an instance
+            errormsg = 'Incorrect type: object is %s, but %s is required' % (type(obj), objtype)
+            raise Exception(errormsg)
+        else:
+            return None # It's fine, do nothing
+    else: # Return the result of the comparison
+        return result
+   
+         
+def isnumber(obj):
+    ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
+    return checktype(obj, 'number')
+    
 
 def promotetoarray(x):
     ''' Small function to ensure consistent format for things that should be arrays '''
@@ -196,6 +304,18 @@ def promotetoarray(x):
             return array([x]) # e.g. array(3)
     else: # e.g. 'foo'
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
+
+
+def promotetolist(obj=None, objtype=None):
+    ''' Make sure object is iterable -- used so functions can handle inputs like 'FSW' or ['FSW', 'MSM'] '''
+    if type(obj)!=list:
+        obj = [obj] # Listify it
+    if objtype is not None:  # Check that the types match -- now that we know it's a list, we can iterate over it
+        for item in obj:
+            checktype(obj=item, objtype=objtype, die=True)
+    if obj is None:
+        raise Exception('This is mathematically impossible')
+    return obj
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
@@ -356,7 +476,7 @@ def findinds(val1, val2=None, eps=1e-6):
     if val2==None: # Check for equality
         output = nonzero(val1) # If not, just check the truth condition
     else:
-        if isinstance(val2, (str, unicode)):
+        if isinstance(val2, basestring):
             output = nonzero(array(val1)==val2)
         else:
             output = nonzero(abs(array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
@@ -1143,8 +1263,8 @@ class odict(OrderedDict):
 ## DATA FRAME CLASS
 ##############################################################################
 
-# These are repeated to make this frationally more self-contained
-from numpy import array, zeros, vstack, hstack, matrix, argsort # analysis:ignore
+# Some of these are repeated to make this frationally more self-contained
+from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin # analysis:ignore
 from numbers import Number # analysis:ignore
 
 class dataframe(object):
@@ -1167,6 +1287,7 @@ class dataframe(object):
         a.sort(); print a # Sort by the first column
         a.sort('y'); print a # Sort by the second column
         a.addrow([1,44]); print a # Replace the previous row and sort
+        a.getrow(1) # Return the row starting with value '1'
         a.rmrow(); print a # Remove last row
         a.rmrow(3); print a # Remove the row starting with element '3'
     
@@ -1193,7 +1314,7 @@ class dataframe(object):
             nrows = self.nrows()
             for c,col in enumerate(self.cols):
                 outputlist[col] = list()
-                maxlen = -1
+                maxlen = len(col) # Start with length of column name
                 if nrows:
                     for val in self.data[c,:]:
                         output = str(val)
@@ -1201,10 +1322,10 @@ class dataframe(object):
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY
+            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY, but easier to do explicitly than to find the general solution!
             elif nrows<100:  indformat = '%3s'
             elif nrows<1000: indformat = '%4s'
-            else:            indformat = '%5s'
+            else:            indformat = '%6s'
             
             # Assemble output
             output = indformat % '' # Empty column for index
@@ -1220,7 +1341,7 @@ class dataframe(object):
             
             return output
     
-    def _val2row(self, value):
+    def _val2row(self, value=None):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
             output = zeros(self.ncols(), dtype=object)
@@ -1230,18 +1351,20 @@ class dataframe(object):
                 except: 
                     raise Exception('Entry for column %s not found; keys you supplied are: %s' % (col, value.keys()))
             return array(output, dtype=object)
+        elif value is None:
+            return empty(self.ncols(),dtype=object)
         else: # Not sure what it is, just make it an array
             return array(value, dtype=object)
     
     def _sanitizecol(self, col):
         ''' Take None or a string and return the index of the column '''
         if col is None: output = 0 # If not supplied, assume first column is control
-        elif isinstance(col, (str, unicode)): output = self.cols.index(col) # Convert to index
+        elif isinstance(col, basestring): output = self.cols.index(col) # Convert to index
         else: output = col
         return output
         
     def __getitem__(self, key):
-        if isinstance(key, (str, unicode)):
+        if isinstance(key, basestring):
             colindex = self.cols.index(key)
             output = self.data[colindex,:]
         elif isinstance(key, Number):
@@ -1254,7 +1377,7 @@ class dataframe(object):
         return output
         
     def __setitem__(self, key, value):
-        if isinstance(key, (str, unicode)):
+        if isinstance(key, basestring):
             if len(value) != self.nrows(): 
                 raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows()))
             try:
@@ -1276,28 +1399,6 @@ class dataframe(object):
             self.data[colindex,rowindex] = value
         return None
     
-    def ncols(self):
-        ''' Get the number of columns in the data frame '''
-        return len(self.cols)
-
-    def nrows(self):
-        ''' Get the number of rows in the data frame '''
-        try:    return self.data.shape[1]
-        except: return 0 # If it didn't work, probably because it's empty
-    
-    def addcol(self, key, value):
-        ''' Add a new colun to the data frame -- for consistency only '''
-        self.__setitem__(key, value)
-    
-    def rmcol(self, key, returnval=True):
-        ''' Remove a column from the data frame '''
-        colindex = self.cols.index(key)
-        self.cols.pop(colindex)
-        thiscol = self.data[colindex,:]
-        self.data = vstack((self.data[:colindex,:], self.data[colindex+1:,:]))
-        if returnval: return thiscol
-        else: return None
-    
     def pop(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
@@ -1312,27 +1413,94 @@ class dataframe(object):
         self.data = hstack((self.data, array(matrix(value).transpose(), dtype=object)))
         return None
     
-    def addrow(self, value, overwrite=True, col=None, reverse=False):
+    def ncols(self):
+        ''' Get the number of columns in the data frame '''
+        return len(self.cols)
+
+    def nrows(self):
+        ''' Get the number of rows in the data frame '''
+        try:    return self.data.shape[1]
+        except: return 0 # If it didn't work, probably because it's empty
+    
+    def addcol(self, key, value):
+        ''' Add a new colun to the data frame -- for consistency only '''
+        self.__setitem__(key, value)
+    
+    def rmcol(self, key):
+        ''' Remove a column from the data frame '''
+        colindex = self.cols.index(key)
+        self.cols.pop(colindex) # Remove from list of columns
+        self.data = vstack((self.data[:colindex,:], self.data[colindex+1:,:])) # Remove from data
+        return None
+    
+    def addrow(self, value=None, overwrite=True, col=None, reverse=False):
         ''' Like append, but removes duplicates in the first column and resorts '''
         value = self._val2row(value) # Make sure it's in the correct format
-        col = self._sanitizecol(col)
-        try:    index = self.data[col,:].tolist().index(value[col]) # Try to find duplicates
-        except: index = None
+        col   = self._sanitizecol(col)
+        index = self._rowindex(key=value[col], col=col, die=False) # Return None if not found
         if index is None or not overwrite: self.append(value)
         else: self.data[:,index] = value # If it exists already, just replace it
         self.sort(col=col, reverse=reverse) # Sort
         return None
     
-    def rmrow(self, key=None, col=None, returnval=False):
-        ''' Like pop, but removes by matching the first column instead of the index '''
+    def _rowindex(self, key=None, col=None, die=False):
+        ''' Get the sanitized row index for a given key and column '''
         col = self._sanitizecol(col)
-        if key is None: key = self.data[col,-1] # If not supplied, pick the last element
-        try:    index = self.data[col,:].tolist().index(key) # Try to find duplicates
-        except: raise Exception('Item %s not found; choices are: %s' % (key, self.data[col,:]))
-        thisrow = self.pop(index)
-        if returnval: return thisrow
-        else:         return None
+        coldata = self.data[col,:] # Get data for this column
+        if key is None: key = coldata[-1] # If not supplied, pick the last element
+        try:    index = coldata.tolist().index(key) # Try to find duplicates
+        except: 
+            if die: raise Exception('Item %s not found; choices are: %s' % (key, coldata))
+            else:   return None
+        return index
+        
+    def rmrow(self, key=None, col=None, returnval=False, die=True):
+        ''' Like pop, but removes by matching the first column instead of the index '''
+        index = self._rowindex(key=key, col=col, die=die)
+        if index is not None: self.pop(index)
+        return None
     
+    def _todict(self, row):
+        ''' Return row as a dict rather than as an array '''
+        if len(row)!=len(self.cols): 
+            errormsg = 'Length mismatch between "%s" and "%s"' % (row, self.cols)
+            raise Exception(errormsg)
+        rowdict = dict(zip(self.cols, row))
+        return rowdict
+    
+    def getrow(self, key=None, col=None, default=None, closest=False, die=False, asdict=False):
+        '''
+        Get a row by value.
+        
+        Arguments:
+            key = the value to look for
+            col = the column to look for this value in
+            default = the value to return if key is not found (overrides die)
+            closest = whether or not to return the closest row (overrides default and die)
+            die = whether to raise an exception if the value is not found
+            asdict = whether to return results as dict rather than list
+        
+        Example:
+            df = dataframe(cols=['year','val'],data=[[2016,2017],[0.3,0.5]])
+            df.getrow(2016) # returns array([2016, 0.3], dtype=object)
+            df.getrow(2013) # returns None, or exception if die is True
+            df.getrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
+            df.getrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
+        '''
+        if not closest: # Usual case, get 
+            index = self._rowindex(key=key, col=col, die=(die and default is None))
+        else:
+            col = self._sanitizecol(col)
+            coldata = self.data[col,:] # Get data for this column
+            index = argmin(abs(coldata-key)) # Find the closest match to the key
+        if index is not None:
+            thisrow = self.data[:,index]
+            if asdict:
+                thisrow = self._todict(thisrow)
+        else:
+            thisrow = default # If not found, return as default
+        return thisrow
+        
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
         rowindex = int(row)
