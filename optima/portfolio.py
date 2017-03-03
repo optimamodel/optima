@@ -191,16 +191,16 @@ class Portfolio(object):
             objectives = defaultobjectives()
         if progsetnames==None:
             printv('\nWARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 3, verbose)
-            progsetnames = [0]*len(self.projects)
+            progsetnames = [-1]*len(self.projects)
         if not len(progsetnames)==len(self.projects):
             printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 1, verbose)
-            progsetnames = [0]*len(self.projects)
+            progsetnames = [-1]*len(self.projects)
         if parsetnames==None:
             printv('\nWARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 3, verbose)
-            parsetnames = [0]*len(self.projects)
+            parsetnames = [-1]*len(self.projects)
         if not len(parsetnames)==len(self.projects):
             printv('WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 1, verbose)
-            parsetnames = [0]*len(self.projects)
+            parsetnames = [-1]*len(self.projects)
         
         # Initialise internal parameters
         BOClist = []
