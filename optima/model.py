@@ -160,11 +160,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     fixpropsupp    = findfixind('fixpropsupp')# findinds(simpars['tvec']>=simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] < simpars['tvec'][-1] else nan
     
     # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
-    #                  name,       prop,    lower, to,   num,      denom,   raw_new,        fixyear
-    propdx_list     = ('propdx',   propdx,   undx, dx,   alldx,   allplhiv, raw_diag,       fixpropdx)
-    propcare_list   = ('propcare', propcare, dx,   care, allcare, alldx,    raw_newcare,    fixpropcare)
-    proptx_list     = ('proptx',   proptx,   care, usvl, alltx,   allcare,  raw_newtreat,   fixproptx)
-    propsupp_list   = ('propsupp', propsupp, usvl, svl,  svl,     alltx,    raw_newsupp,    fixpropsupp)
+    #                  name,       prop,    lower, to,    num,      denom,   raw_new,        fixyear
+    propdx_list     = ('propdx',   propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx)
+    propcare_list   = ('propcare', propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare)
+    proptx_list     = ('proptx',   proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx) 
+    propsupp_list   = ('propsupp', propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -784,9 +784,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         else: printv(errormsg, 1, verbose=verbose)
             
 
-            ###########################################################################
-            ## Proportions
-            ###########################################################################
+            #######################################################################################
+            ## Proportions -- these happen after the Euler step, which is why it's t+1 instead of t
+            #######################################################################################
 
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
@@ -813,12 +813,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Reconcile the differences between the number we have and the number we want
                 if wanted is not None:
                     diff = wanted - actual # Wanted number minus actual number 
-                    if diff>0.: # We need to move people UP the cascade 
+                    if diff>0.: # We need to move people forwards along the cascade 
                         ppltomoveup = people[lowerstate,:,t+1]
                         totalppltomoveup = ppltomoveup.sum()
                         if totalppltomoveup>0:
                             diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
-                            if name == 'proptx': # For treatment, we move people in lower CD4 states first
+                            if name is 'proptx': # For treatment, we move people in lower CD4 states first
                                 tmpdiff = diff
                                 newmovers = zeros((ncd4,npops))
                                 for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
@@ -829,20 +829,40 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                             tmpdiffcd4 = min(tmpdiff, totalppltomoveupcd4-eps)
                                             newmovers[cd4,:] = tmpdiffcd4*ppltomoveupcd4/totalppltomoveupcd4 # Pull out evenly from each population
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
+                                # Need to handle USVL and SVL separately
+                                people[care,:,t+1] -= newmovers # Shift people out of care
+                                totcurrentusvl  = people[usvl,:,t+1].sum()
+                                totcurrentsvl   = people[svl,:,t+1].sum()
+                                totcurrenttx    = totcurrentusvl + totcurrentsvl
+                                currentfracusvl = totcurrentusvl/totcurrenttx
+                                currentfracsvl  = totcurrentsvl/totcurrenttx
+                                people[usvl,:,t+1]  += newmovers*currentfracusvl # ... and onto treatment, according to existing proportions
+                                people[svl,:,t+1]   += newmovers*currentfracsvl # Likewise for SVL
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                                 newmovers = diff*ppltomoveup/totalppltomoveup
-                            people[lowerstate,:,t+1] -= newmovers # Shift people out of the lower state... 
-                            people[tostate,:,t+1]    += newmovers # ... and into the higher state
+                                people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
+                                people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
                             raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
-                    elif diff<0.: # We need to move people DOWN the cascade
+                    elif diff<0.: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
                         if totalppltomovedown>0: # To avoid having to add eps
-                            diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people, to keep my sanity...
+                            diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
-                            people[tostate,:,t+1]    -= newmovers # Shift people out of the higher state... 
-                            people[lowerstate,:,t+1] += newmovers # ... and into the lower state
+                            if name is 'proptx': # Handle SVL and USVL separately
+                                totcurrentusvl = people[usvl,:,t+1].sum()
+                                totcurrentsvl  = people[svl,:,t+1].sum()
+                                totcurrenttx   = totcurrentusvl + totcurrentsvl
+                                currentfracusvl = totcurrentusvl/totcurrenttx
+                                currentfracsvl  = totcurrentsvl/totcurrenttx
+                                people[usvl,:,t+1] -= newmovers*currentfracusvl # Shift people out of USVL treatment
+                                people[svl,:,t+1]  -= newmovers*currentfracsvl  # Shift people out of SVL treatment
+                                people[care,:,t+1] += newmovers # ... and into care
+                            else:
+                                people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
+                                people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
                             raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+
             if debug: checkfornegativepeople(people, tind=t+1)
         
     raw                 = odict()    # Sim output structure
