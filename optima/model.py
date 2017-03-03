@@ -33,7 +33,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
     fromto          = simpars['fromto']             # States to and from
     transmatrix     = simpars['transmatrix']        # Raw transitions matrix
-		
+
     # Initialize people array
     people          = zeros((nstates, npops, npts)) # Matrix to hold everything
 
@@ -483,7 +483,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s and thistransit[%i] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t], errstate, thistransit[errstate,:,:])
+                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t])
                             if die: raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
@@ -568,13 +568,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
 
         # Add these transition probabilities to the main array
-        ii = undx[0]
         si = susreg[0] # susreg is a single element, but needs an index since can't index a list with an array
         pi = progcirc[0] # as above 
-        thistransit[si,si,:] = (1.-background[:,t]) - infections_to[si] # Index for moving from sus to sus
-        thistransit[si,ii,:] = infections_to[si] # Index for moving from sus to infection
-        thistransit[pi,pi,:] = (1.-background[:,t]) - infections_to[pi] # Index for moving from circ to circ
-        thistransit[pi,ii,:] = infections_to[pi] # Index for moving from circ to infection
+        ui = undx[0]
+        thistransit[si,si,:] *= (1.-background[:,t]) - infections_to[si] # Index for moving from sus to sus
+        thistransit[si,ui,:] *= infections_to[si] # Index for moving from sus to infection
+        thistransit[pi,pi,:] *= (1.-background[:,t]) - infections_to[pi] # Index for moving from circ to circ
+        thistransit[pi,ui,:] *= infections_to[pi] # Index for moving from circ to infection
 
         # Calculate infections acquired and transmitted
         raw_inci[:,t]       = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
@@ -586,8 +586,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ##############################################################################################################
 
         # Adjust transition rates
-        for state in range(nsus,nstates):
-            thistransit[state,:,:] *= (1.-background[:,t])
+        thistransit[nsus:,:,:] *= (1.-background[:,t])
 
         # Store deaths
         raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
@@ -646,15 +645,17 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= (1.-usvlprob)
                 elif tostate in usvl: # Probability of becoming unsuppressed
                     thistransit[fromstate,tostate,:] *= usvlprob
-
+        
         # Check that probabilities all sum to 1
-        if debug and not all([(abs(thistransit[j].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all() for j in range(nstates)]):
-            wrongstatesindices = [j for j in range(nstates) if not (abs(thistransit[j].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))<eps).all()]
-            wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
-            wrongprobs = array([thistransit[j].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
-            errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
-            raise OptimaException(errormsg)
-            
+        if debug:
+            transtest = array([(abs(thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))>eps).any() for j in range(nstates)])
+            if any(transtest):
+                wrongstatesindices = findinds(transtest)
+                wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
+                wrongprobs = array([thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
+                errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
+                raise OptimaException(errormsg)
+                
         # Check that no probabilities are less than 0
         if debug and any([(thistransit[k]<0).any() for k in range(nstates)]):
             wrongstatesindices = [k for k in range(nstates) if (thistransit[k]<0.).any()]
@@ -850,14 +851,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
                             if name is 'proptx': # Handle SVL and USVL separately
-                                totcurrentusvl = people[usvl,:,t+1].sum()
-                                totcurrentsvl  = people[svl,:,t+1].sum()
-                                totcurrenttx   = totcurrentusvl + totcurrentsvl
-                                currentfracusvl = totcurrentusvl/totcurrenttx
-                                currentfracsvl  = totcurrentsvl/totcurrenttx
-                                people[usvl,:,t+1] -= newmovers*currentfracusvl # Shift people out of USVL treatment
-                                people[svl,:,t+1]  -= newmovers*currentfracsvl  # Shift people out of SVL treatment
-                                people[care,:,t+1] += newmovers # ... and into care
+                                newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
+                                newmoverssvl  = newmovers[ncd4:,:] # Second group is SVL
+                                people[usvl,:,t+1] -= newmoversusvl # Shift people out of USVL treatment
+                                people[svl,:,t+1]  -= newmoverssvl  # Shift people out of SVL treatment
+                                people[care,:,t+1] += newmoversusvl+newmoverssvl # Add both groups of movers into care
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
@@ -881,6 +879,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['otherdeath']   = raw_otherdeath
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
+    
+    import optima as op
+    op.saveobj('transmatrix.obj', alltransmatrices)
+    print('TEMP')
     
     return raw # Return raw results
 
