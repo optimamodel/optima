@@ -2,7 +2,7 @@
 
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None,
-    maxiters=1e3, maxtime=3600, abstol=None, reltol=5e-3, stalliters=50,
+    maxiters=None, maxtime=None, abstol=None, reltol=5e-3, stalliters=50,
     stoppingfunc=None, randseed=None, label=None, fulloutput=True, verbose=2):
     """
     Optimization using adaptive stochastic descent (ASD).
@@ -64,6 +64,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         return output, origshape
     
     ## Handle inputs and set defaults
+    if maxtime  is None: maxtime = 3600
+    if maxiters is None: maxiters = 1000
     nparams = size(x); # Number of parameters
     x, origshape = consistentshape(x) # Turn it into a vector but keep the original shape (not necessarily class, though)
     p,tmp = ones(2*nparams),0 if pinitial is None else consistentshape(pinitial)  # Set initial parameter selection probabilities -- uniform by default
@@ -176,7 +178,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Return
     x = reshape(x,origshape) # Parameters
     fval = fulloutputfval[:count] # Function evaluations
-    if verbose>=2: print('======== %s, terminating ========' % exitreason)
+    if verbose>=2: print('=== %s, terminating (orig: %s | best: %s) ===' % ((exitreason,)+multisigfig([fval[0], fval[-1]])))
     if fulloutput: return (x, fval, exitreason)
     else:          return x
 
