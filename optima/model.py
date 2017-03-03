@@ -850,14 +850,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
                             if name is 'proptx': # Handle SVL and USVL separately
-                                totcurrentusvl = people[usvl,:,t+1].sum()
-                                totcurrentsvl  = people[svl,:,t+1].sum()
-                                totcurrenttx   = totcurrentusvl + totcurrentsvl
-                                currentfracusvl = totcurrentusvl/totcurrenttx
-                                currentfracsvl  = totcurrentsvl/totcurrenttx
-                                people[usvl,:,t+1] -= newmovers*currentfracusvl # Shift people out of USVL treatment
-                                people[svl,:,t+1]  -= newmovers*currentfracsvl  # Shift people out of SVL treatment
-                                people[care,:,t+1] += newmovers # ... and into care
+                                newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
+                                newmoverssvl  = newmovers[ncd4:,:] # Second group is SVL
+                                people[usvl,:,t+1] -= newmoversusvl # Shift people out of USVL treatment
+                                people[svl,:,t+1]  -= newmoverssvl  # Shift people out of SVL treatment
+                                people[care,:,t+1] += newmoversusvl+newmoverssvl # Add both groups of movers into care
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
