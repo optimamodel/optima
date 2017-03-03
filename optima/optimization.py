@@ -378,7 +378,13 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         else:
             summary = 'Baseline: %0.0f %0.0f | Target: %0.0f %0.0f | Final: %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
-
+    
+    try: 
+        print('hi my name is objectivecalc and your budget is %s and outcome is %s' % (totalbudget, output.outcome))
+    except:
+        print('hi my name is objectivecalc and your budget is %s and outcome is %s' % (totalbudget, output))
+    
+    
     return output
 
 
@@ -513,7 +519,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
-        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
+        args['initpeople'] = None # WARNING initpeople # Set so only runs the part of the optimization required
         
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
