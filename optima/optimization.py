@@ -528,7 +528,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     
     # Print out results of the run
     if mc:
-        printv('Outcomes for budget scenarios, from best to worst:', 2, verbose)
+        printv('Budget scenario outcomes:', 2, verbose)
         besttoworst = argsort(extremeoutcomes[:])
         besttoworstkeys = [extremeoutcomes.keys()[i] for i in besttoworst]
         for key in firstkeys: besttoworstkeys.remove(key) # Remove these from the list
