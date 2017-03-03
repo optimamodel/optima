@@ -96,9 +96,9 @@ def loadtranstable(filename=default_filename, npops=None):
 
     fromto = []
     transmatrix = zeros((nstates,nstates,npops))
-    for rownum in range(nstates-1): # Loop over each health state: the from state
+    for rownum in range(nstates): # Loop over each health state: the from state
         fromto.append([]) # Append two lists: the to state and the probability
-        for colnum in range(nstates-1): # ...and again
+        for colnum in range(nstates): # ...and again
             if sheet.cell_value(rownum+1,colnum+1):
                 fromto[rownum].append(colnum) # Append the to states
                 transmatrix[rownum,colnum,:] = ones(npops) # Append the probabilities
