@@ -34,8 +34,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     fromto          = simpars['fromto']             # States to and from
     transmatrix     = simpars['transmatrix']        # Raw transitions matrix
 
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    
     # Initialize people array
     people          = zeros((nstates, npops, npts)) # Matrix to hold everything
 
@@ -881,6 +879,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['otherdeath']   = raw_otherdeath
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
+    
+    import optima as op
+    op.saveobj('transmatrix.obj', alltransmatrices)
+    print('TEMP')
     
     return raw # Return raw results
 

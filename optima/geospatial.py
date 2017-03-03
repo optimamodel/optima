@@ -516,7 +516,6 @@ def loadport(filepath=None, usegui=False):
         try: tmpport = loadobj(filepath, verbose=0)
         except Exception as E: 
             warning('Could not load file "%s" because "%s"' % (filepath, E.message), usegui)
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             return None
         if tmpport is not None: 
             if type(tmpport)==Portfolio:
