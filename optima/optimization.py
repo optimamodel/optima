@@ -9,9 +9,6 @@ from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, 
 from numpy import zeros, arange, maximum, array, inf, isfinite, argmin
 from numpy.random import random
 
-# Define global parameters that shouldn't really matter
-infmoney = 1e9 # Effectively infinite money
-
 
 ################################################################################################################################################
 ### The container class
@@ -381,7 +378,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
         else:
             summary = 'Baseline: %0.0f %0.0f | Target: %0.0f %0.0f | Final: %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
-
+    
     return output
 
 
@@ -465,19 +462,31 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     
     # Calculate the initial people distribution
     results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0)
-    initialind = findinds(results.tvec, optim.objectives['start'])
+    initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     ## Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-    args = {'which':'outcomes', 'project':project, 'parset':parset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':origtotalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose, 'initpeople':None}
+    args = {'which':'outcomes', 
+            'project':project, 
+            'parset':parset, 
+            'progset':progset, 
+            'objectives':optim.objectives, 
+            'constraints':optim.constraints, 
+            'totalbudget':origtotalbudget, 
+            'optiminds':optiminds, 
+            'origbudget':origbudget, 
+            'tvec':tvec, 
+            'ccsample':ccsample, 
+            'verbose':verbose, 
+            'initpeople':initpeople}
     
     # Set up extremes
     extremebudgets = odict()
     extremebudgets['Current']    = zeros(nprogs)
     for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
     extremebudgets['Zero']     = zeros(nprogs)
-    extremebudgets['Infinite'] = origbudget[:]+infmoney
+    extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
     if mc: # Only run these if MC is being run
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
@@ -603,7 +612,7 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     terminate = False
 
     # First, try infinite money
-    args['totalbudget'] = 1e9
+    args['totalbudget'] = project.settings.infmoney
     targetsmet, summary = objectivecalc(budgetvec, **args)
     if not(targetsmet): 
         terminate = True

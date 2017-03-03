@@ -301,7 +301,7 @@ def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020
         defaultbudget = project.progsets[progset].getdefaultbudget()
         maxbudget = dcp(defaultbudget)
         nobudget = dcp(defaultbudget)
-        for key in maxbudget: maxbudget[key] += 1e14
+        for key in maxbudget: maxbudget[key] += project.settings.infmoney
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
             Parscen(name='Current conditions', parsetname='default', pars=[]),
