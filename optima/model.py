@@ -816,10 +816,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Reconcile the differences between the number we have and the number we want
                 if wanted is not None:
                     diff = wanted - actual # Wanted number minus actual number 
-                    if diff>0.: # We need to move people forwards along the cascade 
+                    if diff>eps: # We need to move people forwards along the cascade 
                         ppltomoveup = people[lowerstate,:,t+1]
                         totalppltomoveup = ppltomoveup.sum()
-                        if totalppltomoveup>0:
+                        if totalppltomoveup>eps:
                             diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
                             if name is 'proptx': # For treatment, we move people in lower CD4 states first
                                 tmpdiff = diff
@@ -850,7 +850,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
                             raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
-                    elif diff<0.: # We need to move people backwards along the cascade
+                            checkfornegativepeople(people)
+                    elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
                         if totalppltomovedown>0: # To avoid having to add eps
