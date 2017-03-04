@@ -96,7 +96,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetnam
     project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname,
                    progsetname=progsetname, objectives=objectives, 
                    constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-                   verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc)
+                   verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
     project.save(filename=project.tmpfilename)
     if batch: outputqueue.put(project)
     print('...done.')

@@ -594,7 +594,7 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, **kwargs):
+    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, die=True, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
         projectBOC.name += ' (' + str(projectBOC.uid) + ')'
@@ -637,7 +637,7 @@ class Project(object):
                 owbudget = tmpallocs[closest]
                 print('Using old allocation as new starting point.')
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
-            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, mc=mc, **kwargs)
+            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, mc=mc, die=die, **kwargs)
             tmptotals.append(budget)
             tmpallocs.append(dcp(results.budget['Optimal']))
             projectBOC.x.append(budget)
