@@ -595,9 +595,7 @@ def redotranstable(project, **kwargs):
 #    fixsettings(project, resetversion=False, **kwargs)
     
     # Add transitions matrix
-#    for ps in project.parsets.values():
-#        ps.pars['fromto'], ps.pars['transmatrix'] = op.loadtranstable(npops = project.data['npops'])
-#        ps.pars.pop('rawtransit', None) # If it's really old, it won't actually have this
+    tmpfromto, tmptransmatrix = op.loadtranstable(npops = project.data['npops'])
     
     to, prob = 0, 1
     for ps in project.parsets.values():
@@ -605,7 +603,7 @@ def redotranstable(project, **kwargs):
         nstates = len(ps.pars['rawtransit'])
         transmatrix = zeros((nstates,nstates,len(ps.pars['popkeys'])))
         for fromstate in range(nstates):
-            fromto.append(ps.pars['rawtransit'][to])
+            fromto.append(ps.pars['rawtransit'][fromstate][to])
             for t,tostate in enumerate(ps.pars['rawtransit'][fromstate][to]):
                 transmatrix[fromstate,tostate,:] = ps.pars['rawtransit'][fromstate][prob][t]
         ps.pars['fromto'] = fromto
