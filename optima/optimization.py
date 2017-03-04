@@ -184,12 +184,8 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     constrainedbudget = dcp(origbudget)
     
     # Handle zeros
-    if sum(constrainedbudget[:])==0: 
-        print('this is a thing')
-        constrainedbudget[:] += tolerance
-    if sum(budgetvec)==0:            
-        print('another thing')
-        budgetvec[:] += tolerance
+    if sum(constrainedbudget[:])==0: constrainedbudget[:] += tolerance
+    if sum(budgetvec)==0:            budgetvec[:] += tolerance
 
     # Calculate the current total budget
     currenttotal = sum(constrainedbudget[:]) # WARNING, assumes it's an odict

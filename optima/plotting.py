@@ -172,7 +172,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
                 allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
+            else: printv('Could not plot improvement: "%s"' % E.__repr__(), 1, verbose)
         
     
     ## Add budget plot
@@ -183,7 +183,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
                 allplots['budget'] = plotbudget(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot budget: "%s"' % (E.message), 1, verbose)
+            else: printv('Could not plot budget: "%s"' % (E.__repr__()), 1, verbose)
     
     ## Add coverage plot
     if 'coverage' in toplot:
@@ -193,7 +193,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
                 allplots['coverage'] = plotcoverage(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot coverage: "%s"' % (E.message), 1, verbose)
+            else: printv('Could not plot coverage: "%s"' % (E.__repr__()), 1, verbose)
     
     ## Add cascade plot
     if 'cascade' in toplot:
@@ -202,7 +202,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             allplots['cascade'] = plotcascade(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot cascade: "%s"' % E.message, 1, verbose)
+            else: printv('Could not plot cascade: "%s"' % E.__repr__(), 1, verbose)
     
     
     ## Add deaths by CD4 plot
@@ -212,7 +212,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot deaths by CD4: "%s"' % E.message, 1, verbose)
+            else: printv('Could not plot deaths by CD4: "%s"' % E.__repr__(), 1, verbose)
     
     
     ## Add PLHIV by CD4 plot
@@ -222,7 +222,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot PLHIV by CD4: "%s"' % E.message, 1, verbose)
+            else: printv('Could not plot PLHIV by CD4: "%s"' % E.__repr__(), 1, verbose)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
@@ -561,6 +561,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     # Preliminaries: process inputs and extract needed data
     
     budgets = dcp(multires.budget) # Copy budget
+    if not isinstance(budgets[0], odict): budgets = odict([('Sample',budgets)]) # Handle case where it's not an odict of odicts
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
             if budgets[b][p] is not None:
