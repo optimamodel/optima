@@ -589,14 +589,28 @@ def addagetopars(project, **kwargs):
 
 def redotranstable(project, **kwargs):
     ''' Redo how the transition table is handled and add infinite money '''
+    from numpy import zeros
     
     # Refresh settings since potentially bunged when the transition matrix is reloaded
-    fixsettings(project, resetversion=False, **kwargs)
+#    fixsettings(project, resetversion=False, **kwargs)
     
     # Add transitions matrix
+#    for ps in project.parsets.values():
+#        ps.pars['fromto'], ps.pars['transmatrix'] = op.loadtranstable(npops = project.data['npops'])
+#        ps.pars.pop('rawtransit', None) # If it's really old, it won't actually have this
+    
+    to, prob = 0, 1
     for ps in project.parsets.values():
-        ps.pars['fromto'], ps.pars['transmatrix'] = op.loadtranstable(npops = project.data['npops'])
-        ps.pars.pop('rawtransit', None) # If it's really old, it won't actually have this
+        fromto = []
+        nstates = len(ps.pars['rawtransit'])
+        transmatrix = zeros((nstates,nstates,len(ps.pars['popkeys'])))
+        for fromstate in range(nstates):
+            fromto.append(ps.pars['rawtransit'][to])
+            for t,tostate in enumerate(ps.pars['rawtransit'][fromstate][to]):
+                transmatrix[fromstate,tostate,:] = ps.pars['rawtransit'][fromstate][prob][t]
+        ps.pars['fromto'] = fromto
+        ps.pars['transmatrix'] = transmatrix
+        ps.pars.pop('rawtransit')
     
     # Even though fixed by fixsettings above, just make it explicit that we're adding this as well
     project.settings.infmoney = 1e10
