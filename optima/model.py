@@ -828,7 +828,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                     if tmpdiff>eps: # Move people until you have the right proportions
                                         ppltomoveupcd4 = ppltomoveup[cd4,:]
                                         totalppltomoveupcd4 = ppltomoveupcd4.sum()
-                                        if totalppltomoveupcd4:
+                                        if totalppltomoveupcd4>eps:
                                             tmpdiffcd4 = min(tmpdiff, totalppltomoveupcd4-eps)
                                             newmovers[cd4,:] = tmpdiffcd4*ppltomoveupcd4/totalppltomoveupcd4 # Pull out evenly from each population
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
