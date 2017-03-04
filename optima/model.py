@@ -882,6 +882,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
+#    import optima as op
+#    op.saveobj('transmatrices.obj', alltransmatrices)
+#    print('TEMP')
+#    import os; print(os.getcwd())
+    
     return raw # Return raw results
 
 
