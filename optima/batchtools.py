@@ -41,6 +41,8 @@ def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
         processes.append(prc)
     for i in range(nprocs):
         outputlist[i] = outputqueue.get()
+    for prc in processes:
+        prc.join() # Wait for them to finish
     
     return outputlist
 
@@ -74,6 +76,8 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
                       args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload))
         prc.start()
         processes.append(prc)
+    for prc in processes:
+        prc.join() # Wait for them to finish
     
     return outputlist
 
@@ -168,5 +172,8 @@ def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetnam
             processes.append(prc)
         else:
             boc_task(*args)
+    if batch:
+        for prc in processes:
+            prc.join() # Wait for them to finish
     
     return outputlist
