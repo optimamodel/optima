@@ -13,11 +13,8 @@ from time import time
 import os
 
 
-global geoguiwindow, globalportfolio
-if 1:  geoguiwindow, globalportfolio = [None]*2
-
-globalobjectives = defaultobjectives(verbose=0)
-globalobjectives['budget'] = 0.0 # Reset
+global geoguiwindow, globalportfolio, globalobjectives
+if 1:  geoguiwindow, globalportfolio, globalobjectives = [None]*3
 
     
     
@@ -452,7 +449,7 @@ def gui_create():
 
 def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-    if usegui: global globalportfolio, projectslistbox, globalobjectives, objectiveinputs
+    if usegui: global globalportfolio, projectslistbox, objectiveinputs
     
     projectpaths = []
     projectslist = []
@@ -542,10 +539,13 @@ def rungeo(portfolio=None, objectives=None, BOCtime=300, maxtime=120, usegui=Fal
     ''' Actually run geospatial analysis!!! '''
     if usegui: global globalportfolio, globalobjectives, objectiveinputs
     starttime = time()
-    if portfolio != None:
+    if portfolio is not None:
         globalportfolio = portfolio
-    if objectives != None:
+    if objectives is not None:
         globalobjectives = objectives
+    if globalobjectives is None:
+        globalobjectives = defaultobjectives()
+        globalobjectives['budget'] = 0.0 # Reset
     if usegui:
         for key in objectiveinputs.keys():
             globalobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
@@ -703,8 +703,9 @@ def geogui():
     '''
     global geoguiwindow, globalportfolio, globalobjectives, objectiveinputs, projectslistbox, projectinfobox
     globalportfolio = None
-#    globalobjectives = defaultobjectives()
-#    globalobjectives['budget'] = 0.0 # Reset
+    if globalobjectives is None:
+        globalobjectives = defaultobjectives()
+        globalobjectives['budget'] = 0.0 # Reset
     
     ## Set parameters
     wid = 1200.0

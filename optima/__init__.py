@@ -154,7 +154,7 @@ from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios
 
 ## Optimization analyses
 from . import optimization as _optimization
-from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
+from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, outcomecalc
 
 ## Plotting functions
 from . import plotting as _plotting 
@@ -200,13 +200,14 @@ from .portfolio import Portfolio
 
 # And really really finally, load geospatial functions (has to load projects, so has to come after migration)
 try:
-    import geospatial as _geospatial
     from . import batchtools
-    from .batchtools import batchautofit
-    from .batchtools import batchBOC
-    from .geospatial import geogui # Import GUI tools for geospatial analysis
-except Exception as E: _failed.append('geospatial, batchtools: %s' % E.__repr__())
+    from .batchtools import batchautofit, batchBOC
+except Exception as E: _failed.append('batchtools: %s' % E.__repr__())
 
+try:
+    import geospatial as _geospatial
+    from .geospatial import geogui # Import GUI tools for geospatial analysis
+except Exception as E: _failed.append('geospatial: %s' % E.__repr__())
 
 if len(_failed): print('The following import errors were encountered:\n%s' % _failed)
 else: del _failed # If it's empty, don't bother keeping it
