@@ -320,7 +320,7 @@ def fixsettings(project, resetversion=True, **kwargs):
     Migration between Optima 2.1.7 and 2.1.8.
     """
     ## Make sure settings is up to date
-    settingslist = ['dt', 'start', 'now', 'dataend', 'safetymargin', 'eps', 'forcepopsize'] # Keep these from the old settings object
+    settingslist = ['dt', 'start', 'now', 'dataend', 'safetymargin', 'eps', 'forcepopsize', 'transnorm'] # Keep these from the old settings object
     oldsettings = {}
     
     # Pull out original setting
