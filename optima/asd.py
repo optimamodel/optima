@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None,
-    maxiters=None, maxtime=None, abstol=None, reltol=5e-3, stalliters=50,
+    maxiters=None, maxtime=None, abstol=None, reltol=1e-3, stalliters=50,
     stoppingfunc=None, randseed=None, label=None, fulloutput=True, verbose=2):
     """
     Optimization using adaptive stochastic descent (ASD).
@@ -143,16 +141,16 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             s1[choice] = s1[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
-            flag = '✓' # Marks an improvement
+            flag = '++' # Marks an improvement
         elif fvalnew >= fvalold: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
-            flag = '—' # Marks no change
+            flag = '--' # Marks no change
         else:
             exitreason = 'Objective function returned NaN'
             break
         if verbose>=2: 
-            print(offset + label + ' step %i (%0.1f s): %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
+            print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
         
         # Store output information
         fulloutputfval[count-1] = fval # Store objective function evaluations
@@ -178,7 +176,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Return
     x = reshape(x,origshape) # Parameters
     fval = fulloutputfval[:count] # Function evaluations
-    if verbose>=2: print('=== %s, terminating (orig: %s | best: %s) ===' % ((exitreason,)+multisigfig([fval[0], fval[-1]])))
+    if verbose>=2: print('=== %s, terminating (orig: %s | best: %s | ratio: %s) ===' % ((exitreason,)+multisigfig([fval[0], fval[-1], fval[-1]/fval[0]])))
     if fulloutput: return (x, fval, exitreason)
     else:          return x
 

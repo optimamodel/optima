@@ -1,12 +1,12 @@
 """
 Functions for running optimizations.
 
-Version: 2016apr11
+Version: 2017mar03
 """
 
 from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
-from numpy import zeros, arange, maximum, array, inf, isfinite, argmin
+from numpy import zeros, arange, maximum, array, inf, isfinite, argmin, argsort
 from numpy.random import random
 
 
@@ -393,7 +393,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
 
-    Version: 1.2 (2016feb07)
+    Version: 1.3 (2017mar02)
     '''
 
     ## Input validation

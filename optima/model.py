@@ -6,7 +6,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.7 (2016sep14)
+    Version: 1.8 (2017mar03)
     """
     
     ##################################################################################################################
@@ -835,8 +835,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 totcurrentusvl  = people[usvl,:,t+1].sum()
                                 totcurrentsvl   = people[svl,:,t+1].sum()
                                 totcurrenttx    = totcurrentusvl + totcurrentsvl
-                                currentfracusvl = totcurrentusvl/totcurrenttx
-                                currentfracsvl  = totcurrentsvl/totcurrenttx
+                                currentfracusvl = totcurrentusvl/(eps+totcurrenttx)
+                                currentfracsvl  = totcurrentsvl/(eps+totcurrenttx)
                                 people[usvl,:,t+1]  += newmovers*currentfracusvl # ... and onto treatment, according to existing proportions
                                 people[svl,:,t+1]   += newmovers*currentfracsvl # Likewise for SVL
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
