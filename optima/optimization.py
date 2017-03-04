@@ -93,15 +93,12 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
         try: defaultbudget = sum(project.getdefaultbudget()[:])
         except: raise OptimaException('Could not get default budget for optimization')
     elif project is not None:
-        if progset is None: progset = -1
+        if progset is None: progset = -1 # Think it's OK to make this the default
         try: defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
         except: raise OptimaException('Could not get default budget for optimization')
-        printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     else:
         defaultbudget = 1e6 # If can't find programs
-        printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        printv('defaultobjectives() did not get a project or progset, so setting budget to %0.0f' % defaultbudget, 2, verbose)
         
     objectives = odict() # Dictionary of all objectives
     objectives['which'] = which
@@ -185,6 +182,14 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
+    
+    # Handle zeros
+    if sum(constrainedbudget[:])==0: 
+        print('this is a thing')
+        constrainedbudget[:] += tolerance
+    if sum(budgetvec)==0:            
+        print('another thing')
+        budgetvec[:] += tolerance
 
     # Calculate the current total budget
     currenttotal = sum(constrainedbudget[:]) # WARNING, assumes it's an odict
@@ -226,15 +231,6 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if isfinite(abslimits['min'][oind]): abslimits['min'][oind] *= rescaledbudget[oind]
         if isfinite(abslimits['max'][oind]): abslimits['max'][oind] *= rescaledbudget[oind]
         
-
-#        # Semi-relative limits. Note: Has issues, but is left here for posterity.
-#        if scaleratio<1:
-#            abslimits['min'][oind] *= rescaledbudget[oind] # If total budget is less, scale down the lower limit...
-#            abslimits['max'][oind] *= origbudget[oind] # ...but keep the upper limit in absolute terms
-#        elif scaleratio>=1:
-#            abslimits['min'][oind] *= origbudget[oind] # If the total budget is more, keep the absolute original lower limit...
-#            abslimits['max'][oind] *= rescaledbudget[oind] # ...but scale up the upper limit
-
     # Apply constraints on optimizable parameters
     noptimprogs = len(optiminds) # Number of optimizable programs
     limlow = zeros(noptimprogs, dtype=bool)
@@ -311,14 +307,15 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
     # Set up defaults
     if which is None: which = 'outcomes'
-    if parset is None: parset = -1
-    if progset is None: progset = -1
+    if project is not None:
+        if parset is None: parset = project.parsets[-1]
+        if progset is None: progset = project.progsets[-1]
     if objectives is None: objectives = defaultobjectives(project=project, progset=progset, which=which)
     if constraints is None: constraints = defaultconstraints(project=project, progset=progset, which=which)
     if totalbudget is None: totalbudget = objectives['budget']
-    if origbudget is None: origbudget = project.progsets[progset].getdefaultbudget()
-    if budgetvec is None: budgetvec = dcp(origbudget[:])
-    if optiminds is None: optiminds = findinds(project.progsets[progset].optimizable())
+    if origbudget is None: origbudget = progset.getdefaultbudget()
+    if optiminds is None: optiminds = findinds(progset.optimizable())
+    if budgetvec is None: budgetvec = dcp(origbudget[:][optiminds])
     
     # Validate input
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
