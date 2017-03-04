@@ -58,7 +58,7 @@ class Optim(object):
 
 
     def optimize(self, name=None, parsetname=None, progsetname=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, 
-                 method='asd', die=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+                 method='asd', die=False, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
         if name is None: name='default'
         multires = optimize(which=self.objectives['which'], project=self.projectref(), optim=self, maxiters=maxiters, 
@@ -398,7 +398,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
 
 def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', 
-             die=True, overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, **kwargs):
+             die=False, overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
@@ -466,7 +466,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
 
 def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
-                overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, die=True, **kwargs):
+                overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
@@ -549,7 +549,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         raise OptimaException(errormsg)
     for k,key in enumerate(extremeoutcomes.keys()):
         if extremeoutcomes[key] > extremeoutcomes['Zero']:
-            errormsg = 'Funding for %s has a worse outcome than no funding: %s vs. %s' % (key, extremeoutcomes[key], extremeoutcomes['Zero'])
+            errormsg = 'WARNING, funding for %s has a worse outcome than no funding: %s vs. %s' % (key, extremeoutcomes[key], extremeoutcomes['Zero'])
             if die: raise OptimaException(errormsg)
             else:   print(errormsg)
             

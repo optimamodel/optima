@@ -109,7 +109,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetnam
 
 def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
-             maxload=0.5, prerun=True, batch=True, mc=3, die=True):
+             maxload=0.5, prerun=True, batch=True, mc=3, die=False):
     """
     Perform batch BOC calculation.
 
