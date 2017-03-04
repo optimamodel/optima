@@ -837,8 +837,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 totcurrentusvl  = people[usvl,:,t+1].sum()
                                 totcurrentsvl   = people[svl,:,t+1].sum()
                                 totcurrenttx    = totcurrentusvl + totcurrentsvl
-                                currentfracusvl = totcurrentusvl/(eps+totcurrenttx)
-                                currentfracsvl  = totcurrentsvl/(eps+totcurrenttx)
+                                if totcurrenttx<eps: # There's no one on treatment: assign a proportion
+                                    currentfracsvl = treatvs
+                                    currentfracusvl = 1.0 - currentfracsvl
+                                else: # There are people on treatment: use existing proportions
+                                    currentfracusvl = totcurrentusvl/totcurrenttx
+                                    currentfracsvl  = totcurrentsvl/totcurrenttx
                                 people[usvl,:,t+1]  += newmovers*currentfracusvl # ... and onto treatment, according to existing proportions
                                 people[svl,:,t+1]   += newmovers*currentfracsvl # Likewise for SVL
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
@@ -881,11 +885,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['otherdeath']   = raw_otherdeath
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
-    
-#    import optima as op
-#    op.saveobj('transmatrices.obj', alltransmatrices)
-#    print('TEMP')
-#    import os; print(os.getcwd())
     
     return raw # Return raw results
 
