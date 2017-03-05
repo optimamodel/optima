@@ -598,8 +598,8 @@ class Project(object):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
         projectBOC.name += ' (' + str(projectBOC.uid) + ')'
-        if objectives == None:
-            printv('WARNING, you have called genBOC for project "%s" without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
+        if objectives is None:
+            printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progset=progsetname)
         projectBOC.objectives = objectives
         
@@ -611,30 +611,40 @@ class Project(object):
             printv('Warning, using default progset', 3, verbose)
             progsetname = -1
         
-        if budgetlist == None:
-            if not progsetname == None:
+        if budgetlist is None:
+            if progsetname is not None:
                 baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
             else:
                 try:
                     baseline = sum(self.progsets[-1].getdefaultbudget().values())
                     printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
-                except:
-                    OptimaException('Error: No progsets associated with project for which BOC is being generated!')
+                except Exception as E:
+                    errormsg = 'Error: No progsets associated with project for which BOC is being generated: %s' % E.__repr__()
+                    OptimaException(errormsg)
             budgetlist = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
-        results = None
-        owbudget = None
+        
+        # Calculate the number of iterations
+        noptims = 1+(mc!=0)*3+max(mc,0) # Calculate the number of optimizations per BOC point
+        nbocpts = len(budgetlist)
+        guessstalliters = 50  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
+        guessmaxiters = maxiters if maxiters is not None else 1000
+        estminiters = noptims*nbocpts*guessstalliters
+        estmaxiters = noptims*nbocpts*guessmaxiters
+        printv('Generating BOC for %s (should require from %i to %i iterations)' % (self.name, estminiters, estmaxiters), 1, verbose)
+        
+        # Initialize arrays
         budgetdict = odict()
         for budgetratio in budgetlist:
             budgetdict['%s'%budgetratio] = budgetratio # Store the budget ratios as a dicitonary
         tmptotals = odict()
         tmpallocs = odict()
         tmpoutcomes = odict()
-        count = 0
+        counts = odict([(key,0) for key in budgetdict.keys()]) # Initialize to zeros
         while len(budgetdict):
-            count += 1
             key, ratio = budgetdict.items()[0] # Use first budget in the stack
+            counts[key] += 1
             budget = ratio*baseline
-            print('Running budget %i/%i (%0.0f)' % (count, len(budgetdict)+count-1, budget))
+            printv('Running budget %i/%i (%0.0f)' % (sum(counts[:]), len(budgetdict)+sum(counts[:])-1, budget), 2, verbose)
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             
@@ -642,6 +652,8 @@ class Project(object):
             if len(tmptotals):
                 closest = argmin(abs(tmptotals[:]-budget)) # Find closest budget
                 owbudget = tmpallocs[closest]
+            else:
+                owbudget = None
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
             results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, mc=mc, die=die, **kwargs)
             tmptotals[key] = budget
@@ -656,10 +668,14 @@ class Project(object):
             for oldkey in tmpoutcomes.keys():
                 if tmpoutcomes[oldkey]>tmpoutcomes[key] and tmptotals[oldkey]>tmptotals[key]: # Outcome is worse but budget is larger
                     printv('WARNING, outcome for %s is worse than outcome for %s, rerunning...' % (oldkey, key), 1, verbose)
-                    budgetdict.insert(0, oldkey, float(oldkey)) # e.g. key2='0.8'
+                    if counts[oldkey]<5: # Don't get stuck in an infinite loop -- 5 is arbitrary, but jeez, that should take care of it
+                        budgetdict.insert(0, oldkey, float(oldkey)) # e.g. key2='0.8'
+                    else:
+                        printv('WARNING, tried 5 times to reoptimize budget and unable to get lower', 1, verbose) # Give up
+                        
         
         # Tidy up: insert remaining points
-        if count:
+        if sum(counts[:]):
             projectBOC.x.insert(0, 0)
             projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
             projectBOC.yinf = results.outcomes['Infinite'] # Store infinite money, but not as part of the BOC

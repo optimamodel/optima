@@ -535,9 +535,11 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         printv('Budget scenario outcomes:', 2, verbose)
         besttoworst = argsort(extremeoutcomes[:])
         besttoworstkeys = [extremeoutcomes.keys()[i] for i in besttoworst]
+        longestkey = -1
+        for key in firstkeys+besttoworstkeys: longestkey = max(longestkey, len(key)) # Find the longest key
         for key in firstkeys: besttoworstkeys.remove(key) # Remove these from the list
         for key in firstkeys+besttoworstkeys:
-            printv('Outcome for %s: %0.0f' % (key,extremeoutcomes[key]), 2, verbose)
+            printv(('Outcome for %'+str(longestkey)+'s: %0.0f') % (key,extremeoutcomes[key]), 2, verbose)
     else:
         printv('Outcome for current budget (starting point): %0.0f' % extremeoutcomes['Current'], 2, verbose)
         printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
