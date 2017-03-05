@@ -770,6 +770,14 @@ def toc(start=0, label='', sigfigs=3):
     
 
 
+def percentcomplete(step=None, maxsteps=None, indent=1):
+    ''' Display progress '''
+    onepercent = max(1,round(maxsteps/100)); # Calculate how big a single step is -- not smaller than 1
+    if not step%onepercent: # Does this value lie on a percent
+        thispercent = round(step/maxsteps*100) # Calculate what percent it is
+        print('%s%i%%\n'% (' '*indent, thispercent)) # Display the output
+    return None
+
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     """
     Checks how much memory the variable in question uses by dumping it to file.
@@ -1297,7 +1305,7 @@ class odict(OrderedDict):
         '''
         if sortby is None: allkeys = sorted(self.keys())
         else:
-            if not checktype(sortby, 'arraylike'): raise Exception('Please provide a list to determine the sort order.')
+            if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
             if all(isinstance(x,basestring) for x in sortby): # Going to sort by keys
                 if not set(sortby)==set(self.keys()): 
                     errormsg = 'List of keys to sort by must be the same as list of keys in odict.\n You provided the following list of keys to sort by:\n'
@@ -1306,7 +1314,7 @@ class odict(OrderedDict):
                     errormsg += '\n'.join(self.keys())
                     raise Exception(errormsg)
                 else: allkeys = sortby
-            elif all(isinstance(x,int) for x in sortby): # Going to sort by numbers
+            elif all(isinstance(x,Number) for x in sortby): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
                     errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
                     raise Exception(errormsg)
