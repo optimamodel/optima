@@ -662,7 +662,7 @@ class Project(object):
         if count:
             projectBOC.x.insert(0, 0)
             projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
-            projectBOC.yinf = results.outcomes['Infinite']) # Store infinite money, but not as part of the BOC
+            projectBOC.yinf = results.outcomes['Infinite'] # Store infinite money, but not as part of the BOC
             projectBOC.parsetname = parsetname
             projectBOC.progsetname = progsetname
             self.addresult(result=projectBOC)
