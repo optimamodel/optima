@@ -515,11 +515,12 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='unspecified', x=None, y=None, budgets=None, objectives=None, parsetname=None, progsetname=None):
+    def __init__(self, name='unspecified', x=None, y=None, yinf=None, budgets=None, objectives=None, parsetname=None, progsetname=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
         self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
+        self.yinf = yinf # Store the outcome for infinite money to be plotted separately if desired
         self.parsetname = parsetname
         self.progsetname = progsetname
         self.budgets = budgets if budgets else [] # A list of actual budgets
