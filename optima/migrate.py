@@ -658,6 +658,9 @@ def migrate(project, verbose=2, die=False):
         op.printv("Migrating from %6s ->" % project.version, 2, verbose, newline=False)
         upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
         op.printv("%6s" % project.version, 2, verbose, indent=False)
+        
+    # Update git info
+    project.gitbranch, project.gitversion = op.gitinfo()
     
     op.printv('Migration successful!', 3, verbose)
     

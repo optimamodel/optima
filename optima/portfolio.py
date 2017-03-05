@@ -80,7 +80,8 @@ class Portfolio(object):
         if replace: self.projects = odict() # Wipe clean before adding new projects
         for project in projects:
             project.uid = uuid() # TEMPPPP WARNING overwrite UUID
-            self.projects[str(project.uid)] = project        
+            keyname = project.name if project.name not in self.projects.keys() else str(project.uid) # Only fall back on UID if the project name is taken
+            self.projects[keyname] = project        
             printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         return None
     
