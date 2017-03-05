@@ -1,6 +1,7 @@
 from utils import isnumber, checktype
-from numpy import linspace, array, diff
+from numpy import linspace, array, diff, argsort
 from copy import deepcopy as dcp
+from pylab import figure, plot, show
 pchipeps = 1e-8
 
 def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=0, monotonic=True):
@@ -13,11 +14,9 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=0, mo
     Version: 2017mar02
     """
     
-    sortzip = dcp(sorted(zip(x,y)))
-    xs = [a for a,b in sortzip]
-    ys = [b for a,b in sortzip]
-    x = dcp(xs)
-    y = dcp(ys)
+    xorder = argsort(x)
+    x = dcp(array(x)[xorder])
+    y = dcp(array(y)[xorder])
     
     if smooth:
         x,y = smoothingfunc(x=x,y=y, smooth=smooth, monotonic=monotonic)
@@ -42,8 +41,6 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=0, mo
         		    ynew.append(ynew[-1]) # Duplicate the last element so the right length
     else:
         raise Exception('Interpolation method "%s" not understood' % method)
-    
-    
     
     if checktype(y, 'array'): ynew = array(ynew) # Try to preserve original type
     
@@ -124,8 +121,6 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 ##=========================================================
 
 def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=None, subsample=50):
-
-    from pylab import figure, plot, show, argsort
 
     xorder = argsort(x)
     x = dcp(array(x)[xorder])

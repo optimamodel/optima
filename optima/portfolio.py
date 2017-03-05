@@ -99,49 +99,11 @@ class Portfolio(object):
         return None
         
         
-        
-    def getdefaultbudgets(self, progsetnames=None, verbose=2):
-        ''' Get the default allocation totals of each project, using the progset names or indices specified '''
-        budgets = []
-        printv('Getting budgets...', 2, verbose)
-        
-        # Validate inputs
-        if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using default budget from first saved progset for each project for portfolio "%s".' % (self.name), 4, verbose)
-            progsetnames = [0]*len(self.projects)
-        if not len(progsetnames)==len(self.projects):
-            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using default budget from first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 4, verbose)
-            progsetnames = [0]*len(self.projects)
-
-        # Loop over projects & get defaul budget for each, if you can
-        for pno, P in enumerate(self.projects.values()):
-
-            # Crash if any project doesn't have progsets
-            if not P.progsets: 
-                errormsg = 'Project "%s" does not have a progset. Cannot get default budgets.'
-                raise OptimaException(errormsg)
-
-            # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-            if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in P.progsets]:
-                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], P.name, P.progsets[progsetnames[0]].name), 3, verbose)
-                pno=0
-            elif isinstance(progsetnames[pno],int) and len(P.progsets)<=progsetnames[pno]:
-                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], P.name, len(P.progsets)), 1, verbose)
-                pno=0
-            else: 
-                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (P.name), 3, verbose)
-                pno=0            
-                
-            printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (P.progsets[progsetnames[pno]].name, P.name, self.name), 4, verbose)
-            budgets.append(P.progsets[progsetnames[pno]].getdefaultbudget())
-        
-        return budgets
-        
     
     def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current portfolio, by default using its name, and without results '''
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
-        if filename is None: filename = self.name+'.prj'
+        if filename is None: filename = self.name+'.prt'
         self.filename = os.path.abspath(filename) # Store file path
         if saveresults:
             saveobj(filename, self, verbose=verbose)
@@ -159,35 +121,31 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
         
-    def runGA(self, objectives=None, budgetratio=None, minbound=None, maxtime=None, doplotBOCs=False, verbose=2):
+    def runGA(self, objectives=None, grandtotal=None, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         printv('Performing full geospatial analysis', 1, verbose)
         
         GAstart = tic()
         
-        # Check inputs
-        if objectives == None: 
-            printv('WARNING, you have called fullGA on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
-        objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
-        
-        gaoptim = GAOptim(objectives = objectives)
-        self.gaoptims[str(gaoptim.uid)] = gaoptim
-        
-        if budgetratio == None: budgetratio = self.getdefaultbudgets()
-        initbudgets = scaleratio(budgetratio,objectives['budget'])
-        
         # Gather the BOCs
         BOClist = []
         for pno,P in enumerate(self.projects.values()):
-            thisBOC = P.getBOC(objectives)
+            thisBOC = P.getBOC(objectives=objectives)
             if thisBOC is None:
                 errormsg = 'GA FAILED: Project %s has no BOC' % P.name
                 raise OptimaException(errormsg)
             BOClist.append(thisBOC)
         
+        # Get the grand total
+        if grandtotal is None:
+            if objectives is not None:
+                grandtotal = objectives['budget']
+            else:
+                grandtotal = 0.0
+                for BOC in BOClist:
+                    grandtotal += sum(BOC.defaultbudget[:])
+        
         # Run actual geospatial analysis optimization
-        grandtotal = objectives['budget']
         geooptimization(BOClist=BOClist, grandtotal=grandtotal) # Operate on the BOCs
         
         # Reoptimize projects
@@ -196,7 +154,6 @@ class Portfolio(object):
         # Tidy up
         self.outputstring = gaoptim.printresults() # Store the results as an output string
         toc(GAstart)
-        if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         return None
 
 
@@ -227,45 +184,21 @@ class Portfolio(object):
         
 #%% Functions for geospatial analysis
 
-def constrainbudgets(x, grandtotal, minbound):
-    # First make sure all values are not below the respective minimum bounds.
-    for i in xrange(len(x)):
-        if x[i] < minbound[i]:
-            x[i] = minbound[i]
     
-    # Then scale all excesses over the minimum bounds so that the new sum is grandtotal.
-    constrainedx = []
-    for i in xrange(len(x)):
-        xi = (x[i] - minbound[i])*(grandtotal - sum(minbound))/(sum(x) - sum(minbound)) + minbound[i]
-        constrainedx.append(xi)
-    
-    return constrainedx
-
-
-def objectivecalc(x, BOClist, grandtotal, minbound):
-    ''' Objective function. Sums outcomes from all projects corresponding to budget list x. '''
-    x = constrainbudgets(x, grandtotal, minbound)
-    
-    totalobj = 0
-    for i in range(len(x)):
-        totalobj += BOClist[i].getoutcome([x[i]])[-1]     # Outcomes are currently passed to and from pchip as lists.
-    return totalobj
-    
-    
-def geooptimization(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=2):
+def geooptimization(BOClist=None, grandtotal=None, maxtime=None, stepsize=None, verbose=2):
     ''' Actual runs geospatial optimisation across provided BOCs. '''
-    printv('Calculating minimum outcomes for grand total budget of %f' % grandtotal, 2, verbose)
+    printv('Calculating geospatial optimization for grand total budget of %f' % grandtotal, 2, verbose)
     
-    if minbound == None: minbound = [0]*len(BOClist)
-    if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
-    if not len(budgetvec) == len(BOClist): 
-        errormsg = 'Geospatial analysis is minimising %i BOCs with %i initial budgets' % (len(BOClist), len(budgetvec))
-        raise OptimaException(errormsg)
-        
-    args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}    
+    # Check inputs
+    if stepsize is None: stepsize = 10000 # The step size, in $
     
-    budgetvecnew, fvals, exitreason = asd(objectivecalc, budgetvec, args=args, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
-    budgetvecnew = constrainbudgets(budgetvecnew, grandtotal, minbound)
+    # Set up variables
+    
+    # Set up vectors
+    
+    # Extract BOC derivatives
+    
+    # Iterate over vectors
 
     return budgetvecnew
 

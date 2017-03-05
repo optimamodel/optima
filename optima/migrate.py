@@ -603,6 +603,7 @@ def redotranstable(project, **kwargs):
     project.version = '2.3.3'
     return None
 
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -684,20 +685,28 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     # Create legacy classes for compatibility -- FOR FUTURE
-#    class CCOF(): pass
+    
+    class Spreadsheet(object): pass
+    op.project.Spreadsheet = Spreadsheet
+    
+    class GAOptim(object): pass
+    op.portfolio.GAOptim = GAOptim
+    
+    #    class CCOF(): pass
 #    class Costcov(): pass
 #    class Covout(): pass
 #    op.programs.CCOF = CCOF
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
-    
-    class Spreadsheet(object): pass
-    op.project.Spreadsheet = Spreadsheet
 
     if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
 
     P = migrate(origP, verbose=verbose, die=die)
+    
+    # Once used to do the migration, we can delete these
+    del op.project.Spreadsheet
+    del op.portfolio.GAOptim
     
 #    del op.programs.CCOF
 #    del op.programs.Costcov

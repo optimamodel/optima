@@ -3,7 +3,7 @@ from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, 
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
-from numpy import argmin, array
+from numpy import argmin, array, argsort
 from numpy.random import seed, randint
 import os
 
@@ -594,10 +594,10 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, die=False, **kwargs):
+    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, die=False, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
-        projectBOC.name += ' (' + str(projectBOC.uid) + ')'
+        projectBOC.name += ' ' + str(projectBOC.uid)[:6]
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progset=progsetname)
@@ -611,21 +611,14 @@ class Project(object):
             printv('Warning, using default progset', 3, verbose)
             progsetname = -1
         
-        if budgetlist is None:
-            if progsetname is not None:
-                baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
-            else:
-                try:
-                    baseline = sum(self.progsets[-1].getdefaultbudget().values())
-                    printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
-                except Exception as E:
-                    errormsg = 'Error: No progsets associated with project for which BOC is being generated: %s' % E.__repr__()
-                    OptimaException(errormsg)
-            budgetlist = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
+        defaultbudget = self.progsets[progsetname].getdefaultbudget()
+        
+        if budgetratios is None:
+            budgetratios = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
         
         # Calculate the number of iterations
         noptims = 1+(mc!=0)*3+max(mc,0) # Calculate the number of optimizations per BOC point
-        nbocpts = len(budgetlist)
+        nbocpts = len(budgetratios)
         guessstalliters = 50  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
         guessmaxiters = maxiters if maxiters is not None else 1000
         estminiters = noptims*nbocpts*guessstalliters
@@ -634,7 +627,7 @@ class Project(object):
         
         # Initialize arrays
         budgetdict = odict()
-        for budgetratio in budgetlist:
+        for budgetratio in budgetratios:
             budgetdict['%s'%budgetratio] = budgetratio # Store the budget ratios as a dicitonary
         tmptotals = odict()
         tmpallocs = odict()
@@ -643,7 +636,7 @@ class Project(object):
         while len(budgetdict):
             key, ratio = budgetdict.items()[0] # Use first budget in the stack
             counts[key] += 1
-            budget = ratio*baseline
+            budget = ratio*sum(defaultbudget[:])
             printv('Running budget %i/%i (%0.0f)' % (sum(counts[:]), len(budgetdict)+sum(counts[:])-1, budget), 2, verbose)
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
@@ -655,13 +648,15 @@ class Project(object):
             else:
                 owbudget = None
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
+            
+            # Actually run
             results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, mc=mc, die=die, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budget['Optimal'])
             tmpoutcomes[key] = results.improvement[-1][-1]
             projectBOC.x.append(budget)
             projectBOC.y.append(tmpoutcomes[-1])
-            projectBOC.budgets.append(tmpallocs[-1])
+            projectBOC.budgets[key] = tmpallocs[-1]
             
             # Check that the BOC points are monotonic, and if not, rerun
             budgetdict.pop(key) # Remove the current key from the list
@@ -673,14 +668,18 @@ class Project(object):
                     else:
                         printv('WARNING, tried 5 times to reoptimize budget and unable to get lower', 1, verbose) # Give up
                         
-        
         # Tidy up: insert remaining points
         if sum(counts[:]):
-            projectBOC.x.insert(0, 0)
+            xorder = argsort(projectBOC.x) # Sort everything
+            projectBOC.x = array(projectBOC.x[xorder]).tolist()
+            projectBOC.y = array(projectBOC.y[xorder]).tolist()
+            projectBOC.budgets.sort(xorder)
+            projectBOC.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
             projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
             projectBOC.yinf = results.outcomes['Infinite'] # Store infinite money, but not as part of the BOC
             projectBOC.parsetname = parsetname
             projectBOC.progsetname = progsetname
+            projectBOC.defaultbudget = dcp(defaultbudget)
             self.addresult(result=projectBOC)
             self.modified = today()
         else:
