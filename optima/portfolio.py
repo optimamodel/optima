@@ -146,7 +146,7 @@ class Portfolio(object):
                     grandtotal += sum(BOC.defaultbudget[:])
         
         # Run actual geospatial analysis optimization
-        geooptimization(BOClist=BOClist, grandtotal=grandtotal) # Operate on the BOCs
+        oldgeooptimization(BOClist=BOClist, grandtotal=grandtotal) # Operate on the BOCs
         
         # Reoptimize projects
 #        gaoptim.reoptimize(self.projects, initbudgets, optbudgets, maxtime=maxtime)
@@ -183,6 +183,49 @@ class Portfolio(object):
         
         
 #%% Functions for geospatial analysis
+        
+        
+def constrainbudgets(x, grandtotal, minbound):
+    # First make sure all values are not below the respective minimum bounds.
+    for i in xrange(len(x)):
+        if x[i] < minbound[i]:
+            x[i] = minbound[i]
+    
+    # Then scale all excesses over the minimum bounds so that the new sum is grandtotal.
+    constrainedx = []
+    for i in xrange(len(x)):
+        xi = (x[i] - minbound[i])*(grandtotal - sum(minbound))/(sum(x) - sum(minbound)) + minbound[i]
+        constrainedx.append(xi)
+    
+    return constrainedx
+
+
+def objectivecalc(x, BOClist, grandtotal, minbound):
+    ''' Objective function. Sums outcomes from all projects corresponding to budget list x. '''
+    x = constrainbudgets(x, grandtotal, minbound)
+    
+    totalobj = 0
+    for i in range(len(x)):
+        totalobj += BOClist[i].getoutcome([x[i]])[-1]     # Outcomes are currently passed to and from pchip as lists.
+    return totalobj
+    
+    
+def oldgeooptimization(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=2):
+    ''' Actual runs geospatial optimisation across provided BOCs. '''
+    printv('Calculating minimum outcomes for grand total budget of %f' % grandtotal, 2, verbose)
+    
+    if minbound == None: minbound = [0]*len(BOClist)
+    if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
+    if not len(budgetvec) == len(BOClist): 
+        errormsg = 'Geospatial analysis is minimising %i BOCs with %i initial budgets' % (len(BOClist), len(budgetvec))
+        raise OptimaException(errormsg)
+        
+    args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}    
+    
+    budgetvecnew, fvals, exitreason = asd(objectivecalc, budgetvec, args=args, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
+    budgetvecnew = constrainbudgets(budgetvecnew, grandtotal, minbound)
+
+    return budgetvecnew
 
     
 def geooptimization(BOClist=None, grandtotal=None, maxtime=None, stepsize=None, verbose=2):
@@ -201,6 +244,9 @@ def geooptimization(BOClist=None, grandtotal=None, maxtime=None, stepsize=None, 
     # Iterate over vectors
 
     return budgetvecnew
+
+
+
 
 
 
