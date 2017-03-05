@@ -2,7 +2,7 @@
 from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
-def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False):
+def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None):
     """
     Runs Optima's epidemiological model.
     
@@ -14,10 +14,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##################################################################################################################
 
     # Initialize basic quantities
-    if simpars is None: raise OptimaException('model() requires simpars as an input')
-    if settings is None: raise OptimaException('model() requires settings as an input')
-
-    if verbose is None: verbose = settings.verbose # Verbosity of output
+    
+    if verbose is None:  verbose = settings.verbose # Verbosity of output
+    if label is None: label = ''
+    else:             label += ': '# An optional label to add to error messages
+    if simpars is None:  raise OptimaException(label+'model() requires simpars as an input')
+    if settings is None: raise OptimaException(label+'model() requires settings as an input')
     printv('Running model...', 1, verbose)
     
     # Extract key items
@@ -103,7 +105,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
     
     if debug and len(sus)!=2:
-        errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
+        errormsg = label + 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
         raise OptimaException(errormsg)
 
     # Births, deaths and transitions
@@ -191,14 +193,14 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             ostprev = numost/numpwid # Proportion of PWID on OST (P)
             ostprev = minimum(ostprev, 1.0) # Don't let more than 100% of PWID be on OST :)
         except: 
-            errormsg = 'Cannot divide by the number of PWID (numost=%f, numpwid=5f' % (numost, numpwid)
+            errormsg = label + 'Cannot divide by the number of PWID (numost=%f, numpwid=5f' % (numost, numpwid)
             if die: raise OptimaException(errormsg)
             else: 
                 printv(errormsg, 1, verbose)
                 ostprev = zeros(npts) # Reset to zero
     else: # No one injects
         if numost.sum(): 
-            errormsg = 'You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject'
+            errormsg = label + 'You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject'
             if die: raise OptimaException(errormsg)
             else: 
                 printv(errormsg, 1, verbose)
@@ -326,7 +328,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     if initpeople is not None:
         initpeople = squeeze(initpeople)
         if debug and initpeople.shape != (nstates, npops):
-            errormsg = 'Wrong shape of init distribution: should be (%i, %i) but is %s' % (nstates, npops, initpeople.shape)
+            errormsg = label + 'Wrong shape of init distribution: should be (%i, %i) but is %s' % (nstates, npops, initpeople.shape)
             if die: raise OptimaException(errormsg)
             else:
                 printv(errormsg, 1, verbose)
@@ -343,7 +345,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         else:                fractotal = zeros(npops) # If there's no one infected, reset to 0
         treatment = initnumtx * fractotal # Number of people on 1st-line treatment
         if debug and any(treatment>allinfected): # More people on treatment than ever infected
-            errormsg = 'More people on treatment (%f) than infected (%f)!' % (treatment, allinfected)
+            errormsg = label + 'More people on treatment (%f) than infected (%f)!' % (treatment, allinfected)
             if die: raise OptimaException(errormsg)
             else:
                 printv(errormsg, 1, verbose)
@@ -391,7 +393,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         initpeople[lost, :]        = initlost
 
     if debug and not(initpeople.all()>=0): # If not every element is a real number >0, throw an error
-        errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
+        errormsg = label + 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
         if die: raise OptimaException(errormsg)
         else:
             printv(errormsg, 1, verbose)
@@ -418,7 +420,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             elif simpars['cond'+act].get((key[1],key[0])) is not None:
                 condkey = simpars['cond'+act][(key[1],key[0])]
             else:
-                errormsg = 'Cannot find condom use between "%s" and "%s", assuming there is none.' % (key[0], key[1]) # NB, this might not be the most reasonable assumption
+                errormsg = label + 'Cannot find condom use between "%s" and "%s", assuming there is none.' % (key[0], key[1]) # NB, this might not be the most reasonable assumption
                 if die: raise OptimaException(errormsg)
                 else: 
                     printv(errormsg, 1, verbose)
@@ -431,7 +433,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['transmfi']  
             elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmfr']
             else:
-                errormsg = 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
+                errormsg = label + 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
                 printv(errormsg, 3, verbose)
                 this['trans'] = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female                     
                     
@@ -440,7 +442,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             # Error checking
             for key in ['wholeacts', 'fracacts', 'cond']:
                 if debug and not(all(this[key]>=0)):
-                    errormsg = 'Invalid sexual behavior parameter "%s": values are:\n%s' % (key, this[key])
+                    errormsg = label + 'Invalid sexual behavior parameter "%s": values are:\n%s' % (key, this[key])
                     if die: raise OptimaException(errormsg)
                     else: 
                         printv(errormsg, 1, verbose)
@@ -483,7 +485,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
-                            errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t])
+                            errormsg = label + 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t])
                             if die: raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
@@ -511,13 +513,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         allpeople[:,t] = people[:, :, t].sum(axis=0)
         if debug and not( all(allpeople[:,t]>0)):
-            errormsg = 'No people in populations %s at timestep %i (time %0.1f)' % (findinds(allpeople[:,t]<=0), t, tvec[t])
+            errormsg = label + 'No people in populations %s at timestep %i (time %0.1f)' % (findinds(allpeople[:,t]<=0), t, tvec[t])
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
                 
         effallprev = einsum('i,ij->ij',alltrans,people[:,:,t]) / allpeople[:,t]                            
         if debug and not((effallprev[:,:]>=0).all()): 
-            errormsg = 'HIV prevalence invalid at time %s' % (t)
+            errormsg = label + 'HIV prevalence invalid at time %s' % (t)
             if die: raise OptimaException(errormsg)
             else:
                 printv(errormsg, 1, verbose)
@@ -543,7 +545,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             forceinffull[:,pop1,:,pop2] *= thisforceinfsex 
             
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
-                errormsg = 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
@@ -558,7 +560,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 forceinffull[index,pop1,:,pop2] *= thisforceinfinj
             
             if debug and not(forceinffull[:,pop1,:,pop2].all>=0):
-                errormsg = 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
                 for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
@@ -653,7 +655,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 wrongstatesindices = findinds(transtest)
                 wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
                 wrongprobs = array([thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j] for j in wrongstatesindices])
-                errormsg = 'model(): Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
+                errormsg = label + 'Transitions do not sum to 1 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
                 raise OptimaException(errormsg)
                 
         # Check that no probabilities are less than 0
@@ -661,7 +663,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             wrongstatesindices = [k for k in range(nstates) if (thistransit[k]<0.).any()]
             wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
             wrongprobs = array([thistransit[j][1] for j in wrongstatesindices])
-            errormsg = 'model(): Transitions are less than 0 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
+            errormsg = label + 'Transitions are less than 0 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
             raise OptimaException(errormsg)
             
         ## Shift people as required
@@ -706,7 +708,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
 
         if debug and abs(raw_inci[:,t].sum() - raw_incibypop[:,t].sum()) > eps:
-            errormsg = 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,t].sum(), t)
+            errormsg = label + 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,t].sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
 
@@ -729,7 +731,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for p1,p2,thisagetransprob in agetransitlist:
                 peopleleaving = people[:, p1, t+1] * thisagetransprob
                 if debug and (peopleleaving > people[:, p1, t+1]).any():
-                    errormsg = 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
+                    errormsg = label + 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
                     if die: raise OptimaException(errormsg)
                     else:
                         printv(errormsg, 1, verbose)
@@ -756,7 +758,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             thisprogcirc = people[progcirc,noinflows,t+1]
             allsus = thissusreg+thisprogcirc
             if debug and not all(allsus>0): 
-                errormsg = '100%% prevalence detected (t=%f, pop=%s)' % (t+1, array(popkeys)[findinds(allsus>0)][0])
+                errormsg = label + '100%% prevalence detected (t=%f, pop=%s)' % (t+1, array(popkeys)[findinds(allsus>0)][0])
                 raise OptimaException(errormsg)
             newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
@@ -766,7 +768,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             actualpeople = people[:,:,t+1][:,noinflows].sum()
             wantedpeople = popsize[noinflows,t+1].sum()
             if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
-                errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
+                errormsg = label + 'Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
                 raise OptimaException(errormsg)
             
             # If required, scale population sizes to exactly match the parameters
@@ -780,7 +782,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     ratio = wantedpeople/actualpeople
                     people[susnotonart,p,t+1] *= ratio # Scale to match
                     if abs(ratio-1)>relerr:
-                        errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
+                        errormsg = label + 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 1, verbose=verbose)
             
@@ -814,10 +816,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Reconcile the differences between the number we have and the number we want
                 if wanted is not None:
                     diff = wanted - actual # Wanted number minus actual number 
-                    if diff>0.: # We need to move people forwards along the cascade 
+                    if diff>eps: # We need to move people forwards along the cascade 
                         ppltomoveup = people[lowerstate,:,t+1]
                         totalppltomoveup = ppltomoveup.sum()
-                        if totalppltomoveup>0:
+                        if totalppltomoveup>eps:
                             diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
                             if name is 'proptx': # For treatment, we move people in lower CD4 states first
                                 tmpdiff = diff
@@ -826,7 +828,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                     if tmpdiff>eps: # Move people until you have the right proportions
                                         ppltomoveupcd4 = ppltomoveup[cd4,:]
                                         totalppltomoveupcd4 = ppltomoveupcd4.sum()
-                                        if totalppltomoveupcd4:
+                                        if totalppltomoveupcd4>eps:
                                             tmpdiffcd4 = min(tmpdiff, totalppltomoveupcd4-eps)
                                             newmovers[cd4,:] = tmpdiffcd4*ppltomoveupcd4/totalppltomoveupcd4 # Pull out evenly from each population
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
@@ -835,8 +837,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 totcurrentusvl  = people[usvl,:,t+1].sum()
                                 totcurrentsvl   = people[svl,:,t+1].sum()
                                 totcurrenttx    = totcurrentusvl + totcurrentsvl
-                                currentfracusvl = totcurrentusvl/(eps+totcurrenttx)
-                                currentfracsvl  = totcurrentsvl/(eps+totcurrenttx)
+                                if totcurrenttx<eps: # There's no one on treatment: assign a proportion
+                                    currentfracsvl = treatvs
+                                    currentfracusvl = 1.0 - currentfracsvl
+                                else: # There are people on treatment: use existing proportions
+                                    currentfracusvl = totcurrentusvl/totcurrenttx
+                                    currentfracsvl  = totcurrentsvl/totcurrenttx
                                 people[usvl,:,t+1]  += newmovers*currentfracusvl # ... and onto treatment, according to existing proportions
                                 people[svl,:,t+1]   += newmovers*currentfracsvl # Likewise for SVL
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
@@ -844,7 +850,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
                             raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
-                    elif diff<0.: # We need to move people backwards along the cascade
+                            checkfornegativepeople(people)
+                    elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
                         if totalppltomovedown>0: # To avoid having to add eps
@@ -886,7 +893,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, initpeople=None, debug=False, die=False, keepraw=False, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, initpeople=None, debug=False, die=False, keepraw=False, label=None, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -896,15 +903,18 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
+    if label is None:
+        try: label = project.name
+        except: pass
     if start is None: start = settings.start
-    if end is None: end = settings.end
-    if dt is None: dt = settings.dt
+    if end   is None: end   = settings.end
+    if dt    is None: dt    = settings.dt
     if simpars is None:
         if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
         simpars = makesimpars(pars, name=name, start=start, end=end, dt=dt, tvec=tvec, settings=settings)
         
     # Actually run the model
-    raw = model(simpars=simpars, settings=settings, initpeople=initpeople, debug=debug, die=die, verbose=verbose) # RUN OPTIMA!!
+    raw = model(simpars=simpars, settings=settings, initpeople=initpeople, debug=debug, die=die, label=label, verbose=verbose) # RUN OPTIMA!!
     
     results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose) # Create structure for storing results
     return results
