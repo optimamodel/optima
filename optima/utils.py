@@ -1004,7 +1004,7 @@ def getdate(obj, which='modified', fmt='str'):
         dateformat = '%Y-%b-%d %H:%M:%S'
         
         try:
-            if type(obj)==str: return obj # Return directly if it's a string
+            if isinstance(obj, basestring): return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
         except: # It's not a date object
@@ -1135,7 +1135,7 @@ class odict(OrderedDict):
     
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
-        if type(key)==str:
+        if isinstance(key, basestring):
             return OrderedDict.pop(self, key, *args, **kwargs)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
@@ -1273,7 +1273,7 @@ class odict(OrderedDict):
         if isinstance(oldkey, Number): 
             index = oldkey
             keystr = self.keys()[index]
-        elif type(oldkey) is str: 
+        elif isinstance(oldkey, basestring): 
             index = self.keys().index(oldkey)
             keystr = oldkey
         else: raise Exception('Key type not recognized: must be int or str')
