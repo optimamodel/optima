@@ -6,7 +6,7 @@ Functions for doing things in batch...yeah, should make better.
 Note - tasks have to be standalone functions or they break on windows, see
 http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
 
-Version: 2017mar2
+Version: 2017mar04
 """
 
 from multiprocessing import Process, Queue
@@ -76,6 +76,8 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
                       args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload))
         prc.start()
         processes.append(prc)
+    for i in range(nfiles):
+        outputlist[i] = outputqueue.get() # This is needed or else the process never finishes
     for prc in processes:
         prc.join() # Wait for them to finish
     
@@ -172,7 +174,10 @@ def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetnam
             processes.append(prc)
         else:
             boc_task(*args)
+        
     if batch:
+        for i in range(nfiles):
+            outputlist[i] = outputqueue.get()  # This is needed or else the process never finishes
         for prc in processes:
             prc.join() # Wait for them to finish
     
