@@ -133,7 +133,7 @@ class Portfolio(object):
                 pno=0            
                 
             printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (P.progsets[progsetnames[pno]].name, P.name, self.name), 4, verbose)
-            budgets.append(P.progsets[progsetnames[pno]].defaultbudget())
+            budgets.append(P.progsets[progsetnames[pno]].getdefaultbudget())
         
         return budgets
         
@@ -191,7 +191,7 @@ class Portfolio(object):
         optbudgets = geooptimization(BOClist, grandtotal, budgetvec=initbudgets, minbound=minbound, maxtime=maxtime)
         
         # Reoptimize projects
-        gaoptim.reoptimize(self.projects, initbudgets, optbudgets, maxtime=maxtime)
+#        gaoptim.reoptimize(self.projects, initbudgets, optbudgets, maxtime=maxtime)
         
         # Tidy up
         self.outputstring = gaoptim.printresults() # Store the results as an output string

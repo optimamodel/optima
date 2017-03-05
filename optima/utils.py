@@ -607,7 +607,9 @@ def perturb(n=1, span=0.5, randseed=None):
 def scaleratio(inarray,total):
     """ Multiply a list or array by some factor so that its sum is equal to the total. """
     from numpy import array
-    outarray = array([float(x)*total/float(sum(inarray)) for x in inarray])
+    origtotal = float(sum(inarray))
+    ratio = total/origtotal
+    outarray = array(inarray)*ratio
     if type(inarray)==list: outarray = outarray.tolist() # Preserve type
     return outarray
 
