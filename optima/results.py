@@ -515,7 +515,7 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='unspecified', x=None, y=None, yinf=None, budgets=None, objectives=None, parsetname=None, progsetname=None):
+    def __init__(self, name='unspecified', x=None, y=None, yinf=None, budgets=None, initbudget=None, initoutcome=None, objectives=None, parsetname=None, progsetname=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
@@ -524,6 +524,8 @@ class BOC(object):
         self.parsetname = parsetname
         self.progsetname = progsetname
         self.budgets = budgets if budgets else [] # A list of actual budgets
+        self.initbudget = initbudget # The initial budget, pre-optimization
+        self.initoutcome = initoutcome # The initial outcome, pre-optimization
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
         self.name = name # Required by rmresult in Project.
 

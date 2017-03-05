@@ -93,7 +93,7 @@ class Portfolio(object):
         if replace: self.projects = odict() # Wipe clean before adding new projects
         for f,filename in enumerate(filelist):
             printv('Loading project %i/%i "%s"...' % (f+1, len(filelist), filename), 3, verbose)
-            project = loadproj(filename)
+            project = loadproj(filename, verbose=0)
             projects.append(project)
         self.addprojects(projects)
         return None
@@ -188,7 +188,7 @@ class Portfolio(object):
         
         # Run actual geospatial analysis optimization
         grandtotal = objectives['budget']
-        optbudgets = geooptimization(BOClist, grandtotal, budgetvec=initbudgets, minbound=minbound, maxtime=maxtime)
+        geooptimization(BOClist=BOClist, grandtotal=grandtotal) # Operate on the BOCs
         
         # Reoptimize projects
 #        gaoptim.reoptimize(self.projects, initbudgets, optbudgets, maxtime=maxtime)
