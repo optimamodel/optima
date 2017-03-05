@@ -1,10 +1,9 @@
-from utils import isnumber
+from utils import isnumber, checktype
 from numpy import linspace, array, diff
 from copy import deepcopy as dcp
-import collections
 pchipeps = 1e-8
 
-def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=10, monotonic=True):
+def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=0, monotonic=True):
     """
     This module implements the monotonic Piecewise Cubic Hermite Interpolating Polynomial (PCHIP).
     Slopes are constrained via the Fritsch-Carlson method.
@@ -23,7 +22,7 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=10, m
     if smooth:
         x,y = smoothingfunc(x=x,y=y, smooth=smooth, monotonic=monotonic)
     
-    if not isinstance(xnew,collections.Sequence):       # Is this reliable enough...?
+    if not checktype(xnew, 'arraylike'):
         Exception('Error: Values to interpolate for with PCHIP have not been given in sequence form (e.g. list or array)!')
     xnew = dcp(sorted(xnew))
     
@@ -46,7 +45,7 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=10, m
     
     
     
-    if type(y)==type(array([])): ynew = array(ynew) # Try to preserve original type
+    if checktype(y, 'array'): ynew = array(ynew) # Try to preserve original type
     
     return ynew
     
@@ -100,8 +99,6 @@ def pchip_eval(x, y, m, xvec, deriv = False):
             c += 1
         if xc >= x[-1]: c = -2
 
-#        print('%f %f' % (xc,x[c]))        
-        
         # Create the Hermite coefficients
         h = x[c+1] - x[c]
         t = (xc - x[c]) / h
@@ -126,21 +123,18 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 
 ##=========================================================
 
-def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbudget = None):
+def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=None, subsample=50):
 
-    from pylab import figure, plot, show
+    from pylab import figure, plot, show, argsort
 
-    sortzip = dcp(sorted(zip(x,y)))
-    xs = [a for a,b in sortzip]
-    ys = [b for a,b in sortzip]
-    x = dcp(xs)
-    y = dcp(ys)
+    xorder = argsort(x)
+    x = dcp(array(x)[xorder])
+    y = dcp(array(y)[xorder])
 
     # Process inputs
     if isnumber(initbudget): initbudget = [initbudget] # Plotting expects this to be a list
     if isnumber(optbudget): optbudget = [optbudget] # Plotting expects this to be a list
     
-#    try:
     xstart = x[0]
     xend = x[-1]
     if xend > 1e15: xend = x[-2]    # This handles any artificially big value
@@ -150,19 +144,20 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
     if not optbudget == None:
         xstart = min(xstart,optbudget[0])
         xend = max(xend,optbudget[-1])
-    xnew = linspace(xstart,xend,200)
+    
+    # Make a new x-axis by subsampling
+    xnew = []
+    for i in range(len(x)-1):
+        tmp = linspace(x[i],x[i+1],subsample).tolist()
+        tmp.pop(-1)
+        xnew.extend(tmp)
+    xnew = array(xnew)
     
     fig = figure(facecolor=(1,1,1))
     ax = fig.add_subplot(111)
-#    print(xnew)
-#    print(pchip(x,y,xnew,deriv))
-#    print(optbudget)
-#    print(pchip(x,y,optbudget,deriv))
     plot(xnew, pchip(x,y,xnew,deriv), linewidth=2)
     xs = [a+pchipeps for a in x]    # Shift the original points slightly when plotting them, otherwise derivatives become zero-like.
     plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, markersize=20, label='Budget-objective curve')
-#        print(x)
-#        print(pchip(x,y,x,deriv))
     if not initbudget == None:
         plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Initial')
     if not optbudget == None:
@@ -172,8 +167,6 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
         return ax
     else:
         show()
-#    except:
-#        print('Plotting of PCHIP-interpolated data failed!')
     
     return None
 
@@ -193,9 +186,37 @@ def smoothingfunc(x=None, y=None, npts=10, smooth=10, monotonic=True):
     
     Version: 2017mar02 by cliffk
     '''
+    
+    print('WARNING, has strange behavior sometimes still :(')
+    
+    problemcase = '''
+    from pylab import *; from optima import *
+
+    x = array([0.0, 3840693.0, 2304416.0, 1152208.0, 384069.0, 11522078.0, 23044156.0, 38406927.0, 10000000000.0])
+    y = array([13290.0, 3950.0, 6211.0, 9145.0, 11707.0, 3064.0, 3018.0, 2990.0, 1970.0])
+    
+    inds = argsort(x)
+    x = x[inds]
+    y = y[inds]
+    
+    usederiv = 1
+    
+    xnew = []
+    for i in range(len(x)-1):
+        tmp = linspace(x[i],x[i+1],10).tolist()
+        tmp.pop(-1)
+        xnew.extend(tmp)
+    
+    ynew = pchip(x, y, xnew, smooth=0, deriv=usederiv)
+    ynew2 = pchip(x, y, xnew, smooth=10, deriv=usederiv)
+     
+    scatter(xnew, ynew)
+    scatter(xnew, ynew2, c=(1,0.4,0))
+    if not usederiv: scatter(x,y,c=(0,0.8,0))
+    '''
 
     # Imports
-    from pylab import concatenate, ones, array, convolve, diff, argsort, linspace, cumsum, clip, sign
+    from pylab import concatenate, ones, array, convolve, diff, argsort, linspace, cumsum, clip, minimum, maximum, sign
     from optima import dcp
     
     # Set parameters
@@ -237,6 +258,13 @@ def smoothingfunc(x=None, y=None, npts=10, smooth=10, monotonic=True):
             nbstart = start+npad
             nbend   = end+npad
             if monotonic:
+                if der>=0:  
+                    print('der>0')
+                    y1pad[nbstart:nbend] = maximum(y1pad[nbstart:nbend], 0)
+                elif der<0: 
+                    print('der<0')
+                    y1pad[nbstart:nbend] = minimum(y1pad[nbstart:nbend], 0)
+                else:       raise Exception('Derivative is neither more or less than zero')
                 if d>0 and d<len(derivs)-1 and sign(derivs[d]-derivs[d-1])!=-sign(derivs[d+1]-derivs[d]): # Enforce monotonicity for points in the middle
                     lower = min(derivs[d-1], derivs[d+1])
                     upper = max(derivs[d-1], derivs[d+1])

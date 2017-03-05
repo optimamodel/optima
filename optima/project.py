@@ -605,52 +605,70 @@ class Project(object):
         
         if parsetname is None:
             printv('Warning, using default parset', 3, verbose)
-            parsetname = 0
+            parsetname = -1
         
         if progsetname is None:
             printv('Warning, using default progset', 3, verbose)
-            progsetname = 0
+            progsetname = -1
         
         if budgetlist == None:
             if not progsetname == None:
                 baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
             else:
                 try:
-                    baseline = sum(self.progsets[0].getdefaultbudget().values())
+                    baseline = sum(self.progsets[-1].getdefaultbudget().values())
                     printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
                 except:
                     OptimaException('Error: No progsets associated with project for which BOC is being generated!')
-            budgetlist = [x*baseline for x in [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0]] # Start from original, go down, then go up
-                
+            budgetlist = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
         results = None
         owbudget = None
-        tmptotals = []
-        tmpallocs = []
-        for i,budget in enumerate(budgetlist):
-            print('Running budget %i/%i (%0.0f)' % (i+1, len(budgetlist), budget))
+        budgetdict = odict()
+        for budgetratio in budgetlist:
+            budgetdict['%s'%budgetratio] = budgetratio # Store the budget ratios as a dicitonary
+        tmptotals = odict()
+        tmpallocs = odict()
+        tmpoutcomes = odict()
+        count = 0
+        while len(budgetdict):
+            count += 1
+            key, ratio = budgetdict.items()[0] # Use first budget in the stack
+            budget = ratio*baseline
+            print('Running budget %i/%i (%0.0f)' % (count, len(budgetdict)+count-1, budget))
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
             if len(tmptotals):
-                closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
-                owbudget = tmpallocs[closest]
-                print('Using old allocation as new starting point.')
+                best = argmin(tmpoutcomes[:]) # Find closest budget
+                owbudget = tmpallocs[best]
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
             results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, mc=mc, die=die, **kwargs)
-            tmptotals.append(budget)
-            tmpallocs.append(dcp(results.budget['Optimal']))
+            tmptotals[key] = budget
+            tmpallocs[key] = dcp(results.budget['Optimal'])
+            tmpoutcomes[key] = results.improvement[-1][-1]
             projectBOC.x.append(budget)
-            projectBOC.y.append(results.improvement[-1][-1])
+            projectBOC.y.append(tmpoutcomes[-1])
             projectBOC.budgets.append(tmpallocs[-1])
-        projectBOC.x.insert(0, 0)
-        projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
-        projectBOC.x.append(self.settings.infmoney)
-        projectBOC.y.append(results.outcomes['Infinite'])
-        projectBOC.parsetname = parsetname
-        projectBOC.progsetname = progsetname
-        self.addresult(result=projectBOC)
-        self.modified = today()
+            
+            # Check that the BOC points are monotonic, and if not, rerun
+            budgetdict.pop(key) # Remove the current key from the list
+            for oldkey in tmpoutcomes.keys():
+                if tmpoutcomes[oldkey]>tmpoutcomes[key] and tmptotals[oldkey]>tmptotals[key]: # Outcome is worse but budget is larger
+                    printv('WARNING, outcome for %s is worse than outcome for %s, rerunning...' % (oldkey, key), 1, verbose)
+                    budgetdict.insert(0, oldkey, float(oldkey)) # e.g. key2='0.8'
+        
+        # Tidy up: insert remaining points
+        if count:
+            projectBOC.x.insert(0, 0)
+            projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
+            projectBOC.parsetname = parsetname
+            projectBOC.progsetname = progsetname
+            self.addresult(result=projectBOC)
+            self.modified = today()
+        else:
+            errormsg = 'BOC generation failed: no BOC points were calculated'
+            raise OptimaException(errormsg)
         return None        
     
     
