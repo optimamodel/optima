@@ -639,7 +639,7 @@ class Project(object):
         tmptotals = odict()
         tmpallocs = odict()
         tmpoutcomes = odict()
-        counts = odict([(key,0) for key in budgetdict.keys()]) # Initialize to zeros
+        counts = odict([(key,0) for key in budgetdict.keys()]) # Initialize to zeros -- count how many times each budget is run
         while len(budgetdict):
             key, ratio = budgetdict.items()[0] # Use first budget in the stack
             counts[key] += 1
