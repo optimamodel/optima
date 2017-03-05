@@ -95,7 +95,7 @@ class Portfolio(object):
             printv('Loading project %i/%i "%s"...' % (f+1, len(filelist), filename), 3, verbose)
             project = loadproj(filename, verbose=0)
             projects.append(project)
-        self.addprojects(projects)
+        self.addprojects(projects, verbose=verbose)
         return None
         
         

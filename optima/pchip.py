@@ -1,4 +1,4 @@
-from utils import isnumber, checktype
+from utils import isnumber, checktype, promotetoarray
 from numpy import linspace, array, diff, argsort
 from copy import deepcopy as dcp
 from pylab import figure, plot, show
@@ -22,7 +22,7 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=0, mo
         x,y = smoothingfunc(x=x,y=y, smooth=smooth, monotonic=monotonic)
     
     if not checktype(xnew, 'arraylike'):
-        Exception('Error: Values to interpolate for with PCHIP have not been given in sequence form (e.g. list or array)!')
+        xnew = promotetoarray(xnew)
     xnew = dcp(sorted(xnew))
     
     if method=='pchip': # WARNING, need to rename this function something else...
@@ -254,10 +254,8 @@ def smoothingfunc(x=None, y=None, npts=10, smooth=10, monotonic=True):
             nbend   = end+npad
             if monotonic:
                 if der>=0:  
-                    print('der>0')
                     y1pad[nbstart:nbend] = maximum(y1pad[nbstart:nbend], 0)
                 elif der<0: 
-                    print('der<0')
                     y1pad[nbstart:nbend] = minimum(y1pad[nbstart:nbend], 0)
                 else:       raise Exception('Derivative is neither more or less than zero')
                 if d>0 and d<len(derivs)-1 and sign(derivs[d]-derivs[d-1])!=-sign(derivs[d+1]-derivs[d]): # Enforce monotonicity for points in the middle
