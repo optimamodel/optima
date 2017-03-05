@@ -640,8 +640,8 @@ class Project(object):
             
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
             if len(tmptotals):
-                best = argmin(tmpoutcomes[:]) # Find closest budget
-                owbudget = tmpallocs[best]
+                closest = argmin(abs(tmptotals[:]-budget)) # Find closest budget
+                owbudget = tmpallocs[closest]
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
             results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, mc=mc, die=die, **kwargs)
             tmptotals[key] = budget
