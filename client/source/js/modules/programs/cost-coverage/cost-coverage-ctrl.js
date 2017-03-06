@@ -66,7 +66,7 @@ define(['./../module', 'underscore'], function(module, _) {
           })
           .then(function(response) {
             vm.parsets = response.data.parsets;
-            console.log('vm.parsets', vm.parsets);
+            console.log('ModelCostCoverageController vm.parsets', vm.parsets);
             vm.state.parset = vm.parsets[0];
             vm.changeProgsetAndParset();
           });
@@ -99,7 +99,7 @@ define(['./../module', 'underscore'], function(module, _) {
       }
 
       function changeParset() {
-        console.log('vm.state.parset', vm.state.parset);
+        console.log('changeParset', vm.state.parset);
         if (vm.state.progset && vm.state.parset) {
           $http
             .get(
@@ -108,7 +108,7 @@ define(['./../module', 'underscore'], function(module, _) {
                 + '/parameters/' + vm.state.parset.id)
             .success(function(parameters) {
               vm.parameters = parameters;
-              console.log('vm.parameters', vm.parameters);
+              console.log('changeParset parameters', vm.parameters);
               vm.state.parameter = vm.parameters[0];
               vm.changeTargetParameter();
             });
@@ -124,7 +124,6 @@ define(['./../module', 'underscore'], function(module, _) {
               + '/parset/' + vm.state.parset.id
               + '/popsizes')
           .success(function(response) {
-            console.log('Est populations for program', response);
             vm.state.popsizes = response;
             buildCostFunctionTables();
             vm.updateCostCovGraph();
@@ -147,10 +146,9 @@ define(['./../module', 'underscore'], function(module, _) {
           'name');
         vm.state.program = vm.programs[0];
         if (!("attr" in vm.state.program)) {
-          console.log('new attr for program');
           vm.state.program.attr = {caption: "", xupperlim: null};
         }
-        console.log('selected program', vm.state.program);
+        console.log('changeProgsetAndParset program', vm.state.program);
         vm.state.popsizes = {};
 
         runServerProcedure(
@@ -158,7 +156,7 @@ define(['./../module', 'underscore'], function(module, _) {
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
           vm.state.summary = response.data;
-          console.log('vm.state.summary', response.data);
+          console.log('changeProgsetAndParset reoncile', response.data);
 
           // Fetch outcomes for this progset
           return $http.get(
@@ -168,7 +166,7 @@ define(['./../module', 'underscore'], function(module, _) {
         })
         .then(function(response) {
           vm.outcomes = response.data;
-          console.log('outcome summaries', vm.outcomes);
+          console.log('changeProgsetAndParset outcomes', vm.outcomes);
           changeParset();
           vm.changeProgram();
         })
@@ -361,7 +359,6 @@ define(['./../module', 'underscore'], function(module, _) {
             existingPops.push(outcome.pop);
           }
         });
-        console.log('existing pop in outcome', existingPops);
 
         var missingPops = [];
         _.each(vm.state.parameter.populations, function(population) {
@@ -372,7 +369,6 @@ define(['./../module', 'underscore'], function(module, _) {
             missingPops.push(population.pop);
           }
         });
-        console.log('missing pop in outcome', missingPops);
 
         _.each(missingPops, function(pop) {
           outcomes.push({
@@ -471,7 +467,7 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.targetedOutcomes = _.filter(vm.outcomes, function(outcome) {
           return outcome.name == vm.state.parameter.short;
         });
-        console.log('selected outcomes', vm.state.targetedOutcomes);
+        console.log('changeTargetParameter outcomes', vm.state.targetedOutcomes);
         buildParameterSelectors();
       };
 
@@ -481,7 +477,7 @@ define(['./../module', 'underscore'], function(module, _) {
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
           vm.state.summary = response.data;
-          console.log('vm.state.summary', response.data);
+          console.log('updateSummary renconcile', response.data);
         });
       };
 

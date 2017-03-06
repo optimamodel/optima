@@ -1269,7 +1269,7 @@ def reconcile_progset(project_id, progset_id, parset_id, year):
         print(">> reconcile_progset %s" % project.progsets)
         progset = parse.get_progset_from_project(project, progset_id)
         parset = parse.get_parset_from_project_by_id(project, parset_id)
-        progset.reconcile(parset, year)
+        progset.reconcile(parset, year, uselimits=True)
 
     update_project_with_fn(project_id, update_project_fn)
 

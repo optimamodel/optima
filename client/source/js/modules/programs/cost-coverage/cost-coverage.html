@@ -475,7 +475,10 @@
               <th>Coverage value</th>
             </tr>
             <tr ng-repeat="par in vm.state.summary.pars">
-              <td ng-repeat="p in par">{{p}}</td>
+              <td>{{par[0]}}</td>
+              <td>{{par[1]}}</td>
+              <td>{{par[2]|number:2}}</td>
+              <td>{{par[3]|number:2}}</td>
             </tr>
           </table>
 
