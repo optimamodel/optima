@@ -1,3 +1,4 @@
+from __future__ import print_function
 """
 parse.py
 ========
@@ -14,6 +15,7 @@ There should be no references to the database or web-handlers.
 from collections import defaultdict, OrderedDict
 from pprint import pformat
 from uuid import UUID
+import json
 
 import numpy as np
 import optima as op
@@ -452,7 +454,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset = get_progset_from_project(project, progset_id)
     parset = get_parset_from_project(project, parset_id)
 
-    print ">> Fetching target parameters from progset '%s'" % progset.name
+    print(">> Fetching target parameters from progset '%s'" % progset.name)
 
     progset.gettargetpops()
     progset.gettargetpars()
@@ -921,7 +923,25 @@ def get_progset_from_project(project, progset_id):
     return progsets[0]
 
 
-def set_program_summary_on_progset(progset, summary):
+def get_progset_from_name(project, progset_name, progset_id=None):
+    print(">> Finding progset '%s'" % progset_name)
+    if progset_name not in project.progsets:
+        if progset_id:
+            print("> Updated program set %s with new id %s" % (progset_name, progset_id))
+            # It may have changed, so try getting via ID if we have it...
+            progset = get_progset_from_project(project, progset_id)
+            project.progsets.pop(progset.name)
+
+            # Update the name and its reflection in the project.
+            progset.name = progset_name
+            project.progsets[progset_name] = progset
+        else:
+            print("> Created program set %s" % progset_name)
+            project.progsets[progset_name] = op.Programset(name=progset_name)
+    return project.progsets[progset_name]
+
+
+def create_or_extract_program_from_progset(progset, summary):
 
     try:
         program_id = summary.get("id")
@@ -956,7 +976,7 @@ def set_program_summary_on_progset(progset, summary):
     else:
         costcov = None
 
-    print(">> set_program_summary_on_progset", summary)
+    print(">> set_program_summary_on_progset", json.dumps(summary, indent=2))
     program = op.Program(
         short=summary["short"],
         name=summary["name"],
@@ -973,40 +993,29 @@ def set_program_summary_on_progset(progset, summary):
     if program_id:
         program.uid = program_id
 
+    return program
+
+
+def set_program_summary_on_progset(progset, summary):
+    program = create_or_extract_program_from_progset(progset, summary)
     if summary["active"]:
         progset.addprograms(program)
     else:
         progset.inactive_programs[program.short] = program
 
-    progset.updateprogset()
-
-
-def get_progset_from_name(project, progset_name, progset_id=None):
-    print(">> Finding progset '%s'" % progset_name)
-    if progset_name not in project.progsets:
-        if progset_id:
-            print("> Updated program set %s with new id %s" % (progset_name, progset_id))
-            # It may have changed, so try getting via ID if we have it...
-            progset = get_progset_from_project(project, progset_id)
-            project.progsets.pop(progset.name)
-
-            # Update the name and its reflection in the project.
-            progset.name = progset_name
-            project.progsets[progset_name] = progset
-        else:
-            print("> Created program set %s" % progset_name)
-            project.progsets[progset_name] = op.Programset(name=progset_name)
-    return project.progsets[progset_name]
-
 
 def set_progset_summary_on_progset(progset, progset_summary):
-    # Clear the current programs...
-    progset.programs = op.odict()
     progset.inactive_programs = op.odict()
     print(">> Setting %d programs on progset" % len(progset_summary['programs']))
-    for p in progset_summary['programs']:
-        set_program_summary_on_progset(progset, p)
-    progset.updateprogset()
+    updated_programs = []
+    for program_summary in progset_summary['programs']:
+        program = create_or_extract_program_from_progset(progset, program_summary)
+        if program_summary["active"]:
+            updated_programs.append(program)
+        else:
+            progset.inactive_programs[program.short] = program
+    progset.programs = op.odict()
+    progset.addprograms(updated_programs)
 
 
 def set_progset_summary_on_project(project, progset_summary, progset_id=None):

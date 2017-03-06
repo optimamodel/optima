@@ -1,3 +1,4 @@
+from __future__ import print_function
 """
 
 dataio.py
@@ -723,7 +724,7 @@ def save_portfolio(portfolio, db_session=None):
         record.id = UUID(portfolio_id)
         record.type = "portfolio"
         record.name = portfolio.name
-    print ">> Saved portfolio %s" % (portfolio_id)
+    print(">> Saved portfolio %s" % (portfolio_id))
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
@@ -763,7 +764,7 @@ def delete_portfolio_project(portfolio_id, project_id):
     """
     portfolio = load_portfolio(portfolio_id)
     portfolio.projects.pop(str(project_id))
-    print ">> Deleted project %s from portfolio %s" % (project_id, portfolio_id)
+    print(">> Deleted project %s from portfolio %s" % (project_id, portfolio_id))
     save_portfolio(portfolio)
     return load_portfolio_summaries()
 
@@ -903,7 +904,7 @@ def save_parameters(project_id, parset_id, parameters):
 
     def update_project_fn(project):
         parset = parse.get_parset_from_project(project, parset_id)
-        print ">> Updating parset '%s'" % parset.name
+        print(">> Updating parset '%s'" % parset.name)
         parset.modified = datetime.now(dateutil.tz.tzutc())
         parse.set_parameters_on_parset(parameters, parset)
 
@@ -922,7 +923,7 @@ def load_parset_graphs(
     print(">> Calibration parameters %s %s %s" % (startYear, endYear, parameters is not None))
 
     if parameters is not None:
-        print ">> Updating parset '%s'" % parset.name
+        print(">> Updating parset '%s'" % parset.name)
         parset.modified = datetime.now(dateutil.tz.tzutc())
         parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
@@ -930,7 +931,7 @@ def load_parset_graphs(
 
     result = load_result(project_id, parset_id, calculation_type, which)
     if result is None:
-        print ">> Runsim for for parset '%s'" % parset.name
+        print(">> Runsim for for parset '%s'" % parset.name)
         if startYear is None:
             startYear = project.settings.start
         if endYear is None:
@@ -943,7 +944,7 @@ def load_parset_graphs(
 
     assert result is not None
 
-    print ">> Generating graphs for parset '%s'" % parset.name
+    print(">> Generating graphs for parset '%s'" % parset.name)
 
     graph_dict = make_mpld3_graph_dict(result, which)
 
@@ -1017,13 +1018,13 @@ def update_or_create_result_record_by_id(
 
     result_record = db_session.query(ResultsDb).get(result.uid)
     if result_record is not None:
-        print ">> Updating record for result '%s'" % (result.name)
+        print(">> Updating record for result '%s'" % (result.name))
     else:
         result_record = ResultsDb(
             parset_id=parset_id,
             project_id=project_id,
             calculation_type=calculation_type)
-        print ">> Creating record for result '%s'" % (result.name)
+        print(">> Creating record for result '%s'" % (result.name))
 
     result_record.id = result.uid
     result_record.save_obj(result)
@@ -1058,7 +1059,7 @@ def delete_result_by_name(
     for record in records:
         result = record.load()
         if result.name == result_name:
-            print ">> Deleting outdated result '%s'" % result_name
+            print(">> Deleting outdated result '%s'" % result_name)
             record.cleanup()
             db_session.delete(record)
     db_session.commit()
@@ -1386,6 +1387,7 @@ def save_progset(project_id, progset_id, progset_summary):
     """
     Returns progset summary
     """
+    print(">> save_progset", progset_summary)
     project_record = load_project_record(project_id)
     project = project_record.load()
     parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
@@ -1467,14 +1469,8 @@ def save_outcome_summaries(project_id, progset_id, outcome_summaries):
 def save_program(project_id, progset_id, program_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
-
     progset = parse.get_progset_from_project(project, progset_id)
-
-    print("> Saving program " + program_summary['name'])
     parse.set_program_summary_on_progset(progset, program_summary)
-
-    progset.updateprogset()
-
     project_record.save_obj(project)
 
 
