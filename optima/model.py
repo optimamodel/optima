@@ -816,7 +816,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Reconcile the differences between the number we have and the number we want
                 if wanted is not None:
                     diff = wanted - actual # Wanted number minus actual number 
-
                     if diff>eps: # We need to move people forwards along the cascade 
                         ppltomoveup = people[lowerstate,:,t+1]
                         totalppltomoveup = ppltomoveup.sum()
@@ -851,13 +850,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
                             raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
-                            checkfornegativepeople(people)
-
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
-                        if totalppltomovedown>0: # To avoid having to add eps
-                            diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people
+                        if totalppltomovedown>eps: # To avoid having to add eps
+                            diff = min(-diff, totalppltomovedown-eps) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
                             if name is 'proptx': # Handle SVL and USVL separately
                                 newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
@@ -869,8 +866,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
                             raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
-
-            if debug: checkfornegativepeople(people, tind=t+1)
+            if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
     raw                 = odict()    # Sim output structure
     raw['tvec']         = tvec
