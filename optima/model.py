@@ -772,6 +772,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 raise OptimaException(errormsg)
             
             # If required, scale population sizes to exactly match the parameters
+            checkfornegativepeople(people)
             if forcepopsize:
                 relerr = 0.1 # Set relative error tolerance
                 for p in range(npops):
@@ -854,8 +855,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
-                        if totalppltomovedown>0: # To avoid having to add eps
-                            diff = min(-diff, eps+totalppltomovedown) # Flip it around so we have positive people
+                        if totalppltomovedown>eps: # To avoid having to add eps
+                            diff = min(-diff, totalppltomovedown-eps) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
                             if name is 'proptx': # Handle SVL and USVL separately
                                 newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
@@ -867,7 +868,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
                             raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
-
+                            checkfornegativepeople(people)
             if debug: checkfornegativepeople(people, tind=t+1)
         
     raw                 = odict()    # Sim output structure
