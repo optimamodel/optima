@@ -1203,7 +1203,7 @@ class odict(OrderedDict):
         print(self.__repr__(maxlen=maxlen, spaces=spaces, divider=divider))
     
     def _repr_pretty_(self, p, cycle):
-        ''' Stupid function to fix __repr__ because IPython is stupid '''
+        ''' Function to fix __repr__ in IPython'''
         print(self.__repr__())
     
     
