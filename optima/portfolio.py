@@ -51,7 +51,6 @@ class Portfolio(object):
         output += '            Portfolio name: %s\n' % self.name
         output += '\n'
         output += '        Number of projects: %i\n' % len(self.projects)
-        output += 'Number of GA Optimizations: %i\n' % len(self.gaoptims)
         output += '\n'
         output += '            Optima version: %s\n' % self.version
         output += '              Date created: %s\n' % getdate(self.created)
@@ -234,8 +233,9 @@ class Portfolio(object):
             boc.gaoptimbudget = spendperproject[b]
         
         # Reoptimize projects
-        if reoptimize: reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, verbose=verbose)
-        
+        if reoptimize: 
+            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, verbose=verbose)
+            self.results = resultpairs
         # Tidy up
         if doprint: self.makeoutput()
         if export: self.export()
@@ -268,8 +268,6 @@ class Portfolio(object):
         return None
     
     
-    # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
-    # Be very wary of the indices being used...
     def makeoutput(self, doprint=True, verbose=2):
         ''' Just displays results related to the GA run '''
         printv('Printing results...', 2, verbose)
@@ -291,19 +289,19 @@ class Portfolio(object):
         projoutcomes = []
         projoutcomesplit = []
         
-        for prj,x in enumerate(self.resultpairs.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
+        for prj,x in enumerate(self.results.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
             # Figure out which indices to use
-            tvector = self.resultpairs[x]['init'].tvec          # WARNING: NOT USING DT NORMALISATIONS LATER, SO ASSUME DT = 1 YEAR.
+            tvector = self.results[x]['init'].tvec          # WARNING: NOT USING DT NORMALISATIONS LATER, SO ASSUME DT = 1 YEAR.
             initial = findinds(tvector, self.objectives['start'])
             final = findinds(tvector, self.objectives['end'])
             indices = arange(initial, final)
             
-            projectname = self.resultpairs[x]['init'].projectinfo['name']
-            initalloc = self.resultpairs[x]['init'].budget['Current']
-            gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal']
-            initoutcome = self.resultpairs[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
+            projectname = self.results[x]['init'].projectinfo['name']
+            initalloc = self.results[x]['init'].budget['Current']
+            gaoptalloc = self.results[x]['opt'].budget['Optimal']
+            initoutcome = self.results[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
                                                                             # The second 0 corresponds to outcome pre-optimisation (which shouldn't matter anyway due to pre-GA budget 'init' being optimised for 0 seconds).
-            gaoptoutcome = self.resultpairs[x]['opt'].improvement[0][-1]    # The -1 corresponds to outcome post-optimisation (with 'opt' being a maxtime optimisation of a post-GA budget).
+            gaoptoutcome = self.results[x]['opt'].improvement[0][-1]    # The -1 corresponds to outcome post-optimisation (with 'opt' being a maxtime optimisation of a post-GA budget).
             suminitalloc = sum(initalloc.values())
             sumgaoptalloc = sum(gaoptalloc.values())
             
@@ -324,10 +322,10 @@ class Portfolio(object):
             projoutcomesplit[prj]['init'] = odict()
             projoutcomesplit[prj]['opt'] = odict()
             
-            initpars = self.resultpairs[x]['init'].parset[0]
-            optpars = self.resultpairs[x]['opt'].parset[-1]
-            initprog = self.resultpairs[x]['init'].progset[0]
-            optprog = self.resultpairs[x]['opt'].progset[-1]
+            initpars = self.results[x]['init'].parset[0]
+            optpars = self.results[x]['opt'].parset[-1]
+            initprog = self.results[x]['init'].progset[0]
+            optprog = self.results[x]['opt'].progset[-1]
             initcov = initprog.getprogcoverage(initalloc,self.objectives['start'],parset=initpars)
             optcov = optprog.getprogcoverage(gaoptalloc,self.objectives['start'],parset=optpars)
             
@@ -336,8 +334,8 @@ class Portfolio(object):
             projcov[prj]['opt']   = optcov
             
             for key in self.objectives['keys']:
-                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
+                projoutcomesplit[prj]['init']['num'+key] = self.results[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                projoutcomesplit[prj]['opt']['num'+key] = self.results[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
                 overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
                 overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
                 
@@ -404,7 +402,7 @@ class Portfolio(object):
         
         # Convert from a string to a 2D array
         outlist = []
-        outstr = self.makeoutput(doprint=False)
+        outstr = self.makeoutput(doprint=False) # Gather the results to export
         for line in outstr.split('\n'):
             outlist.append([])
             for cell in line.split('\t'):
@@ -431,6 +429,7 @@ class Portfolio(object):
 def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, batch=True, verbose=2):
     ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
     
+    printv('Reoptimizing portfolio projects...', 2, verbose)
     resultpairs = odict()
     if batch:
         outputqueue = Queue()
@@ -447,11 +446,13 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
             resultpair = reoptimizeprojects_task(*args)
             resultpairs[resultpair['key']] = resultpair
     if batch:
-        for key in projects.values:
+        for key in projects:
             resultpair = outputqueue.get()
             resultpairs[resultpair['key']] = resultpair
         for prc in processes:
             prc.join()
+    
+    printv('Reoptimization complete', 2, verbose)
     
     return resultpairs      
         
