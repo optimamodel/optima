@@ -560,6 +560,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     ## Loop over budget scale factors
     tmpresults = odict()
     tmpimprovements = odict()
+    tmpfullruninfo = odict()
     tmpresults['Current'] = extremeresults['Current'] # Include un-optimized original
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
     for scalefactor in scalefactors: 
@@ -591,19 +592,20 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
                 budgetvecnew, fvals, exitreason = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
-                asdresults[key] = {'budgetvec':budgetvecnew, 'fvals':fvals}
+                constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+                asdresults[key] = {'budget':constrainedbudgetnew, 'budgetvec':constrainedbudgetvecnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
                     bestkey = key # Reset key
                     bestfval = fvals[-1] # Reset fval
             
             ## Calculate outcomes
             args['initpeople'] = None # Set to None to get full results, not just from strat year
-            constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=asdresults[bestkey]['budgetvec'], totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-            new = outcomecalc(constrainedbudgetvecnew, outputresults=True, **args)
+            new = outcomecalc(asdresults[bestkey]['budgetvec'], outputresults=True, **args)
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
             else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
             tmpresults[new.name] = new
             tmpimprovements[new.name] = asdresults[bestkey]['fvals']
+            tmpfullruninfo[new.name] = asdresults # Store everything
         else:
             tmpresults['Optimal'] = dcp(tmpresults['Current']) # If zero budget, just copy current and rename
             tmpresults['Optimal'].name = 'Optimal' # Rename name to named name
@@ -613,6 +615,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.outcomes = extremeoutcomes # Store all of these
+    multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
     for key in tmpimprovements.keys():
         multires.outcomes[key] = tmpimprovements[key][-1] # Get best value
     optim.resultsref = multires.name # Store the reference for this result
