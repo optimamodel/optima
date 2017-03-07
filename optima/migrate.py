@@ -681,10 +681,10 @@ def migrate(project, verbose=2, die=False):
 
 
 
-def loadproj(filename=None, verbose=2, die=False, fromdb=False):
+def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
-    # Create legacy classes for compatibility -- FOR FUTURE
+    # Create legacy classes for compatibility
     
     class Spreadsheet(object): pass
     op.project.Spreadsheet = Spreadsheet
@@ -702,9 +702,10 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False):
     if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
 
-    P = migrate(origP, verbose=verbose, die=die)
+    if domigrate: P = migrate(origP, verbose=verbose, die=die)
+    else:         P = origP # Don't migrate -- WARNING, dangerous!
     
-    # Once used to do the migration, we can delete these
+    # Once used to unpickle the project, we can delete these
     del op.project.Spreadsheet
     del op.portfolio.GAOptim
     

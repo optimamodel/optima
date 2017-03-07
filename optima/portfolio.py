@@ -1,10 +1,9 @@
 from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
-from optima import version, loadbalancer, defaultobjectives, Project, pchip
+from optima import version, loadbalancer, defaultobjectives, Project, pchip, outcomecalc
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from multiprocessing import Process, Queue
 from glob import glob
 from xlsxwriter import Workbook
-import sys
 import os
 
 #######################################################################################################
@@ -129,10 +128,10 @@ class Portfolio(object):
         # Gather the BOCs
         if BOClist is None:
             BOClist = []
-            for pno,P in enumerate(self.projects.values()):
-                thisBOC = P.getBOC(objectives=objectives)
+            for pno,project in enumerate(self.projects.values()):
+                thisBOC = project.getBOC(objectives=objectives)
                 if thisBOC is None:
-                    errormsg = 'GA FAILED: Project %s has no BOC' % P.name
+                    errormsg = 'GA FAILED: Project %s has no BOC' % project.name
                     raise OptimaException(errormsg)
                 BOClist.append(thisBOC)
         
@@ -153,11 +152,11 @@ class Portfolio(object):
         bocxvecs = []
         bocyvecs = []
         for BOC in BOClist:
-            maxbudget = min(grandtotal,max(BOC.x))+1
+            maxbudget = min(grandtotal,max(BOC.x))+1 # Add one for the log
             tmpx1 = linspace(0,log(maxbudget), npts) # Exponentially distributed
             tmpx2 = linspace(1, maxbudget, npts) # Uniformly distributed
             tmpx3 = (tmpx1+log(tmpx2))/2. # Halfway in between, logarithmically speaking
-            tmpxvec = exp(tmpx3)-1
+            tmpxvec = exp(tmpx3)-1 # Subtract one from the log
             tmpyvec = pchip(BOC.x, BOC.y, tmpxvec)
             newtmpyvec = tmpyvec[0] - tmpyvec # Flip to an improvement
             bocxvecs.append(tmpxvec)
@@ -230,7 +229,7 @@ class Portfolio(object):
         self.spendperproject = odict([(key,spp) for key,spp in zip(self.projects.keys(), spendperproject)]) # Convert to odict
         
         # Reoptimize projects
-        if reoptimize: reoptimizeprojects(self.projects, spendperproject, maxtime=maxtime, maxiters=maxiters, mc=mc)
+        if reoptimize: reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc)
         
         # Tidy up
         if doprint: self.makeoutput()
@@ -424,7 +423,7 @@ class Portfolio(object):
         workbook.close()
         
 
-def reoptimizeprojects(projects, maxtime=None, maxiters=None, verbose=2):
+def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, verbose=2):
     ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
     printv('Finalizing geospatial analysis...', 1, verbose)
     printv('Warning, using default programset/programset!', 2, verbose)
@@ -438,7 +437,7 @@ def reoptimizeprojects(projects, maxtime=None, maxiters=None, verbose=2):
     for pind,project in enumerate(projects.values()):
         prc = Process(
             target=reoptimizeprojects_task,
-            args=(project, pind, outputqueue, maxtime, maxiters, verbose))
+            args=(project, objectives, pind, outputqueue, maxtime, maxiters, verbose))
         prc.start()
         prc.join()
         processes.append(prc)
@@ -449,85 +448,36 @@ def reoptimizeprojects(projects, maxtime=None, maxiters=None, verbose=2):
     return resultpairs      
         
 
-#%% Geospatial analysis batch functions for multiprocessing.
-
-def reoptimizeprojects_task(project, pind, outputqueue, maxtime, maxiters, verbose):
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
     loadbalancer(index=pind)
-    printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
+    
+    # Extract info from the BOC
+    BOC = project.getBOC(objectives)
+    args = {'which':'outcomes', 
+            'project':project, 
+            'parset':BOC.parsetname, 
+            'progset':BOC.progsetname, 
+            'objectives':BOC.objectives, 
+            'constraints':BOC.constraints, 
+            'totalbudget':BOC.gaoptbudget, 
+            'origbudget':closestbudget, 
+            'tvec':tvec, 
+            'ccsample':ccsample, 
+            'verbose':verbose, 
+            'initpeople':initpeople}
 
-    tmp = odict()
+    resultpair = odict()
 
-    # Crash if any project doesn't have progsets
-    if not P.progsets or not P.parsets:
-        errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
-        raise OptimaException(errormsg)
-
-    initobjectives = dcp(gaoptim.objectives)
-    initobjectives['budget'] = initbudgets[pind] + budgeteps
-    printv("Generating initial-budget optimization for project '%s'." % P.name, 2, verbose)
-    tmp['init'] = P.optimize(name=P.name+' GA initial', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
-    sys.stdout.flush()
-
+    resultpair['init'] = outcomecalc(defaultbudget, outputresults=True, doconstrainbudget=False, **args)
+    resultpair['init'].name = P.name+' GA initial'
     optobjectives = dcp(gaoptim.objectives)
     optobjectives['budget'] = optbudgets[pind] + budgeteps
     printv("Generating optimal-budget optimization for project '%s'." % P.name, 2, verbose)
-    tmp['opt'] = P.optimize(name=P.name+' GA optimal', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
-    sys.stdout.flush()
+    resultpair['opt'] = P.optimize(name=P.name+' GA optimal', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
 
-    outputqueue.put(tmp)
+    outputqueue.put(resultpair)
     return None
-    
-#%% Geospatial analysis runs are stored in a GAOptim object.
-
-class GAOptim(object):
-    """
-    GAOPTIM
-
-    Short for geospatial analysis optimisation. This class stores results from an optimisation run.
-
-    Version: 2016jan26 by davidkedz
-    """
-    #######################################################################################################
-    ## Built-in methods -- initialization, and the thing to print if you call a portfolio
-    #######################################################################################################
-
-    def __init__(self, name='default', objectives = None):
-        ''' Initialize the GA optim object '''
-
-        ## Define the structure sets
-        self.objectives = objectives
-        self.resultpairs = odict()
-
-        ## Define other quantities
-        self.name = name
-
-        ## Define metadata
-        self.uid = uuid()
-        self.created = today()
-        self.modified = today()
-        self.version = version
-        self.gitbranch, self.gitversion = gitinfo()
-
-        return None
-
-
-    def __repr__(self):
-        ''' Print out useful information when called '''
-        output = '============================================================\n'
-        output += '      GAOptim name: %s\n'    % self.name
-        output += '\n'
-        output += '    Optima version: %s\n'    % self.version
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '        Git branch: %s\n'    % self.gitbranch
-        output += '       Git version: %s\n'    % self.gitversion
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
-        return output
-
-
 
    
 
