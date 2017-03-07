@@ -440,6 +440,52 @@
           </div>
 
         </div>
+
+        <!--Summary tab windoe-->
+        <div style="width: 100%;"
+             class="c-tab"
+             ng-if="vm.activeTab === 'summary'">
+          <h1>Budget</h1>
+          <table
+              class="section table table-bordered">
+            <tr>
+              <th style="width: 15em;">Program</th>
+              <th>Budget</th>
+            </tr>
+            <tr ng-repeat="(programShort, budget) in vm.state.summary.budgets">
+              <td style="width: 15em;">{{programShort}}</td>
+              <td>{{budget}}</td>
+            </tr>
+          </table>
+
+          <h1>Parameters</h1>
+          Year:
+          <select
+              ng-model="vm.state.year"
+              ng-options="year for year in vm.state.yearSelector"
+              ng-change="vm.updateSummary()"
+              class="txbox __inline"/>
+          <br><br>
+          <table
+              class="section table table-bordered">
+            <tr>
+              <th>Parameter</th>
+              <th>Population</th>
+              <th>Calibration value</th>
+              <th>Coverage value</th>
+            </tr>
+            <tr ng-repeat="par in vm.state.summary.pars">
+              <td>{{par[0]}}</td>
+              <td>{{par[1]}}</td>
+              <td>{{par[2]|number:2}}</td>
+              <td>{{par[3]|number:2}}</td>
+            </tr>
+          </table>
+
+          <button ng-click="vm.reconcilePrograms()" class="btn">Reconcile</button>
+
+        </div>
+
       </div>
     </div>
 
