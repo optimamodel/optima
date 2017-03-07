@@ -306,9 +306,8 @@ class Portfolio(object):
             projectname = self.results[x]['init'].projectinfo['name']
             initalloc = self.results[x]['init'].budget
             gaoptalloc = self.results[x]['opt'].budget
-            initoutcome = self.results[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
-                                                                            # The second 0 corresponds to outcome pre-optimisation (which shouldn't matter anyway due to pre-GA budget 'init' being optimised for 0 seconds).
-            gaoptoutcome = self.results[x]['opt'].improvement[0][-1]    # The -1 corresponds to outcome post-optimisation (with 'opt' being a maxtime optimisation of a post-GA budget).
+            initoutcome = self.results[x]['init'].outcome 
+            gaoptoutcome = self.results[x]['opt'].outcome
             suminitalloc = sum(initalloc.values())
             sumgaoptalloc = sum(gaoptalloc.values())
             
@@ -329,10 +328,10 @@ class Portfolio(object):
             projoutcomesplit[prj]['init'] = odict()
             projoutcomesplit[prj]['opt'] = odict()
             
-            initpars = self.results[x]['init'].parset[0]
-            optpars = self.results[x]['opt'].parset[-1]
-            initprog = self.results[x]['init'].progset[0]
-            optprog = self.results[x]['opt'].progset[-1]
+            initpars = self.results[x]['init'].parset
+            optpars = self.results[x]['opt'].parset
+            initprog = self.results[x]['init'].progset
+            optprog = self.results[x]['opt'].progset
             initcov = initprog.getprogcoverage(initalloc,self.objectives['start'],parset=initpars)
             optcov = optprog.getprogcoverage(gaoptalloc,self.objectives['start'],parset=optpars)
             
@@ -341,8 +340,8 @@ class Portfolio(object):
             projcov[prj]['opt']   = optcov
             
             for key in self.objectives['keys']:
-                projoutcomesplit[prj]['init']['num'+key] = self.results[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                projoutcomesplit[prj]['opt']['num'+key] = self.results[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
+                projoutcomesplit[prj]['init']['num'+key] = self.results[x]['init'].main['num'+key].tot[indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                projoutcomesplit[prj]['opt']['num'+key] = self.results[x]['opt'].main['num'+key].tot[indices].sum()
                 overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
                 overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
                 
