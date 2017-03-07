@@ -475,7 +475,6 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
             'constraints':boc.constraints, 
             'totalbudget':totalbudget, 
             'origbudget':closestbudget, 
-            'mc':mc,
             'verbose':verbose}
 
     resultpair = odict()
@@ -483,7 +482,7 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     # Run the analyses
     resultpair['init'] = outcomecalc(boc.defaultbudget, outputresults=True, doconstrainbudget=False, **args)
     resultpair['init'].name = project.name+' GA initial'
-    resultpair['opt'] = project.optimize(label=project.name, **args)
+    resultpair['opt'] = project.optimize(label=project.name, mc=mc, **args)
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
 
