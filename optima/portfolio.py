@@ -186,7 +186,7 @@ class Portfolio(object):
     
 def geooptimization(BOClist=None, grandtotal=None, npts=None, maxiters=None, verbose=2):
     ''' Actual runs geospatial optimisation across provided BOCs. '''
-    printv('Calculating geospatial optimization for grand total budget of %f' % grandtotal, 2, verbose)
+    printv('Calculating geospatial optimization for grand total budget of %0.0f' % grandtotal, 2, verbose)
     
     # Check inputs
     if npts is None: npts = 2000 # The number of points to calculate along each BOC
@@ -248,7 +248,7 @@ def geooptimization(BOClist=None, grandtotal=None, npts=None, maxiters=None, ver
                 relimprovevecs[b] = relimprovevecs[b][withinbudget]
                 costeffvecs[b] = relimprovevecs[b]/relspendvecs[b]
             if not i%100:
-                printv('  Allocated %0.1f%% of the budget' % ((grandtotal-runningtotal)/float(grandtotal)*100), 2, verbose)
+                printv('  Allocated %0.1f%% of the portfolio budget...' % ((grandtotal-runningtotal)/float(grandtotal)*100), 2, verbose)
         else:
             break
     
