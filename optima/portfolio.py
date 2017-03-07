@@ -307,7 +307,8 @@ class Portfolio(object):
             initalloc = self.results[x]['init'].budget
             gaoptalloc = self.results[x]['opt'].budget
             initoutcome = self.results[x]['init'].outcome 
-            gaoptoutcome = self.results[x]['opt'].outcome
+            try:    gaoptoutcome = self.results[x]['opt'].outcomes['Optimal'] # Hmm, doesn't seem right...
+            except: gaoptoutcome = initoutcome # If it doesn't have an "outcomes" structure, that's because
             suminitalloc = sum(initalloc.values())
             sumgaoptalloc = sum(gaoptalloc.values())
             
@@ -340,8 +341,8 @@ class Portfolio(object):
             projcov[prj]['opt']   = optcov
             
             for key in self.objectives['keys']:
-                projoutcomesplit[prj]['init']['num'+key] = self.results[x]['init'].main['num'+key].tot[indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                projoutcomesplit[prj]['opt']['num'+key] = self.results[x]['opt'].main['num'+key].tot[indices].sum()
+                projoutcomesplit[prj]['init']['num'+key] = self.results[x]['init'].main['num'+key].tot[0][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                projoutcomesplit[prj]['opt']['num'+key] = self.results[x]['opt'].main['num'+key].tot[0][indices].sum()
                 overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
                 overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
                 
@@ -499,8 +500,9 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     outcalcargs.update(sharedargs)
     optimargs.update(sharedargs)
     resultpair['init'] = outcomecalc(**outcalcargs)
+    print('NO, need to run with original budget!')
     if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
-    else:           resultpair['opt'] = dcp(resultpair['init'])
+    else:           resultpair['opt'] = dcp(resultpair['init'])#  NO, need to rerun with GA budget
     resultpair['init'].name = project.name+' GA initial'
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
