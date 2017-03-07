@@ -442,7 +442,6 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
         if batch:
             prc = Process(target=reoptimizeprojects_task, args=args)
             prc.start()
-            prc.join()
             processes.append(prc)
         else:
             resultpair = reoptimizeprojects_task(*args)
@@ -451,6 +450,8 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
         for key in projects.values:
             resultpair = outputqueue.get()
             resultpairs[resultpair['key']] = resultpair
+        for prc in processes:
+            prc.join()
     
     return resultpairs      
         
