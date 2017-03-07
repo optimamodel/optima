@@ -782,6 +782,30 @@ api.add_resource(ProgramCostcovGraph,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
 
 
+
+# class GeneralRpcLoader(Resource):
+#     method_decorators = [report_exception_decorator, login_required]
+#
+#     @swagger.operation(summary='General RPC loader')
+#     def post(self):
+#         """
+#         url-args:
+#             'procedure': string name of function in dataio
+#             'args': list of arguments for the function
+#         """
+#         json = get_post_data_json()
+#
+#         fn_name = json['name']
+#         print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
+#         fn = getattr(dataio, fn_name)
+#
+#         args = json.get('args', [])
+#         kwargs = json.get('kwargs', {})
+#         return fn(*args, **kwargs)
+#
+# api.add_resource(GeneralRpcLoader, '/api/procedure')
+
+
 # SCENARIOS
 
 
