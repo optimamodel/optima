@@ -468,7 +468,6 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     
     # Extract info from the BOC
     args = {'which':'outcomes', 
-            'project':project, 
             'parset':boc.parsetname, 
             'progset':boc.progsetname, 
             'objectives':boc.objectives, 
@@ -477,10 +476,9 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
             'origbudget':closestbudget, 
             'verbose':verbose}
 
-    resultpair = odict()
-    
     # Run the analyses
-    resultpair['init'] = outcomecalc(boc.defaultbudget, outputresults=True, doconstrainbudget=False, **args)
+    resultpair = odict()
+    resultpair['init'] = outcomecalc(project=project, outputresults=True, doconstrainbudget=False, **args)
     resultpair['init'].name = project.name+' GA initial'
     resultpair['opt'] = project.optimize(label=project.name, mc=mc, **args)
     resultpair['opt'].name = project.name+' GA optimal'

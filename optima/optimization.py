@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2017mar03
 """
 
-from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
+from optima import OptimaException, Link, Multiresultset, Parameterset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
 from numpy import zeros, arange, maximum, array, inf, isfinite, argmin, argsort
 from numpy.random import random
@@ -303,9 +303,10 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
     # Set up defaults
     if which is None: which = 'outcomes'
-    if project is not None:
-        if parset is None: parset = project.parsets[-1]
-        if progset is None: progset = project.progsets[-1]
+    if parset is None: parset = -1
+    if progset is None: progset = -1
+    if not isinstance(parset,  Parameterset): parset  = project.parsets[parset] # Assume it's a key
+    if not isinstance(progset, Programset):   progset = project.progsets[progset] # Assume it's a key
     if objectives is None: objectives = defaultobjectives(project=project, progset=progset, which=which)
     if constraints is None: constraints = defaultconstraints(project=project, progset=progset, which=which)
     if totalbudget is None: totalbudget = objectives['budget']
