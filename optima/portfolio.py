@@ -227,9 +227,11 @@ class Portfolio(object):
         
         # Store results
         self.spendperproject = odict([(key,spp) for key,spp in zip(self.projects.keys(), spendperproject)]) # Convert to odict
+        for b,BOC in enumerate(BOClist):
+            BOC.gaoptimbudget = spendperproject[b]
         
         # Reoptimize projects
-        if reoptimize: reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc)
+        if reoptimize: reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, verbose=verbose)
         
         # Tidy up
         if doprint: self.makeoutput()
@@ -423,58 +425,65 @@ class Portfolio(object):
         workbook.close()
         
 
-def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, verbose=2):
+def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, batch=True, verbose=2):
     ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
-    printv('Finalizing geospatial analysis...', 1, verbose)
-    printv('Warning, using default programset/programset!', 2, verbose)
-    
-    # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
-    # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
     
     resultpairs = odict()
-    outputqueue = Queue()
-    processes = []
+    if batch:
+        outputqueue = Queue()
+        processes = []
     for pind,project in enumerate(projects.values()):
-        prc = Process(
-            target=reoptimizeprojects_task,
-            args=(project, objectives, pind, outputqueue, maxtime, maxiters, verbose))
-        prc.start()
-        prc.join()
-        processes.append(prc)
-    for pind,P in enumerate(projects.values()):
-        tmpresult = outputqueue.get()
-        resultpairs[tmpresult.name] = tmpresult
+        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, verbose)
+        if batch:
+            prc = Process(target=reoptimizeprojects_task, args=args)
+            prc.start()
+            prc.join()
+            processes.append(prc)
+        else:
+            resultpair = reoptimizeprojects_task(*args)
+            resultpairs[resultpair['key']] = resultpair
+    if batch:
+        for key in projects.values:
+            resultpair = outputqueue.get()
+            resultpairs[resultpair['key']] = resultpair
     
     return resultpairs      
         
 
-def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, verbose):
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
     loadbalancer(index=pind)
     
-    # Extract info from the BOC
+    # Figure out which budget to use as a starting point
     BOC = project.getBOC(objectives)
+    totalbudget = BOC.gaoptbudget
+    smallestmismatch = inf
+    for budget in BOC.budgets: # Could be done with argmin() but this is more explicit...
+        thismismatch = abs(totalbudget-budget[:].sum())
+        if thismismatch<smallestmismatch:
+            closestbudget = dcp(budget)
+            smallestmismatch = thismismatch
+    
+    # Extract info from the BOC
     args = {'which':'outcomes', 
             'project':project, 
             'parset':BOC.parsetname, 
             'progset':BOC.progsetname, 
             'objectives':BOC.objectives, 
             'constraints':BOC.constraints, 
-            'totalbudget':BOC.gaoptbudget, 
+            'totalbudget':totalbudget, 
             'origbudget':closestbudget, 
-            'tvec':tvec, 
-            'ccsample':ccsample, 
-            'verbose':verbose, 
-            'initpeople':initpeople}
+            'mc':mc,
+            'verbose':verbose}
 
     resultpair = odict()
-
-    resultpair['init'] = outcomecalc(defaultbudget, outputresults=True, doconstrainbudget=False, **args)
-    resultpair['init'].name = P.name+' GA initial'
-    optobjectives = dcp(gaoptim.objectives)
-    optobjectives['budget'] = optbudgets[pind] + budgeteps
-    printv("Generating optimal-budget optimization for project '%s'." % P.name, 2, verbose)
-    resultpair['opt'] = P.optimize(name=P.name+' GA optimal', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+    
+    # Run the analyses
+    resultpair['init'] = outcomecalc(BOC.defaultbudget, outputresults=True, doconstrainbudget=False, **args)
+    resultpair['init'].name = project.name+' GA initial'
+    resultpair['opt'] = project.optimize(label=project.name, **args)
+    resultpair['opt'].name = project.name+' GA optimal'
+    resultpair['key'] = project.name # Store the project name to avoid mix-ups
 
     outputqueue.put(resultpair)
     return None
