@@ -229,7 +229,6 @@ def set_project_summary_on_project(project, summary):
 
     startYear = summary['startYear']
     endYear = summary['endYear']
-    project.data["years"] = (startYear, endYear)
     project.settings.start = startYear
     project.settings.end = endYear
 
