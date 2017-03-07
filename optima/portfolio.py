@@ -466,20 +466,28 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
             closestbudget = dcp(budget)
             smallestmismatch = thismismatch
     
-    # Extract info from the BOC
-    args = {'parset':boc.parsetname, 
-            'progset':boc.progsetname, 
-            'objectives':boc.objectives, 
-            'constraints':boc.constraints, 
-            'origbudget':closestbudget, 
-            'verbose':verbose}
+    # Extract info from the BOC and specify argument lists...painful
+    sharedargs = {'objectives':boc.objectives, 
+                  'constraints':boc.constraints, 
+                  'origbudget':closestbudget,
+                  'parsetname':boc.parsetname, 
+                  'progsetname':boc.progsetname,
+                  'verbose':verbose
+                  }
+    outcalcargs = {'project':project,
+                   'outputresults':True,
+                   'doconstrainbudget':False}
+    optimargs = {'label':project.name,
+                 'mc':mc}
 
     # Run the analyses
     resultpair = odict()
-    objectives['budget'] = totalbudget
-    resultpair['init'] = outcomecalc(project=project, totalbudget=totalbudget, outputresults=True, doconstrainbudget=False, **args)
+    sharedargs['objectives']['budget'] = totalbudget
+    outcalcargs.update(sharedargs)
+    optimargs.update(sharedargs)
+    resultpair['init'] = outcomecalc(**outcalcargs)
     resultpair['init'].name = project.name+' GA initial'
-    resultpair['opt'] = project.optimize(label=project.name, mc=mc, **args)
+    resultpair['opt'] = project.optimize(**optimargs)
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
 

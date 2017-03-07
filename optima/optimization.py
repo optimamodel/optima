@@ -297,16 +297,17 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ### The main meat of the matter
 ################################################################################################################################################
 
-def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, 
-                  optiminds=None, origbudget=None, tvec=None, initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
+def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, parsetname=None, progsetname=None, 
+                objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
+                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
     if which is None: which = objectives['which']
-    if parset is None: parset = -1
-    if progset is None: progset = -1
-    if not isinstance(parset,  Parameterset): parset  = project.parsets[parset] # Assume it's a key
-    if not isinstance(progset, Programset):   progset = project.progsets[progset] # Assume it's a key
+    if parsetname is None: parsetname = -1
+    if progsetname is None: progsetname = -1
+    if parset is None: parset  = project.parsets[parsetname] 
+    if progset is None: progset = project.progsets[progsetname] 
     if objectives is None: objectives = defaultobjectives(project=project, progset=progset, which=which)
     if constraints is None: constraints = defaultconstraints(project=project, progset=progset, which=which)
     if totalbudget is None: totalbudget = objectives['budget']
