@@ -466,11 +466,11 @@ class Multiresultset(Resultset):
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
-            if getattr(rset,'budget'): # If it has a budget, overwrite coverage information by calculating from budget
+            if len(rset.budget): # If it has a budget, overwrite coverage information by calculating from budget
                 self.budget[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
                 self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
-            elif getattr(rset,'coverage'): # If no budget, compute budget from coverage
+            elif len(rset.coverage): # If no budget, compute budget from coverage
                 self.coverage[key]      = rset.coverage
                 self.budgetyears[key] = rset.budgetyears
                 self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
@@ -515,11 +515,12 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='unspecified', x=None, y=None, objectives=None):
+    def __init__(self, name='unspecified', x=None, y=None, budgets=None, objectives=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
         self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
+        self.budgets = budgets if budgets else [] # A list of actual budgets
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
         
         self.name = name # Required by rmresult in Project.

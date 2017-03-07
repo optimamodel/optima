@@ -350,7 +350,7 @@ class Programset(object):
         if isinstance(budget, list) or isinstance(budget,type(array([]))):
             budget = vec2obj(orig=self.getdefaultbudget(), newvec=budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
-        budget = budget.sort([p.short for p in self.programs.values()])
+        budget.sort([p.short for p in self.programs.values()])
 
         # Get program-level coverage for each program
         for thisprog in self.programs.keys():
@@ -376,7 +376,7 @@ class Programset(object):
         if isnumber(t): t = [t]
         if not isinstance(coverage,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
         if not isinstance(coverage,odict): budget = odict(budget)
-        coverage = coverage.sort([p.short for p in self.programs.values()])
+        coverage.sort([p.short for p in self.programs.values()])
 
         # Get budget for each program
         for thisprog in self.programs.keys():
@@ -401,7 +401,7 @@ class Programset(object):
         # Validate inputs
         if not isinstance(budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
         if not isinstance(budget,odict): budget = odict(budget)
-        budget = budget.sort([p.short for p in self.programs.values()])
+        budget.sort([p.short for p in self.programs.values()])
 
         # Get population-level coverage for each program
         for thisprog in self.programs.keys():
@@ -715,7 +715,7 @@ class Programset(object):
         args = odict([('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('objective',objective), ('verbose',verbose)])
         origmismatch = costfuncobjectivecalc(parmeans, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
             
-        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, MaxIter=maxiters, timelimit=maxtime, verbose=verbose, **kwargs)
+        parvecnew, fvals, exitreason = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, maxiters=maxiters, maxtime=maxtime, verbose=verbose, **kwargs)
         currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
@@ -825,6 +825,7 @@ class Program(object):
         '''Add a model parameter to be targeted by this program'''
         if (targetpar['param'],targetpar['pop']) not in [(tp['param'],tp['pop']) for tp in self.targetpars]:
             self.targetpars.append(targetpar)
+            self.targetpartypes = list(set([thispar['param'] for thispar in self.targetpars]))
             printv('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.short, self.targetpars), 4, verbose)
         else:
             index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))

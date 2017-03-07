@@ -1065,10 +1065,10 @@ class odict(OrderedDict):
             try:
                 output = OrderedDict.__getitem__(self, key)
                 return output
-            except: # WARNING, should be KeyError, but this can't print newlines!!!
+            except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
-                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
-                        '\n'.join([str(k) for k in self.keys()]))
+                    errormsg = E.__repr__()+'\n'
+                    errormsg += 'odict key "%s" not found; available keys are:\n%s' % (str(key), '\n'.join([str(k) for k in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
@@ -1168,18 +1168,18 @@ class odict(OrderedDict):
                 raise Exception(errormsg)
     
     
-    def __repr__(self, maxlen=None, spaces=True, divider=True):
+    def __repr__(self, maxlen=None, spaces=True, divider=False):
         ''' Print a meaningful representation of the odict '''
          # Maximum length of string to display
         toolong = ' [...]'
-        divider = '#############################################################\n'
+        dividerstr = '#############################################################\n'
         if len(self.keys())==0: 
             output = 'odict()'
         else: 
             output = ''
             hasspaces = 0
             for i in range(len(self)):
-                if divider and spaces and hasspaces: output += divider
+                if divider and spaces and hasspaces: output += dividerstr
                 thiskey = str(self.keys()[i]) # Probably don't need to cast to str, but just to be sure
                 thisval = str(self.values()[i])
                 if not(spaces):                    thisval = thisval.replace('\n','\\n') # Replace line breaks with characters
@@ -1193,24 +1193,80 @@ class odict(OrderedDict):
         print(self.__repr__(maxlen=maxlen, spaces=spaces, divider=divider))
     
     def _repr_pretty_(self, p, cycle):
-        ''' Stupid function to fix __repr__ because IPython is stupid '''
+        ''' Function to fix __repr__ in IPython'''
         print(self.__repr__())
     
     
-    def index(self, item):
+    def index(self, value):
         ''' Return the index of a given key '''
-        return self.keys().index(item)
+        return self.keys().index(value)
     
-    def valind(self, item):
+    def valind(self, value):
         ''' Return the index of a given value '''
-        return self.items().index(item)
+        return self.items().index(value)
     
-    def append(self, item):
+    def append(self, key=None, value=None):
         ''' Support an append method, like a list '''
-        keyname = str(len(self)) # Define the key just to be the current index
-        self.__setitem__(keyname, item)
+        needkey = False
+        if value is None: # Assume called with a single argument
+            value = key
+            needkey = True
+        if key is None or needkey:
+            keyname = 'key'+str(len(self))  # Define the key just to be the current index
+        else:
+            keyname = key
+        self.__setitem__(keyname, value)
         return None
     
+    def insert(self, pos=None, key=None, value=None):
+        '''
+        Stupid, slow function to do insert -- WARNING, should be able to use approach more like rename...
+        
+        Usage:
+            z = odict()
+            z['foo'] = 1492
+            z.insert(1604)
+            z.insert(0, 'ganges', 1444)
+            z.insert(2, 'midway', 1234)
+        '''
+        
+        # Handle inputs
+        realpos, realkey, realvalue = pos, key, value
+        if key is None and value is None: # Assume it's called like odict.insert(666)
+            realvalue = pos
+            realkey = 'key'+str(len(self))
+            realpos = 0
+        elif value is None: # Assume it's called like odict.insert('devil', 666)
+            realvalue = key
+            realkey = pos
+            realpos = 0
+        if pos is None:
+            realpos = 0
+        if realpos>len(self):
+            errormsg = 'Cannot insert %s at position %i since length of odict is %i ' % (key, pos, len(self))
+            raise Exception(errormsg)
+        
+        # Create a temporary dictionary to hold all of the items after the insertion point
+        tmpdict = odict()
+        origkeys = self.keys()
+        originds = range(len(origkeys))
+        if not len(originds) or realpos==len(originds): # It's empty or in the final position, just append
+            self.__setitem__(realkey, realvalue)
+        else: # Main usage case, it's not empty
+            try: insertind = originds.index(realpos) # Figure out which index we're inseting at
+            except:
+                errormsg = 'Could not insert item at position %i in odict with %i items' % (realpos, len(originds))
+                raise Exception(errormsg)
+            keystopop = origkeys[insertind:] # Pop these keys until we get far enough back
+            for keytopop in keystopop:
+                tmpdict.__setitem__(keytopop, self.pop(keytopop))
+            self.__setitem__(realkey, realvalue) # Insert the new item at the right location
+            for keytopop in keystopop: # Insert popped items back in
+                self.__setitem__(keytopop, tmpdict.pop(keytopop))
+
+        return None
+        
+        
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
@@ -1229,9 +1285,14 @@ class odict(OrderedDict):
                 self.__setitem__(key, value)
         return None
     
-    def sort(self, sortby=None):
-        ''' Return a sorted copy of the odict. 
-        Sorts by order of sortby, if provided, otherwise alphabetical'''
+    
+    def sort(self, sortby=None, copy=False):
+        '''
+        Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
+        If copy is True, then returns a copy (like sorted())
+        
+        Note: very slow, do not use for serious computations!!
+        '''
         if not sortby: allkeys = sorted(self.keys())
         else:
             if not isinstance(sortby, list): raise Exception('Please provide a list to determine the sort order.')
@@ -1249,9 +1310,18 @@ class odict(OrderedDict):
                     raise Exception(errormsg)
                 else: allkeys = [y for (x,y) in sorted(zip(sortby,self.keys()))]
             else: raise Exception('Cannot figure out how to sort by "%s"' % sortby)
-        out = odict()
-        for key in allkeys: out[key] = self[key]
-        return out
+        tmpdict = odict()
+        if copy:
+            for key in allkeys: tmpdict[key] = self[key]
+            return tmpdict
+        else:
+            for key in allkeys: tmpdict.__setitem__(key, self.pop(key))
+            for key in allkeys: self.__setitem__(key, tmpdict.pop(key))
+            return None
+    
+    def sorted(self, sortby=None):
+        ''' Shortcut for making a copy of the sorted odict '''
+        return self.sort(sortby=sortby, copy=True)
 
 
 
