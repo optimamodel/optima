@@ -868,7 +868,7 @@ def loadbalancer(maxload=0.5, index=None, refresh=1.0, maxtime=3600, verbose=Tru
         currentload = cpu_percent()/100.
         if currentload>maxload:
             if verbose: print('CPU load too high (%0.2f/%0.2f); process %s queued for the %ith time' % (currentload, maxload, index, count))
-            sleep(refresh)
+            sleep(refresh*2*random())
         else: 
             toohigh = False # print('CPU load fine (%0.2f/%0.2f)' % (currentload, maxload))
     return None
