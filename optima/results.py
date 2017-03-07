@@ -527,6 +527,7 @@ class BOC(object):
         self.defaultbudget = defaultbudget # The initial budget, pre-optimization
         self.gaoptimbudget = None # The optimized budget, assigned by GA
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
+        self.constraints = constraints # Likewise...
         self.name = name # Required by rmresult in Project.
 
     def __repr__(self):

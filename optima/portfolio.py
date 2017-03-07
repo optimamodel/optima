@@ -116,7 +116,7 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
         
-    def runGA(self, grandtotal=None, objectives=None, BOClist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, doprint=True, export=False, verbose=2):
+    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, doprint=True, export=False, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -126,14 +126,14 @@ class Portfolio(object):
         if mc is None: mc = 0 # Do not use MC by default
         
         # Gather the BOCs
-        if BOClist is None:
-            BOClist = []
+        if boclist is None:
+            boclist = []
             for pno,project in enumerate(self.projects.values()):
-                thisBOC = project.getBOC(objectives=objectives)
-                if thisBOC is None:
+                thisboc = project.getBOC(objectives=objectives)
+                if thisboc is None:
                     errormsg = 'GA FAILED: Project %s has no BOC' % project.name
                     raise OptimaException(errormsg)
-                BOClist.append(thisBOC)
+                boclist.append(thisboc)
         
         # Get the grand total
         if grandtotal is None:
@@ -141,23 +141,23 @@ class Portfolio(object):
                 grandtotal = objectives['budget']
             else:
                 grandtotal = 0.0
-                for BOC in BOClist:
-                    grandtotal += sum(BOC.defaultbudget[:])
+                for boc in boclist:
+                    grandtotal += sum(boc.defaultbudget[:])
         
         # Run actual geospatial analysis optimization
         printv('Performing geospatial optimization for grand total budget of %0.0f' % grandtotal, 2, verbose)
 
         # Set up vectors
-        nbocs = len(BOClist)
+        nbocs = len(boclist)
         bocxvecs = []
         bocyvecs = []
-        for BOC in BOClist:
-            maxbudget = min(grandtotal,max(BOC.x))+1 # Add one for the log
+        for boc in boclist:
+            maxbudget = min(grandtotal,max(boc.x))+1 # Add one for the log
             tmpx1 = linspace(0,log(maxbudget), npts) # Exponentially distributed
             tmpx2 = linspace(1, maxbudget, npts) # Uniformly distributed
             tmpx3 = (tmpx1+log(tmpx2))/2. # Halfway in between, logarithmically speaking
             tmpxvec = exp(tmpx3)-1 # Subtract one from the log
-            tmpyvec = pchip(BOC.x, BOC.y, tmpxvec)
+            tmpyvec = pchip(boc.x, boc.y, tmpxvec)
             newtmpyvec = tmpyvec[0] - tmpyvec # Flip to an improvement
             bocxvecs.append(tmpxvec)
             bocyvecs.append(newtmpyvec)
@@ -215,10 +215,10 @@ class Portfolio(object):
         origspend = zeros(nbocs)
         origoutcomes = zeros(nbocs)
         optimoutcomes = zeros(nbocs)
-        for b,BOC in enumerate(BOClist):
-            origspend[b] = sum(BOClist[b].defaultbudget[:])
-            origoutcomes[b] = pchip(BOC.x, BOC.y, origspend[b])
-            optimoutcomes[b] = pchip(BOC.x, BOC.y, spendperproject[b])
+        for b,boc in enumerate(boclist):
+            origspend[b] = sum(boclist[b].defaultbudget[:])
+            origoutcomes[b] = pchip(boc.x, boc.y, origspend[b])
+            optimoutcomes[b] = pchip(boc.x, boc.y, spendperproject[b])
         
         origsum = sum(origoutcomes[:])
         optsum = sum(optimoutcomes[:])
@@ -227,11 +227,11 @@ class Portfolio(object):
         
         # Store results
         self.spendperproject = odict([(key,spp) for key,spp in zip(self.projects.keys(), spendperproject)]) # Convert to odict
-        for b,BOC in enumerate(BOClist):
-            BOC.gaoptimbudget = spendperproject[b]
+        for b,boc in enumerate(boclist):
+            boc.gaoptimbudget = spendperproject[b]
         
         # Reoptimize projects
-        if reoptimize: reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, verbose=verbose)
+        if reoptimize: reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, verbose=verbose)
         
         # Tidy up
         if doprint: self.makeoutput()
@@ -432,8 +432,10 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
     if batch:
         outputqueue = Queue()
         processes = []
+    else:
+        outputqueue = None
     for pind,project in enumerate(projects.values()):
-        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, verbose)
+        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, verbose)
         if batch:
             prc = Process(target=reoptimizeprojects_task, args=args)
             prc.start()
@@ -450,15 +452,15 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
     return resultpairs      
         
 
-def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, verbose):
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
-    loadbalancer(index=pind)
+    if batch: loadbalancer(index=pind)
     
     # Figure out which budget to use as a starting point
-    BOC = project.getBOC(objectives)
-    totalbudget = BOC.gaoptbudget
+    boc = project.getBOC(objectives)
+    totalbudget = boc.gaoptimbudget
     smallestmismatch = inf
-    for budget in BOC.budgets: # Could be done with argmin() but this is more explicit...
+    for budget in boc.budgets: # Could be done with argmin() but this is more explicit...
         thismismatch = abs(totalbudget-budget[:].sum())
         if thismismatch<smallestmismatch:
             closestbudget = dcp(budget)
@@ -467,10 +469,10 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     # Extract info from the BOC
     args = {'which':'outcomes', 
             'project':project, 
-            'parset':BOC.parsetname, 
-            'progset':BOC.progsetname, 
-            'objectives':BOC.objectives, 
-            'constraints':BOC.constraints, 
+            'parset':boc.parsetname, 
+            'progset':boc.progsetname, 
+            'objectives':boc.objectives, 
+            'constraints':boc.constraints, 
             'totalbudget':totalbudget, 
             'origbudget':closestbudget, 
             'mc':mc,
@@ -479,13 +481,13 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     resultpair = odict()
     
     # Run the analyses
-    resultpair['init'] = outcomecalc(BOC.defaultbudget, outputresults=True, doconstrainbudget=False, **args)
+    resultpair['init'] = outcomecalc(boc.defaultbudget, outputresults=True, doconstrainbudget=False, **args)
     resultpair['init'].name = project.name+' GA initial'
     resultpair['opt'] = project.optimize(label=project.name, **args)
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
 
-    outputqueue.put(resultpair)
+    if batch: outputqueue.put(resultpair)
     return None
 
    

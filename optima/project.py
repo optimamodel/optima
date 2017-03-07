@@ -596,11 +596,12 @@ class Project(object):
         
     def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, die=False, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
-        projectBOC = BOC(name='BOC '+self.name)
+        boc = BOC(name='BOC '+self.name)
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progset=progsetname)
-        projectBOC.objectives = objectives
+        boc.objectives = objectives
+        boc.constraints = constraints
         
         if parsetname is None:
             printv('Warning, using default parset', 3, verbose)
@@ -653,9 +654,9 @@ class Project(object):
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budget['Optimal'])
             tmpoutcomes[key] = results.improvement[-1][-1]
-            projectBOC.x.append(budget)
-            projectBOC.y.append(tmpoutcomes[-1])
-            projectBOC.budgets[key] = tmpallocs[-1]
+            boc.x.append(budget)
+            boc.y.append(tmpoutcomes[-1])
+            boc.budgets[key] = tmpallocs[-1]
             
             # Check that the BOC points are monotonic, and if not, rerun
             budgetdict.pop(key) # Remove the current key from the list
@@ -669,17 +670,17 @@ class Project(object):
                         
         # Tidy up: insert remaining points
         if sum(counts[:]):
-            xorder = argsort(projectBOC.x) # Sort everything
-            projectBOC.x = array(projectBOC.x[xorder]).tolist()
-            projectBOC.y = array(projectBOC.y[xorder]).tolist()
-            projectBOC.budgets.sort(xorder)
-            projectBOC.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
-            projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
-            projectBOC.yinf = results.outcomes['Infinite'] # Store infinite money, but not as part of the BOC
-            projectBOC.parsetname = parsetname
-            projectBOC.progsetname = progsetname
-            projectBOC.defaultbudget = dcp(defaultbudget)
-            self.addresult(result=projectBOC)
+            xorder = argsort(boc.x) # Sort everything
+            boc.x = array(boc.x[xorder]).tolist()
+            boc.y = array(boc.y[xorder]).tolist()
+            boc.budgets.sort(xorder)
+            boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
+            boc.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
+            boc.yinf = results.outcomes['Infinite'] # Store infinite money, but not as part of the BOC
+            boc.parsetname = parsetname
+            boc.progsetname = progsetname
+            boc.defaultbudget = dcp(defaultbudget)
+            self.addresult(result=boc)
             self.modified = today()
         else:
             errormsg = 'BOC generation failed: no BOC points were calculated'
