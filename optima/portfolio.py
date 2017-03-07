@@ -143,6 +143,9 @@ class Portfolio(object):
                 grandtotal = 0.0
                 for boc in boclist:
                     grandtotal += sum(boc.defaultbudget[:])
+        if not grandtotal:
+            errormsg = 'Total budget of all %i projects included in this portfolio is zero' % len(self.projects)
+            raise OptimaException(errormsg)
         
         # Run actual geospatial analysis optimization
         printv('Performing geospatial optimization for grand total budget of %0.0f' % grandtotal, 2, verbose)
