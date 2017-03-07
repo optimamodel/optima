@@ -117,7 +117,7 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
         
-    def runGA(self, grandtotal=None, objectives=None, BOClist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, verbose=2):
+    def runGA(self, grandtotal=None, objectives=None, BOClist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, doprint=True, export=False, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -233,9 +233,10 @@ class Portfolio(object):
         if reoptimize: reoptimizeprojects(self.projects, spendperproject, maxtime=maxtime, maxiters=maxiters, mc=mc)
         
         # Tidy up
-#        self.outputstring = gaoptim.printresults() # Store the results as an output string
+        if doprint: self.makeoutput()
+        if export: self.export()
         toc(GAstart)
-        return spendperproject
+        return None
 
 
     # Note: Lists of lists extrax and extray allow for extra custom points to be plotted.
@@ -265,7 +266,7 @@ class Portfolio(object):
     
     # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
     # Be very wary of the indices being used...
-    def makeoutputstr(self, doprint=True, verbose=2):
+    def makeoutput(self, doprint=True, verbose=2):
         ''' Just displays results related to the GA run '''
         printv('Printing results...', 2, verbose)
         
@@ -330,7 +331,6 @@ class Portfolio(object):
             projcov[prj]['init']  = initcov
             projcov[prj]['opt']   = optcov
             
-            
             for key in self.objectives['keys']:
                 projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
                 projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
@@ -374,13 +374,18 @@ class Portfolio(object):
                 output += '\n\t%s\t%0.0f\t%0.0f' % (prg, initval, optval)
         
         # Tidy up
-        self.outputstr = output
-        if doprint: print(output)
+        if doprint: 
+            print(output)
+            return None
+        else:
+            return output
+    
+    
+    def export(self, filename=None):
+        ''' Export the results to Excel format '''
         
-        return output
-    
-    
-    def export(filename=None):
+        if filename is None:
+            filename = self.name+'-results.xlsx'
         workbook = Workbook(filename)
         worksheet = workbook.add_worksheet()
         
@@ -395,6 +400,7 @@ class Portfolio(object):
         
         # Convert from a string to a 2D array
         outlist = []
+        outstr = self.makeoutput(doprint=False)
         for line in outstr.split('\n'):
             outlist.append([])
             for cell in line.split('\t'):
@@ -418,7 +424,7 @@ class Portfolio(object):
         workbook.close()
         
 
-def reoptimizeprojects(self, projects, initbudgets, optbudgets, maxtime=None, parprogind=0, verbose=2):
+def reoptimizeprojects(projects, maxtime=None, maxiters=None, verbose=2):
     ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
     printv('Finalizing geospatial analysis...', 1, verbose)
     printv('Warning, using default programset/programset!', 2, verbose)
@@ -426,25 +432,26 @@ def reoptimizeprojects(self, projects, initbudgets, optbudgets, maxtime=None, pa
     # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
     # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
     
+    resultpairs = odict()
     outputqueue = Queue()
     processes = []
-    for pind,P in enumerate(projects.values()):
+    for pind,project in enumerate(projects.values()):
         prc = Process(
-            target=batch_reopt,
-            args=(self, P, pind, outputqueue, projects, initbudgets,
-                  optbudgets, parsetnames, progsetnames, maxtime,
-                  parprogind, verbose))
+            target=reoptimizeprojects_task,
+            args=(project, pind, outputqueue, maxtime, maxiters, verbose))
         prc.start()
+        prc.join()
         processes.append(prc)
     for pind,P in enumerate(projects.values()):
-        self.resultpairs[str(P.uid)] = outputqueue.get()
+        tmpresult = outputqueue.get()
+        resultpairs[tmpresult.name] = tmpresult
     
-    return None      
+    return resultpairs      
         
 
 #%% Geospatial analysis batch functions for multiprocessing.
 
-def batch_reopt(gaoptim, P, pind, outputqueue, projects, initbudgets, optbudgets, maxtime, parprogind, verbose):
+def reoptimizeprojects_task(project, pind, outputqueue, maxtime, maxiters, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
     loadbalancer(index=pind)
     printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
