@@ -523,7 +523,7 @@ class BOC(object):
         self.yinf = yinf # Store the outcome for infinite money to be plotted separately if desired
         self.parsetname = parsetname
         self.progsetname = progsetname
-        self.budgets = budgets if budgets else [] # A list of actual budgets
+        self.budgets = budgets if budgets else odict() # A list of actual budgets
         self.defaultbudget = defaultbudget # The initial budget, pre-optimization
         self.gaoptimbudget = None # The optimized budget, assigned by GA
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)

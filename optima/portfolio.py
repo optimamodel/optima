@@ -1,8 +1,7 @@
 from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
-from optima import version, loadbalancer, defaultobjectives, Project, pchip, outcomecalc
+from optima import version, loadbalancer, defaultobjectives, Project, pchip, outcomecalc, getfilelist
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from multiprocessing import Process, Queue
-from glob import glob
 from xlsxwriter import Workbook
 import os
 
@@ -83,7 +82,7 @@ class Portfolio(object):
     
     def addfolder(self, folder=None, replace=True, verbose=2):
         ''' Add a folder of projects to a portfolio '''
-        filelist = sorted(glob(os.path.join(folder, '*.prj')))
+        filelist = getfilelist(folder, 'prj')
         projects = []
         if replace: self.projects = odict() # Wipe clean before adding new projects
         for f,filename in enumerate(filelist):

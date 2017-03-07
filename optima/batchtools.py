@@ -11,8 +11,7 @@ Version: 2017mar04
 
 from multiprocessing import Process, Queue
 from numpy import empty
-from glob import glob
-from optima import loadproj, loadbalancer, printv
+from optima import loadproj, loadbalancer, printv, getfilelist
 from os import path
 
 
@@ -62,7 +61,7 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
     ''' Perform batch autofitting '''
     
     if folder is None: folder = '.'
-    filelist = sorted(glob(path.join(folder, '*.prj')))
+    filelist = getfilelist(folder, 'prj')
     nfiles = len(filelist)
 
     outputqueue = Queue()
@@ -153,7 +152,7 @@ def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetnam
         maxload - how much of the CPU to use
     """
     
-    filelist = sorted(glob(path.join(folder, '*.prj')))
+    filelist = getfilelist(folder, 'prj')
     nfiles = len(filelist)
     
     if batch: outputqueue = Queue()

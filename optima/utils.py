@@ -778,6 +778,7 @@ def percentcomplete(step=None, maxsteps=None, indent=1):
         print('%s%i%%\n'% (' '*indent, thispercent)) # Display the output
     return None
 
+
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     """
     Checks how much memory the variable in question uses by dumping it to file.
@@ -845,6 +846,16 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         pie(array(printbytes)[inds], labels=array(printnames)[inds], autopct='%0.2f')
 
     return None
+
+
+def getfilelist(folder=None, ext=None):
+    ''' A short-hand since glob is annoying '''
+    from glob import glob
+    import os
+    if folder is None: folder = os.getcwd()
+    if ext is None: ext = '*'
+    filelist = sorted(glob(os.path.join(folder, '*.'+ext)))
+    return filelist
 
 
 def loadbalancer(maxload=0.5, index=None, refresh=10.0, maxtime=3600, verbose=True):
