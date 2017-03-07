@@ -172,6 +172,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
             errormsg += '%s\n' % tmptoplot
             errormsg += 'Available keys are:\n'
             errormsg += '%s' % checkboxes
+            if not advanced: errormsg += 'Set advanced=True for more options'
             printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel

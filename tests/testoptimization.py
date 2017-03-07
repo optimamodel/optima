@@ -41,6 +41,8 @@ blank()
 ##############################################################################
 
 from optima import defaults
+from pylab import seed
+seed(0) # Ensure consistency across runs
 
 T = tic()
 
@@ -62,7 +64,7 @@ if 'minimizeoutcomes' in tests:
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
+    P.optimize(name='minoutcome', maxtime=10, mc=0, parsetname=-1, progsetname=-1, objectives=objectives, method='asd')
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
@@ -70,7 +72,7 @@ if 'minimizeoutcomes' in tests:
     print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-total', 'prev-population', 'numinci-total'], advanced=True)
     
     done(t)
 
@@ -91,7 +93,7 @@ if 'investmentstaircase' in tests:
     
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'numinci-tot'])
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev', 'numinci'])
     
     done(t)
 
@@ -119,7 +121,7 @@ if 'minimizemoney' in tests:
     print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-total', 'prev-population', 'numinci'], advanced=True)
     
     done(t)
 

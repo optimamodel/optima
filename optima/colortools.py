@@ -157,7 +157,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
    cmap = makecolormap('alpinecolormap',cdict,256)
    return cmap
 
-## Show the staggering beauty of the color map's infinite possibilities
+## Test
 def testalpinecolormap():
     from pylab import randn, show, convolve, array, seed, linspace, meshgrid, xlabel, ylabel, figure, pcolor
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
@@ -305,7 +305,7 @@ def bicolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
 
    return cmap
 
-## Show the staggering beauty of the color map's infinite possibilities
+## Test
 def testbicolormap():
     from pylab import figure, subplot, imshow, colorbar, rand, show
     
