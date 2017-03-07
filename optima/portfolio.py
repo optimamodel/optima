@@ -1,6 +1,6 @@
 from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj, promotetolist # Import utilities
 from optima import version, loadbalancer, defaultobjectives, asd, Project, pchip
-from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax
+from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from multiprocessing import Process, Queue
 from glob import glob
 import sys
@@ -119,7 +119,7 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
         
-    def runGA(self, objectives=None, grandtotal=None, verbose=2):
+    def runGA(self, objectives=None, grandtotal=None, npts=None, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         printv('Performing full geospatial analysis', 1, verbose)
         
@@ -144,7 +144,7 @@ class Portfolio(object):
                     grandtotal += sum(BOC.defaultbudget[:])
         
         # Run actual geospatial analysis optimization
-        optbudgets = geooptimization(BOClist=BOClist, grandtotal=grandtotal) # Operate on the BOCs
+        optbudgets = geooptimization(BOClist=BOClist, grandtotal=grandtotal, npts=npts) # Operate on the BOCs
         
         # Reoptimize projects
 #        gaoptim.reoptimize(self.projects, initbudgets, optbudgets, maxtime=maxtime)
@@ -181,42 +181,16 @@ class Portfolio(object):
         
         
 #%% Functions for geospatial analysis
-        
-        
-def constrainbocbudgets(x, grandtotal, minbound):
-    # First make sure all values are not below the respective minimum bounds.
-    for i in xrange(len(x)):
-        if x[i] < minbound[i]:
-            x[i] = minbound[i]
-    
-    # Then scale all excesses over the minimum bounds so that the new sum is grandtotal.
-    constrainedx = []
-    for i in xrange(len(x)):
-        xi = (x[i] - minbound[i])*(grandtotal - sum(minbound))/(sum(x) - sum(minbound)) + minbound[i]
-        constrainedx.append(xi)
-    
-    return constrainedx
-
-
-def bocobjectivecalc(x, BOClist, grandtotal, minbound):
-    ''' Objective function. Sums outcomes from all projects corresponding to budget list x. '''
-    x = constrainbocbudgets(x, grandtotal, minbound)
-    
-    totalobj = 0
-    for i in range(len(x)):
-        totalobj += BOClist[i].getoutcome([x[i]])[-1]     # Outcomes are currently passed to and from pchip as lists.
-    return totalobj
-    
     
 
     
-def geooptimization(BOClist=None, grandtotal=None, maxtime=None, npts=None, maxiters=None, minbound=None, verbose=2):
+def geooptimization(BOClist=None, grandtotal=None, npts=None, maxiters=None, verbose=2):
     ''' Actual runs geospatial optimisation across provided BOCs. '''
     printv('Calculating geospatial optimization for grand total budget of %f' % grandtotal, 2, verbose)
     
     # Check inputs
-    if npts is None: npts = 1000 # The number of points to calculate along each BOC
-    if maxiters is None: maxiters = int(1e5)
+    if npts is None: npts = 2000 # The number of points to calculate along each BOC
+    if maxiters is None: maxiters = int(1e6) # Number of iterations to use...shouldn't be constrained
     
     # Set up vectors
     nbocs = len(BOClist)
@@ -246,7 +220,7 @@ def geooptimization(BOClist=None, grandtotal=None, maxtime=None, npts=None, maxi
     # Iterate over vectors, finding best option
     spendperboc = zeros(nbocs)
     runningtotal = grandtotal
-    for z in range(maxiters):
+    for i in range(maxiters):
         bestval = -inf
         bestboc = None
         for b in range(nbocs):
@@ -273,8 +247,13 @@ def geooptimization(BOClist=None, grandtotal=None, maxtime=None, npts=None, maxi
                 relspendvecs[b] = relspendvecs[b][withinbudget]
                 relimprovevecs[b] = relimprovevecs[b][withinbudget]
                 costeffvecs[b] = relimprovevecs[b]/relspendvecs[b]
+            if not i%100:
+                printv('  Allocated %0.1f%% of the budget' % ((grandtotal-runningtotal)/float(grandtotal)*100), 2, verbose)
         else:
             break
+    
+    # Scale to make sure budget is correct
+    spendperboc = (array(spendperboc)/array(spendperboc.sum())*grandtotal).tolist()
     
     # Calculate outcomes
     origspend = zeros(nbocs)
@@ -285,16 +264,9 @@ def geooptimization(BOClist=None, grandtotal=None, maxtime=None, npts=None, maxi
         origoutcomes[b] = pchip(BOC.x, BOC.y, origspend[b])
         optimoutcomes[b] = pchip(BOC.x, BOC.y, spendperboc[b])
     
-    printv('First-pass geospatial analysis reduced outcome from %0.0f to %0.0f' % (sum(origoutcomes[b]), sum(optimoutcomes[b])), 2, verbose)
+    printv('Geospatial analysis reduced outcome from %0.0f to %0.0f' % (sum(origoutcomes[:]), sum(optimoutcomes[:])), 2, verbose)
     
-    # Now do a tidy-up ASD optimization
-    if minbound == None: minbound = [0]*nbocs
-    args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}    
-    
-    budgetvecnew, fvals, exitreason = asd(bocobjectivecalc, spendperboc, args=args, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
-    budgetvecnew = constrainbocbudgets(budgetvecnew, grandtotal, minbound)
-
-    return budgetvecnew
+    return spendperboc
 
 
 
