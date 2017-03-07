@@ -525,6 +525,7 @@ class BOC(object):
         self.progsetname = progsetname
         self.budgets = budgets if budgets else [] # A list of actual budgets
         self.defaultbudget = defaultbudget # The initial budget, pre-optimization
+        self.gaoptimbudget = None # The optimized budget, assigned by GA
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
         self.name = name # Required by rmresult in Project.
 

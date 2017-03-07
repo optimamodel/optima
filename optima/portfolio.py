@@ -1,24 +1,21 @@
-from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj, promotetolist # Import utilities
-from optima import version, loadbalancer, defaultobjectives, asd, Project, pchip
+from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import version, loadbalancer, defaultobjectives, Project, pchip
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from multiprocessing import Process, Queue
 from glob import glob
+from xlsxwriter import Workbook
 import sys
 import os
 
 #######################################################################################################
-## Portfolio class -- this contains Projects and GA optimisations
+## Portfolio class
 #######################################################################################################
-
-budgeteps = 1e-8        # Project optimisations will fail for budgets that are optimised by GA to be zero. This avoids zeros.
-tol = 1.0 # Tolerance for checking that budgets match
-
 
 class Portfolio(object):
     """
     PORTFOLIO
 
-    The super Optima portfolio class.
+    The super Optima portfolio class  -- this contains Projects and GA optimizations.
 
     Version: 2016jan20 by davidkedz
     """
@@ -36,7 +33,8 @@ class Portfolio(object):
         ## Define the structure sets
         self.projects = odict()
         if projects is not None: self.addprojects(projects)
-        self.gaoptims = gaoptims if gaoptims else odict()
+        self.spendperproject = odict() # Store the list of the final spend per project
+        self.results = None # List of before-and-after result pairs after reoptimization
 
         ## Define metadata
         self.uid = uuid()
@@ -228,6 +226,9 @@ class Portfolio(object):
         improvement = (1.0-optsum/origsum)*100
         printv('Geospatial analysis reduced outcome from %0.0f to %0.0f (%0.1f%%)' % (origsum, optsum, improvement), 2, verbose)
         
+        # Store results
+        self.spendperproject = odict([(key,spp) for key,spp in zip(self.projects.keys(), spendperproject)]) # Convert to odict
+        
         # Reoptimize projects
         if reoptimize: reoptimizeprojects(self.projects, spendperproject, maxtime=maxtime, maxiters=maxiters, mc=mc)
         
@@ -260,6 +261,161 @@ class Portfolio(object):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
                     if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
         return None
+    
+    
+    # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
+    # Be very wary of the indices being used...
+    def makeoutputstr(self, doprint=True, verbose=2):
+        ''' Just displays results related to the GA run '''
+        printv('Printing results...', 2, verbose)
+        
+        overallbudgetinit = 0
+        overallbudgetopt = 0
+        overalloutcomeinit = 0
+        overalloutcomeopt = 0
+        
+        overalloutcomesplit = odict()
+        for key in self.objectives['keys']:
+            overalloutcomesplit['num'+key] = odict()
+            overalloutcomesplit['num'+key]['init'] = 0
+            overalloutcomesplit['num'+key]['opt'] = 0
+        
+        projnames = []
+        projbudgets = []
+        projcov = []
+        projoutcomes = []
+        projoutcomesplit = []
+        
+        for prj,x in enumerate(self.resultpairs.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
+            # Figure out which indices to use
+            tvector = self.resultpairs[x]['init'].tvec          # WARNING: NOT USING DT NORMALISATIONS LATER, SO ASSUME DT = 1 YEAR.
+            initial = findinds(tvector, self.objectives['start'])
+            final = findinds(tvector, self.objectives['end'])
+            indices = arange(initial, final)
+            
+            projectname = self.resultpairs[x]['init'].projectinfo['name']
+            initalloc = self.resultpairs[x]['init'].budget['Current']
+            gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal']
+            initoutcome = self.resultpairs[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
+                                                                            # The second 0 corresponds to outcome pre-optimisation (which shouldn't matter anyway due to pre-GA budget 'init' being optimised for 0 seconds).
+            gaoptoutcome = self.resultpairs[x]['opt'].improvement[0][-1]    # The -1 corresponds to outcome post-optimisation (with 'opt' being a maxtime optimisation of a post-GA budget).
+            suminitalloc = sum(initalloc.values())
+            sumgaoptalloc = sum(gaoptalloc.values())
+            
+            overallbudgetinit += suminitalloc
+            overallbudgetopt += sumgaoptalloc
+            overalloutcomeinit += initoutcome
+            overalloutcomeopt += gaoptoutcome
+            
+            projnames.append(projectname)
+            projbudgets.append(odict())
+            projoutcomes.append(odict())
+            projbudgets[prj]['init']  = initalloc
+            projbudgets[prj]['opt']   = gaoptalloc
+            projoutcomes[prj]['init'] = initoutcome
+            projoutcomes[prj]['opt']  = gaoptoutcome
+            
+            projoutcomesplit.append(odict())
+            projoutcomesplit[prj]['init'] = odict()
+            projoutcomesplit[prj]['opt'] = odict()
+            
+            initpars = self.resultpairs[x]['init'].parset[0]
+            optpars = self.resultpairs[x]['opt'].parset[-1]
+            initprog = self.resultpairs[x]['init'].progset[0]
+            optprog = self.resultpairs[x]['opt'].progset[-1]
+            initcov = initprog.getprogcoverage(initalloc,self.objectives['start'],parset=initpars)
+            optcov = optprog.getprogcoverage(gaoptalloc,self.objectives['start'],parset=optpars)
+            
+            projcov.append(odict())
+            projcov[prj]['init']  = initcov
+            projcov[prj]['opt']   = optcov
+            
+            
+            for key in self.objectives['keys']:
+                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
+                overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
+                overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
+                
+        ## Actually create the output
+        output = ''
+        output += 'Geospatial analysis results: minimize outcomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
+        output += '\n\n'
+        output += '\n\t\tInitial\tOptimal'
+        output += '\nOverall summary'
+        output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbudgetinit, overallbudgetopt)
+        output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overalloutcomeinit, overalloutcomeopt)
+        for key in self.objectives['keys']:
+            output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
+        
+        ## Sort, then export
+        projindices = argsort(projnames)
+        for prj in projindices:
+            output += '\n'
+            output += '\n'
+            output += '\n\t\tInitial\tOptimal'
+            output += '\nProject: "%s"' % projnames[prj]
+            output += '\n'
+            output += '\n\tBudget:\t%0.0f\t%0.0f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
+            output += '\n\tOutcome:\t%0.0f\t%0.0f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
+            for key in self.objectives['keys']:
+                output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
+            output += '\n'
+            output += '\n\tAllocation:'
+            for prg in projbudgets[prj]['init'].keys():
+                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, projbudgets[prj]['init'][prg], projbudgets[prj]['opt'][prg])
+            output += '\n'
+            output += '\n\tCoverage (%i):' % (self.objectives['start'])
+            for prg in projbudgets[prj]['init'].keys():
+                initval = projcov[prj]['init'][prg]
+                optval = projcov[prj]['opt'][prg]
+                if initval is None: initval = 0
+                if optval is None: optval = 0
+                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, initval, optval)
+        
+        # Tidy up
+        self.outputstr = output
+        if doprint: print(output)
+        
+        return output
+    
+    
+    def export(filename=None):
+        workbook = Workbook(filename)
+        worksheet = workbook.add_worksheet()
+        
+        # Define formatting
+        originalblue = '#18C1FF' # analysis:ignore
+        hotpink = '#FFC0CB' # analysis:ignore
+        formats = dict()
+        formats['plain'] = workbook.add_format({})
+        formats['bold'] = workbook.add_format({'bold': True})
+        formats['number'] = workbook.add_format({'bg_color': hotpink, 'num_format':0x04})
+        colwidth = 30
+        
+        # Convert from a string to a 2D array
+        outlist = []
+        for line in outstr.split('\n'):
+            outlist.append([])
+            for cell in line.split('\t'):
+                outlist[-1].append(cell)
+        
+        # Iterate over the data and write it out row by row.
+        row, col = 0, 0
+        for row in range(len(outlist)):
+            for col in range(len(outlist[row])):
+                thistxt = outlist[row][col]
+                thisformat = 'plain'
+                if col==0: thisformat = 'bold'
+                tmptxt = thistxt.lower()
+                for word in ['budget','outcome','allocation','initial','optimal','coverage']:
+                    if tmptxt.find(word)>=0: thisformat = 'bold'
+                if col in [2,3] and thisformat=='plain': thisformat = 'number'
+                if thisformat=='number':thistxt = float(thistxt)
+                worksheet.write(row, col, thistxt, formats[thisformat])
+        
+        worksheet.set_column(0, 3, colwidth) # Make wider
+        workbook.close()
         
 
 def reoptimizeprojects(self, projects, initbudgets, optbudgets, maxtime=None, parprogind=0, verbose=2):
@@ -369,117 +525,3 @@ class GAOptim(object):
    
 
 
-    # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
-    # Be very wary of the indices being used...
-    def printresults(self, verbose=2):
-        ''' Just displays results related to the GA run '''
-        printv('Printing results...', 2, verbose)
-        
-        overallbudgetinit = 0
-        overallbudgetopt = 0
-        overalloutcomeinit = 0
-        overalloutcomeopt = 0
-        
-        overalloutcomesplit = odict()
-        for key in self.objectives['keys']:
-            overalloutcomesplit['num'+key] = odict()
-            overalloutcomesplit['num'+key]['init'] = 0
-            overalloutcomesplit['num'+key]['opt'] = 0
-        
-        projnames = []
-        projbudgets = []
-        projcov = []
-        projoutcomes = []
-        projoutcomesplit = []
-        
-        for prj,x in enumerate(self.resultpairs.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
-            # Figure out which indices to use
-            tvector = self.resultpairs[x]['init'].tvec          # WARNING: NOT USING DT NORMALISATIONS LATER, SO ASSUME DT = 1 YEAR.
-            initial = findinds(tvector, self.objectives['start'])
-            final = findinds(tvector, self.objectives['end'])
-            indices = arange(initial, final)
-            
-            projectname = self.resultpairs[x]['init'].projectinfo['name']
-            initalloc = self.resultpairs[x]['init'].budget['Current']
-            gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal']
-            initoutcome = self.resultpairs[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
-                                                                            # The second 0 corresponds to outcome pre-optimisation (which shouldn't matter anyway due to pre-GA budget 'init' being optimised for 0 seconds).
-            gaoptoutcome = self.resultpairs[x]['opt'].improvement[0][-1]    # The -1 corresponds to outcome post-optimisation (with 'opt' being a maxtime optimisation of a post-GA budget).
-            suminitalloc = sum(initalloc.values())
-            sumgaoptalloc = sum(gaoptalloc.values())
-            
-            overallbudgetinit += suminitalloc
-            overallbudgetopt += sumgaoptalloc
-            overalloutcomeinit += initoutcome
-            overalloutcomeopt += gaoptoutcome
-            
-            projnames.append(projectname)
-            projbudgets.append(odict())
-            projoutcomes.append(odict())
-            projbudgets[prj]['init']  = initalloc
-            projbudgets[prj]['opt']   = gaoptalloc
-            projoutcomes[prj]['init'] = initoutcome
-            projoutcomes[prj]['opt']  = gaoptoutcome
-            
-            projoutcomesplit.append(odict())
-            projoutcomesplit[prj]['init'] = odict()
-            projoutcomesplit[prj]['opt'] = odict()
-            
-            initpars = self.resultpairs[x]['init'].parset[0]
-            optpars = self.resultpairs[x]['opt'].parset[-1]
-            initprog = self.resultpairs[x]['init'].progset[0]
-            optprog = self.resultpairs[x]['opt'].progset[-1]
-            initcov = initprog.getprogcoverage(initalloc,self.objectives['start'],parset=initpars)
-            optcov = optprog.getprogcoverage(gaoptalloc,self.objectives['start'],parset=optpars)
-            
-            projcov.append(odict())
-            projcov[prj]['init']  = initcov
-            projcov[prj]['opt']   = optcov
-            
-            
-            for key in self.objectives['keys']:
-                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
-                overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
-                overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
-                
-                 
-        ## Actually create the output
-        output = ''
-        output += 'Geospatial analysis results: minimize outcomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
-        output += '\n\n'
-        output += '\n\t\tInitial\tOptimal'
-        output += '\nOverall summary'
-        output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbudgetinit, overallbudgetopt)
-        output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overalloutcomeinit, overalloutcomeopt)
-        for key in self.objectives['keys']:
-            output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
-        
-        ## Sort, then export
-        projindices = argsort(projnames)
-        for prj in projindices:
-            output += '\n'
-            output += '\n'
-            output += '\n\t\tInitial\tOptimal'
-            output += '\nProject: "%s"' % projnames[prj]
-            output += '\n'
-            output += '\n\tBudget:\t%0.0f\t%0.0f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
-            output += '\n\tOutcome:\t%0.0f\t%0.0f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
-            for key in self.objectives['keys']:
-                output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
-            output += '\n'
-            output += '\n\tAllocation:'
-            for prg in projbudgets[prj]['init'].keys():
-                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, projbudgets[prj]['init'][prg], projbudgets[prj]['opt'][prg])
-            output += '\n'
-            output += '\n\tCoverage (%i):' % (self.objectives['start'])
-            for prg in projbudgets[prj]['init'].keys():
-                initval = projcov[prj]['init'][prg]
-                optval = projcov[prj]['opt'][prg]
-                if initval is None: initval = 0
-                if optval is None: optval = 0
-                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, initval, optval)
-        
-        print(output)
-        
-        return output
