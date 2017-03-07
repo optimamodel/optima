@@ -576,11 +576,11 @@ class Project(object):
 
     
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000,
-                 maxtime=None, verbose=2, stoppingfunc=None, method='asd', die=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+                 maxtime=None, verbose=2, stoppingfunc=None, method='asd', die=False, saveprocess=True, origbudget=None, ccsample='best', randseed=None, **kwargs):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                  method=method, die=die, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
+                                  method=method, die=die, origbudget=origbudget, ccsample=ccsample, randseed=randseed, **kwargs)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)
@@ -650,7 +650,7 @@ class Project(object):
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
             
             # Actually run
-            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, mc=mc, die=die, **kwargs)
+            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, origbudget=owbudget, label=label, mc=mc, die=die, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budget['Optimal'])
             tmpoutcomes[key] = results.improvement[-1][-1]

@@ -58,12 +58,12 @@ class Optim(object):
 
 
     def optimize(self, name=None, parsetname=None, progsetname=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, 
-                 method='asd', die=False, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+                 method='asd', die=False, origbudget=None, ccsample='best', randseed=None, **kwargs):
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
         if name is None: name='default'
         multires = optimize(which=self.objectives['which'], project=self.projectref(), optim=self, maxiters=maxiters, 
                             maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, die=die, 
-                            overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
+                            origbudget=origbudget, ccsample=ccsample, randseed=randseed, **kwargs)
         multires.name = 'optim-'+name # Multires might be None if couldn't meet targets
         return multires
 
@@ -302,7 +302,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
-    if which is None: which = 'outcomes'
+    if which is None: which = objectives['which']
     if parset is None: parset = -1
     if progset is None: progset = -1
     if not isinstance(parset,  Parameterset): parset  = project.parsets[parset] # Assume it's a key
@@ -399,7 +399,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
 
 def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', 
-             die=False, overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, **kwargs):
+             die=False, origbudget=None, ccsample='best', randseed=None, mc=3, label=None, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
@@ -413,7 +413,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
         stoppingfunc = a function called to decide on stopping
         method = 'asd', currently the only option
         die = whether or not to check things in detail
-        overwritebudget = used in GA somehow...
+        origbudget = the budget to start from (if not supplied, use default
         ccsample = which sample of the cost curves to use (deprecated)
         randseed = optionally reset the seed
         mc = how many Monte Carlo iterations to run for (if -1, run other starting points but not MC)
@@ -452,7 +452,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
     # Run outcomes minimization
     if which=='outcomes':
         multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, 
-                               overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
+                               origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
 
     # Run money minimization
     elif which=='money':
@@ -467,7 +467,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
 
 def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
-                overwritebudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
+                origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
@@ -475,8 +475,8 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
     origtotalbudget = dcp(optim.objectives['budget'])
-    if overwritebudget != None:
-        origbudget = dcp(overwritebudget)
+    if origbudget != None:
+        origbudget = dcp(origbudget)
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')

@@ -467,18 +467,17 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
             smallestmismatch = thismismatch
     
     # Extract info from the BOC
-    args = {'which':'outcomes', 
-            'parset':boc.parsetname, 
+    args = {'parset':boc.parsetname, 
             'progset':boc.progsetname, 
             'objectives':boc.objectives, 
             'constraints':boc.constraints, 
-            'totalbudget':totalbudget, 
             'origbudget':closestbudget, 
             'verbose':verbose}
 
     # Run the analyses
     resultpair = odict()
-    resultpair['init'] = outcomecalc(project=project, outputresults=True, doconstrainbudget=False, **args)
+    objectives['budget'] = totalbudget
+    resultpair['init'] = outcomecalc(project=project, totalbudget=totalbudget, outputresults=True, doconstrainbudget=False, **args)
     resultpair['init'].name = project.name+' GA initial'
     resultpair['opt'] = project.optimize(label=project.name, mc=mc, **args)
     resultpair['opt'].name = project.name+' GA optimal'
