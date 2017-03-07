@@ -119,20 +119,24 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
         
-    def runGA(self, objectives=None, grandtotal=None, npts=None, verbose=2):
+    def runGA(self, grandtotal=None, objectives=None, BOClist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
-        printv('Performing full geospatial analysis', 1, verbose)
         
         GAstart = tic()
         
+        # Check inputs
+        if npts is None: npts = 2000 # The number of points to calculate along each BOC
+        if mc is None: mc = 0 # Do not use MC by default
+        
         # Gather the BOCs
-        BOClist = []
-        for pno,P in enumerate(self.projects.values()):
-            thisBOC = P.getBOC(objectives=objectives)
-            if thisBOC is None:
-                errormsg = 'GA FAILED: Project %s has no BOC' % P.name
-                raise OptimaException(errormsg)
-            BOClist.append(thisBOC)
+        if BOClist is None:
+            BOClist = []
+            for pno,P in enumerate(self.projects.values()):
+                thisBOC = P.getBOC(objectives=objectives)
+                if thisBOC is None:
+                    errormsg = 'GA FAILED: Project %s has no BOC' % P.name
+                    raise OptimaException(errormsg)
+                BOClist.append(thisBOC)
         
         # Get the grand total
         if grandtotal is None:
@@ -144,15 +148,93 @@ class Portfolio(object):
                     grandtotal += sum(BOC.defaultbudget[:])
         
         # Run actual geospatial analysis optimization
-        optbudgets = geooptimization(BOClist=BOClist, grandtotal=grandtotal, npts=npts) # Operate on the BOCs
+        printv('Performing geospatial optimization for grand total budget of %0.0f' % grandtotal, 2, verbose)
+
+        # Set up vectors
+        nbocs = len(BOClist)
+        bocxvecs = []
+        bocyvecs = []
+        for BOC in BOClist:
+            maxbudget = min(grandtotal,max(BOC.x))+1
+            tmpx1 = linspace(0,log(maxbudget), npts) # Exponentially distributed
+            tmpx2 = linspace(1, maxbudget, npts) # Uniformly distributed
+            tmpx3 = (tmpx1+log(tmpx2))/2. # Halfway in between, logarithmically speaking
+            tmpxvec = exp(tmpx3)-1
+            tmpyvec = pchip(BOC.x, BOC.y, tmpxvec)
+            newtmpyvec = tmpyvec[0] - tmpyvec # Flip to an improvement
+            bocxvecs.append(tmpxvec)
+            bocyvecs.append(newtmpyvec)
+        
+        # Extract BOC derivatives
+        relspendvecs = []
+        relimprovevecs = []
+        costeffvecs = []
+        for b in range(nbocs):
+            withinbudget = nonzero(bocxvecs[b]<=grandtotal)[0] # Stupid nonzero returns stupid
+            relspendvecs.append(dcp(bocxvecs[b][withinbudget[1:]])) # Exclude 0 spend
+            relimprovevecs.append(bocyvecs[b][withinbudget[1:]])
+            costeffvecs.append(relimprovevecs[b]/relspendvecs[b])
+        
+        # Iterate over vectors, finding best option
+        maxgaiters = int(1e6) # This should be a lot -- just not infinite, but should break first
+        spendperproject = zeros(nbocs)
+        runningtotal = grandtotal
+        for i in range(maxgaiters):
+            bestval = -inf
+            bestboc = None
+            for b in range(nbocs):
+                assert(len(costeffvecs[b])==len(relimprovevecs[b])==len(relspendvecs[b]))
+                if len(costeffvecs[b]):
+                    tmpbestind = argmax(costeffvecs[b])
+                    tmpbestval = costeffvecs[b][tmpbestind]
+                    if tmpbestval>bestval:
+                        bestval = tmpbestval
+                        bestind = tmpbestind
+                        bestboc = b
+            
+            # Update everything
+            if bestboc is not None:
+                money = relspendvecs[bestboc][bestind]
+                runningtotal -= money
+                relspendvecs[bestboc] -= money
+                spendperproject[bestboc] += money
+                relimprovevecs[bestboc] -= relimprovevecs[bestboc][bestind]
+                relspendvecs[bestboc]   = relspendvecs[bestboc][bestind+1:]
+                relimprovevecs[bestboc] = relimprovevecs[bestboc][bestind+1:]
+                for b in range(nbocs):
+                    withinbudget = nonzero(relspendvecs[b]<=runningtotal)[0]
+                    relspendvecs[b] = relspendvecs[b][withinbudget]
+                    relimprovevecs[b] = relimprovevecs[b][withinbudget]
+                    costeffvecs[b] = relimprovevecs[b]/relspendvecs[b]
+                if not i%100:
+                    printv('  Allocated %0.1f%% of the portfolio budget...' % ((grandtotal-runningtotal)/float(grandtotal)*100), 2, verbose)
+            else:
+                break # We're done, there's nothing more to allocate
+        
+        # Scale to make sure budget is correct
+        spendperproject = (array(spendperproject)/array(spendperproject.sum())*grandtotal).tolist()
+        
+        # Calculate outcomes
+        origspend = zeros(nbocs)
+        origoutcomes = zeros(nbocs)
+        optimoutcomes = zeros(nbocs)
+        for b,BOC in enumerate(BOClist):
+            origspend[b] = sum(BOClist[b].defaultbudget[:])
+            origoutcomes[b] = pchip(BOC.x, BOC.y, origspend[b])
+            optimoutcomes[b] = pchip(BOC.x, BOC.y, spendperproject[b])
+        
+        origsum = sum(origoutcomes[:])
+        optsum = sum(optimoutcomes[:])
+        improvement = (1.0-optsum/origsum)*100
+        printv('Geospatial analysis reduced outcome from %0.0f to %0.0f (%0.1f%%)' % (origsum, optsum, improvement), 2, verbose)
         
         # Reoptimize projects
-#        gaoptim.reoptimize(self.projects, initbudgets, optbudgets, maxtime=maxtime)
+        if reoptimize: reoptimizeprojects(self.projects, spendperproject, maxtime=maxtime, maxiters=maxiters, mc=mc)
         
         # Tidy up
 #        self.outputstring = gaoptim.printresults() # Store the results as an output string
         toc(GAstart)
-        return optbudgets
+        return spendperproject
 
 
     # Note: Lists of lists extrax and extray allow for extra custom points to be plotted.
@@ -177,101 +259,32 @@ class Portfolio(object):
                 for k in xrange(len(extrax[c])):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
                     if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
+        return None
         
+
+def reoptimizeprojects(self, projects, initbudgets, optbudgets, maxtime=None, parprogind=0, verbose=2):
+    ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
+    printv('Finalizing geospatial analysis...', 1, verbose)
+    printv('Warning, using default programset/programset!', 2, verbose)
+    
+    # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
+    # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
+    
+    outputqueue = Queue()
+    processes = []
+    for pind,P in enumerate(projects.values()):
+        prc = Process(
+            target=batch_reopt,
+            args=(self, P, pind, outputqueue, projects, initbudgets,
+                  optbudgets, parsetnames, progsetnames, maxtime,
+                  parprogind, verbose))
+        prc.start()
+        processes.append(prc)
+    for pind,P in enumerate(projects.values()):
+        self.resultpairs[str(P.uid)] = outputqueue.get()
+    
+    return None      
         
-        
-#%% Functions for geospatial analysis
-    
-
-    
-def geooptimization(BOClist=None, grandtotal=None, npts=None, maxiters=None, verbose=2):
-    ''' Actual runs geospatial optimisation across provided BOCs. '''
-    printv('Calculating geospatial optimization for grand total budget of %0.0f' % grandtotal, 2, verbose)
-    
-    # Check inputs
-    if npts is None: npts = 2000 # The number of points to calculate along each BOC
-    if maxiters is None: maxiters = int(1e6) # Number of iterations to use...shouldn't be constrained
-    
-    # Set up vectors
-    nbocs = len(BOClist)
-    bocxvecs = []
-    bocyvecs = []
-    for BOC in BOClist:
-        maxbudget = min(grandtotal,max(BOC.x))+1
-        tmpx1 = linspace(0,log(maxbudget), npts) # Exponentially distributed
-        tmpx2 = linspace(1, maxbudget, npts) # Uniformly distributed
-        tmpx3 = (tmpx1+log(tmpx2))/2. # Halfway in between, logarithmically speaking
-        tmpxvec = exp(tmpx3)-1
-        tmpyvec = pchip(BOC.x, BOC.y, tmpxvec)
-        newtmpyvec = tmpyvec[0] - tmpyvec # Flip to an improvement
-        bocxvecs.append(tmpxvec)
-        bocyvecs.append(newtmpyvec)
-    
-    # Extract BOC derivatives
-    relspendvecs = []
-    relimprovevecs = []
-    costeffvecs = []
-    for b in range(nbocs):
-        withinbudget = nonzero(bocxvecs[b]<=grandtotal)[0] # Stupid nonzero returns stupid
-        relspendvecs.append(dcp(bocxvecs[b][withinbudget[1:]])) # Exclude 0 spend
-        relimprovevecs.append(bocyvecs[b][withinbudget[1:]])
-        costeffvecs.append(relimprovevecs[b]/relspendvecs[b])
-    
-    # Iterate over vectors, finding best option
-    spendperboc = zeros(nbocs)
-    runningtotal = grandtotal
-    for i in range(maxiters):
-        bestval = -inf
-        bestboc = None
-        for b in range(nbocs):
-            assert(len(costeffvecs[b])==len(relimprovevecs[b])==len(relspendvecs[b]))
-            if len(costeffvecs[b]):
-                tmpbestind = argmax(costeffvecs[b])
-                tmpbestval = costeffvecs[b][tmpbestind]
-                if tmpbestval>bestval:
-                    bestval = tmpbestval
-                    bestind = tmpbestind
-                    bestboc = b
-        
-        # Update everything
-        if bestboc is not None:
-            money = relspendvecs[bestboc][bestind]
-            runningtotal -= money
-            relspendvecs[bestboc] -= money
-            spendperboc[bestboc] += money
-            relimprovevecs[bestboc] -= relimprovevecs[bestboc][bestind]
-            relspendvecs[bestboc]   = relspendvecs[bestboc][bestind+1:]
-            relimprovevecs[bestboc] = relimprovevecs[bestboc][bestind+1:]
-            for b in range(nbocs):
-                withinbudget = nonzero(relspendvecs[b]<=runningtotal)[0]
-                relspendvecs[b] = relspendvecs[b][withinbudget]
-                relimprovevecs[b] = relimprovevecs[b][withinbudget]
-                costeffvecs[b] = relimprovevecs[b]/relspendvecs[b]
-            if not i%100:
-                printv('  Allocated %0.1f%% of the portfolio budget...' % ((grandtotal-runningtotal)/float(grandtotal)*100), 2, verbose)
-        else:
-            break
-    
-    # Scale to make sure budget is correct
-    spendperboc = (array(spendperboc)/array(spendperboc.sum())*grandtotal).tolist()
-    
-    # Calculate outcomes
-    origspend = zeros(nbocs)
-    origoutcomes = zeros(nbocs)
-    optimoutcomes = zeros(nbocs)
-    for b,BOC in enumerate(BOClist):
-        origspend[b] = sum(BOClist[b].defaultbudget[:])
-        origoutcomes[b] = pchip(BOC.x, BOC.y, origspend[b])
-        optimoutcomes[b] = pchip(BOC.x, BOC.y, spendperboc[b])
-    
-    printv('Geospatial analysis reduced outcome from %0.0f to %0.0f' % (sum(origoutcomes[:]), sum(optimoutcomes[:])), 2, verbose)
-    
-    return spendperboc
-
-
-
-
-
 
 #%% Geospatial analysis batch functions for multiprocessing.
 
@@ -353,28 +366,7 @@ class GAOptim(object):
 
 
 
-    def reoptimize(self, projects, initbudgets, optbudgets, maxtime=None, parprogind=0, verbose=2):
-        ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
-        printv('Finalizing geospatial analysis...', 1, verbose)
-        printv('Warning, using default programset/programset!', 2, verbose)
-        
-        # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
-        # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        
-        outputqueue = Queue()
-        processes = []
-        for pind,P in enumerate(projects.values()):
-            prc = Process(
-                target=batch_reopt,
-                args=(self, P, pind, outputqueue, projects, initbudgets,
-                      optbudgets, parsetnames, progsetnames, maxtime,
-                      parprogind, verbose))
-            prc.start()
-            processes.append(prc)
-        for pind,P in enumerate(projects.values()):
-            self.resultpairs[str(P.uid)] = outputqueue.get()
-    
-        return None
+   
 
 
     # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
