@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr, promotetolist # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
@@ -494,14 +494,7 @@ class Project(object):
         # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
         rawlist = []
         for ind,simpars in enumerate(simparslist):
-            if debug: # Should this be die?
-                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-            else:
-                try:
-                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose)
-                except:
-                    printv('Running model failed; running again with debugging...', 1, verbose)
-                    raw = model(simpars, self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
@@ -599,7 +592,7 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
+    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC(name='BOC')
         projectBOC.name += ' (' + str(projectBOC.uid) + ')'
@@ -641,11 +634,17 @@ class Project(object):
                 closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
                 owbudget = tmpallocs[closest]
                 print('Using old allocation as new starting point.')
-            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
+            label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
+            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, **kwargs)
             tmptotals.append(budget)
             tmpallocs.append(dcp(results.budget['Optimal']))
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
+            projectBOC.budgets.append(tmpallocs[-1])
+        projectBOC.x.insert(0, 0)
+        projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
+        projectBOC.x.append(self.settings.infmoney)
+        projectBOC.y.append(results.outcomes['Infinite'])
         self.addresult(result=projectBOC)
         self.modified = today()
         return None        
