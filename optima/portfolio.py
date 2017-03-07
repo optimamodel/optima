@@ -465,6 +465,8 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
         if thismismatch<smallestmismatch:
             closestbudget = dcp(budget)
             smallestmismatch = thismismatch
+    if totalbudget: printv('Reoptimizing %s with $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
+    else:           printv('Total budget for %s is zero, skipping optimization...' % project.name, 2, verbose)
     
     # Extract info from the BOC and specify argument lists...painful
     sharedargs = {'objectives':boc.objectives, 
@@ -486,13 +488,17 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     outcalcargs.update(sharedargs)
     optimargs.update(sharedargs)
     resultpair['init'] = outcomecalc(**outcalcargs)
+    if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
+    else:           resultpair['opt'] = dcp(resultpair['init'])
     resultpair['init'].name = project.name+' GA initial'
-    resultpair['opt'] = project.optimize(**optimargs)
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
 
-    if batch: outputqueue.put(resultpair)
-    return None
+    if batch: 
+        outputqueue.put(resultpair)
+        return None
+    else:
+        return resultpair
 
    
 
