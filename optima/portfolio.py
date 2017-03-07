@@ -23,7 +23,7 @@ class Portfolio(object):
     ## Built-in methods -- initialization, and the thing to print if you call a portfolio
     #######################################################################################################
 
-    def __init__(self, name='default', projects=None, gaoptims=None):
+    def __init__(self, name='default', objectives=None, projects=None, gaoptims=None):
         ''' Initialize the portfolio '''
 
         ## Set name
@@ -31,6 +31,7 @@ class Portfolio(object):
 
         ## Define the structure sets
         self.projects = odict()
+        self.objectives = objectives
         if projects is not None: self.addprojects(projects)
         self.spendperproject = odict() # Store the list of the final spend per project
         self.results = None # List of before-and-after result pairs after reoptimization
@@ -123,6 +124,7 @@ class Portfolio(object):
         # Check inputs
         if npts is None: npts = 2000 # The number of points to calculate along each BOC
         if mc is None: mc = 0 # Do not use MC by default
+        if objectives is not None: self.objectives = objectives # Store objectives, if supplied
         
         # Gather the BOCs
         if boclist is None:
@@ -145,6 +147,11 @@ class Portfolio(object):
         if not grandtotal:
             errormsg = 'Total budget of all %i projects included in this portfolio is zero' % len(self.projects)
             raise OptimaException(errormsg)
+            
+        # Really store the objectives
+        if self.objectives is None:
+            self.objectives = boclist[0].objectives
+            self.objectives['budget'] = grandtotal
         
         # Run actual geospatial analysis optimization
         printv('Performing geospatial optimization for grand total budget of %0.0f' % grandtotal, 2, verbose)
@@ -297,8 +304,8 @@ class Portfolio(object):
             indices = arange(initial, final)
             
             projectname = self.results[x]['init'].projectinfo['name']
-            initalloc = self.results[x]['init'].budget['Current']
-            gaoptalloc = self.results[x]['opt'].budget['Optimal']
+            initalloc = self.results[x]['init'].budget
+            gaoptalloc = self.results[x]['opt'].budget
             initoutcome = self.results[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
                                                                             # The second 0 corresponds to outcome pre-optimisation (which shouldn't matter anyway due to pre-GA budget 'init' being optimised for 0 seconds).
             gaoptoutcome = self.results[x]['opt'].improvement[0][-1]    # The -1 corresponds to outcome post-optimisation (with 'opt' being a maxtime optimisation of a post-GA budget).
