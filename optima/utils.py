@@ -847,7 +847,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     return None
 
 
-def loadbalancer(maxload=0.5, index=None, refresh=1.0, maxtime=3600, verbose=True):
+def loadbalancer(maxload=0.5, index=None, refresh=10.0, maxtime=3600, verbose=True):
     ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
     from psutil import cpu_percent
     from time import sleep
@@ -868,7 +868,7 @@ def loadbalancer(maxload=0.5, index=None, refresh=1.0, maxtime=3600, verbose=Tru
         currentload = cpu_percent()/100.
         if currentload>maxload:
             if verbose: print('CPU load too high (%0.2f/%0.2f); process %s queued for the %ith time' % (currentload, maxload, index, count))
-            sleep(refresh*2*random())
+            sleep(refresh*2*random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else: 
             toohigh = False # print('CPU load fine (%0.2f/%0.2f)' % (currentload, maxload))
     return None
