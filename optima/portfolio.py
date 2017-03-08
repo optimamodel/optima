@@ -474,7 +474,7 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     boc = project.getBOC(objectives)
     totalbudget = boc.gaoptimbudget
     smallestmismatch = inf
-    for budget in boc.budgets: # Could be done with argmin() but this is more explicit...
+    for budget in boc.budgets.values(): # Could be done with argmin() but this is more explicit...
         thismismatch = abs(totalbudget-budget[:].sum())
         if thismismatch<smallestmismatch:
             closestbudget = dcp(budget)
