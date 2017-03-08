@@ -243,7 +243,10 @@ class Portfolio(object):
             resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, verbose=verbose)
             self.results = resultpairs
         # Tidy up
-        if doprint: self.makeoutput()
+        print('FIXXXX')
+#        if doprint: 
+#            if self.results: self.makeoutput()
+#            else:       
         if export: self.export()
         toc(GAstart)
         return None

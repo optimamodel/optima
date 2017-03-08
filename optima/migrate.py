@@ -426,7 +426,7 @@ def redoparameters(project, die=True, **kwargs):
         oldpars = ps.pars[0]
         tmpdata = op.dcp(project.data)
         for key,val in tmpdata['const'].items(): tmpdata[key] = val # Parameters were moved from 'const' to main data
-        newpars = op.makepars(data = tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
+        newpars = op.makepars(data=tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
         
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()
@@ -660,8 +660,8 @@ def migrate(project, verbose=2, die=False):
         upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
         op.printv("%6s" % project.version, 2, verbose, indent=False)
         
-    # Update git info
-    project.gitbranch, project.gitversion = op.gitinfo()
+        # Update project info
+        project.modified = op.today()
     
     op.printv('Migration successful!', 3, verbose)
     
@@ -669,7 +669,8 @@ def migrate(project, verbose=2, die=False):
     warnings = project.getwarnings()
     if warnings and die: 
         errormsg = 'Please resolve warnings in projects before continuing'
-        raise op.OptimaException(errormsg)
+        if die: raise op.OptimaException(errormsg)
+        else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
 
     return project
 
