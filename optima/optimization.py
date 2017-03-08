@@ -314,6 +314,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     if origbudget is None: origbudget = progset.getdefaultbudget()
     if optiminds is None: optiminds = findinds(progset.optimizable())
     if budgetvec is None: budgetvec = dcp(origbudget[:][optiminds])
+    if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
     
     # Validate input
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
@@ -593,14 +594,14 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
                 else: thislabel = '"'+key+'"'
                 budgetvecnew, fvals, exitreason = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-                asdresults[key] = {'budget':constrainedbudgetnew, 'budgetvec':constrainedbudgetvecnew, 'fvals':fvals}
+                asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
                     bestkey = key # Reset key
                     bestfval = fvals[-1] # Reset fval
             
             ## Calculate outcomes
             args['initpeople'] = None # Set to None to get full results, not just from strat year
-            new = outcomecalc(asdresults[bestkey]['budgetvec'], outputresults=True, **args)
+            new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
             else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
             tmpresults[new.name] = new
