@@ -692,16 +692,19 @@ class Project(object):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         
         boc = None
+        objkeys = ['start','end','deathweight','inciweight']
         for x in reversed(self.results.keys()): # Get last BOC
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
                 if objectives is None: return boc
                 same = True
                 for y in boc.objectives:
-                    if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
+                    if y in objkeys and boc.objectives[y] != objectives[y]: same = False
                 if same:
                     return boc
-        print('No BOC with the required objectives can be found in project: %s; using last BOC found' % self.name)
+        wantedobjs = ', '.join(['%s=%0.1f' % (key,objectives[key]) for key in objkeys])
+        actualobjs = ', '.join(['%s=%0.1f' % (key,boc.objectives[key]) for key in objkeys])
+        printv('WARNING, project %s has no BOC with objectives "%s", instead using BOC with objectives "%s"' % (self.name, wantedobjs, actualobjs))
         if boc is None:
             print('WARNING, no BOCs found!')
         return boc
