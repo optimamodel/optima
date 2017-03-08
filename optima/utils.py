@@ -878,9 +878,9 @@ def loadbalancer(maxload=0.5, index=None, refresh=10.0, maxtime=3600, label=None
     maxcount = maxtime/float(refresh)
     while toohigh and count<maxcount:
         count += 1
-        currentload = cpu_percent()/100.
+        currentload = cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
         if currentload>maxload:
-            if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued for the %ith time' % (currentload, maxload, index, count))
+            if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
             sleep(refresh*2*random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else: 
             toohigh = False 

@@ -637,7 +637,7 @@ class Project(object):
             key, ratio = budgetdict.items()[0] # Use first budget in the stack
             counts[key] += 1
             budget = ratio*sum(defaultbudget[:])
-            printv('Running budget %i/%i (%0.0f)' % (sum(counts[:]), len(budgetdict)+sum(counts[:])-1, budget), 2, verbose)
+            printv('Running budget %i/%i ($%0.0f)' % (sum(counts[:]), len(budgetdict)+sum(counts[:])-1, budget), 2, verbose)
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             
