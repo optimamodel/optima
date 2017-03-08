@@ -940,7 +940,7 @@ def load_result_by_optimization(project, optimization):
 
 
 def load_result_mpld3_graphs(result_id, which):
-    result = load_result_by_id(result_id)
+    result = load_result_by_id(result_id, which)
     return make_mpld3_graph_dict(result, which)
 
 

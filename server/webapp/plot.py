@@ -70,6 +70,17 @@ def convert_to_mpld3(figure):
     return normalize_obj(mpld3_dict)
 
 
+def convert_to_selectors(graph_selectors):
+    keys = graph_selectors['keys']
+    names = graph_selectors['names']
+    defaults = graph_selectors['defaults']
+    print ">> make_mpld3_graph_dict keys", keys
+
+    selectors = [
+        {'key': key, 'name': name, 'checked': checked}
+         for (key, name, checked) in zip(keys, names, defaults)]
+    return selectors
+
 def make_mpld3_graph_dict(result, which=None):
     """
     Converts an Optima sim Result into a dictionary containing
@@ -96,37 +107,54 @@ def make_mpld3_graph_dict(result, which=None):
               }
         }
     """
-    advanced = False
-    which = []
-    if hasattr(result, 'which'):
-        print ">> Loading saved which options"
-        which = result.which
-        if 'advanced' in result.which:
+    print ">> make_mpld3_graph_dict input which:", which
+
+    if which is None:
+        print ">> make_mpld3_graph_dict has cache:", hasattr(result, 'which')
+        advanced = False
+        if hasattr(result, 'which'):
+            which = result.which
+            print ">> make_mpld3_graph_dict cached options"
+            if 'advanced' in result.which:
+                advanced = True
+                which.remove("advanced")
+        else:
+            which = ["default"]
+    else:
+        advanced = False
+        if 'advanced' in which:
             advanced = True
-            which.remove("advanced")
+            which.remove('advanced')
+
+    print ">> make_mpld3_graph_dict advanced:", advanced
+
     graph_selectors = op.getplotselections(result, advanced=advanced) # BOSCO MODIFY
-    keys = graph_selectors['keys']
-    names = graph_selectors['names']
-    checks = graph_selectors['defaults']
+    if advanced:
+        normal_graph_selectors = op.getplotselections(result)
+        n = len(normal_graph_selectors['keys'])
+        normal_default_keys = []
+        for i in range(n):
+            if normal_graph_selectors["defaults"][i]:
+                normal_default_keys.append(normal_graph_selectors["keys"][i])
+        normal_default_keys = tuple(normal_default_keys)
+        # rough and dirty defaults for missing defaults in advanced
+        n = len(graph_selectors['keys'])
+        for i in range(n):
+            key = graph_selectors['keys'][i]
+            if key.startswith(normal_default_keys) and "-total" in key:
+                graph_selectors['defaults'][i] = True
+    selectors = convert_to_selectors(graph_selectors)
 
-    which = [w for w in which if w in keys]
-
-    selectors = [
-        {'key': key, 'name': name, 'checked': checked}
-         for (key, name, checked) in zip(keys, names, checks)]
-
-    print "advanced:", advanced
-    print "which:", not not which
-    if not which:
+    if 'default' in which:
         which = [s["key"] for s in selectors if s["checked"]]
     else:
+        which = [w for w in which if w in graph_selectors["keys"]]
         for selector in selectors:
             selector['checked'] = selector['key'] in which
 
-    try:
-        graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
-    except:
-        graphs = op.plotting.makeplots(result, toplot="default", figsize=(4, 3))
+    print ">> make_mpld3_graph_dict which:", which
+
+    graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3), die=False)
 
     graph_selectors = []
     mpld3_graphs = []
