@@ -8,11 +8,11 @@ Version: 2.1 (2017jan31)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray # Utilities 
+from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
-generalkeys = ['male', 'female', 'popkeys', 'injects', 'rawtransit'] # General parameter keys that are just copied
+generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
 staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
 
 
@@ -851,8 +851,8 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         largestthatyear = largest_i*grow(largest_e, thisyear[key]-startyear)
         par.i[key] = largest_i*thispopsize[key]/largestthatyear # Scale population size
         par.e[key] = largest_e # Copy exponent
-    par.i = par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
-    par.e = par.e.sort(keys)
+    par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    par.e.sort(keys)
     
     if uniformgrowth:
         for key in keys:
@@ -1020,7 +1020,7 @@ def makepars(data=None, verbose=2, die=True):
         errormsg = 'Could not load parameter table: "%s"' % E.message
         raise OptimaException(errormsg)
         
-    pars['rawtransit'] = loadtranstable(sheetname='Transitions', npops=len(popkeys)) # Read the transitions
+    pars['fromto'], pars['transmatrix'] = loadtranstable(npops=len(popkeys)) # Read the transitions
     
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
@@ -1079,8 +1079,8 @@ def makepars(data=None, verbose=2, die=True):
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0.0])
         pars['birth'].t[key] = array([0.0])
-    pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['birth'].t = pars['birth'].t.sort(popkeys)
+    pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['birth'].t.sort(popkeys)
     
     # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
     npopkeys = len(popkeys)
@@ -1113,10 +1113,10 @@ def makepars(data=None, verbose=2, die=True):
         pars['propcirc'].t[key] = array([0.0])
         pars['numcirc'].y[key]  = array([0.0])
         pars['numcirc'].t[key]  = array([0.0])
-    pars['propcirc'].y = pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['propcirc'].t = pars['propcirc'].t.sort(popkeys)
-    pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
+    pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['propcirc'].t.sort(popkeys)
+    pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['numcirc'].t.sort(popkeys)
     for key in pars['numcirc'].keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
@@ -1178,7 +1178,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016dec11
+    Version: 2017mar01
     '''
     
     # Handle inputs and initialization
@@ -1192,7 +1192,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
-    if isinstance(tosample, (str, unicode)): tosample = [tosample] # Convert to list
+    tosample = promotetolist(tosample) # Convert to list
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])

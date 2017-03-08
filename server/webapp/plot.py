@@ -108,13 +108,15 @@ def make_mpld3_graph_dict(result, which=None):
     keys = graph_selectors['keys']
     names = graph_selectors['names']
     checks = graph_selectors['defaults']
-    print "defaults", checks
+
     which = [w for w in which if w in keys]
-    print "which", which
+
     selectors = [
         {'key': key, 'name': name, 'checked': checked}
          for (key, name, checked) in zip(keys, names, checks)]
 
+    print "advanced:", advanced
+    print "which:", not not which
     if not which:
         which = [s["key"] for s in selectors if s["checked"]]
     else:

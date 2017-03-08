@@ -8,8 +8,8 @@ from gzip import GzipFile
 from cStringIO import StringIO
 from contextlib import closing
 from os import path, sep
-from numpy import array, ones
-from optima import odict
+from numpy import ones, zeros
+from optima import odict, OptimaException
 from xlrd import open_workbook
 
 
@@ -64,8 +64,9 @@ def loadstr(source):
 default_filename = 'model-inputs.xlsx'
 
 
-def loadpartable(filename=default_filename, sheetname='Model parameters'):
+def loadpartable(filename=default_filename):
     '''  Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters '''
+    sheetname = 'Model parameters'
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     sheet = workbook.sheet_by_name(sheetname)
 
@@ -81,30 +82,36 @@ def loadpartable(filename=default_filename, sheetname='Model parameters'):
 
 
 
-def loadtranstable(filename=default_filename, sheetname='Transitions', npops=None):
+def loadtranstable(filename=default_filename, npops=None):
     ''' Function to load the allowable transitions from the spreadsheet '''
+    sheetname = 'Transitions' # This will only change between Optima versions, so OK to have in body of function
+    if npops is None: npops = 1 # Use just one population if not told otherwise
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     sheet = workbook.sheet_by_name(sheetname)
+    
+    if sheet.nrows != sheet.ncols:
+        errormsg = 'Transition matrix should have the same number of rows and columns (%i vs. %i)' % (sheet.nrows, sheet.ncols)
+        raise OptimaException(errormsg)
+    nstates = sheet.nrows-1 # First row is header
 
-    if npops is None: npops = 1 # Use just one population if not told otherwise
-
-    rawtransit = []
-    for rownum in range(sheet.nrows-1):
-        rawtransit.append([[],[]])
-        for colnum in range(sheet.ncols-1):
+    fromto = []
+    transmatrix = zeros((nstates,nstates,npops))
+    for rownum in range(nstates): # Loop over each health state: the from state
+        fromto.append([]) # Append two lists: the to state and the probability
+        for colnum in range(nstates): # ...and again
             if sheet.cell_value(rownum+1,colnum+1):
-                rawtransit[rownum][0].append(colnum)
-                rawtransit[rownum][1].append(ones(npops))
-        rawtransit[rownum][1] = array(rawtransit[rownum][1])
-    return rawtransit
+                fromto[rownum].append(colnum) # Append the to states
+                transmatrix[rownum,colnum,:] = ones(npops) # Append the probabilities
+    
+    return fromto, transmatrix
 
 
 
 def loaddatapars(filename=default_filename, verbose=2):
     ''' Function to parse the data parameter definitions '''
+    inputsheets = ['Data inputs', 'Data constants']
     workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
     
-    inputsheets = ['Data inputs', 'Data constants']
     pardefinitions = odict()
     for inputsheet in inputsheets:
         sheet = workbook.sheet_by_name(inputsheet)

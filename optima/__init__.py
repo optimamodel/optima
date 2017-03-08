@@ -53,6 +53,10 @@ from uuid import uuid4 as uuid
 from datetime import datetime; today = datetime.today
 from copy import deepcopy as dcp
 
+## Utilities
+from . import utils # Load high-level module as well
+from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, promotetoarray, promotetolist, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
+
 ## Optimization algorithm
 from . import asd as _asd
 from .asd import asd
@@ -64,14 +68,6 @@ from .pchip import pchip, plotpchip
 ## Color definitions
 from . import colortools # Load high-level module as well
 from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
-
-## Utilities
-from . import utils # Load high-level module as well
-from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, promotetoarray, promotetolist, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
-
-## Data I/O
-from . import dataio
-from .dataio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 
 
 #####################################################################################################################
@@ -114,6 +110,10 @@ class OptimaException(Exception):
 ### Load Optima functions and classes
 #####################################################################################################################
 
+## Data I/O
+from . import dataio
+from .dataio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+
 ## Project settings
 from . import settings as _settings # Inter-project definitions, e.g. health states
 from .settings import Settings, convertlimits, gettvecdt
@@ -130,7 +130,7 @@ from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearp
 try:
     from . import makespreadsheet as _makespreadsheet
     from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
-except Exception as E: _failed.append('makespreadsheet: %s' % E.message)
+except Exception as E: _failed.append('makespreadsheet: %s' % E.__repr__())
 
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
@@ -175,7 +175,7 @@ from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotal
 try: 
     from . import gui
     from .gui import plotresults, pygui, plotpeople, plotpars, browser, manualfit
-except Exception as E: _failed.append('gui: %s' % E.message)
+except Exception as E: _failed.append('gui: %s' % E.__repr__())
 
 
 #####################################################################################################################
@@ -205,7 +205,7 @@ try:
     from .batchtools import batchautofit
     from .batchtools import batchBOC
     from .geospatial import geogui # Import GUI tools for geospatial analysis
-except Exception as E: _failed.append('geospatial, batchtools: %s' % E.message)
+except Exception as E: _failed.append('geospatial, batchtools: %s' % E.__repr__())
 
 
 if len(_failed): print('The following import errors were encountered:\n%s' % _failed)

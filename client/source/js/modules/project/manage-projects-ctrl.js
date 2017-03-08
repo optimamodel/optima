@@ -234,6 +234,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               .success(function () {
                 project.name = name;
                 toastr.success('Renamed project');
+                activeProject.setActiveProjectFor(name, project.id, userManager.user);
                 $state.reload();
               });
           },

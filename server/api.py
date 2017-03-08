@@ -140,7 +140,6 @@ def get_remote_file():
     return helpers.send_from_directory(dirname, filename)
 
 
-
 def init_db():
     print("Loading DB...")
 

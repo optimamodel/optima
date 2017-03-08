@@ -1,22 +1,18 @@
-"""
-This module implements the monotonic Piecewise Cubic Hermite Interpolating Polynomial (PCHIP).
-Slopes are constrained via the Fritsch-Carlson method.
-More details: https://en.wikipedia.org/wiki/Monotone_cubic_interpolation
-Script written by Chris Michalski 2009aug18 used as a basis.
-
-Version: 2016feb04
-"""
-
 from utils import isnumber
 from numpy import linspace, array, diff
 from copy import deepcopy as dcp
 import collections
-#from interpolate import slopes, stineman_interp
-
 pchipeps = 1e-8
 
-#=========================================================
-def pchip(x, y, xnew, deriv = False, method='pchip'):
+def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=10, monotonic=True):
+    """
+    This module implements the monotonic Piecewise Cubic Hermite Interpolating Polynomial (PCHIP).
+    Slopes are constrained via the Fritsch-Carlson method.
+    More details: https://en.wikipedia.org/wiki/Monotone_cubic_interpolation
+    Script written by Chris Michalski 2009aug18 used as a basis.
+    
+    Version: 2017mar02
+    """
     
     sortzip = dcp(sorted(zip(x,y)))
     xs = [a for a,b in sortzip]
@@ -24,12 +20,12 @@ def pchip(x, y, xnew, deriv = False, method='pchip'):
     x = dcp(xs)
     y = dcp(ys)
     
+    if smooth:
+        x,y = smoothingfunc(x=x,y=y, smooth=smooth, monotonic=monotonic)
+    
     if not isinstance(xnew,collections.Sequence):       # Is this reliable enough...?
         Exception('Error: Values to interpolate for with PCHIP have not been given in sequence form (e.g. list or array)!')
     xnew = dcp(sorted(xnew))
-    
-#    print x
-#    print y
     
     if method=='pchip': # WARNING, need to rename this function something else...
         m = pchip_slopes(x, y) # Compute slopes used by piecewise cubic Hermite interpolator.
@@ -54,7 +50,7 @@ def pchip(x, y, xnew, deriv = False, method='pchip'):
     
     return ynew
     
-#=========================================================
+
 def pchip_slopes(x, y, monotone=True):
 
     if not len(x) == len(y): raise Exception('Error: Interpolation failure due to unequal x and y points!')
@@ -78,11 +74,9 @@ def pchip_slopes(x, y, monotone=True):
     
             m.append(deriv)
     
-#    print secants
-#    print m
     return array(m)
 
-#=========================================================
+
 def pchip_eval(x, y, m, xvec, deriv = False):
     '''
      Evaluate the piecewise cubic Hermite interpolant with  monoticity preserved
@@ -182,3 +176,81 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
 #        print('Plotting of PCHIP-interpolated data failed!')
     
     return None
+
+
+def smoothingfunc(x=None, y=None, npts=10, smooth=10, monotonic=True):
+    '''
+    pchip can introduce irregularities, so this smooths them out.
+    
+    Inputs:
+        x = the x values to smooth
+        y = the y values to smooth
+        npts = the number of times to replicate each point
+        smooth = the number of times to apply the smoothing kernel
+        monotonic = whether or not to enforce monotonicity in the derivative
+    
+    Returns new values of x and y as a tuple.
+    
+    Version: 2017mar02 by cliffk
+    '''
+
+    # Imports
+    from pylab import concatenate, ones, array, convolve, diff, argsort, linspace, cumsum, clip, sign
+    from optima import dcp
+    
+    # Set parameters
+    repeats = npts*smooth # Number of times to apply smoothing
+    npad = npts # Size of buffer on each end
+    kernel = array([0.25, 0.5, 0.25]) # Kernel to convolve with on each step
+    
+    # Ensure it's in the correct order and calculate derivative
+    order = argsort(x)
+    X = array(x)[order]
+    Y = array(y)[order]
+    derivs = diff(Y)/diff(X)
+    
+    # Calculate the new x axis, since now npts times as many points as originally
+    newx = []
+    for z in range(len(X)-1):
+        if z<len(X)-2: newx.extend((linspace(X[z], X[z+1], npts+1))[:-1].tolist())
+        else:          newx.extend((linspace(X[z], X[z+1], npts+1)).tolist())
+    newx = array(newx, dtype=float) # Convert to array -- for plotting y
+    
+    # Make original derivative (y0 = original, y1 = 1st derivative, y2 = 2nd derivative)
+    y1 = []
+    for der in derivs:
+        y1.extend((der*ones(npts)).tolist())
+    y1 = array(y1, dtype=float)
+    y1pad = concatenate([ones(npad)*y1[0], y1, ones(npad)*y1[-1]]) # Pad the ends
+    
+    # Set up the original for comparison
+    y1o = dcp(y1) # Original derivative
+    y0o = concatenate([[0.], cumsum(y1o*diff(newx))]) # Original function value
+    y0o += Y[0] # Adjust for constant of integration
+    
+    # Convolve the derivative with the kernel
+    for r in range(repeats):
+        y1pad = convolve(y1pad, kernel, mode='same') # Do the convolution
+        for d,der in enumerate(derivs):
+            start = d*npts
+            end   = (d+1)*npts
+            nbstart = start+npad
+            nbend   = end+npad
+            if monotonic:
+                if d>0 and d<len(derivs)-1 and sign(derivs[d]-derivs[d-1])!=-sign(derivs[d+1]-derivs[d]): # Enforce monotonicity for points in the middle
+                    lower = min(derivs[d-1], derivs[d+1])
+                    upper = max(derivs[d-1], derivs[d+1])
+                    y1pad[nbstart:nbend] = clip(y1pad[nbstart:nbend], lower, upper)
+            y1osum = sum(y1o[start:end]) # Calculate the desired sum
+            y1sum = sum(y1pad[nbstart:nbend]) # Calculate the actual sum
+            y1pad[nbstart:nbend] = y1pad[nbstart:nbend] + (y1osum-y1sum)/npts # Adjust actual to match desired -- if sum(y1) is right, then y0 will be right too
+        y1pad[:npad] = y1pad[npad] # Reset the initial pad
+        y1pad[-npad:] = y1pad[-npad]  # Reset the final pad
+        y1 = y1pad[npad:-npad] # Trim the buffer
+        
+        # Calculate integral and derivative (used for plotting only)
+        y0 = concatenate([[0.], cumsum(y1*diff(newx))]) # Original function value
+        y0 += Y[0] # Adjust for constant of integration
+    
+    newy = y0
+    return newx,newy

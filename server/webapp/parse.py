@@ -231,7 +231,6 @@ def set_project_summary_on_project(project, summary):
 
     startYear = summary['startYear']
     endYear = summary['endYear']
-    project.data["years"] = (startYear, endYear)
     project.settings.start = startYear
     project.settings.end = endYear
 
@@ -913,14 +912,11 @@ def get_progset_from_project(project, progset_id):
     if not isinstance(progset_id, UUID):
         progset_id = UUID(progset_id)
 
-    progsets = [
-        project.progsets[key]
-        for key in project.progsets
-        if project.progsets[key].uid == progset_id
-    ]
-    if not progsets:
-        raise ProgsetDoesNotExist(project_id=project.uid, id=progset_id)
-    return progsets[0]
+    for key, progset in project.progsets.items():
+        if str(progset.uid) == str(progset_id):
+            return progset
+
+    raise ProgsetDoesNotExist(project_id=project.uid, id=progset_id)
 
 
 def get_progset_from_name(project, progset_name, progset_id=None):
