@@ -468,7 +468,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
 
 def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
-    if batch: loadbalancer(index=pind)
+    if batch: loadbalancer(index=pind, label=project.name)
     
     # Figure out which budget to use as a starting point
     boc = project.getBOC(objectives)
@@ -479,8 +479,6 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
         if thismismatch<smallestmismatch:
             closestbudget = dcp(budget)
             smallestmismatch = thismismatch
-    if totalbudget: printv('Reoptimizing %s with $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
-    else:           printv('Total budget for %s is zero, skipping optimization...' % project.name, 2, verbose)
     
     # Extract info from the BOC and specify argument lists...painful
     sharedargs = {'objectives':boc.objectives, 
@@ -498,13 +496,20 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
 
     # Run the analyses
     resultpair = odict()
-    sharedargs['objectives']['budget'] = totalbudget
+    
+    # Initial spending
+    printv('%s: calculating initial outcome for budget $%0.0f' % (project.name, boc.defaultbudget), 2, verbose)
+    sharedargs['objectives']['budget'] = boc.defaultbudget
     outcalcargs.update(sharedargs)
-    optimargs.update(sharedargs)
     resultpair['init'] = outcomecalc(**outcalcargs)
-    print('NO, need to run with original budget!')
+    
+    # Optimal spending -- reoptimize
+    if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
+    else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)
+    sharedargs['objectives']['budget'] = totalbudget
+    optimargs.update(sharedargs)
     if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
-    else:           resultpair['opt'] = dcp(resultpair['init'])#  NO, need to rerun with GA budget
+    else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
     resultpair['init'].name = project.name+' GA initial'
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
