@@ -32,7 +32,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           project.dataUploadTime = Date.parse(project.dataUploadTime);
           return project;
         });
-        console.log('projects', $scope.projects);
+        console.log('loadProjects ', $scope.projects);
       }
 
       $scope.filterByName = function(project) {

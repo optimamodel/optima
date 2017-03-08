@@ -16,7 +16,7 @@
     }
 
     function isNonemptyList(l) {
-      return (!_.isUndefined(l.length) && l.length > 0);
+      return (!_.isUndefined(l) && !_.isUndefined(l.length) && l.length > 0);
     }
 
     function initialize() {
@@ -34,7 +34,6 @@
         progPopReadOnly: false
       };
 
-      console.log('default loaded parameters', parameters);
       /**
        All populations for the project will be listed for
        the program for user to select from.
@@ -55,30 +54,31 @@
         function(par) { return par.pops.indexOf('tot') >= 0; }
       );
 
-      console.log('$scope.state.program.targetpars', $scope.state.program.targetpars);
-      console.log('$scope.state.program.costcov', $scope.state.program.costcov);
+      console.log('ProgramModalController.init costcov', $scope.state.program.costcov);
       $scope.years = _.range(openProject.startYear, openProject.endYear+1);
-      console.log('$scope.years', $scope.currentYear, $scope.years);
 
       if (isAnyTargetparForTotal) {
         $scope.state.progPopReadOnly = true;
         $scope.state.selectAll = true;
         $scope.clickAllTargetPopulations();
       } else {
-        if (isNonemptyList(program.populations)) {
+        console.log('ProgramModalController.init program', $scope.state.program);
+        if (isNonemptyList($scope.state.program.populations)) {
           _.forEach($scope.state.populations, function(population) {
             population.active = (
-              program.populations.length === 0)
-               || (program.populations.indexOf(population.short) > -1);
+              $scope.state.program.populations.length === 0)
+               || ($scope.state.program.populations.indexOf(population.short) > -1);
           });
           $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
             return !population.active;
           })
+        } else {
+          $scope.state.program.populations = [];
         }
       }
 
       _.forEach($scope.state.program.targetpars, setAttrOfPar);
-      console.log('init targetpars', $scope.state.program.targetpars);
+      console.log('ProgramModalController.init targetpars', $scope.state.program.targetpars);
 
       // Set the program as active
       $scope.state.program.active = true;
@@ -148,8 +148,6 @@
       }
       targetpar.attr = deepCopy(attr);
 
-      console.log('raw targetpar', targetpar);
-
       if (attr.by == "pship") {
 
         targetpar.attr.pships = deepCopy(targetpar.attr.pships);
@@ -195,10 +193,10 @@
         });
 
       } else {
-        console.log('Error in setting targetpar');
+        console.log('setAttrOfPar error in setting targetpar');
       }
 
-      console.log('attr targetpar', targetpar);
+      console.log('setAttrOfPar targetpar', targetpar);
 
     }
 
@@ -297,6 +295,7 @@
 
     // Function to add additional data
     $scope.addHistoricalYearCostcovData = function () {
+      console.log('addHistoricalYearCostcovData');
       if(!$scope.state.program.costcov) {
         $scope.state.program.costcov = [];
       }
