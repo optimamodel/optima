@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr, promotetolist, sigfig # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
@@ -671,8 +671,8 @@ class Project(object):
         # Tidy up: insert remaining points
         if sum(counts[:]):
             xorder = argsort(boc.x) # Sort everything
-            boc.x = array(boc.x[xorder]).tolist()
-            boc.y = array(boc.y[xorder]).tolist()
+            boc.x = array(boc.x)[xorder].tolist()
+            boc.y = array(boc.y)[xorder].tolist()
             boc.budgets.sort(xorder)
             boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
             boc.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
