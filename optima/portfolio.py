@@ -76,7 +76,7 @@ class Portfolio(object):
             project.uid = uuid() # TEMPPPP WARNING overwrite UUID
             keyname = project.name if project.name not in self.projects.keys() else str(project.uid) # Only fall back on UID if the project name is taken
             self.projects[keyname] = project        
-            printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
+            printv('Added project %s to portfolio %s' % (project.name, self.name), 2, verbose)
         return None
     
     
