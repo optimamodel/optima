@@ -84,7 +84,7 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
 
 def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,
              maxiters, maxtime, verbose, stoppingfunc, method, maxload, prerun, batch, mc, die):
-    if batch: loadbalancer(index=ind, maxload=maxload)
+    if batch: loadbalancer(index=ind, maxload=maxload, label=project.name)
     printv('Running BOC generation...', 1, verbose)
     if prerun:
         if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now

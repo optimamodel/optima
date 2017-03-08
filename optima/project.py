@@ -623,7 +623,7 @@ class Project(object):
         guessmaxiters = maxiters if maxiters is not None else 1000
         estminiters = noptims*nbocpts*guessstalliters
         estmaxiters = noptims*nbocpts*guessmaxiters
-        printv('Generating BOC for %s (should require from %i to %i iterations)' % (self.name, estminiters, estmaxiters), 1, verbose)
+        printv('Generating BOC for %s for %0.0f-%0.0f with weights deaths=%0.1f, infections=%0.1f (est. %i-%i iterations)' % (self.name, objectives['start'], objectives['end'], objectives['deathweight'], objectives['inciweight'], estminiters, estmaxiters), 1, verbose)
         
         # Initialize arrays
         budgetdict = odict()

@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2017mar03
 """
 
-from optima import OptimaException, Link, Multiresultset, Parameterset, Programset, asd, runmodel, getresults # Main functions
+from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
 from numpy import zeros, arange, maximum, array, inf, isfinite, argmin, argsort
 from numpy.random import random

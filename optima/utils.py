@@ -858,14 +858,16 @@ def getfilelist(folder=None, ext=None):
     return filelist
 
 
-def loadbalancer(maxload=0.5, index=None, refresh=10.0, maxtime=3600, verbose=True):
+def loadbalancer(maxload=0.5, index=None, refresh=10.0, maxtime=3600, label=None, verbose=True):
     ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
     from psutil import cpu_percent
     from time import sleep
     from numpy.random import random
     
     # Set up processes to start asynchronously
-    if index is None:  delay = random()
+    if label is None: label = ''
+    else: label += ': '
+    if index is None:  delay = random()*refresh
     else:              delay = index*refresh
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
     sleep(delay) # Give it time to asynchronize
@@ -878,10 +880,11 @@ def loadbalancer(maxload=0.5, index=None, refresh=10.0, maxtime=3600, verbose=Tr
         count += 1
         currentload = cpu_percent()/100.
         if currentload>maxload:
-            if verbose: print('CPU load too high (%0.2f/%0.2f); process %s queued for the %ith time' % (currentload, maxload, index, count))
+            if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued for the %ith time' % (currentload, maxload, index, count))
             sleep(refresh*2*random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else: 
-            toohigh = False # print('CPU load fine (%0.2f/%0.2f)' % (currentload, maxload))
+            toohigh = False 
+            if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
     return None
     
     
