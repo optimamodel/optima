@@ -12,7 +12,6 @@ Version: 2017mar04
 from multiprocessing import Process, Queue
 from numpy import empty
 from optima import loadproj, loadbalancer, printv, getfilelist
-from os import path
 
 
 def batchtest_task(obj, ind, outputqueue, nprocs, nrepeats, maxload):
@@ -83,7 +82,7 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
     return outputlist
 
 
-def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetname, objectives, constraints,
+def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,
              maxiters, maxtime, verbose, stoppingfunc, method, maxload, prerun, batch, mc, die):
     if batch: loadbalancer(index=ind, maxload=maxload)
     printv('Running BOC generation...', 1, verbose)
@@ -98,7 +97,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetnam
         if rerun: 
             printv('No results set found, so rerunning model...', 2, verbose)
             project.runsim(parsetname) # Rerun if exception or if results is None
-    project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname,
+    project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
                    progsetname=progsetname, objectives=objectives, 
                    constraints=constraints, maxiters=maxiters, maxtime=maxtime,
                    verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
@@ -108,7 +107,7 @@ def boc_task(project, ind, outputqueue, budgetlist, name, parsetname, progsetnam
     return None
 
 
-def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, 
+def batchBOC(folder='.', budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
              maxload=0.5, prerun=True, batch=True, mc=3, die=False):
     """
@@ -122,7 +121,7 @@ def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetnam
     Arguments:
         folder - the directory containing all projects for which a BOC will be
                 calculated
-        budgetlist - a vector of multiples of the current budget for which an
+        budgetratios - a vector of multiples of the current budget for which an
                 optimization will be performed to comprise the BOC (default:
                 [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0])
         name - name of the stored BOC result
@@ -164,7 +163,7 @@ def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetnam
         project.tmpfilename = filelist[i]
         prjobjectives = project.optims[-1].objectives if objectives == 'latest' else objectives
         prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
-        args = (project, i, outputqueue, budgetlist, name, parsetname, 
+        args = (project, i, outputqueue, budgetratios, name, parsetname, 
                 progsetname, prjobjectives, prjconstraints, maxiters, 
                 maxtime, verbose, stoppingfunc, method, maxload, prerun, batch, mc, die)
         if batch:
