@@ -472,6 +472,7 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     
     # Figure out which budget to use as a starting point
     boc = project.getBOC(objectives)
+    defaultbudget = boc.defaultbudget[:].sum()
     totalbudget = boc.gaoptimbudget
     smallestmismatch = inf
     for budget in boc.budgets.values(): # Could be done with argmin() but this is more explicit...
@@ -498,8 +499,8 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     resultpair = odict()
     
     # Initial spending
-    printv('%s: calculating initial outcome for budget $%0.0f' % (project.name, boc.defaultbudget), 2, verbose)
-    sharedargs['objectives']['budget'] = boc.defaultbudget
+    printv('%s: calculating initial outcome for budget $%0.0f' % (project.name, defaultbudget), 2, verbose)
+    sharedargs['objectives']['budget'] = defaultbudget
     outcalcargs.update(sharedargs)
     resultpair['init'] = outcomecalc(**outcalcargs)
     
