@@ -1,4 +1,4 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
@@ -266,6 +266,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
+        if hasattr(structlist[name], 'projectref'): structlist[name].projectref = Link(self) # Fix project links
         printv('Item "%s" added to "%s"' % (name, what), 3, self.settings.verbose)
         self.modified = today()
         return None
@@ -291,6 +292,7 @@ class Project(object):
         structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
+        if hasattr(structlist[new], 'projectref'): structlist[new].projectref = Link(self) # Fix project links
         printv('%s "%s" copied to "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None
@@ -300,7 +302,7 @@ class Project(object):
         ''' Rename an entry in a structure list '''
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
-        structlist[new] = structlist.pop(orig)
+        structlist.rename(oldkey=orig, newkey=new)
         structlist[new].name = new # Update name
         printv('%s "%s" renamed "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
