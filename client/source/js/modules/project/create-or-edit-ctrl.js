@@ -17,7 +17,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.projectInfo = info ? info.data : void 0;
 
-      $scope.submitButtonText = "Create project & Download template data spreadsheet";
+      $scope.submitButtonText = "Create project & download data entry spreadsheet";
       $scope.populations = populations.data.populations;
       console.log('default populations', $scope.populations);
 
