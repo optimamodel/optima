@@ -7,61 +7,58 @@
 
   <div ng-if="!isMissingData">
 
-    <div>
+    <div style="float: right; text-align: right">
+      Program set: &nbsp;
 
-      <div style="float: right; text-align: right">
-        Program set: &nbsp;
+      <select
+          class="txbox"
+          ng-model="state.activeProgramSet"
+          ng-options="p.name for p in programSetList"
+          style="width: 150px; display: inline">
+      </select>
 
-        <select
-            class="txbox"
-            ng-model="state.activeProgramSet"
-            ng-options="p.name for p in programSetList"
-            style="width: 150px; display: inline">
-        </select>
-
-        <i
-            ng-click="addProgramSet()"
-            class="fa fa-file-o"
-            tp-text="New" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-        </i>
-        <i
-            ng-click="copyProgramSet()"
-            class="fa fa-copy"
-            tp-text="Copy" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-        </i>
-        <i
-            ng-click="renameProgramSet()"
-            class="fa fa-pencil"
-            tp-text="Rename" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-        </i>
-        <i
-            ng-click="downloadProgramSet()"
-            class="fa fa-download"
-            tp-text="Download" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-        </i>
-        <i
-            ng-click="uploadProgramSet()"
-            class="fa fa-upload"
-            tp-text="Upload" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-        </i>
-        <i
-            ng-click="deleteProgramSet()"
-            class="fa fa-trash-o"
-            tp-text="Delete" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-        </i>
-      </div>
+      <i
+          ng-click="addProgramSet()"
+          class="fa fa-file-o"
+          tp-text="New" tooltip tp-class="tooltip"
+          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+          style="margin-left: 0.5em">
+      </i>
+      <i
+          ng-click="copyProgramSet()"
+          class="fa fa-copy"
+          tp-text="Copy" tooltip tp-class="tooltip"
+          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+          style="margin-left: 0.5em">
+      </i>
+      <i
+          ng-click="renameProgramSet()"
+          class="fa fa-pencil"
+          tp-text="Rename" tooltip tp-class="tooltip"
+          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+          style="margin-left: 0.5em">
+      </i>
+      <i
+          ng-click="downloadProgramSet()"
+          class="fa fa-download"
+          tp-text="Download" tooltip tp-class="tooltip"
+          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+          style="margin-left: 0.5em">
+      </i>
+      <i
+          ng-click="uploadProgramSet()"
+          class="fa fa-upload"
+          tp-text="Upload" tooltip tp-class="tooltip"
+          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+          style="margin-left: 0.5em">
+      </i>
+      <i
+          ng-click="deleteProgramSet()"
+          class="fa fa-trash-o"
+          tp-text="Delete" tooltip tp-class="tooltip"
+          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+          style="margin-left: 0.5em">
+      </i>
     </div>
 
     <h2>Manage programs</h2>
