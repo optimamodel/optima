@@ -512,11 +512,8 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     sharedargs['origbudget'] = closestbudget
     sharedargs['objectives']['budget'] = totalbudget
     optimargs.update(sharedargs)
-    if totalbudget: 
-        resultpair['opt'] = project.optimize(**optimargs)
-        resultpair['opt'].budget = resultpair['opt'].budget['Optimal'] # For consistency with outcomecalc, keep just this one
-    else:
-        resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
+    if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
+    else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
     resultpair['init'].name = project.name+' GA initial'
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
