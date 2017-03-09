@@ -242,10 +242,10 @@ class Portfolio(object):
             resultpairs = batchtools.reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
             self.results = resultpairs
         # Tidy up
-        if doprint and self.results: self.makeoutput(doprint=doprint)
+        if doprint and self.results: self.makeoutput(doprint=doprint, verbose=verbose)
         if export:
             if self.results:
-                self.export(filename=outfile)
+                self.export(filename=outfile, verbose=verbose)
             else:
                 errormsg = 'Could not export results for portfolio %s since no results generated' % self.name
                 raise OptimaException(errormsg)
@@ -280,7 +280,7 @@ class Portfolio(object):
     
     def makeoutput(self, doprint=True, verbose=2):
         ''' Just displays results related to the GA run '''
-        printv('Printing results...', 2, verbose)
+        if doprint: printv('Printing results...', 2, verbose)
         
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
@@ -333,8 +333,8 @@ class Portfolio(object):
                 
                 projoutcomesplit[k][io] = odict()
                 for obkey in self.objectives['keys']:
-                    projoutcomesplit[k][io]['num'+obkey] = self.results[obkey][io].main['num'+obkey].tot[0][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                    overalloutcomesplit['num'+key][io] += projoutcomesplit[k][io]['num'+obkey]
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[0][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                    overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
                 
         ## Actually create the output
         output = ''
@@ -344,8 +344,8 @@ class Portfolio(object):
         output += '\nOverall summary'
         output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbud['init'], overallbud['opt'])
         output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overallout['init'], overallout['opt'])
-        for key in self.objectives['keys']:
-            output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
+        for obkey in self.objectives['keys']:
+            output += '\n\t' + self.objectives['keylabels'][obkey] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+obkey]['init'], overalloutcomesplit['num'+obkey]['opt'])
         
         ## Sort, then export
         projindices = argsort(projnames)
@@ -380,7 +380,7 @@ class Portfolio(object):
             return output
     
     
-    def export(self, filename=None):
+    def export(self, filename=None, verbose=2):
         ''' Export the results to Excel format '''
         
         if filename is None:
@@ -421,6 +421,9 @@ class Portfolio(object):
         
         worksheet.set_column(0, 3, colwidth) # Make wider
         workbook.close()
+        
+        printv('Results exported to %s' % filename, 2, verbose)
+        return None
         
 
 
