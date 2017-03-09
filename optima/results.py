@@ -440,7 +440,7 @@ class Multiresultset(Resultset):
         
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
-        diffattrs = ['parset', 'progset', 'simpars'] # Things that differ between between results sets
+        diffattrs = ['parset', 'progset'] # Things that differ between between results sets
         for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr+'dict', odict()) # Store a copy for each resultset, e.g. 'parsetdict'
 
