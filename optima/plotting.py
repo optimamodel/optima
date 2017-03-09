@@ -265,6 +265,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
         # Initialize
         toplot = promotetolist(toplot) # If single value, put inside list
         epiplots = odict()
+        colorsarg = dcp(colors) # This is annoying, but it gets overwritten later and need to preserve it here
 
 
         ## Validate plot keys
@@ -371,7 +372,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
-                if colors is None: colors = gridcolormap(nlinesperplot)
+                if colorsarg is None: colors = gridcolormap(nlinesperplot) # This is needed because this loop gets run multiple times, so can't just set and forget
                 
 
                 ################################################################################################################
