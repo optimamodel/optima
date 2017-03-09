@@ -136,8 +136,14 @@ def get_remote_file():
     kwargs = json.get('kwargs', {})
     full_filename = fn(*args, **kwargs)
     dirname, filename = os.path.split(full_filename)
-    print(">> Get remote filen %s %s" % (dirname, filename))
-    return helpers.send_from_directory(dirname, filename)
+    print(">> Get remote file %s %s" % (dirname, filename))
+    response = helpers.send_from_directory(
+        dirname,
+        filename,
+        as_attachment=True,
+        attachment_filename=filename)
+    response.status_code = 201
+    return response
 
 
 def init_db():

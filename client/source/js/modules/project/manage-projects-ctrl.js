@@ -127,13 +127,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $state.go('project.edit');
       };
 
-      /**
-       * Regenerates workbook for the given project.
-       */
-      $scope.workbook = function (name, id) {
-        // read that this is the universal method which should work everywhere in
-        // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-        window.open(projectApi.getSpreadsheetUrl(id), '_blank', '');
+      $scope.downloadSpreadsheet = function (name, id) {
+        $http
+          .post(
+            '/api/download',
+            {
+              'name': 'download_data_spreadsheet',
+              'args': [id],
+              'kwargs': {'is_blank': false}
+            },
+            {responseType: 'blob'})
+          .success(function (response) {
+            var blob = new Blob([response]);
+            saveAs(blob, (name + '.xlsx'));
+          });
       };
 
       function isExistingProjectName(projectName) {
