@@ -141,30 +141,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .click();
     };
 
-    $scope.deleteProgramSet = function () {
-      if (!$scope.state.activeProgramSet) {
-        modalService.informError([{message: 'No program set selected.'}]);
-      } else {
-        var remove = function () {
-          if ($scope.state.activeProgramSet.id) {
-            $http
-              .delete('/api/project/' + project.id +  '/progset' + '/' + $scope.state.activeProgramSet.id)
-              .success(deleteProgramSetFromPage);
-          } else {
-            deleteProgramSetFromPage();
-          }
-        };
-        modalService.confirm(
-          remove,
-          function () { },
-          'Yes, remove this program set',
-          'No',
-          'Are you sure you want to permanently remove program set "' + $scope.state.activeProgramSet.name + '"?',
-          'Delete program set'
-        );
-      }
-    };
-
     function deleteProgramSetFromPage() {
       $scope.programSetList = _.filter($scope.programSetList, function(programSet) {
         return programSet.name !== $scope.state.activeProgramSet.name;
@@ -181,6 +157,35 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       toastr.success("Program set deleted");
       $state.reload();
     }
+
+
+    $scope.deleteProgramSet = function () {
+      if (!$scope.state.activeProgramSet) {
+        modalService.informError([{message: 'No program set selected.'}]);
+        return;
+      }
+
+      if ($scope.programSetList.length == 1) {
+        modalService.informError([{message: 'Cannot delete last program set.'}]);
+        return;
+      }
+
+      modalService.confirm(
+        function () {
+          $http
+            .delete(
+              '/api/project/' + project.id +  '/progset' + '/' + $scope.state.activeProgramSet.id)
+            .success(
+              deleteProgramSetFromPage);
+        },
+        function () {},
+        'Yes, remove this program set',
+        'No',
+        'Are you sure you want to permanently remove program set "' + $scope.state.activeProgramSet.name + '"?',
+        'Delete program set'
+      );
+
+    };
 
     $scope.copyProgramSet = function () {
       if (!$scope.state.activeProgramSet) {
