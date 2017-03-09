@@ -406,7 +406,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
+                        try: plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
+                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
@@ -559,8 +560,8 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     '''
     
     # Preliminaries: process inputs and extract needed data
-    if hasattr(multires, 'budgets'): budgets = dcp(multires.budget)
-    else:                            budgets = odict([('Sample',multires.budget)])
+    if hasattr(multires, 'budgets'): budgets = dcp(multires.budgets)
+    else:                            budgets = odict([('Sample',multires.budgets)])
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
             if budgets[b][p] is not None:

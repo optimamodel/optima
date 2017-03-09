@@ -15,7 +15,7 @@ tests = [
 #'manualcalib',
 #'reconcile',
 #'runscenarios',
-#'optimize',
+'optimize',
 'dosave',
 ]
 
@@ -90,7 +90,7 @@ if 'runscenarios' in tests:
 
 
 if 'optimize' in tests:
-    P.optimize(maxtime=20)
+    P.optimize(maxtime=20, mc=0)
     if doplot: pygui(P.results[ind])
     
 
