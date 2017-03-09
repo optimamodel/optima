@@ -403,7 +403,7 @@ class Portfolio(object):
         for line in outstr.split('\n'):
             outlist.append([])
             for cell in line.split('\t'):
-                outlist[-1].append(cell)
+                outlist[-1].append(str(cell)) # If unicode, doesn't work
         
         # Iterate over the data and write it out row by row.
         row, col = 0, 0
