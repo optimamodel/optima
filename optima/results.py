@@ -59,8 +59,8 @@ class Resultset(object):
             if settings is None: settings = project.settings
         
         # Fundamental quantities -- populated by project.runsim()
-        if keepraw: self.raw = raw
-        self.simpars = simpars # ...and sim parameters
+        if keepraw: self.raw = raw # Keep raw, but only if asked
+        if keepraw: self.simpars = simpars # ...likewise sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.projectref = Link(project) # ...and just store the whole project
