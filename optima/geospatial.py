@@ -470,12 +470,11 @@ def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
             try: tmpproj = loadproj(filepath, verbose=0)
             except: print('Could not load file "%s"; moving on...' % filepath)
             if tmpproj is not None: 
-                try: 
-                    assert type(tmpproj)==Project
+                if type(tmpproj)==Project:
                     projectslist.append(tmpproj)
                     projectpaths.append(filepath)
                     print('Project file "%s" loaded' % filepath)
-                except: print('File "%s" is not an Optima project file; moving on...' % filepath)
+                else: print('File "%s" is not an Optima project file; moving on...' % filepath)
         if usegui:
             projectslistbox.addItems(projectpaths)
         globalportfolio.addprojects(projectslist)

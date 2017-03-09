@@ -188,7 +188,6 @@ class Portfolio(object):
             bestval = -inf
             bestboc = None
             for b in range(nbocs):
-                assert(len(costeffvecs[b])==len(relimprovevecs[b])==len(relspendvecs[b]))
                 if len(costeffvecs[b]):
                     tmpbestind = argmax(costeffvecs[b])
                     tmpbestval = costeffvecs[b][tmpbestind]
