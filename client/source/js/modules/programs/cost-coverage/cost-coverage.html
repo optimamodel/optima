@@ -1,5 +1,8 @@
 <div class="page rich c-cost-coverage">
 
+  <h1>Cost functions</h1>
+
+  <p></p>
   <div class="error-hint" ng-show="vm.isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
@@ -12,29 +15,29 @@
 
     <div style="width: 100%">
 
-      Select program set
+      Parameter set
       <select
         class="txbox"
         style="
-          width: 15em;
+          width: 12em;
           display: inline;
           margin-left: 0.5em;
           margin-right: 2em; "
-        ng-options="progset as progset.name for progset in vm.progsets"
-        ng-change="vm.changeProgsetAndParset()"
-        ng-model="vm.state.progset">
-      </select>
-
-      Select parameter set
-      <select
-        class="txbox"
-        style="
-          width: 15em;
-          display: inline;
-          margin-left: 0.5em; "
         ng-options="parset as parset.name for parset in vm.parsets"
         ng-change="vm.changeProgsetAndParset()"
         ng-model="vm.state.parset">
+      </select>
+
+      Program set
+      <select
+        class="txbox"
+        style="
+          width: 12em;
+          display: inline;
+          margin-left: 0.5em;"
+        ng-options="progset as progset.name for progset in vm.progsets"
+        ng-change="vm.changeProgsetAndParset()"
+        ng-model="vm.state.progset">
       </select>
 
     </div>
@@ -84,14 +87,10 @@
              class="c-tab"
              ng-if="vm.activeTab === 'cost'">
 
-          <div style="font-style: italic; padding:30px 0px 10px">
-            Every program must have parameters for cost function and cost data for at least 1 year.
-          </div>
-
           <div style="
                 width: 100%;
                 margin: 10px 0px 30px;">
-            <label>Select program</label>
+            <label>Program</label>
             <select
                 style="
                   margin-left: 0.5em;
@@ -104,13 +103,6 @@
             </select>
           </div>
 
-          <a
-              ng-click="vm.saveProgram()"
-              class="btn"
-              style="margin-bottom: 3em">
-            Update cost function & graph
-          </a>
-
           <div ng-if="vm.state.program"
                style="
                   display: flex;
@@ -119,13 +111,13 @@
 
             <div style="flex: 0 0 500px;">
 
-              <h3>Parameters for defining cost function</h3>
+              <h3>Define cost function</h3>
 
               <table
                   class="section table table-bordered">
                 <tr>
                   <td>Year</td>
-                  <td>Estimated<br>Population</td>
+                  <td>Estimated<br>population</td>
                   <td>Saturation %</td>
                   <td>Unit cost</td>
                   <td></td>
@@ -182,7 +174,7 @@
                 <tr>
                   <td colspan="5">
                     <a class="btn" ng-click="vm.addCcoparYear()">
-                      + Year
+                      Add year
                     </a>
                   </td>
                 </tr>
@@ -237,12 +229,22 @@
                   </td>
                 </tr>
               </table>
+
+              <div style="text-align: center">
+                <a
+                    ng-click="vm.saveProgram()"
+                    class="btn __green"
+                    style="margin-left: 4em; margin-bottom: 3em">
+                  Save & update
+                </a>
+              </div>
+
+
             </div>
 
             <div
                 ng-if="!vm.chartData"
                 style=" margin-left: 30px;">
-              <h3>Graph of cost function (spending vs. number-covered)</h3>
               <i>Parameters need to be defined to show graph</i>
 
             </div>
@@ -256,18 +258,6 @@
                    flex-grow: 1;
                    overflow: hidden;">
 
-              <h3>Graph of cost function (spending vs. number-covered)</h3>
-
-              Maximum spending shown on graph:
-              <input
-                  placeholder="e.g. 1000000"
-                  sytle="width: 150px"
-                  ng-model="vm.state.program.attr.xupperlim"
-                  type="number"/>
-              <br>
-              <br>
-              <br>
-
               <div
                   style="overflow: hidden"
                   mpld3-chart="vm.state.chartData"
@@ -275,6 +265,17 @@
                   ng-if="vm.state.chartData">
               </div>
 
+              <br>
+              <br>
+
+              Maximum spending shown:
+              <input
+                  placeholder="e.g. 1000000"
+                  sytle="width: 150px"
+                  ng-model="vm.state.program.attr.xupperlim"
+                  type="number"/>
+
+              <br>
               <br>
               Remarks
               <br>
@@ -292,10 +293,6 @@
         <!-- Outcome functions tab window -->
         <div style="width: 100%;"
              ng-if="vm.activeTab === 'outcome'">
-
-          <div style="font-style: italic; padding:30px 0px 10px">
-            Every parameter must have values for its outcome functions
-          </div>
 
           <div style="margin: 30px 0 20px 0;">
             <label>
