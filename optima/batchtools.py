@@ -237,7 +237,7 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
                   }
     outcalcargs = {'project':project,
                    'outputresults':True,
-                   'doconstrainbudget':False}
+                   'doconstrainbudget':True}
     optimargs = {'label':project.name,
                  'maxtime': maxtime,
                  'maxiters': maxiters,
@@ -264,6 +264,8 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     resultpair['init'].name = project.name+' GA initial'
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
+    
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     if batch: 
         outputqueue.put(resultpair)
