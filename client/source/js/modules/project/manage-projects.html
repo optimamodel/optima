@@ -11,7 +11,7 @@
 
   <a class="btn" ui-sref="project.create">Create project</a> &nbsp;
   <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp;
-  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xls</a> &nbsp;
+  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xlsx</a> &nbsp;
 
   <br>
   <br>
@@ -60,7 +60,7 @@
           <span ng-show="sortType != 'updatedTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
         <th ng-click="updateSorting('dataUploadTime')" class="sortable">
-          Data on
+          Data uploaded on
           <span ng-show="sortType == 'dataUploadTime' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'dataUploadTime' && sortReverse" class="fa fa-caret-up"></span>
           <span ng-show="sortType != 'dataUploadTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
@@ -91,33 +91,14 @@
           {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm') : 'No data uploaded'}}
         </td>
         <td style="white-space: nowrap">
-          <i
-            ng-click="copy(project.name, project.id)"
-            class="fa fa-copy"
-            tp-text="Copy" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-          </i>
-          <i
-            ng-click="editProjectName(project)"
-            class="fa fa-pencil"
-            tp-text="Rename" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-          </i>
-          <i
-            ng-click="remove($event, project.name, project.id, $index)"
-            class="fa fa-trash-o"
-            tp-text="Delete" tooltip tp-class="tooltip"
-            tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-            style="margin-left: 0.5em">
-          </i>
+          <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
+          <button class="btn" ng-click="editProjectName(project)">Rename</button>
+          <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete</button>
         </td>
         <td style="white-space: nowrap">
-          <button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>
-          <button class="btn" ng-click="downloadTemplateSpreadsheet(project.name, project.id)">Template</button>
-          <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download</button>
+          <!--<button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>-->
           <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload</button>
+          <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download</button>
         </td>
         <td style="white-space: nowrap">
           <button class="btn" ng-click="downloadProject(project.name, project.id)">Download</button>
@@ -128,8 +109,8 @@
     </table>
 
     <div style="display: flex; margin-left: -2%;" ng-show="projects.length">
-      <button ng-click="deleteSelected()" type="button" class="btn" style="margin-left:2%">Delete Selected</button>
-      <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download Selected</button>
+      <button ng-click="deleteSelected()" type="button" class="btn" style="margin-left:2%">Delete selected</button>
+      <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download selected</button>
     </div>
 
   </div>

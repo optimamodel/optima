@@ -127,25 +127,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $state.go('project.edit');
       };
 
-      /**
-       * Regenerates workbook for the given project.
-       */
-      $scope.downloadTemplateSpreadsheet = function (name, id) {
-        $http
-          .post(
-            '/api/download',
-            {
-              'name': 'download_data_spreadsheet',
-              'args': [id],
-              'kwargs': {'is_blank': true}
-            },
-            {responseType: 'blob'})
-          .success(function (response) {
-            var blob = new Blob([response]);
-            saveAs(blob, (name + '.xlsx'));
-          });
-      };
-
       $scope.downloadSpreadsheet = function (name, id) {
         $http
           .post(
