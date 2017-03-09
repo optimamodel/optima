@@ -74,11 +74,11 @@ def loadpickle(fileobj):
     #    op.programs.Costcov = Costcov
     #    op.programs.Covout = Covout
     except:
-        pass # Don't worry, yet, if we can't delete these, it'll crash later anyway :)
+        pass # Don't worry, yet, if we can't create these, it'll crash later anyway :)
     
     obj = pickle.loads(fileobj.read()) # Actually load it
     
-    # Once used to unpickle the project, we can delete these
+    # Once used to unpickle the project, we can delete these (if they were created)
     try:
         del op.project.Spreadsheet
         del op.portfolio.GAOptim
