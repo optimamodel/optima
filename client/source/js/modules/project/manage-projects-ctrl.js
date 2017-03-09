@@ -130,7 +130,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       /**
        * Regenerates workbook for the given project.
        */
-      $scope.workbook = function (name, id) {
+      $scope.downloadTemplateSpreadsheet = function (name, id) {
         $http
           .post(
             '/api/download',

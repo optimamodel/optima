@@ -639,6 +639,12 @@ def update_project_from_prj(project_id, prj_filename):
     db.session.commit()
 
 
+def update_project_from_data_spreadsheet(project_id, spreadsheet_fname):
+    def modify(project):
+        project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
+    update_project_with_fn(project_id, modify)
+
+
 def load_zip_of_prj_files(project_ids):
     """
     Returns the (dirname, filename) of the .zip of the selected projects on the server
