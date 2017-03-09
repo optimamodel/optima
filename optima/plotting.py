@@ -20,8 +20,8 @@ from matplotlib import ticker
 epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = 'none' # Color of estimates rather than real data
-defaultplots = ['budget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
-defaultmultiplots = ['budget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
+defaultplots = ['budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
@@ -82,31 +82,32 @@ def getplotselections(results, advanced=False):
     
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
     if hasattr(results, 'improvement') and results.improvement is not None:
-        plotselections['keys'] += ['improvement'] # WARNING, maybe more standard to do append()...
-        plotselections['names'] += ['Improvement']
+        plotselections['keys'].append('improvement') # WARNING, maybe more standard to do append()...
+        plotselections['names'].append('Improvement')
     
     
     ## Add selection for budget allocations and coverage
-    budcovdict = odict([('budget','Budget allocation'), ('coverage','Program coverage')])
-    for budcov in budcovdict.keys():
-        if hasattr(results, budcov) and getattr(results, budcov):
-            if all([item is not None for item in getattr(results, budcov).values()]): # Make sure none of the individual budgets are none either
-                plotselections['keys'] += [budcov] # e.g. 'budget'
-                plotselections['names'] += [budcovdict[budcov]] # e.g. 'Budget allocation'
+    budcovdict = odict([('budgets','Budget allocations'), ('coverages','Program coverages')])
+    for bckey,bclabel in budcovdict.items(): # Loop over budget and coverage
+        if hasattr(results, bckey):
+            budcovres = getattr(results, bckey)
+            if budcovres and all([item is not None for item in budcovres.values()]): # Make sure none of the individual budgets are none either
+                plotselections['keys'].append(bckey) # e.g. 'budget'
+                plotselections['names'].append(bclabel) # e.g. 'Budget allocation'
     
     ## Cascade plot is always available, since epi is always available
-    plotselections['keys'] += ['cascade']
-    plotselections['names'] += ['Treatment cascade']
+    plotselections['keys'].append('cascade')
+    plotselections['names'].append('Treatment cascade')
     
     ## Deaths by CD4
     if advanced:
-        plotselections['keys'] += ['deathbycd4']
-        plotselections['names'] += ['Deaths by CD4']
+        plotselections['keys'].append('deathbycd4')
+        plotselections['names'].append('Deaths by CD4')
     
     ## People by CD4
     if advanced:
-        plotselections['keys'] += ['plhivbycd4']
-        plotselections['names'] += ['PLHIV by CD4']
+        plotselections['keys'].append('plhivbycd4')
+        plotselections['names'].append('PLHIV by CD4')
     
     ## Get plot selections for plotepi
     plotepikeys = list()
@@ -176,24 +177,24 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         
     
     ## Add budget plot
-    if 'budget' in toplot:
-        toplot.remove('budget') # Because everything else is passed to plotepi()
+    if 'budgets' in toplot:
+        toplot.remove('budgets') # Because everything else is passed to plotepi()
         try: 
-            if hasattr(results, 'budget') and results.budget: # WARNING, duplicated from getplotselections()
-                allplots['budget'] = plotbudget(results, die=die, **kwargs)
+            if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
+                allplots['budgets'] = plotbudget(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot budget: "%s"' % (E.__repr__()), 1, verbose)
+            else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
     
     ## Add coverage plot
-    if 'coverage' in toplot:
-        toplot.remove('coverage') # Because everything else is passed to plotepi()
+    if 'coverages' in toplot:
+        toplot.remove('coverages') # Because everything else is passed to plotepi()
         try: 
-            if hasattr(results, 'coverage') and results.coverage: # WARNING, duplicated from getplotselections()
-                allplots['coverage'] = plotcoverage(results, die=die, **kwargs)
+            if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
+                allplots['coverages'] = plotcoverage(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot coverage: "%s"' % (E.__repr__()), 1, verbose)
+            else: printv('Could not plot coverages: "%s"' % (E.__repr__()), 1, verbose)
     
     ## Add cascade plot
     if 'cascade' in toplot:
@@ -561,8 +562,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     '''
     
     # Preliminaries: process inputs and extract needed data
-    if hasattr(multires, 'budgets'): budgets = dcp(multires.budgets)
-    else:                            budgets = odict([('Sample',dcp(multires.budget))])
+    budgets = dcp(multires.budgets)
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
             if budgets[b][p] is not None:
@@ -631,8 +631,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     '''
     
     # Preliminaries: process inputs and extract needed data
-    if hasattr(multires, 'coverages'): coverages = dcp(multires.coverages)
-    else:                              coverages = odict([('Sample',multires.coverage)])
+    coverages = dcp(multires.coverages)
     toplot = [item for item in coverages.values() if item] # e.g. [budget for budget in multires.budget]
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
