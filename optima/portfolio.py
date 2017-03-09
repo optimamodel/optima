@@ -115,7 +115,7 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
         
-    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, doprint=True, export=False, verbose=2):
+    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, doprint=True, export=False, outfile=None, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -243,11 +243,13 @@ class Portfolio(object):
             resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, verbose=verbose)
             self.results = resultpairs
         # Tidy up
-        print('FIXXXX')
-#        if doprint: 
-#            if self.results: self.makeoutput()
-#            else:       
-        if export: self.export()
+        if doprint and self.results: self.makeoutput(doprint=doprint)
+        if export:
+            if self.results:
+                self.export(filename=outfile)
+            else:
+                errormsg = 'Could not export results for portfolio %s since no results generated' % self.name
+                raise OptimaException(errormsg)
         toc(GAstart)
         return None
 

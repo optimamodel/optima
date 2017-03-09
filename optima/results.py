@@ -439,11 +439,10 @@ class Multiresultset(Resultset):
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
-        commonattrs = ['projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
+        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
         diffattrs = ['parset', 'progset', 'simpars'] # Things that differ between between results sets
-        for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
-        for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
+        for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
+        for attr in diffattrs: setattr(self, attr+'dict', odict()) # Store a copy for each resultset, e.g. 'parsetdict'
 
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
@@ -456,19 +455,21 @@ class Multiresultset(Resultset):
             self.keys.append(key)
             
             # First, loop over shared attributes, and ensure they match
-            for attr in sameattrs+commonattrs:
+            for attr in sameattrs:
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
                 if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
             
             # Loop over different attributes and append to the odict
             for attr in diffattrs:
-                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
+                getattr(self, attr+'dict')[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
+                setattr(self, attr, getattr(rset, attr)) # And then also just store the last value, because most of the time they'll match anyway
             
             # Now, the real deal: fix self.main
+            best = 0 # Key for best data -- discard uncertainty
             for key2 in self.main.keys():
                 for at in ['pops', 'tot']:
-                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
             if len(rset.budget): # If it has a budget, overwrite coverage information by calculating from budget
