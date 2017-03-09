@@ -561,7 +561,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     
     # Preliminaries: process inputs and extract needed data
     if hasattr(multires, 'budgets'): budgets = dcp(multires.budgets)
-    else:                            budgets = odict([('Sample',multires.budgets)])
+    else:                            budgets = odict([('Sample',dcp(multires.budget))])
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
             if budgets[b][p] is not None:
