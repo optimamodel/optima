@@ -858,30 +858,33 @@ def getfilelist(folder=None, ext=None):
     return filelist
 
 
-def loadbalancer(maxload=0.5, index=None, refresh=10.0, maxtime=3600, label=None, verbose=True):
+def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
     ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
     from psutil import cpu_percent
     from time import sleep
     from numpy.random import random
     
     # Set up processes to start asynchronously
+    if maxload is None: maxload = 0.5
+    if interval is None: interval = 10.0
+    if maxtime is None: maxtime = 3600
     if label is None: label = ''
     else: label += ': '
-    if index is None:  delay = random()*refresh
-    else:              delay = index*refresh
+    if index is None:  pause = random()*interval
+    else:              pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
-    sleep(delay) # Give it time to asynchronize
+    sleep(pause) # Give it time to asynchronize
     
     # Loop until load is OK
     toohigh = True # Assume too high
     count = 0
-    maxcount = maxtime/float(refresh)
+    maxcount = maxtime/float(interval)
     while toohigh and count<maxcount:
         count += 1
         currentload = cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
         if currentload>maxload:
             if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
-            sleep(refresh*2*random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
+            sleep(interval*2*random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else: 
             toohigh = False 
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))

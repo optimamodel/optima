@@ -83,8 +83,8 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
 
 
 def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,
-             maxiters, maxtime, verbose, stoppingfunc, method, maxload, prerun, batch, mc, die):
-    if batch: loadbalancer(index=ind, maxload=maxload, label=project.name)
+             maxiters, maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die):
+    if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
     printv('Running BOC generation...', 1, verbose)
     if prerun:
         if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
@@ -109,7 +109,7 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
 
 def batchBOC(folder='.', budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
-             maxload=0.5, prerun=True, batch=True, mc=3, die=False):
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False):
     """
     Perform batch BOC calculation.
 
@@ -165,7 +165,7 @@ def batchBOC(folder='.', budgetratios=None, name=None, parsetname=None, progsetn
         prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
         args = (project, i, outputqueue, budgetratios, name, parsetname, 
                 progsetname, prjobjectives, prjconstraints, maxiters, 
-                maxtime, verbose, stoppingfunc, method, maxload, prerun, batch, mc, die)
+                maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die)
         if batch:
             prc = Process(target=boc_task, args=args)
             prc.start()

@@ -115,7 +115,7 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
         
-    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, doprint=True, export=False, outfile=None, verbose=2):
+    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -240,7 +240,7 @@ class Portfolio(object):
         
         # Reoptimize projects
         if reoptimize: 
-            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, verbose=verbose)
+            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
             self.results = resultpairs
         # Tidy up
         if doprint and self.results: self.makeoutput(doprint=doprint)
@@ -437,7 +437,7 @@ class Portfolio(object):
         workbook.close()
         
 
-def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, batch=True, verbose=2):
+def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2):
     ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
     
     printv('Reoptimizing portfolio projects...', 2, verbose)
@@ -448,7 +448,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
     else:
         outputqueue = None
     for pind,project in enumerate(projects.values()):
-        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, verbose)
+        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose)
         if batch:
             prc = Process(target=reoptimizeprojects_task, args=args)
             prc.start()
@@ -468,9 +468,9 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
     return resultpairs      
         
 
-def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, verbose):
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose):
     """Batch function for final re-optimization step of geospatial analysis."""
-    if batch: loadbalancer(index=pind, label=project.name)
+    if batch: loadbalancer(index=pind, maxload=maxload, interval=interval, label=project.name)
     
     # Figure out which budget to use as a starting point
     boc = project.getBOC(objectives)
