@@ -454,6 +454,20 @@ def update_project_from_summary(project_id, project_summary, is_delete_data):
     return project
 
 
+def download_data_spreadsheet(project_id):
+    project = load_project(project_id)
+    project_summary = parse.get_project_summary_from_project(project)
+    new_project_template = secure_filename(
+        "{}.xlsx".format(project_summary['name']))
+    path = templatepath(new_project_template)
+    op.makespreadsheet(
+        path,
+        pops=project_summary['populations'],
+        datastart=project_summary["startYear"],
+        dataend=project_summary["endYear"])
+    return path
+
+
 def update_project_followed_by_template_data_spreadsheet(
         project_id, project_summary, is_delete_data):
     """
