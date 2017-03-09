@@ -28,7 +28,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if (response.progsets) {
             $scope.programSetList = response.progsets;
-            console.log("loaded program sets", $scope.programSetList);
+            console.log("ProgramSetController.init progsets", $scope.programSetList);
             if (response.progsets && response.progsets.length > 0) {
               $scope.state.activeProgramSet = response.progsets[0];
             }
@@ -40,7 +40,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .getDefault(project.id)
         .success(function(response) {
           defaultPrograms = response;
-          console.log("default_programs = ", defaultPrograms);
+          console.log("ProgramSetController.init defaultPrograms", defaultPrograms);
         });
 
       // Load parameters that can be used to set custom programs
@@ -48,6 +48,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .get('/api/project/' + project.id + '/parameters')
         .success(function(response) {
           parameters = response.parameters;
+          console.log("ProgramSetController.init parameters", parameters);
         });
     }
 
@@ -208,7 +209,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         msg = 'Changes saved';
       }
       var programSet = $scope.state.activeProgramSet;
-      console.log('saving', programSet);
+      console.log('saveActiveProgramSet', programSet);
       if (!programSet || !programSet.name) {
         modalService.inform(
           function (){ },
@@ -278,6 +279,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             program, project, $scope.state.activeProgramSet.programs, parameters, $scope.getCategories())
         .result
         .then(function (newProgram) {
+          console.log('openAddProgramModal', newProgram);
           $scope.state.activeProgramSet.programs.push(newProgram);
           $scope.saveActiveProgramSet("Program added");
         });
