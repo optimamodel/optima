@@ -1,9 +1,9 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr, promotetolist, sigfig # Import utilities
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
-from numpy import argmin, array
+from numpy import argmin, array, argsort
 from numpy.random import seed, randint
 import os
 
@@ -266,6 +266,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
+        if hasattr(structlist[name], 'projectref'): structlist[name].projectref = Link(self) # Fix project links
         printv('Item "%s" added to "%s"' % (name, what), 3, self.settings.verbose)
         self.modified = today()
         return None
@@ -291,6 +292,7 @@ class Project(object):
         structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
+        if hasattr(structlist[new], 'projectref'): structlist[new].projectref = Link(self) # Fix project links
         printv('%s "%s" copied to "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
         return None
@@ -300,7 +302,7 @@ class Project(object):
         ''' Rename an entry in a structure list '''
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
-        structlist[new] = structlist.pop(orig)
+        structlist.rename(oldkey=orig, newkey=new)
         structlist[new].name = new # Update name
         printv('%s "%s" renamed "%s"' % (what, orig, new), 3, self.settings.verbose)
         self.modified = today()
@@ -468,7 +470,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None, keepraw=False):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None, keepraw=False, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -494,7 +496,7 @@ class Project(object):
         # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
         rawlist = []
         for ind,simpars in enumerate(simparslist):
-            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, **kwargs) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
@@ -568,17 +570,19 @@ class Project(object):
             except: raise OptimaException("No program set entered, and there are none stored in the project") 
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
-        results = runmodel(pars=progpars, project=self, parset=self.parsets[parsetname], progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
+        results = runmodel(pars=progpars, project=self, parset=self.parsets[parsetname], progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears, label=self.name+'-runbudget') # WARNING, this should probably use runsim, but then would need to make simpars...
         results.name = name
         self.addresult(results)
         self.modified = today()
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best', randseed=None, **kwargs):
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000,
+                 maxtime=None, verbose=2, stoppingfunc=None, method='asd', die=False, saveprocess=True, origbudget=None, ccsample='best', randseed=None, **kwargs):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample, randseed=randseed, **kwargs)
+        multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                  method=method, die=die, origbudget=origbudget, ccsample=ccsample, randseed=randseed, **kwargs)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)
@@ -592,61 +596,97 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', **kwargs):
+    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, die=False, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
-        projectBOC = BOC(name='BOC')
-        projectBOC.name += ' (' + str(projectBOC.uid) + ')'
-        if objectives == None:
-            printv('WARNING, you have called genBOC for project "%s" without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
+        boc = BOC(name='BOC '+self.name)
+        if objectives is None:
+            printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progset=progsetname)
-        projectBOC.objectives = objectives
+        boc.objectives = objectives
+        boc.constraints = constraints
         
         if parsetname is None:
             printv('Warning, using default parset', 3, verbose)
-            parsetname = 0
+            parsetname = -1
         
         if progsetname is None:
             printv('Warning, using default progset', 3, verbose)
-            progsetname = 0
+            progsetname = -1
         
-        if budgetlist == None:
-            if not progsetname == None:
-                baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
-            else:
-                try:
-                    baseline = sum(self.progsets[0].getdefaultbudget().values())
-                    printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
-                except:
-                    OptimaException('Error: No progsets associated with project for which BOC is being generated!')
-            budgetlist = [x*baseline for x in [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0]] # Start from original, go down, then go up
-                
-        results = None
-        owbudget = None
-        tmptotals = []
-        tmpallocs = []
-        for i,budget in enumerate(budgetlist):
-            print('Running budget %i/%i (%0.0f)' % (i+1, len(budgetlist), budget))
+        defaultbudget = self.progsets[progsetname].getdefaultbudget()
+        
+        if budgetratios is None:
+            budgetratios = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
+        
+        # Calculate the number of iterations
+        noptims = 1+(mc!=0)*3+max(mc,0) # Calculate the number of optimizations per BOC point
+        nbocpts = len(budgetratios)
+        guessstalliters = 50  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
+        guessmaxiters = maxiters if maxiters is not None else 1000
+        estminiters = noptims*nbocpts*guessstalliters
+        estmaxiters = noptims*nbocpts*guessmaxiters
+        printv('Generating BOC for %s for %0.0f-%0.0f with weights deaths=%0.1f, infections=%0.1f (est. %i-%i iterations)' % (self.name, objectives['start'], objectives['end'], objectives['deathweight'], objectives['inciweight'], estminiters, estmaxiters), 1, verbose)
+        
+        # Initialize arrays
+        budgetdict = odict()
+        for budgetratio in budgetratios:
+            budgetdict['%s'%budgetratio] = budgetratio # Store the budget ratios as a dicitonary
+        tmptotals = odict()
+        tmpallocs = odict()
+        tmpoutcomes = odict()
+        counts = odict([(key,0) for key in budgetdict.keys()]) # Initialize to zeros -- count how many times each budget is run
+        while len(budgetdict):
+            key, ratio = budgetdict.items()[0] # Use first budget in the stack
+            counts[key] += 1
+            budget = ratio*sum(defaultbudget[:])
+            printv('Running budget %i/%i ($%0.0f)' % (sum(counts[:]), len(budgetdict)+sum(counts[:])-1, budget), 2, verbose)
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
             if len(tmptotals):
-                closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
+                closest = argmin(abs(tmptotals[:]-budget)) # Find closest budget
                 owbudget = tmpallocs[closest]
-                print('Using old allocation as new starting point.')
+            else:
+                owbudget = None
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
-            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget, label=label, **kwargs)
-            tmptotals.append(budget)
-            tmpallocs.append(dcp(results.budget['Optimal']))
-            projectBOC.x.append(budget)
-            projectBOC.y.append(results.improvement[-1][-1])
-            projectBOC.budgets.append(tmpallocs[-1])
-        projectBOC.x.insert(0, 0)
-        projectBOC.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
-        projectBOC.x.append(self.settings.infmoney)
-        projectBOC.y.append(results.outcomes['Infinite'])
-        self.addresult(result=projectBOC)
-        self.modified = today()
+            
+            # Actually run
+            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, origbudget=owbudget, label=label, mc=mc, die=die, **kwargs)
+            tmptotals[key] = budget
+            tmpallocs[key] = dcp(results.budget['Optimal'])
+            tmpoutcomes[key] = results.improvement[-1][-1]
+            boc.x.append(budget)
+            boc.y.append(tmpoutcomes[-1])
+            boc.budgets[key] = tmpallocs[-1]
+            
+            # Check that the BOC points are monotonic, and if not, rerun
+            budgetdict.pop(key) # Remove the current key from the list
+            for oldkey in tmpoutcomes.keys():
+                if tmpoutcomes[oldkey]>tmpoutcomes[key] and tmptotals[oldkey]>tmptotals[key]: # Outcome is worse but budget is larger
+                    printv('WARNING, outcome for %s is worse than outcome for %s, rerunning...' % (oldkey, key), 1, verbose)
+                    if counts[oldkey]<5: # Don't get stuck in an infinite loop -- 5 is arbitrary, but jeez, that should take care of it
+                        budgetdict.insert(0, oldkey, float(oldkey)) # e.g. key2='0.8'
+                    else:
+                        printv('WARNING, tried 5 times to reoptimize budget and unable to get lower', 1, verbose) # Give up
+                        
+        # Tidy up: insert remaining points
+        if sum(counts[:]):
+            xorder = argsort(boc.x) # Sort everything
+            boc.x = array(boc.x)[xorder].tolist()
+            boc.y = array(boc.y)[xorder].tolist()
+            boc.budgets.sort(xorder)
+            boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
+            boc.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
+            boc.yinf = results.outcomes['Infinite'] # Store infinite money, but not as part of the BOC
+            boc.parsetname = parsetname
+            boc.progsetname = progsetname
+            boc.defaultbudget = dcp(defaultbudget)
+            self.addresult(result=boc)
+            self.modified = today()
+        else:
+            errormsg = 'BOC generation failed: no BOC points were calculated'
+            raise OptimaException(errormsg)
         return None        
     
     
@@ -654,16 +694,19 @@ class Project(object):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         
         boc = None
-        for x in self.results:
+        objkeys = ['start','end','deathweight','inciweight']
+        for x in reversed(self.results.keys()): # Get last BOC
             if isinstance(self.results[x],BOC):
                 boc = self.results[x]
                 if objectives is None: return boc
                 same = True
                 for y in boc.objectives:
-                    if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
+                    if y in objkeys and boc.objectives[y] != objectives[y]: same = False
                 if same:
                     return boc
-        print('No BOC with the required objectives can be found in project: %s; using first BOC found' % self.name)
+        wantedobjs = ', '.join(['%s=%0.1f' % (key,objectives[key]) for key in objkeys])
+        actualobjs = ', '.join(['%s=%0.1f' % (key,boc.objectives[key]) for key in objkeys])
+        printv('WARNING, project %s has no BOC with objectives "%s", instead using BOC with objectives "%s"' % (self.name, wantedobjs, actualobjs))
         if boc is None:
             print('WARNING, no BOCs found!')
         return boc

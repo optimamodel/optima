@@ -426,7 +426,7 @@ def redoparameters(project, die=True, **kwargs):
         oldpars = ps.pars[0]
         tmpdata = op.dcp(project.data)
         for key,val in tmpdata['const'].items(): tmpdata[key] = val # Parameters were moved from 'const' to main data
-        newpars = op.makepars(data = tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
+        newpars = op.makepars(data=tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
         
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()
@@ -603,6 +603,7 @@ def redotranstable(project, **kwargs):
     project.version = '2.3.3'
     return None
 
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -659,8 +660,8 @@ def migrate(project, verbose=2, die=False):
         upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
         op.printv("%6s" % project.version, 2, verbose, indent=False)
         
-    # Update git info
-    project.gitbranch, project.gitversion = op.gitinfo()
+        # Update project info
+        project.modified = op.today()
     
     op.printv('Migration successful!', 3, verbose)
     
@@ -668,7 +669,8 @@ def migrate(project, verbose=2, die=False):
     warnings = project.getwarnings()
     if warnings and die: 
         errormsg = 'Please resolve warnings in projects before continuing'
-        raise op.OptimaException(errormsg)
+        if die: raise op.OptimaException(errormsg)
+        else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
 
     return project
 
@@ -680,24 +682,33 @@ def migrate(project, verbose=2, die=False):
 
 
 
-def loadproj(filename=None, verbose=2, die=False, fromdb=False):
+def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
-    # Create legacy classes for compatibility -- FOR FUTURE
-#    class CCOF(): pass
+    # Create legacy classes for compatibility
+    
+    class Spreadsheet(object): pass
+    op.project.Spreadsheet = Spreadsheet
+    
+    class GAOptim(object): pass
+    op.portfolio.GAOptim = GAOptim
+    
+    #    class CCOF(): pass
 #    class Costcov(): pass
 #    class Covout(): pass
 #    op.programs.CCOF = CCOF
 #    op.programs.Costcov = Costcov
 #    op.programs.Covout = Covout
-    
-    class Spreadsheet(object): pass
-    op.project.Spreadsheet = Spreadsheet
 
     if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
 
-    P = migrate(origP, verbose=verbose, die=die)
+    if domigrate: P = migrate(origP, verbose=verbose, die=die)
+    else:         P = origP # Don't migrate -- WARNING, dangerous!
+    
+    # Once used to unpickle the project, we can delete these
+    del op.project.Spreadsheet
+    del op.portfolio.GAOptim
     
 #    del op.programs.CCOF
 #    del op.programs.Costcov

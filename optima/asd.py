@@ -1,6 +1,6 @@
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None,
-    maxiters=None, maxtime=None, abstol=None, reltol=1e-3, stalliters=50,
+    maxiters=None, maxtime=None, abstol=None, reltol=1e-3, stalliters=None,
     stoppingfunc=None, randseed=None, label=None, fulloutput=True, verbose=2):
     """
     Optimization using adaptive stochastic descent (ASD).
@@ -44,10 +44,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         from numpy import norm
         x, fval, exitflag, output = asd(norm, [1, 2, 3])
     
-    Version: 2017mar02 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2017mar08 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
-    from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero, isnan, inf
+    from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, hstack, floor, flatnonzero, isnan, inf
     from numpy.random import random, seed
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time
@@ -64,8 +64,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     ## Handle inputs and set defaults
     if maxtime  is None: maxtime = 3600
     if maxiters is None: maxiters = 1000
-    nparams = size(x); # Number of parameters
     x, origshape = consistentshape(x) # Turn it into a vector but keep the original shape (not necessarily class, though)
+    nparams = len(x) # Number of parameters
     p,tmp = ones(2*nparams),0 if pinitial is None else consistentshape(pinitial)  # Set initial parameter selection probabilities -- uniform by default
     
     # Handle step sizes
@@ -84,6 +84,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         errormsg = 'At least one value in the vector of starting points is NaN:\n%s' % x
         raise Exception(errormsg)
     if label is None: label = ''
+    if stalliters is None: stalliters = 5*nparams # By default, try five times per parameter on average
     stalliters = int(stalliters)
     maxiters = int(maxiters)
     
@@ -176,7 +177,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Return
     x = reshape(x,origshape) # Parameters
     fval = fulloutputfval[:count] # Function evaluations
-    if verbose>=2: print('=== %s, terminating (orig: %s | best: %s | ratio: %s) ===' % ((exitreason,)+multisigfig([fval[0], fval[-1], fval[-1]/fval[0]])))
+    if verbose>=2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count)+multisigfig([fval[0], fval[-1], fval[-1]/fval[0]])))
     if fulloutput: return (x, fval, exitreason)
     else:          return x
 

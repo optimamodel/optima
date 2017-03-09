@@ -13,11 +13,8 @@ from time import time
 import os
 
 
-global geoguiwindow, globalportfolio
-if 1:  geoguiwindow, globalportfolio = [None]*2
-
-globalobjectives = defaultobjectives(verbose=0)
-globalobjectives['budget'] = 0.0 # Reset
+global geoguiwindow, globalportfolio, globalobjectives
+if 1:  geoguiwindow, globalportfolio, globalobjectives = [None]*3
 
     
     
@@ -452,7 +449,7 @@ def gui_create():
 
 def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-    if usegui: global globalportfolio, projectslistbox, globalobjectives, objectiveinputs
+    if usegui: global globalportfolio, projectslistbox, objectiveinputs
     
     projectpaths = []
     projectslist = []
@@ -473,12 +470,11 @@ def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
             try: tmpproj = loadproj(filepath, verbose=0)
             except: print('Could not load file "%s"; moving on...' % filepath)
             if tmpproj is not None: 
-                try: 
-                    assert type(tmpproj)==Project
+                if type(tmpproj)==Project:
                     projectslist.append(tmpproj)
                     projectpaths.append(filepath)
                     print('Project file "%s" loaded' % filepath)
-                except: print('File "%s" is not an Optima project file; moving on...' % filepath)
+                else: print('File "%s" is not an Optima project file; moving on...' % filepath)
         if usegui:
             projectslistbox.addItems(projectpaths)
         globalportfolio.addprojects(projectslist)
@@ -542,10 +538,13 @@ def rungeo(portfolio=None, objectives=None, BOCtime=300, maxtime=120, usegui=Fal
     ''' Actually run geospatial analysis!!! '''
     if usegui: global globalportfolio, globalobjectives, objectiveinputs
     starttime = time()
-    if portfolio != None:
+    if portfolio is not None:
         globalportfolio = portfolio
-    if objectives != None:
+    if objectives is not None:
         globalobjectives = objectives
+    if globalobjectives is None:
+        globalobjectives = defaultobjectives()
+        globalobjectives['budget'] = 0.0 # Reset
     if usegui:
         for key in objectiveinputs.keys():
             globalobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
@@ -612,60 +611,13 @@ def export(portfolio=None, filepath=None, usegui=False):
             filepath = portfolio.name+'.prt'
     if type(globalportfolio)!=Portfolio and usegui: warning('Warning, must load portfolio first!')
     
-    from xlsxwriter import Workbook
-    if not usegui: print('Saving portfolio...')
-    
-    # 1. Extract data needed from portfolio
-    try:
-        outstr = globalportfolio.gaoptims[-1].printresults() # Stored, but regenerate
-    except:
-        errormsg = 'Warning, it does not seem that geospatial analysis has been run for this portfolio!'
-        warning(errormsg, usegui)
-        if not usegui: raise Exception(errormsg)
-        return None
-    
     # 2. Create a new file dialog to save this spreadsheet
     if usegui:
         filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
     
-    # 2. Generate spreadsheet according to David's template to store these data
+    # 3. Generate spreadsheet according to David's template to store these data
     if filepath:
-        workbook = Workbook(filepath)
-        worksheet = workbook.add_worksheet()
-        
-        # Define formatting
-        originalblue = '#18C1FF' # analysis:ignore
-        hotpink = '#FFC0CB' # analysis:ignore
-        formats = dict()
-        formats['plain'] = workbook.add_format({})
-        formats['bold'] = workbook.add_format({'bold': True})
-        formats['number'] = workbook.add_format({'bg_color': hotpink, 'num_format':0x04})
-        colwidth = 30
-        
-        # Convert from a string to a 2D array
-        outlist = []
-        for line in outstr.split('\n'):
-            outlist.append([])
-            for cell in line.split('\t'):
-                outlist[-1].append(cell)
-        
-        # Iterate over the data and write it out row by row.
-        row, col = 0, 0
-        for row in range(len(outlist)):
-            for col in range(len(outlist[row])):
-                thistxt = outlist[row][col]
-                thisformat = 'plain'
-                if col==0: thisformat = 'bold'
-                tmptxt = thistxt.lower()
-                for word in ['budget','outcome','allocation','initial','optimal','coverage']:
-                    if tmptxt.find(word)>=0: thisformat = 'bold'
-                if col in [2,3] and thisformat=='plain': thisformat = 'number'
-                if thisformat=='number':thistxt = float(thistxt)
-                worksheet.write(row, col, thistxt, formats[thisformat])
-        
-        worksheet.set_column(0, 3, colwidth) # Make wider
-        workbook.close()
-        
+        globalportfolio.export(filename=filepath)
         warning('Results saved to "%s".' % filepath, usegui)
     else:
         warning('Filepath not supplied: %s' % filepath, usegui)
@@ -703,8 +655,9 @@ def geogui():
     '''
     global geoguiwindow, globalportfolio, globalobjectives, objectiveinputs, projectslistbox, projectinfobox
     globalportfolio = None
-#    globalobjectives = defaultobjectives()
-#    globalobjectives['budget'] = 0.0 # Reset
+    if globalobjectives is None:
+        globalobjectives = defaultobjectives()
+        globalobjectives['budget'] = 0.0 # Reset
     
     ## Set parameters
     wid = 1200.0

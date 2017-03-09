@@ -20,8 +20,8 @@ from matplotlib import ticker
 epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = 'none' # Color of estimates rather than real data
-defaultplots = ['budget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
-defaultmultiplots = ['budget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
+defaultplots = ['budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
@@ -82,31 +82,32 @@ def getplotselections(results, advanced=False):
     
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
     if hasattr(results, 'improvement') and results.improvement is not None:
-        plotselections['keys'] += ['improvement'] # WARNING, maybe more standard to do append()...
-        plotselections['names'] += ['Improvement']
+        plotselections['keys'].append('improvement') # WARNING, maybe more standard to do append()...
+        plotselections['names'].append('Improvement')
     
     
     ## Add selection for budget allocations and coverage
-    budcovdict = odict([('budget','Budget allocation'), ('coverage','Program coverage')])
-    for budcov in budcovdict.keys():
-        if hasattr(results, budcov) and getattr(results, budcov):
-            if all([item is not None for item in getattr(results, budcov).values()]): # Make sure none of the individual budgets are none either
-                plotselections['keys'] += [budcov] # e.g. 'budget'
-                plotselections['names'] += [budcovdict[budcov]] # e.g. 'Budget allocation'
+    budcovdict = odict([('budgets','Budget allocations'), ('coverages','Program coverages')])
+    for bckey,bclabel in budcovdict.items(): # Loop over budget and coverage
+        if hasattr(results, bckey):
+            budcovres = getattr(results, bckey)
+            if budcovres and all([item is not None for item in budcovres.values()]): # Make sure none of the individual budgets are none either
+                plotselections['keys'].append(bckey) # e.g. 'budget'
+                plotselections['names'].append(bclabel) # e.g. 'Budget allocation'
     
     ## Cascade plot is always available, since epi is always available
-    plotselections['keys'] += ['cascade']
-    plotselections['names'] += ['Treatment cascade']
+    plotselections['keys'].append('cascade')
+    plotselections['names'].append('Treatment cascade')
     
     ## Deaths by CD4
     if advanced:
-        plotselections['keys'] += ['deathbycd4']
-        plotselections['names'] += ['Deaths by CD4']
+        plotselections['keys'].append('deathbycd4')
+        plotselections['names'].append('Deaths by CD4')
     
     ## People by CD4
     if advanced:
-        plotselections['keys'] += ['plhivbycd4']
-        plotselections['names'] += ['PLHIV by CD4']
+        plotselections['keys'].append('plhivbycd4')
+        plotselections['names'].append('PLHIV by CD4')
     
     ## Get plot selections for plotepi
     plotepikeys = list()
@@ -172,28 +173,28 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
                 allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
+            else: printv('Could not plot improvement: "%s"' % E.__repr__(), 1, verbose)
         
     
     ## Add budget plot
-    if 'budget' in toplot:
-        toplot.remove('budget') # Because everything else is passed to plotepi()
+    if 'budgets' in toplot:
+        toplot.remove('budgets') # Because everything else is passed to plotepi()
         try: 
-            if hasattr(results, 'budget') and results.budget: # WARNING, duplicated from getplotselections()
-                allplots['budget'] = plotbudget(results, die=die, **kwargs)
+            if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
+                allplots['budgets'] = plotbudget(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot budget: "%s"' % (E.message), 1, verbose)
+            else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
     
     ## Add coverage plot
-    if 'coverage' in toplot:
-        toplot.remove('coverage') # Because everything else is passed to plotepi()
+    if 'coverages' in toplot:
+        toplot.remove('coverages') # Because everything else is passed to plotepi()
         try: 
-            if hasattr(results, 'coverage') and results.coverage: # WARNING, duplicated from getplotselections()
-                allplots['coverage'] = plotcoverage(results, die=die, **kwargs)
+            if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
+                allplots['coverages'] = plotcoverage(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot coverage: "%s"' % (E.message), 1, verbose)
+            else: printv('Could not plot coverages: "%s"' % (E.__repr__()), 1, verbose)
     
     ## Add cascade plot
     if 'cascade' in toplot:
@@ -202,7 +203,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             allplots['cascade'] = plotcascade(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot cascade: "%s"' % E.message, 1, verbose)
+            else: printv('Could not plot cascade: "%s"' % E.__repr__(), 1, verbose)
     
     
     ## Add deaths by CD4 plot
@@ -212,7 +213,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot deaths by CD4: "%s"' % E.message, 1, verbose)
+            else: printv('Could not plot deaths by CD4: "%s"' % E.__repr__(), 1, verbose)
     
     
     ## Add PLHIV by CD4 plot
@@ -222,7 +223,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
-            else: printv('Could not plot PLHIV by CD4: "%s"' % E.message, 1, verbose)
+            else: printv('Could not plot PLHIV by CD4: "%s"' % E.__repr__(), 1, verbose)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
@@ -265,6 +266,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
         # Initialize
         toplot = promotetolist(toplot) # If single value, put inside list
         epiplots = odict()
+        colorsarg = dcp(colors) # This is annoying, but it gets overwritten later and need to preserve it here
 
 
         ## Validate plot keys
@@ -371,7 +373,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
-                if colors is None: colors = gridcolormap(nlinesperplot)
+                if colorsarg is None: colors = gridcolormap(nlinesperplot) # This is needed because this loop gets run multiple times, so can't just set and forget
                 
 
                 ################################################################################################################
@@ -406,7 +408,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
+                        try: plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
+                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
@@ -555,12 +558,11 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     
     "which" should be either 'budget' or 'coverage'
     
-    Version: 2016jan27
+    Version: 2017mar09
     '''
     
     # Preliminaries: process inputs and extract needed data
-    
-    budgets = dcp(multires.budget) # Copy budget
+    budgets = dcp(multires.budgets)
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
             if budgets[b][p] is not None:
@@ -587,10 +589,10 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
 
     # Set up legend
-    labels = proglabels
+    labels = dcp(proglabels)
     labels.reverse() # Wrong order otherwise, don't know why
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-    ax.legend(proglabels, **legendsettings) # Multiple entries, all populations
+    ax.legend(labels, **legendsettings) # Multiple entries, all populations
     
     # Set up other things
     ax.set_xlabel('Spending')
@@ -617,7 +619,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
 ##################################################################
     
     
-def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -625,20 +627,22 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     
     "which" should be either 'budget' or 'coverage'
     
-    Version: 2016aug18
+    Version: 2017mar09
     '''
     
     # Preliminaries: process inputs and extract needed data
-    toplot = [item for item in multires.coverage.values() if item] # e.g. [budget for budget in multires.budget]
+    coverages = dcp(multires.coverages)
+    toplot = [item for item in coverages.values() if item] # e.g. [budget for budget in multires.budget]
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
     proglabels = toplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(multires.coverage.keys()) if multires.coverage.values()[k]] # WARNING, will this actually work if some values are None?
+    alloclabels = [key for k,key in enumerate(coverages.keys()) if coverages.values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
     fig = figure(facecolor=(1,1,1), figsize=figsize)
-    fig.subplots_adjust(bottom=0.30) # Less space on bottom
+    fig.subplots_adjust(bottom=0.10) # Less space on bottom
+    fig.subplots_adjust(right=0.70) # Less space on bottom
     fig.subplots_adjust(hspace=0.50) # More space between
     colors = gridcolormap(nprogs)
     ax = []
@@ -668,8 +672,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
                 ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
         if nbudgetyears>1: ax[-1].legend(frameon=False)
         ax[-1].set_xticks(arange(nprogs)+1)
-        if plt<nprogs: ax[-1].set_xticklabels('')
-        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+        ax[-1].set_xticklabels('')
         ax[-1].set_xlim(0,nprogs+1)
         
         ylabel = 'Coverage (%)'
@@ -678,6 +681,13 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
+    
+    # Set up legend
+    labels = dcp(proglabels)
+    labels.reverse() # Wrong order otherwise, don't know why
+    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+    ax[0].legend(labels, **legendsettings) # Multiple entries, all populations
+
 
     SIticks(fig)
     close(fig)

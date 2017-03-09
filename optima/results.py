@@ -59,8 +59,8 @@ class Resultset(object):
             if settings is None: settings = project.settings
         
         # Fundamental quantities -- populated by project.runsim()
-        if keepraw: self.raw = raw
-        self.simpars = simpars # ...and sim parameters
+        if keepraw: self.raw = raw # Keep raw, but only if asked
+        if keepraw: self.simpars = simpars # ...likewise sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.projectref = Link(project) # ...and just store the whole project
@@ -110,7 +110,6 @@ class Resultset(object):
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
         self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
-
 
         self.other = odict() # For storing other results -- not available in the interface
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
@@ -214,6 +213,7 @@ class Resultset(object):
         allmtct      = dcp(array([raw[i]['mtct']      for i in range(nraw)]))
         allhivbirths = dcp(array([raw[i]['hivbirths'] for i in range(nraw)]))
         allpmtct     = dcp(array([raw[i]['pmtct']     for i in range(nraw)]))
+        allcosttreat = dcp(array([raw[i]['costtreat'] for i in range(nraw)]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -299,8 +299,8 @@ class Resultset(object):
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
-        self.main['costtreat'].pops = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['costtreat'].tot = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['costtreat'].pops = quantile(allcosttreat[:,:,indices], quantiles=quantiles).round()
+        self.main['costtreat'].tot = quantile(allcosttreat[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['proptreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['proptreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
@@ -365,17 +365,22 @@ class Resultset(object):
                     if self.main[key].ispercentage: output += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                           output += ('%i'+sep) % data[t]
        
+        if hasattr(self, 'budgets'):   thisbudget = self.budgets[ind]
+        else:                          thisbudget = self.budget
+        if hasattr(self, 'coverages'): thiscoverage = self.coveragess[ind]
+        else:                          thiscoverage = self.coverage
+        
         if len(self.budget)>ind: # WARNING, does not support multiple years
             output += '\n\n\n'
             output += 'Budget\n'
-            output += sep.join(self.budget[ind].keys()) + '\n'
-            output += sep.join([str(val) for val in self.budget[ind].values()]) + '\n'
+            output += sep.join(thisbudget.keys()) + '\n'
+            output += sep.join([str(val) for val in thisbudget.values()]) + '\n'
         
         if len(self.coverage)>ind: # WARNING, does not support multiple years
             output += '\n\n\n'
             output += 'Coverage\n'
-            output += sep.join(self.coverage[ind].keys()) + '\n'
-            output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
+            output += sep.join(thiscoverage.keys()) + '\n'
+            output += sep.join([str(val) for val in thiscoverage.values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
             
         if writetofile: 
             with open(filename, 'w') as f: f.write(output)
@@ -425,8 +430,8 @@ class Multiresultset(Resultset):
         self.created = today()
         self.nresultsets = len(resultsetlist)
         self.keys = []
-        self.budget = odict()
-        self.coverage = odict()
+        self.budgets = odict()
+        self.coverages = odict()
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
@@ -434,11 +439,10 @@ class Multiresultset(Resultset):
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
-        commonattrs = ['projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
-        diffattrs = ['parset', 'progset', 'simpars'] # Things that differ between between results sets
-        for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
-        for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
+        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
+        diffattrs = ['parset', 'progset'] # Things that differ between between results sets
+        for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
+        for attr in diffattrs: setattr(self, attr+'dict', odict()) # Store a copy for each resultset, e.g. 'parsetdict'
 
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
@@ -451,29 +455,31 @@ class Multiresultset(Resultset):
             self.keys.append(key)
             
             # First, loop over shared attributes, and ensure they match
-            for attr in sameattrs+commonattrs:
+            for attr in sameattrs:
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
                 if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
             
             # Loop over different attributes and append to the odict
             for attr in diffattrs:
-                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
+                getattr(self, attr+'dict')[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
+                setattr(self, attr, getattr(rset, attr)) # And then also just store the last value, because most of the time they'll match anyway
             
             # Now, the real deal: fix self.main
+            best = 0 # Key for best data -- discard uncertainty
             for key2 in self.main.keys():
                 for at in ['pops', 'tot']:
-                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
             if len(rset.budget): # If it has a budget, overwrite coverage information by calculating from budget
-                self.budget[key]      = rset.budget
+                self.budgets[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
-                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+                self.coverages[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
             elif len(rset.coverage): # If no budget, compute budget from coverage
-                self.coverage[key]      = rset.coverage
+                self.coverages[key]      = rset.coverage
                 self.budgetyears[key] = rset.budgetyears
-                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
+                self.budgets[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
         
         
     def __repr__(self):
@@ -515,23 +521,24 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='unspecified', x=None, y=None, budgets=None, objectives=None):
+    def __init__(self, name='unspecified', x=None, y=None, yinf=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, parsetname=None, progsetname=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
         self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
-        self.budgets = budgets if budgets else [] # A list of actual budgets
+        self.yinf = yinf # Store the outcome for infinite money to be plotted separately if desired
+        self.parsetname = parsetname
+        self.progsetname = progsetname
+        self.budgets = budgets if budgets else odict() # A list of actual budgets
+        self.defaultbudget = defaultbudget # The initial budget, pre-optimization
+        self.gaoptimbudget = None # The optimized budget, assigned by GA
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
-        
+        self.constraints = constraints # Likewise...
         self.name = name # Required by rmresult in Project.
 
     def __repr__(self):
         ''' Print out summary stats '''
-        output = '============================================================\n'
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
+        output = defaultrepr(self)
         return output
         
     def getoutcome(self, budgets):
