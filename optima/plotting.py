@@ -589,10 +589,10 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
 
     # Set up legend
-    labels = proglabels
+    labels = dcp(proglabels)
     labels.reverse() # Wrong order otherwise, don't know why
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-    ax.legend(proglabels, **legendsettings) # Multiple entries, all populations
+    ax.legend(labels, **legendsettings) # Multiple entries, all populations
     
     # Set up other things
     ax.set_xlabel('Spending')
@@ -619,7 +619,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
 ##################################################################
     
     
-def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -641,7 +641,8 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     nallocs = len(alloclabels)
     
     fig = figure(facecolor=(1,1,1), figsize=figsize)
-    fig.subplots_adjust(bottom=0.30) # Less space on bottom
+    fig.subplots_adjust(bottom=0.10) # Less space on bottom
+    fig.subplots_adjust(right=0.70) # Less space on bottom
     fig.subplots_adjust(hspace=0.50) # More space between
     colors = gridcolormap(nprogs)
     ax = []
@@ -671,8 +672,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
                 ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
         if nbudgetyears>1: ax[-1].legend(frameon=False)
         ax[-1].set_xticks(arange(nprogs)+1)
-        if plt<nprogs: ax[-1].set_xticklabels('')
-        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+        ax[-1].set_xticklabels('')
         ax[-1].set_xlim(0,nprogs+1)
         
         ylabel = 'Coverage (%)'
@@ -681,6 +681,13 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
+    
+    # Set up legend
+    labels = dcp(proglabels)
+    labels.reverse() # Wrong order otherwise, don't know why
+    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+    ax[0].legend(labels, **legendsettings) # Multiple entries, all populations
+
 
     SIticks(fig)
     close(fig)
