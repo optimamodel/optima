@@ -134,7 +134,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $http
           .post(
             '/api/download',
-            {'name': 'download_data_spreadsheet', 'args': [id]},
+            {
+              'name': 'download_data_spreadsheet',
+              'args': [id],
+              'kwargs': {'is_blank': true}
+            },
             {responseType: 'blob'})
           .success(function (response) {
             var blob = new Blob([response]);
@@ -143,12 +147,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadSpreadsheet = function (name, id) {
-        // read that this is the universal method which should work everywhere in
-        // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-        projectApi.getSpreadsheetUrl(id, '_blank', '')
-          .success(function (response, status, headers, config) {
-            var blob = new Blob([response], { type: 'application/octet-stream' });
-            saveAs(blob, (name + '.xls'));
+        $http
+          .post(
+            '/api/download',
+            {
+              'name': 'download_data_spreadsheet',
+              'args': [id],
+              'kwargs': {'is_blank': false}
+            },
+            {responseType: 'blob'})
+          .success(function (response) {
+            var blob = new Blob([response]);
+            saveAs(blob, (name + '.xlsx'));
           });
       };
 

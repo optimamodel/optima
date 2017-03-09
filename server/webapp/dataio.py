@@ -454,17 +454,20 @@ def update_project_from_summary(project_id, project_summary, is_delete_data):
     return project
 
 
-def download_data_spreadsheet(project_id):
+def download_data_spreadsheet(project_id, is_blank=True):
     project = load_project(project_id)
     project_summary = parse.get_project_summary_from_project(project)
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    op.makespreadsheet(
-        path,
-        pops=project_summary['populations'],
-        datastart=project_summary["startYear"],
-        dataend=project_summary["endYear"])
+    if is_blank:
+        op.makespreadsheet(
+            path,
+            pops=project_summary['populations'],
+            datastart=project_summary["startYear"],
+            dataend=project_summary["endYear"])
+    else:
+        op.makespreadsheet(path, data=project.data)
     return path
 
 
