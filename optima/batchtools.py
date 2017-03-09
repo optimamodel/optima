@@ -6,12 +6,12 @@ Functions for doing things in batch...yeah, should make better.
 Note - tasks have to be standalone functions or they break on windows, see
 http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
 
-Version: 2017mar04
+Version: 2017mar09
 """
 
 from multiprocessing import Process, Queue
-from numpy import empty
-from optima import loadproj, loadbalancer, printv, getfilelist
+from numpy import empty, inf
+from optima import loadproj, loadbalancer, printv, getfilelist, dcp, odict, outcomecalc
 
 
 def batchtest_task(obj, ind, outputqueue, nprocs, nrepeats, maxload):
@@ -180,3 +180,93 @@ def batchBOC(folder='.', budgetratios=None, name=None, parsetname=None, progsetn
             prc.join() # Wait for them to finish
     
     return outputlist
+
+
+def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2):
+    ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
+    
+    printv('Reoptimizing portfolio projects...', 2, verbose)
+    resultpairs = odict()
+    if batch:
+        outputqueue = Queue()
+        processes = []
+    else:
+        outputqueue = None
+    for pind,project in enumerate(projects.values()):
+        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose)
+        if batch:
+            prc = Process(target=reoptimizeprojects_task, args=args)
+            prc.start()
+            processes.append(prc)
+        else:
+            resultpair = reoptimizeprojects_task(*args)
+            resultpairs[resultpair['key']] = resultpair
+    if batch:
+        for key in projects:
+            resultpair = outputqueue.get()
+            resultpairs[resultpair['key']] = resultpair
+        for prc in processes:
+            prc.join()
+    
+    printv('Reoptimization complete', 2, verbose)
+    
+    return resultpairs      
+        
+
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose):
+    """Batch function for final re-optimization step of geospatial analysis."""
+    if batch: loadbalancer(index=pind, maxload=maxload, interval=interval, label=project.name)
+    
+    # Figure out which budget to use as a starting point
+    boc = project.getBOC(objectives)
+    defaultbudget = boc.defaultbudget[:].sum()
+    totalbudget = boc.gaoptimbudget
+    smallestmismatch = inf
+    for budget in boc.budgets.values(): # Could be done with argmin() but this is more explicit...
+        thismismatch = abs(totalbudget-budget[:].sum())
+        if thismismatch<smallestmismatch:
+            closestbudget = dcp(budget)
+            smallestmismatch = thismismatch
+    
+    # Extract info from the BOC and specify argument lists...painful
+    sharedargs = {'objectives':boc.objectives, 
+                  'constraints':boc.constraints, 
+                  'parsetname':boc.parsetname, 
+                  'progsetname':boc.progsetname,
+                  'verbose':verbose
+                  }
+    outcalcargs = {'project':project,
+                   'outputresults':True,
+                   'doconstrainbudget':False}
+    optimargs = {'label':project.name,
+                 'maxtime': maxtime,
+                 'maxiters': maxiters,
+                 'mc':mc}
+
+    # Run the analyses
+    resultpair = odict()
+    
+    # Initial spending
+    printv('%s: calculating initial outcome for budget $%0.0f' % (project.name, defaultbudget), 2, verbose)
+    sharedargs['origbudget'] = boc.defaultbudget
+    sharedargs['objectives']['budget'] = defaultbudget
+    outcalcargs.update(sharedargs)
+    resultpair['init'] = outcomecalc(**outcalcargs)
+    
+    # Optimal spending -- reoptimize
+    if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
+    else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)
+    sharedargs['origbudget'] = closestbudget
+    sharedargs['objectives']['budget'] = totalbudget
+    optimargs.update(sharedargs)
+    if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
+    else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
+    resultpair['init'].name = project.name+' GA initial'
+    resultpair['opt'].name = project.name+' GA optimal'
+    resultpair['key'] = project.name # Store the project name to avoid mix-ups
+
+    if batch: 
+        outputqueue.put(resultpair)
+        return None
+    else:
+        return resultpair
