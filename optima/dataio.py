@@ -11,6 +11,7 @@ from os import path, sep
 from numpy import ones, zeros
 from optima import odict, OptimaException
 from xlrd import open_workbook
+import optima as op
 
 
 #############################################################################################################################
@@ -32,7 +33,7 @@ def loadobj(filename, verbose=True):
     else: argtype = 'fileobj'
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
-        obj = pickle.loads(fileobj.read())
+        obj = loadpickle(fileobj)
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
@@ -52,9 +53,43 @@ def loadstr(source):
     ''' Load data from a fake file object -- also used on the FE '''
     with closing(StringIO(source)) as output:
         with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
-            obj = pickle.loads(fileobj.read())
+            obj = loadpickle(fileobj)
     return obj
 
+
+def loadpickle(fileobj):
+    ''' Loads a pickled object -- need to define legacy classes here since they're needed for unpickling '''
+    
+    # Create legacy classes for compatibility
+    try:
+        class Spreadsheet(object): pass
+        op.project.Spreadsheet = Spreadsheet
+        
+        class GAOptim(object): pass
+        op.portfolio.GAOptim = GAOptim
+    #    class CCOF(): pass
+    #    class Costcov(): pass
+    #    class Covout(): pass
+    #    op.programs.CCOF = CCOF
+    #    op.programs.Costcov = Costcov
+    #    op.programs.Covout = Covout
+    except:
+        pass # Don't worry, yet, if we can't create these, it'll crash later anyway :)
+    
+    obj = pickle.loads(fileobj.read()) # Actually load it
+    
+    # Once used to unpickle the project, we can delete these (if they were created)
+    try:
+        del op.project.Spreadsheet
+        del op.portfolio.GAOptim
+    #    del op.programs.CCOF
+    #    del op.programs.Costcov
+    #    del op.programs.Covout
+    except:
+        pass
+    
+    return obj
+    
 
 #############################################################################################################################
 ### Functions to load the parameters and transitions
