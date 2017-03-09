@@ -111,7 +111,6 @@ class Resultset(object):
         self.main['popsize']        = Result('Population size')
         self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
-
         self.other = odict() # For storing other results -- not available in the interface
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
@@ -214,6 +213,7 @@ class Resultset(object):
         allmtct      = dcp(array([raw[i]['mtct']      for i in range(nraw)]))
         allhivbirths = dcp(array([raw[i]['hivbirths'] for i in range(nraw)]))
         allpmtct     = dcp(array([raw[i]['pmtct']     for i in range(nraw)]))
+        allcosttreat = dcp(array([raw[i]['costtreat'] for i in range(nraw)]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -299,8 +299,8 @@ class Resultset(object):
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
-        self.main['costtreat'].pops = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['costtreat'].tot = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['costtreat'].pops = quantile(allcosttreat[:,:,indices], quantiles=quantiles).round()
+        self.main['costtreat'].tot = quantile(allcosttreat[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['proptreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['proptreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
