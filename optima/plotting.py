@@ -555,13 +555,12 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     
     "which" should be either 'budget' or 'coverage'
     
-    Version: 2016jan27
+    Version: 2017mar09
     '''
     
     # Preliminaries: process inputs and extract needed data
-    
-    budgets = dcp(multires.budget) # Copy budget
-    if not isinstance(budgets[0], odict): budgets = odict([('Sample',budgets)]) # Handle case where it's not an odict of odicts
+    if hasattr(multires, 'budgets'): budgets = dcp(multires.budget)
+    else:                            budgets = odict([('Sample',multires.budget)])
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
             if budgets[b][p] is not None:
@@ -626,15 +625,17 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     
     "which" should be either 'budget' or 'coverage'
     
-    Version: 2016aug18
+    Version: 2017mar09
     '''
     
     # Preliminaries: process inputs and extract needed data
-    toplot = [item for item in multires.coverage.values() if item] # e.g. [budget for budget in multires.budget]
+    if hasattr(multires, 'coverages'): coverages = dcp(multires.coverages)
+    else:                              coverages = odict([('Sample',multires.coverage)])
+    toplot = [item for item in coverages.values() if item] # e.g. [budget for budget in multires.budget]
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
     proglabels = toplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(multires.coverage.keys()) if multires.coverage.values()[k]] # WARNING, will this actually work if some values are None?
+    alloclabels = [key for k,key in enumerate(coverages.keys()) if coverages.values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     

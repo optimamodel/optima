@@ -615,11 +615,18 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % new.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
-    multires.outcomes = extremeoutcomes # Store all of these
+    multires.extremeoutcomes = extremeoutcomes # Store all of these
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
+    multires.outcomes = odict() # Initialize
     for key in tmpimprovements.keys():
         multires.outcomes[key] = tmpimprovements[key][-1] # Get best value
     optim.resultsref = multires.name # Store the reference for this result
+    try:
+        multires.outcome = multires.outcomes['Optimal'] # Store these defaults in a convenient place
+        multires.budget = multires.budgets['Optimal']
+    except:
+        multires.outcome = None
+        multires.budget = None
 
     return multires
 

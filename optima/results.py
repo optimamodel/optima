@@ -365,17 +365,22 @@ class Resultset(object):
                     if self.main[key].ispercentage: output += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                           output += ('%i'+sep) % data[t]
        
+        if hasattr(self, 'budgets'):   thisbudget = self.budgets[ind]
+        else:                          thisbudget = self.budget
+        if hasattr(self, 'coverages'): thiscoverage = self.coveragess[ind]
+        else:                          thiscoverage = self.coverage
+        
         if len(self.budget)>ind: # WARNING, does not support multiple years
             output += '\n\n\n'
             output += 'Budget\n'
-            output += sep.join(self.budget[ind].keys()) + '\n'
-            output += sep.join([str(val) for val in self.budget[ind].values()]) + '\n'
+            output += sep.join(thisbudget.keys()) + '\n'
+            output += sep.join([str(val) for val in thisbudget.values()]) + '\n'
         
         if len(self.coverage)>ind: # WARNING, does not support multiple years
             output += '\n\n\n'
             output += 'Coverage\n'
-            output += sep.join(self.coverage[ind].keys()) + '\n'
-            output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
+            output += sep.join(thiscoverage.keys()) + '\n'
+            output += sep.join([str(val) for val in thiscoverage.values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
             
         if writetofile: 
             with open(filename, 'w') as f: f.write(output)
@@ -425,8 +430,8 @@ class Multiresultset(Resultset):
         self.created = today()
         self.nresultsets = len(resultsetlist)
         self.keys = []
-        self.budget = odict()
-        self.coverage = odict()
+        self.budgets = odict()
+        self.coverages = odict()
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
@@ -467,13 +472,13 @@ class Multiresultset(Resultset):
             
             # Finally, process the budget and budgetyears
             if len(rset.budget): # If it has a budget, overwrite coverage information by calculating from budget
-                self.budget[key]      = rset.budget
+                self.budgets[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
-                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+                self.coverages[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
             elif len(rset.coverage): # If no budget, compute budget from coverage
-                self.coverage[key]      = rset.coverage
+                self.coverages[key]      = rset.coverage
                 self.budgetyears[key] = rset.budgetyears
-                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
+                self.budgets[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
         
         
     def __repr__(self):

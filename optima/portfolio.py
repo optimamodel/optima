@@ -484,7 +484,6 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     # Extract info from the BOC and specify argument lists...painful
     sharedargs = {'objectives':boc.objectives, 
                   'constraints':boc.constraints, 
-                  'origbudget':closestbudget,
                   'parsetname':boc.parsetname, 
                   'progsetname':boc.progsetname,
                   'verbose':verbose
@@ -493,6 +492,8 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
                    'outputresults':True,
                    'doconstrainbudget':False}
     optimargs = {'label':project.name,
+                 'maxtime': maxtime,
+                 'maxiters': maxiters,
                  'mc':mc}
 
     # Run the analyses
@@ -500,6 +501,7 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     
     # Initial spending
     printv('%s: calculating initial outcome for budget $%0.0f' % (project.name, defaultbudget), 2, verbose)
+    sharedargs['origbudget'] = boc.defaultbudget
     sharedargs['objectives']['budget'] = defaultbudget
     outcalcargs.update(sharedargs)
     resultpair['init'] = outcomecalc(**outcalcargs)
@@ -507,10 +509,14 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     # Optimal spending -- reoptimize
     if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
     else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)
+    sharedargs['origbudget'] = closestbudget
     sharedargs['objectives']['budget'] = totalbudget
     optimargs.update(sharedargs)
-    if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
-    else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
+    if totalbudget: 
+        resultpair['opt'] = project.optimize(**optimargs)
+        resultpair['opt'].budget = resultpair['opt'].budget['Optimal'] # For consistency with outcomecalc, keep just this one
+    else:
+        resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
     resultpair['init'].name = project.name+' GA initial'
     resultpair['opt'].name = project.name+' GA optimal'
     resultpair['key'] = project.name # Store the project name to avoid mix-ups
