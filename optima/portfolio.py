@@ -98,6 +98,7 @@ class Portfolio(object):
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
         if filename is None: filename = self.name+'.prt'
         self.filename = os.path.abspath(filename) # Store file path
+        printv('Saving portfolio to %s...' % self.filename, 2, verbose)
         if saveresults:
             saveobj(filename, self, verbose=verbose)
         else:
