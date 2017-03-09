@@ -538,11 +538,6 @@ class BOC(object):
 
     def __repr__(self):
         ''' Print out summary stats '''
-#        output = '============================================================\n'
-#        output += '      Date created: %s\n'    % getdate(self.created)
-#        output += '               UID: %s\n'    % self.uid
-#        output += '============================================================\n'
-#        output += objrepr(self)
         output = defaultrepr(self)
         return output
         
