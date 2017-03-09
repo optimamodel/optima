@@ -242,7 +242,7 @@ class Portfolio(object):
             resultpairs = batchtools.reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
             self.results = resultpairs
         # Tidy up
-        if doprint and self.results: self.makeoutput(doprint=doprint, verbose=verbose)
+        if doprint and self.results: self.makeoutput(doprint=True, verbose=verbose)
         if export:
             if self.results:
                 self.export(filename=outfile, verbose=verbose)
@@ -278,7 +278,7 @@ class Portfolio(object):
         return None
     
     
-    def makeoutput(self, doprint=True, verbose=2):
+    def makeoutput(self, doprint=False, verbose=2):
         ''' Just displays results related to the GA run '''
         if doprint: printv('Printing results...', 2, verbose)
         

@@ -612,60 +612,13 @@ def export(portfolio=None, filepath=None, usegui=False):
             filepath = portfolio.name+'.prt'
     if type(globalportfolio)!=Portfolio and usegui: warning('Warning, must load portfolio first!')
     
-    from xlsxwriter import Workbook
-    if not usegui: print('Saving portfolio...')
-    
-    # 1. Extract data needed from portfolio
-    try:
-        outstr = globalportfolio.gaoptims[-1].printresults() # Stored, but regenerate
-    except:
-        errormsg = 'Warning, it does not seem that geospatial analysis has been run for this portfolio!'
-        warning(errormsg, usegui)
-        if not usegui: raise Exception(errormsg)
-        return None
-    
     # 2. Create a new file dialog to save this spreadsheet
     if usegui:
         filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
     
-    # 2. Generate spreadsheet according to David's template to store these data
+    # 3. Generate spreadsheet according to David's template to store these data
     if filepath:
-        workbook = Workbook(filepath)
-        worksheet = workbook.add_worksheet()
-        
-        # Define formatting
-        originalblue = '#18C1FF' # analysis:ignore
-        hotpink = '#FFC0CB' # analysis:ignore
-        formats = dict()
-        formats['plain'] = workbook.add_format({})
-        formats['bold'] = workbook.add_format({'bold': True})
-        formats['number'] = workbook.add_format({'bg_color': hotpink, 'num_format':0x04})
-        colwidth = 30
-        
-        # Convert from a string to a 2D array
-        outlist = []
-        for line in outstr.split('\n'):
-            outlist.append([])
-            for cell in line.split('\t'):
-                outlist[-1].append(cell)
-        
-        # Iterate over the data and write it out row by row.
-        row, col = 0, 0
-        for row in range(len(outlist)):
-            for col in range(len(outlist[row])):
-                thistxt = outlist[row][col]
-                thisformat = 'plain'
-                if col==0: thisformat = 'bold'
-                tmptxt = thistxt.lower()
-                for word in ['budget','outcome','allocation','initial','optimal','coverage']:
-                    if tmptxt.find(word)>=0: thisformat = 'bold'
-                if col in [2,3] and thisformat=='plain': thisformat = 'number'
-                if thisformat=='number':thistxt = float(thistxt)
-                worksheet.write(row, col, thistxt, formats[thisformat])
-        
-        worksheet.set_column(0, 3, colwidth) # Make wider
-        workbook.close()
-        
+        globalportfolio.export(filename=filepath)
         warning('Results saved to "%s".' % filepath, usegui)
     else:
         warning('Filepath not supplied: %s' % filepath, usegui)
