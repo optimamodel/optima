@@ -2,6 +2,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   'use strict';
 
+  module.directive('postiveValidation', function(){
+    return {
+      require: 'ngModel',
+      link: function(scope, element, attrs, modelCtrl) {
+        modelCtrl.$parsers.push(function (inputValue) {
+          console.log('customValidation parsing', inputValue);
+          var transformedInput = inputValue;
+          if (transformedInput < 0) {
+            transformedInput = Math.abs(transformedInput);
+            modelCtrl.$setViewValue(transformedInput);
+            modelCtrl.$render();
+          }
+          return transformedInput;
+        });
+      }
+    };
+  });
+
   module.controller('ModelCalibrationController', function (
       $scope, $http, info, modalService, $upload,
       $modal, $timeout, toastr, globalPoller) {
@@ -10,6 +28,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initialize() {
 
+      $scope.onlyNumbers = /^(?:[1-9]\d*|0)?(?:\.\d+)?$/;
       $scope.parsets = [];
       $scope.years = _.range(project.startYear, project.endYear+1);
       var iLast = $scope.years.length - 1;
@@ -42,6 +61,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           }
         });
     }
+
+    $scope.isNumberKey = function(evt) {
+        var charCode = (evt.which) ? evt.which : event.keyCode;
+        return !(charCode > 31 && (charCode < 48 || charCode > 57));
+    };
 
     function getMostRecentItem(aList, datetimeProp) {
       var aListByDate = _.sortBy(aList, function(item) {
@@ -119,6 +143,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           toastr.success('Updated parameters and loaded graphs');
           loadParametersAndGraphs(response);
         });
+    };
+
+    $scope.changeParameter = function(parameter) {
+      console.log(parameter);
     };
 
     $scope.addParameterSet = function() {
