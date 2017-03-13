@@ -155,8 +155,8 @@
           border-top: 1px solid #999;
           border-bottom: 1px solid #999;">
       <th>Program</th>
-      <th style="width: 6em">Not less than</th>
-      <th style="width: 5em">Not more than</th>
+      <th style="width: 6em">Not less than<br>(% of current)</th>
+      <th style="width: 5em">Not more than<br>(% of current)</th>
     </tr>
     <tr style="justify-content: space-around"
         class="option"
@@ -166,17 +166,17 @@
       </td>
       <td style="width: 6em">
         <input
-            style="width: 5em;"
+            style="width: 5em; display: inline;"
             class="txbox"
             type="number"
-            ng-model="constraint.min"/>
+            ng-model="constraint.min"/> %
       </td>
       <td style="width: 5em">
         <input
-            style="width: 5em;"
+            style="width: 5em; display: inline;"
             class="txbox"
             type="number"
-            ng-model="constraint.max"/>
+            ng-model="constraint.max"/> %
       </td>
     </tr>
   </table>
