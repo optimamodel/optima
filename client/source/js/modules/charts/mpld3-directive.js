@@ -344,8 +344,6 @@ define(
         function initialize() {
 
           var allCharts = elem.find('.allcharts');
-          console.log('allCharts', allCharts);
-          console.log('allCharts width', allCharts.width());
 
           scope.state = {
             slider: {
@@ -452,7 +450,7 @@ define(
           var allCharts = elem.find('.allcharts');
           var allChartsWidth = parseInt(allCharts.width());
           var width = allChartsWidth * percentage / 100.;
-          console.log('changing width to ', width, '/', allChartsWidth, ' based on slider ', percentage);
+          console.log('getSelectedFigureWidth', width, '/', allChartsWidth, ' based on slider ', percentage);
           return width;
         }
 
@@ -463,8 +461,6 @@ define(
               return;
             }
             if (scope.graphs) {
-              console.log('detected graphs in directive', scope.graphs);
-              console.log('current graph width state', scope.state);
               var width = getSelectedFigureWidth();
               _.each(scope.graphs.mpld3_graphs, function(g, i) {
                 g.isChecked = function() {

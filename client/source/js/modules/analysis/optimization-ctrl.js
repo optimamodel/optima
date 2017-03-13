@@ -396,6 +396,18 @@ define(
           return result;
         }
 
+        function scaleConstraints(constraints, scale) {
+          _.each(constraints, function(constraint) {
+            if (constraint.max !== null) {
+              constraint.max = constraint.max*scale;
+            }
+            if (constraint.min !== null) {
+              constraint.min = constraint.min*scale;
+            }
+          });
+
+        }
+
         function selectProgset() {
           var progsetId = $scope.state.optimization.progset_id;
           $scope.defaultConstraints = listifyConstraints(
@@ -412,14 +424,15 @@ define(
             }
           });
           constraints = _.sortBy(constraints, function(c) { return c.key });
+          scaleConstraints(constraints, 100.0)
           $scope.state.optimization.constraints = constraints;
-
-          console.log("patched constraints", $scope.state.optimization.constraints);
+          console.log("selectProgset constraints", $scope.state.optimization.constraints);
         }
 
         function cancel() { $modalInstance.dismiss("cancel"); }
 
         function save() {
+          scaleConstraints($scope.state.optimization.constraints, 0.01);
           $scope.state.optimization.constraints = revertToConstraints(
             $scope.state.optimization.constraints);
           $modalInstance.close($scope.state.optimization);
