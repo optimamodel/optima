@@ -3,13 +3,14 @@ This module defines the Constant, Metapar, Timepar, and Popsizepar classes, whic
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2.1 (2017jan31)
+Version: 2.1 (2017mar14)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
+import optima as op
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
@@ -1344,7 +1345,73 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
     return None
 
 
-
+def sanitycheck(simpars=None, showdiff=True, threshold=0.1, eps=1e-6):
+    '''
+    Compare the current simpars with the default simpars, flagging
+    potential differences. If simpars is None, generate it from the
+    current parset. If showdiff is True, only show parameters that differ
+    by more than the threshold amount (default, 10%). eps is just to
+    avoid divide-by-zero errors and can be ignored, probably.
+    
+    Usage:
+        sanitycheck(P)
+    or
+        result = P.runsim(keepraw=True) # Need keepraw or else it doesn't store simpars
+        sanitycheck(result.simpars)
+    '''
+    if isinstance(simpars, op.Project): # It's actually a project
+        thisproj = simpars # Rename so it's clearer
+        try:    simpars = thisproj.result().simpars # Try to extract the simpars
+        except: simpars = thisproj.runsim(keepraw=True, die=False).simpars # If not, rerun
+            
+    tmpproj = op.demo(dorun=False, doplot=False) # Can't import this earlier since not actually declared before
+    tmpproj.runsim(keepraw=True)
+    gsp = op.dcp(tmpproj.results[-1].simpars[0]) # "Good simpars"
+    sp = simpars[0] # "Simpars"
+    
+    if set(sp.keys())!=set(gsp.keys()):
+        errormsg = 'Keys do not match:'
+        errormsg += 'Too many: %s' % (set(sp.keys())-set(gsp.keys()))
+        errormsg += 'Missing: %s' % (set(gsp.keys())-set(sp.keys()))
+        raise op.OptimaException(errormsg)
+    
+    outstr = ''
+    skipped = []
+    for k,key in enumerate(gsp.keys()):
+        if op.checktype(sp[key], 'number'):
+            spval = sp[key]
+            gspval = gsp[key]
+            ratio = (eps+spval)/(eps+gspval)
+            if not showdiff or not(abs(1-ratio)<threshold):
+                outstr += '\n\n%s\n%s (%03i/%03i)\n' % ('='*70, key, k, len(sp.keys())-1)
+                outstr += 'Yours: %10s  Best: %10s Ratio: %10s\n' % (op.sigfig(spval), op.sigfig(gspval), op.sigfig(ratio))
+            else:
+                skipped.append(key)
+        elif op.checktype(sp[key], 'arraylike') or op.checktype(sp[key], op.odict):
+            if op.checktype(sp[key], op.odict):
+                sp[key] = sp[key][:] # Try converting to an odict...
+                gsp[key] = gsp[key][:] # Try converting to an odict...
+            spmin = sp[key].min()
+            spmax = sp[key].max()
+            gspmin = gsp[key].min()
+            gspmax = gsp[key].max()
+            minratio = (eps+spmin)/(eps+gspmin)
+            maxratio = (eps+spmax)/(eps+gspmax)
+            if not showdiff or not(abs(1-minratio)<threshold) or not(abs(1-maxratio)<threshold):
+                outstr += '\n\n%s\n%s (%03i/%03i)\n' % ('='*70, key, k, len(sp.keys())-1)
+                outstr += 'Min-Yours: %10s  Min-Best: %10s Min-Ratio: %10s\n' % (op.sigfig(spmin), op.sigfig(gspmin), op.sigfig(minratio))
+                outstr += 'Max-Yours: %10s  Max-Best: %10s Max-Ratio: %10s\n' % (op.sigfig(spmax), op.sigfig(gspmax), op.sigfig(maxratio))
+            else:
+                skipped.append(key)
+        else:
+            if not showdiff:
+                outstr += '\n\n%s\n%s (%03i/%03i)\n' % ('='*70, key, k, len(sp.keys())-1)
+                outstr += str(type(sp[key]))
+            else:
+                skipped.append(key)
+        
+    print(outstr)
+    return outstr
 
 
 
