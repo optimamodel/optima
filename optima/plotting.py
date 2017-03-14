@@ -397,7 +397,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
                         origorder = arange(nlinesperplot)
                         plotorder = nlinesperplot-1-origorder
-                        if reorder: plotorder = [reorder[k] for k in plotorder]z
+                        if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
                             fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
 #                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=gridcolormap(nlinesperplot)[k], alpha=1, lw=0, label=results.popkeys[k])
