@@ -188,6 +188,7 @@ define(['./../module', 'underscore'], function(module, _) {
               + '&parset_id=' + vm.state.parset.id)
           .success(function(data) {
             vm.state.chartData = data;
+            console.log('updateCostCovGraph', data);
           })
           .error(function() {
             console.log('Failed to load graph for', vm.state.program.short);

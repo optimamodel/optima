@@ -310,8 +310,8 @@
             </select>
           </div>
 
-          <button class="btn __m" ng-click="vm.saveProgsetOutcomes()">
-            Save outcome functions
+          <button class="btn __green __m" ng-click="vm.saveProgsetOutcomes()">
+            Save
           </button>
           <br>
           <br>
@@ -330,20 +330,14 @@
                 ng-repeat="yearEntry in outcome.years"
                 cellpadding="10px"
                 style="
-                    width: 100%;
+                    max-width: 900px;
                     border-top: 1px solid #999;
                     border-bottom: 1px solid #999;
                     border-spacing: 10px;">
               <tr style="border-bottom: 1px solid #DDD">
+                <th>{{vm.state.parameter.name}} for {{vm.makePopKeyLabel(outcome.pop)}}</th>
                 <th>
-                  Population /
-                  <br>
-                  Partnerships
-                </th>
-                <th>Year</th>
-                <th>Description of program impact</th>
-                <th>
-                  Parameter Value
+                  Parameter value
                   <br>
                   ({{vm.state.parameter.limits[0]}}
                   -
@@ -352,19 +346,11 @@
               </tr>
 
               <tr>
-                <td>{{vm.makePopKeyLabel(outcome.pop)}}</td>
                 <td>
-                  <input
-                    style="width:4em"
-                    type="number"
-                    ng-model="yearEntry.year">
-                </td>
-                <td>
-                  "{{vm.state.parameter.name}}"
                   in the absence of any programs targeting this parameter
                   <br>
                   <br>
-                  <i ng-if="vm.state.parameter.coverage != 1">Program Effects</i>
+                  <i ng-if="vm.state.parameter.coverage != 1">Value for maximum attainable coverage of each program acting in isolation:</i>
                 </td>
                 <td style="width:12em">
                   <input
@@ -380,15 +366,10 @@
               </tr>
 
               <tr ng-if="vm.state.parameter.coverage != 1" ng-repeat="program in yearEntry.programs">
-                <td></td>
-                <td></td>
                 <td>
                   <ul>
                     <li>
-                  "{{vm.state.parameter.name}}"
-                  under maximal attainable coverage of
-                  "{{vm.getProgramName(program.name)}}"
-                  in isolation
+                  {{vm.getProgramName(program.name)}}
                     </li>
                   </ul>
                 </td>
@@ -405,32 +386,30 @@
                 </td>
               </tr>
 
-              <tr ng-if="vm.state.parameter.coverage != 1">
-                <td></td>
-                <td></td>
-                <td>
-                  <i>Program interactions</i>:
-                  &nbsp; &nbsp;
-                  <input
-                      type="radio"
-                      ng-model="outcome.interact"
-                      value="random">
-                  <label> random </label> &nbsp; &nbsp;
-                  <input
-                      type="radio"
-                      ng-model="outcome.interact"
-                      ng-value="nested">
-                  <label> nested </label> &nbsp; &nbsp;
-                  <input
-                      type="radio"
-                      ng-model="outcome.interact"
-                      value="additive">
-                  <label> additive </label>
-                  <br>
-                  <br>
-                </td>
-                <td></td>
-              </tr>
+              <!--<tr ng-if="vm.state.parameter.coverage != 1">-->
+                <!--<td>-->
+                  <!--<i>Program interactions</i>:-->
+                  <!--&nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--value="random">-->
+                  <!--<label> random </label> &nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--ng-value="nested">-->
+                  <!--<label> nested </label> &nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--value="additive">-->
+                  <!--<label> additive </label>-->
+                  <!--<br>-->
+                  <!--<br>-->
+                <!--</td>-->
+                <!--<td></td>-->
+              <!--</tr>-->
 
             </table>
 
