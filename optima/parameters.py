@@ -1359,8 +1359,9 @@ def sanitycheck(simpars=None, showdiff=True):
         sanitycheck(result.simpars)
     '''
     if isinstance(simpars, op.Project): # It's actually a project
-        try:    simpars = simpars.result().simpars # Try to extract the simpars
-        except: simpars = simpars.runsim(keepraw=True, die=False) # If not, rerun
+        thisproj = simpars # Rename so it's clearer
+        try:    simpars = thisproj.result().simpars # Try to extract the simpars
+        except: simpars = thisproj.runsim(keepraw=True, die=False).simpars # If not, rerun
             
     eps = 1e-6
     threshold = 0.1
