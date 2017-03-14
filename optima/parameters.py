@@ -1345,7 +1345,7 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
     return None
 
 
-def sanitycheck(simpars=None, showdiff=True):
+def sanitycheck(simpars=None, showdiff=True, threshold=0.1, eps=1e-6):
     '''
     Compare the current simpars with the default simpars, flagging
     potential differences. If simpars is None, generate it from the
@@ -1363,8 +1363,6 @@ def sanitycheck(simpars=None, showdiff=True):
         try:    simpars = thisproj.result().simpars # Try to extract the simpars
         except: simpars = thisproj.runsim(keepraw=True, die=False).simpars # If not, rerun
             
-    eps = 1e-6
-    threshold = 0.1
     tmpproj = op.demo(dorun=False, doplot=False) # Can't import this earlier since not actually declared before
     tmpproj.runsim(keepraw=True)
     gsp = op.dcp(tmpproj.results[-1].simpars[0]) # "Good simpars"
