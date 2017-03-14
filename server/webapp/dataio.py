@@ -1057,9 +1057,9 @@ def save_parameters(project_id, parset_id, parameters):
         parset.modified = datetime.now(dateutil.tz.tzutc())
         parse.set_parameters_on_parset(parameters, parset)
 
+    delete_result_by_parset_id(project_id, parset_id)
     update_project_with_fn(project_id, update_project_fn)
 
-    delete_result_by_parset_id(project_id, parset_id)
 
 
 def load_parset_graphs(
