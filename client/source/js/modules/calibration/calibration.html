@@ -1,13 +1,17 @@
 
 <div class="rich">
 
-  <div class="error-hint" ng-show="isMissingData">
+  <div
+      class="error-hint"
+      ng-show="isMissingData">
     No parameter sets, you need to
     <a ui-sref="home">upload a data spreadsheet</a>
     for this project.
   </div>
 
-  <div ng-if="!isMissingData">
+  <form
+      ng-if="!isMissingData"
+      ng-submit="saveAndUpdateGraphs()">
 
     <div
       style="
@@ -44,20 +48,20 @@
         tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
         style="margin-left: 0.5em">
       </i>
-      <i
-        ng-click="downloadParameterSet()"
-        class="fa fa-download"
-        tp-text="Download" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-        style="margin-left: 0.5em">
-      </i>
-      <i
-        ng-click="uploadParameterSet()"
-        class="fa fa-upload"
-        tp-text="Upload" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-        style="margin-left: 0.5em">
-      </i>
+      <!--<i-->
+        <!--ng-click="downloadParameterSet()"-->
+        <!--class="fa fa-download"-->
+        <!--tp-text="Download" tooltip tp-class="tooltip"-->
+        <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
+        <!--style="margin-left: 0.5em">-->
+      <!--</i>-->
+      <!--<i-->
+        <!--ng-click="uploadParameterSet()"-->
+        <!--class="fa fa-upload"-->
+        <!--tp-text="Upload" tooltip tp-class="tooltip"-->
+        <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
+        <!--style="margin-left: 0.5em">-->
+      <!--</i>-->
       <i
         ng-click="deleteParameterSet()"
         class="fa fa-trash-o"
@@ -74,11 +78,9 @@
         padding-top: 10px;
         padding-bottom: 15px;">
 
-      <button class="btn __m" ng-click="saveAndUpdateGraphs()">
-        Save parameters & graph
-      </button>
+      <input type="submit" value="Save & update" class="btn __green __m"/>
 
-      &nbsp; from &nbsp;
+      &nbsp; &nbsp;
 
       <select
         ng-model="state.startYear"
@@ -90,13 +92,13 @@
         ng-model="state.endYear"
         ng-options="year for year in years"></select>
 
-      &nbsp; &#183; &nbsp;
+      &nbsp; &nbsp;
 
       <button
           class="btn"
           ng-click="refreshParset()">Set to default</button>
 
-      &nbsp; &#183; &nbsp;
+      &nbsp; &nbsp;
 
       <button
           class="btn"
@@ -110,8 +112,6 @@
         <option value="30">30 seconds</option>
         <option value="60">1 minute</option>
         <option value="300">5 minutes</option>
-        <option value="600">10 minutes</option>
-        <option value="1800">30 minutes</option>
       </select>
 
       &nbsp; &nbsp;
@@ -120,42 +120,64 @@
 
     </div>
 
-    <div
-      style="
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        width: 100%;
-        height: calc(100vh - 210px)">
+    <style>
+      /* Hide HTML5 Up and Down arrows. */
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      input[type="number"] {
+        -moz-appearance: textfield;
+      }
+    </style>
 
-      <div class="small_bordered_list"
-           style="flex: 0 0 320px;"
-           ng-if="parameters.length > 0">
-        <div class="option_list" style="height: 100%;">
+    <div
+        style="
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          width: 100%;
+          height: calc(100vh - 210px)">
+
+      <div
+          class="small_bordered_list"
+          style="flex: 0 0 320px;"
+          ng-if="parameters.length > 0">
+        <div
+            class="option_list"
+            style="height: 100%;">
           <div
               ng-repeat="parameter in parameters"
               style="justify-content: space-around"
               class="option">
-            <span style="width: 45%">{{parameter.label}}</span>
-            <span style="width: 45%">
-              <input class="txbox __m"
-                     type="number"
-                     ng-model="parameter.value"/>
+            <span
+                style="width: 45%">
+              {{parameter.label}}
+            </span>
+            <span
+                style="width: 45%">
+              <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  class="txbox __m"
+                  ng-model="parameter.value">
             </span>
           </div>
         </div>
       </div>
 
       <div
-      style="
-         margin-left: 10px;
-         border: 1px solid #DDD;
-         flex: 1 1 auto;
-         height:100%;
-         width: 100%;">
+          style="
+             margin-left: 10px;
+             border: 1px solid #DDD;
+             flex: 1 1 auto;
+             height:100%;
+             width: 100%;">
         <optima-graphs graphs="state.graphs"></optima-graphs>
       </div>
 
     </div>
-  </div>
+  </form>
 </div>
