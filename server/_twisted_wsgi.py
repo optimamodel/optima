@@ -40,8 +40,8 @@ def run():
             return r
 
 
-    base_resource = File('client/source/')
-    base_resource.putChild('build', File('client/source/'))
+    base_resource = File('client/build/')
+    base_resource.putChild('dev', File('client/source/'))
     base_resource.putChild('api', OptimaResource(wsgi_app))
 
     site = Site(base_resource)
