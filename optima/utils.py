@@ -269,7 +269,9 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     result = isinstance(obj, objinstance)
     
     # Do second round checking
-    if subtype is None and objtype is 'arraylike': subtype = 'number' # This is the default
+    if result and objtype is 'arraylike': # Special case for handling arrays which may be multi-dimensional
+        obj = promotetoarray(obj).flatten() # Flatten all elements
+        if subtype is None: subtype = 'number' # This is the default
     if isiterable(obj) and subtype is not None:
         for item in obj:
             result = result and checktype(item, subtype)
