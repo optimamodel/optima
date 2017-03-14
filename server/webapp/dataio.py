@@ -774,7 +774,7 @@ def resolve_project(project):
                 del_optim_keys.append(optim_key)
     print(">>> Delete deprecated optims %s" % del_optim_keys)
     for optim_key in del_optim_keys:
-        del project.optimis[optim_key]
+        del project.optims[optim_key]
 
     is_change = is_change or len(del_optim_keys) > 0
 
