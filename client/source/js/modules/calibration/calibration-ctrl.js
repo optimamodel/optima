@@ -43,6 +43,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     }
 
+    $scope.isNumberKey = function(evt) {
+        var charCode = (evt.which) ? evt.which : event.keyCode;
+        return !(charCode > 31 && (charCode < 48 || charCode > 57));
+    };
+
     function getMostRecentItem(aList, datetimeProp) {
       var aListByDate = _.sortBy(aList, function(item) {
         return new Date(item[datetimeProp]);
@@ -104,6 +109,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.parameters) {
         return;
       }
+      _.each($scope.parameters, function(parameter) {
+        console.log('saveAndUpdateGraphs', parameter);
+      });
       $http
         .post(
           '/api/project/' + project.id
@@ -119,6 +127,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           toastr.success('Updated parameters and loaded graphs');
           loadParametersAndGraphs(response);
         });
+    };
+
+    $scope.changeParameter = function(parameter) {
+      console.log(parameter);
     };
 
     $scope.addParameterSet = function() {

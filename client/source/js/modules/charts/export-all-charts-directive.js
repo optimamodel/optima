@@ -13,7 +13,7 @@ define(
             name: '@',
             customTitles: '='
           },
-          template: '<button type="button" class="btn" ng-click="exportAllFigures()">Export Figures PDF</button>',
+          template: '<button type="button" class="btn" ng-click="exportAllFigures()">Export all figures</button>',
           link: function (scope, elem, attrs) {
 
             /**
