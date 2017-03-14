@@ -1057,9 +1057,9 @@ def save_parameters(project_id, parset_id, parameters):
         parset.modified = datetime.now(dateutil.tz.tzutc())
         parse.set_parameters_on_parset(parameters, parset)
 
+    delete_result_by_parset_id(project_id, parset_id)
     update_project_with_fn(project_id, update_project_fn)
 
-    delete_result_by_parset_id(project_id, parset_id)
 
 
 def load_parset_graphs(
@@ -1258,7 +1258,13 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
     parset = parse.get_parset_from_project(project, parset_id)
     plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
 
-    return convert_to_mpld3(plot)
+    graph_dict = convert_to_mpld3(plot)
+    texts = graph_dict['axes'][0]['texts']
+    for i in reversed(range(len(texts))):
+        if texts[i]['text'] == 'None':
+            del texts[i]
+
+    return graph_dict
 
 
 def load_reconcile_summary(project_id, progset_id, parset_id, t):
