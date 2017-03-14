@@ -1350,12 +1350,13 @@ def sanitycheck(simpars=None, showdiff=True, threshold=0.1, eps=1e-6):
     Compare the current simpars with the default simpars, flagging
     potential differences. If simpars is None, generate it from the
     current parset. If showdiff is True, only show parameters that differ
-    by more than 10%.
+    by more than the threshold amount (default, 10%). eps is just to
+    avoid divide-by-zero errors and can be ignored, probably.
     
     Usage:
         sanitycheck(P)
     or
-        result = P.runsim(keepraw=True) # Need this or else it doesn't store simpars
+        result = P.runsim(keepraw=True) # Need keepraw or else it doesn't store simpars
         sanitycheck(result.simpars)
     '''
     if isinstance(simpars, op.Project): # It's actually a project
