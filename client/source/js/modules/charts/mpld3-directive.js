@@ -377,8 +377,8 @@ define(
               responseType: 'blob'
             })
           .success(function (response) {
-            var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
-            saveAs(blob, ('export_graphs.csv'));
+            var blob = new Blob([response], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, ('results.xlsx'));
           });
         };
 
