@@ -11,7 +11,6 @@ from os import path, sep
 from numpy import ones, zeros
 from optima import odict, OptimaException
 from xlrd import open_workbook
-import optima as op
 
 
 #############################################################################################################################
@@ -57,36 +56,57 @@ def loadstr(source):
     return obj
 
 
-def loadpickle(fileobj):
+def map_path(modulename, classname, verbose=2):
+    ''' Adapted from http://stackoverflow.com/questions/13398462/unpickling-python-objects-with-a-changed-module-path '''
+    
+    # Define an empty class
+    class EmptyClass(object):
+        def __init__(self, *args, **kwargs):
+            pass
+
+    # Handle the case where the module doesn't exist
+    try:
+        module = __import__(modulename)
+        if verbose>=2: print('Success: Loading module %s' % modulename)
+    except:
+        if verbose>=1: print('Fail: Loading module %s' % modulename)
+        module = EmptyClass()
+    
+    # Handle the case where the attribute doesn't exist
+    try:
+        output = getattr(module, classname) # Main usage case -- everything is fine
+        if verbose>=2: print('Success: Loading attribute %s.%s' % (modulename, classname))
+        return output
+    except:
+        if verbose>=2: print('Fail: Loading attribute %s.%s' % (modulename, classname))
+        return EmptyClass
+        
+
+
+def loadpickle(fileobj, attempts=10, verbose=True):
     ''' Loads a pickled object -- need to define legacy classes here since they're needed for unpickling '''
     
-    # Create legacy classes for compatibility
-    try:
-        class Spreadsheet(object): pass
-        op.project.Spreadsheet = Spreadsheet
-        
-        class GAOptim(object): pass
-        op.portfolio.GAOptim = GAOptim
-    #    class CCOF(): pass
-    #    class Costcov(): pass
-    #    class Covout(): pass
-    #    op.programs.CCOF = CCOF
-    #    op.programs.Costcov = Costcov
-    #    op.programs.Covout = Covout
-    except:
-        pass # Don't worry, yet, if we can't create these, it'll crash later anyway :)
+    # Load the file object
+    filestr = fileobj.read() # Read the binary file object
+    unpickler = pickle.Unpickler(StringIO(filestr))
+#    unpickler.find_global = map_path
+    obj = unpickler.load() # Actually load it
     
-    obj = pickle.loads(fileobj.read()) # Actually load it
-    
-    # Once used to unpickle the project, we can delete these (if they were created)
-    try:
-        del op.project.Spreadsheet
-        del op.portfolio.GAOptim
-    #    del op.programs.CCOF
-    #    del op.programs.Costcov
-    #    del op.programs.Covout
-    except:
-        pass
+#    # Attempt to read the pickle
+#    missingclasses = []
+#    for attempt in range(attempts):
+#        if verbose: print('Attempt %i of %i' % (attempt+1, attempts))
+#        try: 
+#            obj = unpickler.load() # Actually load it
+#            break # If it's loaded, we can break out of this loop
+#        except Exception as E:
+#            import traceback; z = traceback.extract_stack()
+#            print(z)
+#            if verbose: print('Error! %s' % E.__repr__())
+#            missingclass = E.message.split('object has no attribute ')[1][1:-1] # Name of the missing class, e.g. Spreadsheet
+#            missingclasses.append(missingclass)
+##            exec('op.project.%s = emptyclass' % missingclass) # Restore the missing class
+#            raise E
     
     return obj
     
