@@ -698,7 +698,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
         
         # Tidy up
         SIticks(fig)
-        coverageplots['coverages-%s'%plt] = fig
+        coverageplots['coverages-%s'%alloclabels[plt]] = fig
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
     
@@ -795,7 +795,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=(14,10), 
         if useSIticks: SIticks(fig)
         else:          commaticks(fig)
         
-        cascadeplots['cascade-%s'%plt] = fig
+        cascadeplots['cascade-%s'%titles[plt]] = fig
     
     return cascadeplots
 
