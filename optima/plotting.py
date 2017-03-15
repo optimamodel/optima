@@ -13,7 +13,7 @@ Version: 2016jul06
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh, pie
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh, pie, axis
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -32,11 +32,8 @@ globallegendsize = 8
 
 def SItickformatter(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    if abs(x)>=1e9:     output = str(x/1e9)+'B'
-    elif abs(x)>=1e6:   output = str(x/1e6)+'M'
-    elif abs(x)>=1e3:   output = str(x/1e3)+'K'
-    else:               output = str(x)
-    return output
+    return sigfig(x, sigfigs=None, SI=True)
+
 
 def SIticks(figure, axis='y'):
     ''' Apply SI tick formatting to the y axis of a figure '''
@@ -553,7 +550,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
 ##################################################################
     
     
-def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, usepie=True, verbose=2, **kwargs):
+def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, usepie=False, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -588,6 +585,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
             # Make a pie
             ydata = budgets[i][:]
             pie(ydata, colors=progcolors)
+            axis('square')
             
             # Set up legend
             labels = dcp(proglabels)
@@ -596,6 +594,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
             legend(labels, **legendsettings) # Multiple entries, all populations
             
             budgetplots['budget-%s'%i] = fig
+            close(fig)
       
     # Make bar plots
     else:
@@ -604,22 +603,23 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         fig.subplots_adjust(bottom=0.50) # Less space on bottom
         
         for i in range(nprogs-1,-1,-1):
-            xdata = arange(nallocs)+1
+            xdata = arange(nallocs)+0.5
             ydata = array([budget[i] for budget in budgets.values()])
             bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-            barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
+            barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0, label=proglabels[i])
     
         # Set up legend
-        labels = dcp(proglabels)
-        labels.reverse() # Wrong order otherwise, don't know why
-        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-        ax.legend(labels, **legendsettings) # Multiple entries, all populations
-        
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+        handles, legendlabels = ax.get_legend_handles_labels()
+        legend(reversed(handles), reversed(legendlabels), **legendsettings)
+#        ax.legend(labels, **legendsettings) # Multiple entries, all populations
+    
         # Set up other things
         ax.set_xlabel('Spending')
         ax.set_yticks(arange(nallocs)+1)
         ax.set_yticklabels(alloclabels)
         ax.set_ylim(0,nallocs+1)
+        ax.set_title('Budgets: %s' % ', '.join(alloclabels))
         
         SIticks(fig, axis='x')
         budgetplots['budget'] = fig
@@ -705,7 +705,6 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
         
         # Set up legend
         labels = dcp(proglabels)
-        labels.reverse() # Wrong order otherwise, don't know why
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
         ax[-1].legend(labels, **legendsettings) # Multiple entries, all populations
         
