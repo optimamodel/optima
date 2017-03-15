@@ -4,7 +4,7 @@ if (typeof define !== 'function') {
 }
 
 define({
-  waitSeconds: 30, // timeout after 3min
+  waitSeconds: 300, // timeout after 5min
 
   // Here paths are set relative to `/source/js` folder
   paths: {
