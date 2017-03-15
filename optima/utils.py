@@ -108,7 +108,7 @@ def defaultrepr(obj, maxlen=300):
 
 
 def printarr(arr, arrformat='%0.2f  '):
-    """ 
+    ''' 
     Print a numpy array nicely.
     
     Example:
@@ -117,7 +117,7 @@ def printarr(arr, arrformat='%0.2f  '):
         printarr(rand(3,7,4))
     
     Version: 2014dec01 by cliffk
-    """
+    '''
     from numpy import ndim
     if ndim(arr)==1:
         string = ''
@@ -180,10 +180,16 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
 
 
 
-def sigfig(X, sigfigs=5):
-    """ Return a string representation of variable x with sigfigs number of significant figures -- copied from asd.py """
+def sigfig(X, sigfigs=5, SI=False):
+    '''
+    Return a string representation of variable x with sigfigs number of significant figures -- 
+    copied from asd.py.
+    
+    If SI=True, then will return e.g. 32433 as 32.433K
+    '''
     from numpy import log10, floor
     output = []
+    
     try: 
         n=len(X)
         islist = True
@@ -193,9 +199,25 @@ def sigfig(X, sigfigs=5):
         islist = False
     for i in range(n):
         x = X[i]
+        
+        if SI:
+            if abs(X)>=1e9:
+                X = X/1e9
+                suffix = 'B'
+            elif abs(X)>=1e6:
+                X = X/1e6
+                suffix = 'M'
+            elif abs(X)>=1e3:
+                X = X/1e3
+                suffix = 'B'
+        else:
+            suffix = ''
+        
         try:
             if x==0:
                 output.append('0')
+            elif sigfigs is None:
+                output.append(str(x)+suffix)
             else:
                 magnitude = floor(log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
@@ -204,6 +226,7 @@ def sigfig(X, sigfigs=5):
                 decimals = int(max(0,-magnitude+sigfigs-1))
                 strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
                 string = strformat % x
+                string += suffix
                 output.append(string)
         except:
             output.append(str(x))
@@ -321,7 +344,7 @@ def promotetolist(obj=None, objtype=None):
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
-    """
+    '''
     Nicely print a complicated data structure, a la Matlab.
     Arguments:
       data: the data to display
@@ -333,7 +356,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
     Note: "printdata" is aliased to "pd".
 
     Version: 1.0 (2015aug21)    
-    """
+    '''
     datatype = type(data)
     def printentry(data):
         from numpy import shape, ndarray
@@ -393,13 +416,13 @@ pd = printdata # Alias to make it easier to use
 
 
 def quantile(data, quantiles=[0.5, 0.25, 0.75]):
-    """
+    '''
     Custom function for calculating quantiles most efficiently for a given dataset.
         data = a list of arrays, or an array where he first dimension is to be sorted
         quantiles = a list of floats >=0 and <=1
     
     Version: 2014nov23
-    """
+    '''
     from numpy import array
     nsamples = len(data) # Number of samples in the dataset
     indices = (array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
@@ -412,12 +435,12 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 def sanitize(data=None, returninds=False):
-        """
+        '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
         
         Example:
             sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
-        """
+        '''
         from numpy import array, isnan, nonzero
         try:
             data = array(data,dtype=float) # Make sure it's an array of float type
@@ -462,7 +485,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
 
 
 def findinds(val1, val2=None, eps=1e-6):
-    """
+    '''
     Little function to find matches even if two things aren't eactly equal (eg. 
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
     check for equality using eps. Returns a tuple of arrays if val1 is multidimensional,
@@ -473,7 +496,7 @@ def findinds(val1, val2=None, eps=1e-6):
         findinds([2,3,6,3], 6) # e.g. array([2])
     
     Version: 2016jun06 by cliffk
-    """
+    '''
     from numpy import nonzero, array, ndim
     if val2==None: # Check for equality
         output = nonzero(val1) # If not, just check the truth condition
@@ -488,7 +511,7 @@ def findinds(val1, val2=None, eps=1e-6):
 
 
 def findnearest(series=None, value=None):
-    """
+    '''
     Return the index of the nearest match in series to value
     
     Examples:
@@ -498,7 +521,7 @@ def findnearest(series=None, value=None):
         findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     
     Version: 2017jan07 by cliffk
-    """
+    '''
     from numpy import argmin
     series = promotetoarray(series)
     if isnumber(value):
@@ -511,7 +534,7 @@ def findnearest(series=None, value=None):
     
     
 def dataindex(dataarray, index):        
-    """ Take an array of data and return either the first or last (or some other) non-NaN entry. """
+    ''' Take an array of data and return either the first or last (or some other) non-NaN entry. '''
     from numpy import zeros, shape
     
     nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
@@ -523,7 +546,7 @@ def dataindex(dataarray, index):
 
 
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, strictnans=False):
-    """
+    '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
     Example:
@@ -537,7 +560,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         scatter(origx,origy)
     
     Version: 2016nov02 by cliffk
-    """
+    '''
     from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
     # Ensure arrays and remove NaNs
@@ -600,14 +623,14 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
 
 def perturb(n=1, span=0.5, randseed=None):
-    """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
+    ''' Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1.'''
     from numpy.random import rand, seed
     if randseed>=0: seed(randseed) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
     return output
     
 def scaleratio(inarray,total):
-    """ Multiply a list or array by some factor so that its sum is equal to the total. """
+    ''' Multiply a list or array by some factor so that its sum is equal to the total. '''
     from numpy import array
     origtotal = float(sum(inarray))
     ratio = total/origtotal
@@ -652,7 +675,7 @@ def vec2obj(orig=None, newvec=None, inds=None):
 ## NESTED DICTIONARY FUNCTIONS
 ##############################################################################
 
-"""
+'''
 Four little functions to get and set data from nested dictionaries. The first two were stolen from:
     http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
 
@@ -694,21 +717,21 @@ Example 2:
         setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
 Version: 2014nov29 by cliffk
-"""
+'''
 
 def getnested(nesteddict, keylist, safe=False): 
-    """ Get a value from a nested dictionary"""
+    ''' Get a value from a nested dictionary'''
     from functools import reduce
     output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
     return output
 
 def setnested(nesteddict, keylist, value): 
-    """ Set a value in a nested dictionary """
+    ''' Set a value in a nested dictionary '''
     getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
     return None # Modify nesteddict in place
 
 def makenested(nesteddict, keylist,item=None):
-    """ Insert item into nested dictionary, creating keys if required """
+    ''' Insert item into nested dictionary, creating keys if required '''
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
     	if not(key in currentlevel):
@@ -747,22 +770,22 @@ def iternested(nesteddict,previous = []):
 
 
 def tic():
-    """
+    '''
     A little pair of functions to calculate a time difference, sort of like Matlab:
     t = tic()
     toc(t)
-    """
+    '''
     from time import time
     return time()
 
 
 
 def toc(start=0, label='', sigfigs=3):
-    """
+    '''
     A little pair of functions to calculate a time difference, sort of like Matlab:
     t = tic()
     toc(t)
-    """
+    '''
     from time import time
     elapsed = time() - start
     if label=='': base = 'Elapsed time: '
@@ -782,13 +805,13 @@ def percentcomplete(step=None, maxsteps=None, indent=1):
 
 
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
-    """
+    '''
     Checks how much memory the variable in question uses by dumping it to file.
     
     Example:
         from utils import checkmem
         checkmem(['spiffy',rand(2483,589)],descend=1)
-    """
+    '''
     from os import getcwd, remove
     from os.path import getsize
     from cPickle import dump
@@ -897,7 +920,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
 
 
 def runcommand(command, printinput=False, printoutput=False):
-   """ Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 """
+   ''' Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 '''
    from subprocess import Popen, PIPE
    if printinput: print(command)
    try: output = Popen(command, shell=True, stdout=PIPE).communicate()[0].decode("utf-8")

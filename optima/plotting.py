@@ -13,7 +13,7 @@ Version: 2016jul06
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh, pie, axis
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -32,11 +32,8 @@ globallegendsize = 8
 
 def SItickformatter(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    if abs(x)>=1e9:     output = str(x/1e9)+'B'
-    elif abs(x)>=1e6:   output = str(x/1e6)+'M'
-    elif abs(x)>=1e3:   output = str(x/1e3)+'K'
-    else:               output = str(x)
-    return output
+    return sigfig(x, sigfigs=None, SI=True)
+
 
 def SIticks(figure, axis='y'):
     ''' Apply SI tick formatting to the y axis of a figure '''
@@ -87,10 +84,10 @@ def getplotselections(results, advanced=False):
     
     
     ## Add selection for budget allocations and coverage
-    budcovdict = odict([('budgets','Budget allocations'), ('coverages','Program coverages')])
-    for bckey,bclabel in budcovdict.items(): # Loop over budget and coverage
-        if hasattr(results, bckey):
-            budcovres = getattr(results, bckey)
+    budcovlist = [('budgets','budgets','Budget allocations'), ('coverage','coverages','Program coverages')]
+    for bckey,bcattr,bclabel in budcovlist: # Loop over budget and coverage
+        if hasattr(results, bcattr):
+            budcovres = getattr(results, bcattr)
             if budcovres and all([item is not None for item in budcovres.values()]): # Make sure none of the individual budgets are none either
                 plotselections['keys'].append(bckey) # e.g. 'budget'
                 plotselections['names'].append(bclabel) # e.g. 'Budget allocation'
@@ -124,7 +121,7 @@ def getplotselections(results, advanced=False):
         for name in epinames: # e.g. 'HIV prevalence'
             for subname in epiplottypes: # e.g. 'total'
                 if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
-                    plotepinames.append(name+' -- '+subname)
+                    plotepinames.append(name+' - '+subname)
     else:
         plotepikeys = dcp(epikeys)
         plotepinames = dcp(epinames)
@@ -181,26 +178,29 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         toplot.remove('budgets') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
-                allplots['budgets'] = plotbudget(results, die=die, **kwargs)
+                budgetplots = plotbudget(results, die=die, **kwargs)
+                allplots.update(budgetplots)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
     
-    ## Add coverage plot
-    if 'coverages' in toplot:
-        toplot.remove('coverages') # Because everything else is passed to plotepi()
+    ## Add coverage plot(s)
+    if 'coverage' in toplot:
+        toplot.remove('coverage') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
-                allplots['coverages'] = plotcoverage(results, die=die, **kwargs)
+                coverageplots = plotcoverage(results, die=die, **kwargs)
+                allplots.update(coverageplots)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot coverages: "%s"' % (E.__repr__()), 1, verbose)
     
-    ## Add cascade plot
+    ## Add cascade plot(s)
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
         try: 
-            allplots['cascade'] = plotcascade(results, die=die, **kwargs)
+            cascadeplots = plotcascade(results, die=die, **kwargs)
+            allplots.update(cascadeplots)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot cascade: "%s"' % E.__repr__(), 1, verbose)
@@ -550,13 +550,11 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
 ##################################################################
     
     
-def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, verbose=2, **kwargs):
+def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, usepie=False, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
     Results object must be of Multiresultset type.
-    
-    "which" should be either 'budget' or 'coverage'
     
     Version: 2017mar09
     '''
@@ -577,33 +575,57 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     nallocs = len(alloclabels)
     progcolors = gridcolormap(nprogs)
     
-    fig = figure(facecolor=(1,1,1), figsize=figsize)
-    ax = subplot(1,1,1)
+    budgetplots = odict()
     
-    fig.subplots_adjust(bottom=0.50) # Less space on bottom
+    # Make pie plots
+    if usepie:
+        for i in range(nallocs):
+            fig = figure(facecolor=(1,1,1), figsize=figsize)
+            
+            # Make a pie
+            ydata = budgets[i][:]
+            pie(ydata, colors=progcolors)
+            axis('square')
+            
+            # Set up legend
+            labels = dcp(proglabels)
+            labels.reverse() # Wrong order otherwise, don't know why
+            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+            legend(labels, **legendsettings) # Multiple entries, all populations
+            
+            budgetplots['budget-%s'%i] = fig
+            close(fig)
+      
+    # Make bar plots
+    else:
+        fig = figure(facecolor=(1,1,1), figsize=figsize)
+        ax = subplot(1,1,1)
+        fig.subplots_adjust(bottom=0.50) # Less space on bottom
+        
+        for i in range(nprogs-1,-1,-1):
+            xdata = arange(nallocs)+0.5
+            ydata = array([budget[i] for budget in budgets.values()])
+            bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
+            barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0, label=proglabels[i])
     
-    for i in range(nprogs-1,-1,-1):
-        xdata = arange(nallocs)+1
-        ydata = array([budget[i] for budget in budgets.values()])
-        bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
-
-    # Set up legend
-    labels = dcp(proglabels)
-    labels.reverse() # Wrong order otherwise, don't know why
-    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-    ax.legend(labels, **legendsettings) # Multiple entries, all populations
+        # Set up legend
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+        handles, legendlabels = ax.get_legend_handles_labels()
+        legend(reversed(handles), reversed(legendlabels), **legendsettings)
+#        ax.legend(labels, **legendsettings) # Multiple entries, all populations
     
-    # Set up other things
-    ax.set_xlabel('Spending')
-    ax.set_yticks(arange(nallocs)+1)
-    ax.set_yticklabels(alloclabels)
-    ax.set_ylim(0,nallocs+1)
+        # Set up other things
+        ax.set_xlabel('Spending')
+        ax.set_yticks(arange(nallocs)+1)
+        ax.set_yticklabels(alloclabels)
+        ax.set_ylim(0,nallocs+1)
+        ax.set_title('Budget')
+        
+        SIticks(fig, axis='x')
+        budgetplots['budget'] = fig
+        close(fig)
     
-    SIticks(fig, axis='x')
-    close(fig)
-    
-    return fig
+    return budgetplots
 
 
 
@@ -625,8 +647,6 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
 
     Results object must be of Multiresultset type.
     
-    "which" should be either 'budget' or 'coverage'
-    
     Version: 2017mar09
     '''
     
@@ -640,17 +660,19 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
-    fig = figure(facecolor=(1,1,1), figsize=figsize)
-    fig.subplots_adjust(bottom=0.10) # Less space on bottom
-    fig.subplots_adjust(right=0.70) # Less space on bottom
-    fig.subplots_adjust(hspace=0.50) # More space between
+    
     colors = gridcolormap(nprogs)
     ax = []
     ymax = 0
     
+    coverageplots = odict()
+    
     for plt in range(nallocs):
+        
+        fig = figure(facecolor=(1,1,1), figsize=figsize)
+        
         nbudgetyears = len(budgetyearstoplot[plt])
-        ax.append(subplot(nallocs,1,plt+1))
+        ax.append(subplot(1,1,1))
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
@@ -669,7 +691,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
                 else: barcolor = colors[p] # Only one year? Color by program
                 if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
                 else: yearlabel=None
-                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor, linewidth=0)
         if nbudgetyears>1: ax[-1].legend(frameon=False)
         ax[-1].set_xticks(arange(nprogs)+1)
         ax[-1].set_xticklabels('')
@@ -677,22 +699,23 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
         
         ylabel = 'Coverage (%)'
         ax[-1].set_ylabel(ylabel)
-        ax[-1].set_title(alloclabels[plt])
+        if nallocs>1: ax[-1].set_title('Coverage - %s' % alloclabels[plt])
+        else:         ax[-1].set_title('Program coverage')
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
+        
+        # Set up legend
+        labels = dcp(proglabels)
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+        ax[-1].legend(labels, **legendsettings) # Multiple entries, all populations
+        
+        # Tidy up
+        SIticks(fig)
+        coverageplots['coverages-%s'%plt] = fig
+        close(fig)
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
     
-    # Set up legend
-    labels = dcp(proglabels)
-    labels.reverse() # Wrong order otherwise, don't know why
-    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-    ax[0].legend(labels, **legendsettings) # Multiple entries, all populations
-
-
-    SIticks(fig)
-    close(fig)
-    
-    return fig
+    return coverageplots
 
 
 
@@ -730,8 +753,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = figure(facecolor=(1,1,1), figsize=figsize)
-    
+    cascadeplots = odict()
     cascadelist = ['numplhiv', 'numdiag', 'numevercare', 'numincare', 'numtreat', 'numsuppressed'] 
     cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
@@ -745,7 +767,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         bottom = 0*results.tvec # Easy way of setting to 0...
         
         ## Do the plotting
-        subplot(nsims,1,plt+1)
+        fig = figure(facecolor=(1,1,1), figsize=figsize)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
                 thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
@@ -774,7 +796,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         ax.legend(**legendsettings) # Multiple entries, all populations
         
         # Configure rest of the plot
-        if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
+        if ismultisim: ax.set_title('Cascade - %s' % titles[plt])
         else:          ax.set_title('Cascade')
         if aspercentage: ax.set_ylabel('Percentage of PLHIV')
         else:            ax.set_ylabel('Number of PLHIV')
@@ -783,12 +805,13 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         else:            ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         
+        if useSIticks: SIticks(fig)
+        else:          commaticks(fig)
+        if doclose: close(fig)
         
-    if useSIticks: SIticks(fig)
-    else:          commaticks(fig)
-    if doclose: close(fig)
+        cascadeplots['cascade-%s'%plt] = fig
     
-    return fig
+    return cascadeplots
 
 
 
@@ -911,7 +934,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
         # Configure plot specifics
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
                           'frameon':False}
-        if ismultisim: ax.set_title(titlemap[whattoplot]+'-- %s' % titles[plt])
+        if ismultisim: ax.set_title(titlemap[whattoplot]+'- %s' % titles[plt])
         else: ax.set_title(titlemap[whattoplot])
         ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
