@@ -1040,22 +1040,20 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     if filetype is None: filetype = 'png'
     results = sanitizeresults(results)
     
+    # Handle filepath
+    if filepath is None:
+        filepath = ''
+        if filename is not None: filepath = os.path.dirname(filename)
+        if filepath: filepath += os.sep
+    
     plots = makeplots(results=results, toplot=toplot, **kwargs)
     nplots = len(plots)
     for key,plt in plots.items():
-        
-        keyforfilename = filter(str.isalnum, key) # Strip out non-alphanumeric stuff for key
-        
-        # Handle filepath
-        if filepath is None:
-            filepath = ''
-            if filename is not None: filepath = os.path.dirname(filename)
-            if filepath: filepath += os.sep
-        
         # Handle filename
         if filename is not None and nplots==1: # Single plot, filename supplied -- use it
             thisfilename = filepath+filename
         else: # Any other case, generate a filename
+            keyforfilename = filter(str.isalnum, key) # Strip out non-alphanumeric stuff for key
             thisfilename = filepath+keyforfilename+'.'+filetype
         
         # Do the saving
