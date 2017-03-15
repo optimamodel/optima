@@ -11,6 +11,7 @@ from os import path, sep
 from numpy import ones, zeros
 from optima import odict, OptimaException
 from xlrd import open_workbook
+import optima as op
 
 
 #############################################################################################################################
@@ -56,87 +57,22 @@ def loadstr(source):
     return obj
 
 
-def map_path(modulename, classname, verbose=3):
-    ''' Adapted from http://stackoverflow.com/questions/13398462/unpickling-python-objects-with-a-changed-module-path '''
-    import numpy as np
-    
-    class ReallyEmptyClass(object): pass
-    
-    # Define an empty class
-    class EmptyClass(object):
-        
-        def __new__(self, *args, **kwargs):
-            if verbose>=3:
-                print('Newing empty class...')
-                print(args)
-                print(kwargs)
-                print('Done initializing')
-            try:
-                newobj = args[0](*args[1:]) # If it's a class, initialize this object with it
-                return newobj
-            except:
-                print('Newing class failed')
-                return ReallyEmptyClass()
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-        
-        def __init__(self, *args, **kwargs):
-            if verbose>=3:
-                print('Initializing empty class...')
-                print(args)
-                print(kwargs)
-                print('Done initializing')
-            try: 
-                if args[0]==np.ndarray:
-                    this = np.ndarray(*args[1:]) # If it's a class, initialize this object with it
-                    self.__dict__ = this.__dict__ # Reset this, lol
-                    print('is ok')
-                else:
-                    print('thought tihs isnt an array')
-                    print args[0]
-                if verbose>=3: print('Initializing object succeeded')
-            except:
-                if verbose>=3: print('Initializing object failed')
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            return None
-        
-        def __setstate__(self, state, *args, **kwargs):
-            if verbose>=3:
-                print('Setting state...')
-                print(state)
-                print(args)
-                print(kwargs)
-                print('Done initializing')
-#            try:
-#                self.__
-            return None
-    
-    # Handle the case where the module doesn't exist -- shouldn't happen
-    try:
-        module = __import__(modulename)
-        if verbose>=3: print('Success: Loading module %s' % modulename)
-    except:
-        if verbose>=1: print('Fail: Loading module %s' % modulename)
-        module = EmptyClass()
-    
-    # Handle the case where the attribute doesn't exist -- will happen if class names have changed
-    try:
-        output = getattr(module, classname) # Main usage case -- everything is fine
-        if verbose>=2: print('Success: Loading attribute %s.%s' % (modulename, classname))
-        return output
-    except:
-        if verbose>=2: print('Fail: Loading attribute %s.%s' % (modulename, classname))
-        return EmptyClass
-        
-
-
-def loadpickle(fileobj, attempts=10, verbose=True):
+def loadpickle(fileobj, verbose=False):
     ''' Loads a pickled object -- need to define legacy classes here since they're needed for unpickling '''
     
-    # Load the file object
-    filestr = fileobj.read() # Read the binary file object
-    unpickler = pickle.Unpickler(StringIO(filestr))
-    unpickler.find_global = map_path
-    obj = unpickler.load() # Actually load it
+    # Load the file string
+    filestr = fileobj.read()
+    
+    try: # Try just loading it
+        obj = pickle.loads(filestr) # Actually load it
+    except: # If that fails, create legacy classes and try again
+        if verbose: print('Initial loading failed, trying again with legacy classes...')
+        class EmptyClass(object): pass
+        op.project.Spreadsheet = EmptyClass
+        op.portfolio.GAOptim = EmptyClass
+        obj = pickle.loads(filestr) # Actually load it
+        del op.project.Spreadsheet
+        del op.portfolio.GAOptim
     
     return obj
     
