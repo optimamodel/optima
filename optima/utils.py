@@ -189,17 +189,6 @@ def sigfig(X, sigfigs=5, SI=False):
     '''
     from numpy import log10, floor
     output = []
-    suffix = ''
-    
-    if abs(X)>=1e9:
-        X = X/1e9
-        suffix = 'B'
-    elif abs(X)>=1e6:
-        X = X/1e6
-        suffix = 'M'
-    elif abs(X)>=1e3:
-        X = X/1e3
-        suffix = 'B'
     
     try: 
         n=len(X)
@@ -210,6 +199,20 @@ def sigfig(X, sigfigs=5, SI=False):
         islist = False
     for i in range(n):
         x = X[i]
+        
+        if SI:
+            if abs(X)>=1e9:
+                X = X/1e9
+                suffix = 'B'
+            elif abs(X)>=1e6:
+                X = X/1e6
+                suffix = 'M'
+            elif abs(X)>=1e3:
+                X = X/1e3
+                suffix = 'B'
+        else:
+            suffix = ''
+        
         try:
             if x==0:
                 output.append('0')
