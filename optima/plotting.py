@@ -28,10 +28,11 @@ defaultplots = ['budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stac
 defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
-globaltitlesize = 10
-globallabelsize = 10
-globalticksize = 8
-globallegendsize = 8
+globaltitlesize = 12
+globallabelsize = 12
+globalticksize = 10
+globallegendsize = 10
+globalfigsize = (6,4)
 
 
 
@@ -217,7 +218,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 
-def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, alpha=0.2, lw=2, dotsize=50,
             titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, colors=None, reorder=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
@@ -456,7 +457,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, **kwargs):
+def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -522,7 +523,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
 ##################################################################
     
     
-def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, usepie=False, verbose=2, **kwargs):
+def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, usepie=False, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -610,7 +611,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
 ##################################################################
     
     
-def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, verbose=2, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -700,7 +701,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
 ##################################################################
 ## Plot cascade
 ##################################################################
-def plotcascade(results=None, aspercentage=False, colors=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
                 ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, plotdata=True, **kwargs):
     ''' 
     Plot the treatment cascade.
@@ -851,7 +852,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
 ##################################################################
 ## Plot things by CD4
 ##################################################################
-def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
                 ticksize=globalticksize, legendsize=globallegendsize, ind=0, **kwargs):
     ''' 
     Plot deaths or people by CD4
@@ -1050,7 +1051,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     
     plots = makeplots(results=results, toplot=toplot, **kwargs)
     nplots = len(plots)
-    if filetype is 'pdf':
+    if filetype is 'pdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
         thisfilename = filepath+filename
         if not thisfilename: thisfilename = 'figures.pdf'
@@ -1058,7 +1059,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         printv('PDF saved to %s' % thisfilename, 2, verbose)
     for key,plt in plots.items():
         # Handle filename
-        if filename is not None and nplots==1: # Single plot, filename supplied -- use it
+        if filename and nplots==1: # Single plot, filename supplied -- use it
             thisfilename = filepath+filename
         else: # Any other case, generate a filename
             keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
@@ -1075,6 +1076,8 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                 pdf.savefig(figure=plt, **savefigargs)
             else:                 
                 plt.savefig(thisfilename, **savefigargs)
+                if not thisfilename:
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 printv('%s plot saved to %s' % (filetype,thisfilename), 2, verbose)
             close(plt)
     
