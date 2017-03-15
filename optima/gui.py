@@ -19,6 +19,16 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     heightfactor = 0.9/nrows**(1/4.)
     pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
     thisplot.set_position(pos2) # set a new position
+    thisplot.figure = thisfig
+    thisplot.pchanged()
+    thisplot.stale = True
+    return None
+
+
+def reanimateplots(plots=None):
+    ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
+    fignum = gcf().number # This is the number of the current active figure
+    for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager
     return None
 
 
@@ -55,8 +65,7 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
     
     # Actually create plots
     plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height))
-    fignum = gcf().number # This is the number of the current active figure
-    for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager
+    reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows

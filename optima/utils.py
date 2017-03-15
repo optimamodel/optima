@@ -209,7 +209,7 @@ def sigfig(X, sigfigs=5, SI=False):
                 suffix = 'M'
             elif abs(x)>=1e3:
                 x = x/1e3
-                suffix = 'B'
+                suffix = 'K'
         else:
             suffix = ''
         
