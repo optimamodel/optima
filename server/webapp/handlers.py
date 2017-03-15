@@ -840,7 +840,6 @@ class ScenarioSimulationGraphs(Resource):
             end: int -or- None
         """
         args = get_post_data_json()
-        print("> Get scenario graphs", args)
         return dataio.make_scenarios_graphs(
             project_id,
             which=args.get('which', None),
