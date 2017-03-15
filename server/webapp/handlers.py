@@ -391,7 +391,7 @@ class CalculatePortfolio(Resource):
         print("> Run BOC %s" % (portfolio_id))
         return server.webapp.tasks.launch_boc(portfolio_id, maxtime)
 
-api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>')
+api.add_resource(CalculatePortfolio, '/api/calculate/portfolio/<uuid:portfolio_id>')
 
 
 class MinimizePortfolio(Resource):
