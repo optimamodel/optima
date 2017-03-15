@@ -58,28 +58,37 @@ def loadstr(source):
 
 def map_path(modulename, classname, verbose=2):
     ''' Adapted from http://stackoverflow.com/questions/13398462/unpickling-python-objects-with-a-changed-module-path '''
+#    import sys
+#    mod = __import__(modulename)
     
-    # Define an empty class
-    class EmptyClass(object):
-        def __init__(self, *args, **kwargs):
-            pass
-
-    # Handle the case where the module doesn't exist
-    try:
-        module = __import__(modulename)
-        if verbose>=2: print('Success: Loading module %s' % modulename)
-    except:
-        if verbose>=1: print('Fail: Loading module %s' % modulename)
-        module = EmptyClass()
+    mod = __import__(modulename)
+    try: return getattr(mod, classname)
+    except: return None
+#    sys.modules[modulename] = mod
+##    eval('import %s' % modulename)
+#    return eval('sys.modules[%s].%s' % (modulename, classname))
     
-    # Handle the case where the attribute doesn't exist
-    try:
-        output = getattr(module, classname) # Main usage case -- everything is fine
-        if verbose>=2: print('Success: Loading attribute %s.%s' % (modulename, classname))
-        return output
-    except:
-        if verbose>=2: print('Fail: Loading attribute %s.%s' % (modulename, classname))
-        return EmptyClass
+#    # Define an empty class
+#    class EmptyClass(object):
+#        def __init__(self, *args, **kwargs):
+#            pass
+#    
+#    # Handle the case where the module doesn't exist
+#    try:
+#        module = __import__(modulename)
+#        if verbose>=2: print('Success: Loading module %s' % modulename)
+#    except:
+#        if verbose>=1: print('Fail: Loading module %s' % modulename)
+#        module = EmptyClass()
+#    
+#    # Handle the case where the attribute doesn't exist
+#    try:
+#        output = getattr(module, classname) # Main usage case -- everything is fine
+#        if verbose>=2: print('Success: Loading attribute %s.%s' % (modulename, classname))
+#        return output
+#    except:
+#        if verbose>=2: print('Fail: Loading attribute %s.%s' % (modulename, classname))
+#        return EmptyClass
         
 
 
@@ -89,7 +98,7 @@ def loadpickle(fileobj, attempts=10, verbose=True):
     # Load the file object
     filestr = fileobj.read() # Read the binary file object
     unpickler = pickle.Unpickler(StringIO(filestr))
-#    unpickler.find_global = map_path
+    unpickler.find_global = map_path
     obj = unpickler.load() # Actually load it
     
 #    # Attempt to read the pickle
