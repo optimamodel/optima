@@ -1,6 +1,6 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj, checktype
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, show, pause
+from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, gcf
 from matplotlib.widgets import CheckButtons, Button
 from matplotlib.backends.backend_qt4agg import new_figure_manager_given_figure as nfmgf
@@ -30,6 +30,8 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
     results = sanitizeresults(tmpresults)
     
     # Do plotting
+    wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
+    if wasinteractive: ioff()
     width,height = fig.get_size_inches()
     
     # Actually create plots
@@ -52,6 +54,8 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
                 newp = ncols*thisrow + origcol # Calculate new row/column
                 addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1))
         else: pass # Must have 0 length or something
+    
+    if wasinteractive: ion()
     show()
 
 
