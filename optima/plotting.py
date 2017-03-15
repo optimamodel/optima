@@ -11,11 +11,12 @@ plotting to this file.
 Version: 2016jul06
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, checktype, promotetoarray
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
+from matplotlib.backends.backend_qt4agg import new_figure_manager_given_figure as nfmgf
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
-from optima import promotetoarray
+from pylab import gcf, get_fignums, close, ion, ioff, isinteractive
 import textwrap
 import os
 
@@ -1009,7 +1010,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
 
 
-def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, **kwargs):
+def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, verbose=2, **kwargs):
     '''
     Save the requested plots to disk.
     
@@ -1034,6 +1035,8 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     '''
     
     # Preliminaries
+    wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
+    if wasinteractive: ioff()
     if filetype is None: filetype = 'png'
     results = sanitizeresults(results)
     
@@ -1060,15 +1063,24 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         if filetype is 'fig':
             saveobj(thisfilename, plt)
         else:
-            plt.savefig(filename, **savefigargs)
-            
+            reanimateplots(plt)
+            plt.savefig(thisfilename, **savefigargs)
+            close(plt)
+        
+        printv('Plot saved to %s' % thisfilename, 2, verbose)
     
-    
-    
-    
-    
+    if wasinteractive: ion()
     return None
 
+
+
+def reanimateplots(plots=None):
+    ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
+    if len(get_fignums()): fignum = gcf().number # This is the number of the current active figure, if it exists
+    else: fignum = 1
+    if not checktype(plots, odict): plots = odict({'Plot':plots}) # Convert to an odict
+    for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
+    return None
 
 
 def sanitizeresults(results):
@@ -1103,3 +1115,5 @@ def commaticks(figure, axis='y'):
         elif axis=='z': thisaxis = ax.zaxis
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+
+

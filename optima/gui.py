@@ -1,9 +1,8 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj, checktype, sanitizeresults
+from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj, sanitizeresults
 from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
-from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, gcf, get_fignums
+from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
-from matplotlib.backends.backend_qt4agg import new_figure_manager_given_figure as nfmgf
 
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
@@ -560,15 +559,6 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
     thisplot.pchanged()
     thisplot.stale = True
-    return None
-
-
-def reanimateplots(plots=None):
-    ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
-    if len(get_fignums()): fignum = gcf().number # This is the number of the current active figure, if it exists
-    else: fignum = 1
-    if not checktype(plots, odict): plots = odict({'Plot':plots}) # Convert to an odict
-    for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
     return None
 
 
