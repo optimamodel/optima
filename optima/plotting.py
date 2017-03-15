@@ -1017,7 +1017,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     Arguments:
         results -- either a Resultset, Multiresultset, or a Project
         toplot -- either a plot key or a list of plot keys
-        filetype -- the file type; can be 'fig' or anything supported by savefig()
+        filetype -- the file type; can be 'fig', 'pdf' (default), or anything supported by savefig()
         filepath -- the folder to save the file(s) in
         filename -- the file to save to (only uses path if multiple files)
         savefigargs -- dictionary of arguments passed to savefig()
@@ -1026,8 +1026,9 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     Example usages:
         import optima as op
         P = op.demo(0)
-        op.saveplots(P, 'cascade', filename='mycascade.png')
+        op.saveplots(P, 'cascade', 'png', filename='mycascade.png')
         op.saveplots(P, ['numplhiv','cascade'], filepath='/home/me', filetype='svg')
+        op.saveplots(P, filetype='pdf') # Save everything to one PDF file
     
     If saved as 'fig', then can load and display the plot using op.loadplot().
     
@@ -1037,7 +1038,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     # Preliminaries
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
     if wasinteractive: ioff()
-    if filetype is None: filetype = 'png'
+    if filetype is None: filetype = 'pdf' # This ensures that only one file is created
     results = sanitizeresults(results)
     
     # Handle filepath
