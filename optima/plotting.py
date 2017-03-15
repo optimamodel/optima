@@ -12,9 +12,12 @@ Version: 2016jul06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist
-from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh, pie, axis
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
+from pylab import plot, ylim, fill_between, scatter, gca, subplot, legend, barh, pie, axis, figtext
+from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
+from optima import promotetoarray
+import textwrap
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiplottypes = ['total', 'stacked', 'population']
@@ -153,8 +156,6 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     
     ## Initialize
     allplots = odict()
-    wasinteractive = isinteractive() # Get current state of interactivity
-    ioff() # Just in case, so we don't flood the user's screen with figures
     if toplot is None: toplot = defaultplots # Go straight ahead and replace with defaults
     if not(isinstance(toplot, list)): toplot = [toplot] # Handle single entries, for example 
     if 'default' in toplot: # Special case for handling default plots
@@ -230,17 +231,13 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
     
-    
-    # Tidy up: turn interactivity back on
-    if wasinteractive: ion() 
-    
     return allplots
 
 
 
 
 
-def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, colors=None, reorder=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
@@ -369,7 +366,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
             
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
-                epiplots[pk] = figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
+                epiplots[pk] = Figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
@@ -471,7 +468,6 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, doclose=True, plot
                     legend(labels[::-1], **legendsettings) # Multiple simulations
                 if useSIticks: SIticks(epiplots[pk])
                 else:          commaticks(epiplots[pk])
-                if doclose: close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
 
@@ -503,7 +499,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
     
     # Set up figure and do plot
     sigfigs = 2 # Number of significant figures
-    fig = figure(facecolor=(1,1,1), figsize=figsize)
+    fig = Figure(facecolor=(1,1,1), figsize=figsize)
     colors = gridcolormap(ncurves)
     
     # Plot model estimates with uncertainty
@@ -535,8 +531,6 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
     ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
     ax.set_ylim((0,currentylims[1]))
     ax.set_xlim((0, maxiters))
-    
-    close(fig)
     
     return fig
 
@@ -580,7 +574,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     # Make pie plots
     if usepie:
         for i in range(nallocs):
-            fig = figure(facecolor=(1,1,1), figsize=figsize)
+            fig = Figure(facecolor=(1,1,1), figsize=figsize)
             
             # Make a pie
             ydata = budgets[i][:]
@@ -594,11 +588,10 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
             legend(labels, **legendsettings) # Multiple entries, all populations
             
             budgetplots['budget-%s'%i] = fig
-            close(fig)
       
     # Make bar plots
     else:
-        fig = figure(facecolor=(1,1,1), figsize=figsize)
+        fig = Figure(facecolor=(1,1,1), figsize=figsize)
         ax = subplot(1,1,1)
         fig.subplots_adjust(bottom=0.50) # Less space on bottom
         
@@ -623,7 +616,6 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         
         SIticks(fig, axis='x')
         budgetplots['budget'] = fig
-        close(fig)
     
     return budgetplots
 
@@ -669,7 +661,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
     
     for plt in range(nallocs):
         
-        fig = figure(facecolor=(1,1,1), figsize=figsize)
+        fig = Figure(facecolor=(1,1,1), figsize=figsize)
         
         nbudgetyears = len(budgetyearstoplot[plt])
         ax.append(subplot(1,1,1))
@@ -711,7 +703,6 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
         # Tidy up
         SIticks(fig)
         coverageplots['coverages-%s'%plt] = fig
-        close(fig)
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
     
@@ -730,7 +721,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
 ##################################################################
 ## Plot cascade
 ##################################################################
-def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+def plotcascade(results=None, aspercentage=False, colors=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
                 ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, plotdata=True, **kwargs):
     ''' 
     Plot the treatment cascade.
@@ -767,7 +758,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         bottom = 0*results.tvec # Easy way of setting to 0...
         
         ## Do the plotting
-        fig = figure(facecolor=(1,1,1), figsize=figsize)
+        fig = Figure(facecolor=(1,1,1), figsize=figsize)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
                 thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
@@ -807,7 +798,6 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         
         if useSIticks: SIticks(fig)
         else:          commaticks(fig)
-        if doclose: close(fig)
         
         cascadeplots['cascade-%s'%plt] = fig
     
@@ -840,7 +830,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         colors = gridcolormap(nprogs)
             
     
-    fig = figure(facecolor=(1,1,1), figsize=(10,10))
+    fig = Figure(facecolor=(1,1,1), figsize=(10,10))
     fig.subplots_adjust(left=0.10) # Less space on left
     fig.subplots_adjust(right=0.98) # Less space on right
     fig.subplots_adjust(top=0.95) # Less space on bottom
@@ -900,7 +890,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = figure(figsize=figsize)
+    fig = Figure(figsize=figsize)
     
     titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
     settings = results.projectref().settings
@@ -941,25 +931,16 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
         ax.legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
         
     SIticks(fig)
-    close(fig)
     
     return fig    
 
 
-from optima import promotetoarray
-from pylab import isnan, linspace
+
 
 def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
     """ Plot the cost-coverage curve for a single program"""
     
     # Put plotting imports here so fails at the last possible moment
-    from pylab import figure, figtext, isinteractive, ioff, ion, close, show
-    from matplotlib.ticker import MaxNLocator
-    import textwrap
-    
-    wasinteractive = isinteractive() # Get current state of interactivity
-    ioff() # Just in case, so we don't flood the user's screen with figures
-
     year = promotetoarray(year)
     colors = gridcolormap(len(year))
     plotdata = odict()
@@ -1005,7 +986,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     else:
         plotdata['xlinedata'] = xlinedata
         
-    cost_coverage_figure = existingFigure if existingFigure else figure()
+    cost_coverage_figure = existingFigure if existingFigure else Figure()
     cost_coverage_figure.hold(True)
     axis = cost_coverage_figure.gca()
 
@@ -1039,15 +1020,10 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     axis.tick_params(axis='both', which='major', labelsize=11)
     axis.set_xlabel(plotdata['xlabel'], fontsize=11)
     axis.set_ylabel(plotdata['ylabel'], fontsize=11)
-    axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
+    axis.get_xaxis().set_major_locator(ticker.MaxNLocator(nbins=3))
     axis.set_title(program.short)
     axis.get_xaxis().get_major_formatter().set_scientific(False)
     axis.get_yaxis().get_major_formatter().set_scientific(False)
     if len(year)>1: axis.legend(loc=4)
     
-    # Tidy up
-    if not doplot: close(cost_coverage_figure)
-    if wasinteractive: ion()
-    if doplot: show()
-
     return cost_coverage_figure
