@@ -1028,9 +1028,9 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     Example usages:
         import optima as op
         P = op.demo(0)
+        op.saveplots(P) # Save everything to one PDF file
         op.saveplots(P, 'cascade', 'png', filename='mycascade.png', savefigargs={'dpi':200})
         op.saveplots(P, ['numplhiv','cascade'], filepath='/home/me', filetype='svg')
-        op.saveplots(P, filetype='pdf') # Save everything to one PDF file
     
     If saved as 'fig', then can load and display the plot using op.loadplot().
     
@@ -1048,7 +1048,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     if filepath is None:
         filepath = ''
         if filename: filepath = os.path.dirname(filename)
-        if filepath: filepath += os.sep
+    if filepath: filepath += os.sep
     
     plots = makeplots(results=results, toplot=toplot, **kwargs)
     nplots = len(plots)
