@@ -32,7 +32,7 @@ globaltitlesize = 12
 globallabelsize = 12
 globalticksize = 10
 globallegendsize = 10
-globalfigsize = (6,4)
+globalfigsize = (8,4)
 
 
 
@@ -1027,7 +1027,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     Example usages:
         import optima as op
         P = op.demo(0)
-        op.saveplots(P, 'cascade', 'png', filename='mycascade.png')
+        op.saveplots(P, 'cascade', 'png', filename='mycascade.png', savefigargs={'dpi':200})
         op.saveplots(P, ['numplhiv','cascade'], filepath='/home/me', filetype='svg')
         op.saveplots(P, filetype='pdf') # Save everything to one PDF file
     
@@ -1066,7 +1066,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
             thisfilename = filepath+keyforfilename+'.'+filetype
         
         # Do the saving
-        if savefigargs is None: savefigargs = {}
+        if savefigargs is None: savefigargs = {'dpi':200} # Specify a higher default DPI
         if filetype is 'fig':
             saveobj(thisfilename, plt)
             printv('Figure object saved to %s' % thisfilename, 2, verbose)
