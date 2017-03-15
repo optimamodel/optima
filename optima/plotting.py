@@ -1041,19 +1041,23 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     results = sanitizeresults(results)
     
     # Handle filepath
+    if filename is None: filename = ''
     if filepath is None:
         filepath = ''
-        if filename is not None: filepath = os.path.dirname(filename)
+        if filename: filepath = os.path.dirname(filename)
         if filepath: filepath += os.sep
     
     plots = makeplots(results=results, toplot=toplot, **kwargs)
     nplots = len(plots)
+    if filetype is 'pdf':
+        from matplotlib.backends.backend_pdf import PdfPages
+        pdf = PdfPages(filepath+filename)
     for key,plt in plots.items():
         # Handle filename
         if filename is not None and nplots==1: # Single plot, filename supplied -- use it
             thisfilename = filepath+filename
         else: # Any other case, generate a filename
-            keyforfilename = filter(str.isalnum, key) # Strip out non-alphanumeric stuff for key
+            keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
             thisfilename = filepath+keyforfilename+'.'+filetype
         
         # Do the saving
@@ -1062,7 +1066,8 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
             saveobj(thisfilename, plt)
         else:
             reanimateplots(plt)
-            plt.savefig(thisfilename, **savefigargs)
+            if filetype is 'pdf': pdf.savefig(**savefigargs)
+            else:                 plt.savefig(thisfilename, **savefigargs)
             close(plt)
         
         printv('Plot saved to %s' % thisfilename, 2, verbose)
