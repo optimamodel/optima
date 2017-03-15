@@ -51,21 +51,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     function getSelectors() {
-      if ($scope.state.graphs) {
-        var selectors = $scope.state.graphs.selectors;
+      function getChecked(s) { return s.checked; }
+      function getKey(s) { return s.key }
+      var scope = $scope;
+      var which = [];
+      if (scope.graphs) {
+        if (scope.graphs.advanced) {
+          which.push('advanced');
+        }
+        var selectors = scope.graphs.selectors;
         if (selectors) {
-          var which = _.filter(selectors, function(selector) {
-            return selector.checked;
-          })
-          .map(function(selector) {
-            return selector.key;
-          });
-          if (which.length > 0) {
-            return which;
-          }
+          which = which.concat(_.filter(selectors, getChecked).map(getKey));
         }
       }
-      return null;
+      return which;
     }
 
     $scope.graphScenarios = function(isRun) {
