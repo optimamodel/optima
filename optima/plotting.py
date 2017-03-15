@@ -32,28 +32,7 @@ globalticksize = 8
 globallegendsize = 8
 
 
-def SItickformatter(x, pos):  # formatter function takes tick label and tick position
-    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    return sigfig(x, sigfigs=None, SI=True)
 
-
-def SIticks(figure, axis='y'):
-    ''' Apply SI tick formatting to the y axis of a figure '''
-    for ax in figure.axes:
-        if axis=='x':   thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise OptimaException('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
-
-def commaticks(figure, axis='y'):
-    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
-    for ax in figure.axes:
-        if axis=='x':   thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise OptimaException('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 
 def getplotselections(results, advanced=False):
@@ -160,7 +139,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     if 'default' in toplot: # Special case for handling default plots
         toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
-    
+    results = sanitizeresults(results)
 
     ## Add improvement plot
     if 'improvement' in toplot:
@@ -1010,7 +989,6 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         program.costcovdata['coverage'],
         color='#666666')
     
-
     ax.set_xlim([0, xupperlim])
     ax.set_ylim(bottom=0)
     ax.tick_params(axis='both', which='major', labelsize=11)
@@ -1023,3 +1001,38 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     if len(year)>1: ax.legend(loc=4)
     
     return fig
+
+
+
+def sanitizeresults(results):
+    ''' Allow for flexible input -- a results structure, a list, or a project file '''
+    if type(results)==list: output = Multiresultset(results) # Convert to a multiresults set if it's a list of results
+    elif type(results) not in [Resultset, Multiresultset]:
+        try: output = results.results[-1] # Maybe it's actually a project? Pull out results
+        except: raise OptimaException('Could not figure out how to get results from:\n%s' % results)
+    else: output = results # Just use directly
+    return output
+
+
+def SItickformatter(x, pos):  # formatter function takes tick label and tick position
+    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    return sigfig(x, sigfigs=None, SI=True)
+
+
+def SIticks(figure, axis='y'):
+    ''' Apply SI tick formatting to the y axis of a figure '''
+    for ax in figure.axes:
+        if axis=='x':   thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise OptimaException('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+
+def commaticks(figure, axis='y'):
+    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
+    for ax in figure.axes:
+        if axis=='x':   thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise OptimaException('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))

@@ -1,5 +1,6 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj, checktype
+from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj, checktype
+from optima._plotting import sanitizeresults
 from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, gcf
 from matplotlib.widgets import CheckButtons, Button
@@ -13,7 +14,7 @@ if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fu
 ##############################################################################
 
 
-def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
+def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
     Does the hard work for updateplots() for pygui()
     Keyword arguments if supplied are passed on to figure().
@@ -27,7 +28,6 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
     
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
-    results = sanitizeresults(tmpresults)
     
     # Do plotting
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
@@ -569,16 +569,6 @@ def reanimateplots(plots=None):
     if not checktype(plots, odict): plots = odict({'Plot':plots}) # Convert to an odict
     for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager
     return None
-
-
-def sanitizeresults(tmpresults):
-    ''' Allow for flexible input -- a results structure, a list, or a project file '''
-    if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
-    elif type(tmpresults) not in [Resultset, Multiresultset]:
-        try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
-        except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
-    else: results = tmpresults # Just use directly
-    return results
 
 
 def closegui(event=None):
