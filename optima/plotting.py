@@ -350,7 +350,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 epiplots[pk] = Figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
                 ax = epiplots[pk].add_subplot(111)
-                ax.set_position([0.5,0.5,0.2,0.2])
+                ax.set_position(globalaxisposition)
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
