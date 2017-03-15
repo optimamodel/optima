@@ -24,7 +24,7 @@ import os
 epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = 'none' # Color of estimates rather than real data
-defaultplots = ['budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
 defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
@@ -349,7 +349,6 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
                 epiplots[pk] = Figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
-                epiplots[pk].subplots_adjust(right=0.50)
                 ax = epiplots[pk].add_subplot(111)
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
@@ -740,7 +739,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
         ## Do the plotting
         fig = Figure(facecolor=(1,1,1), figsize=figsize)
         ax = fig.add_subplot(111)
-#        ax.set_position(globalaxisposition)
+        ax.set_position(globalaxisposition)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
                 thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
