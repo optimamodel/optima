@@ -21,7 +21,7 @@ class Portfolio(object):
     ## Built-in methods -- initialization, and the thing to print if you call a portfolio
     #######################################################################################################
 
-    def __init__(self, name='default', objectives=None, projects=None, gaoptims=None):
+    def __init__(self, name='default', objectives=None, projects=None):
         ''' Initialize the portfolio '''
 
         ## Set name
