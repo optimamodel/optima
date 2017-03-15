@@ -587,7 +587,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
             
             # Make a pie
             ydata = budgets[i][:]
-            pie(ydata, colors=progcolors, linewidth=0)
+            pie(ydata, colors=progcolors)
             
             # Set up legend
             labels = dcp(proglabels)
@@ -625,7 +625,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         budgetplots['budget'] = fig
         close(fig)
     
-    return fig
+    return budgetplots
 
 
 
