@@ -11,6 +11,7 @@ import itertools
 import random
 try: import BaseHTTPServer as server # Python 2.x
 except: from http import server # Python 3.x
+from optima import makeplots
 
 
 def generate_handler(html, files=None):
@@ -80,3 +81,111 @@ def serve(html, ip='127.0.0.1', port=8888, n_retries=50):
 
     # CK: don't serve forever, just create it once
     srvr.handle_request()
+
+
+def browser(results, toplot=None, doplot=True):
+    ''' 
+    Create an MPLD3 GUI and display in the browser. This is basically a testbed for 
+    the Optima frontend.
+    
+    Usage:
+        browser(results, [toplot])
+    
+    where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
+        toplot = ['prev-tot', 'inci-pop']
+    
+    With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
+    
+    Version: 1.1 (2015dec29) by cliffk
+    '''
+    import mpld3 # Only import this if needed, since might not always be available
+    import json
+
+    ## Specify the div style, and create the HTML template we'll add the data to
+    divstyle = "float: left"
+    html = '''
+    <html>
+    <head><script src="https://code.jquery.com/jquery-1.11.3.min.js"></script></head>
+    <body>
+    !MAKE DIVS!
+    <script>function mpld3_load_lib(url, callback){var s = document.createElement('script'); s.src = url; s.async = true; s.onreadystatechange = s.onload = callback; s.onerror = function(){console.warn("failed to load library " + url);}; document.getElementsByTagName("head")[0].appendChild(s)} mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3git.js", function(){
+    !DRAW FIGURES!
+    })});
+    </script>
+    <script>
+    function move_year() {
+        console.log('trying to move year');
+        var al = $('.mpld3-baseaxes').length;
+        var dl = $('div.fig').length
+        if (al === dl) {
+            $('.mpld3-baseaxes > text').each(function() {
+                var value = $(this).text();
+                if (value === 'Year') {
+                    console.log('found year');
+                    $(this).attr('y', parseInt($(this).attr('y'))+10);
+                    console.log($(this).attr('y'));
+                }
+            });
+        } else {
+            setTimeout(move_year, 150);
+        }
+    }
+    function format_xaxis() {
+        var axes = $('.mpld3-xaxis');
+        var al = axes.length;
+        var dl = $('div.fig').length;
+        if (al === dl) {
+            $(axes).find('g.tick > text').each(function() {
+                $(this).text($(this).text().replace(',',''));
+            });
+        } else {
+            setTimeout(format_xaxis, 150);
+        }
+    }
+    function add_lines_to_legends() {
+        console.log('adding lines to legends');
+        var al = $('.mpld3-baseaxes').length;
+        var dl = $('div.fig').length
+        if (al === dl) {
+            $('div.fig').each(function() {
+                var paths = $(this).find('.mpld3-baseaxes > text');
+                if (paths) {
+                    var legend_length = paths.length - 2;
+                    var lines = $(this).find('.mpld3-axes > path');
+                    var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
+                    $(this).find('.mpld3-baseaxes').append(lines_to_copy);
+                }
+            });
+        } else {
+            setTimeout(add_lines_to_legends, 150);
+        }
+    }
+    $(document).ready(function() {
+        format_xaxis();
+        move_year();
+        add_lines_to_legends();
+    });
+    </script>
+    </body></html>
+    '''
+
+    ## Create the figures to plot
+    jsons = [] # List for storing the converted JSONs
+    plots = makeplots(results=results, toplot=toplot) # Generate the plots
+    nplots = len(plots) # Figure out how many plots there are
+    for p in range(nplots): # Loop over each plot
+        mpld3.plugins.connect(plots[p], mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
+        jsons.append(str(json.dumps(mpld3.fig_to_dict(plots[p])))) # Save to JSON
+    
+    ## Create div and JSON strings to replace the placeholers above
+    divstr = ''
+    jsonstr = ''
+    for p in range(nplots):
+        divstr += '<div style="%s" id="fig%i" class="fig"></div>\n' % (divstyle, p) # Add div information: key is unique ID for each figure
+        jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (p, jsons[p]) # Add the JSON representation of each figure -- THIS IS KEY!
+    html = html.replace('!MAKE DIVS!',divstr) # Populate div information
+    html = html.replace('!DRAW FIGURES!',jsonstr) # Populate figure information
+    
+    ## Launch a server or return the HTML representation
+    if doplot: serve(html)
+    else: return html

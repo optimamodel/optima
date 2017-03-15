@@ -174,8 +174,13 @@ from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotal
 ## Load high level GUI module
 try: 
     from . import gui
-    from .gui import plotresults, pygui, plotpeople, plotpars, browser, manualfit
+    from .gui import plotresults, pygui, plotpeople, plotpars, manualfit
 except Exception as E: _failed.append('gui: %s' % E.__repr__())
+
+try: 
+    from . import webserver as _webserver
+    from .webserver import browser
+except Exception as E: _failed.append('webserver: %s' % E.__repr__())
 
 
 #####################################################################################################################
