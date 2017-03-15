@@ -367,7 +367,7 @@ class Resultset(object):
        
         if hasattr(self, 'budgets'):   thisbudget = self.budgets[ind]
         else:                          thisbudget = self.budget
-        if hasattr(self, 'coverages'): thiscoverage = self.coveragess[ind]
+        if hasattr(self, 'coverages'): thiscoverage = self.coverages[ind]
         else:                          thiscoverage = self.coverage
         
         if len(self.budget)>ind: # WARNING, does not support multiple years

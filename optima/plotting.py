@@ -87,10 +87,10 @@ def getplotselections(results, advanced=False):
     
     
     ## Add selection for budget allocations and coverage
-    budcovdict = odict([('budgets','Budget allocations'), ('coverages','Program coverages')])
-    for bckey,bclabel in budcovdict.items(): # Loop over budget and coverage
-        if hasattr(results, bckey):
-            budcovres = getattr(results, bckey)
+    budcovlist = [('budgets','budgets','Budget allocations'), ('coverage','coverages','Program coverages')]
+    for bckey,bcattr,bclabel in budcovlist: # Loop over budget and coverage
+        if hasattr(results, bcattr):
+            budcovres = getattr(results, bcattr)
             if budcovres and all([item is not None for item in budcovres.values()]): # Make sure none of the individual budgets are none either
                 plotselections['keys'].append(bckey) # e.g. 'budget'
                 plotselections['names'].append(bclabel) # e.g. 'Budget allocation'
@@ -177,9 +177,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         
     
     ## Add budget plot
-    thesekeys = {'budget', 'budgets'}
-    if thesekeys.intersection(toplot):
-        for thiskey in list(thesekeys.intersection(toplot)): toplot.remove(thiskey) # Because everything else is passed to plotepi()
+    if 'budget' in toplot:
+        toplot.remove('budget') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
                 allplots['budgets'] = plotbudget(results, die=die, **kwargs)
@@ -188,10 +187,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
     
     ## Add coverage plot(s)
-    thesekeys = {'coverage', 'coverages'}
-    if thesekeys.intersection(toplot):
-        for thiskey in list(thesekeys.intersection(toplot)): toplot.remove(thiskey) # Because everything else is passed to plotepi()
-        toplot.remove('coverages') # Because everything else is passed to plotepi()
+    if 'coverage' in toplot:
+        toplot.remove('coverage') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
                 coverageplots = plotcoverage(results, die=die, **kwargs)
@@ -561,8 +558,6 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
 
     Results object must be of Multiresultset type.
     
-    "which" should be either 'budget' or 'coverage'
-    
     Version: 2017mar09
     '''
     
@@ -629,8 +624,6 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
     Results object must be of Multiresultset type.
-    
-    "which" should be either 'budget' or 'coverage'
     
     Version: 2017mar09
     '''
