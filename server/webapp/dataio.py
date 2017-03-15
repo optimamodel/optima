@@ -1075,8 +1075,9 @@ def load_parset_graphs(
     result = load_result(project_id, parset_id, calculation_type, which)
     if result:
         if not which:
-            print(">> load_parset_graphs load stored which of parset '%s'" % parset.name)
-            which = result.which
+            if hasattr(result, 'which'):
+                print(">> load_parset_graphs load stored which of parset '%s'" % parset.name)
+                which = result.which
 
     if parameters is not None:
         print(">> load_parset_graphs updating parset '%s'" % parset.name)
@@ -1308,8 +1309,9 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=
             print(">> make_scenarios_graphs: no results found")
             return {}
     if not which:
-        print(">> make_scenarios_graphs load which")
-        which = result.which
+        if hasattr(result, 'which'):
+            print(">> make_scenarios_graphs load which")
+            which = result.which
     if is_run:
         project = load_project(project_id)
         if len(project.scens) == 0:
@@ -1412,12 +1414,13 @@ def load_optimization_graphs(project_id, optimization_id, which):
     project = load_project(project_id)
     optimization = parse.get_optimization_from_project(project, optimization_id)
     result_name = "optim-" + optimization.name
-    parset_id = project.parsets[optimization.parsetname].uid
     result = load_result(project.uid, None, "optimization", which, result_name)
-    if result is None:
+    if not result:
         return {}
     else:
-        print(">> Loading graphs for result '%s'" % result.name)
+        if hasattr(result, 'which'):
+            which = result.which
+        print(">> Loading graphs for result '%s' %s" % (result.name, which))
         return make_mpld3_graph_dict(result, which)
 
 
