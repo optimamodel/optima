@@ -58,16 +58,47 @@ def loadstr(source):
 
 def map_path(modulename, classname, verbose=3):
     ''' Adapted from http://stackoverflow.com/questions/13398462/unpickling-python-objects-with-a-changed-module-path '''
+    import numpy as np
+    
+    class ReallyEmptyClass(object): pass
     
     # Define an empty class
     class EmptyClass(object):
+        
+        def __new__(self, *args, **kwargs):
+            if verbose>=3:
+                print('Newing empty class...')
+                print(args)
+                print(kwargs)
+                print('Done initializing')
+            try:
+                newobj = args[0](*args[1:]) # If it's a class, initialize this object with it
+                return newobj
+            except:
+                print('Newing class failed')
+                return ReallyEmptyClass()
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        
         def __init__(self, *args, **kwargs):
             if verbose>=3:
                 print('Initializing empty class...')
                 print(args)
                 print(kwargs)
                 print('Done initializing')
+            try: 
+                if args[0]==np.ndarray:
+                    this = np.ndarray(*args[1:]) # If it's a class, initialize this object with it
+                    self.__dict__ = this.__dict__ # Reset this, lol
+                    print('is ok')
+                else:
+                    print('thought tihs isnt an array')
+                    print args[0]
+                if verbose>=3: print('Initializing object succeeded')
+            except:
+                if verbose>=3: print('Initializing object failed')
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             return None
+        
         def __setstate__(self, state, *args, **kwargs):
             if verbose>=3:
                 print('Setting state...')
@@ -75,6 +106,8 @@ def map_path(modulename, classname, verbose=3):
                 print(args)
                 print(kwargs)
                 print('Done initializing')
+#            try:
+#                self.__
             return None
     
     # Handle the case where the module doesn't exist -- shouldn't happen
