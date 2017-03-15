@@ -33,7 +33,7 @@ globallabelsize = 10
 globalticksize = 8
 globallegendsize = 8
 globalfigsize = (8,4)
-globalaxisposition = [0.1,0.1,0.7,0.8]
+globalaxisposition = [0.1,0.06,0.66,0.8]
 
 
 
