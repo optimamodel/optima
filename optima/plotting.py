@@ -677,7 +677,8 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
         
         ylabel = 'Coverage (%)'
         ax[-1].set_ylabel(ylabel)
-        ax[-1].set_title(alloclabels[plt])
+        if nallocs>1: ax[-1].set_title('Coverage -- %s' % alloclabels[plt])
+        else:         ax[-1].set_title('Program coverage')
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
         
         # Set up legend
