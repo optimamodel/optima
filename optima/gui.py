@@ -1,7 +1,7 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj, checktype, sanitizeresults
 from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
-from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, gcf
+from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, gcf, get_fignums
 from matplotlib.widgets import CheckButtons, Button
 from matplotlib.backends.backend_qt4agg import new_figure_manager_given_figure as nfmgf
 
@@ -537,6 +537,7 @@ def loadplot(filename=None):
     Later:
         cascadefig = op.loadplot('cascade.fig')
     '''
+    ion() # Without this, it doesn't show up
     fig = loadobj(filename)
     reanimateplots(fig)
     return fig
@@ -564,9 +565,10 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
 
 def reanimateplots(plots=None):
     ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
-    fignum = gcf().number # This is the number of the current active figure
+    if len(get_fignums()): fignum = gcf().number # This is the number of the current active figure, if it exists
+    else: fignum = 1
     if not checktype(plots, odict): plots = odict({'Plot':plots}) # Convert to an odict
-    for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager
+    for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
     return None
 
 
