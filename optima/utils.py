@@ -201,14 +201,14 @@ def sigfig(X, sigfigs=5, SI=False):
         x = X[i]
         
         if SI:
-            if abs(X)>=1e9:
-                X = X/1e9
+            if abs(x)>=1e9:
+                x = x/1e9
                 suffix = 'B'
-            elif abs(X)>=1e6:
-                X = X/1e6
+            elif abs(x)>=1e6:
+                x = x/1e6
                 suffix = 'M'
-            elif abs(X)>=1e3:
-                X = X/1e3
+            elif abs(x)>=1e3:
+                x = x/1e3
                 suffix = 'B'
         else:
             suffix = ''

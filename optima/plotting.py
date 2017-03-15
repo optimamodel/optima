@@ -13,7 +13,6 @@ Version: 2016jul06
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
-from pylab import plot, ylim, fill_between, scatter, gca, subplot, legend, barh, pie, axis, figtext
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
 from optima import promotetoarray
@@ -367,6 +366,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
                 epiplots[pk] = Figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
+                ax = epiplots[pk].add_subplot(111)
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
@@ -759,6 +759,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=(14,10), 
         
         ## Do the plotting
         fig = Figure(facecolor=(1,1,1), figsize=figsize)
+        ax = fig.add_subplot(111)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
                 thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
@@ -766,15 +767,14 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=(14,10), 
             else:
                 thisdata = results.main[key].tot[0] # Get the best estimate
                 if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[0]
-            fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
+            ax.fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
-            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
+            ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
         if plotdata and not aspercentage: # Don't try to plot if it's a percentage
             thisdata = results.main['numtreat'].datatot[0]
-            scatter(results.datayears, thisdata, c=(0,0,0), label='Treatment data')
+            ax.scatter(results.datayears, thisdata, c=(0,0,0), label='Treatment data')
         
         ## Configure plot -- WARNING, copied from plotepi()
-        ax = gca()
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
         ax.title.set_fontsize(titlesize)
@@ -793,7 +793,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=(14,10), 
         else:            ax.set_ylabel('Number of PLHIV')
                 
         if aspercentage: ax.set_ylim((0,100))
-        else:            ax.set_ylim((0,ylim()[1]))
+        else:            ax.set_ylim((0,ax.get_ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         
         if useSIticks: SIticks(fig)
