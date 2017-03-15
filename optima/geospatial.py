@@ -6,7 +6,7 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 Version: 2016nov03
 """
 
-from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
+from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, printv
 from PyQt4 import QtGui
 from pylab import figure, close, array
 from time import time
@@ -430,15 +430,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     project.runsim(project.parsets[-1].name)
     
     ## 6. Save each project file into the directory
-#        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
-    if checkplots: 
-        plotresults(results , toplot=['popsize-tot', 'popsize-pops'])
-        plotresults(results , toplot=['prev-tot', 'prev-pops'])
     for subproject in projlist:
-#            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
-        if checkplots:
-            plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
-            plotresults(subproject.parsets[-1].getresults(), toplot=['prev-tot', 'prev-pops'])
         saveobj(destination+os.sep+subproject.name+'.prj', subproject)
         
     return None
