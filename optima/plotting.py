@@ -11,12 +11,13 @@ plotting to this file.
 Version: 2016jul06
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
 from optima import promotetoarray
 import textwrap
+import os
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiplottypes = ['total', 'stacked', 'population']
@@ -1001,6 +1002,68 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     if len(year)>1: ax.legend(loc=4)
     
     return fig
+
+
+
+def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, **kwargs):
+    '''
+    Save the requested plots to disk.
+    
+    Arguments:
+        results -- either a Resultset, Multiresultset, or a Project
+        toplot -- either a plot key or a list of plot keys
+        filetype -- the file type; can be 'fig' or anything supported by savefig()
+        filepath -- the folder to save the file(s) in
+        filename -- the file to save to (only uses path if multiple files)
+        savefigargs -- dictionary of arguments passed to savefig()
+        kwargs -- passed to makeplots()
+    
+    Example usages:
+        import optima as op
+        P = op.demo(0)
+        op.saveplots(P, 'cascade', filename='mycascade.png')
+        op.saveplots(P, ['numplhiv','cascade'], filepath='/home/me', filetype='svg')
+    
+    If saved as 'fig', then can load and display the plot using op.loadplot().
+    
+    Version: 2017mar15    
+    '''
+    
+    # Preliminaries
+    if filetype is None: filetype = 'png'
+    results = sanitizeresults(results)
+    
+    plots = makeplots(results=results, toplot=toplot, **kwargs)
+    nplots = len(plots)
+    for key,plt in plots.items():
+        
+        keyforfilename = filter(str.isalnum, key) # Strip out non-alphanumeric stuff for key
+        
+        # Handle filepath
+        if filepath is None:
+            filepath = ''
+            if filename is not None: filepath = os.path.dirname(filename)
+            if filepath: filepath += os.sep
+        
+        # Handle filename
+        if filename is not None and nplots==1: # Single plot, filename supplied -- use it
+            thisfilename = filepath+filename
+        else: # Any other case, generate a filename
+            thisfilename = filepath+keyforfilename+'.'+filetype
+        
+        # Do the saving
+        if savefigargs is None: savefigargs = {}
+        if filetype is 'fig':
+            saveobj(thisfilename, plt)
+        else:
+            plt.savefig(filename, **savefigargs)
+            
+    
+    
+    
+    
+    
+    return None
 
 
 
