@@ -11,7 +11,7 @@ import itertools
 import random
 try: import BaseHTTPServer as server # Python 2.x
 except: from http import server # Python 3.x
-from optima import makeplots
+import optima as op
 
 
 def generate_handler(html, files=None):
@@ -171,7 +171,8 @@ def browser(results, toplot=None, doplot=True):
 
     ## Create the figures to plot
     jsons = [] # List for storing the converted JSONs
-    plots = makeplots(results=results, toplot=toplot) # Generate the plots
+    plots = op.makeplots(results=results, toplot=toplot) # Generate the plots
+    op.gui.reanimateplots(plots)
     nplots = len(plots) # Figure out how many plots there are
     for p in range(nplots): # Loop over each plot
         mpld3.plugins.connect(plots[p], mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
