@@ -177,8 +177,9 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         
     
     ## Add budget plot
-    if 'budgets' in toplot:
-        toplot.remove('budgets') # Because everything else is passed to plotepi()
+    thesekeys = {'budget', 'budgets'}
+    if thesekeys.intersection(toplot):
+        for thiskey in list(thesekeys.intersection(toplot)): toplot.remove(thiskey) # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
                 allplots['budgets'] = plotbudget(results, die=die, **kwargs)
@@ -186,8 +187,10 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             if die: raise E
             else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
     
-    ## Add coverage plot
-    if 'coverages' in toplot:
+    ## Add coverage plot(s)
+    thesekeys = {'coverage', 'coverages'}
+    if thesekeys.intersection(toplot):
+        for thiskey in list(thesekeys.intersection(toplot)): toplot.remove(thiskey) # Because everything else is passed to plotepi()
         toplot.remove('coverages') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
@@ -197,7 +200,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             if die: raise E
             else: printv('Could not plot coverages: "%s"' % (E.__repr__()), 1, verbose)
     
-    ## Add cascade plot
+    ## Add cascade plot(s)
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
         try: 

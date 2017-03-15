@@ -53,7 +53,6 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
     
     # Actually create plots
     plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height))
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
