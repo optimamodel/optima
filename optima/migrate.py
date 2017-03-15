@@ -207,7 +207,7 @@ def redotransitions(project, dorun=False, **kwargs):
                 for p1 in range(pd[transitkey].shape[0]):
                     for p2 in range(pd[transitkey].shape[1]):
                         thistrans = pd[transitkey][p1,p2]
-                        if thistrans>0: pd[transitkey][p1,p2] = 1./thistrans # Invert if nonzero
+                        if thistrans>0 and thistrans<1.0: pd[transitkey][p1,p2] = 1./thistrans # Invert if nonzero and also if it's a small rate (otherwise, assume it somehow got converted already)
             
             # Convert more rates to transitions
             for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']:

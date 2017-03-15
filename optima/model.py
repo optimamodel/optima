@@ -780,11 +780,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     wantedpeople = popsize[p,t+1] - people[alltx,p,t+1].sum()
                     if actualpeople==0: raise Exception("ERROR: no people.")
                     ratio = wantedpeople/actualpeople
-                    people[susnotonart,p,t+1] *= ratio # Scale to match
-                    if abs(ratio-1)>relerr:
-                        errormsg = label + 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t+1, popkeys[p], wantedpeople, actualpeople, ratio)
+                    if abs(ratio-1)>relerr: # It's not OK
+                        errormsg = label + 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 1, verbose=verbose)
+                    people[susnotonart,p,t+1] *= ratio # It's OK, so scale to match
             
 
             #######################################################################################

@@ -364,6 +364,7 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
                 objectives=objectives,
                 constraints=constraints,
                 maxtime=maxtime,
+                mc=0, # Set this to zero for now while we decide how to handle uncertainties etc.
             )
             result.uid = optima.uuid()
             status = 'completed'

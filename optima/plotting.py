@@ -99,15 +99,15 @@ def getplotselections(results, advanced=False):
     plotselections['keys'].append('cascade')
     plotselections['names'].append('Treatment cascade')
     
-    ## Deaths by CD4
-    if advanced:
-        plotselections['keys'].append('deathbycd4')
-        plotselections['names'].append('Deaths by CD4')
-    
-    ## People by CD4
-    if advanced:
-        plotselections['keys'].append('plhivbycd4')
-        plotselections['names'].append('PLHIV by CD4')
+#    ## Deaths by CD4
+#    if advanced:
+#        plotselections['keys'].append('deathbycd4')
+#        plotselections['names'].append('Deaths by CD4')
+#    
+#    ## People by CD4
+#    if advanced:
+#        plotselections['keys'].append('plhivbycd4')
+#        plotselections['names'].append('PLHIV by CD4')
     
     ## Get plot selections for plotepi
     plotepikeys = list()
