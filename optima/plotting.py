@@ -619,7 +619,7 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
         ax.set_yticks(arange(nallocs)+1)
         ax.set_yticklabels(alloclabels)
         ax.set_ylim(0,nallocs+1)
-        ax.set_title('Budgets: %s' % ', '.join(alloclabels))
+        ax.set_title('Budget' % ', '.join(alloclabels))
         
         SIticks(fig, axis='x')
         budgetplots['budget'] = fig
