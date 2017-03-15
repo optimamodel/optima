@@ -397,7 +397,7 @@ class Resultset(object):
                 filename = filestem + '.csv'
                 with open(filename, 'w') as f: f.write(output)
             printv('Results exported to "%s"' % filename, 2, verbose)
-            return None
+            return filename
         else:
             return output
         
@@ -530,7 +530,7 @@ class Multiresultset(Resultset):
             else:
                 filename = filestem+'.csv'
             printv('Results exported to "%s"' % filename, 2, verbose)
-            return None
+            return filename
         else:
             if asexcel: return outputdict
             else:       return outputstr
