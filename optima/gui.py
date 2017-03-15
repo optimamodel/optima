@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist
+from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, gcf
 from matplotlib.widgets import CheckButtons, Button
@@ -19,7 +19,7 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     heightfactor = 0.9/nrows**(1/4.)
     pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
     thisplot.set_position(pos2) # set a new position
-    thisplot.figure = thisfig
+    thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
     thisplot.pchanged()
     thisplot.stale = True
     return None
@@ -28,6 +28,7 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
 def reanimateplots(plots=None):
     ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
     fignum = gcf().number # This is the number of the current active figure
+    if not checktype(plots, odict): plots = odict({'Plot':plots}) # Convert to an odict
     for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager
     return None
 
@@ -40,6 +41,23 @@ def sanitizeresults(tmpresults):
         except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
     else: results = tmpresults # Just use directly
     return results
+
+
+def loadplot(filename=None):
+    '''
+    Load a plot from a file and reanimate it.
+    
+    Example usage:
+        import optima as op
+        P = op.demo(0)
+        op.saveplots(P, toplot='cascade', filetype='fig')
+    
+    Later:
+        cascadefig = op.loadplot('cascade.fig')
+    '''
+    fig = loadobj(filename)
+    reanimateplots(fig)
+    return fig
 
 
 def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
@@ -59,8 +77,6 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
     results = sanitizeresults(tmpresults)
     
     # Do plotting
-    wasinteractive = isinteractive()
-    if wasinteractive: ioff()
     width,height = fig.get_size_inches()
     
     # Actually create plots
