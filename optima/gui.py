@@ -1,6 +1,6 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist
-from pylab import figure, close, floor, axes, ceil, sqrt, array, pause
+from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, gcf
 from matplotlib.widgets import CheckButtons, Button
 from matplotlib.backends.backend_qt4agg import new_figure_manager_given_figure as nfmgf
@@ -10,20 +10,15 @@ if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fu
 
 
 
-def addplot(currentfig=None, origfig=None, name=None, nrows=1, ncols=1, n=1):
+def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     ''' Add a plot to an existing figure '''
-    print('hey great to meet you')
-    close(origfig)
-    fignum = gcf().number # This is the number of the current active figure
-    nfmgf(fignum, origfig) # Make sure each figure object is associated with the figure manager
-#    thisplot = origfig.axes[0]
-#    currentfig._axstack.add(currentfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
-#    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
-#    orig = thisplot.get_position() # get the original position 
-#    widthfactor = 0.9/ncols**(1/4.)
-#    heightfactor = 0.9/nrows**(1/4.)
-#    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
-#    thisplot.set_position(pos2) # set a new position
+    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+    orig = thisplot.get_position() # get the original position 
+    widthfactor = 0.9/ncols**(1/4.)
+    heightfactor = 0.9/nrows**(1/4.)
+    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
+    thisplot.set_position(pos2) # set a new position
     return None
 
 
@@ -54,17 +49,21 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
     results = sanitizeresults(tmpresults)
     
     # Do plotting
+    wasinteractive = isinteractive()
+    if wasinteractive: ioff()
     width,height = fig.get_size_inches()
     
     # Actually create plots
     plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height))
+    fignum = gcf().number # This is the number of the current active figure
+    for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
     for p in range(len(plots)): 
         naxes = len(plots[p].axes)
         if naxes==1: # Usual situation: just plot the normal axis
-            addplot(fig, plots[p], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=p+1)
+            addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=p+1)
         elif naxes>1: # Multiple axes, e.g. allocation bar plots -- have to do some maths to figure out where to put the plots
             origrow = floor(p/ncols)
             origcol = p%ncols # Column doesn't change
@@ -75,6 +74,8 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
                 newp = ncols*thisrow + origcol # Calculate new row/column
                 addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1))
         else: pass # Must have 0 length or something
+    if wasinteractive: ion()
+    show()
 
 
 
