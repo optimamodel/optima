@@ -33,6 +33,7 @@ globallabelsize = 12
 globalticksize = 10
 globallegendsize = 10
 globalfigsize = (8,4)
+globalaxisposition = [0.1,0.1,0.3,0.8]
 
 
 
@@ -739,6 +740,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
         ## Do the plotting
         fig = Figure(facecolor=(1,1,1), figsize=figsize)
         ax = fig.add_subplot(111)
+#        ax.set_position(globalaxisposition)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
                 thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
@@ -1077,7 +1079,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                 plt.savefig(thisfilename, **savefigargs)
                 if not thisfilename:
                     import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                printv('%s plot saved to %s' % (filetype,thisfilename), 2, verbose)
+                printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
             close(plt)
     
     if filetype is 'pdf': pdf.close()
