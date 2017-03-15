@@ -77,7 +77,7 @@ def map_path(modulename, classname, verbose=3):
                 print('Done initializing')
             return None
     
-    # Handle the case where the module doesn't exist
+    # Handle the case where the module doesn't exist -- shouldn't happen
     try:
         module = __import__(modulename)
         if verbose>=3: print('Success: Loading module %s' % modulename)
@@ -85,7 +85,7 @@ def map_path(modulename, classname, verbose=3):
         if verbose>=1: print('Fail: Loading module %s' % modulename)
         module = EmptyClass()
     
-    # Handle the case where the attribute doesn't exist
+    # Handle the case where the attribute doesn't exist -- will happen if class names have changed
     try:
         output = getattr(module, classname) # Main usage case -- everything is fine
         if verbose>=2: print('Success: Loading attribute %s.%s' % (modulename, classname))
