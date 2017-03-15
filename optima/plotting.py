@@ -667,8 +667,10 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
         
         ylabel = 'Coverage (%)'
         ax[-1].set_ylabel(ylabel)
-        if nallocs>1: ax[-1].set_title('Coverage - %s' % alloclabels[plt])
-        else:         ax[-1].set_title('Program coverage')
+         
+        if nallocs>1: thistitle = 'Coverage - %s' % alloclabels[plt]
+        else:         thistitle = 'Program coverage'
+        ax[-1].set_title(thistitle)
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
         
         # Set up legend
@@ -763,8 +765,10 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=(14,10), 
         ax.legend(**legendsettings) # Multiple entries, all populations
         
         # Configure rest of the plot
-        if ismultisim: ax.set_title('Cascade - %s' % titles[plt])
-        else:          ax.set_title('Cascade')
+        
+        if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
+        else:          thistitle = 'Cascade'
+        ax.set_title(thistitle)
         if aspercentage: ax.set_ylabel('Percentage of PLHIV')
         else:            ax.set_ylabel('Number of PLHIV')
                 
@@ -775,7 +779,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=(14,10), 
         if useSIticks: SIticks(fig)
         else:          commaticks(fig)
         
-        cascadeplots['cascade-%s'%titles[plt]] = fig
+        cascadeplots['cascade-%s'%thistitle] = fig
     
     return cascadeplots
 
