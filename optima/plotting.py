@@ -1012,7 +1012,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
 
 
-def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, verbose=2, **kwargs):
+def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, index=None, verbose=2, **kwargs):
     '''
     Save the requested plots to disk.
     
@@ -1023,6 +1023,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         filepath -- the folder to save the file(s) in
         filename -- the file to save to (only uses path if multiple files)
         savefigargs -- dictionary of arguments passed to savefig()
+        index -- optional argument to only save the specified plot index
         kwargs -- passed to makeplots()
     
     Example usages:
@@ -1058,29 +1059,31 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         if not thisfilename: thisfilename = 'figures.pdf'
         pdf = PdfPages(thisfilename)
         printv('PDF saved to %s' % thisfilename, 2, verbose)
-    for key,plt in plots.items():
-        # Handle filename
-        if filename and nplots==1: # Single plot, filename supplied -- use it
-            thisfilename = filepath+filename
-        else: # Any other case, generate a filename
-            keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
-            thisfilename = filepath+keyforfilename+'.'+filetype
-        
-        # Do the saving
-        if savefigargs is None: savefigargs = {'dpi':200} # Specify a higher default DPI
-        if filetype is 'fig':
-            saveobj(thisfilename, plt)
-            printv('Figure object saved to %s' % thisfilename, 2, verbose)
-        else:
-            reanimateplots(plt)
-            if filetype is 'pdf':
-                pdf.savefig(figure=plt, **savefigargs)
-            else:                 
-                plt.savefig(thisfilename, **savefigargs)
-                if not thisfilename:
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
-            close(plt)
+    for p,item in enumerate(plots.items()):
+        key,plt = item
+        if index is None or index==p:
+            # Handle filename
+            if filename and nplots==1: # Single plot, filename supplied -- use it
+                thisfilename = filepath+filename
+            else: # Any other case, generate a filename
+                keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
+                thisfilename = filepath+keyforfilename+'.'+filetype
+            
+            # Do the saving
+            if savefigargs is None: savefigargs = {'dpi':200} # Specify a higher default DPI
+            if filetype is 'fig':
+                saveobj(thisfilename, plt)
+                printv('Figure object saved to %s' % thisfilename, 2, verbose)
+            else:
+                reanimateplots(plt)
+                if filetype is 'pdf':
+                    pdf.savefig(figure=plt, **savefigargs)
+                else:                 
+                    plt.savefig(thisfilename, **savefigargs)
+                    if not thisfilename:
+                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
+                close(plt)
     
     if filetype is 'pdf': pdf.close()
     if wasinteractive: ion()
