@@ -57,36 +57,22 @@ def loadstr(source):
     return obj
 
 
-def loadpickle(fileobj):
+def loadpickle(fileobj, verbose=False):
     ''' Loads a pickled object -- need to define legacy classes here since they're needed for unpickling '''
     
-    # Create legacy classes for compatibility
-    try:
-        class Spreadsheet(object): pass
-        op.project.Spreadsheet = Spreadsheet
-        
-        class GAOptim(object): pass
-        op.portfolio.GAOptim = GAOptim
-    #    class CCOF(): pass
-    #    class Costcov(): pass
-    #    class Covout(): pass
-    #    op.programs.CCOF = CCOF
-    #    op.programs.Costcov = Costcov
-    #    op.programs.Covout = Covout
-    except:
-        pass # Don't worry, yet, if we can't create these, it'll crash later anyway :)
+    # Load the file string
+    filestr = fileobj.read()
     
-    obj = pickle.loads(fileobj.read()) # Actually load it
-    
-    # Once used to unpickle the project, we can delete these (if they were created)
-    try:
+    try: # Try just loading it
+        obj = pickle.loads(filestr) # Actually load it
+    except: # If that fails, create legacy classes and try again
+        if verbose: print('Initial loading failed, trying again with legacy classes...')
+        class EmptyClass(object): pass
+        op.project.Spreadsheet = EmptyClass
+        op.portfolio.GAOptim = EmptyClass
+        obj = pickle.loads(filestr) # Actually load it
         del op.project.Spreadsheet
         del op.portfolio.GAOptim
-    #    del op.programs.CCOF
-    #    del op.programs.Costcov
-    #    del op.programs.Covout
-    except:
-        pass
     
     return obj
     

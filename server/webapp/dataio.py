@@ -783,11 +783,6 @@ def resolve_project(project):
     for record in query:
         print(">> Portfolio id %s" % record.id)
         portfolio = record.load()
-        if len(portfolio.gaoptims) == 0:
-            objectives = op.portfolio.defaultobjectives(verbose=0)
-            gaoptim = op.portfolio.GAOptim(objectives=objectives)
-            portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
-            record.save_obj(portfolio)
         portfolios.append(portfolio)
 
     # ensure constraints set to None are given a default
@@ -1437,9 +1432,6 @@ def create_portfolio(name, db_session=None):
     print("> Create portfolio %s" % name)
     portfolio = op.Portfolio()
     portfolio.name = name
-    objectives = op.portfolio.defaultobjectives(verbose=0)
-    gaoptim = op.portfolio.GAOptim(objectives=objectives)
-    portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
     record = PyObjectDb(
         user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
     # TODO: something about dates
@@ -1516,11 +1508,6 @@ def load_portfolio_summaries(db_session=None):
         for record in query:
             print(">> Portfolio id %s" % record.id)
             portfolio = record.load()
-            if len(portfolio.gaoptims) == 0:
-                objectives = op.portfolio.defaultobjectives(verbose=0)
-                gaoptim = op.portfolio.GAOptim(objectives=objectives)
-                portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
-                record.save_obj(portfolio)
             portfolios.append(portfolio)
 
     summaries = map(parse.get_portfolio_summary, portfolios)
