@@ -1,6 +1,6 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
+from pylab import figure, close, floor, axes, ceil, sqrt, array, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, gcf
 from matplotlib.widgets import CheckButtons, Button
 from matplotlib.backends.backend_qt4agg import new_figure_manager_given_figure as nfmgf
@@ -12,16 +12,18 @@ if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fu
 
 def addplot(currentfig=None, origfig=None, name=None, nrows=1, ncols=1, n=1):
     ''' Add a plot to an existing figure '''
+    print('hey great to meet you')
+    close(origfig)
     fignum = gcf().number # This is the number of the current active figure
     nfmgf(fignum, origfig) # Make sure each figure object is associated with the figure manager
-    thisplot = origfig.axes[0]
-    currentfig._axstack.add(currentfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
-    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
-    orig = thisplot.get_position() # get the original position 
-    widthfactor = 0.9/ncols**(1/4.)
-    heightfactor = 0.9/nrows**(1/4.)
-    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
-    thisplot.set_position(pos2) # set a new position
+#    thisplot = origfig.axes[0]
+#    currentfig._axstack.add(currentfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+#    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+#    orig = thisplot.get_position() # get the original position 
+#    widthfactor = 0.9/ncols**(1/4.)
+#    heightfactor = 0.9/nrows**(1/4.)
+#    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
+#    thisplot.set_position(pos2) # set a new position
     return None
 
 
@@ -73,7 +75,6 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
                 newp = ncols*thisrow + origcol # Calculate new row/column
                 addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1))
         else: pass # Must have 0 length or something
-    show()
 
 
 
