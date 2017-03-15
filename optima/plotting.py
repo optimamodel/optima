@@ -191,7 +191,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         toplot.remove('coverages') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
-                allplots['coverages'] = plotcoverage(results, die=die, **kwargs)
+                coverageplots = plotcoverage(results, die=die, **kwargs)
+                allplots.update(coverageplots)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot coverages: "%s"' % (E.__repr__()), 1, verbose)
@@ -200,7 +201,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
         try: 
-            allplots['cascade'] = plotcascade(results, die=die, **kwargs)
+            cascadeplots = plotcascade(results, die=die, **kwargs)
+            allplots.update(cascadeplots)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot cascade: "%s"' % E.__repr__(), 1, verbose)
@@ -640,17 +642,19 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
-    fig = figure(facecolor=(1,1,1), figsize=figsize)
-    fig.subplots_adjust(bottom=0.10) # Less space on bottom
-    fig.subplots_adjust(right=0.70) # Less space on bottom
-    fig.subplots_adjust(hspace=0.50) # More space between
+    
     colors = gridcolormap(nprogs)
     ax = []
     ymax = 0
     
+    coverageplots = odict()
+    
     for plt in range(nallocs):
+        
+        fig = figure(facecolor=(1,1,1), figsize=figsize)
+        
         nbudgetyears = len(budgetyearstoplot[plt])
-        ax.append(subplot(nallocs,1,plt+1))
+        ax.append(subplot(1,1,1))
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
@@ -679,20 +683,21 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
         ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
+        
+        # Set up legend
+        labels = dcp(proglabels)
+        labels.reverse() # Wrong order otherwise, don't know why
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+        ax[-1].legend(labels, **legendsettings) # Multiple entries, all populations
+        
+        # Tidy up
+        SIticks(fig)
+        coverageplots['coverages-%s'%plt] = fig
+        close(fig)
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
     
-    # Set up legend
-    labels = dcp(proglabels)
-    labels.reverse() # Wrong order otherwise, don't know why
-    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-    ax[0].legend(labels, **legendsettings) # Multiple entries, all populations
-
-
-    SIticks(fig)
-    close(fig)
-    
-    return fig
+    return coverageplots
 
 
 
@@ -730,8 +735,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = figure(facecolor=(1,1,1), figsize=figsize)
-    
+    cascadeplots = odict()
     cascadelist = ['numplhiv', 'numdiag', 'numevercare', 'numincare', 'numtreat', 'numsuppressed'] 
     cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
@@ -745,7 +749,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         bottom = 0*results.tvec # Easy way of setting to 0...
         
         ## Do the plotting
-        subplot(nsims,1,plt+1)
+        fig = figure(facecolor=(1,1,1), figsize=figsize)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
                 thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
@@ -783,12 +787,13 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         else:            ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         
+        if useSIticks: SIticks(fig)
+        else:          commaticks(fig)
+        if doclose: close(fig)
         
-    if useSIticks: SIticks(fig)
-    else:          commaticks(fig)
-    if doclose: close(fig)
+        cascadeplots['cascade-%s'%plt] = fig
     
-    return fig
+    return cascadeplots
 
 
 
