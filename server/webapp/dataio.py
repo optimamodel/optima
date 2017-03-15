@@ -740,7 +740,7 @@ def resolve_project(project):
                 del_scenario_keys.append(scenario_key)
     print(">>> Delete deprecated scenarios %s" % del_scenario_keys)
     for scenario_key in del_scenario_keys:
-        del project.scens[scenario_key]
+        project.scens.pop(scenario_key, None)
 
     is_change = is_change or len(del_scenario_keys) > 0
 
@@ -774,7 +774,7 @@ def resolve_project(project):
                 del_optim_keys.append(optim_key)
     print(">>> Delete deprecated optims %s" % del_optim_keys)
     for optim_key in del_optim_keys:
-        del project.optimis[optim_key]
+        project.optims.pop(optim_key, None)
 
     is_change = is_change or len(del_optim_keys) > 0
 
