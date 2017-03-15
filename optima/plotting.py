@@ -28,10 +28,10 @@ defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'nu
 defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
-globaltitlesize = 10
-globallabelsize = 10
-globalticksize = 8
-globallegendsize = 8
+globaltitlesize = 12
+globallabelsize = 12
+globalticksize = 10
+globallegendsize = 10
 globalfigsize = (8,4)
 globalaxisposition = [0.1,0.06,0.66,0.8]
 

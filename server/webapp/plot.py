@@ -38,9 +38,9 @@ def convert_to_mpld3(figure):
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array([[0.19, 0.3], [0.65, 0.9]])))
+            ax.set_position(Bbox(array([[0.19, 0.1], [0.65, 0.85]])))
         else:
-            ax.set_position(Bbox(array([[0.19, 0.3], [0.85, 0.9]])))
+            ax.set_position(Bbox(array([[0.19, 0.1], [0.85, 0.85]])))
 
     mpld3_dict = mpld3.fig_to_dict(figure)
     return normalize_obj(mpld3_dict)
