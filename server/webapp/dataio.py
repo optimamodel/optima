@@ -819,7 +819,7 @@ def resolve_project(project):
 
 def load_result(
         project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
-        name=None, which=None):
+        which=None, name=None):
     kwargs = {
         'calculation_type': calculation_type
     }
@@ -827,30 +827,30 @@ def load_result(
         kwargs['parset_id'] = parset_id
     if project_id is not None:
         kwargs['project_id'] = project_id
+    print(">> load_result name", name, "kwargs", kwargs)
     result_records = db.session.query(ResultsDb).filter_by(**kwargs)
     if result_records is None:
+        print(">> load_result: none")
         return None
-    for result_record in result_records:
-        if name is None:
-            result = result_record.load()
-            break
-        else:
+    if name:
+        for result_record in result_records:
             result = result_record.load()
             if result.name == name:
                 break
-            else:
-                result = None
+        else:
+            result = None
     else:
-        result = None
-    if result is not None:
-        if which is not None:
+        result_record = result_records.first()
+        result = result_record.load()
+    if result:
+        print(">> load_result %s" % str(result.name))
+        if which:
             result.which = which
-            print(">> Saving which options")
+            print(">> load_result saving which", which)
             result_record.save_obj(result)
-    if result is None:
-        print(">> No result found")
     else:
-        print(">> Result %s" % str(result.name))
+        print(">> load_result: none")
+        db.session.delete(result_record)
     return result
 
 
@@ -1069,31 +1069,34 @@ def load_parset_graphs(
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
 
-    print(">> Calibration parameters %s %s %s" % (startYear, endYear, parameters is not None))
+    print(">> load_parset_graphs input %s %s %s" % (startYear, endYear, parameters is not None))
+    print(">> load_parset_graphs input which %s" % (which))
+
+    result = load_result(project_id, parset_id, calculation_type, which)
+    if result:
+        if not which:
+            print(">> load_parset_graphs load stored which of parset '%s'" % parset.name)
+            which = result.which
 
     if parameters is not None:
-        print(">> Updating parset '%s'" % parset.name)
+        print(">> load_parset_graphs updating parset '%s'" % parset.name)
         parset.modified = datetime.now(dateutil.tz.tzutc())
         parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
         update_project(project)
+        result = None
 
-    result = load_result(project_id, parset_id, calculation_type, which)
     if result is None:
-        print(">> Runsim for for parset '%s'" % parset.name)
         if startYear is None:
             startYear = project.settings.start
         if endYear is None:
             endYear = project.settings.end
         result = project.runsim(name=parset.name, start=startYear, end=endYear)
-        result_record = update_or_create_result_record_by_id(
-            result, project_id, parset_id, calculation_type)
-        db.session.add(result_record)
+        result.which = which
+        update_or_create_result_record_by_id(
+            result, project_id, parset_id, calculation_type, db_session=db.session)
+        print(">> load_parset_graphs calc result for parset '%s'" % parset.name)
         db.session.commit()
-
-    assert result is not None
-
-    print(">> Generating graphs for parset '%s'" % parset.name)
 
     graph_dict = make_mpld3_graph_dict(result, which)
 
@@ -1407,7 +1410,7 @@ def load_optimization_graphs(project_id, optimization_id, which):
     optimization = parse.get_optimization_from_project(project, optimization_id)
     result_name = "optim-" + optimization.name
     parset_id = project.parsets[optimization.parsetname].uid
-    result = load_result(project.uid, None, "optimization", result_name, which)
+    result = load_result(project.uid, None, "optimization", which, result_name)
     if result is None:
         return {}
     else:

@@ -9,9 +9,8 @@
     for this project.
   </div>
 
-  <form
-      ng-if="!isMissingData"
-      ng-submit="saveAndUpdateGraphs()">
+  <div
+      ng-if="!isMissingData">
 
     <div
       style="
@@ -78,7 +77,12 @@
         padding-top: 10px;
         padding-bottom: 15px;">
 
-      <input type="submit" value="Save & update" class="btn __green __m"/>
+      <button
+          type="submit"
+          class="btn __green __m"
+          ng-click="saveAndUpdateGraphs()">
+        Save & update
+      </button>
 
       &nbsp; &nbsp;
 
@@ -158,6 +162,7 @@
             <span
                 style="width: 45%">
               <input
+                  my-enter="saveAndUpdateGraphs()"
                   type="number"
                   step="any"
                   min="0"
@@ -179,5 +184,5 @@
       </div>
 
     </div>
-  </form>
+  </div>
 </div>
