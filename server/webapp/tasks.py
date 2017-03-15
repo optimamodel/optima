@@ -416,24 +416,14 @@ def check_optimization(project_id, optimization_id):
     return calc_state
 
 
-def get_gaoptim(project, gaoptim_id):
-    for gaoptim in project.gaoptims.values():
-        if str(gaoptim.uid) == str(gaoptim_id):
-            return gaoptim
-    return None
-
-
 @celery_instance.task(bind=True)
-def run_boc(self, portfolio_id, project_id, gaoptim_id, maxtime=2):
+def run_boc(self, portfolio_id, project_id, maxtime=2):
 
     status = 'started'
     error_text = ""
 
     db_session = init_db_session()
-    kwargs = {
-        'project_id': project_id,
-        'work_type': 'gaoptim-' + str(gaoptim_id)
-    }
+    kwargs = {'project_id': project_id, 'work_type':'boc'}
     work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
     if work_log:
         work_log_id = work_log.id
@@ -457,10 +447,8 @@ def run_boc(self, portfolio_id, project_id, gaoptim_id, maxtime=2):
     if status == 'started':
         result = None
         try:
-            gaoptim = get_gaoptim(project, gaoptim_id)
             print ">> Start BOC:"
-            parse.print_odict("gaoptim", gaoptim)
-            project.genBOC(objectives=gaoptim.objectives, maxtime=maxtime)
+            project.genBOC(maxtime=maxtime)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -489,30 +477,23 @@ def run_boc(self, portfolio_id, project_id, gaoptim_id, maxtime=2):
 
 
 
-def launch_boc(portfolio_id, gaoptim_id, maxtime=2):
+def launch_boc(portfolio_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
-    gaoptims = portfolio.gaoptims
     for project in portfolio.projects.values():
         project_id = project.uid
-        optima.migrate(project)
-        project.gaoptims = gaoptims
-        calc_state = setup_work_log(
-            project_id, 'gaoptim-' + str(gaoptim_id), project)
-        run_boc.delay(portfolio_id, project_id, gaoptim_id, maxtime)
+        calc_state = setup_work_log(project_id, 'boc', project)
+        run_boc.delay(portfolio_id, project_id, maxtime)
 
 
 
 @celery_instance.task(bind=True)
-def run_miminize_portfolio(self, portfolio_id, gaoptim_id, maxtime):
+def run_miminize_portfolio(self, portfolio_id, maxtime):
 
     status = 'started'
     error_text = ""
 
     db_session = init_db_session()
-    kwargs = {
-        'project_id': portfolio_id,
-        'work_type': 'portfolio-' + str(gaoptim_id)
-    }
+    kwargs = {'project_id': portfolio_id, 'work_type': 'portfolio'}
     work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
     if work_log:
         work_log_id = work_log.id
@@ -535,11 +516,8 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id, maxtime):
 
     if status == 'started':
         try:
-            gaoptim = get_gaoptim(portfolio, gaoptim_id)
-            objectives = gaoptim.objectives
             print ">> Start BOC:"
-            parse.print_odict("gaoptim", gaoptim)
-            portfolio.fullGA(objectives=objectives, maxtime=maxtime)
+            portfolio.runGA(maxtime=maxtime)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -565,14 +543,11 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id, maxtime):
 
 
 
-def launch_miminize_portfolio(portfolio_id, gaoptim_id, maxtime=2):
+def launch_miminize_portfolio(portfolio_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
-    for project in portfolio.projects.values():
-        optima.migrate(project)
-    calc_state = setup_work_log(
-        portfolio_id, 'portfolio-' + str(gaoptim_id), portfolio)
+    calc_state = setup_work_log(portfolio_id, 'portfolio', portfolio)
     if calc_state['status'] != 'started':
         return calc_state, 208
-    run_miminize_portfolio.delay(portfolio_id, gaoptim_id, maxtime)
+    run_miminize_portfolio.delay(portfolio_id, maxtime)
 
 
