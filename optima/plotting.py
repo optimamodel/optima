@@ -13,7 +13,7 @@ Version: 2016jul06
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh, pie
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -177,11 +177,12 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         
     
     ## Add budget plot
-    if 'budget' in toplot:
-        toplot.remove('budget') # Because everything else is passed to plotepi()
+    if 'budgets' in toplot:
+        toplot.remove('budgets') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
-                allplots['budgets'] = plotbudget(results, die=die, **kwargs)
+                budgetplots = plotbudget(results, die=die, **kwargs)
+                allplots.update(budgetplots)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
@@ -552,7 +553,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
 ##################################################################
     
     
-def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, verbose=2, **kwargs):
+def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, usepie=True, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -577,31 +578,52 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     nallocs = len(alloclabels)
     progcolors = gridcolormap(nprogs)
     
-    fig = figure(facecolor=(1,1,1), figsize=figsize)
-    ax = subplot(1,1,1)
+    budgetplots = odict()
     
-    fig.subplots_adjust(bottom=0.50) # Less space on bottom
+    # Make pie plots
+    if usepie:
+        for i in range(nallocs):
+            fig = figure(facecolor=(1,1,1), figsize=figsize)
+            
+            # Make a pie
+            ydata = budgets[i][:]
+            pie(ydata, colors=progcolors, linewidth=0)
+            
+            # Set up legend
+            labels = dcp(proglabels)
+            labels.reverse() # Wrong order otherwise, don't know why
+            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+            legend(labels, **legendsettings) # Multiple entries, all populations
+            
+            budgetplots['budget-%s'%i] = fig
+      
+    # Make bar plots
+    else:
+        fig = figure(facecolor=(1,1,1), figsize=figsize)
+        ax = subplot(1,1,1)
+        fig.subplots_adjust(bottom=0.50) # Less space on bottom
+        
+        for i in range(nprogs-1,-1,-1):
+            xdata = arange(nallocs)+1
+            ydata = array([budget[i] for budget in budgets.values()])
+            bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
+            barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
     
-    for i in range(nprogs-1,-1,-1):
-        xdata = arange(nallocs)+1
-        ydata = array([budget[i] for budget in budgets.values()])
-        bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)
-
-    # Set up legend
-    labels = dcp(proglabels)
-    labels.reverse() # Wrong order otherwise, don't know why
-    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-    ax.legend(labels, **legendsettings) # Multiple entries, all populations
-    
-    # Set up other things
-    ax.set_xlabel('Spending')
-    ax.set_yticks(arange(nallocs)+1)
-    ax.set_yticklabels(alloclabels)
-    ax.set_ylim(0,nallocs+1)
-    
-    SIticks(fig, axis='x')
-    close(fig)
+        # Set up legend
+        labels = dcp(proglabels)
+        labels.reverse() # Wrong order otherwise, don't know why
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+        ax.legend(labels, **legendsettings) # Multiple entries, all populations
+        
+        # Set up other things
+        ax.set_xlabel('Spending')
+        ax.set_yticks(arange(nallocs)+1)
+        ax.set_yticklabels(alloclabels)
+        ax.set_ylim(0,nallocs+1)
+        
+        SIticks(fig, axis='x')
+        budgetplots['budget'] = fig
+        close(fig)
     
     return fig
 
