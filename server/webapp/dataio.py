@@ -829,7 +829,7 @@ def load_result(
         kwargs['project_id'] = project_id
     print(">> load_result name", name, "kwargs", kwargs)
     result_records = db.session.query(ResultsDb).filter_by(**kwargs)
-    if result_records is None:
+    if result_records.count() == 0:
         print(">> load_result: none")
         return None
     if name:
@@ -861,7 +861,7 @@ def load_result_by_id(result_id, which=None):
     result = result_record.load()
     if which is not None:
         result.which = which
-        print(">> Saving which options")
+        print(">> load_result_by_id saving which", which)
         result_record.save_obj(result)
     return result
 
@@ -1305,8 +1305,11 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=
 
     if result is None:
         if not is_run:
-            print(">> No pre-calculated scenarios results found")
+            print(">> make_scenarios_graphs: no results found")
             return {}
+    if not which:
+        print(">> make_scenarios_graphs load which")
+        which = result.which
     if is_run:
         project = load_project(project_id)
         if len(project.scens) == 0:
@@ -1317,10 +1320,10 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=
         # start=None, end=None -> does nothing
         project.runscenarios(start=start, end=end)
         result = project.results[-1]
+        if which:
+            result.which = which
         record = update_or_create_result_record_by_id(
             result, project.uid, None, 'scenarios')
-        if which is not None:
-            result.which = which
         db.session.add(record)
         db.session.commit()
     return make_mpld3_graph_dict(result, which)
