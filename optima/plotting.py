@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 PLOTTING
 
@@ -121,7 +123,7 @@ def getplotselections(results, advanced=False):
         for name in epinames: # e.g. 'HIV prevalence'
             for subname in epiplottypes: # e.g. 'total'
                 if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
-                    plotepinames.append(name+' -- '+subname)
+                    plotepinames.append(name+' – '+subname)
     else:
         plotepikeys = dcp(epikeys)
         plotepinames = dcp(epinames)
@@ -691,7 +693,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
                 else: barcolor = colors[p] # Only one year? Color by program
                 if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
                 else: yearlabel=None
-                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor, linewidth=0)
         if nbudgetyears>1: ax[-1].legend(frameon=False)
         ax[-1].set_xticks(arange(nprogs)+1)
         ax[-1].set_xticklabels('')
@@ -699,7 +701,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), legendsize=globallege
         
         ylabel = 'Coverage (%)'
         ax[-1].set_ylabel(ylabel)
-        if nallocs>1: ax[-1].set_title('Coverage -- %s' % alloclabels[plt])
+        if nallocs>1: ax[-1].set_title('Coverage – %s' % alloclabels[plt])
         else:         ax[-1].set_title('Program coverage')
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
         
@@ -796,7 +798,7 @@ def plotcascade(results=None, aspercentage=False, doclose=True, colors=None, fig
         ax.legend(**legendsettings) # Multiple entries, all populations
         
         # Configure rest of the plot
-        if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
+        if ismultisim: ax.set_title('Cascade – %s' % titles[plt])
         else:          ax.set_title('Cascade')
         if aspercentage: ax.set_ylabel('Percentage of PLHIV')
         else:            ax.set_ylabel('Number of PLHIV')
@@ -934,7 +936,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=(14,10), lw=2, titlesiz
         # Configure plot specifics
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
                           'frameon':False}
-        if ismultisim: ax.set_title(titlemap[whattoplot]+'-- %s' % titles[plt])
+        if ismultisim: ax.set_title(titlemap[whattoplot]+'– %s' % titles[plt])
         else: ax.set_title(titlemap[whattoplot])
         ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
