@@ -1051,7 +1051,10 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     nplots = len(plots)
     if filetype is 'pdf':
         from matplotlib.backends.backend_pdf import PdfPages
-        pdf = PdfPages(filepath+filename)
+        thisfilename = filepath+filename
+        if not thisfilename: thisfilename = 'figures.pdf'
+        pdf = PdfPages(thisfilename)
+        printv('PDF saved to %s' % thisfilename, 2, verbose)
     for key,plt in plots.items():
         # Handle filename
         if filename is not None and nplots==1: # Single plot, filename supplied -- use it
@@ -1064,14 +1067,17 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         if savefigargs is None: savefigargs = {}
         if filetype is 'fig':
             saveobj(thisfilename, plt)
+            printv('Figure object saved to %s' % thisfilename, 2, verbose)
         else:
             reanimateplots(plt)
-            if filetype is 'pdf': pdf.savefig(**savefigargs)
-            else:                 plt.savefig(thisfilename, **savefigargs)
+            if filetype is 'pdf':
+                pdf.savefig(figure=plt, **savefigargs)
+            else:                 
+                plt.savefig(thisfilename, **savefigargs)
+                printv('%s plot saved to %s' % (filetype,thisfilename), 2, verbose)
             close(plt)
-        
-        printv('Plot saved to %s' % thisfilename, 2, verbose)
     
+    if filetype is 'pdf': pdf.close()
     if wasinteractive: ion()
     return None
 
