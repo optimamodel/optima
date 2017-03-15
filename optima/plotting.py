@@ -28,10 +28,10 @@ defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'nu
 defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
-globaltitlesize = 12
-globallabelsize = 12
-globalticksize = 10
-globallegendsize = 10
+globaltitlesize = 10
+globallabelsize = 10
+globalticksize = 8
+globallegendsize = 8
 globalfigsize = (8,4)
 globalaxisposition = [0.1,0.1,0.3,0.8]
 
@@ -350,6 +350,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 epiplots[pk] = Figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
                 ax = epiplots[pk].add_subplot(111)
+                ax.set_position([0.5,0.5,0.2,0.2])
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
