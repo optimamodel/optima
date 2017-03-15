@@ -56,39 +56,43 @@ def loadstr(source):
     return obj
 
 
-def map_path(modulename, classname, verbose=2):
+def map_path(modulename, classname, verbose=3):
     ''' Adapted from http://stackoverflow.com/questions/13398462/unpickling-python-objects-with-a-changed-module-path '''
-#    import sys
-#    mod = __import__(modulename)
     
-    mod = __import__(modulename)
-    try: return getattr(mod, classname)
-    except: return None
-#    sys.modules[modulename] = mod
-##    eval('import %s' % modulename)
-#    return eval('sys.modules[%s].%s' % (modulename, classname))
+    # Define an empty class
+    class EmptyClass(object):
+        def __init__(self, *args, **kwargs):
+            if verbose>=3:
+                print('Initializing empty class...')
+                print(args)
+                print(kwargs)
+                print('Done initializing')
+            return None
+        def __setstate__(self, state, *args, **kwargs):
+            if verbose>=3:
+                print('Setting state...')
+                print(state)
+                print(args)
+                print(kwargs)
+                print('Done initializing')
+            return None
     
-#    # Define an empty class
-#    class EmptyClass(object):
-#        def __init__(self, *args, **kwargs):
-#            pass
-#    
-#    # Handle the case where the module doesn't exist
-#    try:
-#        module = __import__(modulename)
-#        if verbose>=2: print('Success: Loading module %s' % modulename)
-#    except:
-#        if verbose>=1: print('Fail: Loading module %s' % modulename)
-#        module = EmptyClass()
-#    
-#    # Handle the case where the attribute doesn't exist
-#    try:
-#        output = getattr(module, classname) # Main usage case -- everything is fine
-#        if verbose>=2: print('Success: Loading attribute %s.%s' % (modulename, classname))
-#        return output
-#    except:
-#        if verbose>=2: print('Fail: Loading attribute %s.%s' % (modulename, classname))
-#        return EmptyClass
+    # Handle the case where the module doesn't exist
+    try:
+        module = __import__(modulename)
+        if verbose>=3: print('Success: Loading module %s' % modulename)
+    except:
+        if verbose>=1: print('Fail: Loading module %s' % modulename)
+        module = EmptyClass()
+    
+    # Handle the case where the attribute doesn't exist
+    try:
+        output = getattr(module, classname) # Main usage case -- everything is fine
+        if verbose>=2: print('Success: Loading attribute %s.%s' % (modulename, classname))
+        return output
+    except:
+        if verbose>=2: print('Fail: Loading attribute %s.%s' % (modulename, classname))
+        return EmptyClass
         
 
 
@@ -100,22 +104,6 @@ def loadpickle(fileobj, attempts=10, verbose=True):
     unpickler = pickle.Unpickler(StringIO(filestr))
     unpickler.find_global = map_path
     obj = unpickler.load() # Actually load it
-    
-#    # Attempt to read the pickle
-#    missingclasses = []
-#    for attempt in range(attempts):
-#        if verbose: print('Attempt %i of %i' % (attempt+1, attempts))
-#        try: 
-#            obj = unpickler.load() # Actually load it
-#            break # If it's loaded, we can break out of this loop
-#        except Exception as E:
-#            import traceback; z = traceback.extract_stack()
-#            print(z)
-#            if verbose: print('Error! %s' % E.__repr__())
-#            missingclass = E.message.split('object has no attribute ')[1][1:-1] # Name of the missing class, e.g. Spreadsheet
-#            missingclasses.append(missingclass)
-##            exec('op.project.%s = emptyclass' % missingclass) # Restore the missing class
-#            raise E
     
     return obj
     
