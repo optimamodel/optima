@@ -45,11 +45,11 @@
       <div style="display:table-cell; width:160px">
         <img src="assets/images/project/logo/optima-hiv-logo-web.png">
       </div>
-      <div style="display:table-cell; vertical-align: middle;" data-menu>
+      <div style="display:table-cell; vertical-align: middle;" data-menu ng-cloak ng-if="userLogged()">
       </div>
 
       <div style="display:table-cell; float:right; vertical-align: middle">
-        <div style="display:table">
+        <div style="display:table" ng-cloak ng-if="userLogged()">
           <div style="display:table-row">
             <div style="display:table-cell; text-align:right; padding-right:10px">
               <b>user:</b>
