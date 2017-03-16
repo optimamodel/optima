@@ -51,16 +51,20 @@
       </div>
       <div
           style="
-            flex: 1 1;
-            text-align: right;"
+            flex: 0 1 auto;
+            text-align: left;
+            position: relative;
+            right: 100%;
+            background-color: #00a200;
+            width: 50px;"
           ng-cloak
           ng-if="userLogged()"
           class="logged-in">
-        user:
+        <b>user:</b>
         <span ng-show="user.displayName">{{ user.displayName }}</span>
         <span ng-show="!user.displayName">{{ user.username }}</span>
         <br>
-        project:
+        <b>project:</b>
         <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
         <span ng-show="!activeProject.isSet()">[none]</span>
       </div>
