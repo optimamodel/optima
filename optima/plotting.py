@@ -583,7 +583,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         ax.set_position(position)
         
         for i in range(nprogs-1,-1,-1):
-            xdata = arange(nallocs)+0.5
+            xdata = arange(nallocs)+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
             ydata = array([budget[i] for budget in budgets.values()])
             bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
             ax.barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0, label=proglabels[i])
