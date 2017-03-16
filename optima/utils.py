@@ -201,16 +201,13 @@ def sigfig(X, sigfigs=5, SI=False):
         x = X[i]
         
         suffix = ''
+        formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'t'), (1e9,'b'), (1e6,'m'), (1e3,'k')]
         if SI:
-            if abs(x)>=1e9:
-                x = x/1e9
-                suffix = 'B'
-            elif abs(x)>=1e6:
-                x = x/1e6
-                suffix = 'M'
-            elif abs(x)>=1e3:
-                x = x/1e3
-                suffix = 'K'
+            for val,suff in formats:
+                if abs(x)>=val:
+                    x = x/val
+                    suffix = suff
+                    break # Find at most one match
         
         try:
             if x==0:

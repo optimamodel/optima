@@ -576,10 +576,10 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     else:
         fig = Figure(facecolor=(1,1,1), figsize=figsize)
         ax = fig.add_subplot(111)
-        extraroom = 0.1 # Define extra room for the y-tick labels
-        if position[0] == globalposition[0]:
-            position[0] += extraroom # Add to side
-            position[2] -= extraroom # Subtract from width
+        if position == globalposition: # If defaults, reset
+            position = dcp(position)
+            position[0] = 0.25 # More room on left side for y-tick labels
+            position[2] = 0.5 # Make narrower
         ax.set_position(position)
         
         for i in range(nprogs-1,-1,-1):
@@ -1124,7 +1124,7 @@ def sanitizeresults(results):
 
 def SItickformatter(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    return sigfig(x, sigfigs=None, SI=True)
+    return sigfig(x, sigfigs=2, SI=True)
 
 
 def SIticks(figure, axis='y'):
