@@ -922,13 +922,13 @@ def delete_result_by_name(
 
 def load_result_csv(result_id):
     """
-    Returns (dirname, basename) of the the result.csv on the server
+    Returns (dirname, basename) of the the result.csv on the server -- WARNING, deprecated function name!
     """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
     filestem = 'results'
-    filename = filestem + '.csv'
+    filename = filestem + '.xlsx'
 
     result = load_result_by_id(result_id)
     result.export(filestem=os.path.join(dirname, filestem))

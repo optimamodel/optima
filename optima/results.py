@@ -4,9 +4,10 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist
+from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist, checktype
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
+from xlsxwriter import Workbook
 
 
 
@@ -344,11 +345,9 @@ class Resultset(object):
         return None # make()
         
         
-    def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, writetofile=True, verbose=2):
-        ''' Method for exporting results to a CSV file '''
-        if filestem is None:  # Doesn't include extension, hence filestem
-            filestem = self.projectinfo['name']+'-'+self.name
-        filename = filestem + '.csv'
+    def export(self, filestem=None, bypop=True, sep=',', ind=0, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
+        ''' Method for exporting results to an Excel or CSV file '''
+
         npts = len(self.tvec)
         keys = self.main.keys()
         output = sep.join(['Indicator','Population'] + ['%i'%t for t in self.tvec]) # Create header and years
@@ -370,22 +369,35 @@ class Resultset(object):
         if hasattr(self, 'coverages'): thiscoverage = self.coverages[ind]
         else:                          thiscoverage = self.coverage
         
-        if len(self.budget)>ind: # WARNING, does not support multiple years
+        if len(thisbudget): # WARNING, does not support multiple years
             output += '\n\n\n'
-            output += 'Budget\n'
-            output += sep.join(thisbudget.keys()) + '\n'
-            output += sep.join([str(val) for val in thisbudget.values()]) + '\n'
+            output += sep*2+'Budget\n'
+            output += sep*2+sep.join(thisbudget.keys()) + '\n'
+            output += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
         
-        if len(self.coverage)>ind: # WARNING, does not support multiple years
+        if len(thiscoverage): # WARNING, does not support multiple years
+            covvals = thiscoverage.values()
+            for c in range(len(covvals)):
+                if checktype(covvals[c], 'arraylike'):
+                    covvals[c] = covvals[c][0] # Only pull out the first element if it's an array/list
+                if covvals[c] is None: covvals[c] = 0 # Just reset
             output += '\n\n\n'
-            output += 'Coverage\n'
-            output += sep.join(thiscoverage.keys()) + '\n'
-            output += sep.join([str(val) for val in thiscoverage.values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
+            output += sep*2+'Coverage\n'
+            output += sep*2+sep.join(thiscoverage.keys()) + '\n'
+            output += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
             
         if writetofile: 
-            with open(filename, 'w') as f: f.write(output)
+            if filestem is None:  # Doesn't include extension, hence filestem
+                filestem = self.projectinfo['name']+'-'+self.name
+            if asexcel:
+                filename = filestem + '.xlsx'
+                outputdict = {'Results':output}
+                exporttoexcel(filename, outputdict)
+            else:
+                filename = filestem + '.csv'
+                with open(filename, 'w') as f: f.write(output)
             printv('Results exported to "%s"' % filename, 2, verbose)
-            return None
+            return filename
         else:
             return output
         
@@ -494,24 +506,34 @@ class Multiresultset(Resultset):
         return output
     
     
-    def export(self, filestem=None, ind=None, writetofile=True, verbose=2, **kwargs):
+    def export(self, filestem=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         if filestem is None: # Filestem rather than filename since doesn't include extension
             filestem = self.projectinfo['name']+'-'+self.name
-        output = ''
+        
+        if asexcel: outputdict = odict()
+        else:       outputstr = ''
         for k,key in enumerate(self.keys):
             thisfilestem = filestem+'-'+key
-            output += '%s\n\n' % key
-            output += Resultset.export(self, filestem=thisfilestem, ind=k, writetofile=False, **kwargs)
-            output += '\n'*5
+            thisoutput = Resultset.export(self, filestem=thisfilestem, ind=k, writetofile=False, **kwargs)
+            if asexcel:
+                outputdict[key] = thisoutput
+            else:
+                outputstr += '%s\n\n' % key
+                outputstr += thisoutput
+                outputstr += '\n'*5
         
         if writetofile: 
-            filename = filestem+'.csv'
-            with open(filename, 'w') as f: f.write(output)
+            if asexcel:
+                filename = filestem+'.xlsx'
+                exporttoexcel(filename, outputdict)
+            else:
+                filename = filestem+'.csv'
             printv('Results exported to "%s"' % filename, 2, verbose)
-            return None
+            return filename
         else:
-            return output
+            if asexcel: return outputdict
+            else:       return outputstr
 
 
 
@@ -644,3 +666,60 @@ def getresults(project=None, pointer=None, die=True):
     else: 
         if die: raise OptimaException('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
         else: return None
+
+
+
+def exporttoexcel(filename=None, outdict=None):
+    '''
+    Little function to format an output results string nicely for Excel
+    Expects an odict of output strings.
+    '''
+    workbook = Workbook(filename)
+    
+    for key,outstr in outdict.items():
+        worksheet = workbook.add_worksheet(key)
+        
+        # Define formatting
+        colors = {'gentlegreen':'#3c7d3e', 'fadedstrawberry':'#ffeecb', 'edgyblue':'#bcd5ff','accountantgrey':'#f6f6f6', 'white':'#ffffff'}
+        formats = dict()
+        formats['plain'] = workbook.add_format({})
+        formats['bold'] = workbook.add_format({'bg_color': colors['edgyblue'], 'bold': True})
+        formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format':0x04})
+        formats['budcov'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
+        
+        # Convert from a string to a 2D array
+        outlist = []
+        for line in outstr.split('\n'):
+            outlist.append([])
+            for cell in line.split(','):
+                if cell=='tot': cell = 'Total' # Hack to replace internal key with something more user-friendly
+                outlist[-1].append(str(cell)) # If unicode, doesn't work
+        
+        # Iterate over the data and write it out row by row.
+        row, col = 0, 0
+        maxcol = 0
+        for row in range(len(outlist)):
+            for col in range(len(outlist[row])):
+                maxcol = max(col,maxcol)
+                thistxt = outlist[row][col]
+                thisformat = 'plain'
+                emptycell = not(thistxt)
+                try: 
+                    thistxt = float(thistxt)
+                    numbercell = True
+                except:
+                    numbercell = False
+                if row==0:                                     thisformat = 'budcov'
+                elif str(thistxt) in ['Budget', 'Coverage']:   thisformat = 'budcov'
+                elif not emptycell and not numbercell:         thisformat = 'bold'
+                elif numbercell:                               thisformat = 'number'
+                worksheet.write(row, col, thistxt, formats[thisformat])
+        
+        worksheet.set_column(2, maxcol, 15) # Make wider
+        worksheet.set_column(1, 1, 20) # Make wider
+        worksheet.set_column(0, 0, 50) # Make wider
+        worksheet.freeze_panes(1, 2) # Freeze first row, first two columns
+        
+    workbook.close()
+    
+    return None

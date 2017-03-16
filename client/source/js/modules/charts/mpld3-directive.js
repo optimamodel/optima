@@ -364,7 +364,7 @@ define(
           });
         }
 
-        scope.exportAllData = function() {
+        scope.exportAllData = function(name) { /* Adding function(name) brings up save dialog box */
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
@@ -377,10 +377,11 @@ define(
               responseType: 'blob'
             })
           .success(function (response) {
-            var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
-            saveAs(blob, ('export_graphs.csv'));
+            var blob = new Blob([response], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, ('results.xlsx'));
           });
         };
+
 
         function getSelectors() {
           function getChecked(s) { return s.checked; }
