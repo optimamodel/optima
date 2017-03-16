@@ -2,6 +2,7 @@
   display: flex;
   align-items: center;
   white-space: nowrap;
+  vertical-align: middle;
 
   & > div {
 
@@ -59,6 +60,7 @@
   cursor: pointer;
   display: inline-block;
   padding: 5px 4px;
+  vertical-align: middle;
 
   @include font-height(15px, 15px);
 

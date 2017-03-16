@@ -2,14 +2,7 @@
 // =======
 
 .elastic {
-
-  display:table-row
-
-  &_col {
-    vertical-align: top;
-
-    &.__va-middle {
-      vertical-align: middle;
-    }
-  }
+  display:table-row;
+  width:100%;
+  vertical-align: middle;
 }
