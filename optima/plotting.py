@@ -32,7 +32,7 @@ globaltitlesize = 12
 globallabelsize = 12
 globalticksize = 10
 globallegendsize = 10
-globalfigsize = (9,4)
+globalfigsize = (8,4)
 globalposition = [0.1,0.06,0.6,0.8]
 
 
@@ -1082,16 +1082,18 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                 thisfilename = filepath+keyforfilename+'.'+filetype
             
             # Do the saving
-            if savefigargs is None: savefigargs = {'dpi':200} # Specify a higher default DPI
+            if savefigargs is None: {}
+            defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
+            defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
             if filetype is 'fig':
                 saveobj(thisfilename, plt)
                 printv('Figure object saved to %s' % thisfilename, 2, verbose)
             else:
                 reanimateplots(plt)
                 if filetype is 'pdf':
-                    pdf.savefig(figure=plt, **savefigargs)
+                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but this should actually be default, since we updated it from the user version
                 else:                 
-                    plt.savefig(thisfilename, **savefigargs)
+                    plt.savefig(thisfilename, **defaultsavefigargs)
                     if not thisfilename:
                         import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
