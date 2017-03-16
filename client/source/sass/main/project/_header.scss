@@ -21,7 +21,6 @@
   .logged-in{
     font-size: 0.8em;
     color: #53646F;
-    overflow: hidden;
     float: right;
     white-space: nowrap;
     margin-left: 10px;
@@ -34,11 +33,9 @@
       }
     }
     b{
-      max-width: 150px;
       display: inline-block;
       white-space: nowrap;
       text-overflow: ellipsis;
-      overflow: hidden;
       text-align: left;
       width: 100%;
     }

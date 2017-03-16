@@ -50,27 +50,32 @@
           ng-if="userLogged()">
       </div>
 
-      <!-- This is kind of clunky, but it works, nothing else would-->
-      <div style="width:90%;" ng-cloak ng-if="userLogged()" class="logged-in">
-        <div style="float:right; text-align:right">
-        <table cellpadding="10px" cellspacing="0">
-          <tr>
-            <td><div style="text-align:right; float:right"><b>user:&nbsp;&nbsp;&nbsp;</b></div></td>
-            <td><div style="text-align:left">
-              <span ng-show="user.displayName">{{ user.displayName }}</span>
-              <span ng-show="!user.displayName">{{ user.username }}</span>
-            </div></td>
-          </tr>
-          <tr>
-            <td><div style="text-align:right; float:right"><b>project:&nbsp;&nbsp;&nbsp;</b></div></td>
-            <td><div style="text-align:left">
-              <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
-              <span ng-show="!activeProject.isSet()">[none]</span>
-            </div></td>
-          </tr>
-        </table>
-          </div>
+      <div style="display:inline; background-color:#cfc;">
+        this is a freaking div
       </div>
+
+      <!-- This is kind of clunky, but it works, nothing else would-->
+      <!--<div style="overflow:hidden; background-color: #cfc;">  &lt;!&ndash; ng-cloak ng-if="userLogged()" &ndash;&gt;-->
+        <!--sldfkjasldfjasdlfjfkj-->
+        <!--<div style="float:right; text-align:right">-->
+        <!--<table cellpadding="10px" cellspacing="10px">-->
+          <!--<tr>-->
+            <!--<td><div style="text-align:right; float:right"><b>user:&nbsp;&nbsp;&nbsp;</b></div></td>-->
+            <!--<td><div style="text-align:left">-->
+              <!--<span ng-show="user.displayName">{{ user.displayName }}</span>-->
+              <!--<span ng-show="!user.displayName">{{ user.username }}</span>-->
+            <!--</div></td>-->
+          <!--</tr>-->
+          <!--<tr>-->
+            <!--<td><div style="text-align:right; float:right"><b>project:&nbsp;&nbsp;&nbsp;</b></div></td>-->
+            <!--<td><div style="text-align:left">-->
+              <!--<span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>-->
+              <!--<span ng-show="!activeProject.isSet()">[none]</span>-->
+            <!--</div></td>-->
+          <!--</tr>-->
+        <!--</table>-->
+          <!--</div>-->
+      <!--</div>-->
     </div>
   </div>
 
