@@ -32,8 +32,8 @@ globaltitlesize = 12
 globallabelsize = 12
 globalticksize = 10
 globallegendsize = 10
-globalfigsize = (8,4)
-globalaxisposition = [0.1,0.06,0.66,0.8]
+globalfigsize = (9,4)
+globalposition = [0.1,0.06,0.6,0.8]
 
 
 
@@ -219,8 +219,9 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 
-def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, alpha=0.2, lw=2, dotsize=50,
-            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, colors=None, reorder=None, **kwargs):
+def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, 
+            alpha=0.2, lw=2, dotsize=50, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
+            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -350,7 +351,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 epiplots[pk] = Figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
                 ax = epiplots[pk].add_subplot(111)
-                ax.set_position(globalaxisposition)
+                ax.set_position(position)
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
@@ -457,7 +458,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, **kwargs):
+def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, position=globalposition, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -480,6 +481,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     sigfigs = 2 # Number of significant figures
     fig = Figure(facecolor=(1,1,1), figsize=figsize)
     ax = fig.add_subplot(111)
+    ax.set_position(position)
     colors = gridcolormap(ncurves)
     
     # Plot model estimates with uncertainty
@@ -523,7 +525,8 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
 ##################################################################
     
     
-def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, usepie=False, verbose=2, **kwargs):
+def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=globalposition,
+               usepie=False, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -555,6 +558,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         for i in range(nallocs):
             fig = Figure(facecolor=(1,1,1), figsize=figsize)
             ax = fig.add_subplot(111)
+            ax.set_position(position)
             
             # Make a pie
             ydata = budgets[i][:]
@@ -572,7 +576,11 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     else:
         fig = Figure(facecolor=(1,1,1), figsize=figsize)
         ax = fig.add_subplot(111)
-        fig.subplots_adjust(bottom=0.50)
+        extraroom = 0.1 # Define extra room for the y-tick labels
+        if position[0] == globalposition[0]:
+            position[0] += extraroom # Add to side
+            position[2] -= extraroom # Subtract from width
+        ax.set_position(position)
         
         for i in range(nprogs-1,-1,-1):
             xdata = arange(nallocs)+0.5
@@ -611,7 +619,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 ##################################################################
     
     
-def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, verbose=2, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=globalposition, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -643,6 +651,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         
         nbudgetyears = len(budgetyearstoplot[plt])
         ax.append(fig.add_subplot(111))
+        ax.set_position(position)
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
@@ -702,7 +711,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ## Plot cascade
 ##################################################################
 def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, useSIticks=True, plotdata=True, **kwargs):
+                ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, useSIticks=True, plotdata=True, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -740,7 +749,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
         ## Do the plotting
         fig = Figure(facecolor=(1,1,1), figsize=figsize)
         ax = fig.add_subplot(111)
-        ax.set_position(globalaxisposition)
+        ax.set_position(position)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
                 thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
@@ -792,7 +801,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
 
 
 def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False):
-    ''' Plot allocations in bar charts '''
+    ''' Plot allocations in bar charts -- not part of weboptima '''
     
     if budgets is None:
         try: budgets = project.results[-1].budget
@@ -858,6 +867,8 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
     ''' 
     Plot deaths or people by CD4
     NOTE: do not call this function directly; instead, call via plotresults().
+    
+    Warning, broken due to results.raw being removed
     '''
     
     # Figure out what kind of result it is
@@ -1032,6 +1043,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         op.saveplots(P) # Save everything to one PDF file
         op.saveplots(P, 'cascade', 'png', filename='mycascade.png', savefigargs={'dpi':200})
         op.saveplots(P, ['numplhiv','cascade'], filepath='/home/me', filetype='svg')
+        op.saveplots(P, 'cascade', position=[0.3,0.3,0.5,0.5])
     
     If saved as 'fig', then can load and display the plot using op.loadplot().
     
