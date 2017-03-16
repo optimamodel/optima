@@ -1082,7 +1082,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                 thisfilename = filepath+keyforfilename+'.'+filetype
             
             # Do the saving
-            if savefigargs is None: {}
+            if savefigargs is None: savefigargs = {}
             defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
             defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
             if filetype is 'fig':
