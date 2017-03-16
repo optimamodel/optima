@@ -1,36 +1,18 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Resultset, Multiresultset, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
+from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
+from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
+
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
 
+##############################################################################
+### USER-VISIBLE FUNCTIONS
+##############################################################################
 
 
-def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
-    ''' Add a plot to an existing figure '''
-    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
-    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
-    orig = thisplot.get_position() # get the original position 
-    widthfactor = 0.9/ncols**(1/4.)
-    heightfactor = 0.9/nrows**(1/4.)
-    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
-    thisplot.set_position(pos2) # set a new position
-    return None
-
-
-def sanitizeresults(tmpresults):
-    ''' Allow for flexible input -- a results structure, a list, or a project file '''
-    if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
-    elif type(tmpresults) not in [Resultset, Multiresultset]:
-        try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
-        except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
-    else: results = tmpresults # Just use directly
-    return results
-
-
-def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
+def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
     Does the hard work for updateplots() for pygui()
     Keyword arguments if supplied are passed on to figure().
@@ -44,15 +26,15 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
     
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
-    results = sanitizeresults(tmpresults)
     
     # Do plotting
-    wasinteractive = isinteractive()
+    wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
     if wasinteractive: ioff()
     width,height = fig.get_size_inches()
     
     # Actually create plots
     plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height))
+    reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
@@ -70,59 +52,9 @@ def plotresults(tmpresults, toplot=None, fig=None, **kwargs): # WARNING, should 
                 newp = ncols*thisrow + origcol # Calculate new row/column
                 addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1))
         else: pass # Must have 0 length or something
+    
     if wasinteractive: ion()
     show()
-
-
-
-
-
-def closegui(event=None):
-    ''' Close all GUI windows '''
-    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results
-    try: close(plotfig)
-    except: pass
-    try: close(panelfig)
-    except: pass
-    return None
-
-
-
-def getchecked(check=None):
-    ''' Return a list of whether or not each check box is checked or not '''
-    ischecked = []
-    for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
-    return ischecked
-
-def clearselections(event=None):
-    global plotfig, check, checkboxes, results
-    for box in range(len(check.lines)):
-        for i in [0,1]: check.lines[box][i].set_visible(False)
-    updateplots()
-    return None
-    
-    
-def updateplots(event=None, tmpresults=None, **kwargs):
-    ''' Close current window if it exists and open a new one based on user selections '''
-    global plotfig, check, checkboxes, results
-    if tmpresults is not None: results = tmpresults
-    
-    # If figure exists, get size, then close it
-    try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
-    except: width,height = 14,12 # No figure: use defaults
-    
-    # Get user selections
-    ischecked = getchecked(check)
-    toplot = array(checkboxes)[array(ischecked)].tolist() # Use logical indexing to get names to plot
-    
-    # Do plotting
-    if sum(ischecked): # Don't do anything if no plots
-        plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
-        for key in ['toplot','fig','figsize']: kwargs.pop(key, None) # Remove duplicated arguments if they exist
-        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **kwargs)
-    
-    return None
-
 
 
 def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
@@ -207,136 +139,6 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     clearbutton.on_clicked(clearselections) # Clear all checkboxes
     closebutton.on_clicked(closegui) # Close figures
     updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
-
-    
-
-
-
-
-
-
-
-
-def browser(results, toplot=None, doplot=True):
-    ''' 
-    Create an MPLD3 GUI and display in the browser. This is basically a testbed for 
-    the Optima frontend.
-    
-    Usage:
-        browser(results, [toplot])
-    
-    where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
-        toplot = ['prev-tot', 'inci-pop']
-    
-    With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
-    
-    Version: 1.1 (2015dec29) by cliffk
-    '''
-    import mpld3 # Only import this if needed, since might not always be available
-    import json
-    if doplot: from webserver import serve # For launching in a browser
-
-    wasinteractive = isinteractive() # Get current state of interactivity so the screen isn't flooded with plots
-    if wasinteractive: ioff()
-    
-    
-    ## Specify the div style, and create the HTML template we'll add the data to
-    divstyle = "float: left"
-    html = '''
-    <html>
-    <head><script src="https://code.jquery.com/jquery-1.11.3.min.js"></script></head>
-    <body>
-    !MAKE DIVS!
-    <script>function mpld3_load_lib(url, callback){var s = document.createElement('script'); s.src = url; s.async = true; s.onreadystatechange = s.onload = callback; s.onerror = function(){console.warn("failed to load library " + url);}; document.getElementsByTagName("head")[0].appendChild(s)} mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3git.js", function(){
-    !DRAW FIGURES!
-    })});
-    </script>
-    <script>
-    function move_year() {
-        console.log('trying to move year');
-        var al = $('.mpld3-baseaxes').length;
-        var dl = $('div.fig').length
-        if (al === dl) {
-            $('.mpld3-baseaxes > text').each(function() {
-                var value = $(this).text();
-                if (value === 'Year') {
-                    console.log('found year');
-                    $(this).attr('y', parseInt($(this).attr('y'))+10);
-                    console.log($(this).attr('y'));
-                }
-            });
-        } else {
-            setTimeout(move_year, 150);
-        }
-    }
-    function format_xaxis() {
-        var axes = $('.mpld3-xaxis');
-        var al = axes.length;
-        var dl = $('div.fig').length;
-        if (al === dl) {
-            $(axes).find('g.tick > text').each(function() {
-                $(this).text($(this).text().replace(',',''));
-            });
-        } else {
-            setTimeout(format_xaxis, 150);
-        }
-    }
-    function add_lines_to_legends() {
-        console.log('adding lines to legends');
-        var al = $('.mpld3-baseaxes').length;
-        var dl = $('div.fig').length
-        if (al === dl) {
-            $('div.fig').each(function() {
-                var paths = $(this).find('.mpld3-baseaxes > text');
-                if (paths) {
-                    var legend_length = paths.length - 2;
-                    var lines = $(this).find('.mpld3-axes > path');
-                    var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
-                    $(this).find('.mpld3-baseaxes').append(lines_to_copy);
-                }
-            });
-        } else {
-            setTimeout(add_lines_to_legends, 150);
-        }
-    }
-    $(document).ready(function() {
-        format_xaxis();
-        move_year();
-        add_lines_to_legends();
-    });
-    </script>
-    </body></html>
-    '''
-
-    ## Create the figures to plot
-    jsons = [] # List for storing the converted JSONs
-    plots = makeplots(results=results, toplot=toplot) # Generate the plots
-    nplots = len(plots) # Figure out how many plots there are
-    for p in range(nplots): # Loop over each plot
-        fig = figure() # Create a blank figure
-        naxes = len(plots[p].axes)
-        for ax in range(naxes): addplot(fig, plots[p].axes[ax], name=plots.keys()[p], nrows=naxes, n=ax+1) # Add this plot to this figure
-        mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
-        jsons.append(str(json.dumps(mpld3.fig_to_dict(fig)))) # Save to JSON
-        close(fig) # Close
-    
-    ## Create div and JSON strings to replace the placeholers above
-    divstr = ''
-    jsonstr = ''
-    for p in range(nplots):
-        divstr += '<div style="%s" id="fig%i" class="fig"></div>\n' % (divstyle, p) # Add div information: key is unique ID for each figure
-        jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (p, jsons[p]) # Add the JSON representation of each figure -- THIS IS KEY!
-    html = html.replace('!MAKE DIVS!',divstr) # Populate div information
-    html = html.replace('!DRAW FIGURES!',jsonstr) # Populate figure information
-    
-    ## Launch a server or return the HTML representation
-    if doplot: serve(html)
-    else: return html
-
-
-
-
-
 
 
 
@@ -584,10 +386,6 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     
 
 
-
-
-
-
 global plotparsbackbut, plotparsnextbut, plotparslider
 def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, die=True, **kwargs):
     '''
@@ -726,5 +524,87 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     return allplotdata
 
 
+def loadplot(filename=None):
+    '''
+    Load a plot from a file and reanimate it.
+    
+    Example usage:
+        import optima as op
+        P = op.demo(0)
+        op.saveplots(P, toplot='cascade', filetype='fig')
+    
+    Later:
+        cascadefig = op.loadplot('cascade.fig')
+    '''
+    ion() # Without this, it doesn't show up
+    fig = loadobj(filename)
+    reanimateplots(fig)
+    return fig
 
+
+
+##############################################################################
+### HELPER FUNCTIONS
+##############################################################################
+
+def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
+    ''' Add a plot to an existing figure '''
+    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+    orig = thisplot.get_position() # get the original position 
+    widthfactor = 0.9/ncols**(1/4.)
+    heightfactor = 0.9/nrows**(1/4.)
+    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
+    thisplot.set_position(pos2) # set a new position
+    thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
+    thisplot.pchanged()
+    thisplot.stale = True
+    return None
+
+
+def closegui(event=None):
+    ''' Close all GUI windows '''
+    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results
+    try: close(plotfig)
+    except: pass
+    try: close(panelfig)
+    except: pass
+    return None
+
+
+def getchecked(check=None):
+    ''' Return a list of whether or not each check box is checked or not '''
+    ischecked = []
+    for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
+    return ischecked
+
+
+def clearselections(event=None):
+    global plotfig, check, checkboxes, results
+    for box in range(len(check.lines)):
+        for i in [0,1]: check.lines[box][i].set_visible(False)
+    updateplots()
+    return None
+    
+    
+def updateplots(event=None, tmpresults=None, **kwargs):
+    ''' Close current window if it exists and open a new one based on user selections '''
+    global plotfig, check, checkboxes, results
+    if tmpresults is not None: results = tmpresults
+    
+    # If figure exists, get size, then close it
+    try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
+    except: width,height = 14,12 # No figure: use defaults
+    
+    # Get user selections
+    ischecked = getchecked(check)
+    toplot = array(checkboxes)[array(ischecked)].tolist() # Use logical indexing to get names to plot
+    
+    # Do plotting
+    if sum(ischecked): # Don't do anything if no plots
+        plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
+        for key in ['toplot','fig','figsize']: kwargs.pop(key, None) # Remove duplicated arguments if they exist
+        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **kwargs)
+    
+    return None
 
