@@ -59,13 +59,13 @@
   display: inline-block;
   padding: 5px 4px;
 
-  @include font-height(13px, 16px);
+  @include font-height(16px, 18px);
 
   background: #2aabe1;
-  color: #000;
+  color: #ffffff;
 
-  border-radius: 20px;
-  border: 10px solid #2aabe1;
+  border-radius: 2px;
+  border: 5px solid #2aabe1;
 
   text-align: center;
   text-decoration: none;
@@ -108,4 +108,5 @@
 
 .menu-active {
   background: #1e749f;
+  border-color: #1e749f;
 }
