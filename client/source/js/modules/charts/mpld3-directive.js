@@ -364,7 +364,7 @@ define(
           });
         }
 
-        scope.exportAllData = function() {
+        scope.exportAllData = function(name) { /* Adding function(name) brings up save dialog box */
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
@@ -381,6 +381,7 @@ define(
             saveAs(blob, ('results.xlsx'));
           });
         };
+
 
         function getSelectors() {
           function getChecked(s) { return s.checked; }
