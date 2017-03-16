@@ -42,43 +42,36 @@
 
   <div class="actionbar">
     <div class="elastic header">
-      <div style="display:table-cell; margin-left: 2em; margin-right: 1em">
+      <div style="display:table-cell; width:160px">
         <img src="assets/images/project/logo/optima-hiv-logo-web.png">
       </div>
       <div style="display:table-cell; vertical-align: middle;" data-menu>
       </div>
 
-      <div style="display:table-cell; float:right; vertical-align: middle;">
-        hi
-        <div style="display:inline; float:right; background-color:#cfc;">
-          this is a freaking div
+      <div style="display:table-cell; float:right; vertical-align: middle">
+        <div style="display:table">
+          <div style="display:table-row">
+            <div style="display:table-cell; text-align:right; padding-right:10px">
+              <b>user:</b>
+            </div>
+            <div style="display:table-cell">
+              <span ng-show="user.displayName">{{ user.displayName }}</span>
+              <span ng-show="!user.displayName">{{ user.username }}</span>
+            </div>
+          </div>
+          <div style="display:table-row">
+            <div style="display:table-cell; text-align:right; padding-right:10px">
+              <b>project:</b>
+            </div>
+            <div style="display:table-cell">
+              <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
+              <span ng-show="!activeProject.isSet()">[none]</span>
+            </div>
+          </div>
+
         </div>
       </div>
 
-
-
-      <!-- This is kind of clunky, but it works, nothing else would-->
-      <!--<div style="overflow:hidden; background-color: #cfc;">  &lt;!&ndash; ng-cloak ng-if="userLogged()" &ndash;&gt;-->
-        <!--sldfkjasldfjasdlfjfkj-->
-        <!--<div style="float:right; text-align:right">-->
-        <!--<table cellpadding="10px" cellspacing="10px">-->
-          <!--<tr>-->
-            <!--<td><div style="text-align:right; float:right"><b>user:&nbsp;&nbsp;&nbsp;</b></div></td>-->
-            <!--<td><div style="text-align:left">-->
-              <!--<span ng-show="user.displayName">{{ user.displayName }}</span>-->
-              <!--<span ng-show="!user.displayName">{{ user.username }}</span>-->
-            <!--</div></td>-->
-          <!--</tr>-->
-          <!--<tr>-->
-            <!--<td><div style="text-align:right; float:right"><b>project:&nbsp;&nbsp;&nbsp;</b></div></td>-->
-            <!--<td><div style="text-align:left">-->
-              <!--<span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>-->
-              <!--<span ng-show="!activeProject.isSet()">[none]</span>-->
-            <!--</div></td>-->
-          <!--</tr>-->
-        <!--</table>-->
-          <!--</div>-->
-      <!--</div>-->
     </div>
   </div>
 
