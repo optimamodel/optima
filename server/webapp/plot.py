@@ -74,12 +74,11 @@ def convert_to_selectors(graph_selectors):
     keys = graph_selectors['keys']
     names = graph_selectors['names']
     defaults = graph_selectors['defaults']
-    print ">> make_mpld3_graph_dict keys", keys
-
     selectors = [
         {'key': key, 'name': name, 'checked': checked}
          for (key, name, checked) in zip(keys, names, defaults)]
     return selectors
+
 
 def make_mpld3_graph_dict(result, which=None):
     """
@@ -110,12 +109,13 @@ def make_mpld3_graph_dict(result, which=None):
     print ">> make_mpld3_graph_dict input which:", which
 
     if which is None:
-        print ">> make_mpld3_graph_dict has cache:", hasattr(result, 'which')
         advanced = False
         if hasattr(result, 'which'):
             which = result.which
-            print ">> make_mpld3_graph_dict cached options"
-            if 'advanced' in result.which:
+            if which is None:
+                which = {}
+            print ">> make_mpld3_graph_dict has cache:", which
+            if 'advanced' in which:
                 advanced = True
                 which.remove("advanced")
         else:
@@ -141,12 +141,17 @@ def make_mpld3_graph_dict(result, which=None):
         n = len(graph_selectors['keys'])
         for i in range(n):
             key = graph_selectors['keys'][i]
-            if key.startswith(normal_default_keys) and "-total" in key:
+            if key.startswith(normal_default_keys) and ('total' in key or 'stacked' in key):
                 graph_selectors['defaults'][i] = True
     selectors = convert_to_selectors(graph_selectors)
 
-    if 'default' in which:
-        which = [s["key"] for s in selectors if s["checked"]]
+    default_which = []
+    for i in range(len(graph_selectors['defaults'])):
+        if graph_selectors['defaults'][i]:
+            default_which.append(graph_selectors['keys'][i])
+
+    if len(which) == 0 or 'default' in which:
+        which = default_which
     else:
         which = [w for w in which if w in graph_selectors["keys"]]
         for selector in selectors:

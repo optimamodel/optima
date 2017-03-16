@@ -386,23 +386,23 @@ class CalculatePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns portfolio information")
-    def post(self, portfolio_id, gaoptim_id):
+    def post(self, portfolio_id):
         maxtime = int(get_post_data_json().get('maxtime'))
-        print("> Run BOC %s %s" % (portfolio_id, gaoptim_id))
-        return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id, maxtime)
+        print("> Run BOC %s" % (portfolio_id))
+        return server.webapp.tasks.launch_boc(portfolio_id, maxtime)
 
-api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+api.add_resource(CalculatePortfolio, '/api/calculate/portfolio/<uuid:portfolio_id>')
 
 
 class MinimizePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Starts portfolio minimization")
-    def post(self, portfolio_id, gaoptim_id):
+    def post(self, portfolio_id):
         maxtime = int(get_post_data_json().get('maxtime'))
-        return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, gaoptim_id, maxtime)
+        return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, maxtime)
 
-api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>')
 
 
 class RegionTemplate(Resource):
@@ -840,7 +840,6 @@ class ScenarioSimulationGraphs(Resource):
             end: int -or- None
         """
         args = get_post_data_json()
-        print("> Get scenario graphs", args)
         return dataio.make_scenarios_graphs(
             project_id,
             which=args.get('which', None),
