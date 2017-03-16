@@ -166,14 +166,15 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
+        print(">> ResultsDb load result-" + self.id.hex)
         return op.loadstr(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
-        print(">> Save result-" + self.id.hex)
+        print(">> ResultsDb save result-" + self.id.hex)
         redis.set("result-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
-        print(">> Cleanup result-" + self.id.hex)
+        print(">> ResultsDb cleanup result-" + self.id.hex)
         redis.delete("result-" + self.id.hex)
 
 

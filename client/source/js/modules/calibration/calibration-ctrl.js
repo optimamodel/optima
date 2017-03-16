@@ -2,6 +2,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   'use strict';
 
+  module.directive('myEnter', function () {
+      return function (scope, element, attrs) {
+          element.bind("keydown keypress", function (event) {
+              if(event.which === 13) {
+                  scope.$apply(function (){
+                      scope.$eval(attrs.myEnter);
+                  });
+
+                  event.preventDefault();
+              }
+          });
+      };
+  });
+
   module.controller('ModelCalibrationController', function (
       $scope, $http, info, modalService, $upload,
       $modal, $timeout, toastr, globalPoller) {
@@ -57,21 +71,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function getSelectors() {
-      if ($scope.state.graphs) {
-        var selectors = $scope.state.graphs.selectors;
+      function getChecked(s) { return s.checked; }
+      function getKey(s) { return s.key }
+      var scope = $scope.state;
+      var which = [];
+      if (scope.graphs) {
+        if (scope.graphs.advanced) {
+          which.push('advanced');
+        }
+        var selectors = scope.graphs.selectors;
         if (selectors) {
-          var which = _.filter(selectors, function(selector) {
-            return selector.checked;
-          })
-            .map(function(selector) {
-              return selector.key;
-            });
-          if (which.length > 0) {
-            return which;
-          }
+          which = which.concat(_.filter(selectors, getChecked).map(getKey));
         }
       }
-      return null;
+      return which;
     }
 
     function loadParametersAndGraphs(response) {
@@ -109,9 +122,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.parameters) {
         return;
       }
-      _.each($scope.parameters, function(parameter) {
-        console.log('saveAndUpdateGraphs', parameter);
-      });
+      console.log('saveAndUpdateGraphs', $scope.parameters);
       $http
         .post(
           '/api/project/' + project.id

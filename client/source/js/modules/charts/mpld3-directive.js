@@ -383,18 +383,19 @@ define(
         };
 
         function getSelectors() {
+          function getChecked(s) { return s.checked; }
+          function getKey(s) { return s.key }
+          var which = [];
           if (scope.graphs) {
-            function getChecked(s) { return s.checked; }
-            function getKey(s) { return s.key }
+            if (scope.graphs.advanced) {
+              which.push('advanced');
+            }
             var selectors = scope.graphs.selectors;
             if (selectors) {
-              var which = _.filter(selectors, getChecked).map(getKey);
-              if (which.length > 0) {
-                return which;
-              }
+              which = which.concat(_.filter(selectors, getChecked).map(getKey));
             }
           }
-          return [];
+          return which;
         }
 
         scope.updateGraphs = function() {
@@ -402,7 +403,7 @@ define(
           if (_.isUndefined(resultId)) {
             return;
           }
-          console.log('fetching graphs reusltId', scope.graphs.resultId);
+          console.log('updateGraphs resultId', scope.graphs.resultId);
           var which = getSelectors();
           if (scope.graphs.advanced) {
             which.push("advanced");
@@ -419,12 +420,11 @@ define(
 
         scope.switchGraphs = function() {
           scope.graphs.advanced = !scope.graphs.advanced;
-          console.log('toggleAdvanced', scope.graphs.advanced);
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
           }
-          console.log('fetching graphs reusltId', scope.graphs.resultId);
+          console.log('switchGraphs', scope.graphs.advanced, 'reusltId', scope.graphs.resultId);
           var which = ["default"];
           if (scope.graphs.advanced) {
             which.push("advanced");
@@ -450,7 +450,6 @@ define(
           var allCharts = elem.find('.allcharts');
           var allChartsWidth = parseInt(allCharts.width());
           var width = allChartsWidth * percentage / 100.;
-          console.log('getSelectedFigureWidth', width, '/', allChartsWidth, ' based on slider ', percentage);
           return width;
         }
 
