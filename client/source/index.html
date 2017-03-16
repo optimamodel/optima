@@ -57,10 +57,19 @@
           ng-if="userLogged()"
           class="logged-in">
         <b>user:</b>
+        <br>
+        <b>project:</b>
+      </div>
+      <div
+        style="
+            flex: 1 1;
+            text-align: right;"
+        ng-cloak
+        ng-if="userLogged()"
+        class="logged-in">
         <span ng-show="user.displayName">{{ user.displayName }}</span>
         <span ng-show="!user.displayName">{{ user.username }}</span>
         <br>
-        <b>project:</b>
         <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
         <span ng-show="!activeProject.isSet()">[none]</span>
       </div>
