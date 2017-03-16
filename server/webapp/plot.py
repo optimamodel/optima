@@ -30,41 +30,17 @@ def convert_to_mpld3(figure):
 
     figure.set_size_inches(5.5, 2)
 
-    # is_stack_plot = False
-
     if len(figure.axes) == 1:
         ax = figure.axes[0]
         legend = ax.get_legend()
         if legend is not None:
             labels = [t.get_text() for t in legend.get_texts()]
-            if len(labels) == 1:
-                if labels[0] == "Model":
-                    legend.remove()
-                    legend = None
-        if legend is not None:
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array([[0.19, 0.3], [0.65, 0.9]])))
+            ax.set_position(Bbox(array([[0.19, 0.1], [0.65, 0.85]])))
         else:
-            ax.set_position(Bbox(array([[0.19, 0.3], [0.85, 0.9]])))
-
-        # if is_stack_plot:
-        #     figure.set_size_inches(5, 4)
-
-        # for ax in figure.axes:
-        #     ax.yaxis.label.set_size(14)
-        #     ax.xaxis.label.set_size(14)
-        #     ax.title.set_size(14)
-        #
-        #     ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
-        #     for ticklabel in ticklabels:
-        #         ticklabel.set_size(10)
-        #     legend = ax.get_legend()
-        #     if legend is not None:
-        #         texts = legend.get_texts()
-        #         for text in texts:
-        #             text.set_size(10)
+            ax.set_position(Bbox(array([[0.19, 0.1], [0.85, 0.85]])))
 
     mpld3_dict = mpld3.fig_to_dict(figure)
     return normalize_obj(mpld3_dict)
@@ -159,7 +135,8 @@ def make_mpld3_graph_dict(result, which=None):
 
     print ">> make_mpld3_graph_dict which:", which
 
-    graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3), die=False)
+    graphs = op.makeplots(result, toplot=which, figsize=(4, 3), die=False)
+    op.reanimateplots(graphs)
 
     graph_selectors = []
     mpld3_graphs = []
