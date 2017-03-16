@@ -51,46 +51,26 @@
       </div>
 
       <!-- This is kind of clunky, but it works, nothing else would-->
-      <div style="width:100%;" ng-cloak ng-if="userLogged()" class="logged-in">
-        <div style="float:right; text-align:right>
-        <table cellpadding="3px" cellspacing="0">
+      <div style="width:90%;" ng-cloak ng-if="userLogged()" class="logged-in">
+        <div style="float:right; text-align:right">
+        <table cellpadding="10px" cellspacing="0">
           <tr>
-            <td><div style="text-align:right">row 1, col 1</div></td>
-            <td><div style="text-align:left">row 1col 2</div></td>
+            <td><div style="text-align:right; float:right"><b>user:&nbsp;&nbsp;&nbsp;</b></div></td>
+            <td><div style="text-align:left">
+              <span ng-show="user.displayName">{{ user.displayName }}</span>
+              <span ng-show="!user.displayName">{{ user.username }}</span>
+            </div></td>
           </tr>
           <tr>
-            <td><div style="text-align:right">r2c1</div></td>
-            <td><div style="text-align:left">r2  c2</div></td>
+            <td><div style="text-align:right; float:right"><b>project:&nbsp;&nbsp;&nbsp;</b></div></td>
+            <td><div style="text-align:left">
+              <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
+              <span ng-show="!activeProject.isSet()">[none]</span>
+            </div></td>
           </tr>
         </table>
           </div>
       </div>
-
-      <!--<div-->
-          <!--style="-->
-            <!--text-align: right;-->
-            <!--float: right;-->
-            <!--width: 80px"-->
-          <!--ng-cloak-->
-          <!--ng-if="userLogged()"-->
-          <!--class="logged-in">-->
-        <!--<b>user:</b>-->
-        <!--<br>-->
-        <!--<b>project:</b>-->
-      <!--</div>-->
-      <!--<div-->
-        <!--style="-->
-            <!--flex: 1 1;-->
-            <!--text-align: right;"-->
-        <!--ng-cloak-->
-        <!--ng-if="userLogged()"-->
-        <!--class="logged-in">-->
-        <!--<span ng-show="user.displayName">{{ user.displayName }}</span>-->
-        <!--<span ng-show="!user.displayName">{{ user.username }}</span>-->
-        <!--<br>-->
-        <!--<span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>-->
-        <!--<span ng-show="!activeProject.isSet()">[none]</span>-->
-      <!--</div>-->
     </div>
   </div>
 
