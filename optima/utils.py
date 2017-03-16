@@ -200,6 +200,7 @@ def sigfig(X, sigfigs=5, SI=False):
     for i in range(n):
         x = X[i]
         
+        suffix = ''
         if SI:
             if abs(x)>=1e9:
                 x = x/1e9
@@ -210,8 +211,6 @@ def sigfig(X, sigfigs=5, SI=False):
             elif abs(x)>=1e3:
                 x = x/1e3
                 suffix = 'K'
-        else:
-            suffix = ''
         
         try:
             if x==0:
