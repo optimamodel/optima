@@ -493,7 +493,7 @@ define(
         );
 
         scope.toggleAdvanced = function() {
-          scope.defaultGraphs();
+          scope.switchGraphs();
         };
 
         scope.clearSelectors = function() {
@@ -503,7 +503,7 @@ define(
         };
 
         scope.defaultSelectors = function() {
-          scope.switchGraphs();
+          scope.defaultGraphs();
         };
 
         scope.changeFigWidth = function() {
