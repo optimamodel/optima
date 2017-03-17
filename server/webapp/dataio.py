@@ -615,18 +615,17 @@ def download_project_with_result(project_id):
     project_record = load_project_record(project_id, raise_exception=True)
     project = project_record.load()
     result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
-    is_save = False
     if result_records is not None:
         for result_record in result_records:
             result = result_record.load()
+            print(">> download_project_with_result result", result.name)
             project.addresult(result)
-            is_save = True
-    if is_save:
-        project_record.save_obj(project, is_skip_result=False)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = project_record.as_file(dirname)
+    filename = project.name + ".prj"
+    server_filename = os.path.join(dirname, filename)
+    project.save(server_filename, saveresults=True)
     print(">> Saving download_project %s %s" % (dirname, filename))
     return os.path.join(dirname, filename)
 
@@ -1280,13 +1279,13 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
         'pars': parse.normalize_obj(pars),
     }
 
-def reconcile_progset(project_id, progset_id, parset_id, year):
+def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
 
     def update_project_fn(project):
         print(">> reconcile_progset %s" % project.progsets)
         progset = parse.get_progset_from_project(project, progset_id)
         parset = parse.get_parset_from_project_by_id(project, parset_id)
-        progset.reconcile(parset, year, uselimits=True)
+        progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
 
     update_project_with_fn(project_id, update_project_fn)
 

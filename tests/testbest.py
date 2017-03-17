@@ -14,9 +14,9 @@ tests = [
 #'autocalib',
 #'manualcalib',
 #'reconcile',
-#'runscenarios',
+'runscenarios',
 'optimize',
-'dosave',
+#'dosave',
 ]
 
 filename = 'best.prj'
@@ -90,7 +90,7 @@ if 'runscenarios' in tests:
 
 
 if 'optimize' in tests:
-    P.optimize(maxtime=20, mc=0)
+    P.optimize(maxtime=10, mc=0)
     if doplot: pygui(P.results[ind])
     
 

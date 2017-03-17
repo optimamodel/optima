@@ -77,17 +77,19 @@ define(['angular'], function (module) {
       }
 
       function loadStartVal(scenPar) {
+        var payload = {
+          projectId: project.id,
+          parsetId: $scope.scenario.parset_id,
+          parShort: scenPar.name,
+          pop: scenPar.for,
+          year: scenPar.startyear
+        };
+        console.log('loadStartVal', payload);
         $http
           .post(
-            '/api/startval',
-            {
-              projectId: project.id,
-              parsetId: $scope.scenario.parset_id,
-              parShort: scenPar.name,
-              pop: scenPar.for,
-              year: scenPar.startyear
-            })
+            '/api/startval', payload)
           .success(function(data) {
+            console.log('loadStartVal', data);
             scenPar.startval = data;
           });
       }
@@ -108,10 +110,9 @@ define(['angular'], function (module) {
       $scope.resetStartValue = function (iPar) {
         var scenPar = $scope.scenario.pars[iPar];
         var pops = $scope.popsOfPar[iPar];
-        console.log('scenPar, pops', scenPar, pops);
         var pop = _.findWhere(pops, {popLabel: scenPar.forLabel});
-        console.log('pop', pop);
-        scenPar.startval = pop.startval;
+        scenPar.for = pop.pop;
+        loadStartVal(scenPar);
       };
 
       $scope.selectNewYear = function (iPar) {
