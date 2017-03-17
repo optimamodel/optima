@@ -96,8 +96,8 @@ gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
       .pipe(uglify().on('error', handleError))
       .pipe(gulp.dest('build/vendor/requirejs')),
     // copy mpld3, instead of minifying because we're using constructor names for plugin identification
-    gulp.src(['source/js/modules/mpld3-charts/mpld3.v0.3-patched.js'])
-      .pipe(gulp.dest('build/js/modules/mpld3-charts'))
+    gulp.src(['source/js/modules/charts/mpld3.v0.3-patched.js'])
+      .pipe(gulp.dest('build/js/modules/charts'))
   );
 });
 
@@ -109,7 +109,7 @@ gulp.task('compile-build-js-client', function () {
     insertRequire: ['js/main'],
     name: 'js/main',
     out: 'main.js',
-    optimize: 'uglify',
+    optimize: 'none',
     wrap: true,
     excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
   };
@@ -118,6 +118,7 @@ gulp.task('compile-build-js-client', function () {
   return rjs(config)
     .on('error', handleError)
     .pipe(ngAnnotate())
+    .pipe(uglify().on('error', handleError))
     .pipe(gulp.dest('build/js/'));
 });
 

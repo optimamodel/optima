@@ -4,4 +4,4 @@
 
 cd `dirname $0` # Make sure we're in this folder
 cd ../client
-source clean_dev_build.sh
+source clean_build.sh
