@@ -8,12 +8,12 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2016jul06
+Version: 2017mar17
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, checktype, promotetoarray
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
-from matplotlib.backends.backend_qt4agg import new_figure_manager_given_figure as nfmgf
+from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive
