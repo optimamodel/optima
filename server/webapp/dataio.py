@@ -625,7 +625,7 @@ def download_project_with_result(project_id):
         dirname = TEMPLATEDIR
     filename = project.name + ".prj"
     server_filename = os.path.join(dirname, filename)
-    op.saveobj(server_filename, project)
+    project.save(server_filename, saveresults=True)
     print(">> Saving download_project %s %s" % (dirname, filename))
     return os.path.join(dirname, filename)
 
