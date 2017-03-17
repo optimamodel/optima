@@ -1279,13 +1279,13 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
         'pars': parse.normalize_obj(pars),
     }
 
-def reconcile_progset(project_id, progset_id, parset_id, year):
+def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
 
     def update_project_fn(project):
         print(">> reconcile_progset %s" % project.progsets)
         progset = parse.get_progset_from_project(project, progset_id)
         parset = parse.get_parset_from_project_by_id(project, parset_id)
-        progset.reconcile(parset, year, uselimits=True)
+        progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
 
     update_project_with_fn(project_id, update_project_fn)
 
