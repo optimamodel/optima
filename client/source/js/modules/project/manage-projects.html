@@ -1,15 +1,13 @@
 
 <div class="rich">
 
-  <h1>Welcome to Optima</h1>
+  <h2>Create projects</h2>
 
   <div style="padding-top:1em" ng-hide="projects.length">
     To begin, please create or upload a project:
   </div>
 
-  <br>
-
-  <a class="btn" ui-sref="project.create">Create project</a> &nbsp;
+  <a class="btn" ui-sref="project.create">Create new project</a> &nbsp;
   <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp;
   <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xlsx</a> &nbsp;
 
@@ -19,13 +17,7 @@
 
   <div class="section" ng-show="projects.length">
 
-    <h2>Projects -
-
-    <span ng-if="project"> current active project is "{{ project.name }}" </span>
-
-    <span ng-if="!project"> no project has been selected as active </span>
-
-    </h2>
+    <h2>Manage projects</h2>
 
     <input type="text"
            class="txbox"

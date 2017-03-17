@@ -16,7 +16,7 @@
 </div>
 
 <div class="c-parsce-modal__field-wrap">
-  <label> Select a parameter set to use as baseline </label>
+  <label>Parameter set:</label>
   <select
       class="txbox"
       type="text"
@@ -27,15 +27,15 @@
   </select>
 </div>
 
-<table class="table table-bordered" style="width:auto;">
+<table class="table" style="width:100%;">
   <tr>
-    <th>Model Parameters</th>
+    <th>Model parameters</th>
     <th>Population</th>
-    <th>Start Year</th>
-    <th>Final Year</th>
-    <th>Start Value</th>
-    <th>Final Value</th>
-    <th>Manage</th>
+    <th>Start year</th>
+    <th>Final year</th>
+    <th>Start value</th>
+    <th>Final value</th>
+    <th></th>
   </tr>
 
   <tr ng-repeat="scenPar in scenario.pars">
@@ -94,7 +94,8 @@
     </td>
     <td>
       <span
-          class="fa fa-trash"
+          class="fa fa-times"
+          style="float: right"
           ng-click="removePar($index)">
       </span>
     </td>
@@ -106,12 +107,12 @@
   ng-click="cancel()">
 </a>
 
-<div style="width: 100%; text-align: center">
+<div style="width: 100%; text-align: left">
   <button
       type="button"
       class="btn"
       ng-click="addPar()">
-    + parameter
+    Add parameter
   </button>
 </div>
 

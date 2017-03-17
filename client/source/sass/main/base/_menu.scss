@@ -1,11 +1,13 @@
 .menu {
   display: flex;
   align-items: center;
+  white-space: nowrap;
+  vertical-align: middle;
 
   & > div {
 
     position: relative;
-    margin-left: 3px;
+    margin-left: 15px;
 
     & > .menu-dropdown {
       position: absolute;
@@ -17,7 +19,7 @@
 
       border-color: #C7DDEA;
       border-style: solid;
-      border-width: 1px;
+      border-width: 5px;
       border-radius: 2px;
 
       z-index: 100;
@@ -58,14 +60,15 @@
   cursor: pointer;
   display: inline-block;
   padding: 5px 4px;
+  vertical-align: middle;
 
-  @include font-height(13px, 16px);
+  @include font-height(15px, 15px);
 
-  background: #EEF9FF;
-  color: #53646F;
+  background: #2aabe1;
+  color: #ffffff;
 
   border-radius: 2px;
-  border: 1px solid #C7DDEA;
+  border: 5px solid #2aabe1;
 
   text-align: center;
   text-decoration: none;
@@ -87,25 +90,26 @@
   }
 
   &:hover:not(:disabled) {
-    background: #BEDFF4;
-    border-color: #9DC6DF;
-    color: #3F4D55;
+    background: #1a5978;
+    border-color: #1a5978;
+    color: #ffffff;
   }
 
   &.__active,
   &:active:not(:disabled) {
-    background: #AFD8F2;
-    border-color: #9DC6DF;
-    color: #3F4D55;
+    background: #1a5978;
+    border-color: #0c2544;
+    color: #ffffff;
   }
 
   &.__active,
   &.__active:hover {
-    background: #AFD8F2;
-    color: #3F4D55;
+    background: #1a5978;
+    color: #ffffff;
   }
 }
 
 .menu-active {
-  background: #BEDFF4;
+  background: #1e749f;
+  border-color: #1e749f;
 }

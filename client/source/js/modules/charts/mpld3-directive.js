@@ -440,6 +440,26 @@ define(
             });
         };
 
+        scope.defaultGraphs = function() {  // Same as above, except don't invert advanced
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('switchGraphs', scope.graphs.advanced, 'reusltId', scope.graphs.resultId);
+          var which = ["default"];
+          if (scope.graphs.advanced) {
+            which.push("advanced");
+          }
+          $http
+            .post(
+              '/api/results/' + resultId,
+              { which: which })
+            .success(function (response) {
+              scope.graphs = response.graphs;
+              toastr.success('Graphs updated');
+            });
+        };
+
         function isChecked(iGraph) {
           var graph_selector = scope.graphs.graph_selectors[iGraph];
           var selector = _.findWhere(scope.graphs.selectors, { key: graph_selector });
@@ -480,6 +500,10 @@ define(
             _.each(scope.graphs.selectors, function (selector) {
               selector.checked = false;
             });
+        };
+
+        scope.defaultSelectors = function() {
+          scope.defaultGraphs();
         };
 
         scope.changeFigWidth = function() {

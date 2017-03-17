@@ -242,7 +242,7 @@ class Parameterset(object):
                         subkeylist.append(None)
                         typelist.append(par.manual)
                         valuelist.append(par.m)
-                        labellist.append('%s -- meta' % par.name)
+                        labellist.append('%s: meta' % par.name)
                 elif par.manual in 'const':
                     keylist.append(key)
                     subkeylist.append(None)
@@ -268,14 +268,14 @@ class Parameterset(object):
                         subkeylist.append(subkey)
                         typelist.append(par.manual)
                         valuelist.append(par.y[subkey])
-                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                        labellist.append('%s: %s' % (par.name, str(subkey)))
                 elif par.manual=='exp':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append(par.manual)
                         valuelist.append(par.i[subkey])
-                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                        labellist.append('%s: %s' % (par.name, str(subkey)))
                 else:
                     print('Parameter type "%s" not implemented!' % par.manual)
     
