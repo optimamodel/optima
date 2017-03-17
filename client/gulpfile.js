@@ -109,15 +109,16 @@ gulp.task('compile-build-js-client', function () {
     insertRequire: ['js/main'],
     name: 'js/main',
     out: 'main.js',
-    optimize: 'uglify',
+    optimize: 'none',
     wrap: true,
     excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
   };
   var config = _(configBuild).extend(configRequire);
 
-  return rjs(config)
-    .on('error', handleError)
+  return gulp.src(['source/js/main.js'])
+    .pipe(rjs(config).on('error', handleError))
     .pipe(ngAnnotate())
+    .pipe(uglify().on('error', handleError))
     .pipe(gulp.dest('build/js/'));
 });
 
