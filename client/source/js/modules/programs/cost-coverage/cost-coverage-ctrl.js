@@ -485,7 +485,7 @@ define(['./../module', 'underscore'], function(module, _) {
       vm.reconcilePrograms = function() {
         runServerProcedure(
             'reconcile_progset',
-            [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year, vm.state.maxtime])
+            [vm.project.id, vm.state.progset.id, vm.state.parset.id, Number(vm.state.year), Number(vm.state.maxtime)])
           .success(function(data) {
             vm.state.summary = data;
             toastr.success('Program set reconciled');
