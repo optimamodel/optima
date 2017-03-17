@@ -8,7 +8,7 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2016jul06
+Version: 2017mar17
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, checktype, promotetoarray
