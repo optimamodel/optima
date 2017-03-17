@@ -102,6 +102,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     start = time()
     offset = ' '*4 # Offset the print statements
     maxrangeiters = 1000 # Number of times to try generating a new parameter
+    exitreason = 'Unknown exit reason' # Catch everything else
     while True:
         if verbose==1: print(offset+label+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval)) # For more verbose, use other print statement below
         
