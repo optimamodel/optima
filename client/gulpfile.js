@@ -118,6 +118,7 @@ gulp.task('compile-build-js-client', function () {
   return rjs(config)
     .on('error', handleError)
     .pipe(ngAnnotate())
+    .pipe(uglify().on('error', handleError))
     .pipe(gulp.dest('build/js/'));
 
   // return rjs(config)
