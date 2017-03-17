@@ -97,14 +97,14 @@
 
   &.__active,
   &:active:not(:disabled) {
-    background: #0f0;
+    background: #1a5978;
     border-color: #0c2544;
     color: #ffffff;
   }
 
   &.__active,
   &.__active:hover {
-    background: #f00;
+    background: #1a5978;
     color: #ffffff;
   }
 }
