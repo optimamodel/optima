@@ -65,7 +65,6 @@ def warning(message, usegui=True):
         print(message)
     
     
-# WARNING: HARDCODING -1TH PROGSET AND PARSET THROUGHOUT. CHECK WITH CLIFF.
 def gui_makesheet():
     ''' GUI wrapper to create a geospatial spreadsheet template based on a project file '''
     makesheet(usegui=True)
@@ -145,17 +144,6 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
                         nattotcell = rc(copies+2,nprogs+2)
                         wsprev.write(row, col, "=(%s*(1-%s)/(%s*(1-%s)))/(%s*(1-%s)/(%s*(1-%s))-1+1/%s)" % (disttotcell,nattotcell,nattotcell,disttotcell,disttotcell,nattotcell,nattotcell,disttotcell,natpopcell))
 
-#                            # Prevalence scaling by function r/(r-1+1/x).
-#                            # Variable r is ratio of intended district prevalence to calibrated national prevalence (scaleup factor).
-#                            # Variable x is calibrated national prevalence specific to pop group.
-#                            natpopcell = rc(copies+2,col)
-#                            disttotcell = rc(row,nprogs+2)
-#                            nattotcell = rc(copies+2,nprogs+2)
-#                            wsprev.write(row, col, "=(%s/%s)/(%s/%s-1+1/%s)" % (disttotcell,nattotcell,disttotcell,nattotcell,natpopcell))
-                        
-#                            # Linear scaling.
-#                            wsprev.write(row, col, "=%s*%s/%s" % (natpopcell,disttotcell,nattotcell))
-                        
                     maxcol = max(maxcol,col)
                 col += 1
                 if row > 0:
@@ -226,9 +214,6 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
                         col += 1
                         if row == 0:
                             wsalloc.write(row, col, progkey)
-                        else:
-                            pass
-    #                        wsalloc.write(row, col, 0)
                         maxcol = max(maxcol,col)
                     col = 0
                     
