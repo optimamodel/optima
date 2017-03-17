@@ -81,10 +81,10 @@
           type="submit"
           class="btn __green __m"
           ng-click="saveAndUpdateGraphs()">
-        Save & update
+        Save & run
       </button>
 
-      &nbsp; &nbsp; Run from &nbsp;
+      &nbsp; from &nbsp;
 
       <select
         ng-model="state.startYear"
@@ -103,20 +103,6 @@
           <!--ng-click="refreshParset()">Set to default</button>-->
 
       &nbsp; &nbsp;
-
-      <button
-          class="btn"
-          ng-click="startAutoCalibration()"
-          ng-disabled="checkNotRunnable()">Run autofit</button>
-
-      &nbsp; for &nbsp;
-
-      <select ng-init="state.maxtime=10" ng-model="state.maxtime">
-        <option value="10">10 seconds</option>
-        <option value="30">30 seconds</option>
-        <option value="60">1 minute</option>
-        <option value="300">5 minutes</option>
-      </select>
 
       &nbsp; &nbsp;
 
@@ -143,7 +129,6 @@
           justify-content: space-between;
           width: 100%;
           height: calc(100vh - 210px)">
-
       <div
           class="small_bordered_list"
           style="flex: 0 0 330px;"
@@ -151,6 +136,23 @@
         <div
             class="option_list"
             style="height: 100%;">
+
+          <br>
+          <div>
+            &nbsp;
+            <button
+              class="btn"
+              ng-click="startAutoCalibration()"
+              ng-disabled="checkNotRunnable()">Automatic calibration</button>
+            &nbsp; for &nbsp;
+            <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+              <option value="10">10 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">1 minute</option>
+              <option value="300">5 minutes</option>
+            </select>
+          </div>
+          <br>
           <div
               ng-repeat="parameter in parameters"
               style="justify-content: space-around"
