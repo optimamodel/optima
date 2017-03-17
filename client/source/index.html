@@ -68,6 +68,16 @@
 <!-- Wait for everything to load -->
 <div class="se-pre-con"></div>
 
+<!-- Scripts -->
+<script src="vendor/requirejs/require.js"></script>
+<script>
+  require(['require', './js/config'], function(require, config) {
+    config.urlArgs = 'bust=v1.0.1';
+    window.require.config(config);
+    require(['./js/main.js']);
+  });
+</script>
+
 <div ng-controller="MainCtrl">
 
 <div class="actionbar">
@@ -105,15 +115,7 @@
   </div>
 </div>
 
-<!-- Scripts -->
-<script src="vendor/requirejs/require.js"></script>
-<script>
-  require(['require', './js/config'], function(require, config) {
-    config.urlArgs = 'bust=v1.0.1';
-    window.require.config(config);
-    require(['./js/main.js']);
-  });
-</script>
+
 
 <div
   style="flex: 1 1;"
