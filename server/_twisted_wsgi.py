@@ -3,8 +3,8 @@ import sys
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
-from twisted.web.resource import Resource, EncodingResourceWrapper
-from twisted.web.server import Site, GzipEncoderFactory
+from twisted.web.resource import Resource
+from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
@@ -38,21 +38,12 @@ def run():
                 b'Cache-Control', [b'no-cache', b'no-store', b'must-revalidate'])
             request.responseHeaders.setRawHeaders(b'expires', [b'0'])
             return r
-    
-    class WrappedFile(File):        
-        def getChild(self, path, request):
-            child = File.getChild(self, path, request)            
-            return EncodingResourceWrapper(child, [GzipEncoderFactory()])
-
-    # From http://stackoverflow.com/questions/5428473/twisted-http-gzip-support
 
     base_resource = File('client/build/')
-    optima_resource = OptimaResource(wsgi_app)
-    base_resource.putChild('api', optima_resource)
-    
-    wrapped = EncodingResourceWrapper(base_resource, [GzipEncoderFactory()])
+    base_resource.putChild('dev', File('client/source/'))
+    base_resource.putChild('api', OptimaResource(wsgi_app))
 
-    site = Site(wrapped)
+    site = Site(base_resource)
 
     try:
         port = str(sys.argv[1])
