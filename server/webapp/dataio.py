@@ -615,18 +615,17 @@ def download_project_with_result(project_id):
     project_record = load_project_record(project_id, raise_exception=True)
     project = project_record.load()
     result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
-    is_save = False
     if result_records is not None:
         for result_record in result_records:
             result = result_record.load()
+            print(">> download_project_with_result result", result.name)
             project.addresult(result)
-            is_save = True
-    if is_save:
-        project_record.save_obj(project, is_skip_result=False)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = project_record.as_file(dirname)
+    filename = project.name + ".prj"
+    server_filename = os.path.join(dirname, filename)
+    op.saveobj(server_filename, project)
     print(">> Saving download_project %s %s" % (dirname, filename))
     return os.path.join(dirname, filename)
 
