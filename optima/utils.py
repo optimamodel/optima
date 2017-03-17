@@ -1,5 +1,5 @@
 ##############################################################################
-## PRINTING FUNCTIONS
+### PRINTING FUNCTIONS
 ##############################################################################
 
 
@@ -200,18 +200,14 @@ def sigfig(X, sigfigs=5, SI=False):
     for i in range(n):
         x = X[i]
         
+        suffix = ''
+        formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'t'), (1e9,'b'), (1e6,'m'), (1e3,'k')]
         if SI:
-            if abs(X)>=1e9:
-                X = X/1e9
-                suffix = 'B'
-            elif abs(X)>=1e6:
-                X = X/1e6
-                suffix = 'M'
-            elif abs(X)>=1e3:
-                X = X/1e3
-                suffix = 'B'
-        else:
-            suffix = ''
+            for val,suff in formats:
+                if abs(x)>=val:
+                    x = x/val
+                    suffix = suff
+                    break # Find at most one match
         
         try:
             if x==0:
@@ -411,7 +407,7 @@ pd = printdata # Alias to make it easier to use
 
 
 ##############################################################################
-## MATHEMATICAL FUNCTIONS
+### MATHEMATICAL FUNCTIONS
 ##############################################################################
 
 
@@ -672,7 +668,7 @@ def vec2obj(orig=None, newvec=None, inds=None):
 
 
 ##############################################################################
-## NESTED DICTIONARY FUNCTIONS
+### NESTED DICTIONARY FUNCTIONS
 ##############################################################################
 
 '''
@@ -765,7 +761,7 @@ def iternested(nesteddict,previous = []):
 
 
 ##############################################################################
-## MISCELLANEOUS FUNCTIONS
+### MISCELLANEOUS FUNCTIONS
 ##############################################################################
 
 
@@ -1043,7 +1039,7 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
 
 
 ##############################################################################
-## CLASS FUNCTIONS
+### CLASS FUNCTIONS
 ##############################################################################
 
 
@@ -1080,7 +1076,7 @@ def getdate(obj, which='modified', fmt='str'):
 
 
 ##############################################################################
-## ORDERED DICTIONARY
+### ORDERED DICTIONARY
 ##############################################################################
 
 
@@ -1382,7 +1378,7 @@ class odict(OrderedDict):
 
 
 ##############################################################################
-## DATA FRAME CLASS
+### DATA FRAME CLASS
 ##############################################################################
 
 # Some of these are repeated to make this frationally more self-contained
@@ -1649,7 +1645,7 @@ class dataframe(object):
 
 
 ##############################################################################
-## OTHER CLASSES
+### OTHER CLASSES
 ##############################################################################
 
 
