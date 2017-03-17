@@ -24,7 +24,7 @@
         ng-model="state.parset"
         ng-change="setActiveParset()"
         ng-options="parset.name for parset in parsets"
-        style="width: 20%;">
+        style="width: 300px;">
       </select>
       <i
         ng-click="addParameterSet()"
@@ -98,9 +98,9 @@
 
       &nbsp; &nbsp;
 
-      <button
-          class="btn"
-          ng-click="refreshParset()">Set to default</button>
+      <!--<button-->
+          <!--class="btn"-->
+          <!--ng-click="refreshParset()">Set to default</button>-->
 
       &nbsp; &nbsp;
 
@@ -109,7 +109,7 @@
           ng-click="startAutoCalibration()"
           ng-disabled="checkNotRunnable()">Run autofit</button>
 
-      &nbsp; for about &nbsp;
+      &nbsp; for &nbsp;
 
       <select ng-init="state.maxtime=10" ng-model="state.maxtime">
         <option value="10">10 seconds</option>
@@ -146,7 +146,7 @@
 
       <div
           class="small_bordered_list"
-          style="flex: 0 0 320px;"
+          style="flex: 0 0 330px;"
           ng-if="parameters.length > 0">
         <div
             class="option_list"
