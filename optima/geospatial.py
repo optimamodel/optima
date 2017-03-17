@@ -10,7 +10,11 @@ from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaul
 from PyQt4 import QtGui
 from pylab import figure, close, array
 from time import time
+from xlsxwriter import Workbook
+from xlsxwriter.utility import xl_rowcol_to_cell as rc
+from xlrd import open_workbook
 import os
+import re
 
 
 global geoguiwindow, globalportfolio, globalobjectives
@@ -109,9 +113,6 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
         if usegui:
             spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
         
-        from xlsxwriter import Workbook
-        from xlsxwriter.utility import xl_rowcol_to_cell as rc
-        
         ## 3. Extract data needed from project (population names, program names...)
         if spreadsheetpath:
             workbook = Workbook(spreadsheetpath)
@@ -201,26 +202,6 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
             wsprev.set_column(0, maxcol, colwidth) # Make wider
             wspopsize.set_column(0, maxcol, colwidth) # Make wider
             
-            if len(project.progsets) > 0:
-                wsalloc = workbook.add_worksheet('Program allocations')
-                
-                # Follow with program data.
-                maxcol = 0
-                row, col = 0, 0
-                for row in xrange(copies+1):
-                    if row != 0:
-                        wsalloc.write(row, col, "='Population sizes'!%s" % rc(row,col))
-                    for progkey in project.progsets[0].programs:
-                        col += 1
-                        if row == 0:
-                            wsalloc.write(row, col, progkey)
-                        maxcol = max(maxcol,col)
-                    col = 0
-                    
-                wsalloc.set_column(0, maxcol, colwidth) # Make wider
-            else:
-                warning('Warning: Loaded project is missing a program set.', usegui)
-        
         # 4. Generate and save spreadsheet
         try:
             workbook.close()    
@@ -254,7 +235,6 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
         spreadsheetpath = QtGui.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
     print('Spreadsheet path: %s' % spreadsheetpath)
     
-    from xlrd import open_workbook  # For opening Excel workbooks.
     workbook = open_workbook(spreadsheetpath)
     wspopsize = workbook.sheet_by_name('Population sizes')
     wsprev = workbook.sheet_by_name('Population prevalence')
@@ -313,7 +293,6 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     ndistricts = len(districtlist)
     
     # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.
-    import re
     refind = -1
     try:
         refyear = int(re.sub("[^0-9]", "", wspopsize.cell_value(ndistricts+2, 0)))         
