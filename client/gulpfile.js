@@ -115,11 +115,21 @@ gulp.task('compile-build-js-client', function () {
   };
   var config = _(configBuild).extend(configRequire);
 
-  return gulp.src(['source/js/main.js'])
-    .pipe(rjs(config).on('error', handleError))
+  return rjs(config)
+    .on('error', handleError)
     .pipe(ngAnnotate())
-    .pipe(uglify().on('error', handleError))
     .pipe(gulp.dest('build/js/'));
+
+  // return rjs(config)
+  //   .on('error', handleError)
+  //   .pipe(ngAnnotate())
+  //   .pipe(gulp.dest('build/js/'));
+
+  // return gulp.src(['source/js/main.js'])
+  //   .pipe(rjs(config).on('error', handleError))
+  //   .pipe(ngAnnotate())
+  //   .pipe(uglify().on('error', handleError))
+  //   .pipe(gulp.dest('build/js/'));
 });
 
 // Copy font-awesome files for icons
