@@ -2,7 +2,7 @@
 <div class="modal-header"> CREATE/EDIT {{state.optimization.which}} OPTIMIZATION</div>
 
 <div class="section">
-  <div style="float: left; width: 40%">
+  <div style="float: left; width: 40%; padding-right:20px">
     <label> Name </label>
     <input
         class="txbox"
@@ -15,8 +15,8 @@
       Scenario with this name already exists, please choose a different name.
     </div>
   </div>
-  <div style="float: left; width: 30%">
-    <label> Select a parameter set to use as baseline </label>
+  <div style="float: left; width: 30%; padding-right: 20px">
+    <label>Parameter set</label>
     <select
         class="txbox"
         type="text"
@@ -25,8 +25,8 @@
         ng-options="parset.id as parset.name for parset in parsets">
     </select>
   </div>
-  <div style="float: left; width: 30%">
-    <label> Select a program set to use as baseline </label>
+  <div style="float: left; width: 30%; padding-right: 20px">
+    <label>Program set</label>
     <select
         class="txbox"
         type="text"
@@ -44,7 +44,7 @@
     class="section"
     ng-if="state.optimization.objectives">
 
-  <h3>OBJECTIVES</h3>
+  <h3>Objectives</h3>
   <b>Timeline: </b>
 
   <span ng-show="state.optimization.which == 'outcomes'">
@@ -94,17 +94,17 @@
 
   <br/>
 
-  <b>Objectives:</b>
+  <b>Weighting:</b>
 
   <span ng-show="state.optimization.which == 'money'">
-    Fractions of deaths to be averted:
+    Fraction of deaths to be averted:
     <input
         type="number"
         class="txbox"
         style="display: inline; width: 5em;"
         ng-model="state.optimization.objectives.incifrac"/>
     &nbsp;
-    Fractions of infections to be averted:
+    Fraction of infections to be averted:
     <input
         type="number"
         class="txbox"
@@ -113,14 +113,14 @@
   </span>
 
   <span ng-show="state.optimization.which == 'outcomes'">
-    Infection weight:
+    Infections:
     <input
         type="number"
         class="txbox"
         style="display: inline; width: 5em;"
         ng-model="state.optimization.objectives.inciweight"/>
     &nbsp;
-    Death weight:
+    Deaths:
     <input
         type="number"
         class="txbox"
@@ -131,9 +131,9 @@
 
 <div ng-if="state.optimization.constraints" class="section">
 
-  <h3>CONSTRAINTS</h3>
+  <h3>Constraints</h3>
 
-  <b>Maximum changes in funding over the program period</b>
+  Maximum changes in funding over the program period
 
   <style>
     .mytable th, .mytable td {
