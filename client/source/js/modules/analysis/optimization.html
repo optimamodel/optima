@@ -15,7 +15,6 @@
   <div
       style="
         display: flex;
-        height: calc(100vh - 110px);
         flex-direction: column"
       ng-if="!isMissingData && isOptimizable && !isMissingProgset" >
 
@@ -34,8 +33,8 @@
             <td>Name</td>
             <td>Select</td>
             <td>Type</td>
-            <td>Parameter Set</td>
-            <td>Program Set</td>
+            <td>Parameter set</td>
+            <td>Program set</td>
             <td>Manage</td>
           </tr>
           <tr ng-repeat="optimization in state.optimizations track by $index"
@@ -74,7 +73,7 @@
                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
                   style="margin-left: 0.5em">
               </i>
-              <i
+<!--              <i
                   ng-click="downloadOptimization(optimization)"
                   class="fa fa-download"
                   tp-text="Download" tooltip tp-class="tooltip"
@@ -87,7 +86,7 @@
                   tp-text="Upload" tooltip tp-class="tooltip"
                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
                   style="margin-left: 0.5em">
-              </i>
+              </i>-->
               <i
                   ng-click="deleteOptimization(optimization)"
                   class="fa fa-trash-o"
@@ -101,54 +100,55 @@
         </table>
       </div>
 
-      <div
-          style="
+      <div style="display:table;
             width: 100%;
             margin-top: 1em;
             margin-bottom: 1.5em;">
-          <input
-            type="button"
-            value="+ money optimization"
-            class="btn"
-            ng-click="addOptimization('money')">
-          &nbsp;
-          <input
-            type="button"
-            value="+ outcome optimization"
-            class="btn"
-            ng-click="addOptimization('outcomes')">
-          &nbsp;
-          <button
-            class="btn"
-            ng-click="startOptimization(state.optimization)"
-            ng-disabled="checkNotRunnable()">
-            Optimize
-          </button>
-          &nbsp;
-          for about
-          &nbsp;
-          <select ng-init="state.maxtime=10" ng-model="state.maxtime">
-            <option value="10">10 seconds</option>
-            <option value="30">30 seconds</option>
-            <option value="60">1 minute</option>
-            <option value="300">5 minutes</option>
-            <option value="600">10 minutes</option>
-            <option value="1800">30 minutes</option>
-          </select>
-          &nbsp;
+        <div style="display: table-row; width=100%">
+          <div style="display: table-cell;">
+            <button
+              class="btn __green __m"
+              ng-click="startOptimization(state.optimization)"
+              ng-disabled="checkNotRunnable()">
+              Optimize
+            </button>
+            &nbsp; for &nbsp;
+            <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+              <option value="10">10 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">1 minute</option>
+              <option value="300">5 minutes</option>
+              <option value="600">10 minutes</option>
+              <option value="1800">30 minutes</option>
+            </select>
+            &nbsp;
           <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
             {{ statusMessage }}
           </span>
 
-          <div class="error-hint" ng-show="isMissingProgset">
-            Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
+            <div class="error-hint" ng-show="isMissingProgset">
+              Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
+            </div>
+            <div class="error-hint" ng-show="!isMissingProgset && !isOptimizable">
+              Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
+            </div>
           </div>
-          <div class="error-hint" ng-show="!isMissingProgset && !isOptimizable">
-            Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
+          <div style="display: table-cell; text-align: right">
+            <input
+              type="button"
+              value="Add money optimization"
+              class="btn"
+              ng-click="addOptimization('money')">
+            &nbsp;
+            <input
+              type="button"
+              value="Add outcomes optimization"
+              class="btn"
+              ng-click="addOptimization('outcomes')">
           </div>
+          </div>
+        </div>
       </div>
-
-    </div>
 
     <div
       ng-if="state.graphs"

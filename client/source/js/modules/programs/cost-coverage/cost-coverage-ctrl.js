@@ -33,7 +33,7 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.parsets = [];
 
         vm.state.year = new Date().getFullYear();
-
+        vm.state.maxtime=10
         vm.state.yearSelector = _.range(
           vm.project.startYear, vm.project.endYear+1);
 
@@ -485,7 +485,7 @@ define(['./../module', 'underscore'], function(module, _) {
       vm.reconcilePrograms = function() {
         runServerProcedure(
             'reconcile_progset',
-            [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
+            [vm.project.id, vm.state.progset.id, vm.state.parset.id, Number(vm.state.year), Number(vm.state.maxtime)])
           .success(function(data) {
             vm.state.summary = data;
             toastr.success('Program set reconciled');

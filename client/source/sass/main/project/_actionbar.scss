@@ -2,11 +2,10 @@
 // ======
 
 .actionbar {
+  display:table;
+  width:100%;
   background: #e7f6ff;
   padding: 10px;
   border-bottom: 1px solid #E5EFF6;
-
-  .elastic {
-    margin: auto;
-  }
+  vertical-align: middle;
 }

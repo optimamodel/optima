@@ -2,125 +2,116 @@
 <div class="rich">
 
   <div
-      class="error-hint"
-      ng-show="isMissingData">
+    class="error-hint"
+    ng-show="isMissingData">
     No parameter sets, you need to
     <a ui-sref="home">upload a data spreadsheet</a>
     for this project.
   </div>
 
   <div
-      ng-if="!isMissingData">
+    ng-if="!isMissingData">
 
-    <div
-      style="
-        display: flex;
-        align-items: center">
-
-      Parameter set:
-      &nbsp;
-      <select
-        class="txbox"
-        ng-model="state.parset"
-        ng-change="setActiveParset()"
-        ng-options="parset.name for parset in parsets"
-        style="width: 20%;">
-      </select>
-      <i
-        ng-click="addParameterSet()"
-        class="fa fa-file-o"
-        tp-text="New" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-        style="margin-left: 0.5em">
-      </i>
-      <i
-        ng-click="copyParameterSet()"
-        class="fa fa-copy"
-        tp-text="Copy" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-        style="margin-left: 0.5em">
-      </i>
-      <i
-        ng-click="renameParameterSet()"
-        class="fa fa-pencil"
-        tp-text="Rename" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-        style="margin-left: 0.5em">
-      </i>
-      <!--<i-->
-        <!--ng-click="downloadParameterSet()"-->
-        <!--class="fa fa-download"-->
-        <!--tp-text="Download" tooltip tp-class="tooltip"-->
-        <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-        <!--style="margin-left: 0.5em">-->
-      <!--</i>-->
-      <!--<i-->
-        <!--ng-click="uploadParameterSet()"-->
-        <!--class="fa fa-upload"-->
-        <!--tp-text="Upload" tooltip tp-class="tooltip"-->
-        <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-        <!--style="margin-left: 0.5em">-->
-      <!--</i>-->
-      <i
-        ng-click="deleteParameterSet()"
-        class="fa fa-trash-o"
-        tp-text="Delete" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-        style="margin-left: 0.5em">
-      </i>
-    </div>
-
-    <div
-      style="
+    <div style="display: table;">
+      <div style="display: table-row;">
+        <div style="display: table-cell; padding-right: 70px">
+          <div
+            style="
         display: flex;
         align-items: center;
         padding-top: 10px;
         padding-bottom: 15px;">
 
-      <button
-          type="submit"
-          class="btn __green __m"
-          ng-click="saveAndUpdateGraphs()">
-        Save & update
-      </button>
+            <button
+              type="submit"
+              class="btn __green __m"
+              ng-click="saveAndUpdateGraphs()">
+              Save & run
+            </button>
 
-      &nbsp; &nbsp;
+            &nbsp; from &nbsp;
 
-      <select
-        ng-model="state.startYear"
-        ng-options="year for year in years"></select>
+            <select
+              ng-model="state.startYear"
+              ng-options="year for year in years"></select>
 
-      &nbsp; to &nbsp;
+            &nbsp; to &nbsp;
 
-      <select
-        ng-model="state.endYear"
-        ng-options="year for year in years"></select>
+            <select
+              ng-model="state.endYear"
+              ng-options="year for year in years"></select>
 
-      &nbsp; &nbsp;
+            <!--<button-->
+            <!--class="btn"-->
+            <!--ng-click="refreshParset()">Set to default</button>-->
 
-      <button
-          class="btn"
-          ng-click="refreshParset()">Set to default</button>
+          </div>
+        </div>
+        <div style="display: table-cell; padding-right: 70px;">
 
-      &nbsp; &nbsp;
+          <div
+            style="
+        display: flex;
+        align-items: center">
 
-      <button
-          class="btn"
-          ng-click="startAutoCalibration()"
-          ng-disabled="checkNotRunnable()">Run autofit</button>
+            Parameter set:
+            &nbsp;
+            <select
+              class="txbox"
+              ng-model="state.parset"
+              ng-change="setActiveParset()"
+              ng-options="parset.name for parset in parsets"
+              style="width: 300px;">
+            </select>
+            <i
+              ng-click="addParameterSet()"
+              class="fa fa-file-o"
+              tp-text="New" tooltip tp-class="tooltip"
+              tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+              style="margin-left: 0.5em">
+            </i>
+            <i
+              ng-click="copyParameterSet()"
+              class="fa fa-copy"
+              tp-text="Copy" tooltip tp-class="tooltip"
+              tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+              style="margin-left: 0.5em">
+            </i>
+            <i
+              ng-click="renameParameterSet()"
+              class="fa fa-pencil"
+              tp-text="Rename" tooltip tp-class="tooltip"
+              tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+              style="margin-left: 0.5em">
+            </i>
+            <!--<i-->
+            <!--ng-click="downloadParameterSet()"-->
+            <!--class="fa fa-download"-->
+            <!--tp-text="Download" tooltip tp-class="tooltip"-->
+            <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
+            <!--style="margin-left: 0.5em">-->
+            <!--</i>-->
+            <!--<i-->
+            <!--ng-click="uploadParameterSet()"-->
+            <!--class="fa fa-upload"-->
+            <!--tp-text="Upload" tooltip tp-class="tooltip"-->
+            <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
+            <!--style="margin-left: 0.5em">-->
+            <!--</i>-->
+            <i
+              ng-click="deleteParameterSet()"
+              class="fa fa-trash-o"
+              tp-text="Delete" tooltip tp-class="tooltip"
+              tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+              style="margin-left: 0.5em">
+            </i>
+          </div>
 
-      &nbsp; for about &nbsp;
-
-      <select ng-init="state.maxtime=10" ng-model="state.maxtime">
-        <option value="10">10 seconds</option>
-        <option value="30">30 seconds</option>
-        <option value="60">1 minute</option>
-        <option value="300">5 minutes</option>
-      </select>
-
-      &nbsp; &nbsp;
-
-      <span style="color: #00aeef;"> {{ statusMessage }} </span>
+        </div>
+        <div style="display: table-cell">
+          <span style="color: #00aeef;"> {{ statusMessage }} </span>
+        </div>
+      </div>
 
     </div>
 
@@ -137,44 +128,60 @@
     </style>
 
     <div
-        style="
+      style="
           display: flex;
           flex-direction: row;
           justify-content: space-between;
           width: 100%;
           height: calc(100vh - 210px)">
-
       <div
-          class="small_bordered_list"
-          style="flex: 0 0 320px;"
-          ng-if="parameters.length > 0">
+        class="small_bordered_list"
+        style="flex: 0 0 330px;"
+        ng-if="parameters.length > 0">
         <div
-            class="option_list"
-            style="height: 100%;">
+          class="option_list"
+          style="height: 100%;">
+
+          <br>
+          <div>
+            &nbsp;
+            <button
+              class="btn"
+              ng-click="startAutoCalibration()"
+              ng-disabled="checkNotRunnable()">Automatic calibration</button>
+            &nbsp; for &nbsp;
+            <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+              <option value="10">10 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">1 minute</option>
+              <option value="300">5 minutes</option>
+            </select>
+          </div>
+          <br>
           <div
-              ng-repeat="parameter in parameters"
-              style="justify-content: space-around"
-              class="option">
+            ng-repeat="parameter in parameters"
+            style="justify-content: space-around"
+            class="option">
             <span
-                style="width: 45%">
+              style="width: 45%">
               {{parameter.label}}
             </span>
             <span
-                style="width: 45%">
+              style="width: 45%">
               <input
-                  my-enter="saveAndUpdateGraphs()"
-                  type="number"
-                  step="any"
-                  min="0"
-                  class="txbox __m"
-                  ng-model="parameter.value">
+                my-enter="saveAndUpdateGraphs()"
+                type="number"
+                step="any"
+                min="0"
+                class="txbox __m"
+                ng-model="parameter.value">
             </span>
           </div>
         </div>
       </div>
 
       <div
-          style="
+        style="
              margin-left: 10px;
              border: 1px solid #DDD;
              flex: 1 1 auto;

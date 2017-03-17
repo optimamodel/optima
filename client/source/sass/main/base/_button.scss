@@ -3,7 +3,7 @@
 
 .btn {
   @extend .btn.__m;
-  @extend .btn.__light-blue;
+  @extend .btn.__medium-blue;
   border-radius: 2px;
   border-style: solid;
   border-width: 1px;
@@ -69,6 +69,35 @@
 
   &.__light-blue {
     background: #EEF9FF;
+    border-color: #C7DDEA;
+    color: #53646F;
+
+    &:disabled {
+      color: #708897
+    }
+
+    &:hover:not(:disabled) {
+      background: #BEDFF4;
+      border-color: #9DC6DF;
+      color: #3F4D55;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #AFD8F2;
+      border-color: #9DC6DF;
+      color: #3F4D55;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: #AFD8F2;
+      color: #3F4D55;
+    }
+  }
+
+  &.__medium-blue {
+    background: #f0f0ff;
     border-color: #C7DDEA;
     color: #53646F;
 

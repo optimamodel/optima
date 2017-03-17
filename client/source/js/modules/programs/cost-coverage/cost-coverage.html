@@ -1,7 +1,5 @@
 <div class="page rich c-cost-coverage">
 
-  <h1>Cost functions</h1>
-
   <p></p>
   <div class="error-hint" ng-show="vm.isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
@@ -15,7 +13,7 @@
 
     <div style="width: 100%">
 
-      Parameter set
+      Parameter set:
       <select
         class="txbox"
         style="
@@ -28,7 +26,7 @@
         ng-model="vm.state.parset">
       </select>
 
-      Program set
+      Program set:
       <select
         class="txbox"
         style="
@@ -421,9 +419,10 @@
         <div style="width: 100%;"
              class="c-tab"
              ng-if="vm.activeTab === 'summary'">
-          <h1>Budget</h1>
+          <h1>Most recent budget</h1>
           <table
-              class="section table table-bordered">
+              class="section table table-bordered"
+              style="max-width: 500px">
             <tr>
               <th style="width: 15em;">Program</th>
               <th>Budget</th>
@@ -443,7 +442,8 @@
               class="txbox __inline"/>
           <br><br>
           <table
-              class="section table table-bordered">
+              class="section table table-bordered"
+              style="max-width: 900px">
             <tr>
               <th>Parameter</th>
               <th>Population</th>
@@ -459,6 +459,16 @@
           </table>
 
           <button ng-click="vm.reconcilePrograms()" class="btn">Reconcile</button>
+
+          &nbsp; for &nbsp;
+
+          <select ng-init="vm.state.maxtime=30" ng-model="vm.state.maxtime">
+            <option value=15>15 seconds</option>
+            <option value=30>30 seconds</option>
+            <option value=60>1 minute</option>
+            <option value=300>5 minutes</option>
+          </select>
+
 
         </div>
 

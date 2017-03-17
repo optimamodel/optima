@@ -6,7 +6,7 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 Version: 2016nov03
 """
 
-from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, printv
+from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, printv
 from PyQt4 import QtGui
 from pylab import figure, close, array
 from time import time
@@ -430,15 +430,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     project.runsim(project.parsets[-1].name)
     
     ## 6. Save each project file into the directory
-#        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
-    if checkplots: 
-        plotresults(results , toplot=['popsize-tot', 'popsize-pops'])
-        plotresults(results , toplot=['prev-tot', 'prev-pops'])
     for subproject in projlist:
-#            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
-        if checkplots:
-            plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
-            plotresults(subproject.parsets[-1].getresults(), toplot=['prev-tot', 'prev-pops'])
         saveobj(destination+os.sep+subproject.name+'.prj', subproject)
         
     return None
@@ -568,32 +560,8 @@ def plotgeo(usegui=False):
     if globalportfolio is None: 
         warning('Please load a portfolio first', usegui)
         return None
-    gaoptim = globalportfolio.gaoptims[-1]
 
-    # Handles multithreading-based resorting. WARNING: Is based on simple sorting UIDs. Expect problems if there are mismatched UIDs...
-    projlist = [x.uid for x in globalportfolio.projects.values()]
-    pairlist = [x[0].project.uid for x in gaoptim.resultpairs.values()]
-    projids = [x[0] for x in sorted(enumerate(projlist), key=lambda pair: pair[1])]
-    pairids = [x[0] for x in sorted(enumerate(pairlist), key=lambda pair: pair[1])]
-    truecid = [x[1] for x in sorted(zip(pairids,projids))]      # Transforms from pair to project ordering.
-    
-    
-    extrax = [None]*len(gaoptim.resultpairs); 
-    extray = [None]*len(gaoptim.resultpairs);
-    for cid in xrange(len(gaoptim.resultpairs)):
-#        extrax.append([]); extray.append([]);
-        rp = gaoptim.resultpairs[cid]
-        extrax[truecid[cid]] = []
-        extray[truecid[cid]] = []
-        extrax[truecid[cid]].append(rp['init'].budget['Current allocation'][:].sum())
-        extrax[truecid[cid]].append(rp['opt'].budget['Optimal allocation'][:].sum())
-        extray[truecid[cid]].append(rp['init'].improvement[-1][0])
-        extray[truecid[cid]].append(rp['opt'].improvement[-1][-1])
-    
-    globalportfolio.plotBOCs(objectives=gaoptim.objectives, 
-                          initbudgets=[x[1] for x in sorted(zip(truecid,gaoptim.getinitbudgets()))], 
-                          optbudgets=[x[1] for x in sorted(zip(truecid,gaoptim.getoptbudgets()))], 
-                          deriv=False, extrax=extrax, extray=extray)
+    globalportfolio.plotBOCs(deriv=False)
             
     return None
 

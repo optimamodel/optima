@@ -12,11 +12,11 @@
           flex-direction: column;
           align-items: flex-start;
           width: 100%;
-          height: calc(100vh - 110px)">
+          ">
 
       <div
         style="
-          flex: 0 0;
+          flex: 0 0 auto;
           width: 100%">
 
         <div style="
@@ -30,10 +30,10 @@
 
             <tr>
               <th style="width: 50px">Active</th>
-              <th>Scenario Name</th>
-              <th>Parameter Set</th>
-              <th>Program Set</th>
-              <th>Scenario Type</th>
+              <th>Scenario name</th>
+              <th>Parameter set</th>
+              <th>Program set</th>
+              <th>Scenario type</th>
               <th style="width:200px; max-width:200px">Manage</th>
             </tr>
 
@@ -78,7 +78,7 @@
 
           <div style="float: left">
             <button
-                class="btn"
+                class="btn __green __m"
                 ng-click="graphScenarios(true)"
                 ng-disabled="!isRunnable()">
               Run scenarios
@@ -103,18 +103,18 @@
                 class="btn"
                 ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
                 ng-disabled="isMissingProgset || !isOptimizable">
-              + budget scenario
+              Add budget scenario
             </button>
             <button
                 class="btn"
                 ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
                 ng-disabled="isMissingProgset || !isOptimizable">
-              + coverage scenario
+              Add coverage scenario
             </button>
             <button
                 class="btn"
                 ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
-              + parameter scenario
+              Add parameter scenario
             </button>
           </div>
 

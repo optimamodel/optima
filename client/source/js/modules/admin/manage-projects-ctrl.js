@@ -83,7 +83,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /**
-     * Gets the data for the given project `name` as <name>.json  file
+     * Gets the data for the given project `name` as <name>.prj  file
      */
     $scope.getData = function (name, id) {
       projectApi.getProjectData(id).success(function (response) {

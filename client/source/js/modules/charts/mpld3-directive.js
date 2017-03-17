@@ -364,7 +364,7 @@ define(
           });
         }
 
-        scope.exportAllData = function() {
+        scope.exportAllData = function(name) { /* Adding function(name) brings up save dialog box */
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
@@ -377,10 +377,11 @@ define(
               responseType: 'blob'
             })
           .success(function (response) {
-            var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
-            saveAs(blob, ('export_graphs.csv'));
+            var blob = new Blob([response], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, ('results.xlsx'));
           });
         };
+
 
         function getSelectors() {
           function getChecked(s) { return s.checked; }
@@ -420,6 +421,26 @@ define(
 
         scope.switchGraphs = function() {
           scope.graphs.advanced = !scope.graphs.advanced;
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('switchGraphs', scope.graphs.advanced, 'reusltId', scope.graphs.resultId);
+          var which = ["default"];
+          if (scope.graphs.advanced) {
+            which.push("advanced");
+          }
+          $http
+            .post(
+              '/api/results/' + resultId,
+              { which: which })
+            .success(function (response) {
+              scope.graphs = response.graphs;
+              toastr.success('Graphs updated');
+            });
+        };
+
+        scope.defaultGraphs = function() {  // Same as above, except don't invert advanced
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
@@ -479,6 +500,10 @@ define(
             _.each(scope.graphs.selectors, function (selector) {
               selector.checked = false;
             });
+        };
+
+        scope.defaultSelectors = function() {
+          scope.defaultGraphs();
         };
 
         scope.changeFigWidth = function() {

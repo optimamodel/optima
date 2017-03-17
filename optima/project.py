@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
-from optima import loadspreadsheet, model, gitinfo, manualfit, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
+from optima import loadspreadsheet, model, gitinfo, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
 from numpy import argmin, array, argsort
@@ -527,6 +527,7 @@ class Project(object):
 
     def manualfit(self, orig=None, parsubset=None, name=None, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
+        from optima import manualfit # Put this here so it doesn't matter if it fails
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         manualfit(project=self, name=name, parsubset=parsubset, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()

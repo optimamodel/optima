@@ -615,18 +615,17 @@ def download_project_with_result(project_id):
     project_record = load_project_record(project_id, raise_exception=True)
     project = project_record.load()
     result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
-    is_save = False
     if result_records is not None:
         for result_record in result_records:
             result = result_record.load()
+            print(">> download_project_with_result result", result.name)
             project.addresult(result)
-            is_save = True
-    if is_save:
-        project_record.save_obj(project, is_skip_result=False)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = project_record.as_file(dirname)
+    filename = project.name + ".prj"
+    server_filename = os.path.join(dirname, filename)
+    project.save(server_filename, saveresults=True)
     print(">> Saving download_project %s %s" % (dirname, filename))
     return os.path.join(dirname, filename)
 
@@ -783,11 +782,6 @@ def resolve_project(project):
     for record in query:
         print(">> Portfolio id %s" % record.id)
         portfolio = record.load()
-        if len(portfolio.gaoptims) == 0:
-            objectives = op.portfolio.defaultobjectives(verbose=0)
-            gaoptim = op.portfolio.GAOptim(objectives=objectives)
-            portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
-            record.save_obj(portfolio)
         portfolios.append(portfolio)
 
     # ensure constraints set to None are given a default
@@ -927,13 +921,13 @@ def delete_result_by_name(
 
 def load_result_csv(result_id):
     """
-    Returns (dirname, basename) of the the result.csv on the server
+    Returns (dirname, basename) of the the result.csv on the server -- WARNING, deprecated function name!
     """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
     filestem = 'results'
-    filename = filestem + '.csv'
+    filename = filestem + '.xlsx'
 
     result = load_result_by_id(result_id)
     result.export(filestem=os.path.join(dirname, filestem))
@@ -1285,13 +1279,13 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
         'pars': parse.normalize_obj(pars),
     }
 
-def reconcile_progset(project_id, progset_id, parset_id, year):
+def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
 
     def update_project_fn(project):
         print(">> reconcile_progset %s" % project.progsets)
         progset = parse.get_progset_from_project(project, progset_id)
         parset = parse.get_parset_from_project_by_id(project, parset_id)
-        progset.reconcile(parset, year, uselimits=True)
+        progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
 
     update_project_with_fn(project_id, update_project_fn)
 
@@ -1437,9 +1431,6 @@ def create_portfolio(name, db_session=None):
     print("> Create portfolio %s" % name)
     portfolio = op.Portfolio()
     portfolio.name = name
-    objectives = op.portfolio.defaultobjectives(verbose=0)
-    gaoptim = op.portfolio.GAOptim(objectives=objectives)
-    portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
     record = PyObjectDb(
         user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
     # TODO: something about dates
@@ -1516,11 +1507,6 @@ def load_portfolio_summaries(db_session=None):
         for record in query:
             print(">> Portfolio id %s" % record.id)
             portfolio = record.load()
-            if len(portfolio.gaoptims) == 0:
-                objectives = op.portfolio.defaultobjectives(verbose=0)
-                gaoptim = op.portfolio.GAOptim(objectives=objectives)
-                portfolio.gaoptims[str(gaoptim.uid)] = gaoptim
-                record.save_obj(portfolio)
             portfolios.append(portfolio)
 
     summaries = map(parse.get_portfolio_summary, portfolios)
