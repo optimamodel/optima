@@ -37,6 +37,7 @@
     }
   </style>
 
+  <!-- Show animation while window loads -- from http://smallenvelop.com/display-loading-icon-page-loads-completely/ -->
   <style>
     .no-js #loader { display: none;  }
     .js #loader { display: block; position: absolute; left: 100px; top: 0; }
@@ -50,13 +51,9 @@
       background: url(assets/images/project/Preloader_2.gif) center no-repeat #fff;
     }
   </style>
-
-
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
-
   <script>
-    //paste this code under the head tag or in a separate js file.
     // Wait for window load
     $(window).load(function() {
       // Animate loader off screen
