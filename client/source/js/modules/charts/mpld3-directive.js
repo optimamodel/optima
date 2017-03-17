@@ -347,7 +347,7 @@ define(
 
           scope.state = {
             slider: {
-              value: 45,
+              value: 48,
               min: 0,
               options: {
                 floor: 10,
