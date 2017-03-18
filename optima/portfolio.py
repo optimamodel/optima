@@ -1,5 +1,5 @@
 from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
-from optima import version, defaultobjectives, Project, pchip, getfilelist, batchtools
+from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
 import os
@@ -114,6 +114,22 @@ class Portfolio(object):
     #######################################################################################################
     ## Methods to perform major tasks
     #######################################################################################################
+    
+    def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
+             constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False):
+        '''
+        Just like genBOC, but run on each of the projects in the portfolio. See batchBOC() for explanation
+        of kwargs.
+        
+        Version: 2017mar17
+        '''
+        # All we need to do is run batchBOC on the portfolio's odict of projects
+        self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
+             constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, 
+             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die)
+             
+        return None
         
     def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
@@ -239,7 +255,7 @@ class Portfolio(object):
         
         # Reoptimize projects
         if reoptimize: 
-            resultpairs = batchtools.reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
+            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
             self.results = resultpairs
         # Tidy up
         if doprint and self.results: self.makeoutput(doprint=True, verbose=verbose)
