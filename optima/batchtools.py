@@ -122,37 +122,42 @@ def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqu
 def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5, batch=True):
     ''' Perform batch autofitting '''
     
-    if folder is None: folder = '.'
-    filelist = getfilelist(folder, 'prj')
-    nfiles = len(filelist)
+    # Praeludium
+    projects, nprojects, fromfolder = getprojects(projects, folder, verbose) # If no projects supplied, load them from the folder
+    outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
 
-    outputqueue = Queue()
-    outputlist = empty(nfiles, dtype=object)
-    processes = []
-    for i in range(nfiles):
-        printv('Calibrating file "%s"' % filelist[i], 3, verbose)
-        project = loadproj(filelist[i])
-        project.filename = filelist[i]
-        prc = Process(target=autofit_task, 
-                      args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch))
-        prc.start()
-        processes.append(prc)
-    for i in range(nfiles):
-        outputlist[i] = outputqueue.get() # This is needed or else the process never finishes
-    for prc in processes:
-        prc.join() # Wait for them to finish
+    for i,project in enumerate(projects.values()):
+        args = (project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch)
+        if batch:
+            prc = Process(target=autofit_task, args=args)
+            prc.start()
+            processes.append(prc)
+        else:
+            outputlist[i] = autofit_task(*args) # Simply store here 
     
-    return outputlist
+    # Encore
+    projects = tidyup(projects=projects, batch=batch, fromfolder=fromfolder, outputlist=outputlist, outputqueue=outputqueue, processes=processes)
+    
+    return projects
 
 
 def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch):
     """Kick off the autofit task for a given project file."""
+    
+    # Standard opening
     if batch: loadbalancer(index=ind, maxload=maxload, label=project.name)
-    print('Running autofitting...')
+    printv('Running autofitting on %s...' % project.name, 2, verbose)
+    
+    # The meat
     project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
-    outputqueue.put(project)
+    
+    # Standardized close
     print('...done.')
-    return None
+    if batch: 
+        outputqueue.put(project)
+        return None
+    else:
+        return project
 
 
 def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
@@ -201,11 +206,9 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         maxload - how much of the CPU to use
     """
     
-    # If no projects supplied, load them from the folder
-    projects, nprojects, fromfolder = getprojects(projects, folder, verbose)
-    
-    # Housekeeping
-    outputqueue, outputlist, processes = housekeeping(nprojects, batch)
+    # Praeludium
+    projects, nprojects, fromfolder = getprojects(projects, folder, verbose) # If no projects supplied, load them from the folder
+    outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
     
     # Loop over the projects
     for i,project in enumerate(projects.values()):
@@ -221,7 +224,7 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         else:
             outputlist[i] = boc_task(*args) # Simply store here 
     
-    # Tidy up
+    # Encore
     projects = tidyup(projects=projects, batch=batch, fromfolder=fromfolder, outputlist=outputlist, outputqueue=outputqueue, processes=processes)
     
     return projects
@@ -229,6 +232,8 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
 
 def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,
              maxiters, maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die):
+    
+    # Custom opening
     if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
     printv('Running BOC generation...', 1, verbose)
     if prerun:
@@ -242,10 +247,14 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
         if rerun: 
             printv('No results set found, so rerunning model...', 2, verbose)
             project.runsim(parsetname) # Rerun if exception or if results is None
+    
+    # The meat
     project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
                    progsetname=progsetname, objectives=objectives, 
                    constraints=constraints, maxiters=maxiters, maxtime=maxtime,
                    verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
+    
+    # Standardized close
     print('...done.')
     if batch: 
         outputqueue.put(project)
