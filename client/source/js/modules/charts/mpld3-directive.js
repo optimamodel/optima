@@ -351,7 +351,6 @@ define(
               min: 0,
               options: {
                 floor: 5,
-
                 ceil: 100,
                 onChange: scope.changeFigWidth
               }
