@@ -153,7 +153,7 @@ class Portfolio(object):
         
         # Get the grand total
         if grandtotal is None:
-            if objectives is not None:
+            if objectives is not None and objectives['budget']: # If 0, then calculate based on the BOCs
                 grandtotal = objectives['budget']
             else:
                 grandtotal = 0.0

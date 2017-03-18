@@ -655,7 +655,7 @@ class Project(object):
             # Actually run
             results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, origbudget=owbudget, label=label, mc=mc, die=die, **kwargs)
             tmptotals[key] = budget
-            tmpallocs[key] = dcp(results.budget['Optimal'])
+            tmpallocs[key] = dcp(results.budgets['Optimal'])
             tmpoutcomes[key] = results.improvement[-1][-1]
             boc.x.append(budget)
             boc.y.append(tmpoutcomes[-1])
@@ -678,8 +678,8 @@ class Project(object):
             boc.y = array(boc.y)[xorder].tolist()
             boc.budgets.sort(xorder)
             boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
-            boc.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
-            boc.yinf = results.outcomes['Infinite'] # Store infinite money, but not as part of the BOC
+            boc.y.insert(0, results.extremeoutcomes['Zero']) # It doesn't matter which results these come from
+            boc.yinf = results.extremeoutcomes['Infinite'] # Store infinite money, but not as part of the BOC
             boc.parsetname = parsetname
             boc.progsetname = progsetname
             boc.defaultbudget = dcp(defaultbudget)
