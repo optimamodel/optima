@@ -4,6 +4,8 @@
 #    ./build_client.sh # Build full client and minify JavaScript (slow)
 #    ./build_client.sh quick # Build client but without minifying JavaScript
 
+echo 'Building client...'
+
 cd `dirname $0` # Make sure we're in this folder
 cd ../client # Change to client folder
 
@@ -22,9 +24,9 @@ npm install --skip-installed
 
 # compile sass scripts -- if 
 if [ $# -gt 1 ]; then
-	echo 'Building client and minifying JavaScript...'
+	echo 'Compiling client (including minifying JavaScript)'
 	node_modules/gulp/bin/gulp.js compile-build-js-client-uglify copy-assets-and-vendor-js write-version-js
 else
-	echo 'Building client (quick version)...'
+	echo 'Compiling client (quick version)...'
 	node_modules/gulp/bin/gulp.js compile-build-js-client-quick copy-assets-and-vendor-js write-version-js
 fi
