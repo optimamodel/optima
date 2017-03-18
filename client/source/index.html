@@ -75,11 +75,19 @@
   <!-- Scripts -->
   <script src="vendor/requirejs/require.js"></script>
   <script>
+    function loadScripts() {
     require(['require', './js/config'], function(require, config) {
       config.urlArgs = 'bust=v1.0.1';
       window.require.config(config);
       require(['./js/main.js']);
     });
+    }
+  </script>
+
+  <script>
+    function waterfall() {
+      async.waterfall([loadScripts, closeAnimation])
+    }
   </script>
 
 </head>

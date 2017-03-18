@@ -8,6 +8,7 @@ define({
 
   // Here paths are set relative to `/source/js` folder
   paths: {
+    'async': './vendor/async/async',
     'underscore': './vendor/underscore/underscore',
     'jquery': './vendor/jquery/dist/jquery',
     'ng-file-upload-html5-shim': './vendor/ng-file-upload/angular-file-upload-shim',
