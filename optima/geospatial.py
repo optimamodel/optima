@@ -190,7 +190,7 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
             col += 1
             wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
             wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
-            col = 0                
+            col = 0
             
             row += 1
             wspopsize.write(row, col, 'District aggregate')
@@ -260,9 +260,8 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplot
     
     ## 4. Read the spreadsheet
     poplist = []
-    for colindex in xrange(wspopsize.ncols):
-        if colindex > 0 and wspopsize.cell_value(0, colindex) not in ['','Total (Intended)','Total (Actual)']:
-            poplist.append(wspopsize.cell_value(0, colindex))
+    for colindex in range(1,wspopsize.ncols-3): # Skip first column and last 3
+        poplist.append(wspopsize.cell_value(0, colindex))
     npops = len(poplist)
     
     districtlist = []
