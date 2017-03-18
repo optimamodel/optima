@@ -49,6 +49,8 @@
       background: url(assets/images/project/Preloader_2.gif) center no-repeat #fff;
     }
   </style>
+
+  <!--Loading script-->
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
   <script>
@@ -57,22 +59,8 @@
       console.log("Page is loaded");
     }
   </script>
-  <!--<script>-->
-    <!--// Wait for window load-->
-    <!--window.load('load', function() {-->
-      <!--// Animate loader off screen-->
-      <!--console.log('this is on-load');-->
-      <!--$(".se-pre-con").fadeOut("slow");-->
-    <!--});-->
 
-    <!--// Test-->
-    <!--$(window).load(function() {-->
-      <!--// Animate loader off screen-->
-      <!--console.log('this is load');-->
-    <!--});-->
-  <!--</script>-->
-
-  <!-- Scripts -->
+  <!--Main scripts-->
   <script src="vendor/requirejs/require.js"></script>
   <script>
     function loadScripts() {
@@ -84,6 +72,8 @@
     }
   </script>
 
+  <!--Load the scripts in the right order-->
+  <script src="vendor/async/async.js"></script>
   <script>
     function waterfall() {
       async.waterfall([loadScripts, closeAnimation])

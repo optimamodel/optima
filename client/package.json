@@ -5,7 +5,6 @@
   "version": "2.0.0alpha",
   "devDependencies": {
     "amdefine": "=1.0.0",
-    "async": "=2.1.5",
     "autoprefixer": "=6.0.3",
     "bower": "=1.5.3",
     "csswring": "=4.0.0",
