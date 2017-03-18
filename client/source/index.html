@@ -41,8 +41,6 @@
   <style>
     .loading-screen {
       position: fixed;
-      left: 0;
-      top: 0;
       width: 100%;
       height: 100%;
       z-index: 9999;
@@ -78,25 +76,39 @@
 
 <body> <!-- It's a bit weird to not load the page elements until after the page is finished loading, but... -->
 
-<!-- Wait for everything to load -->
-<div class="loading-screen"></div>
-
 <!--Load the scripts, wait for 3 seconds, then load the rest of the page -->
 <script>
-  function loadPage() {
-    setTimeout(function () {
-      console.log('Starting loadScripts...');
-    }, 1000);
-    loadScripts();
-    setTimeout(function () {
-      console.log('Starting closeAnimation...');
-    }, 1000);
-    closeAnimation();
-    setTimeout(function () {
-      console.log('Loading finished');
-    }, 1000);
+  console.log(require.defined("angular"));
+//  function loadPage() {
+//    setTimeout(function () {
+//      console.log('Starting loadScripts...');
+//    }, 1000);
+//    loadScripts();
+//    setTimeout(function () {
+//      console.log('Starting closeAnimation...');
+//    }, 1000);
+//    closeAnimation();
+//    setTimeout(function () {
+//      console.log('Loading finished');
+//    }, 1000);
+//  }
+  // Check the heftier functions from config.js and make sure they're all loaded
+  function checkDefined() {
+    return (require.defined("angular") && require.defined("d3") && require.defined("mpld3") && require.defined("jquery") && require.defined("toastr"));
   }
-  loadPage();
+  function checkLoaded() {
+    setTimeout(function() {
+      console.log(checkDefined());
+      if (checkDefined()) {
+        closeAnimation();
+      } else {
+        checkLoaded();
+      }
+    }, 500);
+  }
+  loadScripts();
+  checkLoaded();
+
 </script>
 
 <div ng-controller="MainCtrl">
