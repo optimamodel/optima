@@ -50,24 +50,6 @@
     }
   </style>
 
-  <!--Loading script-->
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
-  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
-  <script>
-    function closeAnimation() {
-      $(".loading-screen").fadeOut("slow");
-      console.log("Page is loaded");
-    }
-  </script>
-
-  <!--Load the scripts in the right order-->
-  <script type="text/javascript" src="https://cdn.rawgit.com/caolan/async/master/dist/async.js"></script>
-  <script>
-    function loadingWaterfall() {
-      async.waterfall([loadScripts, closeAnimation]);
-    }
-  </script>
-
   <!--Main scripts-->
   <script src="vendor/requirejs/require.js"></script>
   <script>
@@ -80,12 +62,38 @@
     }
   </script>
 
+  <!--Loading script-->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
+  <script>
+    function closeAnimation() {
+      $(".loading-screen").fadeOut("slow");
+      console.log("Page is loaded");
+    }
+  </script>
+
+
 </head>
 
-<body onload="loadingWaterfall()"> <!-- It's a bit weird to not load the page elements until after the page is finished loading, but... -->
+<body> <!-- It's a bit weird to not load the page elements until after the page is finished loading, but... -->
 
 <!-- Wait for everything to load -->
 <div class="loading-screen"></div>
+
+<!--Load the scripts in the right order-->
+<script type="text/javascript" src="https://cdn.rawgit.com/caolan/async/master/dist/async.js"></script>
+<script>
+  function myFunction() {
+    setTimeout(function(){ console.log('Starting loadScripts...'); }, 1000);
+//    loadScripts();
+    setTimeout(function(){ console.log('Starting closeAnimation...'); }, 1000);
+//    closeAnimation();
+//    async.waterfall([loadScripts, closeAnimation]);
+    setTimeout(function(){ console.log('non-Waterfall loading finished'); }, 1000);
+  }
+  myFunction()
+  console.log('all done');
+</script>
 
 <div ng-controller="MainCtrl">
 
