@@ -632,6 +632,8 @@ class Project(object):
         budgetdict = odict()
         for budgetratio in budgetratios:
             budgetdict['%s'%budgetratio] = budgetratio # Store the budget ratios as a dicitonary
+        tmpx = odict()
+        tmpy = odict()
         tmptotals = odict()
         tmpallocs = odict()
         tmpoutcomes = odict()
@@ -657,8 +659,8 @@ class Project(object):
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets['Optimal'])
             tmpoutcomes[key] = results.improvement[-1][-1]
-            boc.x.append(budget)
-            boc.y.append(tmpoutcomes[-1])
+            tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
+            tmpy[key] = tmpoutcomes[-1]
             boc.budgets[key] = tmpallocs[-1]
             
             # Check that the BOC points are monotonic, and if not, rerun
@@ -673,9 +675,9 @@ class Project(object):
                         
         # Tidy up: insert remaining points
         if sum(counts[:]):
-            xorder = argsort(boc.x) # Sort everything
-            boc.x = array(boc.x)[xorder].tolist()
-            boc.y = array(boc.y)[xorder].tolist()
+            xorder = argsort(tmpx[:]) # Sort everything
+            boc.x = tmpx[:][xorder].tolist() # Convert to list
+            boc.y = tmpy[:][xorder].tolist()
             boc.budgets.sort(xorder)
             boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
             boc.y.insert(0, results.extremeoutcomes['Zero']) # It doesn't matter which results these come from
