@@ -48,17 +48,15 @@
     }
   </style>
 
-  <!--Main scripts-->
+  <!-- Load main scripts -- takes a long time! -->
   <script src="vendor/requirejs/require.js"></script>
   <script>
     function loadScripts() {
-      console.log('Loading required scripts...');
       require(['require', './js/config'], function(require, config) {
         config.urlArgs = 'bust=v1.0.1';
         window.require.config(config);
         require(['./js/main.js']);
       });
-      console.log('Loading required scripts finished.');
     }
   </script>
 
@@ -67,35 +65,20 @@
   <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
   <script>
     function closeAnimation() {
-      console.log('Starting page loading...');
       $(".loading-screen").fadeOut("slow");
-      console.log("Page is loaded");
     }
   </script>
 </head>
 
-<body> <!-- It's a bit weird to not load the page elements until after the page is finished loading, but... -->
 
-<!--Load the scripts, wait for 3 seconds, then load the rest of the page -->
+<body ng-controller="MainCtrl">
+
 <script>
-  console.log(require.defined("angular"));
-//  function loadPage() {
-//    setTimeout(function () {
-//      console.log('Starting loadScripts...');
-//    }, 1000);
-//    loadScripts();
-//    setTimeout(function () {
-//      console.log('Starting closeAnimation...');
-//    }, 1000);
-//    closeAnimation();
-//    setTimeout(function () {
-//      console.log('Loading finished');
-//    }, 1000);
-//  }
   // Check the heftier functions from config.js and make sure they're all loaded
   function checkDefined() {
     return (require.defined("angular") && require.defined("d3") && require.defined("mpld3") && require.defined("jquery") && require.defined("toastr"));
   }
+  // Check in a loop, every 500 ms, to see if the required libraries have loaded
   function checkLoaded() {
     setTimeout(function() {
       console.log(checkDefined());
@@ -106,9 +89,8 @@
       }
     }, 500);
   }
-  loadScripts();
-  checkLoaded();
-
+  loadScripts(); // Start loading the scripts
+  checkLoaded(); // Don't display the page until they're done
 </script>
 
 <div ng-controller="MainCtrl">
@@ -150,7 +132,6 @@
 
 <!-- Wait for everything to load -->
 <div class="loading-screen"></div>
-
 
 <div
   style="flex: 1 1;"
