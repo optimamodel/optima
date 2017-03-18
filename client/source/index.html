@@ -73,13 +73,13 @@
   </script>
 
   <!--Load the scripts in the right order-->
-  <!--<script src="vendor/async/dist/async.js"></script>-->
+  <script src="vendor/async/dist/async.js"></script>
   <script>
-    var async = require(['vendor/async/dist/async']);
+    var waterfall = require("async/waterfall");
   </script>
   <script>
     function loadingWaterfall() {
-      async.waterfall([loadScripts, closeAnimation]);
+      waterfall([loadScripts, closeAnimation]);
     }
   </script>
 
