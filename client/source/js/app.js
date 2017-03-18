@@ -1,5 +1,6 @@
 define([
   'angular',
+  'async',
   'ng-loading-bar',
   'ng-file-upload',
   'ui.bootstrap',
@@ -34,6 +35,7 @@ define([
       [
         'angularFileUpload',
         'angular-loading-bar',
+        'async',
         'ui.bootstrap',
         'ui.router',
         'tooltip.module',
