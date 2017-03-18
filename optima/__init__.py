@@ -199,15 +199,13 @@ from .defaults import defaultproject, defaultprogset, defaultprograms, demo
 import migrate as _migrate
 from .migrate import migrate, loadproj, loadportfolio, optimaversion
 
+# And really really finally, load geospatial functions (has to load projects, so has to come after migration)
+from . import batchtools
+from .batchtools import batchautofit, batchBOC, reoptimizeprojects
+
 # Really really finally, load the portfolio class (container of Projects), relies on loadproj, hence is here
 import portfolio as _portfolio
 from .portfolio import Portfolio 
-
-# And really really finally, load geospatial functions (has to load projects, so has to come after migration)
-try:
-    from . import batchtools
-    from .batchtools import batchautofit, batchBOC, reoptimizeprojects
-except Exception as E: _failed.append('batchtools: %s' % E.__repr__())
 
 try:
     import geospatial as _geospatial

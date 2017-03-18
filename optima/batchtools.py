@@ -6,12 +6,13 @@ Functions for doing things in batch...yeah, should make better.
 Note - tasks have to be standalone functions or they break on windows, see
 http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
 
-Version: 2017mar09
+Version: 2017mar17
 """
 
-from multiprocessing import Process, Queue
-from numpy import empty, inf
 from optima import loadproj, loadbalancer, printv, getfilelist, dcp, odict, outcomecalc
+from numpy import empty, inf
+try: from multiprocessing import Process, Queue
+except: Process, Queue = None, None # OK to skip these if batch is False
 
 
 ####################################################################################################
