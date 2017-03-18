@@ -50,32 +50,30 @@
     }
   </style>
 
-  <!--&lt;!&ndash;Main scripts&ndash;&gt;-->
-  <!--<script src="vendor/requirejs/require.js"></script>-->
-  <!--<script>-->
-    <!--function loadScripts() {-->
-      <!--console.log('Loading required scripts...');-->
-      <!--require(['require', './js/config'], function(require, config) {-->
-        <!--config.urlArgs = 'bust=v1.0.1';-->
-        <!--window.require.config(config);-->
-        <!--require(['./js/main.js']);-->
-      <!--});-->
-      <!--console.log('Loading required scripts finished.');-->
-    <!--}-->
-  <!--</script>-->
+  <!--Main scripts-->
+  <script src="vendor/requirejs/require.js"></script>
+  <script>
+    function loadScripts() {
+      console.log('Loading required scripts...');
+      require(['require', './js/config'], function(require, config) {
+        config.urlArgs = 'bust=v1.0.1';
+        window.require.config(config);
+        require(['./js/main.js']);
+      });
+      console.log('Loading required scripts finished.');
+    }
+  </script>
 
-  <!--&lt;!&ndash;Loading script&ndash;&gt;-->
-  <!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>-->
-  <!--<script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>-->
-  <!--<script>-->
-    <!--function closeAnimation() {-->
-      <!--console.log('Starting page loading...')-->
-      <!--$(".loading-screen").fadeOut("slow");-->
-      <!--console.log("Page is loaded");-->
-    <!--}-->
-  <!--</script>-->
-
-
+  <!--Loading script-->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
+  <script>
+    function closeAnimation() {
+      console.log('Starting page loading...');
+      $(".loading-screen").fadeOut("slow");
+      console.log("Page is loaded");
+    }
+  </script>
 </head>
 
 <body> <!-- It's a bit weird to not load the page elements until after the page is finished loading, but... -->
@@ -84,46 +82,21 @@
 <div class="loading-screen"></div>
 
 <!--Load the scripts, wait for 3 seconds, then load the rest of the page -->
-<script type="text/javascript" src="https://cdn.rawgit.com/caolan/async/master/dist/async.js"></script>
 <script>
-  //  function myFunction() {
-  //    setTimeout(function(){ console.log('Starting loadScripts...'); }, 1000);
-  ////    loadScripts();
-  //    setTimeout(function(){ console.log('Starting closeAnimation...'); }, 1000);
-  ////    closeAnimation();
-  ////    async.waterfall([loadScripts, closeAnimation]);
-  //    setTimeout(function(){ console.log('non-Waterfall loading finished'); }, 1000);
-  //  }
-
-  function myFunction1() {
-    console.log('myfunction1');
-    setTimeout(function(){ console.log('Starting loadScripts...'); }, 1000);
-    return null;
+  function loadPage() {
+    setTimeout(function () {
+      console.log('Starting loadScripts...');
+    }, 1000);
+    loadScripts();
+    setTimeout(function () {
+      console.log('Starting closeAnimation...');
+    }, 1000);
+    closeAnimation();
+    setTimeout(function () {
+      console.log('Loading finished');
+    }, 1000);
   }
-
-  function myFunction2() {
-    console.log('myfunction2');
-    setTimeout(function(){ console.log('Starting closeAnimation...'); }, 1000);
-    return null;
-  }
-
-  function myFunction3() {
-    console.log('myfunction3');
-    setTimeout(function(){ console.log('non-Waterfall loading finished'); }, 1000);
-    return null;
-  }
-
-  function callmyfuncs() {
-    console.log('calling waterfall...');
-    async.waterfall([myFunction1, myFunction2, myFunction3]);
-    console.log('calling waterfall finished.');
-  }
-
-  console.log('calling callfuncs...');
-  callmyfuncs();
-  console.log('calling callmyfuncs finished.');
-
-  console.log('all done');
+  loadPage();
 </script>
 
 <div ng-controller="MainCtrl">
