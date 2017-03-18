@@ -118,6 +118,11 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
             workbook = Workbook(spreadsheetpath)
             wspopsize = workbook.add_worksheet('Population sizes')
             wsprev = workbook.add_worksheet('Population prevalence')
+            plain = workbook.add_format({})
+            num = workbook.add_format({'num_format':0x04})
+            bold = workbook.add_format({'bold': True})
+            orfmt = workbook.add_format({'bold': True, 'align':'center'})
+            gold = workbook.add_format({'bg_color': '#ffef9d'})
             
             nprogs = len(project.data['pops']['short'])
             
@@ -126,15 +131,15 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
             row, col = 0, 0
             for row in xrange(copies+1):
                 if row != 0:
-                    wspopsize.write(row, col, '%s - District %i' % (project.name, row))
-                    wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col))
+                    wspopsize.write(row, col, '%s - district %i' % (project.name, row), bold)
+                    wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
                 for popname in project.data['pops']['short']:
                     col += 1
                     if row == 0:
-                        wspopsize.write(row, col, popname)
-                        wsprev.write(row, col, popname)
+                        wspopsize.write(row, col, popname, bold)
+                        wsprev.write(row, col, popname, bold)
                     else:
-                        wspopsize.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)))
+                        wspopsize.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)), num)
 
                         # Prevalence scaling by function r/(r-1+1/x).
                         # If n is intended district prevalence and d is calibrated national prevalence, then...
@@ -143,24 +148,27 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
                         natpopcell = rc(copies+2,col)
                         disttotcell = rc(row,nprogs+2)
                         nattotcell = rc(copies+2,nprogs+2)
-                        wsprev.write(row, col, "=(%s*(1-%s)/(%s*(1-%s)))/(%s*(1-%s)/(%s*(1-%s))-1+1/%s)" % (disttotcell,nattotcell,nattotcell,disttotcell,disttotcell,nattotcell,nattotcell,disttotcell,natpopcell))
+                        wsprev.write(row, col, "=(%s*(1-%s)/(%s*(1-%s)))/(%s*(1-%s)/(%s*(1-%s))-1+1/%s)" % (disttotcell,nattotcell,nattotcell,disttotcell,disttotcell,nattotcell,nattotcell,disttotcell,natpopcell), plain)
 
                     maxcol = max(maxcol,col)
                 col += 1
                 if row > 0:
-                    wspopsize.write(row, col, "OR")
-                    wsprev.write(row, col, "OR")
+                    wspopsize.write(row, col, "OR", orfmt)
+                    wsprev.write(row, col, "OR", orfmt)
                 col += 1
                 if row == 0:
-                    wspopsize.write(row, col, "Total (Intended)")
-                    wsprev.write(row, col, "Total (Intended)")
+                    wspopsize.write(row, col, "Total (intended)", bold)
+                    wsprev.write(row, col, "Total (intended)", bold)
+                    for p in range(len(project.data['pops']['short'])):
+                        wspopsize.write(row+1+p, col, None, gold)
+                        wsprev.write(row+1+p, col, None, gold)
                 col += 1
                 if row == 0:
-                    wspopsize.write(row, col, "Total (Actual)")
-                    wsprev.write(row, col, "Total (Actual)")
+                    wspopsize.write(row, col, "Total (actual)", bold)
+                    wsprev.write(row, col, "Total (actual)", bold)
                 else:
-                    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)))
-                    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))
+                    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+                    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)), plain)
                 maxcol = max(maxcol,col)
                 col = 0
             
@@ -170,32 +178,32 @@ def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None,
             wspopsize.write(row, col, '---')
             wsprev.write(row, col, '---')
             row += 1
-            wspopsize.write(row, col, 'Project Cal. %i' % refyear)
-            wsprev.write(row, col, 'Project Cal. %i' % refyear)
+            wspopsize.write(row, col, 'Calibration %i' % refyear)
+            wsprev.write(row, col, 'Calibration %i' % refyear)
             for popname in project.data['pops']['short']:
                 col += 1
-                wspopsize.write(row, col, results.main['popsize'].pops[bestindex][col-1][refind])
+                wspopsize.write(row, col, results.main['popsize'].pops[bestindex][col-1][refind], num)
                 wsprev.write(row, col, results.main['prev'].pops[bestindex][col-1][refind])
             col += 2
-            wspopsize.write(row, col, results.main['popsize'].tot[bestindex][refind])
+            wspopsize.write(row, col, results.main['popsize'].tot[bestindex][refind], num)
             wsprev.write(row, col, results.main['prev'].tot[bestindex][refind])
             col += 1
-            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)))
+            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
             wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
             col = 0                
             
             row += 1
-            wspopsize.write(row, col, 'District Aggregate')
-            wsprev.write(row, col, 'District Aggregate')
+            wspopsize.write(row, col, 'District aggregate')
+            wsprev.write(row, col, 'District aggregate')
             for popname in project.data['pops']['short']:
                 col += 1
-                wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)))
+                wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
                 wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
             col += 2
-            wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)))
+            wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
             wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
             col += 1
-            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)))
+            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
             wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
             col = 0
                 
