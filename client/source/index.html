@@ -29,7 +29,7 @@
       display: block;
     }
     .ng-animate-block-transitions {
-        -webkit-transition: 0s all !important;
+      -webkit-transition: 0s all !important;
       transition: 0s all !important;
     }
     .ng-hide-add-active, .ng-hide-remove {
@@ -71,6 +71,7 @@
 </head>
 
 
+
 <body ng-controller="MainCtrl">
 
 <script>
@@ -93,8 +94,7 @@
   checkLoaded(); // Don't display the page until they're done
 </script>
 
-<div ng-controller="MainCtrl">
-
+<!--Top header-->
 <div class="actionbar">
   <div class="elastic header">
     <div style="display:table-cell; width:160px">
@@ -133,12 +133,11 @@
 <!-- Wait for everything to load -->
 <div class="loading-screen"></div>
 
+<!-- Optima content -- e.g., login screen initially -->
 <div
   style="flex: 1 1;"
   class="layout_cnt">
   <div ui-view></div>
-</div>
-
 </div>
 
 </body>
