@@ -119,17 +119,6 @@ def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqu
 ### The meat of the matter -- batch functions and their tasks
 ####################################################################################################
 
-def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch):
-    """Kick off the autofit task for a given project file."""
-    if batch: loadbalancer(index=ind, maxload=maxload, label=project.name)
-    print('Running autofitting...')
-    project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
-    project.save()
-    outputqueue.put(project)
-    print('...done.')
-    return None
-
-
 def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5, batch=True):
     ''' Perform batch autofitting '''
     
@@ -156,31 +145,14 @@ def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='pre
     return outputlist
 
 
-def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,
-             maxiters, maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die):
-    if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
-    printv('Running BOC generation...', 1, verbose)
-    if prerun:
-        if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
-        rerun = False
-        try:
-            results = project.parsets[parsetname].getresults() # First, try getting results 
-            if results is None: rerun = True
-        except:
-            rerun = True
-        if rerun: 
-            printv('No results set found, so rerunning model...', 2, verbose)
-            project.runsim(parsetname) # Rerun if exception or if results is None
-    project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
-                   progsetname=progsetname, objectives=objectives, 
-                   constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-                   verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
+def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch):
+    """Kick off the autofit task for a given project file."""
+    if batch: loadbalancer(index=ind, maxload=maxload, label=project.name)
+    print('Running autofitting...')
+    project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
+    outputqueue.put(project)
     print('...done.')
-    if batch: 
-        outputqueue.put(project)
-        return None
-    else:
-        return project
+    return None
 
 
 def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
@@ -253,6 +225,34 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
     projects = tidyup(projects=projects, batch=batch, fromfolder=fromfolder, outputlist=outputlist, outputqueue=outputqueue, processes=processes)
     
     return projects
+
+
+def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,
+             maxiters, maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die):
+    if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
+    printv('Running BOC generation...', 1, verbose)
+    if prerun:
+        if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
+        rerun = False
+        try:
+            results = project.parsets[parsetname].getresults() # First, try getting results 
+            if results is None: rerun = True
+        except:
+            rerun = True
+        if rerun: 
+            printv('No results set found, so rerunning model...', 2, verbose)
+            project.runsim(parsetname) # Rerun if exception or if results is None
+    project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
+                   progsetname=progsetname, objectives=objectives, 
+                   constraints=constraints, maxiters=maxiters, maxtime=maxtime,
+                   verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
+    print('...done.')
+    if batch: 
+        outputqueue.put(project)
+        return None
+    else:
+        return project
+
 
 
 def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2):
