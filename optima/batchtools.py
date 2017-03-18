@@ -14,6 +14,10 @@ from numpy import empty, inf
 from optima import loadproj, loadbalancer, printv, getfilelist, dcp, odict, outcomecalc
 
 
+####################################################################################################
+### Simple template functions
+####################################################################################################
+
 def batchtest_task(obj, ind, outputqueue, nprocs, nrepeats, maxload):
     loadbalancer(maxload=maxload, index=ind)
     print('Running slow test function...')
@@ -45,9 +49,78 @@ def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
     return outputlist
 
 
-def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload):
+####################################################################################################
+### Housekeeping functions
+####################################################################################################
+
+def getprojects(projects=None, folder=None, verbose=2):
+    ''' Small helper method to decide what to do about projects '''
+    if projects is None: # If a projects odict is not supplied -- load from file
+        fromfolder = True
+        if folder is None: folder = '.'
+        filelist = getfilelist(folder, 'prj')
+        nprojects = len(filelist)
+        projects = odict()
+        for i in range(nprojects):
+            proj = loadproj(filelist[i])
+            proj.filename = filelist[i] # Ensure the filename is up-to-date since we'll save later
+            projects[proj.name] = proj
+    else:
+        nprojects = len(projects)
+        fromfolder = False # If it is, just set fromfolder
+    
+    # Ensure these match, since used to repopulate the odict
+    for key,project in projects.items():
+        if project.name != key: 
+            msg = 'Warning, project name and key do not match (%s vs. %s), updating...' % (project.name, key)
+            printv(msg, 2, verbose)
+        project.name = key 
+    
+    return projects, nprojects, fromfolder
+
+
+def housekeeping(nprojects, batch):
+    ''' Small function to return the required variables for running the batch functions '''
+    if batch: outputqueue = Queue()
+    else: outputqueue = None
+    outputlist = empty(nprojects, dtype=object)
+    processes = []
+    return outputqueue, outputlist, processes
+
+
+def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqueue=None, processes=None):
+    '''
+    Functions to execute after the parallel process has been run. If batch is True, then outputlist will
+    be empty and will be populated from outputqueue. If it's False, then outputlist will be a list of
+    the processed projects.    
+    '''
+    
+    # Extra tasks required for batch runs
+    if batch:
+        for i in range(len(projects)):
+            outputlist[i] = outputqueue.get()  # This is needed or else the process never finishes
+        for prc in processes:
+            prc.join() # Wait for them to finish
+    
+    # Update the odict
+    for project in outputlist:
+        projects[project.name] = project
+    
+    # If loaded from a folder, save
+    if fromfolder:
+        for project in projects.values():
+            project.save(filename=project.filename)
+    
+    return projects
+
+
+####################################################################################################
+### The meat of the matter -- batch functions and their tasks
+####################################################################################################
+
+def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch):
     """Kick off the autofit task for a given project file."""
-    loadbalancer(index=ind, maxload=maxload)
+    if batch: loadbalancer(index=ind, maxload=maxload, label=project.name)
     print('Running autofitting...')
     project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
     project.save()
@@ -56,7 +129,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
     return None
 
 
-def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5):
+def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5, batch=True):
     ''' Perform batch autofitting '''
     
     if folder is None: folder = '.'
@@ -71,7 +144,7 @@ def batchautofit(folder=None, name=None, fitwhat=None, fitto='prev', maxtime=Non
         project = loadproj(filelist[i])
         project.filename = filelist[i]
         prc = Process(target=autofit_task, 
-                      args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload))
+                      args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch))
         prc.start()
         processes.append(prc)
     for i in range(nfiles):
@@ -156,29 +229,10 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
     """
     
     # If no projects supplied, load them from the folder
-    if projects is None:
-        fromfolder = True
-        if folder is None: folder = '.'
-        filelist = getfilelist(folder, 'prj')
-        nfiles = len(filelist)
-        projects = odict()
-        for i in range(nfiles):
-            proj = loadproj(filelist[i])
-            proj.filename = filelist[i] # Ensure the filename is up-to-date since we'll save later
-            projects[proj.name] = proj
-    else:
-        fromfolder = False
+    projects, nprojects, fromfolder = getprojects(projects, folder, verbose)
     
     # Housekeeping
-    if batch: outputqueue = Queue()
-    else: outputqueue = None
-    outputlist = empty(nfiles, dtype=object)
-    processes = []
-    for key,project in projects.items():
-        if project.name != key: 
-            msg = 'Warning, project name and key do not match (%s vs. %s), updating...' % (project.name, key)
-            printv(msg, 2, verbose)
-        project.name = key # Ensure these match, since used to repopulate the odict
+    outputqueue, outputlist, processes = housekeeping(nprojects, batch)
     
     # Loop over the projects
     for i,project in enumerate(projects.values()):
@@ -194,21 +248,8 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         else:
             outputlist[i] = boc_task(*args) # Simply store here 
     
-    # Extra tasks required for batch runs
-    if batch:
-        for i in range(nfiles):
-            outputlist[i] = outputqueue.get()  # This is needed or else the process never finishes
-        for prc in processes:
-            prc.join() # Wait for them to finish
-    
-    # Update the odict
-    for i,project in enumerate(outputlist):
-        projects[project.name] = project
-    
-    # If loaded from a folder, save
-    if fromfolder:
-        for project in projects.values():
-            project.save(filename=project.tmpfilename)
+    # Tidy up
+    projects = tidyup(projects=projects, batch=batch, fromfolder=fromfolder, outputlist=outputlist, outputqueue=outputqueue, processes=processes)
     
     return projects
 

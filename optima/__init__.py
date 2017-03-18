@@ -206,7 +206,7 @@ from .portfolio import Portfolio
 # And really really finally, load geospatial functions (has to load projects, so has to come after migration)
 try:
     from . import batchtools
-    from .batchtools import batchautofit, batchBOC
+    from .batchtools import batchautofit, batchBOC, reoptimizeprojects
 except Exception as E: _failed.append('batchtools: %s' % E.__repr__())
 
 try:
