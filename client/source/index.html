@@ -39,47 +39,62 @@
 
   <!-- Show animation while window loads -- from http://smallenvelop.com/display-loading-icon-page-loads-completely/ -->
   <style>
-    .no-js #loader { display: none;  }
-    .js #loader { display: block; position: absolute; left: 100px; top: 0; }
-    .se-pre-con {
+    .loading-screen {
       position: fixed;
-      left: 0px;
-      top: 0px;
       width: 100%;
       height: 100%;
       z-index: 9999;
       background: url(assets/images/project/Preloader_2.gif) center no-repeat #fff;
     }
   </style>
+
+  <!-- Load main scripts -- takes a long time! -->
+  <script src="vendor/requirejs/require.js"></script>
+  <script>
+    function loadScripts() {
+      require(['require', './js/config'], function(require, config) {
+        config.urlArgs = 'bust=v1.0.1';
+        window.require.config(config);
+        require(['./js/main.js']);
+      });
+    }
+  </script>
+
+  <!--Loading script-->
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
   <script>
-    // Wait for window load
-    $(window).load(function() {
-      // Animate loader off screen
-      $(".se-pre-con").fadeOut("slow");;
-    });
+    function closeAnimation() {
+      $(".loading-screen").fadeOut("slow");
+    }
   </script>
-
 </head>
 
-<body>
 
-<!-- Wait for everything to load -->
-<div class="se-pre-con"></div>
 
-<!-- Scripts -->
-<script src="vendor/requirejs/require.js"></script>
+<body ng-controller="MainCtrl">
+
 <script>
-  require(['require', './js/config'], function(require, config) {
-    config.urlArgs = 'bust=v1.0.1';
-    window.require.config(config);
-    require(['./js/main.js']);
-  });
+  // Check the heftier functions from config.js and make sure they're all loaded -- you'd think this could be automated, no!?!?
+  function checkDefined() {
+    return (require.defined("angular") && require.defined("d3") && require.defined("mpld3") && require.defined("jquery") && require.defined("toastr"));
+  }
+  // Check in a loop, every 500 ms, to see if the required libraries have loaded
+  function checkLoaded() {
+    setTimeout(function() {
+      console.log('Scripts still loading...');
+      if (checkDefined()) {
+        closeAnimation();
+      } else {
+        checkLoaded();
+      }
+    }, 500);
+  }
+  loadScripts(); // Start loading the scripts
+  checkLoaded(); // Don't display the page until they're done
 </script>
 
-<div ng-controller="MainCtrl">
-
+<!--Top header-->
 <div class="actionbar">
   <div class="elastic header">
     <div style="display:table-cell; width:160px">
@@ -115,14 +130,14 @@
   </div>
 </div>
 
+<!-- Wait for everything to load -->
+<div class="loading-screen"></div>
 
-
+<!-- Optima content -- e.g., login screen initially -->
 <div
   style="flex: 1 1;"
   class="layout_cnt">
   <div ui-view></div>
-</div>
-
 </div>
 
 </body>
