@@ -691,6 +691,8 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
     if domigrate: P = migrate(origP, verbose=verbose, die=die)
     else:         P = origP # Don't migrate -- WARNING, dangerous!
     
+    if not fromdb: P.filename = filename # Update filename if not being loaded from a database
+    
     return P
 
 
@@ -709,6 +711,7 @@ def loadportfolio(filename=None, verbose=2):
         F.projects[i] = migrate(F.projects[i], verbose=verbose)
     
     F.version = op.version # Update version number
+    F.filename = filename # Update filename
     
     return F
 

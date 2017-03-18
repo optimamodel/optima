@@ -40,6 +40,7 @@ class Portfolio(object):
         self.modified = today()
         self.version = version
         self.gitbranch, self.gitversion = gitinfo()
+        self.filename = None # File path, only present if self.save() is used
 
         return None
 
