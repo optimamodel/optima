@@ -39,9 +39,7 @@
 
   <!-- Show animation while window loads -- from http://smallenvelop.com/display-loading-icon-page-loads-completely/ -->
   <style>
-    .no-js #loader { display: none;  }
-    .js #loader { display: block; position: absolute; left: 100px; top: 0; }
-    .se-pre-con {
+    .loading-screen {
       position: fixed;
       left: 0px;
       top: 0px;
@@ -54,36 +52,42 @@
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
   <script>
-    // Wait for window load
-    $(window).on('load', function() {
-      // Animate loader off screen
-      console.log('this is on-load');
-      $(".se-pre-con").fadeOut("slow");
-    });
+    function closeAnimation() {
+      $(".loading-screen").fadeOut("slow");
+      console.log("Page is loaded");
+    }
+  </script>
+  <!--<script>-->
+    <!--// Wait for window load-->
+    <!--window.load('load', function() {-->
+      <!--// Animate loader off screen-->
+      <!--console.log('this is on-load');-->
+      <!--$(".se-pre-con").fadeOut("slow");-->
+    <!--});-->
 
-    // Test
-    $(window).load(function() {
-      // Animate loader off screen
-      console.log('this is load');
+    <!--// Test-->
+    <!--$(window).load(function() {-->
+      <!--// Animate loader off screen-->
+      <!--console.log('this is load');-->
+    <!--});-->
+  <!--</script>-->
+
+  <!-- Scripts -->
+  <script src="vendor/requirejs/require.js"></script>
+  <script>
+    require(['require', './js/config'], function(require, config) {
+      config.urlArgs = 'bust=v1.0.1';
+      window.require.config(config);
+      require(['./js/main.js']);
     });
   </script>
 
 </head>
 
-<body>
+<body onload="closeAnimation()">
 
 <!-- Wait for everything to load -->
-<div class="se-pre-con"></div>
-
-<!-- Scripts -->
-<script src="vendor/requirejs/require.js"></script>
-<script>
-  require(['require', './js/config'], function(require, config) {
-    config.urlArgs = 'bust=v1.0.1';
-    window.require.config(config);
-    require(['./js/main.js']);
-  });
-</script>
+<div class="loading-screen"></div>
 
 <div ng-controller="MainCtrl">
 
