@@ -118,7 +118,7 @@ gulp.task('compile-build-js-client-uglify', function () {
   return rjs(config)
     .on('error', handleError)
     .pipe(ngAnnotate())
-    .pipe(uglify().on('error', handleError))
+    .pipe(uglify().on('error', handleError)) // This is key -- it compresses the JS, but takes a long time
     .pipe(gulp.dest('build/js/'));
 });
 
