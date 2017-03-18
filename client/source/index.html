@@ -76,8 +76,7 @@
   <script src="vendor/async/dist/async.js"></script>
   <script>
     function loadingWaterfall() {
-      var async = require("async");
-      async.waterfall([loadScripts, closeAnimation]);
+      waterfall([loadScripts, closeAnimation]);
     }
   </script>
 
