@@ -132,7 +132,7 @@ class Portfolio(object):
              
         return None
         
-    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2):
+    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -143,13 +143,16 @@ class Portfolio(object):
         if objectives is not None: self.objectives = objectives # Store objectives, if supplied
         
         # Gather the BOCs
+        bocsvalid = True
         if boclist is None:
             boclist = []
             for pno,project in enumerate(self.projects.values()):
                 thisboc = project.getBOC(objectives=objectives)
                 if thisboc is None:
+                    bocsvalid = False
                     errormsg = 'GA FAILED: Project %s has no BOC' % project.name
-                    raise OptimaException(errormsg)
+                    if die: raise OptimaException(errormsg)
+                    else:   printv(errormsg, 1, verbose)
                 boclist.append(thisboc)
         
         # Get the grand total
