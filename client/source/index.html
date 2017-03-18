@@ -51,14 +51,14 @@
   </style>
 
   <!--Loading script-->
-  <!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>-->
-  <!--<script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>-->
-  <!--<script>-->
-    <!--function closeAnimation() {-->
-      <!--$(".loading-screen").fadeOut("slow");-->
-      <!--console.log("Page is loaded");-->
-    <!--}-->
-  <!--</script>-->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
+  <script>
+    function closeAnimation() {
+      $(".loading-screen").fadeOut("slow");
+      console.log("Page is loaded");
+    }
+  </script>
 
   <!--Main scripts-->
   <!--<script src="vendor/requirejs/require.js"></script>-->
@@ -73,43 +73,39 @@
   <!--</script>-->
 
   <!--Load the scripts in the right order-->
-  <!--<script src="vendor/async/dist/async.js"></script>-->
-  <!--<script>-->
-    <!--var async = require(['vendor/async/dist/async']);-->
-  <!--</script>-->
-  <!--<script>-->
-    <!--function loadingWaterfall() {-->
-      <!--async.waterfall([loadScripts, closeAnimation]);-->
-    <!--}-->
-  <!--</script>-->
-
-  <!--<script type="text/javascript" src="vendor/async/dist/async.js"></script>-->
+  <script type="text/javascript" src="vendor/async/dist/async.js"></script>
+  <script>
+    function loadingWaterfall() {
+      async.waterfall([closeAnimation]);
+    }
+  </script>
 
 </head>
 
-<!--<body onload="loadingWaterfall()"> &lt;!&ndash; It's a bit weird to not load the page elements until after the page is finished loading, but... &ndash;&gt;-->
-<body>
+<body onload="loadingWaterfall()"> <!-- It's a bit weird to not load the page elements until after the page is finished loading, but... -->
 
 <!-- Wait for everything to load -->
 <div class="loading-screen"></div>
 
-<script type="text/javascript" src="vendor/async/dist/async.js"></script>
-<script type="text/javascript">
-  // Here is a simple object with an (unnecessarily roundabout) squaring method
-  var AsyncSquaringLibrary = {
-    squareExponent: 2,
-    square: function(number, callback){
-      var result = Math.pow(number, this.squareExponent);
-      setTimeout(function(){
-        callback(null, result);
-      }, 200);
-    }
-  };
-  async.map([1, 2, 3], AsyncSquaringLibrary.square.bind(AsyncSquaringLibrary), function(err, result) {
-    console.log('finished');
-    console.log(result);
-  });
-</script>
+
+
+<!--<script type="text/javascript" src="vendor/async/dist/async.js"></script>-->
+<!--<script type="text/javascript">-->
+  <!--// Here is a simple object with an (unnecessarily roundabout) squaring method-->
+  <!--var AsyncSquaringLibrary = {-->
+    <!--squareExponent: 2,-->
+    <!--square: function(number, callback){-->
+      <!--var result = Math.pow(number, this.squareExponent);-->
+      <!--setTimeout(function(){-->
+        <!--callback(null, result);-->
+      <!--}, 200);-->
+    <!--}-->
+  <!--};-->
+  <!--async.map([1, 2, 3], AsyncSquaringLibrary.square.bind(AsyncSquaringLibrary), function(err, result) {-->
+    <!--console.log('finished');-->
+    <!--console.log(result);-->
+  <!--});-->
+<!--</script>-->
 
 <!--<script type="text/javascript" src="vendor/async/dist/async.js"></script>-->
 <!--<script type="text/javascript">-->
