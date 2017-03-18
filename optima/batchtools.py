@@ -101,13 +101,15 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
                    progsetname=progsetname, objectives=objectives, 
                    constraints=constraints, maxiters=maxiters, maxtime=maxtime,
                    verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
-    project.save(filename=project.tmpfilename)
-    if batch: outputqueue.put(project)
     print('...done.')
-    return None
+    if batch: 
+        outputqueue.put(project)
+        return None
+    else:
+        return project
 
 
-def batchBOC(folder='.', budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
+def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
              maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False):
     """
@@ -120,7 +122,9 @@ def batchBOC(folder='.', budgetratios=None, name=None, parsetname=None, progsetn
 
     Arguments:
         folder - the directory containing all projects for which a BOC will be
-                calculated
+                calculated (optional)
+        projects - an odict of projects, as from a portfolio; if not None, will
+                be used instead of the folder
         budgetratios - a vector of multiples of the current budget for which an
                 optimization will be performed to comprise the BOC (default:
                 [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0])
@@ -151,16 +155,33 @@ def batchBOC(folder='.', budgetratios=None, name=None, parsetname=None, progsetn
         maxload - how much of the CPU to use
     """
     
-    filelist = getfilelist(folder, 'prj')
-    nfiles = len(filelist)
+    # If no projects supplied, load them from the folder
+    if projects is None:
+        fromfolder = True
+        if folder is None: folder = '.'
+        filelist = getfilelist(folder, 'prj')
+        nfiles = len(filelist)
+        projects = odict()
+        for i in range(nfiles):
+            proj = loadproj(filelist[i])
+            proj.filename = filelist[i] # Ensure the filename is up-to-date since we'll save later
+            projects[proj.name] = proj
+    else:
+        fromfolder = False
     
+    # Housekeeping
     if batch: outputqueue = Queue()
     else: outputqueue = None
     outputlist = empty(nfiles, dtype=object)
     processes = []
-    for i in range(nfiles):
-        project = loadproj(filelist[i])
-        project.tmpfilename = filelist[i]
+    for key,project in projects.items():
+        if project.name != key: 
+            msg = 'Warning, project name and key do not match (%s vs. %s), updating...' % (project.name, key)
+            printv(msg, 2, verbose)
+        project.name = key # Ensure these match, since used to repopulate the odict
+    
+    # Loop over the projects
+    for i,project in enumerate(projects.values()):
         prjobjectives = project.optims[-1].objectives if objectives == 'latest' else objectives
         prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
         args = (project, i, outputqueue, budgetratios, name, parsetname, 
@@ -171,15 +192,25 @@ def batchBOC(folder='.', budgetratios=None, name=None, parsetname=None, progsetn
             prc.start()
             processes.append(prc)
         else:
-            boc_task(*args)
-        
+            outputlist[i] = boc_task(*args) # Simply store here 
+    
+    # Extra tasks required for batch runs
     if batch:
         for i in range(nfiles):
             outputlist[i] = outputqueue.get()  # This is needed or else the process never finishes
         for prc in processes:
             prc.join() # Wait for them to finish
     
-    return outputlist
+    # Update the odict
+    for i,project in enumerate(outputlist):
+        projects[project.name] = project
+    
+    # If loaded from a folder, save
+    if fromfolder:
+        for project in projects.values():
+            project.save(filename=project.tmpfilename)
+    
+    return projects
 
 
 def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2):
