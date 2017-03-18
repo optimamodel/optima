@@ -54,11 +54,13 @@
   <script src="vendor/requirejs/require.js"></script>
   <script>
     function loadScripts() {
+      console.log('Loading required scripts...');
       require(['require', './js/config'], function(require, config) {
         config.urlArgs = 'bust=v1.0.1';
         window.require.config(config);
         require(['./js/main.js']);
       });
+      console.log('Loading required scripts finished.');
     }
   </script>
 
@@ -67,6 +69,7 @@
   <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
   <script>
     function closeAnimation() {
+      console.log('Starting page loading...')
       $(".loading-screen").fadeOut("slow");
       console.log("Page is loaded");
     }
@@ -83,15 +86,40 @@
 <!--Load the scripts in the right order-->
 <script type="text/javascript" src="https://cdn.rawgit.com/caolan/async/master/dist/async.js"></script>
 <script>
-  function myFunction() {
+  //  function myFunction() {
+  //    setTimeout(function(){ console.log('Starting loadScripts...'); }, 1000);
+  ////    loadScripts();
+  //    setTimeout(function(){ console.log('Starting closeAnimation...'); }, 1000);
+  ////    closeAnimation();
+  ////    async.waterfall([loadScripts, closeAnimation]);
+  //    setTimeout(function(){ console.log('non-Waterfall loading finished'); }, 1000);
+  //  }
+
+  function myFunction1() {
+    console.log('myfunction1');
     setTimeout(function(){ console.log('Starting loadScripts...'); }, 1000);
-//    loadScripts();
+  }
+
+  function myFunction2() {
+    console.log('myfunction2');
     setTimeout(function(){ console.log('Starting closeAnimation...'); }, 1000);
-//    closeAnimation();
-//    async.waterfall([loadScripts, closeAnimation]);
+  }
+
+  function myFunction3() {
+    console.log('myfunction3');
     setTimeout(function(){ console.log('non-Waterfall loading finished'); }, 1000);
   }
-  myFunction()
+
+  function callmyfuncs() {
+    console.log('calling waterfall...');
+    async.waterfall([myFunction1, myFunction2, myFunction3]);
+    console.log('calling waterfall finished.');
+  }
+
+  console.log('calling callfuncs...');
+  callmyfuncs();
+  console.log('calling callmyfuncs finished.');
+
   console.log('all done');
 </script>
 
