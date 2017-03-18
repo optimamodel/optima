@@ -62,10 +62,9 @@
 
   <!--Load the scripts in the right order-->
   <script type="text/javascript" src="vendor/async/dist/async.js"></script>
-  <script>var clifftempasync = async;</script>
   <script>
     function loadingWaterfall() {
-      clifftempasync.waterfall([loadScripts, closeAnimation]);
+      async.waterfall([loadScripts, closeAnimation]);
     }
   </script>
 
