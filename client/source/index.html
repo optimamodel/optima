@@ -1,41 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Optima</title>
+  <!--<meta charset="utf-8">-->
+  <!--<title>Optima</title>-->
 
-  <!-- Favicons -->
-  <link rel="shortcut icon" href="assets/images/project/favicon.ico">
-  <link rel="apple-touch-icon" sizes="57x57" href="assets/images/project/apple-touch-icon-57x57.png">
-  <link rel="apple-touch-icon" sizes="114x114" href="assets/images/project/apple-touch-icon-114x114.png">
-  <link rel="apple-touch-icon" sizes="72x72" href="assets/images/project/apple-touch-icon-72x72.png">
-  <link rel="apple-touch-icon" sizes="60x60" href="assets/images/project/apple-touch-icon-60x60.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="assets/images/project/apple-touch-icon-120x120.png">
-  <link rel="apple-touch-icon" sizes="76x76" href="assets/images/project/apple-touch-icon-76x76.png">
-  <link rel="icon" type="image/png" href="assets/images/project/favicon-96x96.png" sizes="96x96">
-  <link rel="icon" type="image/png" href="assets/images/project/favicon-16x16.png" sizes="16x16">
-  <link rel="icon" type="image/png" href="assets/images/project/favicon-32x32.png" sizes="32x32">
+  <!--&lt;!&ndash; Favicons &ndash;&gt;-->
+  <!--<link rel="shortcut icon" href="assets/images/project/favicon.ico">-->
+  <!--<link rel="apple-touch-icon" sizes="57x57" href="assets/images/project/apple-touch-icon-57x57.png">-->
+  <!--<link rel="apple-touch-icon" sizes="114x114" href="assets/images/project/apple-touch-icon-114x114.png">-->
+  <!--<link rel="apple-touch-icon" sizes="72x72" href="assets/images/project/apple-touch-icon-72x72.png">-->
+  <!--<link rel="apple-touch-icon" sizes="60x60" href="assets/images/project/apple-touch-icon-60x60.png">-->
+  <!--<link rel="apple-touch-icon" sizes="120x120" href="assets/images/project/apple-touch-icon-120x120.png">-->
+  <!--<link rel="apple-touch-icon" sizes="76x76" href="assets/images/project/apple-touch-icon-76x76.png">-->
+  <!--<link rel="icon" type="image/png" href="assets/images/project/favicon-96x96.png" sizes="96x96">-->
+  <!--<link rel="icon" type="image/png" href="assets/images/project/favicon-16x16.png" sizes="16x16">-->
+  <!--<link rel="icon" type="image/png" href="assets/images/project/favicon-32x32.png" sizes="32x32">-->
 
-  <meta name="msapplication-TileColor" content="#ffffff">
-  <meta name="msapplication-config" content="assets/images/project/browserconfig.xml">
+  <!--<meta name="msapplication-TileColor" content="#ffffff">-->
+  <!--<meta name="msapplication-config" content="assets/images/project/browserconfig.xml">-->
 
-  <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
-  <link rel="stylesheet" href="assets/css/chart.css?bust=v0.4.0">
-  <style>
-    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide {
-      display: none !important;
-    }
-    ng\:form {
-      display: block;
-    }
-    .ng-animate-block-transitions {
-      -webkit-transition: 0s all !important;
-      transition: 0s all !important;
-    }
-    .ng-hide-add-active, .ng-hide-remove {
-      display: block !important;
-    }
-  </style>
+  <!--<link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">-->
+  <!--<link rel="stylesheet" href="assets/css/chart.css?bust=v0.4.0">-->
+  <!--<style>-->
+    <!--[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide {-->
+      <!--display: none !important;-->
+    <!--}-->
+    <!--ng\:form {-->
+      <!--display: block;-->
+    <!--}-->
+    <!--.ng-animate-block-transitions {-->
+      <!-- -webkit-transition: 0s all !important;-->
+      <!--transition: 0s all !important;-->
+    <!--}-->
+    <!--.ng-hide-add-active, .ng-hide-remove {-->
+      <!--display: block !important;-->
+    <!--}-->
+  <!--</style>-->
 
   <!-- Show animation while window loads -- from http://smallenvelop.com/display-loading-icon-page-loads-completely/ -->
   <style>
@@ -51,91 +51,117 @@
   </style>
 
   <!--Loading script-->
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
-  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
-  <script>
-    function closeAnimation() {
-      $(".loading-screen").fadeOut("slow");
-      console.log("Page is loaded");
-    }
-  </script>
+  <!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>-->
+  <!--<script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>-->
+  <!--<script>-->
+    <!--function closeAnimation() {-->
+      <!--$(".loading-screen").fadeOut("slow");-->
+      <!--console.log("Page is loaded");-->
+    <!--}-->
+  <!--</script>-->
 
   <!--Main scripts-->
-  <script src="vendor/requirejs/require.js"></script>
-  <script>
-    function loadScripts() {
-    require(['require', './js/config'], function(require, config) {
-      config.urlArgs = 'bust=v1.0.1';
-      window.require.config(config);
-      require(['./js/main.js']);
-    });
-    }
-  </script>
+  <!--<script src="vendor/requirejs/require.js"></script>-->
+  <!--<script>-->
+    <!--function loadScripts() {-->
+    <!--require(['require', './js/config'], function(require, config) {-->
+      <!--config.urlArgs = 'bust=v1.0.1';-->
+      <!--window.require.config(config);-->
+      <!--require(['./js/main.js']);-->
+    <!--});-->
+    <!--}-->
+  <!--</script>-->
 
   <!--Load the scripts in the right order-->
-  <script src="vendor/async/dist/async.js"></script>
-  <script>
-    var waterfall = require("async/waterfall");
-  </script>
-  <script>
-    function loadingWaterfall() {
-      waterfall([loadScripts, closeAnimation]);
-    }
-  </script>
+  <!--<script src="vendor/async/dist/async.js"></script>-->
+  <!--<script>-->
+    <!--var async = require(['vendor/async/dist/async']);-->
+  <!--</script>-->
+  <!--<script>-->
+    <!--function loadingWaterfall() {-->
+      <!--async.waterfall([loadScripts, closeAnimation]);-->
+    <!--}-->
+  <!--</script>-->
+
+  <!--<script type="text/javascript" src="vendor/async/dist/async.js"></script>-->
 
 </head>
 
-<body onload="loadingWaterfall()"> <!-- It's a bit weird to not load the page elements until after the page is finished loading, but... -->
+<!--<body onload="loadingWaterfall()"> &lt;!&ndash; It's a bit weird to not load the page elements until after the page is finished loading, but... &ndash;&gt;-->
+<body>
 
 <!-- Wait for everything to load -->
 <div class="loading-screen"></div>
 
-<div ng-controller="MainCtrl">
+<script type="text/javascript" src="vendor/async/dist/async.js"></script>
+<script type="text/javascript">
+  // Here is a simple object with an (unnecessarily roundabout) squaring method
+  var AsyncSquaringLibrary = {
+    squareExponent: 2,
+    square: function(number, callback){
+      var result = Math.pow(number, this.squareExponent);
+      setTimeout(function(){
+        callback(null, result);
+      }, 200);
+    }
+  };
+  async.map([1, 2, 3], AsyncSquaringLibrary.square.bind(AsyncSquaringLibrary), function(err, result) {
+    console.log('finished');
+    console.log(result);
+  });
+</script>
 
-<div class="actionbar">
-  <div class="elastic header">
-    <div style="display:table-cell; width:160px">
-      <img src="assets/images/project/logo/optima-hiv-logo-web.png">
-    </div>
-    <div style="display:table-cell; vertical-align: middle;" data-menu ng-cloak ng-if="userLogged()">
-    </div>
+<!--<script type="text/javascript" src="vendor/async/dist/async.js"></script>-->
+<!--<script type="text/javascript">-->
+  <!--async.waterfall([loadScripts, closeAnimation]);-->
+<!--</script>-->
 
-    <div style="display:table-cell; float:right; vertical-align: middle">
-      <div style="display:table" ng-cloak ng-if="userLogged()">
-        <div style="display:table-row">
-          <div style="display:table-cell; text-align:right; padding-right:10px">
-            <b>user:</b>
-          </div>
-          <div style="display:table-cell">
-            <span ng-show="user.displayName">{{ user.displayName }}</span>
-            <span ng-show="!user.displayName">{{ user.username }}</span>
-          </div>
-        </div>
-        <div style="display:table-row">
-          <div style="display:table-cell; text-align:right; padding-right:10px">
-            <b>project:</b>
-          </div>
-          <div style="display:table-cell">
-            <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
-            <span ng-show="!activeProject.isSet()">[none]</span>
-          </div>
-        </div>
+<!--<div ng-controller="MainCtrl">-->
 
-      </div>
-    </div>
+<!--<div class="actionbar">-->
+  <!--<div class="elastic header">-->
+    <!--<div style="display:table-cell; width:160px">-->
+      <!--<img src="assets/images/project/logo/optima-hiv-logo-web.png">-->
+    <!--</div>-->
+    <!--<div style="display:table-cell; vertical-align: middle;" data-menu ng-cloak ng-if="userLogged()">-->
+    <!--</div>-->
 
-  </div>
-</div>
+    <!--<div style="display:table-cell; float:right; vertical-align: middle">-->
+      <!--<div style="display:table" ng-cloak ng-if="userLogged()">-->
+        <!--<div style="display:table-row">-->
+          <!--<div style="display:table-cell; text-align:right; padding-right:10px">-->
+            <!--<b>user:</b>-->
+          <!--</div>-->
+          <!--<div style="display:table-cell">-->
+            <!--<span ng-show="user.displayName">{{ user.displayName }}</span>-->
+            <!--<span ng-show="!user.displayName">{{ user.username }}</span>-->
+          <!--</div>-->
+        <!--</div>-->
+        <!--<div style="display:table-row">-->
+          <!--<div style="display:table-cell; text-align:right; padding-right:10px">-->
+            <!--<b>project:</b>-->
+          <!--</div>-->
+          <!--<div style="display:table-cell">-->
+            <!--<span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>-->
+            <!--<span ng-show="!activeProject.isSet()">[none]</span>-->
+          <!--</div>-->
+        <!--</div>-->
+
+      <!--</div>-->
+    <!--</div>-->
+
+  <!--</div>-->
+<!--</div>-->
 
 
 
-<div
-  style="flex: 1 1;"
-  class="layout_cnt">
-  <div ui-view></div>
-</div>
+<!--<div-->
+  <!--style="flex: 1 1;"-->
+  <!--class="layout_cnt">-->
+  <!--<div ui-view></div>-->
+<!--</div>-->
 
-</div>
+<!--</div>-->
 
 </body>
 
