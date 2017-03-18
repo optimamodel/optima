@@ -64,7 +64,7 @@
   <script type="text/javascript" src="vendor/async/dist/async.js"></script>
   <script>
     function loadingWaterfall() {
-      async.waterfall([closeAnimation]);
+      async.waterfall([loadScripts, closeAnimation]);
     }
   </script>
 
