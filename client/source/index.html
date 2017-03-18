@@ -60,23 +60,23 @@
     }
   </script>
 
-  <!--Main scripts-->
-  <script src="vendor/requirejs/require.js"></script>
-  <script>
-    function loadScripts() {
-    require(['require', './js/config'], function(require, config) {
-      config.urlArgs = 'bust=v1.0.1';
-      window.require.config(config);
-      require(['./js/main.js']);
-    });
-    }
-  </script>
-
   <!--Load the scripts in the right order-->
   <script type="text/javascript" src="vendor/async/dist/async.js"></script>
   <script>
     function loadingWaterfall() {
       async.waterfall([closeAnimation]);
+    }
+  </script>
+
+  <!--Main scripts-->
+  <script src="vendor/requirejs/require.js"></script>
+  <script>
+    function loadScripts() {
+      require(['require', './js/config'], function(require, config) {
+        config.urlArgs = 'bust=v1.0.1';
+        window.require.config(config);
+        require(['./js/main.js']);
+      });
     }
   </script>
 
