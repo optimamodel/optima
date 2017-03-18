@@ -22,8 +22,8 @@ fi
 # install npm and bower deps
 npm install --skip-installed
 
-# compile sass scripts -- if 
-if [ $# -gt 1 ]; then
+# compile sass scripts
+if [ $# -eq 0 ]; then
 	echo 'Compiling client (including minifying JavaScript)'
 	node_modules/gulp/bin/gulp.js compile-build-js-client-uglify copy-assets-and-vendor-js write-version-js
 else
