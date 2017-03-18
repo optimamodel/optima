@@ -55,9 +55,16 @@
   <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
   <script>
     // Wait for window load
-    $(window).on("load", function() {
+    $(window).on('load', function() {
       // Animate loader off screen
-      $(".se-pre-con").fadeOut("slow");;
+      console.log('this is on-load');
+      $(".se-pre-con").fadeOut("slow");
+    });
+
+    // Test
+    $(window).load(function() {
+      // Animate loader off screen
+      console.log('this is load');
     });
   </script>
 
