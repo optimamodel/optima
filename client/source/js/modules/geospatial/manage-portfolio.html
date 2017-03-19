@@ -1,11 +1,11 @@
 <div class="rich">
   <div class="section">
 
-    <h2>Create districts</h2>
+    <h2>Create regions</h2>
 
     <ol>
       <li>
-        Choose a project as template for districts
+        Choose a project as template for regions:
         &nbsp;
 
         <button
@@ -15,8 +15,9 @@
 
         &nbsp;
         <i ng-if="!state.templateProject.name">No template project selected</i>
+        <i ng-if="state.templateProject.name">&nbsp; Selected project: {{ state.templateProject.name}}</i>
 
-        {{ state.templateProject.name}}
+
 
         <div
             style="
@@ -56,7 +57,7 @@
               ng-options="n for n in [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]">
           </select>
 
-        districts for the year
+        regions for the year
 
         <select
             ng-model="state.templateYear"
@@ -74,11 +75,7 @@
       </li>
 
       <li>
-        Enter the district populations in the downloaded spreadsheet using Excel
-      </li>
-
-      <li>
-        Create district projects by uploading the spreadsheet:
+        Create region projects by uploading the spreadsheet:
         &nbsp;
 
         <button
@@ -91,14 +88,14 @@
         <div
             style="font-style: italic"
             ng-if="state.prjNames.length > 0">
-          New district projects:
+          New region projects:
           <ul>
             <li ng-repeat="prjName in state.prjNames">{{prjName}}</li>
           </ul>
         </div>
       </li>
       <li>
-        Calibrate the new district projects from the <a ui-sref="home">project management</a> page.
+        Calibrate the new region projects from the <a ui-sref="home">project management</a> page.
       </li>
     </ol>
 
@@ -188,7 +185,7 @@
 
         <table class="table table-bordered table-hover table-striped">
           <tr>
-            <th>Districts</th>
+            <th>Regions</th>
             <th>Budget-objective curve</th>
             <th></th>
           </tr>
@@ -212,7 +209,7 @@
             <td colspan="4">
               <button class="btn"
                 ng-click="addProject()">
-                Add district
+                Add region
               </button>
 
               <div
