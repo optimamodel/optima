@@ -6,12 +6,6 @@ from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 import optima as op
-from multiprocessing.dummy import Process, Queue
-
-# this is needed to disable multiprocessing in the portfolio
-# module so that celery can handle the multiprocessing itself
-op.portfolio.Process = Process
-op.portfolio.Queue = Queue
 
 # must import api first
 from ..api import app
@@ -406,7 +400,7 @@ def check_optimization(project_id, optimization_id):
 
 
 @celery_instance.task(bind=True)
-def run_boc(self, portfolio_id, project_id, maxtime=2):
+def run_boc(self, portfolio_id, project_id, maxtime=2, objectives=None):
 
     status = 'started'
     error_text = ""
@@ -436,7 +430,7 @@ def run_boc(self, portfolio_id, project_id, maxtime=2):
     if status == 'started':
         try:
             print ">> Start BOC:"
-            project.genBOC(maxtime=maxtime)
+            project.genBOC(maxtime=maxtime, objectives=objectives, mc=0) # WARNING, might want to run with MC one day
             status = 'completed'
         except Exception:
             status = 'error'
@@ -470,7 +464,7 @@ def launch_boc(portfolio_id, maxtime=2):
     for project in portfolio.projects.values():
         project_id = project.uid
         setup_work_log(project_id, 'boc', project)
-        run_boc.delay(portfolio_id, project_id, maxtime)
+        run_boc.delay(portfolio_id, project_id, maxtime=maxtime, objectives=portfolio.objectives)
 
 
 
@@ -505,7 +499,8 @@ def run_miminize_portfolio(self, portfolio_id, maxtime):
     if status == 'started':
         try:
             print ">> Start BOC:"
-            portfolio.runGA(maxtime=maxtime)
+            portfolio.runGA(maxtime=maxtime, mc=0, batch=True)
+            print('WARNING!!! Running with multiprocessing and Celery!! This cant go well!')
             status = 'completed'
         except Exception:
             status = 'error'
