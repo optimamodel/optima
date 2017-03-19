@@ -16,12 +16,12 @@ Version: 2016feb05
 
 ## Define tests to run here!!!
 tests = [
-'spreadsheet',
+#'spreadsheet',
 #'forcerefresh',
 #'makeprojects',
 #'makeportfolio',
 #'generateBOCs',
-#'rungui',
+'geogui',
 #'runbackend'
 ]
 
@@ -135,7 +135,7 @@ if 'generateBOCs' in tests:
 
 
 
-if 'rungui' in tests and doplot:
+if 'geogui' in tests and doplot:
     t = tic()
 
     print('Running geo GUI test...')

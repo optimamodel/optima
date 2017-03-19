@@ -6,11 +6,10 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 Version: 2016nov03
 """
 
-from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, printv, makegeospreadsheet
+from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, makegeospreadsheet, makegeoprojects
 from PyQt4 import QtGui
-from pylab import figure, close, array
+from pylab import figure, close
 from time import time
-import os
 
 
 global geoguiwindow, globalportfolio, globalobjectives
@@ -20,33 +19,14 @@ if 1:  geoguiwindow, globalportfolio, globalobjectives = [None]*3
     
 ## Global options
 budgetfactor = 1e6 # Conversion between screen and internal
-projext = '.prj'
-portext = '.prt'
+prjext = '.prj'
+prtext = '.prt'
 
 
 
 ##############################################################################################################################
 ## Define functions
 ##############################################################################################################################
-
-
-
-
-
-def _loadproj(filepath=None):
-    ''' Helper function to load a project, since used more than once '''
-    if filepath == None:
-        filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+projext)
-    project = None
-    if filepath:
-        try: project = loadproj(filepath, verbose=0)
-        except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.message))
-        if type(project)==Project: return project
-        else: print('File "%s" is not an Optima project file' % filepath)
-    else:
-        print('No filepath provided')
-    return None
-
 
 def resetbudget():
     ''' Replace current displayed budget with default from portfolio '''
@@ -57,6 +37,7 @@ def resetbudget():
     objectiveinputs['budget'].setText(str(totalbudget/budgetfactor))
     return None
 
+
 def warning(message, usegui=True):
     ''' usegui kwarg is so this can be used in a GUI and non-GUI context '''
     global geoguiwindow
@@ -66,11 +47,26 @@ def warning(message, usegui=True):
         print(message)
     
     
+    
+def gui_loadproj():
+    ''' Helper function to load a project, since used more than once '''
+    filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+prjext)
+    project = None
+    if filepath:
+        try: project = loadproj(filepath, verbose=0)
+        except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.message))
+        if type(project)==Project: return project
+        else: print('File "%s" is not an Optima project file' % filepath)
+    else:
+        print('No filepath provided')
+    return project
+    
+    
 def gui_makesheet():
     ''' Create a geospatial spreadsheet template based on a project file '''
     
     ## 1. Load a project file
-    project = _loadproj(projectpath=None) # No, it's a project path, load it
+    project = gui_loadproj() # No, it's a project path, load it
     if project is None: 
         raise OptimaException('No project loaded.')
     
@@ -102,7 +98,7 @@ def gui_makesheet():
     
 def gui_makeproj():
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
-    project = _loadproj(projectpath=None)
+    project = gui_loadproj()
     spreadsheetpath = QtGui.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
     destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
     makegeoprojects(project=project, spreadsheetpath=spreadsheetpath, destination=destination)
@@ -123,7 +119,7 @@ def gui_create(filepaths=None, portfolio=None, doadd=False):
         projectslistbox.clear()
     if doadd and portfolio != None:
         globalportfolio = portfolio
-    filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
+    filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+prjext)
     if filepaths:
         if type(filepaths)==str: filepaths = [filepaths] # Convert to list
         for filepath in filepaths:
@@ -152,7 +148,7 @@ def gui_addproj(portfolio=None, filepaths=None):
 def gui_loadport(filepath=None):
     ''' Load an existing portfolio '''
     global globalportfolio, projectslistbox
-    filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
+    filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+prtext)
     tmpport = None
     if filepath:
         try: tmpport = loadobj(filepath, verbose=0)
@@ -237,7 +233,7 @@ def gui_saveport(portfolio = None, filepath = None):
     global globalportfolio
     if portfolio != None:
         globalportfolio = portfolio
-    filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+portext)
+    filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+prtext)
     saveobj(filepath, globalportfolio)
     return None
 
