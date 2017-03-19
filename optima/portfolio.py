@@ -35,7 +35,7 @@ class Portfolio(object):
         self.objectives = objectives
         if projects is not None: self.addprojects(projects)
         self.spendperproject = odict() # Store the list of the final spend per project
-        self.results = None # List of before-and-after result pairs after reoptimization
+        self.results = odict() # List of before-and-after result pairs after reoptimization
 
         ## Define metadata
         self.uid = uuid()
