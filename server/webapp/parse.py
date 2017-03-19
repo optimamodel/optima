@@ -1389,8 +1389,62 @@ def get_parset_from_project_by_id(project, parset_id):
 
 
 def get_portfolio_summary(portfolio):
-    raise op.OptimaException('Nnoited to implement get_portfolio_summary')
-    return None
+    gaoptim_summaries = []
+    objectivesList = []
+    for gaoptim_key, gaoptim in portfolio.gaoptims.items():
+        resultpairs_summary = []
+        for resultpair_key, resultpair in gaoptim.resultpairs.items():
+            resultpair_summary = {}
+            for result_key, result in resultpair.items():
+                result_summary = {
+                    'name': result.name,
+                    'id': result.uid,
+                }
+                resultpair_summary[result_key] = result_summary
+            resultpairs_summary.append(resultpair_summary)
+
+        gaoptim_summaries.append({
+            "key": gaoptim_key,
+            "objectives": dict(gaoptim.objectives),
+            "id": gaoptim.uid,
+            "name": gaoptim.name,
+            "resultpairs": resultpairs_summary
+        })
+
+        objectivesList.append(gaoptim.objectives)
+
+    project_summaries = []
+
+    for project in portfolio.projects.values():
+        boc = project.getBOC(objectivesList[0])
+        project_summary = {
+            'name': project.name,
+            'id': project.uid,
+            'boc': 'calculated' if boc is not None else 'not ready',
+            'results': []
+        }
+        for result in project.results.values():
+            project_summary['results'].append({
+                'name': result.name,
+                'id': result.uid
+            })
+        project_summaries.append(project_summary)
+
+    result = {
+        "created": portfolio.created,
+        "name": portfolio.name,
+        "gaoptims": gaoptim_summaries,
+        "id": portfolio.uid,
+        "version": portfolio.version,
+        "gitversion": portfolio.gitversion,
+        "outputstring": '',
+        "projects": project_summaries,
+    }
+
+    if hasattr(portfolio, "outputstring"):
+        result["outputstring"] = portfolio.outputstring.replace('\t', ',')
+
+    return result
 
 
 def set_portfolio_summary_on_portfolio(portfolio, summary):
@@ -1398,7 +1452,30 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
     Saves the summary result onto the portfolio and returns
     a list of project_ids of projects that are not in the portfolio
     """
-    raise op.OptimaException('Nnoited to implement get_portfolio_summary')
-    return None
+    gaoptim_summaries = summary['gaoptims']
+    gaoptims = portfolio.gaoptims
+    for gaoptim_summary in gaoptim_summaries:
+        gaoptim_id = str(gaoptim_summary['id'])
+        objectives = op.odict(gaoptim_summary["objectives"])
+        if gaoptim_id in gaoptims:
+            gaoptim = gaoptims[gaoptim_id]
+            gaoptim.objectives = objectives
+        else:
+            gaoptim = op.portfolio.GAOptim(objectives=objectives)
+            gaoptims[gaoptim_id] = gaoptim
+    old_project_ids = portfolio.projects.keys()
+    print("> old project ids %s" % old_project_ids)
+    project_ids = [s["id"] for s in summary["projects"]]
+    print("> new project ids %s" % project_ids)
+    for old_project_id in old_project_ids:
+        if old_project_id not in project_ids:
+            portfolio.projects.pop(old_project_id)
+
+    new_project_ids = []
+    for project_id in project_ids:
+        if project_id not in portfolio.projects:
+            new_project_ids.append(project_id)
+
+    return new_project_ids
 
 
