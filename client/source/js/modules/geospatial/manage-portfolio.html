@@ -1,6 +1,64 @@
 <div class="rich">
   <div class="section">
 
+
+    <h2>Manage portfolios</h2>
+
+    <div ng-if="portfolios.length == 0" style="font-weight: bold; color: red">
+      Please create a portfolio first<br><br>
+    </div>
+
+    Portfolio:
+    &nbsp;
+
+    <select
+      ng-model="state.portfolio"
+      ng-options="portfolio as portfolio.name for portfolio in portfolios"
+      ng-change="setActiveGaoptim()"
+      style="width: 230px;">
+    </select>
+
+
+
+    <i
+      class="fa fa-file-o"
+      ng-click="createPortfolio()"
+      tp-text="New" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+      style="margin-left: 0.5em">
+    </i>
+
+    <i
+      class="fa fa-trash-o"
+      ng-click="deletePortfolio()"
+      tp-text="Delete" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
+    </i>
+
+    <i
+      class="fa fa-trash-o"
+      ng-click="deletePortfolio()"
+      tp-text="Delete" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
+    </i>
+
+    <i
+      class="fa fa-trash-o"
+      ng-click="deletePortfolio()"
+      tp-text="Delete" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
+    </i>
+
+
+
+    <div style="
+        width: 100%;
+        border-bottom: 1px solid #AAA;
+        padding-top: 30px;
+        margin-bottom: 30px">
+    </div>
+
+
     <h2>Create regions</h2>
 
     <button
@@ -106,53 +164,6 @@
 
       <div style="flex: 0 0 430px">
 
-        Portfolio:
-        &nbsp;
-
-        <select
-          ng-if="portfolios.length > 0"
-          ng-model="state.portfolio"
-          ng-options="portfolio as portfolio.name for portfolio in portfolios"
-          ng-change="setActiveGaoptim()"
-          style="width: 230px;">
-        </select>
-
-        <i ng-if="portfolios.length == 0">
-          No portfolios have been created
-        </i>
-
-        <i
-          class="fa fa-file-o"
-          ng-click="createPortfolio()"
-          tp-text="New" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-        </i>
-
-        <i
-          class="fa fa-trash-o"
-          ng-click="deletePortfolio()"
-          tp-text="Delete" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
-        </i>
-
-        <i
-          class="fa fa-trash-o"
-          ng-click="deletePortfolio()"
-          tp-text="Delete" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
-        </i>
-
-        <i
-          class="fa fa-trash-o"
-          ng-click="deletePortfolio()"
-          tp-text="Delete" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
-        </i>
-
-        <br>
-        <br>
-        <br>
 
         <b>Optimization conditions </b>
 
