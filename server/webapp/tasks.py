@@ -316,6 +316,7 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
         try:
             project = work_log.load()
             optim = parse.get_optimization_from_project(project, optimization_id)
+            optim.projectref = op.Link(project) # Need to restore project link
             progset = project.progsets[optim.progsetname]
             if not progset.readytooptimize():
                 status = 'error'
@@ -343,28 +344,9 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
     if status == 'started':
         result = None
         try:
-            print ">> Start optimization '%s'" % optim.name
-#            objectives = server.webapp.parse.normalize_obj(optim.objectives)
-#            constraints = server.webapp.parse.normalize_obj(optim.constraints)
-#            progkeys = project.progsets[optim.progsetname].programs.keys() # Get correct keys
-#            for progkey in progkeys:
-#            constraints["max"] = op.odict(constraints["max"])
-#            constraints["min"] = op.odict(constraints["min"])
-#            constraints["name"] = op.odict(constraints["name"])
-            print(">> maxtime = %f" % maxtime)
-#            parse.print_odict("objectives", objectives)
-#            parse.print_odict("constraints", constraints)
-            parse.print_odict("defaultbudget", project.progsets[optim.progsetname].getdefaultbudget())
-            result = project.optimize(
-                name=optim.name,
-                parsetname=optim.parsetname,
-                progsetname=optim.progsetname,
-                objectives=optim.objectives,
-                constraints=optim.constraints,
-                maxtime=maxtime,
-                mc=0, # Set this to zero for now while we decide how to handle uncertainties etc.
-            )
-            print(result.budgets)
+            print(">> Start optimization '%s' for maxtime = %f" % (optim.name, maxtime))
+            result = optim.optimize(maxtime=maxtime, mc=0) # Set mc to zero for now while we decide how to handle uncertainties etc.
+            print(">> %s" % result.budgets)
             result.uid = op.uuid()
             status = 'completed'
         except Exception:

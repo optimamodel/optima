@@ -581,16 +581,6 @@ class Project(object):
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, 
                  verbose=2, stoppingfunc=None, method='asd', die=False, saveprocess=True, origbudget=None, ccsample='best', randseed=None, mc=3, **kwargs):
         ''' Function to minimize outcomes or money '''
-        
-        print('debugging optimize()')
-        print name
-        print parsetname
-        print progsetname
-        print objectives
-        print constraints
-        print maxtime
-        print mc
-        print('done debugging optimize')
     
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 

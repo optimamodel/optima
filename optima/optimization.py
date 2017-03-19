@@ -183,14 +183,6 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
     
-    print('hi now were debugging constrainbudget')
-    print 'a'; print origbudget
-    print 'b'; print budgetvec
-    print 'c'; print totalbudget
-    print 'd'; print budgetlims
-    print 'e'; print optiminds    
-    print('done debugging constrainbudget')
-    
     # Handle zeros
     if sum(constrainedbudget[:])==0: constrainedbudget[:] += tolerance
     if sum(budgetvec)==0:            budgetvec[:] += tolerance
@@ -499,14 +491,6 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     noptimprogs = len(budgetvec) # Number of optimizable programs
     xmin = zeros(noptimprogs)
     if label is None: label = ''
-    
-    print('debugging here.....')
-    print origbudget
-    print origtotalbudget
-    print budgetvec
-    print optim.objectives
-    print optim.constraints
-    print('done debugging')
     
     # Calculate the initial people distribution
     results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
