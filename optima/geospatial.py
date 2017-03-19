@@ -110,15 +110,21 @@ def gui_create(filepaths=None, portfolio=None, doadd=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
     global globalportfolio, projectslistbox, objectiveinputs
     
+    print "smachno"
+    print globalportfolio
+    
     projectpaths = []
     projectslist = []
     if globalportfolio is None: 
         globalportfolio = Portfolio()
+        print globalportfolio
     if not doadd:
         globalportfolio = Portfolio()
+        print globalportfolio
         projectslistbox.clear()
     if doadd and portfolio != None:
         globalportfolio = portfolio
+        print globalportfolio
     filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+prjext)
     if filepaths:
         if type(filepaths)==str: filepaths = [filepaths] # Convert to list
@@ -134,18 +140,19 @@ def gui_create(filepaths=None, portfolio=None, doadd=False):
                 else: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectslistbox.addItems(projectpaths)
         globalportfolio.addprojects(projectslist)
+        print globalportfolio
         resetbudget() # And reset the budget
     return None
 
 
-def gui_addproj(portfolio=None, filepaths=None):
+def gui_addproj():
     ''' Add a project -- same as creating a portfolio except don't overwrite '''
-    p = gui_create(filepaths=filepaths, doadd=True, portfolio=portfolio)
+    gui_create(doadd=True)
     resetbudget() # And reset the budget
-    return p
+    return None
 
 
-def gui_loadport(filepath=None):
+def gui_loadport():
     ''' Load an existing portfolio '''
     global globalportfolio, projectslistbox
     filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+prtext)
@@ -168,14 +175,12 @@ def gui_loadport(filepath=None):
     return None
 
 
-def gui_rungeo(portfolio=None, objectives=None, maxtime=30, mc=0, batch=True, verbose=2, die=False, strict=True):
+def gui_rungeo():
     ''' Actually run geospatial analysis!!! '''
     global globalportfolio, globalobjectives, objectiveinputs
+    print('hi')
+    print globalportfolio
     starttime = time()
-    if portfolio is not None:
-        globalportfolio = portfolio
-    if objectives is not None:
-        globalobjectives = objectives
     if globalobjectives is None:
         globalobjectives = defaultobjectives()
         globalobjectives['budget'] = 0.0 # Reset
@@ -184,8 +189,9 @@ def gui_rungeo(portfolio=None, objectives=None, maxtime=30, mc=0, batch=True, ve
     globalobjectives['budget'] *= budgetfactor # Convert back to internal representation
     BOCobjectives = dcp(globalobjectives)
     try:
-        globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=maxtime, mc=mc)
-        globalportfolio.runGA(objectives=globalobjectives, maxtime=maxtime, reoptimize=True, mc=mc, batch=batch, verbose=verbose, die=die, strict=strict)
+        print globalportfolio
+        globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=30, mc=0)
+        globalportfolio.runGA(objectives=globalobjectives, maxtime=30, reoptimize=True, mc=0, batch=True, verbose=2, die=False, strict=True)
     except Exception as E:
         warning('Geospatial analysis failed: %s' % E.__repr__())
     warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
@@ -228,11 +234,9 @@ def gui_export(portfolio=None, filepath=None):
     return None
     
 
-def gui_saveport(portfolio = None, filepath = None):
+def gui_saveport():
     ''' Save the current portfolio '''
     global globalportfolio
-    if portfolio != None:
-        globalportfolio = portfolio
     filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+prtext)
     saveobj(filepath, globalportfolio)
     return None
