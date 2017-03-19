@@ -504,7 +504,7 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
     # Start with pop and prev data.
     maxcol = 0
     row, col = 0, 0
-    for row in xrange(copies+1):
+    for row in range(copies+1):
         if row != 0:
             wspopsize.write(row, col, '%s - region %i' % (project.name, row), bold)
             wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
@@ -534,7 +534,7 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
         if row == 0:
             wspopsize.write(row, col, "Total (intended)", bold)
             wsprev.write(row, col, "Total (intended)", bold)
-            for p in range(len(project.data['pops']['short'])):
+            for p in range(copies):
                 wspopsize.write(row+1+p, col, None, gold)
                 wsprev.write(row+1+p, col, None, gold)
         col += 1
