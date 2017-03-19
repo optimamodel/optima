@@ -97,6 +97,41 @@ define(
             _.pluck($scope.portfolios, 'name'));
         };
 
+
+        // START HERE
+        $scope.downloadPortfolio = function (name, id) {
+          $http.get('/api/portfolio/'+ id + '/data',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
+            .success(function (response, status, headers, config) {
+              var blob = new Blob([response], { type: 'application/octet-stream' });
+              saveAs(blob, (name + '.prt'));
+            });
+        };
+
+        $scope.uploadPortfolio = function() {
+          angular
+            .element('<input type="file">')
+            .change(function (event) {
+              var file = event.target.files[0];
+              $upload
+                .upload({
+                  url: '/api/portfolio/data',
+                  fields: {name: getUniqueName(file.name)},
+                  file: file
+                })
+                .success(function(response) {
+                  console.log('uploaded portfolio', response);
+                  $scope.portfolios.push(response);
+                  $scope.state.portfolio = response;
+                  loadPortfolios($scope.portfolios);
+                  toastr.success('Ureated portfolio');
+                });
+            })
+            .click();
+        };
+
+        // END HERE
+
         $scope.deletePortfolio = function() {
           $http
             .delete('/api/portfolio/' + $scope.state.portfolio.id)

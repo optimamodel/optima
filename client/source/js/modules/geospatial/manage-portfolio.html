@@ -18,28 +18,35 @@
       style="width: 230px;">
     </select>
 
-
-
     <i
-      class="fa fa-file-o"
       ng-click="createPortfolio()"
+      class="fa fa-file-o"
       tp-text="New" tooltip tp-class="tooltip"
       tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
       style="margin-left: 0.5em">
     </i>
 
-    <i
-      class="fa fa-trash-o"
-      ng-click="deletePortfolio()"
-      tp-text="Delete" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
-    </i>
+    <!--<i-->
+      <!--ng-click="renamePortfolio()"-->
+      <!--class="fa fa-pencil"-->
+      <!--tp-text="Rename" tooltip tp-class="tooltip"-->
+      <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
+      <!--style="margin-left: 0.5em">-->
+    <!--</i>-->
 
     <i
-      class="fa fa-trash-o"
-      ng-click="deletePortfolio()"
-      tp-text="Delete" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
+      ng-click="downloadPortfolio(portfolio.name, portfolio.id)"
+      class="fa fa-download"
+      tp-text="Download" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+      style="margin-left: 0.5em">
+    </i>
+    <i
+      ng-click="uploadPortfolio()"
+      class="fa fa-upload"
+      tp-text="Upload" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+      style="margin-left: 0.5em">
     </i>
 
     <i
