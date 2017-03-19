@@ -1391,27 +1391,26 @@ def get_parset_from_project_by_id(project, parset_id):
 def get_portfolio_summary(portfolio):
     gaoptim_summaries = []
     objectivesList = []
-    for gaoptim_key, gaoptim in portfolio.gaoptims.items():
-        resultpairs_summary = []
-        for resultpair_key, resultpair in gaoptim.resultpairs.items():
-            resultpair_summary = {}
-            for result_key, result in resultpair.items():
-                result_summary = {
-                    'name': result.name,
-                    'id': result.uid,
-                }
-                resultpair_summary[result_key] = result_summary
-            resultpairs_summary.append(resultpair_summary)
+    resultpairs_summary = []
+    for resultpair_key, resultpair in portfolio.results.items():
+        resultpair_summary = {}
+        for result_key, result in resultpair.items():
+            result_summary = {
+                'name': result.name,
+                'id': result.uid,
+            }
+            resultpair_summary[result_key] = result_summary
+        resultpairs_summary.append(resultpair_summary)
 
-        gaoptim_summaries.append({
-            "key": gaoptim_key,
-            "objectives": dict(gaoptim.objectives),
-            "id": gaoptim.uid,
-            "name": gaoptim.name,
-            "resultpairs": resultpairs_summary
-        })
+    gaoptim_summaries.append({
+        "key": 'DEPRECATED No key',
+        "objectives": dict(portfolio.objectives),
+        "id": 'DEPRECATED No ID',
+        "name": 'DEPRECATED No name',
+        "resultpairs": resultpairs_summary
+    })
 
-        objectivesList.append(gaoptim.objectives)
+    objectivesList.append(portfolio.objectives)
 
     project_summaries = []
 
@@ -1441,9 +1440,6 @@ def get_portfolio_summary(portfolio):
         "projects": project_summaries,
     }
 
-    if hasattr(portfolio, "outputstring"):
-        result["outputstring"] = portfolio.outputstring.replace('\t', ',')
-
     return result
 
 
@@ -1453,16 +1449,10 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
     a list of project_ids of projects that are not in the portfolio
     """
     gaoptim_summaries = summary['gaoptims']
-    gaoptims = portfolio.gaoptims
     for gaoptim_summary in gaoptim_summaries:
-        gaoptim_id = str(gaoptim_summary['id'])
-        objectives = op.odict(gaoptim_summary["objectives"])
-        if gaoptim_id in gaoptims:
-            gaoptim = gaoptims[gaoptim_id]
-            gaoptim.objectives = objectives
-        else:
-            gaoptim = op.portfolio.GAOptim(objectives=objectives)
-            gaoptims[gaoptim_id] = gaoptim
+        objectives = op.odict(gaoptim_summary["objectives"]) # WARNING, this destroys order
+        portfolio.objectives = objectives
+    
     old_project_ids = portfolio.projects.keys()
     print("> old project ids %s" % old_project_ids)
     project_ids = [s["id"] for s in summary["projects"]]
