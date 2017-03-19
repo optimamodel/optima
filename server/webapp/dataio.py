@@ -1503,21 +1503,11 @@ def load_portfolio_summaries(db_session=None):
         db_session = db.session
 
     query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
-    if query is None:
-        portfolio = op.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
-        record = PyObjectDb(
-            user_id=current_user.id, type="portfolio", name=portfolio.name, id=portfolio.uid)
-        record.save_obj(portfolio)
-        db_session.add(record)
-        db_session.commit()
-        print("> Crreated default portfolio %s" % portfolio.name)
-        portfolios = [portfolio]
-    else:
-        portfolios = []
-        for record in query:
-            print(">> Portfolio id %s" % record.id)
-            portfolio = record.load()
-            portfolios.append(portfolio)
+    portfolios = []
+    for record in query:
+        print(">> Portfolio id %s" % record.id)
+        portfolio = record.load()
+        portfolios.append(portfolio)
 
     summaries = map(parse.get_portfolio_summary, portfolios)
     print("> Loading portfolio summaries")
@@ -1591,10 +1581,12 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    prj_basename = load_project_record(project_id).as_file(dirname)
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    prj_basename = project_record.as_file(dirname)
     prj_fname = os.path.join(dirname, prj_basename)
     xlsx_fname = prj_fname.replace('.prj', '.xlsx')
-    geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
+    op.makegeospreadsheet(project=project, spreadsheetpath=xlsx_fname, copies=n_region, refyear=year)
     return os.path.split(xlsx_fname)
 
 
