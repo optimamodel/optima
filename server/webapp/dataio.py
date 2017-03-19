@@ -1598,14 +1598,16 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
     dirname = upload_dir_user(TEMPLATEDIR)
 
-    prj_basename = load_project_record(project_id).as_file(dirname)
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    prj_basename = project_record.as_file(dirname)
     prj_fname = os.path.join(dirname, prj_basename)
 
     spawn_dir = os.path.join(dirname, prj_basename + '-spawn-districts')
     if os.path.isdir(spawn_dir):
         shutil.rmtree(spawn_dir)
 
-    geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
+    op.makegeoprojects(project=project, spreadsheetpath=spreadsheet_fname, destination=spawn_dir)
 
     district_prj_basenames = os.listdir(spawn_dir)
     prj_names = []
