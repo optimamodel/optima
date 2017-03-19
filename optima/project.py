@@ -3,7 +3,7 @@ from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, 
 from optima import loadspreadsheet, model, gitinfo, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
-from numpy import argmin, array, argsort
+from numpy import argmin, argsort
 from numpy.random import seed, randint
 import os
 
@@ -586,18 +586,26 @@ class Project(object):
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, 
-                 verbose=2, stoppingfunc=None, method='asd', die=False, saveprocess=True, origbudget=None, ccsample='best', randseed=None, mc=3, **kwargs):
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, 
+                 stoppingfunc=None, method='asd', die=False, origbudget=None, ccsample='best', randseed=None, mc=3, optim=None, optimname=None, **kwargs):
         ''' Function to minimize outcomes or money '''
-    
-        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        
+        # Check inputs
+        if optim is None:
+            if optimname is not None: # Get the optimization by name if supplied
+                optim = self.optims[optimname] 
+            else: # If neither an optim nor an optimname is supplied, create one
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        
+        # Run the optimization
         multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                   method=method, die=die, origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, **kwargs)
+        
+        # Tidy up
         optim.resultsref = multires.name
-        if saveprocess:        
-            self.addoptim(optim=optim)
-            self.addresult(result=multires)
-            self.modified = today()
+        self.addoptim(optim=optim)
+        self.addresult(result=multires)
+        self.modified = today()
         return multires
 
 
