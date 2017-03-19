@@ -162,7 +162,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
 
 def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False):
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
     """
     Perform batch BOC calculation.
 
@@ -204,6 +204,15 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         method - optimization algorithm to use for optimization runs that
                 comprise the BOC
         maxload - how much of the CPU to use
+        interval - the interval for the loadbalancer to use
+        prerun - whether or not to precalculate the results to use for e.g.
+                population size denominators
+        batch - whether or not to actually run as batch
+        mc - the number of Monte Carlo runs
+        die - whether to crash or give a warning if something goes wrong
+        recalculate - whether to calculate BOCs for projects that already have BOCs
+        strict - whether to recalculate BOCs for projects that have non-matching BOCs
+        
     """
     
     # Praeludium
@@ -214,9 +223,9 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
     for i,project in enumerate(projects.values()):
         prjobjectives = project.optims[-1].objectives if objectives == 'latest' else objectives
         prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
-        args = (project, i, outputqueue, budgetratios, name, parsetname, 
-                progsetname, prjobjectives, prjconstraints, maxiters, 
-                maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die)
+        args = (project, i, outputqueue, budgetratios, name, parsetname, progsetname, prjobjectives, 
+                prjconstraints, maxiters, maxtime, verbose, stoppingfunc, method, maxload, interval, 
+                prerun, batch, mc, die, recalculate, strict)
         if batch:
             prc = Process(target=boc_task, args=args)
             prc.start()
@@ -230,8 +239,8 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
     return projects
 
 
-def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,
-             maxiters, maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die):
+def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints, maxiters, 
+             maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die, recalculate, strict):
     
     # Custom opening
     if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
@@ -249,10 +258,14 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
             project.runsim(parsetname) # Rerun if exception or if results is None
     
     # The meat
-    project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
-                   progsetname=progsetname, objectives=objectives, 
-                   constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-                   verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
+    boc = None
+    if not recalculate: # If we're not recalculating BOCs, check to see if this project already has one
+        boc = project.getBOC(objectives=objectives, strict=strict, verbose=verbose)
+    if recalculate or boc is None: # Only run if requested or if a BOC can't be found -- otherwise, skip and return immediately
+        project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
+                       progsetname=progsetname, objectives=objectives, 
+                       constraints=constraints, maxiters=maxiters, maxtime=maxtime,
+                       verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
     
     # Standardized close
     print('...done.')

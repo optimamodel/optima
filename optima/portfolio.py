@@ -118,7 +118,7 @@ class Portfolio(object):
     
     def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True):
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
         '''
         Just like genBOC, but run on each of the projects in the portfolio. See batchBOC() for explanation
         of kwargs.
@@ -128,11 +128,12 @@ class Portfolio(object):
         # All we need to do is run batchBOC on the portfolio's odict of projects
         self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
              constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, 
-             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate)
+             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict)
              
         return None
         
-    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True, strict=True):
+    
+    def runGA(self, grandtotal=None, objectives=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True, strict=True):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -142,22 +143,25 @@ class Portfolio(object):
         if mc is None: mc = 0 # Do not use MC by default
         if objectives is not None: self.objectives = objectives # Store objectives, if supplied
         
-        # Gather the BOCs
-        bocsvalid = True
-        if boclist is None:
+        def gatherBOCs():
+            ''' Gather the BOCs -- called twice which is why it's a function '''
+            bocsvalid = True
             boclist = []
             for pno,project in enumerate(self.projects.values()):
                 thisboc = project.getBOC(objectives=objectives, strict=strict)
                 if thisboc is None:
                     bocsvalid = False
                     errormsg = 'GA FAILED: Project %s has no BOC' % project.name
-                    if die: raise OptimaException(errormsg)
+                    if die: raise OptimaException(errormsg) # By default die here, but optionally just recalculate
                     else:   printv(errormsg, 1, verbose)
                 boclist.append(thisboc)
+            return boclist, bocsvalid
         
-        # If any BOCs failed, recalculate the ones that did        
+        # If any BOCs failed, recalculate the ones that did     
+        boclist, bocsvalid = gatherBOCs() # If die==True, this will crash if a BOC isn't found; otherwise, return False
         if not bocsvalid:
             self.genBOCs(objectives=objectives, maxiters=maxiters, maxtime=maxtime, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, die=die, recalculate=False)
+            boclist, bocsvalid = gatherBOCs() # Seems odd to repeat this here...
         
         # Get the grand total
         if grandtotal is None:

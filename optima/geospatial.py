@@ -497,7 +497,7 @@ def gui_rungeo():
     ''' Wrapper to actually run geospatial analysis!!! '''
     rungeo(usegui=True)
 
-def rungeo(portfolio=None, objectives=None, maxtime=30, usegui=False):
+def rungeo(portfolio=None, objectives=None, maxtime=30, mc=0, batch=True, usegui=False, verbose=2, die=False, strict=True):
     ''' Actually run geospatial analysis!!! '''
     if usegui: global globalportfolio, globalobjectives, objectiveinputs
     starttime = time()
@@ -513,8 +513,8 @@ def rungeo(portfolio=None, objectives=None, maxtime=30, usegui=False):
             globalobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         globalobjectives['budget'] *= budgetfactor # Convert back to internal representation
     BOCobjectives = dcp(globalobjectives)
-    globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=maxtime, mc=0)
-    globalportfolio.fullGA(globalobjectives, doplotBOCs=False, budgetratio = globalportfolio.getdefaultbudgets(), maxtime=maxtime) # WARNING temp time
+    globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=maxtime, mc=mc)
+    globalportfolio.runGA(objectives=globalobjectives, maxtime=maxtime, reoptimize=True, mc=mc, batch=batch, verbose=verbose, die=die, strict=strict)
     warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime), usegui)
     if usegui: 
         return None
