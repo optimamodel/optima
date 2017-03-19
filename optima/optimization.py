@@ -496,8 +496,10 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
-    ## Calculate original things
+    # Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    
+    # Set up arguments which are shared between outcomecalc and asd
     args = {'which':'outcomes', 
             'project':project, 
             'parset':parset, 
