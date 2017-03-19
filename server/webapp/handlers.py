@@ -290,7 +290,7 @@ class DefaultPopulations(Resource):
 api.add_resource(DefaultPopulations, '/api/project/populations')
 
 
-class Portfolio(Resource):
+class Portfolio(Resource): # WARNING, should maybe be called something different since actually a project method
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Download projects as .zip')
