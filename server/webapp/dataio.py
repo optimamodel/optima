@@ -1546,6 +1546,7 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
         print("> Create portfolio %s" % portfolio_id)
         portfolio = op.Portfolio()
         portfolio.uid = UUID(portfolio_id)
+        portfolio.objectives = op.defaultobjectives()
     return portfolio
 
 
