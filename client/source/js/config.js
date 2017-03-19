@@ -4,6 +4,8 @@ if (typeof define !== 'function') {
 }
 
 define({
+  waitSeconds: 300, // timeout after 5min
+
   // Here paths are set relative to `/source/js` folder
   paths: {
     'underscore': './vendor/underscore/underscore',

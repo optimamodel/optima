@@ -96,20 +96,41 @@ gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
       .pipe(uglify().on('error', handleError))
       .pipe(gulp.dest('build/vendor/requirejs')),
     // copy mpld3, instead of minifying because we're using constructor names for plugin identification
-    gulp.src(['source/js/modules/mpld3-charts/mpld3.v0.3-patched.js'])
-      .pipe(gulp.dest('build/js/modules/mpld3-charts'))
+    gulp.src(['source/js/modules/charts/mpld3.v0.3-patched.js'])
+      .pipe(gulp.dest('build/js/modules/charts'))
   );
 });
 
 // Optimize the app into the build/js directory
-gulp.task('compile-build-js-client', function () {
+gulp.task('compile-build-js-client-uglify', function () {
   var configRequire = require('./source/js/config.js');
   var configBuild = {
     baseUrl: 'source',
     insertRequire: ['js/main'],
     name: 'js/main',
     out: 'main.js',
-    optimize: 'uglify',
+    optimize: 'none',
+    wrap: true,
+    excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
+  };
+  var config = _(configBuild).extend(configRequire);
+
+  return rjs(config)
+    .on('error', handleError)
+    .pipe(ngAnnotate())
+    .pipe(uglify().on('error', handleError)) // This is key -- it compresses the JS, but takes a long time
+    .pipe(gulp.dest('build/js/'));
+});
+
+// Don't optimize the app -- WARNING, could be combined with the above
+gulp.task('compile-build-js-client-quick', function () {
+  var configRequire = require('./source/js/config.js');
+  var configBuild = {
+    baseUrl: 'source',
+    insertRequire: ['js/main'],
+    name: 'js/main',
+    out: 'main.js',
+    optimize: 'none',
     wrap: true,
     excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
   };
@@ -175,7 +196,7 @@ gulp.task('watch', ['compile-sass'], function () {
 gulp.task(
   'default',
   [
-    'compile-build-js-client',
+    'compile-build-js-client-uglify',
     'copy-assets-and-vendor-js',
     'write-version-js'
   ]);

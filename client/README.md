@@ -4,13 +4,14 @@
 - the Optima webclient is a single-page-application written in 
   Javascript ES5, using the Angular 1.0 framework.
 - the entry point of the developing version of the webclient is `source/index.html`. 
+- **WARNING**, many of these notes are outdated!
 
 ## Building the Webclient
 
-First off, here are the two scripts to build the webclient:
+First off, here is the script to build the webclient:
 
-- `clean_build.sh` for production in the `build` folder
-- `clean_dev_build.sh` for development in the `source` folder
+- `../bin/build_client.sh` for production in the `build` folder
+- `../bin/build_client.sh quick` for a quick local build (no minification)
 
 In these scripts:
  
