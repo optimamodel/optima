@@ -110,21 +110,15 @@ def gui_create(filepaths=None, portfolio=None, doadd=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
     global globalportfolio, projectslistbox, objectiveinputs
     
-    print "smachno"
-    print globalportfolio
-    
     projectpaths = []
     projectslist = []
     if globalportfolio is None: 
         globalportfolio = Portfolio()
-        print globalportfolio
     if not doadd:
         globalportfolio = Portfolio()
-        print globalportfolio
         projectslistbox.clear()
     if doadd and portfolio != None:
         globalportfolio = portfolio
-        print globalportfolio
     filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+prjext)
     if filepaths:
         if type(filepaths)==str: filepaths = [filepaths] # Convert to list
@@ -140,7 +134,6 @@ def gui_create(filepaths=None, portfolio=None, doadd=False):
                 else: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectslistbox.addItems(projectpaths)
         globalportfolio.addprojects(projectslist)
-        print globalportfolio
         resetbudget() # And reset the budget
     return None
 
@@ -178,8 +171,6 @@ def gui_loadport():
 def gui_rungeo():
     ''' Actually run geospatial analysis!!! '''
     global globalportfolio, globalobjectives, objectiveinputs
-    print('hi')
-    print globalportfolio
     starttime = time()
     if globalobjectives is None:
         globalobjectives = defaultobjectives()
@@ -189,7 +180,6 @@ def gui_rungeo():
     globalobjectives['budget'] *= budgetfactor # Convert back to internal representation
     BOCobjectives = dcp(globalobjectives)
     try:
-        print globalportfolio
         globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=30, mc=0)
         globalportfolio.runGA(objectives=globalobjectives, maxtime=30, reoptimize=True, mc=0, batch=True, verbose=2, die=False, strict=True)
     except Exception as E:
