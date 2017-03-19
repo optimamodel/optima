@@ -693,26 +693,35 @@ class Project(object):
         return None        
     
     
-    def getBOC(self, objectives=None):
+    def getBOC(self, objectives=None, strict=False, verbose=2):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         
         boc = None
         objkeys = ['start','end','deathweight','inciweight']
-        for x in reversed(self.results.keys()): # Get last BOC
-            if isinstance(self.results[x],BOC):
-                boc = self.results[x]
-                if objectives is None: return boc
+        for boc in reversed(self.results.values()): # Get last result and work backwards
+            if isinstance(boc,BOC):
+                if objectives is None:
+                    return boc # A BOC was found, and objectives are None: we're done
                 same = True
                 for y in boc.objectives:
-                    if y in objkeys and boc.objectives[y] != objectives[y]: same = False
+                    if y in objkeys and boc.objectives[y] != objectives[y]:
+                        same = False
                 if same:
-                    return boc
+                    return boc # Objectives are defined, but they match: return BOC
+        
+        # Figure out what happened
+        if boc is None: # No BOCs were found of any kind
+            printv('Warning, no BOCs found!', 1, verbose)
+            return None
+        
         wantedobjs = ', '.join(['%s=%0.1f' % (key,objectives[key]) for key in objkeys])
         actualobjs = ', '.join(['%s=%0.1f' % (key,boc.objectives[key]) for key in objkeys])
-        printv('WARNING, project %s has no BOC with objectives "%s", instead using BOC with objectives "%s"' % (self.name, wantedobjs, actualobjs))
-        if boc is None:
-            print('WARNING, no BOCs found!')
-        return boc
+        if not same and strict: # The BOCs don't match exactly, and strict checking is enabled, return None
+            printv('WARNING, project %s has no BOC with objectives "%s", aborting (closest match was "%s")' % (self.name, wantedobjs, actualobjs), 1, verbose)
+            return None
+        else:
+            printv('WARNING, project %s has no BOC with objectives "%s", instead using BOC with objectives "%s"' % (self.name, wantedobjs, actualobjs), 1, verbose)
+            return boc
         
         
     def delBOC(self, objectives):

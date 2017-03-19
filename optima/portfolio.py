@@ -118,7 +118,7 @@ class Portfolio(object):
     
     def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False):
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True):
         '''
         Just like genBOC, but run on each of the projects in the portfolio. See batchBOC() for explanation
         of kwargs.
@@ -128,7 +128,7 @@ class Portfolio(object):
         # All we need to do is run batchBOC on the portfolio's odict of projects
         self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
              constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, 
-             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die)
+             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate)
              
         return None
         
@@ -154,6 +154,10 @@ class Portfolio(object):
                     if die: raise OptimaException(errormsg)
                     else:   printv(errormsg, 1, verbose)
                 boclist.append(thisboc)
+        
+        # If any BOCs failed, recalculate the ones that did        
+        if not bocsvalid:
+            self.genBOCs(objectives=objectives, maxiters=maxiters, maxtime=maxtime, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, die=die, recalculate=False)
         
         # Get the grand total
         if grandtotal is None:
