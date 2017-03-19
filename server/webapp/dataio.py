@@ -27,7 +27,7 @@ import dateutil
 import shutil
 from pprint import pprint
 
-from flask import helpers, current_app, abort, request, session, make_response, jsonify
+from flask import current_app, abort, request, session, make_response, jsonify
 from flask_login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from validate_email import validate_email
@@ -1609,7 +1609,7 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     prj_names = []
     for prj_basename in district_prj_basenames:
         first_prj_name = prj_basename.replace('.prj', '')
-        print("> Slurping project %s" % prj_name, existing_prj_names, prj_name in existing_prj_names)
+        print("> Slurping project %s: %s" % (first_prj_name, [existing_prj_names, first_prj_name in existing_prj_names]))
         prj_name = first_prj_name
         i = 1
         while prj_name in existing_prj_names:
