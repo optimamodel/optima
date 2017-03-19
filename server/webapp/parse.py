@@ -23,6 +23,12 @@ import optima as op
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 
 
+#############################################################################################
+### UTILITIES
+#############################################################################################
+
+
+
 def print_odict(name, an_odict):
     """
     Helper function to print an odict to the console
@@ -84,7 +90,9 @@ def normalize_obj(obj):
 
 
 
-# PROJECTS
+#############################################################################################
+#### PROJECTS
+#############################################################################################
 
 def get_project_years(project):
     settings = project.settings
@@ -289,7 +297,10 @@ def get_project_summary_from_project(project):
     return project_summary
 
 
-# PARSETS
+
+#############################################################################################
+### PARSETS
+#############################################################################################
 
 def get_parameters_from_parset(parset, advanced=False):
     """
@@ -488,7 +499,9 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
     return parameters
 
 
-# PROGRAMS
+#############################################################################################
+### PROGRAMS
+#############################################################################################
 
 
 def get_budgets_for_scenarios(project):
@@ -719,7 +732,11 @@ def get_default_program_summaries(project):
         for p in op.defaults.defaultprograms(project)]
 
 
-# PROGSET OUTCOMES
+
+
+#############################################################################################
+### PROGSETS
+#############################################################################################
 
 def get_outcome_summaries_from_progset(progset):
     """
@@ -816,9 +833,6 @@ def set_outcome_summaries_on_progset(outcomes, progset):
                 covout_by_poptuple[poptuple].addccopar(ccopar, overwrite=True)
 
             covout_by_poptuple[poptuple].interaction = outcome['interact']
-
-
-# PROGETS
 
 
 def get_progset_summary(project, progset_name):
@@ -1024,8 +1038,10 @@ def set_progset_summary_on_project(project, progset_summary, progset_id=None):
     set_progset_summary_on_progset(progset, progset_summary)
 
 
-# SCENARIOS
 
+#############################################################################################
+### SCENARIOS
+#############################################################################################
 
 def force_tuple_list(item):
     if isinstance(item, str) or isinstance(item, unicode):
@@ -1083,7 +1099,6 @@ def revert_program_list(program_list):
         vals = [v if v is not None else 0 for v in vals]
         result[key] = np.array(vals)
     return result
-
 
 
 def get_scenario_summary(project, scenario):
@@ -1220,8 +1235,9 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 
 
 
-# OPTIMIZATIONS
-
+#############################################################################################
+### OPTIMIZATIONS
+#############################################################################################
 
 def get_default_optimization_summaries(project):
     defaults_by_progset_id = {}
@@ -1366,11 +1382,14 @@ def get_parset_from_project_by_id(project, parset_id):
         return None
 
 
-# PORTFOLIOS
+
+#############################################################################################
+### PORTFOLIOS
+#############################################################################################
 
 
 def get_portfolio_summary(portfolio):
-
+    raise op.OptimaException('Nnoited to implement get_portfolio_summary')
     return None
 
 
@@ -1379,7 +1398,7 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
     Saves the summary result onto the portfolio and returns
     a list of project_ids of projects that are not in the portfolio
     """
-
+    raise op.OptimaException('Nnoited to implement get_portfolio_summary')
     return None
 
 
