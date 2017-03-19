@@ -346,7 +346,7 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
         result = None
         try:
             print(">> Start optimization '%s' for maxtime = %f" % (optim.name, maxtime))
-            result = optim.optimize(maxtime=maxtime, mc=0) # Set mc to zero for now while we decide how to handle uncertainties etc.
+            result = project.optimize(optim=optim, maxtime=maxtime, mc=0) # Set mc to zero for now while we decide how to handle uncertainties etc.
             print(">> %s" % result.budgets)
             result.uid = op.uuid()
             status = 'completed'
