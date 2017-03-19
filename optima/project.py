@@ -438,6 +438,14 @@ class Project(object):
             else:
                 self.copyparset(orig=orig, new=name) # Store parameters
         return name, orig
+    
+    
+    def restorelinks(self):
+        ''' Loop over all objects that have links back to the project and restore them '''
+        for item in self.parsets.values()+self.progsets.values()+self.scens.values()+self.optims.values()+self.results.values():
+            if hasattr(item, 'projectref'):
+                item.projectref = Link(self)
+        return None
 
 
     def pars(self, key=-1):

@@ -317,6 +317,7 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
             project = work_log.load()
             optim = parse.get_optimization_from_project(project, optimization_id)
             optim.projectref = op.Link(project) # Need to restore project link
+            optim.projectref().restorelinks() # Restore links in the project itself
             progset = project.progsets[optim.progsetname]
             if not progset.readytooptimize():
                 status = 'error'
