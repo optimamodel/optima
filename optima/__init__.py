@@ -205,7 +205,7 @@ from .batchtools import batchautofit, batchBOC, reoptimizeprojects
 
 # Really really finally, load the portfolio class (container of Projects), relies on loadproj, hence is here
 import portfolio as _portfolio
-from .portfolio import Portfolio 
+from .portfolio import Portfolio, makegeospreadsheet
 
 try:
     import geospatial as _geospatial

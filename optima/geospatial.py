@@ -6,12 +6,10 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 Version: 2016nov03
 """
 
-from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, printv
+from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, printv, makegeospreadsheet
 from PyQt4 import QtGui
 from pylab import figure, close, array
 from time import time
-from xlsxwriter import Workbook
-from xlsxwriter.utility import xl_rowcol_to_cell as rc
 from xlrd import open_workbook
 import os
 import re
@@ -70,154 +68,37 @@ def warning(message, usegui=True):
     
     
 def gui_makesheet():
-    ''' GUI wrapper to create a geospatial spreadsheet template based on a project file '''
-    makesheet(usegui=True)
-    
-def makesheet(projectpath=None, spreadsheetpath=None, copies=None, refyear=None, usegui=False):
     ''' Create a geospatial spreadsheet template based on a project file '''
     ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
     ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
     
     ## 1. Load a project file
-    if type(projectpath)==Project: project = projectpath # It's actually a project, not a path
-    else:                          project = _loadproj(projectpath, usegui) # No, it's a project path, load it
-    if project is None:
+    project = _loadproj(projectpath=None, usegui=True) # No, it's a project path, load it
+    if project is None: 
         raise OptimaException('No project loaded.')
     
-    bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
+    try:    results = project.parsets[-1].getresults()
+    except: results = project.runsim(name=project.parsets[-1].name)
     
-    if len(project.parsets) > 0:
-        try:
-            results = project.parsets[-1].getresults()
-        except:
-            results = project.runsim(name=project.parsets[-1].name)
-        
-        if usegui:
-            copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
-        try: copies = int(copies)
-        except: raise OptimaException('Input (number of project copies) cannot be converted into an integer.')
-        
-        if usegui:
-            refyear, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'Select a reference year for which you have district data.')
-        refind = -1            
-        try: refyear = int(refyear)
-        except: raise OptimaException('Input (reference year) cannot be converted into an integer.')
-        if not refyear in [int(x) for x in results.tvec]:
-            raise OptimaException("Input not within range of years used by aggregate project's last stored calibration.")
-        else:
-            refind = [int(x) for x in results.tvec].index(refyear)
+    copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
+    try: copies = int(copies)
+    except: raise OptimaException('Input (number of project copies) cannot be converted into an integer.')
+    
+    refyear, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'Select a reference year for which you have district data.')
+    try: refyear = int(refyear)
+    except: raise OptimaException('Input (reference year) cannot be converted into an integer.')
+    if not refyear in [int(x) for x in results.tvec]:
+        raise OptimaException("Input not within range of years used by aggregate project's last stored calibration.")
 
-        colwidth = 20
-            
-        ## 2. Get destination filename
-        if usegui:
-            spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
-        
-        ## 3. Extract data needed from project (population names, program names...)
-        if spreadsheetpath:
-            workbook = Workbook(spreadsheetpath)
-            wspopsize = workbook.add_worksheet('Population sizes')
-            wsprev = workbook.add_worksheet('Population prevalence')
-            plain = workbook.add_format({})
-            num = workbook.add_format({'num_format':0x04})
-            bold = workbook.add_format({'bold': True})
-            orfmt = workbook.add_format({'bold': True, 'align':'center'})
-            gold = workbook.add_format({'bg_color': '#ffef9d'})
-            
-            nprogs = len(project.data['pops']['short'])
-            
-            # Start with pop and prev data.
-            maxcol = 0
-            row, col = 0, 0
-            for row in xrange(copies+1):
-                if row != 0:
-                    wspopsize.write(row, col, '%s - district %i' % (project.name, row), bold)
-                    wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
-                for popname in project.data['pops']['short']:
-                    col += 1
-                    if row == 0:
-                        wspopsize.write(row, col, popname, bold)
-                        wsprev.write(row, col, popname, bold)
-                    else:
-                        wspopsize.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)), num)
-
-                        # Prevalence scaling by function r/(r-1+1/x).
-                        # If n is intended district prevalence and d is calibrated national prevalence, then...
-                        # 'Unbound' (scaleup) ratio r is n(1-d)/(d(1-n)).
-                        # Variable x is calibrated national prevalence specific to pop group.
-                        natpopcell = rc(copies+2,col)
-                        disttotcell = rc(row,nprogs+2)
-                        nattotcell = rc(copies+2,nprogs+2)
-                        wsprev.write(row, col, "=(%s*(1-%s)/(%s*(1-%s)))/(%s*(1-%s)/(%s*(1-%s))-1+1/%s)" % (disttotcell,nattotcell,nattotcell,disttotcell,disttotcell,nattotcell,nattotcell,disttotcell,natpopcell), plain)
-
-                    maxcol = max(maxcol,col)
-                col += 1
-                if row > 0:
-                    wspopsize.write(row, col, "OR", orfmt)
-                    wsprev.write(row, col, "OR", orfmt)
-                col += 1
-                if row == 0:
-                    wspopsize.write(row, col, "Total (intended)", bold)
-                    wsprev.write(row, col, "Total (intended)", bold)
-                    for p in range(len(project.data['pops']['short'])):
-                        wspopsize.write(row+1+p, col, None, gold)
-                        wsprev.write(row+1+p, col, None, gold)
-                col += 1
-                if row == 0:
-                    wspopsize.write(row, col, "Total (actual)", bold)
-                    wsprev.write(row, col, "Total (actual)", bold)
-                else:
-                    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
-                    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)), plain)
-                maxcol = max(maxcol,col)
-                col = 0
-            
-            # Just a check to make sure the sum and calibrated values match.
-            # Using the last parset stored in project! Assuming it is the best calibration.
-            row += 1              
-            wspopsize.write(row, col, '---')
-            wsprev.write(row, col, '---')
-            row += 1
-            wspopsize.write(row, col, 'Calibration %i' % refyear)
-            wsprev.write(row, col, 'Calibration %i' % refyear)
-            for popname in project.data['pops']['short']:
-                col += 1
-                wspopsize.write(row, col, results.main['popsize'].pops[bestindex][col-1][refind], num)
-                wsprev.write(row, col, results.main['prev'].pops[bestindex][col-1][refind])
-            col += 2
-            wspopsize.write(row, col, results.main['popsize'].tot[bestindex][refind], num)
-            wsprev.write(row, col, results.main['prev'].tot[bestindex][refind])
-            col += 1
-            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
-            wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
-            col = 0
-            
-            row += 1
-            wspopsize.write(row, col, 'District aggregate')
-            wsprev.write(row, col, 'District aggregate')
-            for popname in project.data['pops']['short']:
-                col += 1
-                wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
-                wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
-            col += 2
-            wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
-            wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
-            col += 1
-            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
-            wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
-            col = 0
-                
-            wsprev.set_column(0, maxcol, colwidth) # Make wider
-            wspopsize.set_column(0, maxcol, colwidth) # Make wider
-            
-        # 4. Generate and save spreadsheet
-        try:
-            workbook.close()    
-            warning('Multi-project template saved to "%s".' % spreadsheetpath, usegui)
-        except:
-            warning('Error: Template not saved due to a workbook error!', usegui)
-    else:
-        warning('Error: Loaded project is missing a parameter set!', usegui)
+    ## 2. Get destination filename
+    spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
+    
+    # 4. Generate and save spreadsheet
+    try:
+        makegeospreadsheet(project=project, spreadsheetpath=spreadsheetpath, copies=copies, refyear=refyear, verbose=2)
+        warning('Multi-project template saved to "%s".' % spreadsheetpath, usegui=True)
+    except:
+        warning('Error: Template not saved due to a workbook error!', usegui=True)
 
     return None
     
@@ -513,8 +394,11 @@ def rungeo(portfolio=None, objectives=None, maxtime=30, mc=0, batch=True, usegui
             globalobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         globalobjectives['budget'] *= budgetfactor # Convert back to internal representation
     BOCobjectives = dcp(globalobjectives)
-    globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=maxtime, mc=mc)
-    globalportfolio.runGA(objectives=globalobjectives, maxtime=maxtime, reoptimize=True, mc=mc, batch=batch, verbose=verbose, die=die, strict=strict)
+    try:
+        globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=maxtime, mc=mc)
+        globalportfolio.runGA(objectives=globalobjectives, maxtime=maxtime, reoptimize=True, mc=mc, batch=batch, verbose=verbose, die=die, strict=strict)
+    except Exception as E:
+        warning('Geospatial analysis failed: %s' % E.__repr__())
     warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime), usegui)
     if usegui: 
         return None
@@ -556,7 +440,10 @@ def export(portfolio=None, filepath=None, usegui=False):
     
     # 3. Generate spreadsheet according to David's template to store these data
     if filepath:
-        globalportfolio.export(filename=filepath)
+        try:
+            globalportfolio.export(filename=filepath)
+        except Exception as E:
+            warning('Results export failed: %s' % E.__repr__())
         warning('Results saved to "%s".' % filepath, usegui)
     else:
         warning('Filepath not supplied: %s' % filepath, usegui)

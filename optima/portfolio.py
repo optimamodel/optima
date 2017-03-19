@@ -2,6 +2,7 @@ from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uu
 from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
+from xlsxwriter.utility import xl_rowcol_to_cell as rc
 import os
 
 #######################################################################################################
@@ -309,6 +310,9 @@ class Portfolio(object):
     def makeoutput(self, doprint=False, verbose=2):
         ''' Just displays results related to the GA run '''
         if doprint: printv('Printing results...', 2, verbose)
+        if self.results is None:
+            errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
+            raise OptimaException(errormsg)
         
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
@@ -459,3 +463,129 @@ class Portfolio(object):
    
 
 
+def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=None, verbose=2):
+    ''' Create a geospatial spreadsheet template based on a project file '''
+    ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
+    ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
+    
+    ## 1. Load a project file
+    if project is None:
+        raise OptimaException('No project loaded.')
+    
+    bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
+    
+    try:
+        results = project.parsets[-1].getresults()
+    except:
+        results = project.runsim(name=project.parsets[-1].name)
+    
+    copies = int(copies)
+    refyear = int(refyear)
+    if not refyear in [int(x) for x in results.tvec]:
+        errormsg = "Input not within range of years used by aggregate project's last stored calibration."
+        raise OptimaException(errormsg)
+    else:
+        refind = [int(x) for x in results.tvec].index(refyear)
+
+    ## 2. Extract data needed from project (population names, program names...)
+    workbook = Workbook(spreadsheetpath)
+    wspopsize = workbook.add_worksheet('Population sizes')
+    wsprev = workbook.add_worksheet('Population prevalence')
+    plain = workbook.add_format({})
+    num = workbook.add_format({'num_format':0x04})
+    bold = workbook.add_format({'bold': True})
+    orfmt = workbook.add_format({'bold': True, 'align':'center'})
+    gold = workbook.add_format({'bg_color': '#ffef9d'})
+    
+    nprogs = len(project.data['pops']['short'])
+    
+    # Start with pop and prev data.
+    maxcol = 0
+    row, col = 0, 0
+    for row in xrange(copies+1):
+        if row != 0:
+            wspopsize.write(row, col, '%s - district %i' % (project.name, row), bold)
+            wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
+        for popname in project.data['pops']['short']:
+            col += 1
+            if row == 0:
+                wspopsize.write(row, col, popname, bold)
+                wsprev.write(row, col, popname, bold)
+            else:
+                wspopsize.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)), num)
+
+                # Prevalence scaling by function r/(r-1+1/x).
+                # If n is intended district prevalence and d is calibrated national prevalence, then...
+                # 'Unbound' (scaleup) ratio r is n(1-d)/(d(1-n)).
+                # Variable x is calibrated national prevalence specific to pop group.
+                natpopcell = rc(copies+2,col)
+                disttotcell = rc(row,nprogs+2)
+                nattotcell = rc(copies+2,nprogs+2)
+                wsprev.write(row, col, "=(%s*(1-%s)/(%s*(1-%s)))/(%s*(1-%s)/(%s*(1-%s))-1+1/%s)" % (disttotcell,nattotcell,nattotcell,disttotcell,disttotcell,nattotcell,nattotcell,disttotcell,natpopcell), plain)
+
+            maxcol = max(maxcol,col)
+        col += 1
+        if row > 0:
+            wspopsize.write(row, col, "OR", orfmt)
+            wsprev.write(row, col, "OR", orfmt)
+        col += 1
+        if row == 0:
+            wspopsize.write(row, col, "Total (intended)", bold)
+            wsprev.write(row, col, "Total (intended)", bold)
+            for p in range(len(project.data['pops']['short'])):
+                wspopsize.write(row+1+p, col, None, gold)
+                wsprev.write(row+1+p, col, None, gold)
+        col += 1
+        if row == 0:
+            wspopsize.write(row, col, "Total (actual)", bold)
+            wsprev.write(row, col, "Total (actual)", bold)
+        else:
+            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+            wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)), plain)
+        maxcol = max(maxcol,col)
+        col = 0
+    
+    # Just a check to make sure the sum and calibrated values match.
+    # Using the last parset stored in project! Assuming it is the best calibration.
+    row += 1              
+    wspopsize.write(row, col, '---')
+    wsprev.write(row, col, '---')
+    row += 1
+    wspopsize.write(row, col, 'Calibration %i' % refyear)
+    wsprev.write(row, col, 'Calibration %i' % refyear)
+    for popname in project.data['pops']['short']:
+        col += 1
+        wspopsize.write(row, col, results.main['popsize'].pops[bestindex][col-1][refind], num)
+        wsprev.write(row, col, results.main['prev'].pops[bestindex][col-1][refind])
+    col += 2
+    wspopsize.write(row, col, results.main['popsize'].tot[bestindex][refind], num)
+    wsprev.write(row, col, results.main['prev'].tot[bestindex][refind])
+    col += 1
+    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
+    col = 0
+    
+    row += 1
+    wspopsize.write(row, col, 'District aggregate')
+    wsprev.write(row, col, 'District aggregate')
+    for popname in project.data['pops']['short']:
+        col += 1
+        wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
+        wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
+    col += 2
+    wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
+    col += 1
+    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
+    col = 0
+        
+    colwidth = 20
+    wsprev.set_column(0, maxcol, colwidth) # Make wider
+    wspopsize.set_column(0, maxcol, colwidth) # Make wider
+        
+    # 3. Generate and save spreadsheet
+    workbook.close()    
+    printv('Geospatial spreadsheet template saved to "%s".' % spreadsheetpath, 2, verbose)
+
+    return None

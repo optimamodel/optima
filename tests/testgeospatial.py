@@ -140,9 +140,20 @@ if 'rungui' in tests and doplot:
 
     print('Running geo GUI test...')
     from optima import geogui
-    if __name__ == '__main__':      # Required when multiprocessing.
-        geogui()
     
+    instructions = '''
+    Instructions for testing the geogui:
+    
+    1. Create a simple project (P = defaultproject('simple'); P.save())
+    2. Click "Make geospatial spreadsheet from project" and save it somewhere
+    3. Click "Auto-generate projects from spreadsheet", select the simple
+       project, and select tests/subdivision.xlsx, and save the projects somewhere
+    4. Click "Create portfolio from projects", and select the two you just created
+    5. Click "Run geospatial analysis". It should take about 2 minutes.
+    6. Click "Export results'
+    '''
+    print(instructions)
+    geogui()
     done(t)
 
 
