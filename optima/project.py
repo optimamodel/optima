@@ -578,12 +578,23 @@ class Project(object):
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000,
-                 maxtime=None, verbose=2, stoppingfunc=None, method='asd', die=False, saveprocess=True, origbudget=None, ccsample='best', randseed=None, **kwargs):
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, 
+                 verbose=2, stoppingfunc=None, method='asd', die=False, saveprocess=True, origbudget=None, ccsample='best', randseed=None, mc=3, **kwargs):
         ''' Function to minimize outcomes or money '''
+        
+        print('debugging optimize()')
+        print name
+        print parsetname
+        print progsetname
+        print objectives
+        print constraints
+        print maxtime
+        print mc
+        print('done debugging optimize')
+    
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                  method=method, die=die, origbudget=origbudget, ccsample=ccsample, randseed=randseed, **kwargs)
+                                  method=method, die=die, origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, **kwargs)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)
@@ -597,7 +608,8 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, die=False, **kwargs):
+    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
+               maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, die=False, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         boc = BOC(name='BOC '+self.name)
         if objectives is None:

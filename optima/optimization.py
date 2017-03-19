@@ -423,7 +423,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
     Version: 1.3 (2017mar02)
     '''
-
+    
     ## Input validation
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
     if which not in ['outcomes','money']:
