@@ -1,7 +1,7 @@
 <div class="rich">
   <div class="section">
 
-    <h2>Preparing districts for analysis</h2>
+    <h2>Create districts</h2>
 
     <ol>
       <li>
@@ -109,7 +109,7 @@
         margin-bottom: 30px">
     </div>
 
-    <h2>Select portfolio for geospatial analysis</h2>
+    <h2>Geospatial analysis</h2>
 
     <br>
 
@@ -183,12 +183,10 @@
 
       <div style="flex: 1">
 
-        <h4>Geospatial analysis of districts</h4>
-
         <table class="table table-bordered table-hover table-striped">
           <tr>
             <th>Districts</th>
-            <th>BOC</th>
+            <th>Budget-objective curve</th>
             <th></th>
           </tr>
           <tr ng-repeat="project in state.portfolio.projects">
@@ -211,7 +209,7 @@
             <td colspan="4">
               <button class="btn"
                 ng-click="addProject()">
-                + import districts from projects
+                Add district
               </button>
 
               <div
@@ -247,16 +245,16 @@
         <button
             style="
               margin-bottom: 1em"
-            class="btn"
+            class="btn __green __m"
             ng-click="calculateAllBocCurves()">
-          Calculate BOC curves for districts
+          Calculate budget-objective curves
         </button>
 
         &nbsp;
 
         Time per optimization
 
-        <select ng-init="state.bocMaxtime='2'" ng-model="state.bocMaxtime">
+        <select ng-init="state.bocMaxtime='300'" ng-model="state.bocMaxtime">
           <option value="2">2 seconds</option>
           <option value="10">10 seconds</option>
           <option value="30">30 seconds</option>
@@ -270,17 +268,17 @@
         <br>
         <br>
         <button
-            class="btn"
+            class="btn __green __m"
             ng-click="runFullGa()"
             ng-disabled="checkBocCurvesNotCalculated()">
-          Run geospatial optimization over BOC curves
+          Run geospatial optimization
         </button>
 
         &nbsp;
 
         Time per optimization:
 
-        <select ng-init="state.maxtime='2'" ng-model="state.maxtime">
+        <select ng-init="state.maxtime='300'" ng-model="state.maxtime">
           <option value="2">2 seconds</option>
           <option value="10">10 seconds</option>
           <option value="30">30 seconds</option>
@@ -300,7 +298,7 @@
             class="btn"
             ng-disabled="hasNoResults()"
             ng-click="exportResults()">
-          Results (CSV)
+          Export results
         </button>
 
       </div>
