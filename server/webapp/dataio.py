@@ -33,7 +33,6 @@ from werkzeug.utils import secure_filename
 from validate_email import validate_email
 
 import optima as op
-import optima.geospatial as geospatial
 
 from .dbconn import db
 from . import parse
