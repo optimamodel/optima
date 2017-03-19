@@ -111,44 +111,46 @@
 
     <h2>Geospatial analysis</h2>
 
-    <br>
-
-    Portfolio:
-    &nbsp;
-
-    <select
-        ng-if="portfolios.length > 0"
-        ng-model="state.portfolio"
-        ng-options="portfolio as portfolio.name for portfolio in portfolios"
-        ng-change="setActiveGaoptim()"
-        style="width: 200px;">
-    </select>
-
-    <i ng-if="portfolios.length == 0">
-      No portfolios have been created
-    </i>
-
-    <i
-        class="fa fa-file-o"
-        ng-click="createPortfolio()"
-        tp-text="New" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-        style="margin-left: 0.5em">
-    </i>
-
-    <i
-        class="fa fa-trash-o"
-        ng-click="deletePortfolio()"
-        tp-text="Delete" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
-    </i>
-
     <div
       style="
         display: flex;
-        padding-top: 2em;">
+        padding-top: 0em;">
 
       <div style="flex: 0 0 400px">
+
+        Portfolio:
+        &nbsp;
+
+        <select
+          ng-if="portfolios.length > 0"
+          ng-model="state.portfolio"
+          ng-options="portfolio as portfolio.name for portfolio in portfolios"
+          ng-change="setActiveGaoptim()"
+          style="width: 200px;">
+        </select>
+
+        <i ng-if="portfolios.length == 0">
+          No portfolios have been created
+        </i>
+
+        <i
+          class="fa fa-file-o"
+          ng-click="createPortfolio()"
+          tp-text="New" tooltip tp-class="tooltip"
+          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+          style="margin-left: 0.5em">
+        </i>
+
+        <i
+          class="fa fa-trash-o"
+          ng-click="deletePortfolio()"
+          tp-text="Delete" tooltip tp-class="tooltip"
+          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
+        </i>
+
+        <br>
+        <br>
+        <br>
 
         <b>Optimization conditions </b>
 
