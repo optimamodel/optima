@@ -316,7 +316,6 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
             project = work_log.load()
             optim = parse.get_optimization_from_project(project, optimization_id)
             optim.projectref = op.Link(project) # Need to restore project link
-            optim.projectref().restorelinks() # Restore links in the project itself
             progset = project.progsets[optim.progsetname]
             if not progset.readytooptimize():
                 status = 'error'
@@ -345,7 +344,16 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
         result = None
         try:
             print(">> Start optimization '%s' for maxtime = %f" % (optim.name, maxtime))
-            result = project.optimize(optim=optim, maxtime=maxtime, mc=0) # Set mc to zero for now while we decide how to handle uncertainties etc.
+            result = project.optimize(
+                name=optim.name,
+                parsetname=optim.parsetname,
+                progsetname=optim.progsetname,
+                objectives=optim.objectives,
+                constraints=optim.constraints,
+                maxtime=maxtime,
+                mc=0, # Set this to zero for now while we decide how to handle uncertainties etc.
+            )
+            
             print(">> %s" % result.budgets)
             result.uid = op.uuid()
             status = 'completed'
