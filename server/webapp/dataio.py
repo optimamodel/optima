@@ -98,8 +98,9 @@ def upload_dir_user(dirpath, user_id=None):
     return dirpath
 
 
-########
-# USERS
+#############################################################################################
+### USERS
+#############################################################################################
 
 def authenticate_current_user(raise_exception=True):
     current_app.logger.debug("authenticating user {} (admin:{})".format(
@@ -295,8 +296,11 @@ def verify_admin_request_decorator(api_call):
     return _verify_admin_request
 
 
-########
-## PROJECT
+
+
+#############################################################################################
+### PROJECT
+#############################################################################################
 
 def load_project_record(project_id, raise_exception=True, db_session=None, authenticate=False):
     if not db_session:
@@ -663,8 +667,11 @@ def load_zip_of_prj_files(project_ids):
     return dirname, zip_fname
 
 
-########
-## SPREADSHEETS
+
+
+#############################################################################################
+### SPREADSHEETS
+#############################################################################################
 
 def load_data_spreadsheet_binary(project_id):
     """
@@ -704,18 +711,10 @@ def resolve_project(project):
     print(">> Resolve project")
     is_change = False
 
-    for attr in ['progsets', 'parsets', 'optims']:
-        structlist = getattr(project, attr)
-        for key, struct in structlist.iteritems():
-            if not hasattr(struct, 'Link'):
-                struct.projectref = op.Link(project)
-                print(">>> Check %s.link %s %s" % (attr, key, struct.projectref))
-                is_change = True
+    # Restore links always, don't worry about changes
+    project.restorelinks() 
 
-    for parset_key, parset in project.parsets.items():
-        print(">>> Check parset.link %s %s" % (parset_key, parset.projectref))
-        parset.projectref = op.Link(project)
-
+    # Handle scenarios
     del_scenario_keys = []
     for scenario_key, scenario in project.scens.items():
         if type(scenario.parsetname) is int:
@@ -808,8 +807,11 @@ def resolve_project(project):
     return is_change
 
 
-########
-# RESULT
+
+
+#############################################################################################
+### RESULTS
+#############################################################################################
 
 def load_result(
         project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
@@ -961,8 +963,10 @@ def load_result_mpld3_graphs(result_id, which):
     return make_mpld3_graph_dict(result, which)
 
 
-########
-## PARSET
+
+#############################################################################################
+### PARSETS
+#############################################################################################
 
 def copy_parset(project_id, parset_id, new_parset_name):
 
@@ -1101,8 +1105,10 @@ def load_parset_graphs(
     }
 
 
-########
-## PROGRAMS
+
+#############################################################################################
+### PROGRAMS
+#############################################################################################
 
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     """
@@ -1292,8 +1298,9 @@ def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
     return load_reconcile_summary(project_id, progset_id, parset_id, year)
 
 
-########
-## SCENARIOS
+#############################################################################################
+### SCENARIOS
+#############################################################################################
 
 def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=None):
     result = load_result(project_id, None, "scenarios", which)
@@ -1362,8 +1369,10 @@ def load_startval_for_parameter(project_id, parset_id, par_short, pop, year):
     return parse.get_startval_for_parameter(project, parset_id, par_short, pop, year)
 
 
-########
-## OPTIMIZATION
+
+#############################################################################################
+### OPTIMIZATIONS
+#############################################################################################
 
 def load_optimization_summaries(project_id):
     project = load_and_resolve_project(project_id)
@@ -1418,8 +1427,9 @@ def load_optimization_graphs(project_id, optimization_id, which):
         return make_mpld3_graph_dict(result, which)
 
 
-########
-## PORTFOLIO
+#############################################################################################
+### PORTFOLIO
+#############################################################################################
 
 def create_portfolio(name, db_session=None):
     """
@@ -1431,8 +1441,7 @@ def create_portfolio(name, db_session=None):
     print("> Create portfolio %s" % name)
     portfolio = op.Portfolio()
     portfolio.name = name
-    record = PyObjectDb(
-        user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
+    record = PyObjectDb(user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
     # TODO: something about dates
     record.save_obj(portfolio)
     db_session.add(record)
