@@ -1462,8 +1462,9 @@ def create_portfolio(name, db_session=None):
 
     if db_session is None:
         db_session = db.session
-    print("> Create portfolio %s" % name)
+    print("> Create portfolio %s with default objectives" % name)
     portfolio = op.Portfolio()
+    portfolio.objectives = op.defaultobjectives()
     portfolio.name = name
     record = PyObjectDb(user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
     record.save_obj(portfolio)
