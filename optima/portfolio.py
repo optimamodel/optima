@@ -595,14 +595,13 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
     
 
 # ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
-def makegeoprojects(project=None, spreadsheetpath=None, destination=None, verbose=2):
+def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave=True, verbose=2):
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
     
     ## 1. Get results and defaults
     if project is None or spreadsheetpath is None:
         errormsg = 'makegeoprojects requires a project and a spreadsheet path as inputs'
         raise OptimaException(errormsg)
-    if destination is None: destination = '.'+os.sep # Use current folder
     try:    results = project.parset().getresults()
     except: results = project.runsim()
     
@@ -612,12 +611,14 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, verbos
     wsprev = workbook.sheet_by_name('Population prevalence')
     
     ## 3. Get a destination folder
-    try:
-        if not os.path.exists(destination):
-            os.makedirs(destination)
-    except: 
-        errormsg = 'Was unable to make target directory "%s"' % destination
-        raise OptimaException(errormsg)
+    if dosave:
+        if destination is None: destination = '.'+os.sep # Use current folder
+        try:
+            if not os.path.exists(destination):
+                os.makedirs(destination)
+        except: 
+            errormsg = 'Was unable to make target directory "%s"' % destination
+            raise OptimaException(errormsg)
     
     ## 4. Read the spreadsheet
     poplist = []
@@ -740,9 +741,11 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, verbos
         projlist.append(newproject)
     project.runsim(project.parsets[-1].name)
     
-    ## 6. Save each project file into the directory
-    for subproject in projlist:
-        subproject.filename = destination+os.sep+subproject.name+'.prj'
-        subproject.save()
-        
-    return None
+    ## 6. Save each project file into the directory, or return the created projects
+    if dosave:
+        for subproject in projlist:
+            subproject.filename = destination+os.sep+subproject.name+'.prj'
+            subproject.save()
+        return None
+    else:
+        return projlist

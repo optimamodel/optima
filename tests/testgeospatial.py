@@ -9,20 +9,16 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016feb05
+Version: 2017mar19
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-#'spreadsheet',
-#'forcerefresh',
-#'makeprojects',
-#'makeportfolio',
-#'generateBOCs',
-'geogui',
-#'runbackend'
+'makespreadsheet',
+'runGA',
+#'geogui',
 ]
 
 dosave = False # Whether or not to keep generated spreadsheets
@@ -58,79 +54,46 @@ T = tic()
 
 
 ## Make spreadsheet test
-if 'spreadsheet' in tests:
-    from optima import geospatial as geo, demo
+if 'makespreadsheet' in tests:
+    t = tic()
+    print('Running makeprojects...')
+    from optima import makegeospreadsheet, defaultproject
     from os import remove
-    spreadsheetpath = 'best-ga-division-template.xlsx'
-    P = demo(0)
-    geo.makesheet(P, spreadsheetpath=spreadsheetpath, copies=2, refyear=2015)
+    spreadsheetpath = 'simple-ga-division-template.xlsx'
+    P = defaultproject('simple')
+    makegeospreadsheet(project=P, spreadsheetpath=spreadsheetpath, copies=2, refyear=2015)
     if not dosave: remove(spreadsheetpath)
+    done(t)
    
 
 
 ## Make projects test
-if 'makeprojects' in tests:
+if 'runGA' in tests:
     t = tic()
-    print('Running makeprojects...')
-    from optima import saveobj, defaults
-    import os
-
-    projtypes = ['generalized', 'concentrated']
-    filenames = ['geotestproj1.prj','geotestproj2.prj']
+    print('Running GA...')
+    from optima import makegeoprojects, defaultproject, defaultobjectives, Portfolio
+    from os import remove
     
-    for i in range(len(projtypes)):
-        thisfile = filenames[i]
-        refreshtest = 'forcerefresh' in tests
-        notexiststest = not(os.path.exists(thisfile))
-        if refreshtest or notexiststest:
-            print('You are rerunning "%s" because forcerefresh=%s and notexists=%s' % (thisfile, refreshtest, notexiststest)) 
-            thisproj = defaults.defaultproject(projtypes[i], name='District %i'%(i+1))
-            thisproj.genBOC(maxtime=3)
-            saveobj(thisfile, thisproj)
+    # Definitions
+    spreadsheetpath = 'subdivision.xlsx'
+    outputpath = 'simple-ga-results.xlsx'
     
+    # Make projects
+    P = defaultproject('simple')
+    projlist = makegeoprojects(project=P, spreadsheetpath=spreadsheetpath, dosave=False)
+    
+    # Make portfolio and run
+    F = Portfolio(projects=projlist, objectives=defaultobjectives())
+    F.objectives['end'] = 2022 # This speeds it up by only simulating 5 years
+    F.genBOCs(maxtime=2, mc=0) # Generate BOCs
+    F.runGA(maxtime=2, mc=0) # Run GA
+    F.export(filename=outputpath) # Export
+    
+    # Tidy
+    if not dosave: remove(outputpath)
+    if doplot: F.plotBOCs()
     done(t)
 
-
-
-
-
-
-## Project creation test
-if 'makeportfolio' in tests:
-    t = tic()
-    print('Running make portfolio test...')
-    from optima import Portfolio
-    from optima.defaults import defaultproject
-    
-    P1 = defaultproject('concentrated')
-    P2 = defaultproject('concentrated')
-
-    P1.progsets[0].rmprogram('OST')
-    P2.progsets[0].rmprogram('OST')
-    P2.progsets[0].rmprogram('HTC')
-
-    F = Portfolio(projects=[P1,P2])
-
-    done(t)
-
-
-
-
-## BOC generation test
-if 'generateBOCs' in tests:
-    t = tic()
-
-    print('Running BOC generation test...')
-    from optima import saveobj
-    
-    F.genBOCs(progsetnames=['default','default'], parsetnames=['default','default'], maxtime=3)#,forceregen = True)#, maxtime = 20)
-    F.plotBOCs()
-    
-    print('Saving projects with BOCs...')
-    saveobj(filename1, P1)
-    saveobj(filename2, P2)
-    
-    done(t)
 
 
 
@@ -156,32 +119,6 @@ if 'geogui' in tests and doplot:
     geogui()
     done(t)
 
-
-
-
-if 'runbackend' in tests:
-    print('WARNING, broken since project files no longer in repo')
-    
-    from optima import defaultobjectives
-    from optima.geospatial import makesheet, makeproj, create, addproj, saveport, loadport, rungeo, export, plotgeo
-
-    print('\n\n\nCreating portfolio from subdivision spreadsheet.')
-    makesheet(projectpath='./geo/blantyre.prj', spreadsheetpath='./geo/blantyre-split-blank.xlsx', copies=2, refyear=2017)
-    makeproj(projectpath='./geo/blantyre.prj', spreadsheetpath='./geo/blantyre-split-filled.xlsx', destination='./geo')
-    create(filepaths=['./geo/blantyre-district-1.prj','./geo/blantyre-district-2.prj'])
-    
-    print('\n\n\nCreating portfolio from projects (that already have BOCs).')
-    portfolio = create(filepaths=['./geo/blantyre.prj'])
-    addproj(portfolio=portfolio, filepaths=['./geo/balaka.prj'])   # Use addportfolio argument if not wanting to work with globals.
-    saveport(portfolio=portfolio, filepath='./geo/blantyre-balaka.prt')    # Use portfolio argument if not wanting to work with globals.
-
-    print('\n\n\nRunning geospatial analysis.')
-    gaobjectives = defaultobjectives(verbose=0)
-    gaobjectives['budget'] = 15000000.0 # Reset
-    portfolio = loadport(filepath='./geo/blantyre-balaka.prt')
-    portfolio = rungeo(portfolio=portfolio, objectives=gaobjectives, BOCtime=2, maxtime=10)     # Use portfolio argument if not wanting to work with globals.
-    export(portfolio=portfolio, filepath='./geo/blantyre-balaka-results.xlsx')
-    plotgeo()
 
 
 
