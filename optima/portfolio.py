@@ -3,7 +3,9 @@ from optima import version, defaultobjectives, Project, pchip, getfilelist, batc
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
 from xlsxwriter.utility import xl_rowcol_to_cell as rc
+from xlrd import open_workbook
 import os
+import re
 
 #######################################################################################################
 ## Portfolio class
@@ -588,4 +590,159 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
     workbook.close()    
     printv('Geospatial spreadsheet template saved to "%s".' % spreadsheetpath, 2, verbose)
 
+    return None
+    
+    
+
+# ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
+def makegeoprojects(project=None, spreadsheetpath=None, destination=None, verbose=2):
+    ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
+    
+    ## 1. Get results and defaults
+    if project is None or spreadsheetpath is None:
+        errormsg = 'makegeoprojects requires a project and a spreadsheet path as inputs'
+        raise OptimaException(errormsg)
+    if destination is None: destination = '.'+os.sep # Use current folder
+    try:    results = project.parset().getresults()
+    except: results = project.runsim()
+    
+    ## 2. Load a spreadsheet file
+    workbook = open_workbook(spreadsheetpath)
+    wspopsize = workbook.sheet_by_name('Population sizes')
+    wsprev = workbook.sheet_by_name('Population prevalence')
+    
+    ## 3. Get a destination folder
+    try:
+        if not os.path.exists(destination):
+            os.makedirs(destination)
+    except: 
+        errormsg = 'Was unable to make target directory "%s"' % destination
+        raise OptimaException(errormsg)
+    
+    ## 4. Read the spreadsheet
+    poplist = []
+    for colindex in range(1,wspopsize.ncols-3): # Skip first column and last 3
+        poplist.append(wspopsize.cell_value(0, colindex))
+    npops = len(poplist)
+    
+    districtlist = []
+    popratio = odict()
+    prevfactors = odict()
+    plhivratio = odict()
+    isdistricts = True
+    for rowindex in xrange(wspopsize.nrows):
+        if wspopsize.cell_value(rowindex, 0) == '---':
+            isdistricts = False
+        if isdistricts and rowindex > 0:
+            districtlist.append(wspopsize.cell_value(rowindex, 0))
+            
+            # 'Actual' total ratios.
+            if rowindex == 1:
+                popratio['tot'] = []
+                prevfactors['tot'] = []
+                plhivratio['tot'] = []
+            popratio['tot'].append(wspopsize.cell_value(rowindex, npops+3))
+            prevfactors['tot'].append(wsprev.cell_value(rowindex, npops+3))
+            plhivratio['tot'].append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
+            
+            # Population group ratios.
+            for popid in xrange(npops):
+                popname = poplist[popid]
+                colindex = popid + 1
+                if rowindex == 1:
+                    popratio[popname] = []
+                    prevfactors[popname] = []
+                    plhivratio[popname] = []
+                popratio[popname].append(wspopsize.cell_value(rowindex, colindex))
+                prevfactors[popname].append(wsprev.cell_value(rowindex, colindex))
+                plhivratio[popname].append(wspopsize.cell_value(rowindex, colindex)*wsprev.cell_value(rowindex, colindex))
+    print('Districts...')
+    print districtlist
+    ndistricts = len(districtlist)
+    
+    # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.
+    refind = -1
+    try:
+        refyear = int(re.sub("[^0-9]", "", wspopsize.cell_value(ndistricts+2, 0)))         
+        if refyear in [int(x) for x in project.data['years']]:
+            refind = [int(x) for x in project.data['years']].index(refyear)
+            print('Reference year %i found in data year range with index %i.' % (refyear,refind))
+        else:
+            print('Reference year %i not found in data year range %i-%i.' % (refyear,int(project.data['years'][0]),int(project.data['years'][-1])))
+    except:
+        OptimaException('Warning: Cannot determine calibration reference year for this spreadsheet.')
+    
+    # Important note. Calibration value will be used as the denominator! So ratios can sum to be different from 1.
+    # This allows for 'incomplete' subdivisions, e.g. a country into 2 of 3 states.
+    popdenom = wspopsize.cell_value(ndistricts+2, npops+3)
+    popratio['tot'] = [x/popdenom for x in popratio['tot']]
+    prevdenom = wsprev.cell_value(ndistricts+2, npops+3)
+    prevfactors['tot'] = [x/prevdenom for x in prevfactors['tot']]
+    plhivdenom = wspopsize.cell_value(ndistricts+2, npops+3)*wsprev.cell_value(ndistricts+2, npops+3)
+    plhivratio['tot'] = [x/plhivdenom for x in plhivratio['tot']]        
+    for popid in xrange(npops):
+        colindex = popid + 1
+        popname = poplist[popid]
+        popdenom = wspopsize.cell_value(ndistricts+2, colindex)
+        popratio[popname] = [x/popdenom for x in popratio[popname]]
+        prevdenom = wsprev.cell_value(ndistricts+2, colindex)
+        prevfactors[popname] = [x/prevdenom for x in prevfactors[popname]]
+        plhivdenom = wspopsize.cell_value(ndistricts+2, colindex)*wsprev.cell_value(ndistricts+2, colindex)
+        plhivratio[popname] = [x/plhivdenom for x in plhivratio[popname]]
+
+    printv('Population ratio...', 4, verbose)
+    printv(popratio, 4, verbose)                     # Proportions of national population split between districts.
+    printv('Prevalence multiples...', 4, verbose)
+    printv(prevfactors, 4, verbose)                   # Factors by which to multiply prevalence in a district.        
+    printv('PLHIV ratio...', 4, verbose)
+    printv(plhivratio, 4, verbose)                    # Proportions of PLHIV split between districts.
+    
+    ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
+    projlist = []
+    for c,districtname in enumerate(districtlist):
+        newproject = dcp(project)
+        newproject.name = districtname
+        
+        # Scale data        
+        for popid in xrange(npops):
+            popname = poplist[popid]
+            for x in newproject.data['popsize']:
+                x[popid] = [z*popratio[popname][c] for z in x[popid]]
+            for x in newproject.data['hivprev']:
+                x[popid] = [z*prevfactors[popname][c] for z in x[popid]]
+        newproject.data['numtx'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numtx']]
+        newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
+        newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
+        
+        # Scale calibration
+        for popid in xrange(npops):
+            popname = poplist[popid]
+            newproject.parsets[-1].pars['popsize'].i[popname] *= popratio[popname][c]
+            newproject.parsets[-1].pars['initprev'].y[popname] *= prevfactors[popname][c]
+            newproject.parsets[-1].pars['numcirc'].y[popname] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numtx'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numpmtct'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numost'].y['tot'] *= plhivratio['tot'][c]
+        
+        # Scale programs
+        if len(project.progsets) > 0:
+            for progid in newproject.progsets[-1].programs:
+                program = newproject.progsets[-1].programs[progid]
+                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
+                if program.costcovdata.get('coverage') is not None:
+                    if not program.costcovdata['coverage'] == [None]:
+                        program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
+            
+        datayears = len(newproject.data['years'])
+        newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in results.main['prev'].pops]
+#       newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
+        newproject.runsim(newproject.parsets[-1].name) # Re-simulate autofit curves, but for old data.
+        projlist.append(newproject)
+    project.runsim(project.parsets[-1].name)
+    
+    ## 6. Save each project file into the directory
+    for subproject in projlist:
+        subproject.filename = destination+os.sep+subproject.name+'.prj'
+        subproject.save()
+        
     return None

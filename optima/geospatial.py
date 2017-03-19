@@ -10,9 +10,7 @@ from optima import Project, Portfolio, loadproj, loadobj, saveobj, odict, defaul
 from PyQt4 import QtGui
 from pylab import figure, close, array
 from time import time
-from xlrd import open_workbook
 import os
-import re
 
 
 global geoguiwindow, globalportfolio, globalobjectives
@@ -35,9 +33,9 @@ portext = '.prt'
 
 
 
-def _loadproj(filepath=None, usegui=True):
+def _loadproj(filepath=None):
     ''' Helper function to load a project, since used more than once '''
-    if filepath == None and usegui:
+    if filepath == None:
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+projext)
     project = None
     if filepath:
@@ -60,6 +58,7 @@ def resetbudget():
     return None
 
 def warning(message, usegui=True):
+    ''' usegui kwarg is so this can be used in a GUI and non-GUI context '''
     global geoguiwindow
     if usegui:
         QtGui.QMessageBox.warning(geoguiwindow, 'Message', message)
@@ -69,11 +68,9 @@ def warning(message, usegui=True):
     
 def gui_makesheet():
     ''' Create a geospatial spreadsheet template based on a project file '''
-    ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
-    ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
     
     ## 1. Load a project file
-    project = _loadproj(projectpath=None, usegui=True) # No, it's a project path, load it
+    project = _loadproj(projectpath=None) # No, it's a project path, load it
     if project is None: 
         raise OptimaException('No project loaded.')
     
@@ -96,204 +93,26 @@ def gui_makesheet():
     # 4. Generate and save spreadsheet
     try:
         makegeospreadsheet(project=project, spreadsheetpath=spreadsheetpath, copies=copies, refyear=refyear, verbose=2)
-        warning('Multi-project template saved to "%s".' % spreadsheetpath, usegui=True)
+        warning('Multi-project template saved to "%s".' % spreadsheetpath)
     except:
-        warning('Error: Template not saved due to a workbook error!', usegui=True)
+        warning('Error: Template not saved due to a workbook error!')
 
     return None
+    
     
 def gui_makeproj():
-    ''' Wrapper to create a series of project files based on a seed file and a geospatial spreadsheet '''
-    makeproj(usegui=True)
-    
-    
-# ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
-def makeproj(projectpath=None, spreadsheetpath=None, destination=None, checkplots=False, usegui=False, verbose=2):
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
-    ''' checkplots - To check if calibrations are rescaled nicely. '''
-    
-    ## 1. Load a project file -- WARNING, could be combined with the above!
-    project = _loadproj(projectpath, usegui)
-    if project is None:
-        raise OptimaException('No project loaded.')
-    try: results = project.parsets[-1].getresults()
-    except: results = project.runsim(name=project.parsets[-1].name)
-    
-    ## 2. Load a spreadsheet file
-    if usegui:
-        spreadsheetpath = QtGui.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
-    print('Spreadsheet path: %s' % spreadsheetpath)
-    
-    workbook = open_workbook(spreadsheetpath)
-    wspopsize = workbook.sheet_by_name('Population sizes')
-    wsprev = workbook.sheet_by_name('Population prevalence')
-    
-    ## 3. Get a destination folder
-    if usegui:
-        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
-    print destination
-    
-    # Create it if it doesn't exist
-    try:
-        if not os.path.exists(destination):
-            os.makedirs(destination)
-    except: print('Was unable to make target directory "%s"' % destination)
-    
-    ## 4. Read the spreadsheet
-    poplist = []
-    for colindex in range(1,wspopsize.ncols-3): # Skip first column and last 3
-        poplist.append(wspopsize.cell_value(0, colindex))
-    npops = len(poplist)
-    
-    districtlist = []
-    popratio = odict()
-    prevfactors = odict()
-    plhivratio = odict()
-    isdistricts = True
-    for rowindex in xrange(wspopsize.nrows):
-        if wspopsize.cell_value(rowindex, 0) == '---':
-            isdistricts = False
-        if isdistricts and rowindex > 0:
-            districtlist.append(wspopsize.cell_value(rowindex, 0))
-            
-            # 'Actual' total ratios.
-            if rowindex == 1:
-                popratio['tot'] = []
-                prevfactors['tot'] = []
-                plhivratio['tot'] = []
-            popratio['tot'].append(wspopsize.cell_value(rowindex, npops+3))
-            prevfactors['tot'].append(wsprev.cell_value(rowindex, npops+3))
-            plhivratio['tot'].append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
-            
-            # Population group ratios.
-            for popid in xrange(npops):
-                popname = poplist[popid]
-                colindex = popid + 1
-                if rowindex == 1:
-                    popratio[popname] = []
-                    prevfactors[popname] = []
-                    plhivratio[popname] = []
-                popratio[popname].append(wspopsize.cell_value(rowindex, colindex))
-                prevfactors[popname].append(wsprev.cell_value(rowindex, colindex))
-                plhivratio[popname].append(wspopsize.cell_value(rowindex, colindex)*wsprev.cell_value(rowindex, colindex))
-    print('Districts...')
-    print districtlist
-    ndistricts = len(districtlist)
-    
-    # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.
-    refind = -1
-    try:
-        refyear = int(re.sub("[^0-9]", "", wspopsize.cell_value(ndistricts+2, 0)))         
-        if refyear in [int(x) for x in project.data['years']]:
-            refind = [int(x) for x in project.data['years']].index(refyear)
-            print('Reference year %i found in data year range with index %i.' % (refyear,refind))
-        else:
-            print('Reference year %i not found in data year range %i-%i.' % (refyear,int(project.data['years'][0]),int(project.data['years'][-1])))
-    except:
-        OptimaException('Warning: Cannot determine calibration reference year for this spreadsheet.')
-    
-    # Important note. Calibration value will be used as the denominator! So ratios can sum to be different from 1.
-    # This allows for 'incomplete' subdivisions, e.g. a country into 2 of 3 states.
-    popdenom = wspopsize.cell_value(ndistricts+2, npops+3)
-    popratio['tot'] = [x/popdenom for x in popratio['tot']]
-    prevdenom = wsprev.cell_value(ndistricts+2, npops+3)
-    prevfactors['tot'] = [x/prevdenom for x in prevfactors['tot']]
-    plhivdenom = wspopsize.cell_value(ndistricts+2, npops+3)*wsprev.cell_value(ndistricts+2, npops+3)
-    plhivratio['tot'] = [x/plhivdenom for x in plhivratio['tot']]        
-    for popid in xrange(npops):
-        colindex = popid + 1
-        popname = poplist[popid]
-        popdenom = wspopsize.cell_value(ndistricts+2, colindex)
-        popratio[popname] = [x/popdenom for x in popratio[popname]]
-        prevdenom = wsprev.cell_value(ndistricts+2, colindex)
-        prevfactors[popname] = [x/prevdenom for x in prevfactors[popname]]
-        plhivdenom = wspopsize.cell_value(ndistricts+2, colindex)*wsprev.cell_value(ndistricts+2, colindex)
-        plhivratio[popname] = [x/plhivdenom for x in plhivratio[popname]]
-
-    printv('Population ratio...', 4, verbose)
-    printv(popratio, 4, verbose)                     # Proportions of national population split between districts.
-    printv('Prevalence multiples...', 4, verbose)
-    printv(prevfactors, 4, verbose)                   # Factors by which to multiply prevalence in a district.        
-    printv('PLHIV ratio...', 4, verbose)
-    printv(plhivratio, 4, verbose)                    # Proportions of PLHIV split between districts.
-    
-    ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
-    projlist = []
-    for c,districtname in enumerate(districtlist):
-        newproject = dcp(project)
-        newproject.name = districtname
-        
-        ### ------------------------- WHERE DATA AND PARSET MUST BE RESCALED (AND PROGSET EVENTUALLY)
-        # NOTE: Scaling assumptions for popsize & prev are POPGROUP-dependent, while everything else is TOT-dependent!                
-        
-        # Scale data.            
-        for popid in xrange(npops):
-            popname = poplist[popid]
-            for x in newproject.data['popsize']:
-                x[popid] = [z*popratio[popname][c] for z in x[popid]]
-            for x in newproject.data['hivprev']:
-                x[popid] = [z*prevfactors[popname][c] for z in x[popid]]
-        newproject.data['numtx'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numtx']]
-        newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
-        newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
-        
-        # Scale calibration.
-        for popid in xrange(npops):
-            popname = poplist[popid]
-            newproject.parsets[-1].pars['popsize'].i[popname] *= popratio[popname][c]
-            newproject.parsets[-1].pars['initprev'].y[popname] *= prevfactors[popname][c]
-            newproject.parsets[-1].pars['numcirc'].y[popname] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numtx'].y['tot'] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numpmtct'].y['tot'] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numost'].y['tot'] *= plhivratio['tot'][c]
-        
-        # Scale programs.
-        if len(project.progsets) > 0:
-            for progid in newproject.progsets[-1].programs:
-                program = newproject.progsets[-1].programs[progid]
-                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
-                if program.costcovdata.get('coverage') is not None:
-                    if not program.costcovdata['coverage'] == [None]:
-                        program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
-            
-        ### -----------------------------------------------------------------------------------------
-
-#            # Don't forget to place a data point corresponding to pop/prev from spreadsheets!
-#            # NOTE: Currently doesn't work because some parts of the the data structure may have 1 element for assumptions only!           
-#            if not refind == -1:
-#                for popid in xrange(npops):
-#                    newproject.data['popsize'][bestindex][popid][refind] = wspopsize.cell_value(c+1, popid+1)
-#                    newproject.data['hivprev'][bestindex][popid][refind] = wsprev.cell_value(c+1, popid+1)
-#            else:
-#                print('Absolute values in spreadsheet were for non-data-period reference year %i. Thus not used for autofit.' % refyear)
-        
-#            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
-#            tempprev = dcp(newproject.data['hivprev'])
-        datayears = len(newproject.data['years'])
-#            psetname = newproject.parsets[-1].name
-        # WARNING: Converting results to data assumes that results is already in yearly-dt form.
-        newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in results.main['prev'].pops]
-#            newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
-#            
-#            newproject.data['hivprev'] = tempprev    
-#            
-        newproject.runsim(newproject.parsets[-1].name) # Re-simulate autofit curves, but for old data.
-        projlist.append(newproject)
-    project.runsim(project.parsets[-1].name)
-    
-    ## 6. Save each project file into the directory
-    for subproject in projlist:
-        saveobj(destination+os.sep+subproject.name+'.prj', subproject)
-        
+    project = _loadproj(projectpath=None)
+    spreadsheetpath = QtGui.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+    destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
+    makegeoprojects(project=project, spreadsheetpath=spreadsheetpath, destination=destination)
+    warning('Created projects from spreadsheet')
     return None
 
-def gui_create():
-    ''' Wrapper to create a portfolio by selecting a list of projects; silently skip files that fail '''
-    create(usegui=True)
 
-def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
+def gui_create(filepaths=None, portfolio=None, doadd=False):
     ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-    if usegui: global globalportfolio, projectslistbox, objectiveinputs
+    global globalportfolio, projectslistbox, objectiveinputs
     
     projectpaths = []
     projectslist = []
@@ -301,12 +120,10 @@ def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
         globalportfolio = Portfolio()
     if not doadd:
         globalportfolio = Portfolio()
-        if usegui:
-            projectslistbox.clear()
+        projectslistbox.clear()
     if doadd and portfolio != None:
         globalportfolio = portfolio
-    if usegui:
-        filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
+    filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
     if filepaths:
         if type(filepaths)==str: filepaths = [filepaths] # Convert to list
         for filepath in filepaths:
@@ -319,68 +136,45 @@ def create(filepaths=None, portfolio=None, doadd=False, usegui=False):
                     projectpaths.append(filepath)
                     print('Project file "%s" loaded' % filepath)
                 else: print('File "%s" is not an Optima project file; moving on...' % filepath)
-        if usegui:
-            projectslistbox.addItems(projectpaths)
+        projectslistbox.addItems(projectpaths)
         globalportfolio.addprojects(projectslist)
-        if usegui:
-            resetbudget() # And reset the budget
-    if usegui:
-        return None
-    else:
-        return dcp(globalportfolio)
-
-
-def gui_addproj():
-    ''' Wrappeer to add a project -- same as creating a portfolio except don't overwrite '''
-    addproj(usegui=True)
-
-def addproj(portfolio=None, filepaths=None, usegui=False):
-    ''' Add a project -- same as creating a portfolio except don't overwrite '''
-    p = create(filepaths=filepaths, doadd=True, portfolio=portfolio, usegui=usegui)
-    if usegui:
         resetbudget() # And reset the budget
+    return None
+
+
+def gui_addproj(portfolio=None, filepaths=None):
+    ''' Add a project -- same as creating a portfolio except don't overwrite '''
+    p = gui_create(filepaths=filepaths, doadd=True, portfolio=portfolio)
+    resetbudget() # And reset the budget
     return p
 
 
-def gui_loadport():
-    ''' GUI wrapper to load an existing portfolio '''
-    loadport(usegui=True)
-    
-def loadport(filepath=None, usegui=False):
+def gui_loadport(filepath=None):
     ''' Load an existing portfolio '''
-    if usegui: global globalportfolio, projectslistbox
-    if usegui:
-        filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
+    global globalportfolio, projectslistbox
+    filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
     tmpport = None
     if filepath:
         try: tmpport = loadobj(filepath, verbose=0)
         except Exception as E: 
-            warning('Could not load file "%s" because "%s"' % (filepath, E.message), usegui)
+            warning('Could not load file "%s" because "%s"' % (filepath, E.message))
             return None
         if tmpport is not None: 
             if type(tmpport)==Portfolio:
                 globalportfolio = tmpport
-                if usegui:
-                    projectslistbox.clear()
-                    projectslistbox.addItems([proj.name for proj in globalportfolio.projects.values()])
+                projectslistbox.clear()
+                projectslistbox.addItems([proj.name for proj in globalportfolio.projects.values()])
                 print('Portfolio file "%s" loaded' % filepath)
             else: print('File "%s" is not an Optima portfolio file' % filepath)
     else:
-        warning('File path not provided. Portfolio not loaded.', usegui)
-    if usegui:
-        resetbudget() # And reset the budget
-        return None
-    else:
-        return dcp(globalportfolio)
+        warning('File path not provided. Portfolio not loaded.')
+    resetbudget() # And reset the budget
+    return None
 
 
-def gui_rungeo():
-    ''' Wrapper to actually run geospatial analysis!!! '''
-    rungeo(usegui=True)
-
-def rungeo(portfolio=None, objectives=None, maxtime=30, mc=0, batch=True, usegui=False, verbose=2, die=False, strict=True):
+def gui_rungeo(portfolio=None, objectives=None, maxtime=30, mc=0, batch=True, verbose=2, die=False, strict=True):
     ''' Actually run geospatial analysis!!! '''
-    if usegui: global globalportfolio, globalobjectives, objectiveinputs
+    global globalportfolio, globalobjectives, objectiveinputs
     starttime = time()
     if portfolio is not None:
         globalportfolio = portfolio
@@ -389,54 +183,41 @@ def rungeo(portfolio=None, objectives=None, maxtime=30, mc=0, batch=True, usegui
     if globalobjectives is None:
         globalobjectives = defaultobjectives()
         globalobjectives['budget'] = 0.0 # Reset
-    if usegui:
-        for key in objectiveinputs.keys():
-            globalobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
-        globalobjectives['budget'] *= budgetfactor # Convert back to internal representation
+    for key in objectiveinputs.keys():
+        globalobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
+    globalobjectives['budget'] *= budgetfactor # Convert back to internal representation
     BOCobjectives = dcp(globalobjectives)
     try:
         globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=maxtime, mc=mc)
         globalportfolio.runGA(objectives=globalobjectives, maxtime=maxtime, reoptimize=True, mc=mc, batch=batch, verbose=verbose, die=die, strict=strict)
     except Exception as E:
         warning('Geospatial analysis failed: %s' % E.__repr__())
-    warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime), usegui)
-    if usegui: 
-        return None
-    else:
-        return dcp(globalportfolio)
+    warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
+    return None
     
-def gui_plotgeo():
-    ''' Wrapper to actually plot geospatial analysis!!! '''
-    plotgeo(usegui=True)
 
-def plotgeo(usegui=False):
+def gui_plotgeo():
     ''' Actually plot geospatial analysis!!! '''
     global globalportfolio
     if globalportfolio is None: 
-        warning('Please load a portfolio first', usegui)
+        warning('Please load a portfolio first')
         return None
-
     globalportfolio.plotBOCs(deriv=False)
-            
     return None
 
-def gui_export():
-    ''' Wrapper to save the current results to Excel file '''
-    export(usegui=True)
 
-def export(portfolio=None, filepath=None, usegui=False):
+def gui_export(portfolio=None, filepath=None):
     ''' Save the current results to Excel file '''
-    if usegui: global globalportfolio
+    global globalportfolio
     
     if portfolio is not None:
         globalportfolio = portfolio
         if filepath is None:
             filepath = portfolio.name+'.prt'
-    if type(globalportfolio)!=Portfolio and usegui: warning('Warning, must load portfolio first!')
+    if type(globalportfolio)!=Portfolio: warning('Warning, must load portfolio first!')
     
     # 2. Create a new file dialog to save this spreadsheet
-    if usegui:
-        filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
+    filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
     
     # 3. Generate spreadsheet according to David's template to store these data
     if filepath:
@@ -444,24 +225,19 @@ def export(portfolio=None, filepath=None, usegui=False):
             globalportfolio.export(filename=filepath)
         except Exception as E:
             warning('Results export failed: %s' % E.__repr__())
-        warning('Results saved to "%s".' % filepath, usegui)
+        warning('Results saved to "%s".' % filepath)
     else:
-        warning('Filepath not supplied: %s' % filepath, usegui)
+        warning('Filepath not supplied: %s' % filepath)
     
     return None
     
 
-def gui_saveport():
-    ''' Wrapper to save the current portfolio '''
-    saveport(usegui=True)
-
-def saveport(portfolio = None, filepath = None, usegui=False):
+def gui_saveport(portfolio = None, filepath = None):
     ''' Save the current portfolio '''
-    if usegui: global globalportfolio
+    global globalportfolio
     if portfolio != None:
         globalportfolio = portfolio
-    if usegui:
-        filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+portext)
+    filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+portext)
     saveobj(filepath, globalportfolio)
     return None
 
