@@ -476,12 +476,13 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
-    origtotalbudget = dcp(optim.objectives['budget'])
-    if origbudget != None:
+    origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
+    if origbudget is not None:
         origbudget = dcp(origbudget)
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
+    
     optimizable = progset.optimizable()
     optiminds = findinds(optimizable)
     optimkeys = [key for k,key in enumerate(origbudget.keys()) if optimizable[k]]
@@ -490,6 +491,14 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     noptimprogs = len(budgetvec) # Number of optimizable programs
     xmin = zeros(noptimprogs)
     if label is None: label = ''
+    
+    print('debugging here.....')
+    print origbudget
+    print origtotalbudget
+    print budgetvec
+    print optim.objectives
+    print optim.constraints
+    print('done debugging')
     
     # Calculate the initial people distribution
     results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
@@ -532,7 +541,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     for key,exbudget in extremebudgets.items():
         if key=='Current': 
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
-            args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the
+            args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
             doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
         else:
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)

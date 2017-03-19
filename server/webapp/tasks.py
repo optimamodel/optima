@@ -352,6 +352,7 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
             print(">> maxtime = %f" % maxtime)
             parse.print_odict("objectives", objectives)
             parse.print_odict("constraints", constraints)
+            parse.print_odict("defaultbudget", project.progsets[optim.progsetname].getdefaultbudget())
             result = project.optimize(
                 name=optim.name,
                 parsetname=optim.parsetname,
