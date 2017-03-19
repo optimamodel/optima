@@ -68,6 +68,10 @@ def templatepath(filename):
     return result
 
 
+#############################################################################################
+### USERS
+#############################################################################################
+
 def upload_dir_user(dirpath, user_id=None):
     """
     Returns a unique directory on the server for the user's files
@@ -97,10 +101,6 @@ def upload_dir_user(dirpath, user_id=None):
 
     return dirpath
 
-
-#############################################################################################
-### USERS
-#############################################################################################
 
 def authenticate_current_user(raise_exception=True):
     current_app.logger.debug("authenticating user {} (admin:{})".format(
@@ -668,40 +668,6 @@ def load_zip_of_prj_files(project_ids):
 
 
 
-
-#############################################################################################
-### SPREADSHEETS
-#############################################################################################
-
-def load_data_spreadsheet_binary(project_id):
-    """
-    Returns (full_filename, binary_string) of the previously downloaded spreadhseet
-    """
-    data_record = ProjectDataDb.query.get(project_id)
-    if data_record is not None:
-        binary = data_record.meta
-        if len(binary.meta) > 0:
-            project = load_project(project_id)
-            server_fname = secure_filename('{}.xlsx'.format(project.name))
-            return server_fname, binary
-    return None, None
-
-
-def load_template_data_spreadsheet(project_id):
-    """
-    Returns (dirname, basename) of the the template data spreadsheet
-    """
-    project = load_project(project_id)
-    fname = secure_filename('{}.xlsx'.format(project.name))
-    server_fname = templatepath(fname)
-    op.makespreadsheet(
-        server_fname,
-        pops=parse.get_populations_from_project(project),
-        datastart=int(project.data["years"][0]),
-        dataend=int(project.data["years"][-1]))
-    return upload_dir_user(TEMPLATEDIR), fname
-
-
 def resolve_project(project):
     """
     Returns boolean to whether any changes needed to be made to the project.
@@ -805,6 +771,63 @@ def resolve_project(project):
     is_change = is_change or is_delete_result
 
     return is_change
+
+
+
+#############################################################################################
+### SPREADSHEETS
+#############################################################################################
+
+def load_data_spreadsheet_binary(project_id):
+    """
+    Returns (full_filename, binary_string) of the previously downloaded spreadhseet
+    """
+    data_record = ProjectDataDb.query.get(project_id)
+    if data_record is not None:
+        binary = data_record.meta
+        if len(binary.meta) > 0:
+            project = load_project(project_id)
+            server_fname = secure_filename('{}.xlsx'.format(project.name))
+            return server_fname, binary
+    return None, None
+
+
+def load_template_data_spreadsheet(project_id):
+    """
+    Returns (dirname, basename) of the the template data spreadsheet
+    """
+    project = load_project(project_id)
+    fname = secure_filename('{}.xlsx'.format(project.name))
+    server_fname = templatepath(fname)
+    op.makespreadsheet(
+        server_fname,
+        pops=parse.get_populations_from_project(project),
+        datastart=int(project.data["years"][0]),
+        dataend=int(project.data["years"][-1]))
+    return upload_dir_user(TEMPLATEDIR), fname
+
+
+def load_data_spreadsheet(project_id, is_template=True):
+    """
+    Returns (dirname, basename) of the the template data spreadsheet
+    """
+    project = load_project(project_id)
+    fname = secure_filename('{}.xlsx'.format(project.name))
+    server_fname = templatepath(fname)
+    data = None
+    datastart = project.settings.start
+    dataend = project.settings.dataend
+    if not is_template:
+        data = project.data
+        datastart = int(project.data["years"][0])
+        dataend = int(project.data["years"][-1])
+    op.makespreadsheet(
+        server_fname,
+        pops=parse.get_populations_from_project(project),
+        datastart=datastart,
+        dataend=dataend,
+        data=data)
+    return upload_dir_user(TEMPLATEDIR), fname
 
 
 
@@ -1107,7 +1130,7 @@ def load_parset_graphs(
 
 
 #############################################################################################
-### PROGRAMS
+### PROGSETS
 #############################################################################################
 
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
@@ -1427,6 +1450,8 @@ def load_optimization_graphs(project_id, optimization_id, which):
         return make_mpld3_graph_dict(result, which)
 
 
+
+
 #############################################################################################
 ### PORTFOLIO
 #############################################################################################
@@ -1442,34 +1467,10 @@ def create_portfolio(name, db_session=None):
     portfolio = op.Portfolio()
     portfolio.name = name
     record = PyObjectDb(user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
-    # TODO: something about dates
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
     return parse.get_portfolio_summary(portfolio)
-
-
-def load_data_spreadsheet(project_id, is_template=True):
-    """
-    Returns (dirname, basename) of the the template data spreadsheet
-    """
-    project = load_project(project_id)
-    fname = secure_filename('{}.xlsx'.format(project.name))
-    server_fname = templatepath(fname)
-    data = None
-    datastart = project.settings.start
-    dataend = project.settings.dataend
-    if not is_template:
-        data = project.data
-        datastart = int(project.data["years"][0])
-        dataend = int(project.data["years"][-1])
-    op.makespreadsheet(
-        server_fname,
-        pops=parse.get_populations_from_project(project),
-        datastart=datastart,
-        dataend=dataend,
-        data=data)
-    return upload_dir_user(TEMPLATEDIR), fname
 
 
 def delete_portfolio(portfolio_id, db_session=None):
