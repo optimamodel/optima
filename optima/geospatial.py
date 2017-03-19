@@ -198,14 +198,9 @@ def gui_plotgeo():
     return None
 
 
-def gui_export(portfolio=None, filepath=None):
+def gui_export():
     ''' Save the current results to Excel file '''
     global globalportfolio
-    
-    if portfolio is not None:
-        globalportfolio = portfolio
-        if filepath is None:
-            filepath = portfolio.name+'.prt'
     if type(globalportfolio)!=Portfolio: warning('Warning, must load portfolio first!')
     
     # 2. Create a new file dialog to save this spreadsheet
