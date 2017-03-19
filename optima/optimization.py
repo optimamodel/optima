@@ -183,6 +183,14 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
     
+    print('hi now were debugging constrainbudget')
+    print 'a'; print origbudget
+    print 'b'; print budgetvec
+    print 'c'; print totalbudget
+    print 'd'; print budgetlims
+    print 'e'; print optiminds    
+    print('done debugging constrainbudget')
+    
     # Handle zeros
     if sum(constrainedbudget[:])==0: constrainedbudget[:] += tolerance
     if sum(budgetvec)==0:            budgetvec[:] += tolerance

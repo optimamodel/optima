@@ -344,21 +344,23 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
         result = None
         try:
             print ">> Start optimization '%s'" % optim.name
-            objectives = server.webapp.parse.normalize_obj(optim.objectives)
-            constraints = server.webapp.parse.normalize_obj(optim.constraints)
-            constraints["max"] = op.odict(constraints["max"])
-            constraints["min"] = op.odict(constraints["min"])
-            constraints["name"] = op.odict(constraints["name"])
+#            objectives = server.webapp.parse.normalize_obj(optim.objectives)
+#            constraints = server.webapp.parse.normalize_obj(optim.constraints)
+#            progkeys = project.progsets[optim.progsetname].programs.keys() # Get correct keys
+#            for progkey in progkeys:
+#            constraints["max"] = op.odict(constraints["max"])
+#            constraints["min"] = op.odict(constraints["min"])
+#            constraints["name"] = op.odict(constraints["name"])
             print(">> maxtime = %f" % maxtime)
-            parse.print_odict("objectives", objectives)
-            parse.print_odict("constraints", constraints)
+#            parse.print_odict("objectives", objectives)
+#            parse.print_odict("constraints", constraints)
             parse.print_odict("defaultbudget", project.progsets[optim.progsetname].getdefaultbudget())
             result = project.optimize(
                 name=optim.name,
                 parsetname=optim.parsetname,
                 progsetname=optim.progsetname,
-                objectives=objectives,
-                constraints=constraints,
+                objectives=optim.objectives,
+                constraints=optim.constraints,
                 maxtime=maxtime,
                 mc=0, # Set this to zero for now while we decide how to handle uncertainties etc.
             )

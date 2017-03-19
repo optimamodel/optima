@@ -1229,7 +1229,7 @@ class odict(OrderedDict):
             for i in range(len(self)):
                 if divider and spaces and hasspaces: output += dividerstr
                 thiskey = str(self.keys()[i]) # Probably don't need to cast to str, but just to be sure
-                thisval = str(self.values()[i])
+                thisval = str(self.values()[i].__repr__()) # __repr__() is slightly more accurate
                 if not(spaces):                    thisval = thisval.replace('\n','\\n') # Replace line breaks with characters
                 if maxlen and len(thisval)>maxlen: thisval = thisval[:maxlen-len(toolong)] + toolong # Trim long entries
                 if thisval.find('\n'): hasspaces = True
