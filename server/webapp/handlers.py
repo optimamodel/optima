@@ -375,6 +375,62 @@ class SavePortfolio(Resource):
 api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
 
 
+
+class PortfolioData(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download .prt file for portfolio')
+    def get(self, portfolio_id):
+        dirname, filename = dataio.download_portfolio(portfolio_id)
+        return helpers.send_from_directory(dirname, filename)
+
+    @swagger.operation(summary='Update existing project with .prj')
+    def post(self, portfolio_id):
+        """
+        post-body: upload-file
+        """
+        uploaded_prt_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        dataio.update_portfolio_from_prt(portfolio_id, uploaded_prt_fname)
+        reply = {
+            'file': os.path.basename(uploaded_prt_fname),
+            'result': 'Project %s is updated' % portfolio_id,
+        }
+        return reply
+
+api.add_resource(PortfolioData, '/api/portfolio/<uuid:portfolio_id>/data')
+
+
+class ProjectFromData(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Upload project with .prj/.xls')
+    def post(self):
+        """
+        file-upload
+        request-form:
+            name: name of project
+            xls: true
+        """
+        project_name = request.form.get('name')
+        is_xls = request.form.get('xls', False)
+        uploaded_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        if is_xls:
+            project_id = dataio.create_project_from_spreadsheet(
+                uploaded_fname, project_name, current_user.id)
+        else:
+            project_id = dataio.create_project_from_prj(
+                uploaded_fname, project_name, current_user.id)
+        response = {
+            'file': os.path.basename(uploaded_fname),
+            'name': project_name,
+            'id': project_id
+        }
+        return response, 201
+
+api.add_resource(ProjectFromData, '/api/project/data')
+
+
+
 class DeletePortfolioProject(Resource):
     method_decorators = [report_exception_decorator, login_required]
 

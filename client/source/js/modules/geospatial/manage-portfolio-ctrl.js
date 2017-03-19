@@ -98,7 +98,6 @@ define(
         };
 
 
-        // START HERE
         $scope.downloadPortfolio = function (name, id) {
           $http.get('/api/portfolio/'+ id + '/data',
             {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
@@ -124,13 +123,11 @@ define(
                   $scope.portfolios.push(response);
                   $scope.state.portfolio = response;
                   loadPortfolios($scope.portfolios);
-                  toastr.success('Ureated portfolio');
+                  toastr.success('Uploaded portfolio');
                 });
             })
             .click();
         };
-
-        // END HERE
 
         $scope.deletePortfolio = function() {
           $http

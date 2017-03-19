@@ -1551,6 +1551,49 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
     return portfolio
 
 
+def load_portfolio_record(portfolio_id, raise_exception=True, db_session=None, authenticate=False):
+    if not db_session:
+        db_session = db.session
+
+    if authenticate:
+        authenticate_current_user()
+
+    if authenticate is False or current_user.is_admin:
+        query = db_session.query(PyObjectDb).filter_by(id=portfolio_id)
+    else:
+        query = db_session.query(PyObjectDb).filter_by(
+            id=portfolio_id, user_id=current_user.id)
+
+    portfolio_record = query.first()
+
+    if portfolio_record is None:
+        if raise_exception:
+            raise ProjectDoesNotExist(id=portfolio_record)
+
+    return portfolio_record
+
+
+def download_portfolio(portfolio_id):
+    """
+    Returns the (dirname, filename) of the .prj binary of the project on the server
+    """
+    portfolio_record = load_portfolio_record(portfolio_id, raise_exception=True)
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    filename = portfolio_record.as_file(dirname)
+    return dirname, filename
+
+
+def update_portfolio_from_prt(portfolio_id, prt_filename):
+    portfolio = op.loadproj(prt_filename)
+    portfolio_record = load_portfolio_record(portfolio_id)
+    portfolio_record.save_obj(portfolio)
+    db.session.add(portfolio_record)
+    db.session.commit()
+    return parse.get_portfolio_summary(portfolio)
+
+
 def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     """
     Return updated portfolio summaries
