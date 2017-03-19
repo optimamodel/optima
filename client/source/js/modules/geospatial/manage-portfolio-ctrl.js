@@ -107,14 +107,14 @@ define(
             });
         };
 
-        $scope.uploadPortfolio = function() {
+        $scope.uploadPortfolio = function(id) {
           angular
             .element('<input type="file">')
             .change(function (event) {
               var file = event.target.files[0];
               $upload
                 .upload({
-                  url: '/api/portfolio/data',
+                  url: '/api/portfolio/'+ id + '/data',
                   fields: {name: getUniqueName(file.name)},
                   file: file
                 })
