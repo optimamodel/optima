@@ -1,8 +1,11 @@
 from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
-from optima import version, defaultobjectives, Project, pchip, getfilelist, batchtools
+from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
+from xlsxwriter.utility import xl_rowcol_to_cell as rc
+from xlrd import open_workbook
 import os
+import re
 
 #######################################################################################################
 ## Portfolio class
@@ -40,6 +43,7 @@ class Portfolio(object):
         self.modified = today()
         self.version = version
         self.gitbranch, self.gitversion = gitinfo()
+        self.filename = None # File path, only present if self.save() is used
 
         return None
 
@@ -114,8 +118,25 @@ class Portfolio(object):
     #######################################################################################################
     ## Methods to perform major tasks
     #######################################################################################################
+    
+    def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
+             constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
+        '''
+        Just like genBOC, but run on each of the projects in the portfolio. See batchBOC() for explanation
+        of kwargs.
         
-    def runGA(self, grandtotal=None, objectives=None, boclist=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2):
+        Version: 2017mar17
+        '''
+        # All we need to do is run batchBOC on the portfolio's odict of projects
+        self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
+             constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, 
+             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict)
+             
+        return None
+        
+    
+    def runGA(self, grandtotal=None, objectives=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True, strict=True):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -125,19 +146,29 @@ class Portfolio(object):
         if mc is None: mc = 0 # Do not use MC by default
         if objectives is not None: self.objectives = objectives # Store objectives, if supplied
         
-        # Gather the BOCs
-        if boclist is None:
+        def gatherBOCs():
+            ''' Gather the BOCs -- called twice which is why it's a function '''
+            bocsvalid = True
             boclist = []
             for pno,project in enumerate(self.projects.values()):
-                thisboc = project.getBOC(objectives=objectives)
+                thisboc = project.getBOC(objectives=objectives, strict=strict)
                 if thisboc is None:
+                    bocsvalid = False
                     errormsg = 'GA FAILED: Project %s has no BOC' % project.name
-                    raise OptimaException(errormsg)
+                    if die: raise OptimaException(errormsg) # By default die here, but optionally just recalculate
+                    else:   printv(errormsg, 1, verbose)
                 boclist.append(thisboc)
+            return boclist, bocsvalid
+        
+        # If any BOCs failed, recalculate the ones that did     
+        boclist, bocsvalid = gatherBOCs() # If die==True, this will crash if a BOC isn't found; otherwise, return False
+        if not bocsvalid:
+            self.genBOCs(objectives=objectives, maxiters=maxiters, maxtime=maxtime, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, die=die, recalculate=False)
+            boclist, bocsvalid = gatherBOCs() # Seems odd to repeat this here...
         
         # Get the grand total
         if grandtotal is None:
-            if objectives is not None:
+            if objectives is not None and objectives['budget']: # If 0, then calculate based on the BOCs
                 grandtotal = objectives['budget']
             else:
                 grandtotal = 0.0
@@ -239,7 +270,7 @@ class Portfolio(object):
         
         # Reoptimize projects
         if reoptimize: 
-            resultpairs = batchtools.reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
+            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
             self.results = resultpairs
         # Tidy up
         if doprint and self.results: self.makeoutput(doprint=True, verbose=verbose)
@@ -281,6 +312,9 @@ class Portfolio(object):
     def makeoutput(self, doprint=False, verbose=2):
         ''' Just displays results related to the GA run '''
         if doprint: printv('Printing results...', 2, verbose)
+        if self.results is None:
+            errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
+            raise OptimaException(errormsg)
         
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
@@ -431,3 +465,287 @@ class Portfolio(object):
    
 
 
+def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=None, verbose=2):
+    ''' Create a geospatial spreadsheet template based on a project file '''
+    ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
+    ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
+    
+    ## 1. Load a project file
+    if project is None:
+        raise OptimaException('No project loaded.')
+    
+    bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
+    
+    try:
+        results = project.parsets[-1].getresults()
+    except:
+        results = project.runsim(name=project.parsets[-1].name)
+    
+    copies = int(copies)
+    refyear = int(refyear)
+    if not refyear in [int(x) for x in results.tvec]:
+        errormsg = "Input not within range of years used by aggregate project's last stored calibration."
+        raise OptimaException(errormsg)
+    else:
+        refind = [int(x) for x in results.tvec].index(refyear)
+
+    ## 2. Extract data needed from project (population names, program names...)
+    workbook = Workbook(spreadsheetpath)
+    wspopsize = workbook.add_worksheet('Population sizes')
+    wsprev = workbook.add_worksheet('Population prevalence')
+    plain = workbook.add_format({})
+    num = workbook.add_format({'num_format':0x04})
+    bold = workbook.add_format({'bold': True})
+    orfmt = workbook.add_format({'bold': True, 'align':'center'})
+    gold = workbook.add_format({'bg_color': '#ffef9d'})
+    
+    nprogs = len(project.data['pops']['short'])
+    
+    # Start with pop and prev data.
+    maxcol = 0
+    row, col = 0, 0
+    for row in xrange(copies+1):
+        if row != 0:
+            wspopsize.write(row, col, '%s - district %i' % (project.name, row), bold)
+            wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
+        for popname in project.data['pops']['short']:
+            col += 1
+            if row == 0:
+                wspopsize.write(row, col, popname, bold)
+                wsprev.write(row, col, popname, bold)
+            else:
+                wspopsize.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)), num)
+
+                # Prevalence scaling by function r/(r-1+1/x).
+                # If n is intended district prevalence and d is calibrated national prevalence, then...
+                # 'Unbound' (scaleup) ratio r is n(1-d)/(d(1-n)).
+                # Variable x is calibrated national prevalence specific to pop group.
+                natpopcell = rc(copies+2,col)
+                disttotcell = rc(row,nprogs+2)
+                nattotcell = rc(copies+2,nprogs+2)
+                wsprev.write(row, col, "=(%s*(1-%s)/(%s*(1-%s)))/(%s*(1-%s)/(%s*(1-%s))-1+1/%s)" % (disttotcell,nattotcell,nattotcell,disttotcell,disttotcell,nattotcell,nattotcell,disttotcell,natpopcell), plain)
+
+            maxcol = max(maxcol,col)
+        col += 1
+        if row > 0:
+            wspopsize.write(row, col, "OR", orfmt)
+            wsprev.write(row, col, "OR", orfmt)
+        col += 1
+        if row == 0:
+            wspopsize.write(row, col, "Total (intended)", bold)
+            wsprev.write(row, col, "Total (intended)", bold)
+            for p in range(len(project.data['pops']['short'])):
+                wspopsize.write(row+1+p, col, None, gold)
+                wsprev.write(row+1+p, col, None, gold)
+        col += 1
+        if row == 0:
+            wspopsize.write(row, col, "Total (actual)", bold)
+            wsprev.write(row, col, "Total (actual)", bold)
+        else:
+            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+            wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)), plain)
+        maxcol = max(maxcol,col)
+        col = 0
+    
+    # Just a check to make sure the sum and calibrated values match.
+    # Using the last parset stored in project! Assuming it is the best calibration.
+    row += 1              
+    wspopsize.write(row, col, '---')
+    wsprev.write(row, col, '---')
+    row += 1
+    wspopsize.write(row, col, 'Calibration %i' % refyear)
+    wsprev.write(row, col, 'Calibration %i' % refyear)
+    for popname in project.data['pops']['short']:
+        col += 1
+        wspopsize.write(row, col, results.main['popsize'].pops[bestindex][col-1][refind], num)
+        wsprev.write(row, col, results.main['prev'].pops[bestindex][col-1][refind])
+    col += 2
+    wspopsize.write(row, col, results.main['popsize'].tot[bestindex][refind], num)
+    wsprev.write(row, col, results.main['prev'].tot[bestindex][refind])
+    col += 1
+    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
+    col = 0
+    
+    row += 1
+    wspopsize.write(row, col, 'District aggregate')
+    wsprev.write(row, col, 'District aggregate')
+    for popname in project.data['pops']['short']:
+        col += 1
+        wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
+        wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
+    col += 2
+    wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
+    col += 1
+    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
+    col = 0
+        
+    colwidth = 20
+    wsprev.set_column(0, maxcol, colwidth) # Make wider
+    wspopsize.set_column(0, maxcol, colwidth) # Make wider
+        
+    # 3. Generate and save spreadsheet
+    workbook.close()    
+    printv('Geospatial spreadsheet template saved to "%s".' % spreadsheetpath, 2, verbose)
+
+    return None
+    
+    
+
+# ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
+def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave=True, verbose=2):
+    ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
+    
+    ## 1. Get results and defaults
+    if project is None or spreadsheetpath is None:
+        errormsg = 'makegeoprojects requires a project and a spreadsheet path as inputs'
+        raise OptimaException(errormsg)
+    try:    results = project.parset().getresults()
+    except: results = project.runsim()
+    
+    ## 2. Load a spreadsheet file
+    workbook = open_workbook(spreadsheetpath)
+    wspopsize = workbook.sheet_by_name('Population sizes')
+    wsprev = workbook.sheet_by_name('Population prevalence')
+    
+    ## 3. Get a destination folder
+    if dosave:
+        if destination is None: destination = '.'+os.sep # Use current folder
+        try:
+            if not os.path.exists(destination):
+                os.makedirs(destination)
+        except: 
+            errormsg = 'Was unable to make target directory "%s"' % destination
+            raise OptimaException(errormsg)
+    
+    ## 4. Read the spreadsheet
+    poplist = []
+    for colindex in range(1,wspopsize.ncols-3): # Skip first column and last 3
+        poplist.append(wspopsize.cell_value(0, colindex))
+    npops = len(poplist)
+    
+    districtlist = []
+    popratio = odict()
+    prevfactors = odict()
+    plhivratio = odict()
+    isdistricts = True
+    for rowindex in xrange(wspopsize.nrows):
+        if wspopsize.cell_value(rowindex, 0) == '---':
+            isdistricts = False
+        if isdistricts and rowindex > 0:
+            districtlist.append(wspopsize.cell_value(rowindex, 0))
+            
+            # 'Actual' total ratios.
+            if rowindex == 1:
+                popratio['tot'] = []
+                prevfactors['tot'] = []
+                plhivratio['tot'] = []
+            popratio['tot'].append(wspopsize.cell_value(rowindex, npops+3))
+            prevfactors['tot'].append(wsprev.cell_value(rowindex, npops+3))
+            plhivratio['tot'].append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
+            
+            # Population group ratios.
+            for popid in xrange(npops):
+                popname = poplist[popid]
+                colindex = popid + 1
+                if rowindex == 1:
+                    popratio[popname] = []
+                    prevfactors[popname] = []
+                    plhivratio[popname] = []
+                popratio[popname].append(wspopsize.cell_value(rowindex, colindex))
+                prevfactors[popname].append(wsprev.cell_value(rowindex, colindex))
+                plhivratio[popname].append(wspopsize.cell_value(rowindex, colindex)*wsprev.cell_value(rowindex, colindex))
+    print('Districts...')
+    print districtlist
+    ndistricts = len(districtlist)
+    
+    # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.
+    refind = -1
+    try:
+        refyear = int(re.sub("[^0-9]", "", wspopsize.cell_value(ndistricts+2, 0)))         
+        if refyear in [int(x) for x in project.data['years']]:
+            refind = [int(x) for x in project.data['years']].index(refyear)
+            print('Reference year %i found in data year range with index %i.' % (refyear,refind))
+        else:
+            print('Reference year %i not found in data year range %i-%i.' % (refyear,int(project.data['years'][0]),int(project.data['years'][-1])))
+    except:
+        OptimaException('Warning: Cannot determine calibration reference year for this spreadsheet.')
+    
+    # Important note. Calibration value will be used as the denominator! So ratios can sum to be different from 1.
+    # This allows for 'incomplete' subdivisions, e.g. a country into 2 of 3 states.
+    popdenom = wspopsize.cell_value(ndistricts+2, npops+3)
+    popratio['tot'] = [x/popdenom for x in popratio['tot']]
+    prevdenom = wsprev.cell_value(ndistricts+2, npops+3)
+    prevfactors['tot'] = [x/prevdenom for x in prevfactors['tot']]
+    plhivdenom = wspopsize.cell_value(ndistricts+2, npops+3)*wsprev.cell_value(ndistricts+2, npops+3)
+    plhivratio['tot'] = [x/plhivdenom for x in plhivratio['tot']]        
+    for popid in xrange(npops):
+        colindex = popid + 1
+        popname = poplist[popid]
+        popdenom = wspopsize.cell_value(ndistricts+2, colindex)
+        popratio[popname] = [x/popdenom for x in popratio[popname]]
+        prevdenom = wsprev.cell_value(ndistricts+2, colindex)
+        prevfactors[popname] = [x/prevdenom for x in prevfactors[popname]]
+        plhivdenom = wspopsize.cell_value(ndistricts+2, colindex)*wsprev.cell_value(ndistricts+2, colindex)
+        plhivratio[popname] = [x/plhivdenom for x in plhivratio[popname]]
+
+    printv('Population ratio...', 4, verbose)
+    printv(popratio, 4, verbose)                     # Proportions of national population split between districts.
+    printv('Prevalence multiples...', 4, verbose)
+    printv(prevfactors, 4, verbose)                   # Factors by which to multiply prevalence in a district.        
+    printv('PLHIV ratio...', 4, verbose)
+    printv(plhivratio, 4, verbose)                    # Proportions of PLHIV split between districts.
+    
+    ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
+    projlist = []
+    for c,districtname in enumerate(districtlist):
+        newproject = dcp(project)
+        newproject.name = districtname
+        
+        # Scale data        
+        for popid in xrange(npops):
+            popname = poplist[popid]
+            for x in newproject.data['popsize']:
+                x[popid] = [z*popratio[popname][c] for z in x[popid]]
+            for x in newproject.data['hivprev']:
+                x[popid] = [z*prevfactors[popname][c] for z in x[popid]]
+        newproject.data['numtx'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numtx']]
+        newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
+        newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
+        
+        # Scale calibration
+        for popid in xrange(npops):
+            popname = poplist[popid]
+            newproject.parsets[-1].pars['popsize'].i[popname] *= popratio[popname][c]
+            newproject.parsets[-1].pars['initprev'].y[popname] *= prevfactors[popname][c]
+            newproject.parsets[-1].pars['numcirc'].y[popname] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numtx'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numpmtct'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numost'].y['tot'] *= plhivratio['tot'][c]
+        
+        # Scale programs
+        if len(project.progsets) > 0:
+            for progid in newproject.progsets[-1].programs:
+                program = newproject.progsets[-1].programs[progid]
+                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
+                if program.costcovdata.get('coverage') is not None:
+                    if not program.costcovdata['coverage'] == [None]:
+                        program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
+            
+        datayears = len(newproject.data['years'])
+        newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in results.main['prev'].pops]
+#       newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
+        newproject.runsim(newproject.parsets[-1].name) # Re-simulate autofit curves, but for old data.
+        projlist.append(newproject)
+    project.runsim(project.parsets[-1].name)
+    
+    ## 6. Save each project file into the directory, or return the created projects
+    if dosave:
+        for subproject in projlist:
+            subproject.filename = destination+os.sep+subproject.name+'.prj'
+            subproject.save()
+        return None
+    else:
+        return projlist

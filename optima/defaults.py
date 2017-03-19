@@ -369,7 +369,23 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     
     if which=='simple':
         printv('Creating simple epidemic project...', 2, verbose)
+        
+        # Set up project
+        dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
+        kwargs['dorun'] = False # Don't run now, run after calibration
         P = Project(spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
+        P.pars()['transnorm'].y = 0.8 # "Calibration"
+        P.pars()['fixproptx'].t = 2100 # For optimization to work
+        if dorun: P.runsim() # Run after calibration
+        
+        # Programs
+        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['HTC', 'ART'])
+        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[20e6],'coverage':[1e6]}
+        R.programs['ART'].costcovdata =          {'t':[2014],'cost': [2e6],'coverage':[1e4]}
+        R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})
+        R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})
+        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,10.0), 't': 2016.0})
+        P.addprogset(R)
     
 
 

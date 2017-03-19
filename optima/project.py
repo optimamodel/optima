@@ -632,6 +632,8 @@ class Project(object):
         budgetdict = odict()
         for budgetratio in budgetratios:
             budgetdict['%s'%budgetratio] = budgetratio # Store the budget ratios as a dicitonary
+        tmpx = odict()
+        tmpy = odict()
         tmptotals = odict()
         tmpallocs = odict()
         tmpoutcomes = odict()
@@ -655,10 +657,10 @@ class Project(object):
             # Actually run
             results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, origbudget=owbudget, label=label, mc=mc, die=die, **kwargs)
             tmptotals[key] = budget
-            tmpallocs[key] = dcp(results.budget['Optimal'])
+            tmpallocs[key] = dcp(results.budgets['Optimal'])
             tmpoutcomes[key] = results.improvement[-1][-1]
-            boc.x.append(budget)
-            boc.y.append(tmpoutcomes[-1])
+            tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
+            tmpy[key] = tmpoutcomes[-1]
             boc.budgets[key] = tmpallocs[-1]
             
             # Check that the BOC points are monotonic, and if not, rerun
@@ -673,13 +675,13 @@ class Project(object):
                         
         # Tidy up: insert remaining points
         if sum(counts[:]):
-            xorder = argsort(boc.x) # Sort everything
-            boc.x = array(boc.x)[xorder].tolist()
-            boc.y = array(boc.y)[xorder].tolist()
+            xorder = argsort(tmpx[:]) # Sort everything
+            boc.x = tmpx[:][xorder].tolist() # Convert to list
+            boc.y = tmpy[:][xorder].tolist()
             boc.budgets.sort(xorder)
             boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
-            boc.y.insert(0, results.outcomes['Zero']) # It doesn't matter which results these come from
-            boc.yinf = results.outcomes['Infinite'] # Store infinite money, but not as part of the BOC
+            boc.y.insert(0, results.extremeoutcomes['Zero']) # It doesn't matter which results these come from
+            boc.yinf = results.extremeoutcomes['Infinite'] # Store infinite money, but not as part of the BOC
             boc.parsetname = parsetname
             boc.progsetname = progsetname
             boc.defaultbudget = dcp(defaultbudget)
@@ -691,26 +693,35 @@ class Project(object):
         return None        
     
     
-    def getBOC(self, objectives=None):
+    def getBOC(self, objectives=None, strict=False, verbose=2):
         ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
         
         boc = None
         objkeys = ['start','end','deathweight','inciweight']
-        for x in reversed(self.results.keys()): # Get last BOC
-            if isinstance(self.results[x],BOC):
-                boc = self.results[x]
-                if objectives is None: return boc
+        for boc in reversed(self.results.values()): # Get last result and work backwards
+            if isinstance(boc,BOC):
+                if objectives is None:
+                    return boc # A BOC was found, and objectives are None: we're done
                 same = True
                 for y in boc.objectives:
-                    if y in objkeys and boc.objectives[y] != objectives[y]: same = False
+                    if y in objkeys and boc.objectives[y] != objectives[y]:
+                        same = False
                 if same:
-                    return boc
+                    return boc # Objectives are defined, but they match: return BOC
+        
+        # Figure out what happened
+        if boc is None: # No BOCs were found of any kind
+            printv('Warning, no BOCs found!', 1, verbose)
+            return None
+        
         wantedobjs = ', '.join(['%s=%0.1f' % (key,objectives[key]) for key in objkeys])
         actualobjs = ', '.join(['%s=%0.1f' % (key,boc.objectives[key]) for key in objkeys])
-        printv('WARNING, project %s has no BOC with objectives "%s", instead using BOC with objectives "%s"' % (self.name, wantedobjs, actualobjs))
-        if boc is None:
-            print('WARNING, no BOCs found!')
-        return boc
+        if not same and strict: # The BOCs don't match exactly, and strict checking is enabled, return None
+            printv('WARNING, project %s has no BOC with objectives "%s", aborting (closest match was "%s")' % (self.name, wantedobjs, actualobjs), 1, verbose)
+            return None
+        else:
+            printv('WARNING, project %s has no BOC with objectives "%s", instead using BOC with objectives "%s"' % (self.name, wantedobjs, actualobjs), 1, verbose)
+            return boc
         
         
     def delBOC(self, objectives):

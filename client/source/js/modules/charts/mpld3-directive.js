@@ -347,10 +347,10 @@ define(
 
           scope.state = {
             slider: {
-              value: 30,
+              value: 48,
               min: 0,
               options: {
-                floor: 5,
+                floor: 10,
                 ceil: 100,
                 onChange: scope.changeFigWidth
               }
