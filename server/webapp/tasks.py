@@ -2,7 +2,6 @@ import traceback
 from pprint import pprint, pformat
 import datetime
 import dateutil.tz
-import server.webapp.parse
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -427,7 +426,6 @@ def run_boc(self, portfolio_id, project_id, maxtime=2):
         return
 
     if status == 'started':
-        result = None
         try:
             print ">> Start BOC:"
             project.genBOC(maxtime=maxtime)
@@ -463,7 +461,7 @@ def launch_boc(portfolio_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
     for project in portfolio.projects.values():
         project_id = project.uid
-        calc_state = setup_work_log(project_id, 'boc', project)
+        setup_work_log(project_id, 'boc', project)
         run_boc.delay(portfolio_id, project_id, maxtime)
 
 

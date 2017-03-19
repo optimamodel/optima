@@ -591,13 +591,11 @@ class Project(object):
         ''' Function to minimize outcomes or money '''
         
         # Check inputs
-        makeoptim = False # By default, assume we're not making a new optimization
         if optim is None:
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
                 optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-                makeoptim = True
         
         # Run the optimization
         multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
@@ -605,7 +603,7 @@ class Project(object):
         
         # Tidy up
         optim.resultsref = multires.name
-        if makeoptim: self.addoptim(optim=optim)
+        self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
         return multires
