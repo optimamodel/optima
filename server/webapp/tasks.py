@@ -1,27 +1,21 @@
 import traceback
-from pprint import pformat
+from pprint import pprint, pformat
 import datetime
 import dateutil.tz
-import server.webapp.parse
-
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
-
-import optima
-
+import optima as op
 from multiprocessing.dummy import Process, Queue
 
 # this is needed to disable multiprocessing in the portfolio
 # module so that celery can handle the multiprocessing itself
-optima.portfolio.Process = Process
-optima.portfolio.Queue = Queue
+op.portfolio.Process = Process
+op.portfolio.Queue = Queue
 
 # must import api first
 from ..api import app
-from .dbconn import db
 from . import dbmodels, parse, dataio
-
 
 db = SQLAlchemy(app)
 
@@ -241,7 +235,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
         )
 
         result = project.parsets[autofit_parset_name].getresults()
-        result.uid = optima.uuid()
+        result.uid = op.uuid()
         result_name = 'parset-' + orig_parset_name
         result.name = result_name
 
@@ -321,6 +315,7 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
         try:
             project = work_log.load()
             optim = parse.get_optimization_from_project(project, optimization_id)
+            optim.projectref = op.Link(project) # Need to restore project link
             progset = project.progsets[optim.progsetname]
             if not progset.readytooptimize():
                 status = 'error'
@@ -348,25 +343,19 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
     if status == 'started':
         result = None
         try:
-            print ">> Start optimization '%s'" % optim.name
-            objectives = server.webapp.parse.normalize_obj(optim.objectives)
-            constraints = server.webapp.parse.normalize_obj(optim.constraints)
-            constraints["max"] = optima.odict(constraints["max"])
-            constraints["min"] = optima.odict(constraints["min"])
-            constraints["name"] = optima.odict(constraints["name"])
-            print(">> maxtime = %f" % maxtime)
-            parse.print_odict("objectives", objectives)
-            parse.print_odict("constraints", constraints)
+            print(">> Start optimization '%s' for maxtime = %f" % (optim.name, maxtime))
             result = project.optimize(
                 name=optim.name,
                 parsetname=optim.parsetname,
                 progsetname=optim.progsetname,
-                objectives=objectives,
-                constraints=constraints,
+                objectives=optim.objectives,
+                constraints=optim.constraints,
                 maxtime=maxtime,
                 mc=0, # Set this to zero for now while we decide how to handle uncertainties etc.
             )
-            result.uid = optima.uuid()
+            
+            print(">> %s" % result.budgets)
+            result.uid = op.uuid()
             status = 'completed'
         except Exception:
             status = 'error'
@@ -445,7 +434,6 @@ def run_boc(self, portfolio_id, project_id, maxtime=2):
         return
 
     if status == 'started':
-        result = None
         try:
             print ">> Start BOC:"
             project.genBOC(maxtime=maxtime)
@@ -481,7 +469,7 @@ def launch_boc(portfolio_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
     for project in portfolio.projects.values():
         project_id = project.uid
-        calc_state = setup_work_log(project_id, 'boc', project)
+        setup_work_log(project_id, 'boc', project)
         run_boc.delay(portfolio_id, project_id, maxtime)
 
 

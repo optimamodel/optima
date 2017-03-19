@@ -423,7 +423,7 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
 
     Version: 1.3 (2017mar02)
     '''
-
+    
     ## Input validation
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
     if which not in ['outcomes','money']:
@@ -476,12 +476,13 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
-    origtotalbudget = dcp(optim.objectives['budget'])
-    if origbudget != None:
+    origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
+    if origbudget is not None:
         origbudget = dcp(origbudget)
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
+    
     optimizable = progset.optimizable()
     optiminds = findinds(optimizable)
     optimkeys = [key for k,key in enumerate(origbudget.keys()) if optimizable[k]]
@@ -496,8 +497,10 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
-    ## Calculate original things
+    # Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    
+    # Set up arguments which are shared between outcomecalc and asd
     args = {'which':'outcomes', 
             'project':project, 
             'parset':parset, 
@@ -530,7 +533,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     for key,exbudget in extremebudgets.items():
         if key=='Current': 
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
-            args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the
+            args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
             doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
         else:
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
