@@ -74,7 +74,10 @@ def log_yaml(summary, title=None):
     return summary
 
 
-# PROJECTS
+
+#############################################################################################
+### PROJECTS
+#############################################################################################
 
 class ProjectsAll(Resource):
     method_decorators = [report_exception_decorator, verify_admin_request_decorator]
@@ -338,8 +341,9 @@ class SpreadsheetDownload(Resource):
 api.add_resource(SpreadsheetDownload, '/api/project/<uuid:project_id>/downloaddata')
 
 
-
-# Portfolios
+#############################################################################################
+### PORTFOLIOS
+#############################################################################################
 
 class ManagePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -452,7 +456,10 @@ class TaskChecker(Resource):
 api.add_resource(TaskChecker, '/api/task/<uuid:pyobject_id>/type/<work_type>')
 
 
-# PARSETS
+
+#############################################################################################
+### PARSETS
+#############################################################################################
 
 class Parsets(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -596,7 +603,11 @@ class ParsetUploadDownload(Resource):
 api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
 
 
-# RESULTS
+
+
+#############################################################################################
+### RESULTS
+#############################################################################################
 
 class ResultsExport(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -620,7 +631,10 @@ class ResultsExport(Resource):
 api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
 
 
-# PROGSETS
+
+#############################################################################################
+### PROGSETS
+#############################################################################################
 
 class Progsets(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -782,30 +796,10 @@ api.add_resource(ProgramCostcovGraph,
 
 
 
-# class GeneralRpcLoader(Resource):
-#     method_decorators = [report_exception_decorator, login_required]
-#
-#     @swagger.operation(summary='General RPC loader')
-#     def post(self):
-#         """
-#         url-args:
-#             'procedure': string name of function in dataio
-#             'args': list of arguments for the function
-#         """
-#         json = get_post_data_json()
-#
-#         fn_name = json['name']
-#         print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
-#         fn = getattr(dataio, fn_name)
-#
-#         args = json.get('args', [])
-#         kwargs = json.get('kwargs', {})
-#         return fn(*args, **kwargs)
-#
-# api.add_resource(GeneralRpcLoader, '/api/procedure')
 
-
-# SCENARIOS
+#############################################################################################
+### SCENARIOS
+#############################################################################################
 
 
 class Scenarios(Resource):
@@ -873,7 +867,10 @@ class DefaultParStartVal(Resource):
 api.add_resource(DefaultParStartVal, '/api/startval')
 
 
-# OPTIMIZATIONS
+
+#############################################################################################
+### OPTIMIZATIONS
+#############################################################################################
 
 class Optimizations(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -941,7 +938,10 @@ class OptimizationGraph(Resource):
 api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
 
 
-# USERS
+
+#############################################################################################
+### USERS
+#############################################################################################
 
 
 class User(Resource):
