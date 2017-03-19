@@ -148,15 +148,16 @@
         display: flex;
         padding-top: 2em;">
 
-      <div style="flex: 0 0 280px">
+      <div style="flex: 0 0 330px">
 
-        <h4>Optimization conditions </h4>
+        <b>Optimization conditions </b>
 
+        <br>
         <br>
 
         <div
           style="
-            width: 230px;
+            width: 300px;
             padding-bottom: 0.1em;"
           ng-repeat="entry in objectiveKeyLabels">
           <label>
@@ -181,7 +182,7 @@
         </button>
       </div>
 
-      <div style="flex: 1">
+      <div style="flex: 0 1 auto; min-width: 50%">
 
         <table class="table table-bordered table-hover table-striped">
           <tr>
@@ -193,12 +194,12 @@
             <td>
               {{project.name}}
             </td>
-            <td width="150px">
+            <td width="180px">
               <span style="color: #00aeef;">
                   {{bocStatusMessage[project.id]}}
               </span>
             </td>
-            <td width="20px">
+            <td width="30px">
               <span
                   ng-click="deleteProject(project.id)""
                   class="fa fa-trash">
@@ -247,12 +248,10 @@
               margin-bottom: 1em"
             class="btn __green __m"
             ng-click="calculateAllBocCurves()">
-          Calculate budget-objective curves
+          Run budget-objective curves
         </button>
 
-        &nbsp;
-
-        Time per optimization
+        &nbsp; for &nbsp;
 
         <select ng-init="state.bocMaxtime='300'" ng-model="state.bocMaxtime">
           <option value="2">2 seconds</option>
@@ -264,8 +263,9 @@
           <option value="1800">30 minutes</option>
         </select>
 
+        &nbsp; per optimization
 
-        <br>
+
         <br>
         <button
             class="btn __green __m"
@@ -274,9 +274,7 @@
           Run geospatial optimization
         </button>
 
-        &nbsp;
-
-        Time per optimization:
+        &nbsp; for &nbsp;
 
         <select ng-init="state.maxtime='300'" ng-model="state.maxtime">
           <option value="2">2 seconds</option>
@@ -287,7 +285,7 @@
           <option value="600">10 minutes</option>
           <option value="1800">30 minutes</option>
         </select>
-        &nbsp;
+        &nbsp; per optimization &nbsp;
         <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
           {{ statusMessage }}
         </span>
