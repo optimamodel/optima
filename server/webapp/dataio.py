@@ -1279,6 +1279,7 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, year):
 
     parset = parse.get_parset_from_project(project, parset_id)
     plot = op.plotcostcov(program=program, year=year, parset=parset, plotoptions=plotoptions)
+    op.reanimateplots(plot)
 
     graph_dict = convert_to_mpld3(plot)
 
