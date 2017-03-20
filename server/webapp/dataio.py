@@ -1313,7 +1313,10 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
     parset = parse.get_parset_from_project_by_id(project, parset_id)
 
     budgets = progset.getdefaultbudget()
-    pars = progset.compareoutcomes(parset=parset, year=t)
+    if progset.optimizable():
+        pars = progset.compareoutcomes(parset=parset, year=t)
+    else:
+        pars = []
 
     return {
         'budgets': parse.normalize_obj(budgets),
