@@ -414,8 +414,8 @@ define(
           return "/api/portfolio/" + $scope.state.portfolio.id + "/ready"
         }
 
-        $scope.exportResults = function (id) {
-          $http.get('/api/portfolio/'+ id + '/export',
+        $scope.exportResults = function () {
+          $http.get('/api/portfolio/'+ $scope.state.portfolio.id + '/export',
             {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
             .success(function (response, status, headers, config) {
               var blob = new Blob([response], { type: 'application/octet-stream' });
