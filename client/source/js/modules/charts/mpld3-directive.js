@@ -372,7 +372,8 @@ define(
           console.log('resultId', resultId);
           var which = getSelectors();
           var index = null;
-          var filetype = 'pdf';
+          var filetype = 'singlepdf';
+          console.log('debug info TEMP', which, index, filetype);
           $http
             .post(
               '/api/download',
