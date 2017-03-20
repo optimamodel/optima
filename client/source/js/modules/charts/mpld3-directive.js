@@ -379,6 +379,7 @@ define(
               { name: 'download_figures', args: [resultId, which, filetype, index]},
               {responseType: 'blob'})
             .then(function(response) {
+              console.log(response);
               var blob = new Blob([response.data], { type:'application/pdf' });
               saveAs(blob, ('results.pdf'));
             });

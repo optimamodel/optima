@@ -1031,7 +1031,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     Arguments:
         results -- either a Resultset, Multiresultset, or a Project
         toplot -- either a plot key or a list of plot keys
-        filetype -- the file type; can be 'fig', 'pdf' (default), or anything supported by savefig()
+        filetype -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
         filepath -- the folder to save the file(s) in
         filename -- the file to save to (only uses path if multiple files)
         savefigargs -- dictionary of arguments passed to savefig()
@@ -1054,7 +1054,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     # Preliminaries
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
     if wasinteractive: ioff()
-    if filetype is None: filetype = 'pdf' # This ensures that only one file is created
+    if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
     results = sanitizeresults(results)
     
     # Handle filepath
@@ -1072,7 +1072,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     
     # Handle file types
     filenames = []
-    if filetype is 'pdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
+    if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
         if not filename: filename = results.projectinfo['name']+'-'+'figures.pdf'
         thisfilename = filepath+filename
@@ -1099,7 +1099,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                 printv('Figure object saved to %s' % thisfilename, 2, verbose)
             else:
                 reanimateplots(plt)
-                if filetype is 'pdf':
+                if filetype=='singlepdf':
                     pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
                 else:                 
                     plt.savefig(thisfilename, **defaultsavefigargs)
@@ -1109,7 +1109,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                     printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
                 close(plt)
     
-    if filetype is 'pdf': pdf.close()
+    if filetype=='singlepdf': pdf.close()
     if wasinteractive: ion()
     return filenames
 
