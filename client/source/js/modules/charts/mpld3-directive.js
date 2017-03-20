@@ -213,25 +213,26 @@ define(
           }
         };
 
-        scope.exportFigure = function(name, filetype, figindex) { /* Adding function(name) brings up save dialog box */
+        scope.exportFigure = function(filetype) { /* Adding function(name) brings up save dialog box */
 
           console.log('DEBUG info', name, filetype, figindex);
           console.log('DEBUG elem', elem);
           console.log('DEBUG scope', scope);
           console.log('DEBUG attr', attrs);
-          //scope.parents().exportAllFigures(name);
-          //var which = scope.parent().parent().getSelectors();
-          //console.log('debug info TEMP', which);
-          //$http
-          //  .post(
-          //    '/api/download',
-          //    { name: 'download_figures', args: [resultId, which, filetype, figindex]},
-          //    {responseType: 'blob'})
-          //  .then(function(response) {
-          //    console.log(response);
-          //    var blob = new Blob([response.data], { type:'application/'+filetype });
-          //    saveAs(blob, ('optima-figure.'+filetype));
-          //  });
+          var resultId = attrs.resultId;
+          var graphSelectors = attrs.graphSelectors;
+          var graphIndex = attrs.graphIndex;
+          console.log('debug info TEMP', which);
+          $http
+            .post(
+              '/api/download',
+              { name: 'download_figures', args: [resultId, graphSelectors, filetype, graphIndex]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              console.log(response);
+              var blob = new Blob([response.data], { type:'application/'+filetype });
+              saveAs(blob, ('optima-figure.'+filetype));
+            });
         };
 
         //scope.exportGraphAsSvg = function() {
