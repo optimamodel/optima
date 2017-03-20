@@ -1051,6 +1051,14 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     Version: 2017mar15    
     '''
     
+    print('well hello there!')
+    print toplot
+    print filetype
+    print filepath
+    print filename
+    print index
+    print('ok bye now')
+    
     # Preliminaries
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
     if wasinteractive: ioff()
@@ -1072,6 +1080,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     
     # Handle file types
     filenames = []
+    thisfilename = ''
     if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
         if not filename: filename = results.projectinfo['name']+'-'+'figures.pdf'
@@ -1080,12 +1089,16 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         filenames.append(thisfilename)
         printv('PDF saved to %s' % thisfilename, 2, verbose)
     for p,item in enumerate(plots.items()):
+        print('test1')
         key,plt = item
         if index is None or index==p:
+            print('test2')
             # Handle filename
             if filename and nplots==1: # Single plot, filename supplied -- use it
                 thisfilename = filepath+filename
+                print('test3')
             else: # Any other case, generate a filename
+                print('test4')
                 keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
                 thisfilename = filepath+results.projectinfo['name']+'-'+keyforfilename+'.'+filetype
             
@@ -1094,14 +1107,18 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
             defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
             defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
             if filetype == 'fig':
+                print('test5')
                 saveobj(thisfilename, plt)
                 filenames.append(thisfilename)
                 printv('Figure object saved to %s' % thisfilename, 2, verbose)
             else:
+                print('test6')
                 reanimateplots(plt)
                 if filetype=='singlepdf':
+                    print('test7')
                     pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
-                else:                 
+                else:
+                    print('test8')
                     plt.savefig(thisfilename, **defaultsavefigargs)
                     if not thisfilename:
                         import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
@@ -1109,6 +1126,13 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                     printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
                 close(plt)
 
+    if len(filenames)==0:
+        print('uh ohhhhh')
+        print thisfilename
+        print filetype
+        print index
+        print p
+        raise Exception('filenames is empty!')
     if filetype=='singlepdf': pdf.close()
     if wasinteractive: ion()
     return filenames
