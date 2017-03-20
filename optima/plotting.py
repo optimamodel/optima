@@ -1031,7 +1031,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     Arguments:
         results -- either a Resultset, Multiresultset, or a Project
         toplot -- either a plot key or a list of plot keys
-        filetype -- the file type; can be 'fig', 'pdf' (default), or anything supported by savefig()
+        filetype -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
         filepath -- the folder to save the file(s) in
         filename -- the file to save to (only uses path if multiple files)
         savefigargs -- dictionary of arguments passed to savefig()
@@ -1054,7 +1054,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     # Preliminaries
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
     if wasinteractive: ioff()
-    if filetype is None: filetype = 'pdf' # This ensures that only one file is created
+    if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
     results = sanitizeresults(results)
     
     # Handle filepath
@@ -1071,11 +1071,14 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     nplots = len(plots)
     
     # Handle file types
-    if filetype is 'pdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
+    filenames = []
+    thisfilename = ''
+    if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
+        if not filename: filename = results.projectinfo['name']+'-'+'figures.pdf'
         thisfilename = filepath+filename
-        if not thisfilename: thisfilename = 'figures.pdf'
         pdf = PdfPages(thisfilename)
+        filenames.append(thisfilename)
         printv('PDF saved to %s' % thisfilename, 2, verbose)
     for p,item in enumerate(plots.items()):
         key,plt = item
@@ -1085,29 +1088,29 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                 thisfilename = filepath+filename
             else: # Any other case, generate a filename
                 keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
-                thisfilename = filepath+keyforfilename+'.'+filetype
+                thisfilename = filepath+results.projectinfo['name']+'-'+keyforfilename+'.'+filetype
             
             # Do the saving
             if savefigargs is None: savefigargs = {}
             defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
             defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
-            if filetype is 'fig':
+            if filetype == 'fig':
                 saveobj(thisfilename, plt)
+                filenames.append(thisfilename)
                 printv('Figure object saved to %s' % thisfilename, 2, verbose)
             else:
                 reanimateplots(plt)
-                if filetype is 'pdf':
-                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but this should actually be default, since we updated it from the user version
-                else:                 
+                if filetype=='singlepdf':
+                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
+                else:
                     plt.savefig(thisfilename, **defaultsavefigargs)
-                    if not thisfilename:
-                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    filenames.append(thisfilename)
                     printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
                 close(plt)
-    
-    if filetype is 'pdf': pdf.close()
+
+    if filetype=='singlepdf': pdf.close()
     if wasinteractive: ion()
-    return None
+    return filenames
 
 
 

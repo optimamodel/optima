@@ -986,27 +986,19 @@ def load_result_mpld3_graphs(result_id, which):
     return make_mpld3_graph_dict(result, which)
 
 
-def download_result_pdf(result_id, which):
+def download_figures(result_id=None, which=None, filetype=None, index=None):
     result = load_result_by_id(result_id, which)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = 'results.pdf'
-    server_filename = os.path.join(dirname, filename)
-    print(">> download_result_pdf", server_filename)
-    op.saveplots(result, toplot=which, filepath=dirname, filename=filename, filetype='pdf')
-    return server_filename
-
-
-def download_result_png(result_id, which):
-    result = load_result_by_id(result_id, which)
-    dirname = upload_dir_user(TEMPLATEDIR)
-    if not dirname:
-        dirname = TEMPLATEDIR
-    filename = which + '.png'
-    server_filename = os.path.join(dirname, filename)
-    print(">> download_result_png", server_filename)
-    op.saveplots(result, toplot=which, filepath=dirname, filename=filename, filetype='png')
+    
+    filenames = op.saveplots(result, toplot=which, filepath=dirname, filename=None, filetype=filetype, index=index)
+    if len(filenames)>1:
+        errormsg = 'Webapp only supports saving one figure at a time; you are trying to save %s' % len(filenames)
+        raise op.OptimaException(errormsg)
+    else:
+        server_filename = filenames[0]
+    print(">> download_figures", server_filename)
     return server_filename
 
 
