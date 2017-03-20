@@ -63,8 +63,8 @@ define(
 
         // we look for the background and make it opaque
         if ($path.css('fill')=="rgb(255, 255, 255)") {
-          $path.css('fill', "rgba(255, 255, 255, 0)");
-          $path.css('stroke', "rgba(255, 255, 255, 0)");
+          $path.css('fill-opacity', 0);
+          $path.css('stroke', "none");
         }
       });
 
