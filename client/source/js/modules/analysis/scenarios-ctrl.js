@@ -9,7 +9,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initialize() {
       $scope.project = info.data;
-      $scope.years = _.range($scope.project.startYear, $scope.project.endYear+1);
+      $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
       $scope.parsets = parsetResponse.data.parsets;
       $scope.progsets = progsetsResponse.data.progsets;
       console.log("scenarios response", scenariosResponse.data);
