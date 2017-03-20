@@ -1468,6 +1468,7 @@ def create_portfolio(name, db_session=None, portfolio=None):
         portfolio.objectives = op.defaultobjectives()
         portfolio.name = name
     else:
+        portfolio.uid = op.uuid() # Have to update this or else the database freaks out
         print("Create portfolio %s from upload" % portfolio.name)
     record = PyObjectDb(user_id=current_user.id, name=portfolio.name, id=portfolio.uid, type="portfolio")
     record.save_obj(portfolio)
@@ -1586,6 +1587,21 @@ def download_portfolio(portfolio_id):
         dirname = TEMPLATEDIR
     filename = portfolio_record.as_portfolio_file(dirname)
     return dirname, filename
+
+
+def export_portfolio(portfolio_id):
+    """
+    Exports the results of the portfolio
+    """
+    portfolio_record = load_portfolio_record(portfolio_id, raise_exception=True)
+    portfolio = portfolio_record.load()
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    xlsx_fname = os.path.join(dirname, 'geospatial-results.xlsx')
+    portfolio.export(filename=xlsx_fname)
+    return os.path.split(xlsx_fname)
+    
 
 
 def update_portfolio_from_prt(portfolio_id, prt_filename):

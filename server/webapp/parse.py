@@ -1392,15 +1392,14 @@ def get_portfolio_summary(portfolio):
     gaoptim_summaries = []
     objectivesList = []
     resultpairs_summary = []
-    for resultpair_key, resultpair in portfolio.results.items():
-        resultpair_summary = {}
-        for result_key, result in resultpair.items():
-            result_summary = {
-                'name': result.name,
-                'id': result.uid,
-            }
-            resultpair_summary[result_key] = result_summary
-        resultpairs_summary.append(resultpair_summary)
+    resultpair_summary = {}
+    for result_key, result in portfolio.results.items():
+        result_summary = {
+            'name': 'DEPRECATED no name',
+            'id': 'DEPRECATED no name',
+        }
+        resultpair_summary[result_key] = result_summary
+    resultpairs_summary.append(resultpair_summary)
 
     gaoptim_summaries.append({
         "key": 'DEPRECATED No key',

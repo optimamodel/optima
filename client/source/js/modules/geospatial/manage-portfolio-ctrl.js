@@ -415,6 +415,15 @@ define(
           }
         };
 
+        $scope.exportResults = function (id) {
+          $http.get('/api/portfolio/'+ id + '/export',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
+            .success(function (response, status, headers, config) {
+              var blob = new Blob([response], { type: 'application/octet-stream' });
+              saveAs(blob, ('geospatial-results.xlsx'));
+            });
+        };
+
         initialize();
 
       }

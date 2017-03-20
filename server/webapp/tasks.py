@@ -498,7 +498,7 @@ def run_miminize_portfolio(self, portfolio_id, maxtime):
 
     if status == 'started':
         try:
-            print ">> Start BOC:"
+            print(">> Start GA with maxtime=%s:" % maxtime)
             portfolio.runGA(maxtime=maxtime, mc=0, batch=False)
             status = 'completed'
         except Exception:
