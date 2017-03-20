@@ -1313,14 +1313,13 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
     parset = parse.get_parset_from_project_by_id(project, parset_id)
 
     budgets = progset.getdefaultbudget()
+    print progset.readytooptimize(verbose=4)
+    print('Program set %s is ready to optimize: %s' % (progset.name, progset.readytooptimize()))
     if progset.readytooptimize():
         pars = progset.compareoutcomes(parset=parset, year=t)
     else:
-        costcovmissing = ', '.join(progset.hasallcostcovpars(detail=True))
-        covoutmissing = ', '.join(progset.hasallcovoutpars(detail=True))
-        msg = ''
-        if costcovmissing: msg += 'The following programs are missing cost-coverage data: %s. ' % costcovmissing
-        if covoutmissing: msg += 'The following programs are missing coverage-outcome data: %s.'% covoutmissing
+        msg = progset.readytooptimize(detail=True)
+        print('Program set %s is not ready to optimize: %s' % (progset.name, msg))
         pars = [[msg, '', 0, 0]]
 
     return {
