@@ -10,24 +10,6 @@
          overflow: auto;
          padding: 0;">
 
-    <div ng-hide="!(graphs.mpld3_graphs.length > 0)"
-         style="width:100%;
-         border-bottom: 1px solid #EEE">
-      <button
-          type="button"
-          class="btn"
-          ng-click="exportAllFigures()">
-        Export all figures
-      </button>
-      <button
-          type="button"
-          class="btn"
-          ng-click="exportAllData()">
-        Export data
-      </button>
-      <br clear="all">
-    </div>
-
     <div
       style="
         display: flex;
@@ -61,6 +43,24 @@
          padding: 0px 20px 5px 20px;
          overflow: auto;">
     <div>
+
+      <div ng-hide="!(graphs.mpld3_graphs.length > 0)"
+           style="width:100%;
+         border-bottom: 1px solid #EEE">
+        <br>
+        <export-all-charts
+          name="Export Graphs">
+        </export-all-charts>
+        <button
+          type="button"
+          class="btn"
+          ng-click="exportAllData()">
+          Export data
+        </button>
+        <br clear="all">
+        <br>
+      </div>
+
       <rzslider
           rz-slider-model="state.slider.value"
           rz-slider-options="state.slider.options">

@@ -97,7 +97,7 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
         try: defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
         except: raise OptimaException('Could not get default budget for optimization')
     else:
-        defaultbudget = 1e6 # If can't find programs
+        defaultbudget = 0.0 # If can't find programs
         printv('defaultobjectives() did not get a project or progset, so setting budget to %0.0f' % defaultbudget, 2, verbose)
         
     objectives = odict() # Dictionary of all objectives
