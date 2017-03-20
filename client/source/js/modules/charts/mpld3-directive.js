@@ -195,8 +195,6 @@ define(
           var graphIndex = attrs.graphIndex;
           var graphSelectorsString = attrs.graphSelectors; // graphSelectors gets converted to a string, so convert back: e.g. '["a","b"]' -> 'a, b' -> 'a','b'
           var graphSelectors = graphSelectorsString.split('"').join('').slice(1,-1).split(','); // http://stackoverflow.com/questions/19156148/i-want-to-remove-double-quotes-from-a-string
-          console.log('hi!!!!');
-          console.log(attrs);
           $http
             .post(
               '/api/download',
