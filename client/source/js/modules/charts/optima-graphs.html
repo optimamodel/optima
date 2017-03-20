@@ -26,12 +26,10 @@
             class="chart-container ">
           <div
               mpld3-chart="chart"
-              boofy-head="666"
               chart-id="{{ chart.id }}"
               result-id="{{ graphs.resultId }}"
-              ck-which="{{ getSelectors() }}"
-              ck-idnex="{{ $index }}"
-              which="{{ chart.graphKey }}">
+              selectors="{{ getSelectors() }}"
+              graph-index="{{ $index }}">
           </div>
         </div>
       </div>
