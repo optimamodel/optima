@@ -932,7 +932,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
 
 
 def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
-    """ Plot the cost-coverage curve for a single program"""
+    ''' Plot the cost-coverage curve for a single program'''
     
     # Put plotting imports here so fails at the last possible moment
     year = promotetoarray(year)
@@ -941,7 +941,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     
     # Get caption & scatter data 
     caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
-    costdata = dcp(program.costcovdata['cost'])
+    costdata = dcp(program.costcovdata['cost']) if program.costcovdata.get('cost') else []
 
     # Make x data... 
     if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
@@ -956,9 +956,9 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
     # Create x line data and y line data
     try:
-        y_l = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
-        y_m = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
-        y_u = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
+        y_l = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
+        y_m = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
+        y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
     except:
         y_l,y_m,y_u = None,None,None
     plotdata['ylinedata_l'] = y_l
@@ -1023,7 +1023,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
 
 
-def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, index=None, verbose=2, **kwargs):
+
+def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, index=None, verbose=2, plots=None, **kwargs):
     '''
     Save the requested plots to disk.
     
@@ -1063,8 +1064,12 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         if filename: filepath = os.path.dirname(filename)
     if filepath: filepath += os.sep
     
-    plots = makeplots(results=results, toplot=toplot, **kwargs)
+    # Either take supplied plots, or generate them
+    if plots is None:
+        plots = makeplots(results=results, toplot=toplot, **kwargs)
     nplots = len(plots)
+    
+    # Handle file types
     if filetype is 'pdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
         thisfilename = filepath+filename
