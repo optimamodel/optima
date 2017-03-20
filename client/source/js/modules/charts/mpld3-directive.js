@@ -308,6 +308,8 @@ define(
 
             // clear element before stuffing a figure in there
             var $element = $(elem).find('.mpld3-chart').first();
+            console.log('DEBUG what is going on here;');
+            console.log('attrs', attrs);
             $element.attr('id', attrs.chartId);
             $element.html("");
 
