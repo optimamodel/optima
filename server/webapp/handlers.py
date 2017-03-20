@@ -341,6 +341,7 @@ class SpreadsheetDownload(Resource):
 api.add_resource(SpreadsheetDownload, '/api/project/<uuid:project_id>/downloaddata')
 
 
+
 #############################################################################################
 ### PORTFOLIOS
 #############################################################################################
@@ -710,6 +711,23 @@ class ResultsExport(Resource):
         return dataio.load_result_mpld3_graphs(result_id, args.get('which'))
 
 api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
+
+
+class FiguresExport(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary="Returns result as downloadable figure file")
+    def post(self, result_id):
+        args = get_post_data_json()
+        which = args.get('graphSelectors')
+        filetype = args.get('filetype')
+        index = args.get('graphIndex')
+        load_dir, filename = dataio.download_figures(result_id, which, filetype, index)
+        response = helpers.send_from_directory(load_dir, filename)
+        response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
+        return response
+
+api.add_resource(FiguresExport, '/api/exportfigs/<uuid:result_id>')
 
 
 
