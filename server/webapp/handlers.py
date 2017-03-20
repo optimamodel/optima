@@ -710,17 +710,18 @@ class ResultsExport(Resource):
         args = get_post_data_json()
         return dataio.load_result_mpld3_graphs(result_id, args.get('which'))
     
-    @swagger.operation(summary="Returns result as downloadable figure file")
-    def export(self, result_id):
-        """
-        data-json: { graphSelectors: list of plot selections, filetype: image type; index: plot index }
-        """
-        args = get_post_data_json()
-        which = args.get('graphSelectors')
-        filetype = args.get('filetype')
-        index = args.get('graphIndex')
-        dirname, filename = dataio.download_figures(result_id, which, filetype, index)
-        return helpers.send_from_directory(dirname, filename)
+    # CK: not sure whether it's better to use this or the /api/download endpoint
+#    @swagger.operation(summary="Returns result as downloadable figure file")
+#    def export(self, result_id):
+#        """
+#        data-json: { graphSelectors: list of plot selections, filetype: image type; index: plot index }
+#        """
+#        args = get_post_data_json()
+#        which = args.get('graphSelectors')
+#        filetype = args.get('filetype')
+#        index = args.get('graphIndex')
+#        dirname, filename = dataio.download_figures(result_id, which, filetype, index)
+#        return helpers.send_from_directory(dirname, filename)
 
 api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
 
