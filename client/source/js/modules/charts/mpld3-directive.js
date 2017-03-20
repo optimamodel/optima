@@ -228,7 +228,7 @@ define(
           $http
             .post(
               '/api/download',
-              { name: 'download_figures', args: [resultId, graphSelectors, filetype, graphIndex]},
+              { name: 'download_figures', args: [resultId, graphSelectors, filetype, Number(graphIndex)]},
               {responseType: 'blob'})
             .then(function(response) {
               console.log(response);

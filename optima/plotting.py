@@ -1090,6 +1090,10 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         printv('PDF saved to %s' % thisfilename, 2, verbose)
     for p,item in enumerate(plots.items()):
         print('test1')
+        print index
+        print p
+        print index==p
+        print('ok')
         key,plt = item
         if index is None or index==p:
             print('test2')
