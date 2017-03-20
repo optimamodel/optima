@@ -631,7 +631,10 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
     for colindex in range(1,wspopsize.ncols-3): # Skip first column and last 3
         poplist.append(wspopsize.cell_value(0, colindex))
     npops = len(poplist)
-    
+    if npops!=project.data['npops']:
+        errormsg = 'Selected project and selected spreadsheet are incompatible: %i vs. %i populations' % (npops, project.data['npops'])
+        raise OptimaException(errormsg)
+        
     districtlist = []
     popratio = odict()
     prevfactors = odict()

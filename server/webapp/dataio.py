@@ -1693,7 +1693,7 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
 
     prj_names = []
     for project in projects:
-        print("> Slurping project %s: %s" % (project.name))
+        print("> Slurping project %s" % project.name)
         prj_name = project.name
         i = 1
         while prj_name in existing_prj_names:
