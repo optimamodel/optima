@@ -1581,7 +1581,7 @@ def download_portfolio(portfolio_id):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = portfolio_record.as_file(dirname)
+    filename = portfolio_record.as_portfolio_file(dirname)
     return dirname, filename
 
 
