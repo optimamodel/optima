@@ -997,20 +997,8 @@ def download_figures(result_id=None, which=None, filetype=None, index=None):
         errormsg = 'Webapp only supports saving one figure at a time; you are trying to save %s' % len(filenames)
         raise op.OptimaException(errormsg)
     else:
-        server_filename = os.path.basename(filenames[0])
+        server_filename = filenames[0]
     print(">> download_figures", server_filename)
-    return dirname, server_filename
-
-
-def download_result_png(result_id, which):
-    result = load_result_by_id(result_id, which)
-    dirname = upload_dir_user(TEMPLATEDIR)
-    if not dirname:
-        dirname = TEMPLATEDIR
-    filename = which + '.png'
-    server_filename = os.path.join(dirname, filename)
-    print(">> download_result_png", server_filename)
-    op.saveplots(result, toplot=which, filepath=dirname, filename=filename, filetype='png')
     return server_filename
 
 
