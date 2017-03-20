@@ -1678,10 +1678,6 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     op.makegeoprojects(project=project, spreadsheetpath=spreadsheet_fname, destination=spawn_dir)
 
     district_prj_basenames = os.listdir(spawn_dir)
-    print('hiiiiiiiiiiiiiiiiii')
-    print spawn_dir
-    print district_prj_basenames
-    print('biiiiiiiiiiiiiiii')
     prj_names = []
     for prj_basename in district_prj_basenames:
         first_prj_name = prj_basename.replace('.prj', '')
