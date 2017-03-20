@@ -194,7 +194,7 @@ define(
           console.log('DEBUG info', name, filetype, figindex);
           console.log('DEBUG elem', elem);
           console.log('DEBUG scope', scope);
-          var which = scope.CKgetSelectors;
+          var which = scope.getSelectors;
           console.log('debug info TEMP', which);
           $http
             .post(
@@ -388,7 +388,7 @@ define(
             return;
           }
           console.log('resultId', resultId);
-          var which = scope.CKgetSelectors();
+          var which = scope.getSelectors();
           var index = null;
           var filetype = 'singlepdf';
           $http
@@ -421,30 +421,13 @@ define(
           });
         };
 
-
-        function getSelectors() {
-          function getChecked(s) { return s.checked; }
-          function getKey(s) { return s.key }
-          var which = [];
-          if (scope.graphs) {
-            if (scope.graphs.advanced) {
-              which.push('advanced');
-            }
-            var selectors = scope.graphs.selectors;
-            if (selectors) {
-              which = which.concat(_.filter(selectors, getChecked).map(getKey));
-            }
-          }
-          return which;
-        }
-
         scope.updateGraphs = function() {
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
           }
           console.log('updateGraphs resultId', scope.graphs.resultId);
-          var which = scope.CKgetSelectors();
+          var which = scope.getSelectors();
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
@@ -545,7 +528,7 @@ define(
           scope.defaultGraphs();
         };
 
-        scope.CKgetSelectors = function() {
+        scope.getSelectors = function() {
           function getChecked(s) { return s.checked; }
           function getKey(s) { return s.key }
           var which = [];
