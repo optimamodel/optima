@@ -499,8 +499,7 @@ def run_miminize_portfolio(self, portfolio_id, maxtime):
     if status == 'started':
         try:
             print ">> Start BOC:"
-            portfolio.runGA(maxtime=maxtime, mc=0, batch=True)
-            print('WARNING!!! Running with multiprocessing and Celery!! This cant go well!')
+            portfolio.runGA(maxtime=maxtime, mc=0, batch=False)
             status = 'completed'
         except Exception:
             status = 'error'

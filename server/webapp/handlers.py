@@ -451,7 +451,7 @@ class CalculatePortfolio(Resource):
         print("> Run BOC %s" % (portfolio_id))
         return server.webapp.tasks.launch_boc(portfolio_id, maxtime)
 
-api.add_resource(CalculatePortfolio, '/api/calculate/portfolio/<uuid:portfolio_id>')
+api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/calculate')
 
 
 class MinimizePortfolio(Resource):
@@ -462,7 +462,7 @@ class MinimizePortfolio(Resource):
         maxtime = int(get_post_data_json().get('maxtime'))
         return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, maxtime)
 
-api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>')
+api.add_resource(MinimizePortfolio, '/api/portfolio/<uuid:portfolio_id>/minimize')
 
 
 class RegionTemplate(Resource):

@@ -160,8 +160,7 @@ define(
           console.log('run BOC curves', $scope.state.portfolio);
           $http
             .post(
-              "/api/portfolio/" + $scope.state.portfolio.id
-              + "/gaoptim/" + $scope.state.gaoptim.id,
+              "/api/portfolio/" + $scope.state.portfolio.id + "/calculate",
               {maxtime: $scope.state.bocMaxtime})
             .success(function() {
               _.each($scope.state.portfolio.projects, function(project) {
@@ -189,8 +188,7 @@ define(
               if (response.status != 'started') {
                 $http
                   .post(
-                    "/api/minimize/portfolio/" + $scope.state.portfolio.id
-                    + "/gaoptim/" + $scope.state.gaoptim.id,
+                    "/api/portfolio/" + $scope.state.portfolio.id + "/minimize",
                     {maxtime: $scope.state.maxtime})
                   .success(function() {
                     initFullGaPoll();
