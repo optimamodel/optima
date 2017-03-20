@@ -599,10 +599,6 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
 def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave=True, verbose=2):
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
     
-    print('howdy')
-    print destination
-    print('kk')
-    
     ## 1. Get results and defaults
     if project is None or spreadsheetpath is None:
         errormsg = 'makegeoprojects requires a project and a spreadsheet path as inputs'
