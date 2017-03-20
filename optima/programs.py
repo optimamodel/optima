@@ -167,7 +167,7 @@ class Programset(object):
         for thispartype in self.covout.keys():
             printv('Checking %s partype' % thispartype, 4, verbose)
             for thispop in self.covout[thispartype].keys():
-                printv('Checking %s pop' % thispop, 4, verbose)
+                printv('Checking %s pop' % str(thispop), 4, verbose)
                 if self.covout[thispartype][thispop].ccopars.get('intercept', None) is None:
                     printv('%s %s intercept is none' % (thispartype, thispop), 4, verbose)
                     result = False
@@ -176,7 +176,7 @@ class Programset(object):
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
                         printv('Checking %s program' % thisprog, 4, verbose)
                         if self.covout[thispartype][thispop].ccopars.get(thisprog.short, None) is None:
-                            printv('%s %s %s program effect is none' % (thispartype, thispop, thisprog), 4, verbose)
+                            printv('%s %s %s program effect is none' % (thispartype, str(thispop), thisprog), 4, verbose)
                             result = False
                             details.append((thispartype,thispop))
         if detail: return list(set(details))
