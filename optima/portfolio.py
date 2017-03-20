@@ -99,8 +99,9 @@ class Portfolio(object):
     
     def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current portfolio, by default using its name, and without results '''
-        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
-        if filename is None: filename = self.name+'.prt'
+        if filename is None:
+            if self.filename: filename = self.filename
+            else:             filename = self.name+'.prt'
         self.filename = os.path.abspath(filename) # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
         if saveresults:
@@ -597,6 +598,10 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
 # ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
 def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave=True, verbose=2):
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
+    
+    print('howdy')
+    print destination
+    print('kk')
     
     ## 1. Get results and defaults
     if project is None or spreadsheetpath is None:
