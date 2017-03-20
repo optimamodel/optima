@@ -803,7 +803,7 @@ class Program(object):
 
 
     def optimizable(self):
-        return True if self.targetpars else False
+        return True if self.targetpars else False # and self.hasbudget()
 
     def hasbudget(self):
         return True if self.costcovdata['cost'] else False
