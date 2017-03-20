@@ -1071,11 +1071,13 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     nplots = len(plots)
     
     # Handle file types
+    filenames = []
     if filetype is 'pdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
+        if not filename: filename = results.projectinfo['name']+'-'+'figures.pdf'
         thisfilename = filepath+filename
-        if not thisfilename: thisfilename = 'figures.pdf'
         pdf = PdfPages(thisfilename)
+        filenames.append(thisfilename)
         printv('PDF saved to %s' % thisfilename, 2, verbose)
     for p,item in enumerate(plots.items()):
         key,plt = item
@@ -1093,21 +1095,23 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
             defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
             if filetype is 'fig':
                 saveobj(thisfilename, plt)
+                filenames.append(thisfilename)
                 printv('Figure object saved to %s' % thisfilename, 2, verbose)
             else:
                 reanimateplots(plt)
                 if filetype is 'pdf':
-                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but this should actually be default, since we updated it from the user version
+                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
                 else:                 
                     plt.savefig(thisfilename, **defaultsavefigargs)
                     if not thisfilename:
                         import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    filenames.append(thisfilename)
                     printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
                 close(plt)
     
     if filetype is 'pdf': pdf.close()
     if wasinteractive: ion()
-    return None
+    return filenames
 
 
 

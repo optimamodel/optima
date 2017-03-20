@@ -370,11 +370,13 @@ define(
             return;
           }
           console.log('resultId', resultId);
-          var which = getSelectors()
+          var which = getSelectors();
+          var index = null;
+          var filetype = 'pdf';
           $http
             .post(
               '/api/download',
-              { name: 'download_result_pdf', args: [resultId, which]},
+              { name: 'download_figures', args: [resultId, which, filetype, index]},
               {responseType: 'blob'})
             .then(function(response) {
               var blob = new Blob([response.data], { type:'application/pdf' });
