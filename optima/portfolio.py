@@ -129,6 +129,11 @@ class Portfolio(object):
         
         Version: 2017mar17
         '''
+        
+        # If objectives not supplied, use the ones from the portfolio
+        if objectives is None: objectives = self.objectives
+        
+        
         # All we need to do is run batchBOC on the portfolio's odict of projects
         self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
              constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, 
