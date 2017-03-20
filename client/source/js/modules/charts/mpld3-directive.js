@@ -220,10 +220,11 @@ define(
           console.log('DEBUG scope', scope);
           console.log('DEBUG attr', attrs);
           var resultId = attrs.resultId;
-          var graphSelectors = attrs.graphSelectors;
           var graphIndex = attrs.graphIndex;
+          var graphSelectorsString = attrs.graphSelectors; // graphSelectors gets converted to a string, so convert back: e.g. '["a","b"]' -> 'a, b' -> 'a','b'
+          var graphSelectors = graphSelectorsString.split('"').join('').slice(1,-1).split(','); // http://stackoverflow.com/questions/19156148/i-want-to-remove-double-quotes-from-a-string
           console.log('here we go!');
-          console.log('resultId, graphSelectors, filetype, graphIndex');
+          console.log(resultId, graphSelectors, filetype, graphIndex);
           $http
             .post(
               '/api/download',
@@ -417,10 +418,11 @@ define(
           if (_.isUndefined(resultId)) {
             return;
           }
-          console.log('resultId', resultId);
           var which = scope.getSelectors();
           var index = null;
           var filetype = 'singlepdf';
+          console.log('and here we go again');
+          console.log(resultId, which, filetype, index);
           $http
             .post(
               '/api/download',
