@@ -1603,6 +1603,15 @@ def export_portfolio(portfolio_id):
     return os.path.split(xlsx_fname)
     
 
+def portfolio_results_ready(portfolio_id):
+    """
+    Checks if the portfolio is ready for export
+    """
+    portfolio_record = load_portfolio_record(portfolio_id, raise_exception=True)
+    portfolio = portfolio_record.load()
+    result = len(portfolio.results)>0
+    return result
+
 
 def update_portfolio_from_prt(portfolio_id, prt_filename):
     portfolio = op.loadportfolio(prt_filename)

@@ -98,23 +98,23 @@ define(
         };
 
 
-        $scope.downloadPortfolio = function (name, id) {
-          $http.get('/api/portfolio/'+ id + '/data',
+        $scope.downloadPortfolio = function() {
+          $http.get('/api/portfolio/'+ $scope.state.portfolio.id + '/data',
             {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
             .success(function (response, status, headers, config) {
               var blob = new Blob([response], { type: 'application/octet-stream' });
-              saveAs(blob, (name + '.prt'));
+              saveAs(blob, ($scope.state.portfolio.name + '.prt'));
             });
         };
 
-        $scope.uploadPortfolio = function(id) {
+        $scope.uploadPortfolio = function() {
           angular
             .element('<input type="file">')
             .change(function (event) {
               var file = event.target.files[0];
               $upload
                 .upload({
-                  url: '/api/portfolio/'+ id + '/data',
+                  url: '/api/portfolio/'+ $scope.state.portfolio.id + '/data',
                   fields: {name: file.name},
                   file: file
                 })
@@ -148,12 +148,12 @@ define(
 
         function getCheckFullGaUrl() {
           return "/api/task/" + $scope.state.portfolio.id
-              + "/type/portfolio-" + $scope.state.gaoptim.id;
+              + "/type/portfolio";
         }
 
         function getCheckProjectBocUrl(projectId) {
           return "/api/task/" + projectId
-                + "/type/gaoptim-" + $scope.state.gaoptim.id;
+                + "/type/gaoptim";
         }
 
         $scope.calculateAllBocCurves = function() {
@@ -394,26 +394,25 @@ define(
               allCalculated = false;
             }
           });
-          if (!allCalculated) {
-            $scope.state.portfolio.outputstring = "";
-          }
           return !allCalculated;
         };
 
-        $scope.hasNoResults = function() {
+        //$scope.hasNoResults = function(id) {
+        //  if (_.isUndefined($scope.state.portfolio)) {
+        //    return true;
+        //  }
+        //  var result = "/api/portfolio/" + id + "/ready";
+        //  console.log('checking results:');
+        //  console.log(result);
+        //  return !result;
+        //};
+
+        function hasNoResults() {
           if (_.isUndefined($scope.state.portfolio)) {
             return true;
           }
-          return !($scope.state.portfolio.outputstring);
-        };
-
-        $scope.exportResults = function() {
-          if ($scope.state.portfolio.outputstring) {
-            var blob = new Blob(
-              [$scope.state.portfolio.outputstring], {type: 'application/octet-stream'});
-            saveAs(blob, ('result.csv'));
-          }
-        };
+          return "/api/portfolio/" + $scope.state.portfolio.id + "/ready"
+        }
 
         $scope.exportResults = function (id) {
           $http.get('/api/portfolio/'+ id + '/export',

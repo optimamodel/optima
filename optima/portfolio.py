@@ -312,7 +312,7 @@ class Portfolio(object):
     def makeoutput(self, doprint=False, verbose=2):
         ''' Just displays results related to the GA run '''
         if doprint: printv('Printing results...', 2, verbose)
-        if self.results is None:
+        if not self.results:
             errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
             raise OptimaException(errormsg)
         

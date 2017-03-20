@@ -524,6 +524,19 @@ class TaskChecker(Resource):
 api.add_resource(TaskChecker, '/api/task/<uuid:pyobject_id>/type/<work_type>')
 
 
+class ResultsReady(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download .xlsx file of portfolio results')
+    def get(self, portfolio_id):
+        resultready = dataio.portfolio_results_ready(portfolio_id)
+        return resultready
+
+api.add_resource(ResultsReady, '/api/portfolio/<uuid:portfolio_id>/ready')
+
+
+
+
 
 #############################################################################################
 ### PARSETS
