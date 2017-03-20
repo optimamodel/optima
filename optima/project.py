@@ -717,8 +717,9 @@ class Project(object):
         
         boc = None
         objkeys = ['start','end','deathweight','inciweight']
-        for boc in reversed(self.results.values()): # Get last result and work backwards
-            if isinstance(boc,BOC):
+        for result in reversed(self.results.values()): # Get last result and work backwards
+            if isinstance(result,BOC):
+                boc = result
                 if objectives is None:
                     return boc # A BOC was found, and objectives are None: we're done
                 same = True
@@ -733,6 +734,7 @@ class Project(object):
             printv('Warning, no BOCs found!', 1, verbose)
             return None
         
+        # Compare the last BOC found with the wanted objectives
         wantedobjs = ', '.join(['%s=%0.1f' % (key,objectives[key]) for key in objkeys])
         actualobjs = ', '.join(['%s=%0.1f' % (key,boc.objectives[key]) for key in objkeys])
         if not same and strict: # The BOCs don't match exactly, and strict checking is enabled, return None
