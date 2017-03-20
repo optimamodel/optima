@@ -1,6 +1,6 @@
 define(
-  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png'],
-  function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
+  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs'],
+  function (module, _, $, mpld3, saveAs) {
 
   'use strict';
 
@@ -126,7 +126,7 @@ define(
     $svg.attr('height', height);
   }
 
-  module.directive('mpld3Chart', function ($http, modalService, exportHelpers) {
+  module.directive('mpld3Chart', function ($http, modalService) {
 
     return {
       scope: { chart: '=mpld3Chart' },
@@ -190,66 +190,86 @@ define(
           }
         };
 
-        scope.exportGraphAsSvg = function() {
-          var originalStyle;
-          var elementId = elem.attr('id');
-
-          var $originalSvg = elem.parent().find('svg');
-          var viewBox = $originalSvg[0].getAttribute('viewBox');
-          var orginalWidth, orginalHeight;
-          if (viewBox) {
-            var tokens = viewBox.split(" ");
-            orginalWidth = parseFloat(tokens[2]);
-            orginalHeight = parseFloat(tokens[3]);
-          } else {
-            orginalWidth = $originalSvg.width();
-            orginalHeight = $originalSvg.height();
+        scope.exportFigure = function(name, filetype, figindex) { /* Adding function(name) brings up save dialog box */
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
           }
-
-          originalStyle = 'padding: ' + $originalSvg.css('padding');
-          var scalingFactor = 1;
-
-          // In order to have styled graphs the css content used to render
-          // graphs is retrieved & inject it into the svg as style tag
-          var chartStylesheetRequest = $http.get(chartStylesheetUrl, { cache: true });
-          chartStylesheetRequest
-            .success(function(chartStylesheetContent) {
-              // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
-              var $styleTagContentList = $('style').map(function(index, style) {
-                var styleContent = $(style).html();
-                if (styleContent.indexOf('div#' + elementId) != -1) {
-                  return styleContent.replace(/div#/g, '#');
-                } else {
-                  return styleContent;
-                }
-              });
-
-              var styleContent = $styleTagContentList.get().join('\n');
-              styleContent = styleContent + '\n' + chartStylesheetContent;
-
-              // create svg element
-              var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle, elementId);
-
-              // add styles and content to the svg
-              var styles = '<style>' + styleContent + '</style>';
-              svg.innerHTML = styles + $originalSvg.html();
-
-              // create img element with the svg as data source
-              var svgXML = (new XMLSerializer()).serializeToString(svg);
-              saveAs(new Blob([svgXML], { type: 'image/svg' }), 'graph.svg');
-
-            })
-            .error(function() {
-              alert("Please reload and try again, something went wrong while generating the graph.");
+          console.log('resultId', resultId);
+          var which = getSelectors();
+          console.log('debug info TEMP', which, filetype, figindex);
+          $http
+            .post(
+              '/api/download',
+              { name: 'download_figures', args: [resultId, which, filetype, figindex]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              console.log(response);
+              var blob = new Blob([response.data], { type:'application/'+filetype });
+              saveAs(blob, ('optima-figure.'+filetype));
             });
         };
 
-        scope.exportGraphAsPng = function() {
-          exportHelpers.generateGraphAsPngOrJpeg(
-              elem.parent(),
-              function(blob) { saveAs(blob, "graph.png"); },
-              'blob');
-        };
+        //scope.exportGraphAsSvg = function() {
+        //  var originalStyle;
+        //  var elementId = elem.attr('id');
+        //
+        //  var $originalSvg = elem.parent().find('svg');
+        //  var viewBox = $originalSvg[0].getAttribute('viewBox');
+        //  var orginalWidth, orginalHeight;
+        //  if (viewBox) {
+        //    var tokens = viewBox.split(" ");
+        //    orginalWidth = parseFloat(tokens[2]);
+        //    orginalHeight = parseFloat(tokens[3]);
+        //  } else {
+        //    orginalWidth = $originalSvg.width();
+        //    orginalHeight = $originalSvg.height();
+        //  }
+        //
+        //  originalStyle = 'padding: ' + $originalSvg.css('padding');
+        //  var scalingFactor = 1;
+        //
+        //  // In order to have styled graphs the css content used to render
+        //  // graphs is retrieved & inject it into the svg as style tag
+        //  var chartStylesheetRequest = $http.get(chartStylesheetUrl, { cache: true });
+        //  chartStylesheetRequest
+        //    .success(function(chartStylesheetContent) {
+        //      // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
+        //      var $styleTagContentList = $('style').map(function(index, style) {
+        //        var styleContent = $(style).html();
+        //        if (styleContent.indexOf('div#' + elementId) != -1) {
+        //          return styleContent.replace(/div#/g, '#');
+        //        } else {
+        //          return styleContent;
+        //        }
+        //      });
+        //
+        //      var styleContent = $styleTagContentList.get().join('\n');
+        //      styleContent = styleContent + '\n' + chartStylesheetContent;
+        //
+        //      // create svg element
+        //      var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle, elementId);
+        //
+        //      // add styles and content to the svg
+        //      var styles = '<style>' + styleContent + '</style>';
+        //      svg.innerHTML = styles + $originalSvg.html();
+        //
+        //      // create img element with the svg as data source
+        //      var svgXML = (new XMLSerializer()).serializeToString(svg);
+        //      saveAs(new Blob([svgXML], { type: 'image/svg' }), 'graph.svg');
+        //
+        //    })
+        //    .error(function() {
+        //      alert("Please reload and try again, something went wrong while generating the graph.");
+        //    });
+        //};
+
+        //scope.exportGraphAsPng = function() {
+        //  exportHelpers.generateGraphAsPngOrJpeg(
+        //      elem.parent(),
+        //      function(blob) { saveAs(blob, "graph.png"); },
+        //      'blob');
+        //};
 
         scope.$watch(
           'chart',
@@ -382,7 +402,7 @@ define(
             .then(function(response) {
               console.log(response);
               var blob = new Blob([response.data], { type:'application/pdf' });
-              saveAs(blob, ('results.pdf'));
+              saveAs(blob, ('optima-figures.pdf'));
             });
         };
 
@@ -400,7 +420,7 @@ define(
             })
           .success(function (response) {
             var blob = new Blob([response], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, ('results.xlsx'));
+            saveAs(blob, ('optima-results.xlsx'));
           });
         };
 
