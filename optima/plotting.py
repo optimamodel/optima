@@ -1087,7 +1087,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                 thisfilename = filepath+filename
             else: # Any other case, generate a filename
                 keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
-                thisfilename = filepath+keyforfilename+'.'+filetype
+                thisfilename = filepath+results.projectinfo['name']+'-'+keyforfilename+'.'+filetype
             
             # Do the saving
             if savefigargs is None: savefigargs = {}
