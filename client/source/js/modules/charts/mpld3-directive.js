@@ -215,14 +215,15 @@ define(
 
         scope.exportFigure = function(filetype) { /* Adding function(name) brings up save dialog box */
 
-          console.log('DEBUG info', name, filetype, figindex);
+          console.log('DEBUG info', filetype);
           console.log('DEBUG elem', elem);
           console.log('DEBUG scope', scope);
           console.log('DEBUG attr', attrs);
           var resultId = attrs.resultId;
           var graphSelectors = attrs.graphSelectors;
           var graphIndex = attrs.graphIndex;
-          console.log('debug info TEMP', which);
+          console.log('here we go!');
+          console.log('resultId, graphSelectors, filetype, graphIndex');
           $http
             .post(
               '/api/download',
