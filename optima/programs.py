@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, plotcoverage
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, plotcostcov
 from numpy import ones, prod, array, zeros, exp, log, append, nan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
@@ -769,7 +769,7 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
                 else:
-                    cost_coverage_figures[thisprog] = plotcoverage(program=self.programs[thisprog], t=t,parset=parset,existingFigure=existingFigure,bounds=bounds)
+                    cost_coverage_figures[thisprog] = plotcostcov(program=self.programs[thisprog], t=t,parset=parset,existingFigure=existingFigure,bounds=bounds)
 
         return cost_coverage_figures
 

@@ -1065,8 +1065,9 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     if filepath: filepath += os.sep
     
     # Either take supplied plots, or generate them
-    if plots is None:
+    if plots is None: # NB, this is actually a figure or a list of figures
         plots = makeplots(results=results, toplot=toplot, **kwargs)
+    plots = promotetolist(plots)
     nplots = len(plots)
     
     # Handle file types
