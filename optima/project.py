@@ -497,7 +497,8 @@ class Project(object):
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
             if randseed is not None: seed(randseed) # Reset the random seed, if specified
             for i in range(n):
-                sampleseed = randint(0,2**32-1)
+                maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
+                sampleseed = randint(0,maxint) 
                 simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
