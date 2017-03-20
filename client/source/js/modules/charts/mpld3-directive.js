@@ -62,7 +62,7 @@ define(
         var $path = $(path);
 
         // we look for the background and make it opaque
-        if ($path.css('fill')=="rgb(255, 255, 255)") {
+        if (($path.css('fill')=="rgb(255, 255, 255)") || ($path.css('fill')=='#ffffff')) {
           $path.css('fill-opacity', 0);
           $path.css('stroke', "none");
         }
