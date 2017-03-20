@@ -985,7 +985,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     ax = fig.add_subplot(111)
 
     ax.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
-    ax.figtext(.1, .05, textwrap.fill(caption))
+    fig.text(.1, .05, textwrap.fill(caption))
     
     if y_m is not None:
         for yr in range(y_m.shape[0]):
