@@ -1267,7 +1267,7 @@ def save_program(project_id, progset_id, program_summary):
     project_record.save_obj(project)
 
 
-def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
+def load_costcov_graph(project_id, progset_id, program_id, parset_id, year):
     project_record = load_project_record(project_id)
     project = project_record.load()
     progset = parse.get_progset_from_project(project, progset_id)
@@ -1278,13 +1278,9 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
         plotoptions = program.attr
 
     parset = parse.get_parset_from_project(project, parset_id)
-    plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
+    plot = op.plotcostcov(program=program, year=year, parset=parset, plotoptions=plotoptions)
 
     graph_dict = convert_to_mpld3(plot)
-    texts = graph_dict['axes'][0]['texts']
-    for i in reversed(range(len(texts))):
-        if texts[i]['text'] == 'None':
-            del texts[i]
 
     return graph_dict
 
