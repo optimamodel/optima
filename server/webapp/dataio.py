@@ -572,7 +572,7 @@ def copy_project(project_id, new_project_name):
     return copy_project_id
 
 
-def create_project_from_prj(prj_filename, project_name, user_id):
+def create_project_from_prj(prj_filename=None, project_name=None, user_id=None, project=None):
     """
     Returns the project id of the new project.
         results.name
@@ -580,8 +580,10 @@ def create_project_from_prj(prj_filename, project_name, user_id):
             - 'parset-' - calibration/autofit results
             - 'optim-' - optimization results
     """
-    project = op.loadproj(prj_filename)
-    project.name = project_name
+    if project is None:
+        project = op.loadproj(prj_filename)
+    if project_name is not None:
+        project.name = project_name
     resolve_project(project)
     save_project_as_new(project, user_id)
     return project.uid
@@ -1684,34 +1686,23 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     """
 
     print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
-    dirname = upload_dir_user(TEMPLATEDIR)
-
     project_record = load_project_record(project_id)
-    project = project_record.load()
-    prj_basename = project_record.as_file(dirname)
-    prj_fname = os.path.join(dirname, prj_basename)
+    baseproject = project_record.load()
 
-    spawn_dir = os.path.join(dirname, prj_basename + '-spawn-districts')
-    if os.path.isdir(spawn_dir):
-        shutil.rmtree(spawn_dir)
+    projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
 
-    op.makegeoprojects(project=project, spreadsheetpath=spreadsheet_fname, destination=spawn_dir)
-
-    district_prj_basenames = os.listdir(spawn_dir)
     prj_names = []
-    for prj_basename in district_prj_basenames:
-        first_prj_name = prj_basename.replace('.prj', '')
-        print("> Slurping project %s: %s" % (first_prj_name, [existing_prj_names, first_prj_name in existing_prj_names]))
-        prj_name = first_prj_name
+    for project in projects:
+        print("> Slurping project %s: %s" % (project.name))
+        prj_name = project.name
         i = 1
         while prj_name in existing_prj_names:
-            prj_name = first_prj_name + ' (%d)' % i
+            prj_name = prj_name + ' (%d)' % i
             i += 1
-        create_project_from_prj(prj_fname, prj_name, current_user.id)
+        create_project_from_prj(None, prj_name, current_user.id, project=project)
         prj_names.append(prj_name)
 
-    print("> Cleanup districts for template project %s" % prj_basename)
-    shutil.rmtree(spawn_dir)
+    print("> Cleanup districts for template project %s" % baseproject.name)
     return prj_names
 
 
