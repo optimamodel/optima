@@ -6,6 +6,29 @@ define(
 
   var moduleAllCharts, moduleScrollTop;
 
+    function CKtest(name, filetype, figindex) { /* Adding function(name) brings up save dialog box */
+
+      console.log('DEBUG info', name, filetype, figindex);
+      console.log('DEBUG elem', elem);
+      console.log('DEBUG scope', scope);
+      console.log('DEBUG parents', scope.parent);
+      console.log('DEBUG parents', scope.parent());
+      console.log('DEBUG parents', scope.parents());
+      //scope.parents().exportAllFigures(name);
+      //var which = scope.parent().parent().getSelectors();
+      //console.log('debug info TEMP', which);
+      //$http
+      //  .post(
+      //    '/api/download',
+      //    { name: 'download_figures', args: [resultId, which, filetype, figindex]},
+      //    {responseType: 'blob'})
+      //  .then(function(response) {
+      //    console.log(response);
+      //    var blob = new Blob([response.data], { type:'application/'+filetype });
+      //    saveAs(blob, ('optima-figure.'+filetype));
+      //  });
+    }
+
   function val2str(val, limit, suffix) {
     var reducedVal = val / limit;
     var leftOver = reducedVal % 1.0;
@@ -191,21 +214,24 @@ define(
         };
 
         scope.exportFigure = function(name, filetype, figindex) { /* Adding function(name) brings up save dialog box */
+
           console.log('DEBUG info', name, filetype, figindex);
           console.log('DEBUG elem', elem);
           console.log('DEBUG scope', scope);
-          var which = scope.getSelectors;
-          console.log('debug info TEMP', which);
-          $http
-            .post(
-              '/api/download',
-              { name: 'download_figures', args: [resultId, which, filetype, figindex]},
-              {responseType: 'blob'})
-            .then(function(response) {
-              console.log(response);
-              var blob = new Blob([response.data], { type:'application/'+filetype });
-              saveAs(blob, ('optima-figure.'+filetype));
-            });
+          console.log('DEBUG attr', attrs);
+          //scope.parents().exportAllFigures(name);
+          //var which = scope.parent().parent().getSelectors();
+          //console.log('debug info TEMP', which);
+          //$http
+          //  .post(
+          //    '/api/download',
+          //    { name: 'download_figures', args: [resultId, which, filetype, figindex]},
+          //    {responseType: 'blob'})
+          //  .then(function(response) {
+          //    console.log(response);
+          //    var blob = new Blob([response.data], { type:'application/'+filetype });
+          //    saveAs(blob, ('optima-figure.'+filetype));
+          //  });
         };
 
         //scope.exportGraphAsSvg = function() {
