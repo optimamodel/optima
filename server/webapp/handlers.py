@@ -530,7 +530,7 @@ class ResultsReady(Resource):
     @swagger.operation(summary='Download .xlsx file of portfolio results')
     def get(self, portfolio_id):
         resultready = dataio.portfolio_results_ready(portfolio_id)
-        return resultready
+        return not(resultready) # WARNING, not!
 
 api.add_resource(ResultsReady, '/api/portfolio/<uuid:portfolio_id>/ready')
 
