@@ -16,7 +16,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
       $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
       $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
-      $scope.years = scenariosResponse.data.years;
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.isOptimizable = $scope.project.isOptimizable;
       $scope.isMissingProgset = $scope.project.nProgram == 0;
