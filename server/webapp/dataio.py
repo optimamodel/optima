@@ -961,6 +961,18 @@ def load_result_mpld3_graphs(result_id, which):
     return make_mpld3_graph_dict(result, which)
 
 
+def download_result_pngs(result_id, which):
+    result = load_result_by_id(result_id, which)
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    filename = 'results.pdf'
+    server_filename = os.path.join(dirname, filename)
+    print(">> download_result_pngs", server_filename)
+    op.saveplots(result, toplot=which, filepath=dirname, filename=filename, filetype='pdf')
+    return server_filename
+
+
 ########
 ## PARSET
 

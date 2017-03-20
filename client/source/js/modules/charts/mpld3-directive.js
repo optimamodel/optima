@@ -364,6 +364,24 @@ define(
           });
         }
 
+        scope.exportAllFigures = function(name) { /* Adding function(name) brings up save dialog box */
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('resultId', resultId);
+          var which = getSelectors()
+          $http
+            .post(
+              '/api/download',
+              { name: 'download_result_pngs', args: [resultId, which]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/pdf' });
+              saveAs(blob, ('results.pdf'));
+            });
+        };
+
         scope.exportAllData = function(name) { /* Adding function(name) brings up save dialog box */
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
