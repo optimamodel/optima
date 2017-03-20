@@ -1,5 +1,5 @@
 define(
-  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
+  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png'],
   function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
 
   'use strict';
@@ -62,9 +62,9 @@ define(
         var $path = $(path);
 
         // we look for the background and make it opaque
-        if ($path.css('fill')=="rgb(255, 255, 255)") {
-          $path.css('fill', "rgba(255, 255, 255, 0)");
-          $path.css('stroke', "rgba(255, 255, 255, 0)");
+        if (($path.css('fill')=="rgb(255, 255, 255)") || ($path.css('fill')=='#ffffff')) {
+          $path.css('fill-opacity', 0);
+          $path.css('stroke', "none");
         }
       });
 
@@ -363,6 +363,24 @@ define(
             moduleScrollTop = moduleAllCharts.scrollTop();
           });
         }
+
+        scope.exportAllFigures = function(name) { /* Adding function(name) brings up save dialog box */
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('resultId', resultId);
+          var which = getSelectors()
+          $http
+            .post(
+              '/api/download',
+              { name: 'download_result_pdf', args: [resultId, which]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/pdf' });
+              saveAs(blob, ('results.pdf'));
+            });
+        };
 
         scope.exportAllData = function(name) { /* Adding function(name) brings up save dialog box */
           var resultId = scope.graphs.resultId;
