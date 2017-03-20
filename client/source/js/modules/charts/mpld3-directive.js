@@ -191,13 +191,11 @@ define(
         };
 
         scope.exportFigure = function(name, filetype, figindex) { /* Adding function(name) brings up save dialog box */
-          var resultId = scope.graphs.resultId;
-          if (_.isUndefined(resultId)) {
-            return;
-          }
-          console.log('resultId', resultId);
-          var which = getSelectors();
-          console.log('debug info TEMP', which, filetype, figindex);
+          console.log('DEBUG info', name, filetype, figindex);
+          console.log('DEBUG elem', elem);
+          console.log('DEBUG scope', scope);
+          var which = scope.CKgetSelectors;
+          console.log('debug info TEMP', which);
           $http
             .post(
               '/api/download',
@@ -390,10 +388,9 @@ define(
             return;
           }
           console.log('resultId', resultId);
-          var which = getSelectors();
+          var which = scope.CKgetSelectors();
           var index = null;
           var filetype = 'singlepdf';
-          console.log('debug info TEMP', which, index, filetype);
           $http
             .post(
               '/api/download',
@@ -447,7 +444,7 @@ define(
             return;
           }
           console.log('updateGraphs resultId', scope.graphs.resultId);
-          var which = getSelectors();
+          var which = scope.CKgetSelectors();
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
@@ -546,6 +543,22 @@ define(
 
         scope.defaultSelectors = function() {
           scope.defaultGraphs();
+        };
+
+        scope.CKgetSelectors = function() {
+          function getChecked(s) { return s.checked; }
+          function getKey(s) { return s.key }
+          var which = [];
+          if (scope.graphs) {
+            if (scope.graphs.advanced) {
+              which.push('advanced');
+            }
+            var selectors = scope.graphs.selectors;
+            if (selectors) {
+              which = which.concat(_.filter(selectors, getChecked).map(getKey));
+            }
+          }
+          return which;
         };
 
         scope.changeFigWidth = function() {
