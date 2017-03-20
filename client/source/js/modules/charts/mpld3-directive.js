@@ -374,7 +374,7 @@ define(
           $http
             .post(
               '/api/download',
-              { name: 'download_result_pngs', args: [resultId, which]},
+              { name: 'download_result_pdf', args: [resultId, which]},
               {responseType: 'blob'})
             .then(function(response) {
               var blob = new Blob([response.data], { type:'application/pdf' });

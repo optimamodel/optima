@@ -109,6 +109,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           loadParametersAndGraphs(response);
           toastr.success('Loaded graphs');
+          console.log('getCalibrationGraphs', response.graphs);
           $scope.statusMessage = '';
           $scope.state.isRunnable = true;
         })
