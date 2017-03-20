@@ -17,15 +17,14 @@ import pprint
 import yaml
 
 import flask.json
-from flask import helpers, current_app, request, Response, flash, \
-    url_for, redirect, Blueprint, g, session, make_response
+from flask import helpers, current_app, request, flash, url_for, redirect, Blueprint, make_response
 from flask_login import login_required, current_user
 from flask_restful import Resource
 from flask_restful_swagger import swagger
 from flask_restful import Api
 from werkzeug.utils import secure_filename
 
-from . import parse, dataio, dbconn
+from . import parse, dataio
 from .dataio import report_exception_decorator, verify_admin_request_decorator
 from .parse import normalize_obj
 
@@ -75,7 +74,10 @@ def log_yaml(summary, title=None):
     return summary
 
 
-# PROJECTS
+
+#############################################################################################
+### PROJECTS
+#############################################################################################
 
 class ProjectsAll(Resource):
     method_decorators = [report_exception_decorator, verify_admin_request_decorator]
@@ -288,7 +290,7 @@ class DefaultPopulations(Resource):
 api.add_resource(DefaultPopulations, '/api/project/populations')
 
 
-class Portfolio(Resource):
+class Portfolio(Resource): # WARNING, should maybe be called something different since actually a project method
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Download projects as .zip')
@@ -339,8 +341,9 @@ class SpreadsheetDownload(Resource):
 api.add_resource(SpreadsheetDownload, '/api/project/<uuid:project_id>/downloaddata')
 
 
-
-# Portfolios
+#############################################################################################
+### PORTFOLIOS
+#############################################################################################
 
 class ManagePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -372,6 +375,63 @@ class SavePortfolio(Resource):
 api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
 
 
+
+class PortfolioData(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download .prt file for portfolio')
+    def get(self, portfolio_id):
+        dirname, filename = dataio.download_portfolio(portfolio_id)
+        return helpers.send_from_directory(dirname, filename)
+
+    @swagger.operation(summary='Update existing project with .prj')
+    def post(self, portfolio_id):
+        """
+        post-body: upload-file
+        """
+        uploaded_prt_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        dataio.update_portfolio_from_prt(portfolio_id, uploaded_prt_fname)
+        reply = {
+            'file': os.path.basename(uploaded_prt_fname),
+            'result': 'Portfolio %s is updated' % portfolio_id,
+        }
+        return reply
+
+api.add_resource(PortfolioData, '/api/portfolio/<uuid:portfolio_id>/data')
+
+
+# WARNING, at the moment the upload is halfway in between upload new portfolio and update existing portfolio
+#class PortfolioFromData(Resource):
+#    method_decorators = [report_exception_decorator, login_required]
+#
+#    @swagger.operation(summary='Upload project with .prj/.xls')
+#    def post(self):
+#        """
+#        file-upload
+#        request-form:
+#            name: name of project
+#            xls: true
+#        """
+#        project_name = request.form.get('name')
+#        is_xls = request.form.get('xls', False)
+#        uploaded_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+#        if is_xls:
+#            project_id = dataio.create_project_from_spreadsheet(
+#                uploaded_fname, project_name, current_user.id)
+#        else:
+#            project_id = dataio.create_project_from_prj(
+#                uploaded_fname, project_name, current_user.id)
+#        response = {
+#            'file': os.path.basename(uploaded_fname),
+#            'name': project_name,
+#            'id': project_id
+#        }
+#        return response, 201
+#
+#api.add_resource(PortfolioFromData, '/api/portfolio/data')
+
+
+
 class DeletePortfolioProject(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
@@ -391,7 +451,7 @@ class CalculatePortfolio(Resource):
         print("> Run BOC %s" % (portfolio_id))
         return server.webapp.tasks.launch_boc(portfolio_id, maxtime)
 
-api.add_resource(CalculatePortfolio, '/api/calculate/portfolio/<uuid:portfolio_id>')
+api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/calculate')
 
 
 class MinimizePortfolio(Resource):
@@ -402,7 +462,18 @@ class MinimizePortfolio(Resource):
         maxtime = int(get_post_data_json().get('maxtime'))
         return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, maxtime)
 
-api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>')
+api.add_resource(MinimizePortfolio, '/api/portfolio/<uuid:portfolio_id>/minimize')
+
+
+class ExportPortfolio(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download .xlsx file of portfolio results')
+    def get(self, portfolio_id):
+        dirname, filename = dataio.export_portfolio(portfolio_id)
+        return helpers.send_from_directory(dirname, filename)
+
+api.add_resource(ExportPortfolio, '/api/portfolio/<uuid:portfolio_id>/export')
 
 
 class RegionTemplate(Resource):
@@ -453,7 +524,23 @@ class TaskChecker(Resource):
 api.add_resource(TaskChecker, '/api/task/<uuid:pyobject_id>/type/<work_type>')
 
 
-# PARSETS
+class ResultsReady(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download .xlsx file of portfolio results')
+    def get(self, portfolio_id):
+        resultready = dataio.portfolio_results_ready(portfolio_id)
+        return not(resultready) # WARNING, not!
+
+api.add_resource(ResultsReady, '/api/portfolio/<uuid:portfolio_id>/ready')
+
+
+
+
+
+#############################################################################################
+### PARSETS
+#############################################################################################
 
 class Parsets(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -597,7 +684,11 @@ class ParsetUploadDownload(Resource):
 api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
 
 
-# RESULTS
+
+
+#############################################################################################
+### RESULTS
+#############################################################################################
 
 class ResultsExport(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -621,7 +712,10 @@ class ResultsExport(Resource):
 api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
 
 
-# PROGSETS
+
+#############################################################################################
+### PROGSETS
+#############################################################################################
 
 class Progsets(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -783,30 +877,10 @@ api.add_resource(ProgramCostcovGraph,
 
 
 
-# class GeneralRpcLoader(Resource):
-#     method_decorators = [report_exception_decorator, login_required]
-#
-#     @swagger.operation(summary='General RPC loader')
-#     def post(self):
-#         """
-#         url-args:
-#             'procedure': string name of function in dataio
-#             'args': list of arguments for the function
-#         """
-#         json = get_post_data_json()
-#
-#         fn_name = json['name']
-#         print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
-#         fn = getattr(dataio, fn_name)
-#
-#         args = json.get('args', [])
-#         kwargs = json.get('kwargs', {})
-#         return fn(*args, **kwargs)
-#
-# api.add_resource(GeneralRpcLoader, '/api/procedure')
 
-
-# SCENARIOS
+#############################################################################################
+### SCENARIOS
+#############################################################################################
 
 
 class Scenarios(Resource):
@@ -874,7 +948,10 @@ class DefaultParStartVal(Resource):
 api.add_resource(DefaultParStartVal, '/api/startval')
 
 
-# OPTIMIZATIONS
+
+#############################################################################################
+### OPTIMIZATIONS
+#############################################################################################
 
 class Optimizations(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -942,7 +1019,10 @@ class OptimizationGraph(Resource):
 api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
 
 
-# USERS
+
+#############################################################################################
+### USERS
+#############################################################################################
 
 
 class User(Resource):

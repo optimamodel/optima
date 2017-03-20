@@ -339,6 +339,21 @@ def promotetolist(obj=None, objtype=None):
     return obj
 
 
+def promotetoodict(obj=None):
+    ''' Like promotetolist, but for odicts -- WARNING, could be made into a method for odicts '''
+    if isinstance(obj, odict):
+        return obj # Don't need to do anything
+    elif isinstance(obj, dict):
+        return odict(obj)
+    elif isinstance(obj, list):
+        newobj = odict()
+        for i,val in enumerate(obj):
+            newobj['Key %i'%i] = val
+        return newobj
+    else:
+        return odict({'Key':obj})
+
+
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
     '''
     Nicely print a complicated data structure, a la Matlab.

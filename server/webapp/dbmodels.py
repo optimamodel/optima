@@ -67,6 +67,12 @@ class PyObjectDb(db.Model):
     def cleanup(self):
         print(">> Cleanup " + self.id.hex)
         redis.delete(self.id.hex)
+    
+    def as_portfolio_file(self, loaddir, filename=None):
+        portfolio = self.load()
+        filename = os.path.join(loaddir, portfolio.name + ".prt")
+        op.saveobj(filename, portfolio)
+        return portfolio.name + ".prt"
 
 
 @swagger.model

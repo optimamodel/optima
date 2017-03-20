@@ -34,7 +34,6 @@ def convert_to_mpld3(figure):
         ax = figure.axes[0]
         legend = ax.get_legend()
         if legend is not None:
-            labels = [t.get_text() for t in legend.get_texts()]
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
@@ -43,7 +42,15 @@ def convert_to_mpld3(figure):
             ax.set_position(Bbox(array([[0.19, 0.1], [0.85, 0.85]])))
 
     mpld3_dict = mpld3.fig_to_dict(figure)
-    return normalize_obj(mpld3_dict)
+    graph_dict = normalize_obj(mpld3_dict)
+    
+    # WARNING, kludgy -- remove word None that appears
+    texts = graph_dict['axes'][0]['texts']
+    for i in reversed(range(len(texts))):
+        if texts[i]['text'] == 'None':
+            del texts[i]
+    
+    return graph_dict
 
 
 def convert_to_selectors(graph_selectors):

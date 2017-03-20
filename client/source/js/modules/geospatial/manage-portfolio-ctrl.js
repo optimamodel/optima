@@ -97,6 +97,38 @@ define(
             _.pluck($scope.portfolios, 'name'));
         };
 
+
+        $scope.downloadPortfolio = function() {
+          $http.get('/api/portfolio/'+ $scope.state.portfolio.id + '/data',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
+            .success(function (response, status, headers, config) {
+              var blob = new Blob([response], { type: 'application/octet-stream' });
+              saveAs(blob, ($scope.state.portfolio.name + '.prt'));
+            });
+        };
+
+        $scope.uploadPortfolio = function() {
+          angular
+            .element('<input type="file">')
+            .change(function (event) {
+              var file = event.target.files[0];
+              $upload
+                .upload({
+                  url: '/api/portfolio/'+ $scope.state.portfolio.id + '/data',
+                  fields: {name: file.name},
+                  file: file
+                })
+                .success(function(response) {
+                  console.log('uploaded portfolio', response);
+                  $scope.portfolios.push(response);
+                  $scope.state.portfolio = response;
+                  loadPortfolios($scope.portfolios);
+                  toastr.success('Uploaded portfolio');
+                });
+            })
+            .click();
+        };
+
         $scope.deletePortfolio = function() {
           $http
             .delete('/api/portfolio/' + $scope.state.portfolio.id)
@@ -116,20 +148,19 @@ define(
 
         function getCheckFullGaUrl() {
           return "/api/task/" + $scope.state.portfolio.id
-              + "/type/portfolio-" + $scope.state.gaoptim.id;
+              + "/type/portfolio";
         }
 
         function getCheckProjectBocUrl(projectId) {
           return "/api/task/" + projectId
-                + "/type/gaoptim-" + $scope.state.gaoptim.id;
+                + "/type/gaoptim";
         }
 
         $scope.calculateAllBocCurves = function() {
           console.log('run BOC curves', $scope.state.portfolio);
           $http
             .post(
-              "/api/portfolio/" + $scope.state.portfolio.id
-              + "/gaoptim/" + $scope.state.gaoptim.id,
+              "/api/portfolio/" + $scope.state.portfolio.id + "/calculate",
               {maxtime: $scope.state.bocMaxtime})
             .success(function() {
               _.each($scope.state.portfolio.projects, function(project) {
@@ -157,8 +188,7 @@ define(
               if (response.status != 'started') {
                 $http
                   .post(
-                    "/api/minimize/portfolio/" + $scope.state.portfolio.id
-                    + "/gaoptim/" + $scope.state.gaoptim.id,
+                    "/api/portfolio/" + $scope.state.portfolio.id + "/minimize",
                     {maxtime: $scope.state.maxtime})
                   .success(function() {
                     initFullGaPoll();
@@ -325,8 +355,7 @@ define(
                 {
                   type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 });
-              saveAs(blob, 'template.xlsx');
-              toastr.success('got spreadsheet back');
+              saveAs(blob, 'geospatial-subdivision.xlsx');
             });
         };
 
@@ -364,25 +393,33 @@ define(
               allCalculated = false;
             }
           });
-          if (!allCalculated) {
-            $scope.state.portfolio.outputstring = "";
-          }
           return !allCalculated;
         };
 
-        $scope.hasNoResults = function() {
+        //$scope.hasNoResults = function(id) {
+        //  if (_.isUndefined($scope.state.portfolio)) {
+        //    return true;
+        //  }
+        //  var result = "/api/portfolio/" + id + "/ready";
+        //  console.log('checking results:');
+        //  console.log(result);
+        //  return !result;
+        //};
+
+        function hasNoResults() {
           if (_.isUndefined($scope.state.portfolio)) {
             return true;
           }
-          return !($scope.state.portfolio.outputstring);
-        };
+          return "/api/portfolio/" + $scope.state.portfolio.id + "/ready"
+        }
 
-        $scope.exportResults = function() {
-          if ($scope.state.portfolio.outputstring) {
-            var blob = new Blob(
-              [$scope.state.portfolio.outputstring], {type: 'application/octet-stream'});
-            saveAs(blob, ('result.csv'));
-          }
+        $scope.exportResults = function () {
+          $http.get('/api/portfolio/'+ $scope.state.portfolio.id + '/export',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
+            .success(function (response, status, headers, config) {
+              var blob = new Blob([response], { type: 'application/octet-stream' });
+              saveAs(blob, ('geospatial-results.xlsx'));
+            });
         };
 
         initialize();

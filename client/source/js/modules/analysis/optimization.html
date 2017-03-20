@@ -30,12 +30,12 @@
             class="table table-bordered table-hover table-striped"
             style="margin: 0; border: 0">
           <tr>
-            <td>Name</td>
-            <td>Select</td>
-            <td>Type</td>
-            <td>Parameter set</td>
-            <td>Program set</td>
-            <td>Manage</td>
+            <td><b>Name</b></td>
+            <td><b>Select</b></td>
+            <td><b>Type</b></td>
+            <td><b>Parameter set</b></td>
+            <td><b>Program set</b></td>
+            <td><b>Manage</b></td>
           </tr>
           <tr ng-repeat="optimization in state.optimizations track by $index"
               ng-class="{highlighted: optimization.id === state.optimization.id}">
