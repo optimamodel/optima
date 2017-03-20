@@ -24,15 +24,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initialize() {
 
+      var extrayears = 21;
       $scope.parsets = [];
-      $scope.years = _.range(project.startYear, project.endYear+1);
-      var iLast = $scope.years.length - 1;
+      $scope.years = _.range(project.startYear, project.endYear+extrayears);
+      var defaultindex = $scope.years.length - extrayears;
       $scope.state = {
         maxtime: '10',
         isRunnable: false,
         parset: undefined,
         startYear: $scope.years[0],
-        endYear: $scope.years[iLast],
+        endYear: $scope.years[defaultindex],
         graphs: undefined,
       };
 
