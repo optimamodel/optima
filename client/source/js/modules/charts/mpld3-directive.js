@@ -1,5 +1,5 @@
 define(
-  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
+  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png'],
   function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
 
   'use strict';
