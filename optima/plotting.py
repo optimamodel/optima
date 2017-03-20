@@ -1093,7 +1093,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
             if savefigargs is None: savefigargs = {}
             defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
             defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
-            if filetype is 'fig':
+            if filetype == 'fig':
                 saveobj(thisfilename, plt)
                 filenames.append(thisfilename)
                 printv('Figure object saved to %s' % thisfilename, 2, verbose)
@@ -1108,7 +1108,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                     filenames.append(thisfilename)
                     printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
                 close(plt)
-    
+
     if filetype=='singlepdf': pdf.close()
     if wasinteractive: ion()
     return filenames
