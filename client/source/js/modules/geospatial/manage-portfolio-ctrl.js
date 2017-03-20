@@ -115,7 +115,7 @@ define(
               $upload
                 .upload({
                   url: '/api/portfolio/'+ id + '/data',
-                  fields: {name: getUniqueName(file.name)},
+                  fields: {name: file.name},
                   file: file
                 })
                 .success(function(response) {

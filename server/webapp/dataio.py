@@ -1586,7 +1586,7 @@ def download_portfolio(portfolio_id):
 
 
 def update_portfolio_from_prt(portfolio_id, prt_filename):
-    portfolio = op.loadproj(prt_filename)
+    portfolio = op.loadportfolio(prt_filename)
     portfolio_record = load_portfolio_record(portfolio_id)
     portfolio_record.save_obj(portfolio)
     db.session.add(portfolio_record)
