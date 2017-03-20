@@ -6,29 +6,6 @@ define(
 
   var moduleAllCharts, moduleScrollTop;
 
-    function CKtest(name, filetype, figindex) { /* Adding function(name) brings up save dialog box */
-
-      console.log('DEBUG info', name, filetype, figindex);
-      console.log('DEBUG elem', elem);
-      console.log('DEBUG scope', scope);
-      console.log('DEBUG parents', scope.parent);
-      console.log('DEBUG parents', scope.parent());
-      console.log('DEBUG parents', scope.parents());
-      //scope.parents().exportAllFigures(name);
-      //var which = scope.parent().parent().getSelectors();
-      //console.log('debug info TEMP', which);
-      //$http
-      //  .post(
-      //    '/api/download',
-      //    { name: 'download_figures', args: [resultId, which, filetype, figindex]},
-      //    {responseType: 'blob'})
-      //  .then(function(response) {
-      //    console.log(response);
-      //    var blob = new Blob([response.data], { type:'application/'+filetype });
-      //    saveAs(blob, ('optima-figure.'+filetype));
-      //  });
-    }
-
   function val2str(val, limit, suffix) {
     var reducedVal = val / limit;
     var leftOver = reducedVal % 1.0;
@@ -214,89 +191,20 @@ define(
         };
 
         scope.exportFigure = function(filetype) { /* Adding function(name) brings up save dialog box */
-
-          console.log('DEBUG info', filetype);
-          console.log('DEBUG elem', elem);
-          console.log('DEBUG scope', scope);
-          console.log('DEBUG attr', attrs);
           var resultId = attrs.resultId;
           var graphIndex = attrs.graphIndex;
           var graphSelectorsString = attrs.graphSelectors; // graphSelectors gets converted to a string, so convert back: e.g. '["a","b"]' -> 'a, b' -> 'a','b'
           var graphSelectors = graphSelectorsString.split('"').join('').slice(1,-1).split(','); // http://stackoverflow.com/questions/19156148/i-want-to-remove-double-quotes-from-a-string
-          console.log('here we go!');
-          console.log(resultId, graphSelectors, filetype, graphIndex);
           $http
             .post(
               '/api/download',
               { name: 'download_figures', args: [resultId, graphSelectors, filetype, Number(graphIndex)]},
               {responseType: 'blob'})
             .then(function(response) {
-              console.log(response);
               var blob = new Blob([response.data], { type:'application/'+filetype });
               saveAs(blob, ('optima-figure.'+filetype));
             });
         };
-
-        //scope.exportGraphAsSvg = function() {
-        //  var originalStyle;
-        //  var elementId = elem.attr('id');
-        //
-        //  var $originalSvg = elem.parent().find('svg');
-        //  var viewBox = $originalSvg[0].getAttribute('viewBox');
-        //  var orginalWidth, orginalHeight;
-        //  if (viewBox) {
-        //    var tokens = viewBox.split(" ");
-        //    orginalWidth = parseFloat(tokens[2]);
-        //    orginalHeight = parseFloat(tokens[3]);
-        //  } else {
-        //    orginalWidth = $originalSvg.width();
-        //    orginalHeight = $originalSvg.height();
-        //  }
-        //
-        //  originalStyle = 'padding: ' + $originalSvg.css('padding');
-        //  var scalingFactor = 1;
-        //
-        //  // In order to have styled graphs the css content used to render
-        //  // graphs is retrieved & inject it into the svg as style tag
-        //  var chartStylesheetRequest = $http.get(chartStylesheetUrl, { cache: true });
-        //  chartStylesheetRequest
-        //    .success(function(chartStylesheetContent) {
-        //      // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
-        //      var $styleTagContentList = $('style').map(function(index, style) {
-        //        var styleContent = $(style).html();
-        //        if (styleContent.indexOf('div#' + elementId) != -1) {
-        //          return styleContent.replace(/div#/g, '#');
-        //        } else {
-        //          return styleContent;
-        //        }
-        //      });
-        //
-        //      var styleContent = $styleTagContentList.get().join('\n');
-        //      styleContent = styleContent + '\n' + chartStylesheetContent;
-        //
-        //      // create svg element
-        //      var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle, elementId);
-        //
-        //      // add styles and content to the svg
-        //      var styles = '<style>' + styleContent + '</style>';
-        //      svg.innerHTML = styles + $originalSvg.html();
-        //
-        //      // create img element with the svg as data source
-        //      var svgXML = (new XMLSerializer()).serializeToString(svg);
-        //      saveAs(new Blob([svgXML], { type: 'image/svg' }), 'graph.svg');
-        //
-        //    })
-        //    .error(function() {
-        //      alert("Please reload and try again, something went wrong while generating the graph.");
-        //    });
-        //};
-
-        //scope.exportGraphAsPng = function() {
-        //  exportHelpers.generateGraphAsPngOrJpeg(
-        //      elem.parent(),
-        //      function(blob) { saveAs(blob, "graph.png"); },
-        //      'blob');
-        //};
 
         scope.$watch(
           'chart',
@@ -311,8 +219,6 @@ define(
 
             // clear element before stuffing a figure in there
             var $element = $(elem).find('.mpld3-chart').first();
-            console.log('DEBUG what is going on here;');
-            console.log('attrs', attrs);
             $element.attr('id', attrs.chartId);
             $element.html("");
 
@@ -421,15 +327,12 @@ define(
           var which = scope.getSelectors();
           var index = null;
           var filetype = 'singlepdf';
-          console.log('and here we go again');
-          console.log(resultId, which, filetype, index);
           $http
             .post(
               '/api/download',
               { name: 'download_figures', args: [resultId, which, filetype, index]},
               {responseType: 'blob'})
             .then(function(response) {
-              console.log(response);
               var blob = new Blob([response.data], { type:'application/pdf' });
               saveAs(blob, ('optima-figures.pdf'));
             });
