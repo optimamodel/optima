@@ -26,10 +26,11 @@
             class="chart-container ">
           <div
               mpld3-chart="chart"
-              chartId="{{ chart.id }}"
-              resultId="{{ graphs.resultId }}"
-              graphSelectors="{{ getSelectors() }}"
-              graphIndex="{{ $index }}">
+              chart-id="{{ chart.id }}"
+              result-id="{{ graphs.resultId }}"
+              which="{{ chart.graphKey }}"
+              graph-selectors="{{ getSelectors() }}"
+              graph-index="{{ $index }}">
           </div>
         </div>
       </div>
