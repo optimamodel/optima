@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, plotcostcov
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
 from numpy import ones, prod, array, zeros, exp, log, append, nan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
@@ -759,19 +759,6 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
         printv('%45s | %30s | par: %s | budget: %s | mismatch: %s' % ((budgetparpair[0],budgetparpair[1])+sigfig([parval,budgetval,thismismatch],4)), 3, verbose)
     return mismatch
 
-
-    def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,bounds=None):
-        ''' Plot the cost-coverage curve for all programs'''
-
-        cost_coverage_figures = odict()
-        for thisprog in self.programs.keys():
-            if self.programs[thisprog].optimizable():
-                if not self.programs[thisprog].costcovfn.ccopars:
-                    printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
-                else:
-                    cost_coverage_figures[thisprog] = plotcostcov(program=self.programs[thisprog], t=t,parset=parset,existingFigure=existingFigure,bounds=bounds)
-
-        return cost_coverage_figures
 
 
 class Program(object):
