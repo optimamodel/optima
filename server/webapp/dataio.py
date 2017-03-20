@@ -1455,18 +1455,21 @@ def load_optimization_graphs(project_id, optimization_id, which):
 ### PORTFOLIO
 #############################################################################################
 
-def create_portfolio(name, db_session=None):
+def create_portfolio(name, db_session=None, portfolio=None):
     """
     Returns the portfolio summary of the portfolio
     """
 
     if db_session is None:
         db_session = db.session
-    print("> Create portfolio %s with default objectives" % name)
-    portfolio = op.Portfolio()
-    portfolio.objectives = op.defaultobjectives()
-    portfolio.name = name
-    record = PyObjectDb(user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
+    if portfolio is None:
+        print("> Create portfolio %s with default objectives" % name)
+        portfolio = op.Portfolio()
+        portfolio.objectives = op.defaultobjectives()
+        portfolio.name = name
+    else:
+        print("Create portfolio %s from upload" % portfolio.name)
+    record = PyObjectDb(user_id=current_user.id, name=portfolio.name, id=portfolio.uid, type="portfolio")
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
@@ -1587,10 +1590,7 @@ def download_portfolio(portfolio_id):
 
 def update_portfolio_from_prt(portfolio_id, prt_filename):
     portfolio = op.loadportfolio(prt_filename)
-    portfolio_record = load_portfolio_record(portfolio_id)
-    portfolio_record.save_obj(portfolio)
-    db.session.add(portfolio_record)
-    db.session.commit()
+    create_portfolio(portfolio.name, portfolio=portfolio)
     return parse.get_portfolio_summary(portfolio)
 
 

@@ -393,14 +393,14 @@ class PortfolioData(Resource):
         dataio.update_portfolio_from_prt(portfolio_id, uploaded_prt_fname)
         reply = {
             'file': os.path.basename(uploaded_prt_fname),
-            'result': 'Project %s is updated' % portfolio_id,
+            'result': 'Portfolio %s is updated' % portfolio_id,
         }
         return reply
 
 api.add_resource(PortfolioData, '/api/portfolio/<uuid:portfolio_id>/data')
 
 
-# I don't think we need this, since we don't have upload new portfolio
+# WARNING, at the moment the upload is halfway in between upload new portfolio and update existing portfolio
 #class PortfolioFromData(Resource):
 #    method_decorators = [report_exception_decorator, login_required]
 #
