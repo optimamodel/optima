@@ -356,7 +356,6 @@ define(
                   type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 });
               saveAs(blob, 'geospatial-subdivision.xlsx');
-              toastr.success('got spreadsheet back');
             });
         };
 
