@@ -1051,14 +1051,6 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     Version: 2017mar15    
     '''
     
-    print('well hello there!')
-    print toplot
-    print filetype
-    print filepath
-    print filename
-    print index
-    print('ok bye now')
-    
     # Preliminaries
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
     if wasinteractive: ioff()
@@ -1091,7 +1083,6 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     for p,item in enumerate(plots.items()):
         key,plt = item
         if index is None or index==p:
-            print('test2')
             # Handle filename
             if filename and nplots==1: # Single plot, filename supplied -- use it
                 thisfilename = filepath+filename
@@ -1113,8 +1104,6 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                     pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
                 else:
                     plt.savefig(thisfilename, **defaultsavefigargs)
-                    if not thisfilename:
-                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     filenames.append(thisfilename)
                     printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
                 close(plt)

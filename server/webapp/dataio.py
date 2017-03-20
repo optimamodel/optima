@@ -987,12 +987,6 @@ def load_result_mpld3_graphs(result_id, which):
 
 
 def download_figures(result_id=None, which=None, filetype=None, index=None):
-    print('hiiiii')
-    print 'result_id'; print result_id
-    print 'which'; print which
-    print 'filetype'; print filetype
-    print 'index'; print index
-    print('bye')
     result = load_result_by_id(result_id, which)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
