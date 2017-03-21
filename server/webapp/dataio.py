@@ -1575,8 +1575,7 @@ def load_portfolio_summaries(db_session=None):
         portfolios.append(portfolio)
 
     summaries = map(parse.get_portfolio_summary, portfolios)
-    print("> Loading portfolio summaries")
-    pprint(summaries, indent=2)
+    print("> load_portfolio_summaries")
 
     return summaries
 
@@ -1687,6 +1686,7 @@ def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     portfolio = load_or_create_portfolio(portfolio_id)
     new_project_ids = parse.set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
     for project_id in new_project_ids:
+        print("save_portfolio_by_summary new_project_id", project_id)
         project = load_project(project_id)
         portfolio.projects[project_id] = project
     save_portfolio(portfolio, db_session)
@@ -1698,7 +1698,7 @@ def delete_portfolio_project(portfolio_id, project_id):
     Return remaining portfolio summaries
     """
     portfolio = load_portfolio(portfolio_id)
-    portfolio.projects.pop(str(project_id))
+    parse.delete_project_in_portfolio(portfolio, project_id)
     print(">> Deleted project %s from portfolio %s" % (project_id, portfolio_id))
     save_portfolio(portfolio)
     return load_portfolio_summaries()
