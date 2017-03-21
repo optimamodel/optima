@@ -1389,32 +1389,19 @@ def get_parset_from_project_by_id(project, parset_id):
 
 
 def get_portfolio_summary(portfolio):
-    gaoptim_summaries = []
-    objectivesList = []
-    resultpairs_summary = []
-    resultpair_summary = {}
-    for result_key, result in portfolio.results.items():
-        result_summary = {
-            'name': 'DEPRECATED no name',
-            'id': 'DEPRECATED no name',
-        }
-        resultpair_summary[result_key] = result_summary
-    resultpairs_summary.append(resultpair_summary)
+    print(">> get_portfolio_summary", portfolio.name)
 
-    gaoptim_summaries.append({
-        "key": 'DEPRECATED No key',
-        "objectives": dict(portfolio.objectives),
-        "id": 'DEPRECATED No ID',
-        "name": 'DEPRECATED No name',
-        "resultpairs": resultpairs_summary
-    })
-
-    objectivesList.append(portfolio.objectives)
+    objectives = None
+    objectives_dict = {}
+    if hasattr(portfolio, "objectives"):
+        objectives = portfolio.objectives
+        objectives_dict = dict(objectives)
 
     project_summaries = []
-
     for project in portfolio.projects.values():
-        boc = project.getBOC(objectivesList[0])
+        boc = None
+        if objectives is not None:
+            boc = project.getBOC(objectives)
         project_summary = {
             'name': project.name,
             'id': project.uid,
@@ -1428,11 +1415,17 @@ def get_portfolio_summary(portfolio):
             })
         project_summaries.append(project_summary)
 
+    has_result = False
+    if hasattr(portfolio, "results"):
+        if len(portfolio.results) > 0:
+            has_result = True
+
     result = {
         "created": portfolio.created,
         "name": portfolio.name,
-        "gaoptims": gaoptim_summaries,
+        "objectives": objectives_dict,
         "id": portfolio.uid,
+        "hasResult": has_result,
         "version": portfolio.version,
         "gitversion": portfolio.gitversion,
         "outputstring": '',
@@ -1447,10 +1440,7 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
     Saves the summary result onto the portfolio and returns
     a list of project_ids of projects that are not in the portfolio
     """
-    gaoptim_summaries = summary['gaoptims']
-    for gaoptim_summary in gaoptim_summaries:
-        objectives = op.odict(gaoptim_summary["objectives"]) # WARNING, this destroys order
-        portfolio.objectives = objectives
+    portfolio.objectives = op.odict(summary['objectives']) # WARNING, this destroys order
     
     old_project_ids = portfolio.projects.keys()
     print("> old project ids %s" % old_project_ids)

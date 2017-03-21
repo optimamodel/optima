@@ -1,18 +1,17 @@
 define(
-  ['./module', 'angular', 'underscore'], function (module, angular, _) {
+  ['./module', 'angular', 'underscore'], function(module, angular, _) {
 
     'use strict';
 
     module.controller(
       'PortfolioController',
-      function (
-        $scope, $http, activeProject, modalService, userManager,
-        $state, toastr, globalPoller, $modal, $upload) {
+      function($scope, $http, activeProject, modalService, userManager,
+               $state, toastr, globalPoller, $modal, $upload) {
 
         function initialize() {
 
           $scope.objectiveKeyLabels = [
-            {'key': 'start', 'label':'Start year' },
+            {'key': 'start', 'label': 'Start year'},
             {'key': 'end', 'label': 'End year'},
             {'key': 'budget', 'label': 'Budget'},
             {'key': 'deathweight', 'label': 'Death weight'},
@@ -24,7 +23,7 @@ define(
           $scope.state = {
             portfolio: undefined,
             nRegion: 2,
-            gaoptim: undefined,
+            objectives: undefined,
             tempateProject: null
           };
 
@@ -32,34 +31,29 @@ define(
         }
 
         function loadPortfolios(portfolios) {
-          console.log('loading portfolios', portfolios)
+          console.log('loadPortfolios', portfolios)
           var currentPortfolioId = null;
           if (!_.isUndefined($scope.state.portfolio)) {
             currentPortfolioId = $scope.state.portfolio.id;
           }
           $scope.portfolios = portfolios;
-          $scope.state.portfolio = _.findWhere($scope.portfolios, {id: currentPortfolioId});
-          if (!$scope.state.portfolio) {
-            $scope.state.portfolio = $scope.portfolios[0];
-          }
+          $scope.state.portfolio = undefined;
           if ($scope.portfolios.length > 0) {
-            $scope.setActiveGaoptim();
-          }
+            $scope.state.portfolio = _.findWhere($scope.portfolios, {id: currentPortfolioId});
+            if (!$scope.state.portfolio) {
+              $scope.state.portfolio = $scope.portfolios[0];
+            }
+            $scope.chooseNewPortfolio();
+          };
+          console.log('loadPortfolios portfolio', $scope.state.portfolio)
         }
 
-        $scope.setActiveGaoptim = function() {
-          console.log('setActiveGaoptim');
-          var currentGaoptimId = null;
-          if (!_.isUndefined($scope.state.gaoptim)) {
-            currentGaoptimId = $scope.state.gaoptim.id;
-          }
-          $scope.state.gaoptim = _.findWhere($scope.state.portfolio.gaoptims, {id: currentGaoptimId});
-          if (!$scope.state.gaoptim) {
-            $scope.state.gaoptim = $scope.state.portfolio.gaoptims[0];
-          }
+        $scope.chooseNewPortfolio = function() {
+          $scope.state.objectives = $scope.state.portfolio.objectives;
           $http
             .get(getCheckFullGaUrl())
             .success(function(response) {
+              console.log('chooseNewPortfolio ga status:', response.status);
               if (response.status === 'started') {
                 initFullGaPoll();
               }
@@ -69,6 +63,7 @@ define(
             $http
               .get(getCheckProjectBocUrl(project.id))
               .success(function(response) {
+                console.log('chooseNewPortfolio project', project.id, 'status:', response.status);
                 if (response.status === 'started') {
                   initProjectBocPoll(project.id);
                 }
@@ -99,10 +94,10 @@ define(
 
 
         $scope.downloadPortfolio = function() {
-          $http.get('/api/portfolio/'+ $scope.state.portfolio.id + '/data',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
-            .success(function (response, status, headers, config) {
-              var blob = new Blob([response], { type: 'application/octet-stream' });
+          $http.get('/api/portfolio/' + $scope.state.portfolio.id + '/data',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType: 'blob'})
+            .success(function(response, status, headers, config) {
+              var blob = new Blob([response], {type: 'application/octet-stream'});
               saveAs(blob, ($scope.state.portfolio.name + '.prt'));
             });
         };
@@ -110,19 +105,19 @@ define(
         $scope.uploadPortfolio = function() {
           angular
             .element('<input type="file">')
-            .change(function (event) {
+            .change(function(event) {
               var file = event.target.files[0];
               $upload
                 .upload({
-                  url: '/api/portfolio/'+ $scope.state.portfolio.id + '/data',
+                  url: '/api/portfolio/upload',
                   fields: {name: file.name},
                   file: file
                 })
                 .success(function(response) {
-                  console.log('uploaded portfolio', response);
-                  $scope.portfolios.push(response);
-                  $scope.state.portfolio = response;
+                  console.log('uploadPortfolio', response);
+                  $scope.portfolios.push(response.portfolio);
                   loadPortfolios($scope.portfolios);
+                  $scope.state.portfolio = response.portfolio;
                   toastr.success('Uploaded portfolio');
                 });
             })
@@ -138,7 +133,7 @@ define(
             });
         };
 
-       function reloadPortfolio() {
+        function reloadPortfolio() {
           $scope.bocStatusMessage = {};
           globalPoller.stopPolls();
           $http
@@ -148,16 +143,16 @@ define(
 
         function getCheckFullGaUrl() {
           return "/api/task/" + $scope.state.portfolio.id
-              + "/type/portfolio";
+            + "/type/portfolio";
         }
 
         function getCheckProjectBocUrl(projectId) {
           return "/api/task/" + projectId
-                + "/type/gaoptim";
+            + "/type/boc";
         }
 
         $scope.calculateAllBocCurves = function() {
-          console.log('run BOC curves', $scope.state.portfolio);
+          console.log('calculateAllBocCurves', $scope.state.portfolio);
           $http
             .post(
               "/api/portfolio/" + $scope.state.portfolio.id + "/calculate",
@@ -173,7 +168,7 @@ define(
           $http
             .delete(
               '/api/portfolio/' + $scope.state.portfolio.id
-                + '/project/' + projectId)
+              + '/project/' + projectId)
             .success(function(portfolios) {
               toastr.success('Deleted project in portfolio');
               loadPortfolios(portfolios);
@@ -222,7 +217,7 @@ define(
 
         function initFullGaPoll() {
           globalPoller.startPoll(
-            $scope.state.gaoptim.id,
+            $scope.state.portfolio.id,
             getCheckFullGaUrl(),
             function(response) {
               if (response.status === 'completed') {
@@ -306,7 +301,10 @@ define(
           $http
             .get('/api/project')
             .success(function(response) {
-              var selectedIds = _.pluck($scope.state.portfolio.projects, "id");
+              var selectedIds = [];
+              if ($scope.state.portfolio) {
+                selectedIds = _.pluck($scope.state.portfolio.projects, "id");
+              }
               $scope.projects = [];
               _.each(response.projects, function(project) {
                 var isSelected = _.contains(selectedIds, project.id);
@@ -331,7 +329,7 @@ define(
         $scope.saveTemplateProject = function() {
           $scope.isSelectTemplateProject = false;
           var project = $scope.state.templateProject;
-          $scope.years = _.range(project.startYear, project.endYear+1);
+          $scope.years = _.range(project.startYear, project.endYear + 1);
           $scope.state.templateYear = $scope.years[0];
           console.log('template project', $scope.state.templateProject);
           console.log('years', $scope.years);
@@ -364,14 +362,14 @@ define(
           // then add to portfolio
           angular
             .element('<input type="file">')
-            .change(function (event) {
+            .change(function(event) {
               $upload
                 .upload({
                   url: '/api/spawnregion',
                   fields: {projectId: $scope.state.templateProject.id},
                   file: event.target.files[0]
                 })
-                .success(function (prjNames) {
+                .success(function(prjNames) {
                   $scope.state.prjNames = prjNames;
                   console.log('$scope.state.prjNames', $scope.state.prjNames);
                   _.each(prjNames, function(prjName) {
@@ -396,28 +394,11 @@ define(
           return !allCalculated;
         };
 
-        //$scope.hasNoResults = function(id) {
-        //  if (_.isUndefined($scope.state.portfolio)) {
-        //    return true;
-        //  }
-        //  var result = "/api/portfolio/" + id + "/ready";
-        //  console.log('checking results:');
-        //  console.log(result);
-        //  return !result;
-        //};
-
-        function hasNoResults() {
-          if (_.isUndefined($scope.state.portfolio)) {
-            return true;
-          }
-          return "/api/portfolio/" + $scope.state.portfolio.id + "/ready"
-        }
-
-        $scope.exportResults = function () {
-          $http.get('/api/portfolio/'+ $scope.state.portfolio.id + '/export',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
-            .success(function (response, status, headers, config) {
-              var blob = new Blob([response], { type: 'application/octet-stream' });
+        $scope.exportResults = function() {
+          $http.get('/api/portfolio/' + $scope.state.portfolio.id + '/export',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType: 'blob'})
+            .success(function(response, status, headers, config) {
+              var blob = new Blob([response], {type: 'application/octet-stream'});
               saveAs(blob, ('geospatial-results.xlsx'));
             });
         };
@@ -427,5 +408,4 @@ define(
       }
     );
 
-  }
-);
+});
