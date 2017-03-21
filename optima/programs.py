@@ -173,7 +173,7 @@ class Programset(object):
                 if intercept or intercept!=0:
                     printv('WARNING: %s %s intercept is none' % (thispartype, str(thispop)), 4, verbose)
                     result = False
-                    details.append((thispartype,str(thispop)))
+                    details.append(thispartype+'-'+str(thispop).replace("'","")+'-'+'intercept')
                 else:
                     printv('%s %s intercept is %s' % (thispartype, str(thispop), intercept), 4, verbose)
                 if thispartype not in coveragepars:
@@ -183,7 +183,7 @@ class Programset(object):
                         if progeffect or progeffect!=0:
                             printv('WARNING: %s %s %s program effect is none' % (thispartype, str(thispop), thisprog.short), 4, verbose)
                             result = False
-                            details.append((thispartype,str(thispop)))
+                            details.append(thispartype+'-'+str(thispop).replace("'","")+'-'+thisprog.short)
                         else:
                             printv('%s %s %s program effect is %s' % (thispartype, str(thispop), thisprog.short, progeffect), 4, verbose)
         if detail: return list(set(details))
@@ -217,12 +217,10 @@ class Programset(object):
             msg = ''
             costcovlist = self.hasallcostcovpars(detail=True, verbose=verbose)
             covoutlist = self.hasallcovoutpars(detail=True, verbose=verbose)
-            costcovlist = [str(item).replace("'","").replace('"','') for item in costcovlist] # Convert potential tuples to strings
-            covoutlist = [str(item) for item in covoutlist] # Convert potential tuples to strings
             costcovmissing = ', '.join(costcovlist)
             covoutmissing = ', '.join(covoutlist)
-            if costcovmissing: msg += 'The following programs are missing cost-coverage data: %s. ' % costcovmissing
-            if covoutmissing: msg += 'The following programs are missing coverage-outcome data: %s.'% covoutmissing
+            if costcovmissing: msg += 'The following program(s) are missing cost-coverage data: %s. ' % costcovmissing
+            if covoutmissing: msg += 'The following parameter(s) are missing coverage-outcome data: %s.'% covoutmissing
             return msg
 
     def coveragepar(self, coveragepars=coveragepars):
@@ -352,7 +350,7 @@ class Programset(object):
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
                 lastbudget[program] = sanitize(totalbudget[program])[-1]
             else: 
-                printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
+                printv('WARNING: no cost data defined for program "%s"...' % program, 1, verbose)
                 lastbudget[program] = nan
 
             # Extract cost data for particular years, if requested 
