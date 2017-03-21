@@ -27,39 +27,44 @@ define(
 
       $scope.isMissingData = !activeProject.data.hasParset;
       $scope.anyOptimizable = false;
-      $http.get('/api/project/' + $scope.state.project.id + '/optimizable')
-        .success(function (response) {
-          $scope.anyOptimizable = response;
-        });
-      console.log('anyoptimizable', $scope.anyOptimizable);
-      console.log('$scope.state', $scope.state);
-
-      if ($scope.isMissingData || !$scope.anyOptimizable) {
-        return
-      }
-
       $http
-        .get('/api/project/' + $scope.state.project.id + '/progsets')
-        .then(function (response) {
-          $scope.state.progsets = response.data.progsets;
-          return $http.get('/api/project/' + $scope.state.project.id + '/parsets');
-        })
-        .then(function (response) {
-          $scope.state.parsets = response.data.parsets;
-          return $http.get('/api/project/' + $scope.state.project.id + '/optimizations')
-        })
-        .then(function (response) {
-          var data = response.data;
-          $scope.state.optimizations = data.optimizations;
-          console.log('optimizations', data.optimizations);
-          $scope.defaultOptimizationsByProgsetId = data.defaultOptimizationsByProgsetId;
-          console.log('defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
-          $scope.state.optimization = undefined;
-          if ($scope.state.optimizations.length > 0) {
-            $scope.setActiveOptimization($scope.state.optimizations[0]);
-            selectDefaultProgsetAndParset($scope.state.optimization);
+        .get(
+          '/api/project/' + $scope.state.project.id + '/optimizable')
+        .success(function(response) {
+
+          console.log('init optimizable', response);
+          $scope.anyOptimizable = response;
+          console.log('anyoptimizable', $scope.anyOptimizable);
+          console.log('$scope.state', $scope.state);
+
+          if (!$scope.isMissingData && $scope.anyOptimizable) {
+
+            $http
+              .get('/api/project/' + $scope.state.project.id + '/progsets')
+              .then(function(response) {
+                $scope.state.progsets = response.data.progsets;
+                return $http.get('/api/project/' + $scope.state.project.id + '/parsets');
+              })
+              .then(function(response) {
+                $scope.state.parsets = response.data.parsets;
+                return $http.get('/api/project/' + $scope.state.project.id + '/optimizations')
+              })
+              .then(function(response) {
+                var data = response.data;
+                $scope.state.optimizations = data.optimizations;
+                console.log('optimizations', data.optimizations);
+                $scope.defaultOptimizationsByProgsetId = data.defaultOptimizationsByProgsetId;
+                console.log('defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
+                $scope.state.optimization = undefined;
+                if ($scope.state.optimizations.length > 0) {
+                  $scope.setActiveOptimization($scope.state.optimizations[0]);
+                  selectDefaultProgsetAndParset($scope.state.optimization);
+                }
+              });
           }
+
         });
+
     }
 
     function selectDefaultProgsetAndParset(optimization) {

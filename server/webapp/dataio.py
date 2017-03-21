@@ -1729,7 +1729,6 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
     project_record = load_project_record(project_id)
     baseproject = project_record.load()
-    project.restorelinks()
 
     projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
 
