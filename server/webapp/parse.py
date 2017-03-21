@@ -1445,6 +1445,13 @@ def get_portfolio_summary(portfolio):
     return result
 
 
+def delete_project_in_portfolio(portfolio, project_id):
+    n = len(portfolio.projects)
+    for (k, project) in portfolio.projects.items():
+        if str(project.uid) == str(project_id):
+            del portfolio.projects[k]
+
+
 def set_portfolio_summary_on_portfolio(portfolio, summary):
     """
     Saves the summary result onto the portfolio and returns
@@ -1452,18 +1459,23 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
     """
     portfolio.objectives = op.odict(summary['objectives']) # WARNING, this destroys order
     
-    old_project_ids = portfolio.projects.keys()
-    print("> old project ids %s" % old_project_ids)
     project_ids = [s["id"] for s in summary["projects"]]
-    print("> new project ids %s" % project_ids)
+
+    old_project_ids = [str(p.uid) for p in portfolio.projects.values()]
+    print("> set_portfolio_summary_on_portfolio old project ids %s" % old_project_ids)
     for old_project_id in old_project_ids:
         if old_project_id not in project_ids:
-            portfolio.projects.pop(old_project_id)
+            delete_project_in_portfolio(portfolio, old_project_id)
 
     new_project_ids = []
+    curr_project_ids = [str(p.uid) for p in portfolio.projects.values()]
+    print("> set_portfolio_summary_on_portfolio curr project ids %s" % old_project_ids)
     for project_id in project_ids:
-        if project_id not in portfolio.projects:
+        if project_id not in curr_project_ids:
+            print("set_portfolio_summary_on_portfolio new", project_id, project_id not in curr_project_ids)
             new_project_ids.append(project_id)
+
+    print("> set_portfolio_summary_on_portfolio new project ids %s" % new_project_ids)
 
     return new_project_ids
 
