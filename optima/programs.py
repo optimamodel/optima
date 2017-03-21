@@ -211,19 +211,23 @@ class Programset(object):
                 
     def readytooptimize(self, detail=False, verbose=2):
         ''' True if the progset is ready to optimize (i.e. has all required pars) and False otherwise''' 
+        hasprograms = bool(sum(self.optimizable()))
         if not detail:
             costcovready = self.hasallcostcovpars(verbose=verbose)
             covoutready = self.hasallcovoutpars(verbose=verbose)
-            isready = (costcovready and covoutready)
+            isready = (hasprograms and costcovready and covoutready)
             return isready  
         else:
-            msg = ''
-            costcovlist = self.hasallcostcovpars(detail=True, verbose=verbose)
-            covoutlist = self.hasallcovoutpars(detail=True, verbose=verbose)
-            costcovmissing = ', '.join(costcovlist)
-            covoutmissing = ', '.join(covoutlist)
-            if costcovmissing: msg += 'The following program(s) are missing cost-coverage data: %s. ' % costcovmissing
-            if covoutmissing: msg += 'The following parameter(s) are missing coverage-outcome data: %s.'% covoutmissing
+            if not hasprograms:
+                msg = 'No programs have been defined'
+            else:
+                msg = ''
+                costcovlist = self.hasallcostcovpars(detail=True, verbose=verbose)
+                covoutlist = self.hasallcovoutpars(detail=True, verbose=verbose)
+                costcovmissing = ', '.join(costcovlist)
+                covoutmissing = ', '.join(covoutlist)
+                if costcovmissing: msg += 'The following program(s) are missing cost-coverage data: %s. ' % costcovmissing
+                if covoutmissing: msg += 'The following parameter(s) are missing coverage-outcome data: %s.'% covoutmissing
             return msg
 
     def coveragepar(self, coveragepars=coveragepars):
