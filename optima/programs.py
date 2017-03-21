@@ -103,18 +103,20 @@ class Programset(object):
                                     
                 # Delete any stored programs that are no longer needed (if removing a program)
                 progccopars = dcp(ccopars)
-                del progccopars['t'], progccopars['intercept']
+                progccopars.pop('t', None)
+                progccopars.pop('intercept', None)
                 for prog in progccopars.keys(): 
-                    if prog not in targetingprogs: del ccopars[prog]
+                    if prog not in targetingprogs:
+                        ccopars.pop(prog, None)
 
                 self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=self.default_interaction)
 
         # Delete any stored effects that aren't needed (if removing a program)
         for tpt in self.covout.keys():
-            if tpt not in self.targetpartypes: del self.covout[tpt]
+            if tpt not in self.targetpartypes: self.covout.pop(tpt, None)
             else: 
                 for tp in self.covout[tpt].keys():
-                    if type(tp) in [tuple,str,unicode] and tp not in self.progs_by_targetpar(tpt).keys(): del self.covout[tpt][tp]
+                    if type(tp) in [tuple,str,unicode] and tp not in self.progs_by_targetpar(tpt).keys(): self.covout[tpt].pop(tp, None)
 
     def updateprogset(self, verbose=2):
         ''' Update (run this is you change something... )'''
