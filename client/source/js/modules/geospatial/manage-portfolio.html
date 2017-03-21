@@ -14,7 +14,7 @@
     <select
       ng-model="state.portfolio"
       ng-options="portfolio as portfolio.name for portfolio in portfolios"
-      ng-change="setActiveGaoptim()"
+      ng-change="chooseNewPortfolio()"
       style="width: 230px;">
     </select>
 
@@ -185,7 +185,7 @@
               style="
           float: right;
           width:160px;"
-              ng-model="state.gaoptim.objectives[entry.key]"
+              ng-model="state.objectives[entry.key]"
               type="number"/>
           <br clear="all">
         </div>

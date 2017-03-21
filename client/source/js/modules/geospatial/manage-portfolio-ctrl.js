@@ -24,7 +24,7 @@ define(
           $scope.state = {
             portfolio: undefined,
             nRegion: 2,
-            gaoptim: undefined,
+            objectives: undefined,
             tempateProject: null
           };
 
@@ -32,7 +32,7 @@ define(
         }
 
         function loadPortfolios(portfolios) {
-          console.log('loading portfolios', portfolios)
+          console.log('loadPortfolios', portfolios)
           var currentPortfolioId = null;
           if (!_.isUndefined($scope.state.portfolio)) {
             currentPortfolioId = $scope.state.portfolio.id;
@@ -43,23 +43,16 @@ define(
             $scope.state.portfolio = $scope.portfolios[0];
           }
           if ($scope.portfolios.length > 0) {
-            $scope.setActiveGaoptim();
+            $scope.chooseNewPortfolio();
           }
         }
 
-        $scope.setActiveGaoptim = function() {
-          console.log('setActiveGaoptim');
-          var currentGaoptimId = null;
-          if (!_.isUndefined($scope.state.gaoptim)) {
-            currentGaoptimId = $scope.state.gaoptim.id;
-          }
-          $scope.state.gaoptim = _.findWhere($scope.state.portfolio.gaoptims, {id: currentGaoptimId});
-          if (!$scope.state.gaoptim) {
-            $scope.state.gaoptim = $scope.state.portfolio.gaoptims[0];
-          }
+        $scope.chooseNewPortfolio = function() {
+          $scope.state.objectives = $scope.state.portfolio.objectives;
           $http
             .get(getCheckFullGaUrl())
             .success(function(response) {
+              console.log('chooseNewPortfolio ga status:', response.status);
               if (response.status === 'started') {
                 initFullGaPoll();
               }
@@ -69,6 +62,7 @@ define(
             $http
               .get(getCheckProjectBocUrl(project.id))
               .success(function(response) {
+                console.log('chooseNewPortfolio project', project.id, 'status:', response.status);
                 if (response.status === 'started') {
                   initProjectBocPoll(project.id);
                 }
@@ -153,11 +147,11 @@ define(
 
         function getCheckProjectBocUrl(projectId) {
           return "/api/task/" + projectId
-                + "/type/gaoptim";
+                + "/type/boc";
         }
 
         $scope.calculateAllBocCurves = function() {
-          console.log('run BOC curves', $scope.state.portfolio);
+          console.log('calculateAllBocCurves', $scope.state.portfolio);
           $http
             .post(
               "/api/portfolio/" + $scope.state.portfolio.id + "/calculate",
