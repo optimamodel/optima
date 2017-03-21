@@ -277,7 +277,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     if   objtype in ['str','string']:  objinstance = basestring
     elif objtype in ['num', 'number']: objinstance = Number
     elif objtype in ['arr', 'array']:  objinstance = type(array([]))
-    elif objtype is 'arraylike':       objinstance = (list, tuple, type(array([]))) # Anything suitable as a numerical array
+    elif objtype=='arraylike':         objinstance = (list, tuple, type(array([]))) # Anything suitable as a numerical array
     elif type(objtype)==type:          objinstance = objtype  # Don't need to do anything
     elif objtype is None:              return None # If not supplied, exit
     else:
@@ -288,7 +288,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     result = isinstance(obj, objinstance)
     
     # Do second round checking
-    if result and objtype is 'arraylike': # Special case for handling arrays which may be multi-dimensional
+    if result and objtype=='arraylike': # Special case for handling arrays which may be multi-dimensional
         obj = promotetoarray(obj).flatten() # Flatten all elements
         if subtype is None: subtype = 'number' # This is the default
     if isiterable(obj) and subtype is not None:
@@ -337,6 +337,21 @@ def promotetolist(obj=None, objtype=None):
     if obj is None:
         raise Exception('This is mathematically impossible')
     return obj
+
+
+def promotetoodict(obj=None):
+    ''' Like promotetolist, but for odicts -- WARNING, could be made into a method for odicts '''
+    if isinstance(obj, odict):
+        return obj # Don't need to do anything
+    elif isinstance(obj, dict):
+        return odict(obj)
+    elif isinstance(obj, list):
+        newobj = odict()
+        for i,val in enumerate(obj):
+            newobj['Key %i'%i] = val
+        return newobj
+    else:
+        return odict({'Key':obj})
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):

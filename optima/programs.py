@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, asd, convertlimits
-from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
+from numpy import ones, prod, array, zeros, exp, log, append, nan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
 
@@ -760,19 +760,6 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
     return mismatch
 
 
-    def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,bounds=None):
-        ''' Plot the cost-coverage curve for all programs'''
-
-        cost_coverage_figures = odict()
-        for thisprog in self.programs.keys():
-            if self.programs[thisprog].optimizable():
-                if not self.programs[thisprog].costcovfn.ccopars:
-                    printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
-                else:
-                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,existingFigure=existingFigure,bounds=bounds)
-
-        return cost_coverage_figures
-
 
 class Program(object):
     '''
@@ -1003,110 +990,6 @@ class Program(object):
         else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)
         return reqbudget
 
-
-    def plotcoverage(self, t, parset=None, results=None, plotoptions=None, existingFigure=None,
-        plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
-        ''' Plot the cost-coverage curve for a single program'''
-        
-        # Put plotting imports here so fails at the last possible moment
-        from pylab import figure, figtext, isinteractive, ioff, ion, close, show
-        from matplotlib.ticker import MaxNLocator
-        import textwrap
-        
-        wasinteractive = isinteractive() # Get current state of interactivity
-        ioff() # Just in case, so we don't flood the user's screen with figures
-
-        t = promotetoarray(t)
-        colors = gridcolormap(len(t))
-        plotdata = odict()
-        
-        # Get caption & scatter data 
-        caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
-        costdata = dcp(self.costcovdata['cost']) if self.costcovdata.get('cost') else []
-
-        # Make x data... 
-        if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
-            xupperlim = plotoptions['xupperlim']
-        else:
-            if costdata: xupperlim = 1.5*max(costdata)
-            else: xupperlim = maxupperlim
-        xlinedata = linspace(0,xupperlim,npts)
-
-        if plotoptions and plotoptions.get('perperson'):
-            xlinedata = linspace(0,xupperlim*self.gettargetpopsize(t[-1],parset),npts)
-
-        # Create x line data and y line data
-        try:
-            y_l = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
-            y_m = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
-            y_u = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
-        except:
-            y_l,y_m,y_u = None,None,None
-        plotdata['ylinedata_l'] = y_l
-        plotdata['ylinedata_m'] = y_m
-        plotdata['ylinedata_u'] = y_u
-        plotdata['xlabel'] = 'Spending'
-        plotdata['ylabel'] = 'Number covered'
-
-        # Flag to indicate whether we will adjust by population or not
-        if plotoptions and plotoptions.get('perperson'):
-            if costdata:
-                for yrno, yr in enumerate(self.costcovdata['t']):
-                    targetpopsize = self.gettargetpopsize(t=yr, parset=parset, results=results)
-                    costdata[yrno] /= targetpopsize[0]
-            if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
-                if costdata: xupperlim = 1.5*max(costdata) 
-                else: xupperlim = 1e3
-            plotdata['xlinedata'] = linspace(0,xupperlim,npts)
-        else:
-            plotdata['xlinedata'] = xlinedata
-            
-        cost_coverage_figure = existingFigure if existingFigure else figure()
-        cost_coverage_figure.hold(True)
-        axis = cost_coverage_figure.gca()
-
-        axis.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
-        figtext(.1, .05, textwrap.fill(caption))
-        
-        if y_m is not None:
-            for yr in range(y_m.shape[0]):
-                axis.plot(
-                    plotdata['xlinedata'],
-                    plotdata['ylinedata_m'][yr],
-                    linestyle='-',
-                    linewidth=2,
-                    color=colors[yr],
-                    label=t[yr])
-                if plotbounds:
-                    axis.fill_between(plotdata['xlinedata'],
-                                      plotdata['ylinedata_l'][yr],
-                                      plotdata['ylinedata_u'][yr],
-                                      facecolor=colors[yr],
-                                      alpha=.1,
-                                      lw=0)
-        axis.scatter(
-            costdata,
-            self.costcovdata['coverage'],
-            color='#666666')
-        
-
-        axis.set_xlim([0, xupperlim])
-        axis.set_ylim(bottom=0)
-        axis.tick_params(axis='both', which='major', labelsize=11)
-        axis.set_xlabel(plotdata['xlabel'], fontsize=11)
-        axis.set_ylabel(plotdata['ylabel'], fontsize=11)
-        axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-        axis.set_title(self.short)
-        axis.get_xaxis().get_major_formatter().set_scientific(False)
-        axis.get_yaxis().get_major_formatter().set_scientific(False)
-        if len(t)>1: axis.legend(loc=4)
-        
-        # Tidy up
-        if not doplot: close(cost_coverage_figure)
-        if wasinteractive: ion()
-        if doplot: show()
-
-        return cost_coverage_figure
 
 ########################################################
 # COST COVERAGE OUTCOME FUNCTIONS

@@ -1,106 +1,62 @@
 <div class="rich">
   <div class="section">
 
-    <h2>Preparing districts for analysis</h2>
 
-    <ol>
-      <li>
-        Choose a project as template for districts
-        &nbsp;
+    <h2>Manage portfolios</h2>
 
-        <button
-            class="btn __m __inline"
-            ng-click="chooseTemplateProject()">Choose project
-        </button>
+    <div ng-if="portfolios.length == 0" style="font-weight: bold; color: red">
+      Please create a portfolio first<br><br>
+    </div>
 
-        &nbsp;
-        <i ng-if="!state.templateProject.name">No template project selected</i>
+    Portfolio:
+    &nbsp;
 
-        {{ state.templateProject.name}}
+    <select
+      ng-model="state.portfolio"
+      ng-options="portfolio as portfolio.name for portfolio in portfolios"
+      ng-change="setActiveGaoptim()"
+      style="width: 230px;">
+    </select>
 
-        <div
-            style="
-              border: 1px solid #DDD;
-              padding: 20px;"
-            ng-show="isSelectTemplateProject">
+    <i
+      ng-click="createPortfolio()"
+      class="fa fa-file-o"
+      tp-text="New" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+      style="margin-left: 0.5em">
+    </i>
 
-          <i>Select from optimizable projects:</i>
-          <br>
-          <div ng-repeat="project in projects">
-            <input
-              type="radio"
-              ng-model="state.templateProject"
-              ng-value="project">
-            {{project.name}}
-          </div>
-          <br>
-          <br>
-          <button class="btn"
-            ng-click="dismissSelectTemplateProject()">
-            Dismiss
-          </button>
+    <!--<i-->
+      <!--ng-click="renamePortfolio()"-->
+      <!--class="fa fa-pencil"-->
+      <!--tp-text="Rename" tooltip tp-class="tooltip"-->
+      <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
+      <!--style="margin-left: 0.5em">-->
+    <!--</i>-->
 
-          <button class="btn"
-            ng-click="saveTemplateProject()">
-            Save
-          </button>
-        </div>
-      </li>
+    <i
+      ng-click="downloadPortfolio()"
+      class="fa fa-download"
+      tp-text="Download" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+      style="margin-left: 0.5em">
+    </i>
+    <i
+      ng-click="uploadPortfolio()"
+      class="fa fa-upload"
+      tp-text="Upload" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
+      style="margin-left: 0.5em">
+    </i>
 
-      <li>
-        Generate template spreadsheet with
+    <i
+      class="fa fa-trash-o"
+      ng-click="deletePortfolio()"
+      tp-text="Delete" tooltip tp-class="tooltip"
+      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
+    </i>
 
-          <select
-              ng-model="state.nRegion"
-              ng-init="2"
-              ng-options="n for n in [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]">
-          </select>
 
-        districts for the year
-
-        <select
-            ng-model="state.templateYear"
-            ng-options="year for year in years">
-        </select>
-
-        &nbsp;
-
-        <button
-            class="btn __m __inline"
-            ng-click="generateTemplateSpreadsheet()"
-            ng-disabled=" !state.templateProject || isSelectTemplateProject">
-          Generate spreadsheet
-        </button>
-      </li>
-
-      <li>
-        Enter the district populations in the downloaded spreadsheet using Excel
-      </li>
-
-      <li>
-        Create district projects by uploading the spreadsheet:
-        &nbsp;
-
-        <button
-            class="btn __m __inline"
-            ng-click="spawnRegionsFromSpreadsheet()"
-            ng-disabled=" !state.templateProject || isSelectTemplateProject">
-          Upload spreadsheet
-        </button>
-
-        <div
-            style="font-style: italic"
-            ng-if="state.prjNames.length > 0">
-          New district projects:
-          <ul>
-            <li ng-repeat="prjName in state.prjNames">{{prjName}}</li>
-          </ul>
-        </div>
-      </li>
-      <li>
-        Calibrate the new district projects from the <a ui-sref="home">project management</a> page.
-      </li>
-    </ol>
 
     <div style="
         width: 100%;
@@ -109,54 +65,116 @@
         margin-bottom: 30px">
     </div>
 
-    <h2>Select portfolio for geospatial analysis</h2>
+
+    <h2>Create regions (optional)</h2>
+
+    <button
+      class="btn __m __inline"
+      ng-click="chooseTemplateProject()">Choose project
+    </button>
+
+    &nbsp; as template: &nbsp;
+    <i ng-if="!state.templateProject.name">No template project selected</i>
+    <i ng-if="state.templateProject.name">&nbsp; {{ state.templateProject.name}}</i>
+
+
+
+    <div
+      style="
+              border: 1px solid #DDD;
+              padding: 20px;"
+      ng-show="isSelectTemplateProject">
+
+      <i>Select from optimizable projects:</i>
+      <br>
+      <div ng-repeat="project in projects">
+        <input
+          type="radio"
+          ng-model="state.templateProject"
+          ng-value="project">
+        {{project.name}}
+      </div>
+      <br>
+      <br>
+      <button class="btn"
+              ng-click="dismissSelectTemplateProject()">
+        Dismiss
+      </button>
+
+      <button class="btn"
+              ng-click="saveTemplateProject()">
+        Save
+      </button>
+    </div>
+
 
     <br>
+    <br>
 
-    Portfolio:
-    &nbsp;
+    <button
+      class="btn __m __inline"
+      ng-click="generateTemplateSpreadsheet()"
+      ng-disabled=" !state.templateProject || isSelectTemplateProject">
+      Generate spreadsheet
+    </button>
+
+    &nbsp; with &nbsp;
 
     <select
-        ng-if="portfolios.length > 0"
-        ng-model="state.portfolio"
-        ng-options="portfolio as portfolio.name for portfolio in portfolios"
-        ng-change="setActiveGaoptim()"
-        style="width: 200px;">
+      ng-model="state.nRegion"
+      ng-init="2"
+      ng-options="n for n in [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]">
     </select>
 
-    <i ng-if="portfolios.length == 0">
-      No portfolios have been created
-    </i>
+    &nbsp; regions for the year &nbsp;
 
-    <i
-        class="fa fa-file-o"
-        ng-click="createPortfolio()"
-        tp-text="New" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-        style="margin-left: 0.5em">
-    </i>
+    <select
+      ng-model="state.templateYear"
+      ng-options="year for year in years">
+    </select>
 
-    <i
-        class="fa fa-trash-o"
-        ng-click="deletePortfolio()"
-        tp-text="Delete" tooltip tp-class="tooltip"
-        tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
-    </i>
+
+    <br>
+    <br>
+
+    <button
+      class="btn __m __inline"
+      ng-click="spawnRegionsFromSpreadsheet()"
+      ng-disabled=" !state.templateProject || isSelectTemplateProject">
+      Upload spreadsheet
+    </button>
+
+    &nbsp; to create region projects &nbsp;
+
+    <div
+      style="font-style: italic"
+      ng-if="state.prjNames.length > 0">
+      New region projects:
+      <ul>
+        <li ng-repeat="prjName in state.prjNames">{{prjName}}</li>
+      </ul>
+    </div>
+
+    <div style="
+        width: 100%;
+        border-bottom: 1px solid #AAA;
+        padding-top: 30px;
+        margin-bottom: 30px">
+    </div>
+
+    <h2>Geospatial analysis</h2>
 
     <div
       style="
         display: flex;
-        padding-top: 2em;">
+        padding-top: 0em;">
 
-      <div style="flex: 0 0 280px">
+      <div style="flex: 0 0 370px">
 
-        <h4>Optimization conditions </h4>
-
-        <br>
 
         <div
           style="
-            width: 230px;
+            width: 300px;
             padding-bottom: 0.1em;"
           ng-repeat="entry in objectiveKeyLabels">
           <label>
@@ -166,7 +184,7 @@
               class="txbox __inline"
               style="
           float: right;
-          width:70px;"
+          width:160px;"
               ng-model="state.gaoptim.objectives[entry.key]"
               type="number"/>
           <br clear="all">
@@ -177,30 +195,28 @@
               margin-top: 1em"
               class="btn"
             ng-click="savePortfolio()">
-          Save optimization condition
+          Save
         </button>
       </div>
 
-      <div style="flex: 1">
-
-        <h4>Geospatial analysis of districts</h4>
+      <div style="flex: 0 1 auto; min-width: 50%">
 
         <table class="table table-bordered table-hover table-striped">
           <tr>
-            <th>Districts</th>
-            <th>BOC</th>
+            <th>Regions</th>
+            <th>Budget-objective curve</th>
             <th></th>
           </tr>
           <tr ng-repeat="project in state.portfolio.projects">
             <td>
               {{project.name}}
             </td>
-            <td width="150px">
+            <td width="180px">
               <span style="color: #00aeef;">
                   {{bocStatusMessage[project.id]}}
               </span>
             </td>
-            <td width="20px">
+            <td width="30px">
               <span
                   ng-click="deleteProject(project.id)""
                   class="fa fa-trash">
@@ -211,7 +227,7 @@
             <td colspan="4">
               <button class="btn"
                 ng-click="addProject()">
-                + import districts from projects
+                Add region
               </button>
 
               <div
@@ -247,16 +263,14 @@
         <button
             style="
               margin-bottom: 1em"
-            class="btn"
+            class="btn __green __m"
             ng-click="calculateAllBocCurves()">
-          Calculate BOC curves for districts
+          Run budget-objective curves
         </button>
 
-        &nbsp;
+        &nbsp; for &nbsp;
 
-        Time per optimization
-
-        <select ng-init="state.bocMaxtime='2'" ng-model="state.bocMaxtime">
+        <select ng-init="state.bocMaxtime='300'" ng-model="state.bocMaxtime">
           <option value="2">2 seconds</option>
           <option value="10">10 seconds</option>
           <option value="30">30 seconds</option>
@@ -266,21 +280,20 @@
           <option value="1800">30 minutes</option>
         </select>
 
+        &nbsp; per optimization
 
-        <br>
+
         <br>
         <button
-            class="btn"
+            class="btn __green __m"
             ng-click="runFullGa()"
             ng-disabled="checkBocCurvesNotCalculated()">
-          Run geospatial optimization over BOC curves
+          Run geospatial optimization
         </button>
 
-        &nbsp;
+        &nbsp; for &nbsp;
 
-        Time per optimization:
-
-        <select ng-init="state.maxtime='2'" ng-model="state.maxtime">
+        <select ng-init="state.maxtime='300'" ng-model="state.maxtime">
           <option value="2">2 seconds</option>
           <option value="10">10 seconds</option>
           <option value="30">30 seconds</option>
@@ -289,7 +302,7 @@
           <option value="600">10 minutes</option>
           <option value="1800">30 minutes</option>
         </select>
-        &nbsp;
+        &nbsp; per optimization &nbsp;
         <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
           {{ statusMessage }}
         </span>
@@ -300,7 +313,7 @@
             class="btn"
             ng-disabled="hasNoResults()"
             ng-click="exportResults()">
-          Results (CSV)
+          Export results
         </button>
 
       </div>

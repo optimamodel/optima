@@ -809,8 +809,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 
                 # Move the people who started treatment last timestep from usvl to svl
                 if isnan(prop[t+1]):
-                    if   name is 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
-                    elif name is 'propsupp': wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
+                    if   name == 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
+                    elif name == 'propsupp': wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
                     else:                    wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
                     wanted = prop[t+1]*available
@@ -823,7 +823,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         totalppltomoveup = ppltomoveup.sum()
                         if totalppltomoveup>eps:
                             diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
-                            if name is 'proptx': # For treatment, we move people in lower CD4 states first
+                            if name == 'proptx': # For treatment, we move people in lower CD4 states first
                                 tmpdiff = diff
                                 newmovers = zeros((ncd4,npops))
                                 for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
@@ -836,9 +836,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
                                 # Need to handle USVL and SVL separately
                                 people[care,:,t+1] -= newmovers # Shift people out of care
-                                totcurrentusvl  = people[usvl,:,t+1].sum()
-                                totcurrentsvl   = people[svl,:,t+1].sum()
-                                totcurrenttx    = totcurrentusvl + totcurrentsvl
+                                totcurrentusvl = people[usvl,:,t+1].sum()
+                                totcurrentsvl  = people[svl,:,t+1].sum()
+                                totcurrenttx   = totcurrentusvl + totcurrentsvl
                                 if totcurrenttx<eps: # There's no one on treatment: assign a proportion
                                     currentfracsvl = treatvs
                                     currentfracusvl = 1.0 - currentfracsvl
@@ -858,7 +858,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if totalppltomovedown>eps: # To avoid having to add eps
                             diff = min(-diff, totalppltomovedown-eps) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
-                            if name is 'proptx': # Handle SVL and USVL separately
+                            if name == 'proptx': # Handle SVL and USVL separately
                                 newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
                                 newmoverssvl  = newmovers[ncd4:,:] # Second group is SVL
                                 people[usvl,:,t+1] -= newmoversusvl # Shift people out of USVL treatment

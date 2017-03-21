@@ -35,7 +35,7 @@ class Portfolio(object):
         self.objectives = objectives
         if projects is not None: self.addprojects(projects)
         self.spendperproject = odict() # Store the list of the final spend per project
-        self.results = None # List of before-and-after result pairs after reoptimization
+        self.results = odict() # List of before-and-after result pairs after reoptimization
 
         ## Define metadata
         self.uid = uuid()
@@ -99,8 +99,9 @@ class Portfolio(object):
     
     def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current portfolio, by default using its name, and without results '''
-        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
-        if filename is None: filename = self.name+'.prt'
+        if filename is None:
+            if self.filename: filename = self.filename
+            else:             filename = self.name+'.prt'
         self.filename = os.path.abspath(filename) # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
         if saveresults:
@@ -128,6 +129,11 @@ class Portfolio(object):
         
         Version: 2017mar17
         '''
+        
+        # If objectives not supplied, use the ones from the portfolio
+        if objectives is None: objectives = self.objectives
+        
+        
         # All we need to do is run batchBOC on the portfolio's odict of projects
         self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
              constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, 
@@ -312,7 +318,7 @@ class Portfolio(object):
     def makeoutput(self, doprint=False, verbose=2):
         ''' Just displays results related to the GA run '''
         if doprint: printv('Printing results...', 2, verbose)
-        if self.results is None:
+        if not self.results:
             errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
             raise OptimaException(errormsg)
         
@@ -504,9 +510,9 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
     # Start with pop and prev data.
     maxcol = 0
     row, col = 0, 0
-    for row in xrange(copies+1):
+    for row in range(copies+1):
         if row != 0:
-            wspopsize.write(row, col, '%s - district %i' % (project.name, row), bold)
+            wspopsize.write(row, col, '%s - region %i' % (project.name, row), bold)
             wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
         for popname in project.data['pops']['short']:
             col += 1
@@ -534,7 +540,7 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
         if row == 0:
             wspopsize.write(row, col, "Total (intended)", bold)
             wsprev.write(row, col, "Total (intended)", bold)
-            for p in range(len(project.data['pops']['short'])):
+            for p in range(copies):
                 wspopsize.write(row+1+p, col, None, gold)
                 wsprev.write(row+1+p, col, None, gold)
         col += 1
@@ -625,7 +631,10 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
     for colindex in range(1,wspopsize.ncols-3): # Skip first column and last 3
         poplist.append(wspopsize.cell_value(0, colindex))
     npops = len(poplist)
-    
+    if npops!=project.data['npops']:
+        errormsg = 'Selected project and selected spreadsheet are incompatible: %i vs. %i populations' % (npops, project.data['npops'])
+        raise OptimaException(errormsg)
+        
     districtlist = []
     popratio = odict()
     prevfactors = odict()

@@ -1,4 +1,3 @@
-from __future__ import print_function
 """
 
 dataio.py
@@ -27,13 +26,12 @@ import dateutil
 import shutil
 from pprint import pprint
 
-from flask import helpers, current_app, abort, request, session, make_response, jsonify
+from flask import current_app, abort, request, session, make_response, jsonify
 from flask_login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from validate_email import validate_email
 
 import optima as op
-import optima.geospatial as geospatial
 
 from .dbconn import db
 from . import parse
@@ -68,6 +66,10 @@ def templatepath(filename):
     return result
 
 
+#############################################################################################
+### USERS
+#############################################################################################
+
 def upload_dir_user(dirpath, user_id=None):
     """
     Returns a unique directory on the server for the user's files
@@ -97,9 +99,6 @@ def upload_dir_user(dirpath, user_id=None):
 
     return dirpath
 
-
-########
-# USERS
 
 def authenticate_current_user(raise_exception=True):
     current_app.logger.debug("authenticating user {} (admin:{})".format(
@@ -295,8 +294,11 @@ def verify_admin_request_decorator(api_call):
     return _verify_admin_request
 
 
-########
-## PROJECT
+
+
+#############################################################################################
+### PROJECT
+#############################################################################################
 
 def load_project_record(project_id, raise_exception=True, db_session=None, authenticate=False):
     if not db_session:
@@ -570,7 +572,7 @@ def copy_project(project_id, new_project_name):
     return copy_project_id
 
 
-def create_project_from_prj(prj_filename, project_name, user_id):
+def create_project_from_prj(prj_filename=None, project_name=None, user_id=None, project=None):
     """
     Returns the project id of the new project.
         results.name
@@ -578,8 +580,10 @@ def create_project_from_prj(prj_filename, project_name, user_id):
             - 'parset-' - calibration/autofit results
             - 'optim-' - optimization results
     """
-    project = op.loadproj(prj_filename)
-    project.name = project_name
+    if project is None:
+        project = op.loadproj(prj_filename)
+    if project_name is not None:
+        project.name = project_name
     resolve_project(project)
     save_project_as_new(project, user_id)
     return project.uid
@@ -663,37 +667,6 @@ def load_zip_of_prj_files(project_ids):
     return dirname, zip_fname
 
 
-########
-## SPREADSHEETS
-
-def load_data_spreadsheet_binary(project_id):
-    """
-    Returns (full_filename, binary_string) of the previously downloaded spreadhseet
-    """
-    data_record = ProjectDataDb.query.get(project_id)
-    if data_record is not None:
-        binary = data_record.meta
-        if len(binary.meta) > 0:
-            project = load_project(project_id)
-            server_fname = secure_filename('{}.xlsx'.format(project.name))
-            return server_fname, binary
-    return None, None
-
-
-def load_template_data_spreadsheet(project_id):
-    """
-    Returns (dirname, basename) of the the template data spreadsheet
-    """
-    project = load_project(project_id)
-    fname = secure_filename('{}.xlsx'.format(project.name))
-    server_fname = templatepath(fname)
-    op.makespreadsheet(
-        server_fname,
-        pops=parse.get_populations_from_project(project),
-        datastart=int(project.data["years"][0]),
-        dataend=int(project.data["years"][-1]))
-    return upload_dir_user(TEMPLATEDIR), fname
-
 
 def resolve_project(project):
     """
@@ -704,18 +677,10 @@ def resolve_project(project):
     print(">> Resolve project")
     is_change = False
 
-    for attr in ['progsets', 'parsets', 'optims']:
-        structlist = getattr(project, attr)
-        for key, struct in structlist.iteritems():
-            if not hasattr(struct, 'Link'):
-                struct.projectref = op.Link(project)
-                print(">>> Check %s.link %s %s" % (attr, key, struct.projectref))
-                is_change = True
+    # Restore links always, don't worry about changes
+    project.restorelinks() 
 
-    for parset_key, parset in project.parsets.items():
-        print(">>> Check parset.link %s %s" % (parset_key, parset.projectref))
-        parset.projectref = op.Link(project)
-
+    # Handle scenarios
     del_scenario_keys = []
     for scenario_key, scenario in project.scens.items():
         if type(scenario.parsetname) is int:
@@ -808,8 +773,68 @@ def resolve_project(project):
     return is_change
 
 
-########
-# RESULT
+
+#############################################################################################
+### SPREADSHEETS
+#############################################################################################
+
+def load_data_spreadsheet_binary(project_id):
+    """
+    Returns (full_filename, binary_string) of the previously downloaded spreadhseet
+    """
+    data_record = ProjectDataDb.query.get(project_id)
+    if data_record is not None:
+        binary = data_record.meta
+        if len(binary.meta) > 0:
+            project = load_project(project_id)
+            server_fname = secure_filename('{}.xlsx'.format(project.name))
+            return server_fname, binary
+    return None, None
+
+
+def load_template_data_spreadsheet(project_id):
+    """
+    Returns (dirname, basename) of the the template data spreadsheet
+    """
+    project = load_project(project_id)
+    fname = secure_filename('{}.xlsx'.format(project.name))
+    server_fname = templatepath(fname)
+    op.makespreadsheet(
+        server_fname,
+        pops=parse.get_populations_from_project(project),
+        datastart=int(project.data["years"][0]),
+        dataend=int(project.data["years"][-1]))
+    return upload_dir_user(TEMPLATEDIR), fname
+
+
+def load_data_spreadsheet(project_id, is_template=True):
+    """
+    Returns (dirname, basename) of the the template data spreadsheet
+    """
+    project = load_project(project_id)
+    fname = secure_filename('{}.xlsx'.format(project.name))
+    server_fname = templatepath(fname)
+    data = None
+    datastart = project.settings.start
+    dataend = project.settings.dataend
+    if not is_template:
+        data = project.data
+        datastart = int(project.data["years"][0])
+        dataend = int(project.data["years"][-1])
+    op.makespreadsheet(
+        server_fname,
+        pops=parse.get_populations_from_project(project),
+        datastart=datastart,
+        dataend=dataend,
+        data=data)
+    return upload_dir_user(TEMPLATEDIR), fname
+
+
+
+
+#############################################################################################
+### RESULTS
+#############################################################################################
 
 def load_result(
         project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
@@ -961,8 +986,25 @@ def load_result_mpld3_graphs(result_id, which):
     return make_mpld3_graph_dict(result, which)
 
 
-########
-## PARSET
+def download_figures(result_id=None, which=None, filetype=None, index=None):
+    result = load_result_by_id(result_id, which)
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    
+    filenames = op.saveplots(result, toplot=which, filepath=dirname, filename=None, filetype=filetype, index=index)
+    if len(filenames)>1:
+        errormsg = 'Webapp only supports saving one figure at a time; you are trying to save %s' % len(filenames)
+        raise op.OptimaException(errormsg)
+    else:
+        server_filename = filenames[0]
+    print(">> download_figures", server_filename)
+    return server_filename
+
+
+#############################################################################################
+### PARSETS
+#############################################################################################
 
 def copy_parset(project_id, parset_id, new_parset_name):
 
@@ -1101,8 +1143,10 @@ def load_parset_graphs(
     }
 
 
-########
-## PROGRAMS
+
+#############################################################################################
+### PROGSETS
+#############################################################################################
 
 def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     """
@@ -1243,7 +1287,7 @@ def save_program(project_id, progset_id, program_summary):
     project_record.save_obj(project)
 
 
-def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
+def load_costcov_graph(project_id, progset_id, program_id, parset_id, year):
     project_record = load_project_record(project_id)
     project = project_record.load()
     progset = parse.get_progset_from_project(project, progset_id)
@@ -1254,13 +1298,10 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, t):
         plotoptions = program.attr
 
     parset = parse.get_parset_from_project(project, parset_id)
-    plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
+    plot = op.plotcostcov(program=program, year=year, parset=parset, plotoptions=plotoptions)
+    op.reanimateplots(plot)
 
     graph_dict = convert_to_mpld3(plot)
-    texts = graph_dict['axes'][0]['texts']
-    for i in reversed(range(len(texts))):
-        if texts[i]['text'] == 'None':
-            del texts[i]
 
     return graph_dict
 
@@ -1292,8 +1333,9 @@ def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
     return load_reconcile_summary(project_id, progset_id, parset_id, year)
 
 
-########
-## SCENARIOS
+#############################################################################################
+### SCENARIOS
+#############################################################################################
 
 def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=None):
     result = load_result(project_id, None, "scenarios", which)
@@ -1362,8 +1404,10 @@ def load_startval_for_parameter(project_id, parset_id, par_short, pop, year):
     return parse.get_startval_for_parameter(project, parset_id, par_short, pop, year)
 
 
-########
-## OPTIMIZATION
+
+#############################################################################################
+### OPTIMIZATIONS
+#############################################################################################
 
 def load_optimization_summaries(project_id):
     project = load_and_resolve_project(project_id)
@@ -1418,49 +1462,32 @@ def load_optimization_graphs(project_id, optimization_id, which):
         return make_mpld3_graph_dict(result, which)
 
 
-########
-## PORTFOLIO
 
-def create_portfolio(name, db_session=None):
+
+#############################################################################################
+### PORTFOLIO
+#############################################################################################
+
+def create_portfolio(name, db_session=None, portfolio=None):
     """
     Returns the portfolio summary of the portfolio
     """
 
     if db_session is None:
         db_session = db.session
-    print("> Create portfolio %s" % name)
-    portfolio = op.Portfolio()
-    portfolio.name = name
-    record = PyObjectDb(
-        user_id=current_user.id, name=name, id=portfolio.uid, type="portfolio")
-    # TODO: something about dates
+    if portfolio is None:
+        print("> Create portfolio %s with default objectives" % name)
+        portfolio = op.Portfolio()
+        portfolio.objectives = op.defaultobjectives()
+        portfolio.name = name
+    else:
+        portfolio.uid = op.uuid() # Have to update this or else the database freaks out
+        print("Create portfolio %s from upload" % portfolio.name)
+    record = PyObjectDb(user_id=current_user.id, name=portfolio.name, id=portfolio.uid, type="portfolio")
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
     return parse.get_portfolio_summary(portfolio)
-
-
-def load_data_spreadsheet(project_id, is_template=True):
-    """
-    Returns (dirname, basename) of the the template data spreadsheet
-    """
-    project = load_project(project_id)
-    fname = secure_filename('{}.xlsx'.format(project.name))
-    server_fname = templatepath(fname)
-    data = None
-    datastart = project.settings.start
-    dataend = project.settings.dataend
-    if not is_template:
-        data = project.data
-        datastart = int(project.data["years"][0])
-        dataend = int(project.data["years"][-1])
-    op.makespreadsheet(
-        server_fname,
-        pops=parse.get_populations_from_project(project),
-        datastart=datastart,
-        dataend=dataend,
-        data=data)
-    return upload_dir_user(TEMPLATEDIR), fname
 
 
 def delete_portfolio(portfolio_id, db_session=None):
@@ -1493,21 +1520,11 @@ def load_portfolio_summaries(db_session=None):
         db_session = db.session
 
     query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
-    if query is None:
-        portfolio = op.loadobj("server/example/malawi-decent-two-state.prt", verbose=0)
-        record = PyObjectDb(
-            user_id=current_user.id, type="portfolio", name=portfolio.name, id=portfolio.uid)
-        record.save_obj(portfolio)
-        db_session.add(record)
-        db_session.commit()
-        print("> Crreated default portfolio %s" % portfolio.name)
-        portfolios = [portfolio]
-    else:
-        portfolios = []
-        for record in query:
-            print(">> Portfolio id %s" % record.id)
-            portfolio = record.load()
-            portfolios.append(portfolio)
+    portfolios = []
+    for record in query:
+        print(">> Portfolio id %s" % record.id)
+        portfolio = record.load()
+        portfolios.append(portfolio)
 
     summaries = map(parse.get_portfolio_summary, portfolios)
     print("> Loading portfolio summaries")
@@ -1544,10 +1561,75 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
         print("> load portfolio %s" % portfolio_id)
         portfolio = record.load()
     else:
-        print("> Create portfolio %s" % portfolio_id)
+        print("> Create portfolio %s with default objectives" % portfolio_id)
         portfolio = op.Portfolio()
         portfolio.uid = UUID(portfolio_id)
+        portfolio.objectives = op.defaultobjectives()
     return portfolio
+
+
+def load_portfolio_record(portfolio_id, raise_exception=True, db_session=None, authenticate=False):
+    if not db_session:
+        db_session = db.session
+
+    if authenticate:
+        authenticate_current_user()
+
+    if authenticate is False or current_user.is_admin:
+        query = db_session.query(PyObjectDb).filter_by(id=portfolio_id)
+    else:
+        query = db_session.query(PyObjectDb).filter_by(
+            id=portfolio_id, user_id=current_user.id)
+
+    portfolio_record = query.first()
+
+    if portfolio_record is None:
+        if raise_exception:
+            raise ProjectDoesNotExist(id=portfolio_record)
+
+    return portfolio_record
+
+
+def download_portfolio(portfolio_id):
+    """
+    Returns the (dirname, filename) of the .prj binary of the project on the server
+    """
+    portfolio_record = load_portfolio_record(portfolio_id, raise_exception=True)
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    filename = portfolio_record.as_portfolio_file(dirname)
+    return dirname, filename
+
+
+def export_portfolio(portfolio_id):
+    """
+    Exports the results of the portfolio
+    """
+    portfolio_record = load_portfolio_record(portfolio_id, raise_exception=True)
+    portfolio = portfolio_record.load()
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    xlsx_fname = os.path.join(dirname, 'geospatial-results.xlsx')
+    portfolio.export(filename=xlsx_fname)
+    return os.path.split(xlsx_fname)
+    
+
+def portfolio_results_ready(portfolio_id):
+    """
+    Checks if the portfolio is ready for export
+    """
+    portfolio_record = load_portfolio_record(portfolio_id, raise_exception=True)
+    portfolio = portfolio_record.load()
+    result = len(portfolio.results)>0
+    return result
+
+
+def update_portfolio_from_prt(portfolio_id, prt_filename):
+    portfolio = op.loadportfolio(prt_filename)
+    create_portfolio(portfolio.name, portfolio=portfolio)
+    return parse.get_portfolio_summary(portfolio)
 
 
 def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
@@ -1581,10 +1663,12 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    prj_basename = load_project_record(project_id).as_file(dirname)
+    project_record = load_project_record(project_id)
+    project = project_record.load()
+    prj_basename = project_record.as_file(dirname)
     prj_fname = os.path.join(dirname, prj_basename)
     xlsx_fname = prj_fname.replace('.prj', '.xlsx')
-    geospatial.makesheet(prj_fname, xlsx_fname, copies=n_region, refyear=year)
+    op.makegeospreadsheet(project=project, spreadsheetpath=xlsx_fname, copies=n_region, refyear=year)
     return os.path.split(xlsx_fname)
 
 
@@ -1594,32 +1678,23 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     """
 
     print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
-    dirname = upload_dir_user(TEMPLATEDIR)
+    project_record = load_project_record(project_id)
+    baseproject = project_record.load()
 
-    prj_basename = load_project_record(project_id).as_file(dirname)
-    prj_fname = os.path.join(dirname, prj_basename)
+    projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
 
-    spawn_dir = os.path.join(dirname, prj_basename + '-spawn-districts')
-    if os.path.isdir(spawn_dir):
-        shutil.rmtree(spawn_dir)
-
-    geospatial.makeproj(prj_fname, spreadsheet_fname, spawn_dir)
-
-    district_prj_basenames = os.listdir(spawn_dir)
     prj_names = []
-    for prj_basename in district_prj_basenames:
-        first_prj_name = prj_basename.replace('.prj', '')
-        print("> Slurping project %s" % prj_name, existing_prj_names, prj_name in existing_prj_names)
-        prj_name = first_prj_name
+    for project in projects:
+        print("> Slurping project %s" % project.name)
+        prj_name = project.name
         i = 1
         while prj_name in existing_prj_names:
-            prj_name = first_prj_name + ' (%d)' % i
+            prj_name = prj_name + ' (%d)' % i
             i += 1
-        create_project_from_prj(prj_fname, prj_name, current_user.id)
+        create_project_from_prj(None, prj_name, current_user.id, project=project)
         prj_names.append(prj_name)
 
-    print("> Cleanup districts for template project %s" % prj_basename)
-    shutil.rmtree(spawn_dir)
+    print("> Cleanup districts for template project %s" % baseproject.name)
     return prj_names
 
 

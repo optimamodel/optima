@@ -29,6 +29,11 @@
 
   // ### Sizes
 
+  &.__tiny {
+    @include font-height(8px, 8px);
+    padding: 5px 12px;
+  }
+
   &.__m {
     @include font-height(13px, 16px);
     padding: 5px 12px;
@@ -96,34 +101,36 @@
     }
   }
 
+
   &.__medium-blue {
-    background: #f0f0ff;
-    border-color: #C7DDEA;
-    color: #53646F;
+    background: #d2e6ff;
+    border-color: #9DC6DF;
+    color: #000;
 
     &:disabled {
       color: #708897
     }
 
     &:hover:not(:disabled) {
-      background: #BEDFF4;
+      background: #b7d7ec;
       border-color: #9DC6DF;
-      color: #3F4D55;
+      color: #000;
     }
 
     &.__active,
     &:active:not(:disabled) {
-      background: #AFD8F2;
+      background: #a3c7e0;
       border-color: #9DC6DF;
-      color: #3F4D55;
+      color: #000;
     }
 
     &.__active,
     &.__active:hover {
       background: #AFD8F2;
-      color: #3F4D55;
+      color: #000;
     }
   }
+
 
   &.__blue {
     background: #00aeef;

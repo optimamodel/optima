@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017mar17
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, checktype, promotetoarray
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -932,7 +932,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
 
 
 def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
-    """ Plot the cost-coverage curve for a single program"""
+    ''' Plot the cost-coverage curve for a single program'''
     
     # Put plotting imports here so fails at the last possible moment
     year = promotetoarray(year)
@@ -941,7 +941,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     
     # Get caption & scatter data 
     caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
-    costdata = dcp(program.costcovdata['cost'])
+    costdata = dcp(program.costcovdata['cost']) if program.costcovdata.get('cost') else []
 
     # Make x data... 
     if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
@@ -956,9 +956,9 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
     # Create x line data and y line data
     try:
-        y_l = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
-        y_m = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
-        y_u = program.getcoverage(x=xlinedata, year=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
+        y_l = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
+        y_m = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
+        y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
     except:
         y_l,y_m,y_u = None,None,None
     plotdata['ylinedata_l'] = y_l
@@ -985,7 +985,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     ax = fig.add_subplot(111)
 
     ax.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
-    ax.figtext(.1, .05, textwrap.fill(caption))
+    fig.text(.1, .05, textwrap.fill(caption))
     
     if y_m is not None:
         for yr in range(y_m.shape[0]):
@@ -1023,14 +1023,15 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
 
 
-def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, index=None, verbose=2, **kwargs):
+
+def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, index=None, verbose=2, plots=None, **kwargs):
     '''
     Save the requested plots to disk.
     
     Arguments:
         results -- either a Resultset, Multiresultset, or a Project
         toplot -- either a plot key or a list of plot keys
-        filetype -- the file type; can be 'fig', 'pdf' (default), or anything supported by savefig()
+        filetype -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
         filepath -- the folder to save the file(s) in
         filename -- the file to save to (only uses path if multiple files)
         savefigargs -- dictionary of arguments passed to savefig()
@@ -1053,7 +1054,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     # Preliminaries
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
     if wasinteractive: ioff()
-    if filetype is None: filetype = 'pdf' # This ensures that only one file is created
+    if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
     results = sanitizeresults(results)
     
     # Handle filepath
@@ -1063,13 +1064,21 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         if filename: filepath = os.path.dirname(filename)
     if filepath: filepath += os.sep
     
-    plots = makeplots(results=results, toplot=toplot, **kwargs)
+    # Either take supplied plots, or generate them
+    if plots is None: # NB, this is actually a figure or a list of figures
+        plots = makeplots(results=results, toplot=toplot, **kwargs)
+    plots = promotetoodict(plots)
     nplots = len(plots)
-    if filetype is 'pdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
+    
+    # Handle file types
+    filenames = []
+    thisfilename = ''
+    if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
+        if not filename: filename = results.projectinfo['name']+'-'+'figures.pdf'
         thisfilename = filepath+filename
-        if not thisfilename: thisfilename = 'figures.pdf'
         pdf = PdfPages(thisfilename)
+        filenames.append(thisfilename)
         printv('PDF saved to %s' % thisfilename, 2, verbose)
     for p,item in enumerate(plots.items()):
         key,plt = item
@@ -1079,29 +1088,29 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
                 thisfilename = filepath+filename
             else: # Any other case, generate a filename
                 keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
-                thisfilename = filepath+keyforfilename+'.'+filetype
+                thisfilename = filepath+results.projectinfo['name']+'-'+keyforfilename+'.'+filetype
             
             # Do the saving
             if savefigargs is None: savefigargs = {}
             defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
             defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
-            if filetype is 'fig':
+            if filetype == 'fig':
                 saveobj(thisfilename, plt)
+                filenames.append(thisfilename)
                 printv('Figure object saved to %s' % thisfilename, 2, verbose)
             else:
                 reanimateplots(plt)
-                if filetype is 'pdf':
-                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but this should actually be default, since we updated it from the user version
-                else:                 
+                if filetype=='singlepdf':
+                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
+                else:
                     plt.savefig(thisfilename, **defaultsavefigargs)
-                    if not thisfilename:
-                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    filenames.append(thisfilename)
                     printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
                 close(plt)
-    
-    if filetype is 'pdf': pdf.close()
+
+    if filetype=='singlepdf': pdf.close()
     if wasinteractive: ion()
-    return None
+    return filenames
 
 
 
@@ -1109,7 +1118,7 @@ def reanimateplots(plots=None):
     ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
     if len(get_fignums()): fignum = gcf().number # This is the number of the current active figure, if it exists
     else: fignum = 1
-    if not checktype(plots, odict): plots = odict({'Plot':plots}) # Convert to an odict
+    plots = promotetoodict(plots) # Convert to an odict
     for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
     return None
 

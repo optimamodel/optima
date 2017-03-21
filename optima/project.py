@@ -135,7 +135,7 @@ class Project(object):
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True, **kwargs)
-        if self.name is 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
+        if self.name == 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
         return None
 
 
@@ -377,8 +377,9 @@ class Project(object):
     
     def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
-        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
-        if filename is None: filename = self.name+'.prj'
+        if filename is None:
+            if self.filename: filename = self.filename
+            else:             filename = self.name+'.prj'
         self.filename = os.path.abspath(filename) # Store file path
         if saveresults:
             saveobj(filename, self, verbose=verbose)
@@ -496,7 +497,8 @@ class Project(object):
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
             if randseed is not None: seed(randseed) # Reset the random seed, if specified
             for i in range(n):
-                sampleseed = randint(0,2**32-1)
+                maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
+                sampleseed = randint(0,maxint) 
                 simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
@@ -716,8 +718,9 @@ class Project(object):
         
         boc = None
         objkeys = ['start','end','deathweight','inciweight']
-        for boc in reversed(self.results.values()): # Get last result and work backwards
-            if isinstance(boc,BOC):
+        for result in reversed(self.results.values()): # Get last result and work backwards
+            if isinstance(result,BOC):
+                boc = result
                 if objectives is None:
                     return boc # A BOC was found, and objectives are None: we're done
                 same = True
@@ -732,6 +735,7 @@ class Project(object):
             printv('Warning, no BOCs found!', 1, verbose)
             return None
         
+        # Compare the last BOC found with the wanted objectives
         wantedobjs = ', '.join(['%s=%0.1f' % (key,objectives[key]) for key in objkeys])
         actualobjs = ', '.join(['%s=%0.1f' % (key,boc.objectives[key]) for key in objkeys])
         if not same and strict: # The BOCs don't match exactly, and strict checking is enabled, return None

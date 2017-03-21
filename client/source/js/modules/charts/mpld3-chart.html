@@ -17,14 +17,24 @@
       style="float: right;"
       ng-if="!buttonsOff">
     <button
-        class="btn figure"
-        ng-click="exportGraphAsPng({$event:$event})">
+        class="btn__tiny figure"
+        ng-click="exportFigure('png')">
       PNG
     </button>
     <button
-        class="btn figure"
-        ng-click="exportGraphAsSvg({$event:$event})">
+      class="btn__tiny figure"
+      ng-click="exportFigure('pdf')">
+      PDF
+    </button>
+    <button
+        class="btn__tiny figure"
+        ng-click="exportFigure('svg')">
       SVG
+    </button>
+    <button
+      class="btn__tiny figure"
+      ng-click="exportFigure('fig')">
+      FIG
     </button>
   </div>
   <br clear="all">

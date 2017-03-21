@@ -1,6 +1,6 @@
 define(
-  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
-  function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
+  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs'],
+  function (module, _, $, mpld3, saveAs) {
 
   'use strict';
 
@@ -62,9 +62,9 @@ define(
         var $path = $(path);
 
         // we look for the background and make it opaque
-        if ($path.css('fill')=="rgb(255, 255, 255)") {
-          $path.css('fill', "rgba(255, 255, 255, 0)");
-          $path.css('stroke', "rgba(255, 255, 255, 0)");
+        if (($path.css('fill')=="rgb(255, 255, 255)") || ($path.css('fill')=='#ffffff')) {
+          $path.css('fill-opacity', 0);
+          $path.css('stroke', "none");
         }
       });
 
@@ -126,7 +126,7 @@ define(
     $svg.attr('height', height);
   }
 
-  module.directive('mpld3Chart', function ($http, modalService, exportHelpers) {
+  module.directive('mpld3Chart', function ($http, modalService) {
 
     return {
       scope: { chart: '=mpld3Chart' },
@@ -193,65 +193,20 @@ define(
           }
         };
 
-        scope.exportGraphAsSvg = function() {
-          var originalStyle;
-          var elementId = elem.attr('id');
-
-          var $originalSvg = elem.parent().find('svg');
-          var viewBox = $originalSvg[0].getAttribute('viewBox');
-          var orginalWidth, orginalHeight;
-          if (viewBox) {
-            var tokens = viewBox.split(" ");
-            orginalWidth = parseFloat(tokens[2]);
-            orginalHeight = parseFloat(tokens[3]);
-          } else {
-            orginalWidth = $originalSvg.width();
-            orginalHeight = $originalSvg.height();
-          }
-
-          originalStyle = 'padding: ' + $originalSvg.css('padding');
-          var scalingFactor = 1;
-
-          // In order to have styled graphs the css content used to render
-          // graphs is retrieved & inject it into the svg as style tag
-          var chartStylesheetRequest = $http.get(chartStylesheetUrl, { cache: true });
-          chartStylesheetRequest
-            .success(function(chartStylesheetContent) {
-              // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
-              var $styleTagContentList = $('style').map(function(index, style) {
-                var styleContent = $(style).html();
-                if (styleContent.indexOf('div#' + elementId) != -1) {
-                  return styleContent.replace(/div#/g, '#');
-                } else {
-                  return styleContent;
-                }
-              });
-
-              var styleContent = $styleTagContentList.get().join('\n');
-              styleContent = styleContent + '\n' + chartStylesheetContent;
-
-              // create svg element
-              var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle, elementId);
-
-              // add styles and content to the svg
-              var styles = '<style>' + styleContent + '</style>';
-              svg.innerHTML = styles + $originalSvg.html();
-
-              // create img element with the svg as data source
-              var svgXML = (new XMLSerializer()).serializeToString(svg);
-              saveAs(new Blob([svgXML], { type: 'image/svg' }), 'graph.svg');
-
-            })
-            .error(function() {
-              alert("Please reload and try again, something went wrong while generating the graph.");
+        scope.exportFigure = function(filetype) { /* Adding function(name) brings up save dialog box */
+          var resultId = attrs.resultId;
+          var graphIndex = attrs.graphIndex;
+          var graphSelectorsString = attrs.graphSelectors; // graphSelectors gets converted to a string, so convert back: e.g. '["a","b"]' -> 'a, b' -> 'a','b'
+          var graphSelectors = graphSelectorsString.split('"').join('').slice(1,-1).split(','); // http://stackoverflow.com/questions/19156148/i-want-to-remove-double-quotes-from-a-string
+          $http
+            .post(
+              '/api/download',
+              { name: 'download_figures', args: [resultId, graphSelectors, filetype, Number(graphIndex)]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/'+filetype });
+              saveAs(blob, ('optima-figure.'+filetype));
             });
-        };
-
-        scope.exportGraphAsPng = function() {
-          exportHelpers.generateGraphAsPngOrJpeg(
-              elem.parent(),
-              function(blob) { saveAs(blob, "graph.png"); },
-              'blob');
         };
 
         scope.$watch(
@@ -367,6 +322,25 @@ define(
           });
         }
 
+        scope.exportAllFigures = function(name) { /* Adding function(name) brings up save dialog box */
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          var which = scope.getSelectors();
+          var index = null;
+          var filetype = 'singlepdf';
+          $http
+            .post(
+              '/api/download',
+              { name: 'download_figures', args: [resultId, which, filetype, index]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/pdf' });
+              saveAs(blob, ('optima-figures.pdf'));
+            });
+        };
+
         scope.exportAllData = function(name) { /* Adding function(name) brings up save dialog box */
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
@@ -381,26 +355,9 @@ define(
             })
           .success(function (response) {
             var blob = new Blob([response], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, ('results.xlsx'));
+            saveAs(blob, ('optima-results.xlsx'));
           });
         };
-
-
-        function getSelectors() {
-          function getChecked(s) { return s.checked; }
-          function getKey(s) { return s.key }
-          var which = [];
-          if (scope.graphs) {
-            if (scope.graphs.advanced) {
-              which.push('advanced');
-            }
-            var selectors = scope.graphs.selectors;
-            if (selectors) {
-              which = which.concat(_.filter(selectors, getChecked).map(getKey));
-            }
-          }
-          return which;
-        }
 
         scope.updateGraphs = function() {
           var resultId = scope.graphs.resultId;
@@ -408,7 +365,7 @@ define(
             return;
           }
           console.log('updateGraphs resultId', scope.graphs.resultId);
-          var which = getSelectors();
+          var which = scope.getSelectors();
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
@@ -507,6 +464,22 @@ define(
 
         scope.defaultSelectors = function() {
           scope.defaultGraphs();
+        };
+
+        scope.getSelectors = function() {
+          function getChecked(s) { return s.checked; }
+          function getKey(s) { return s.key }
+          var which = [];
+          if (scope.graphs) {
+            if (scope.graphs.advanced) {
+              which.push('advanced');
+            }
+            var selectors = scope.graphs.selectors;
+            if (selectors) {
+              which = which.concat(_.filter(selectors, getChecked).map(getKey));
+            }
+          }
+          return which;
         };
 
         scope.changeFigWidth = function() {

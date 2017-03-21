@@ -2,7 +2,6 @@ define([
   'angular',
   'ui.router',
   '../project/project-api-service',
-  '../charts/export-all-charts-directive',
   '../analysis/parameter-scenarios-modal',
   '../analysis/program-scenarios-modal',
 ], function (angular) {
@@ -11,7 +10,6 @@ define([
   return angular.module(
     'app.analysis',
     [
-      'app.export-all-charts',
       'ui.router',
       'app.parameter-scenarios-modal',
       'app.program-scenarios-modal',
