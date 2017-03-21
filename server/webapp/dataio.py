@@ -1324,9 +1324,9 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, year):
 def load_reconcile_summary(project_id, progset_id, parset_id, t):
 
     project = load_and_resolve_project(project_id)
-    project.restorelinks()
     progset = parse.get_progset_from_project(project, progset_id)
     parset = parse.get_parset_from_project_by_id(project, parset_id)
+    project.restorelinks()
 
     budgets = progset.getdefaultbudget()
     print('Checking progset....')
@@ -1339,6 +1339,7 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
         msg = progset.readytooptimize(detail=True)
         print('Program set %s is not ready to optimize: %s' % (progset.name, msg))
         pars = [[msg, '', 0, 0]]
+        print(progset.programs)
 
     return {
         'budgets': parse.normalize_obj(budgets),

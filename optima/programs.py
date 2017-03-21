@@ -173,7 +173,7 @@ class Programset(object):
             for thispop in self.covout[thispartype].keys():
                 printv('Checking %s pop' % str(thispop), 4, verbose)
                 intercept = self.covout[thispartype][thispop].ccopars.get('intercept', None)
-                if intercept or intercept!=0:
+                if not(intercept) and intercept!=0:
                     printv('WARNING: %s %s intercept is none' % (thispartype, str(thispop)), 4, verbose)
                     result = False
                     details.append(pars[thispartype].name)
@@ -183,7 +183,7 @@ class Programset(object):
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
                         printv('Checking %s program' % thisprog.short, 4, verbose)
                         progeffect = self.covout[thispartype][thispop].ccopars.get(thisprog.short, None)
-                        if progeffect or progeffect!=0:
+                        if not(progeffect) and progeffect!=0:
                             printv('WARNING: %s %s %s program effect is none' % (thispartype, str(thispop), thisprog.short), 4, verbose)
                             result = False
                             details.append(pars[thispartype].name)
@@ -200,7 +200,7 @@ class Programset(object):
         for key,prog in self.optimizableprograms().items():
             printv('Checking %s program' % key, 4, verbose)
             unitcost = prog.costcovfn.ccopars.get('unitcost', None)
-            if unitcost or unitcost!=0:
+            if not(unitcost) and unitcost!=0:
                 printv('WARNING: %s unit cost is none' % key, 4, verbose)
                 details.append(prog.name)
                 result = False
