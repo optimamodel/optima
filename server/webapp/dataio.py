@@ -1282,7 +1282,7 @@ def save_program(project_id, progset_id, program_summary):
     print("> Saving program " + program_summary['name'])
     parse.set_program_summary_on_progset(progset, program_summary)
 
-    progset.updateprogset()
+    progset.updateprogset(verbose=4)
 
     project_record.save_obj(project)
 

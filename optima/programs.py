@@ -122,7 +122,8 @@ class Programset(object):
         self.gettargetpartypes()
         self.gettargetpops()
         self.initialize_covout()
-        printv('\nUpdated programset "%s"' % (self.name), 4, verbose)
+        printv('Updated program set "%s"' % (self.name), 4, verbose)
+        return None
 
     def addprograms(self, newprograms, verbose=2):
         ''' Add new programs'''
@@ -168,17 +169,23 @@ class Programset(object):
             printv('Checking %s partype' % thispartype, 4, verbose)
             for thispop in self.covout[thispartype].keys():
                 printv('Checking %s pop' % str(thispop), 4, verbose)
-                if self.covout[thispartype][thispop].ccopars.get('intercept', None) is None:
-                    printv('%s %s intercept is none' % (thispartype, thispop), 4, verbose)
+                intercept = self.covout[thispartype][thispop].ccopars.get('intercept', None)
+                if intercept is None:
+                    printv('WARNING: %s %s intercept is none' % (thispartype, str(thispop)), 4, verbose)
                     result = False
                     details.append((thispartype,thispop))
+                else:
+                    printv('%s %s intercept is %s' % (thispartype, str(thispop), intercept), 4, verbose)
                 if thispartype not in coveragepars:
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
-                        printv('Checking %s program' % thisprog, 4, verbose)
-                        if self.covout[thispartype][thispop].ccopars.get(thisprog.short, None) is None:
-                            printv('%s %s %s program effect is none' % (thispartype, str(thispop), thisprog), 4, verbose)
+                        printv('Checking %s program' % thisprog.short, 4, verbose)
+                        progeffect = self.covout[thispartype][thispop].ccopars.get(thisprog.short, None)
+                        if progeffect is None:
+                            printv('WARNING: %s %s %s program effect is none' % (thispartype, str(thispop), thisprog.short), 4, verbose)
                             result = False
                             details.append((thispartype,thispop))
+                        else:
+                            printv('%s %s %s program effect is %s' % (thispartype, str(thispop), thisprog.short, progeffect), 4, verbose)
         if detail: return list(set(details))
         else: return result
 
@@ -189,10 +196,13 @@ class Programset(object):
         printv('Checking costcov pars', 4, verbose)
         for key,prog in self.optimizableprograms().items():
             printv('Checking %s program' % key, 4, verbose)
-            if prog.costcovfn.ccopars.get('unitcost', None) is None:
-                printv('%s unit cost is none' % key, 4, verbose)
+            unitcost = prog.costcovfn.ccopars.get('unitcost', None)
+            if unitcost is None:
+                printv('WARNING: %s unit cost is none' % key, 4, verbose)
                 details.append(prog.name)
                 result = False
+            else:
+                printv('%s unit cost is %s' % (key, unitcost), 4, verbose)
         if detail: return list(set(details))
         else: return result
                 
