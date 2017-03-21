@@ -162,6 +162,8 @@ class Programset(object):
 
     def hasallcovoutpars(self, detail=False, verbose=2):
         ''' Checks whether all the **required** coverage-outcome parameters are there for coverage-outcome rships'''
+        print('CAN YOU HEAR ME')
+        print verbose
         result = True
         details = []
         printv('Checking covout pars', 4, verbose)
@@ -191,6 +193,8 @@ class Programset(object):
 
     def hasallcostcovpars(self, detail=False, verbose=2):
         ''' Checks whether all the **required** cost-coverage parameters are there for coverage-outcome rships'''
+        print('I M CA&')
+        print verbose
         result = True
         details = []
         printv('Checking costcov pars', 4, verbose)
@@ -209,11 +213,16 @@ class Programset(object):
     def readytooptimize(self, detail=False, verbose=2):
         ''' True if the progset is ready to optimize (i.e. has all required pars) and False otherwise''' 
         if not detail:
-            return (self.hasallcostcovpars(verbose=verbose) and self.hasallcovoutpars(verbose=verbose))     
+            costcovready = self.hasallcostcovpars(verbose=verbose)
+            covoutready = self.hasallcovoutpars(verbose=verbose)
+            isready = (costcovready and covoutready)
+            return isready  
         else:
             msg = ''
-            costcovmissing = ', '.join(self.hasallcostcovpars(detail=True, verbose=verbose))
-            covoutmissing = ', '.join(self.hasallcovoutpars(detail=True, verbose=verbose))
+            costcovlist = self.hasallcostcovpars(detail=True, verbose=verbose)
+            covoutlist = self.hasallcovoutpars(detail=True, verbose=verbose)
+            costcovmissing = ', '.join(costcovlist)
+            covoutmissing = ', '.join(covoutlist)
             if costcovmissing: msg += 'The following programs are missing cost-coverage data: %s. ' % costcovmissing
             if covoutmissing: msg += 'The following programs are missing coverage-outcome data: %s.'% covoutmissing
             return msg
