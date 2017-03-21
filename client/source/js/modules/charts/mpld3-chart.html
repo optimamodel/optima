@@ -13,7 +13,9 @@
        ng-class="{'active-icon': panEnabled}">
     </i>
   </div>
-  <div ng-if="1" style="float: right;"> <!-- BOSCO -- replace this ng-if with something that will be false for the cost-coverage chart -->
+  <div
+      style="float: right;"
+      ng-if="!buttonsOff">
     <button
         class="btn__tiny figure"
         ng-click="exportFigure('png')">
