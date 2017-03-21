@@ -1371,13 +1371,15 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
         optim.parsetname = get_parset_from_project(project, summary["parset_id"]).name
         optim.progsetname = get_progset_from_project(project, summary["progset_id"]).name
         for objkey in optim.objectives.keys(): # Update by keys so we preserve order
-            optim.objectives[objkey] = summary["objectives"][objkey]
+            if objkey in summary["objectives"]: # WARNING, this shouldn't be necessary, but just in case...
+                optim.objectives[objkey] = summary["objectives"][objkey]
         optim.objectives["which"] = summary["which"]
         progkeys = project.progsets[optim.progsetname].programs.keys() # To ensure the order is correct
         if "constraints" in summary:
             for conskeys in optim.constraints.keys(): # name, min, max
-                for progkey in progkeys: # e.g. Condom, ART, MSM...
-                    optim.constraints[conskeys][progkey] = summary["constraints"][conskeys][progkey]
+                if conskeys in summary["constraints"]:
+                    for progkey in progkeys: # e.g. Condom, ART, MSM...
+                        optim.constraints[conskeys][progkey] = summary["constraints"][conskeys][progkey]
 
         new_optims[summary["name"]] = optim
 
