@@ -121,8 +121,8 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
         objectives['budget'] = defaultbudget # "Starting budget"
         objectives['deathweight'] = None # "Death weighting"
         objectives['inciweight'] = None # "Incidence weighting"
-        objectives['deathfrac'] = 0.5 # Fraction of deaths to get to
-        objectives['incifrac'] = 0.5 # Fraction of incidence to get to
+        objectives['deathfrac'] = 0.25 # Fraction of deaths to avert
+        objectives['incifrac'] = 0.25 # Fraction of incidence to avert
     else:
         raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
 
@@ -690,18 +690,23 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     # First, try infinite money
     args['totalbudget'] = project.settings.infmoney
     targetsmet, summary = outcomecalc(budgetvec, **args)
+    infinitefailed = False
     if not(targetsmet): 
         terminate = True
+        infinitefailed = True
         printv("Infinite allocation can't meet targets:\n%s" % summary, 1, verbose) # WARNING, this shouldn't be an exception, something more subtle
     else: printv("Infinite allocation meets targets, as expected; proceeding...\n(%s)\n" % summary, 2, verbose)
 
     # Next, try no money
-    args['totalbudget'] = 1e-3
-    targetsmet, summary = outcomecalc(budgetvec, **args)
-    if targetsmet: 
-        terminate = True
-        printv("Even zero allocation meets targets:\n%s" % summary, 1, verbose)
-    else: printv("Zero allocation doesn't meet targets, as expected; proceeding...\n(%s)\n" % summary, 2, verbose)
+    zerofailed = False
+    if not terminate:
+        args['totalbudget'] = 1e-3
+        targetsmet, summary = outcomecalc(budgetvec, **args)
+        if targetsmet: 
+            terminate = True
+            zerofailed = True
+            printv("Even zero allocation meets targets:\n%s" % summary, 1, verbose)
+        else: printv("Zero allocation doesn't meet targets, as expected; proceeding...\n(%s)\n" % summary, 2, verbose)
 
     # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
     args['totalbudget'] = origtotalbudget
@@ -720,9 +725,14 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
 
     # If infinite or zero money met objectives, don't bother proceeding
     if terminate:
-        constrainedbudgetvec = budgetvec * args['totalbudget']
-        newtotalbudget = args['totalbudget']
-        fundingfactor = args['totalbudget']
+        if zerofailed:
+            constrainedbudgetvec = budgetvec * 0.0
+            newtotalbudget = 0.0
+            fundingfactor = 0.0
+        if infinitefailed:
+            fundingfactor = 100 # For plotting, don't make the factor infinite, just very large
+            constrainedbudgetvec = budgetvec * fundingfactor
+            newtotalbudget = totalbudget * fundingfactor
 
     else:
         ##########################################################################################################################
