@@ -162,8 +162,6 @@ class Programset(object):
 
     def hasallcovoutpars(self, detail=False, verbose=2):
         ''' Checks whether all the **required** coverage-outcome parameters are there for coverage-outcome rships'''
-        print('CAN YOU HEAR ME')
-        print verbose
         result = True
         details = []
         printv('Checking covout pars', 4, verbose)
@@ -175,7 +173,7 @@ class Programset(object):
                 if intercept or intercept!=0:
                     printv('WARNING: %s %s intercept is none' % (thispartype, str(thispop)), 4, verbose)
                     result = False
-                    details.append((thispartype,thispop))
+                    details.append((thispartype,str(thispop)))
                 else:
                     printv('%s %s intercept is %s' % (thispartype, str(thispop), intercept), 4, verbose)
                 if thispartype not in coveragepars:
@@ -185,7 +183,7 @@ class Programset(object):
                         if progeffect or progeffect!=0:
                             printv('WARNING: %s %s %s program effect is none' % (thispartype, str(thispop), thisprog.short), 4, verbose)
                             result = False
-                            details.append((thispartype,thispop))
+                            details.append((thispartype,str(thispop)))
                         else:
                             printv('%s %s %s program effect is %s' % (thispartype, str(thispop), thisprog.short, progeffect), 4, verbose)
         if detail: return list(set(details))
@@ -193,8 +191,6 @@ class Programset(object):
 
     def hasallcostcovpars(self, detail=False, verbose=2):
         ''' Checks whether all the **required** cost-coverage parameters are there for coverage-outcome rships'''
-        print('I M CA&')
-        print verbose
         result = True
         details = []
         printv('Checking costcov pars', 4, verbose)
@@ -221,6 +217,8 @@ class Programset(object):
             msg = ''
             costcovlist = self.hasallcostcovpars(detail=True, verbose=verbose)
             covoutlist = self.hasallcovoutpars(detail=True, verbose=verbose)
+            costcovlist = [str(item).replace("'","").replace('"','') for item in costcovlist] # Convert potential tuples to strings
+            covoutlist = [str(item) for item in covoutlist] # Convert potential tuples to strings
             costcovmissing = ', '.join(costcovlist)
             covoutmissing = ', '.join(covoutlist)
             if costcovmissing: msg += 'The following programs are missing cost-coverage data: %s. ' % costcovmissing
