@@ -16,6 +16,7 @@
       ng-options="portfolio as portfolio.name for portfolio in portfolios"
       ng-change="chooseNewPortfolio()"
       style="width: 230px;">
+      <option style="display:none" value="">{ No portfolios found }</option>
     </select>
 
     <i

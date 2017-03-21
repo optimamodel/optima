@@ -37,13 +37,15 @@ define(
             currentPortfolioId = $scope.state.portfolio.id;
           }
           $scope.portfolios = portfolios;
-          $scope.state.portfolio = _.findWhere($scope.portfolios, {id: currentPortfolioId});
-          if (!$scope.state.portfolio) {
-            $scope.state.portfolio = $scope.portfolios[0];
-          }
+          $scope.state.portfolio = undefined;
           if ($scope.portfolios.length > 0) {
+            $scope.state.portfolio = _.findWhere($scope.portfolios, {id: currentPortfolioId});
+            if (!$scope.state.portfolio) {
+              $scope.state.portfolio = $scope.portfolios[0];
+            }
             $scope.chooseNewPortfolio();
-          }
+          };
+          console.log('loadPortfolios portfolio', $scope.state.portfolio)
         }
 
         $scope.chooseNewPortfolio = function() {
