@@ -155,6 +155,10 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.programs = _.sortBy(
           _.filter(vm.state.progset.programs, isActive),
           'name');
+        console.log('changeProgsetAndParset', vm.programs);
+        if (vm.programs.length == 0) {
+          return;
+        }
         vm.state.program = vm.programs[0];
         if (!("attr" in vm.state.program)) {
           vm.state.program.attr = {caption: "", xupperlim: null};
