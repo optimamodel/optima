@@ -174,7 +174,7 @@ class Programset(object):
                 if intercept or intercept!=0:
                     printv('WARNING: %s %s intercept is none' % (thispartype, str(thispop)), 4, verbose)
                     result = False
-                    details.append(pars()[thispartype].name)
+                    details.append(pars[thispartype].name)
                 else:
                     printv('%s %s intercept is %s' % (thispartype, str(thispop), intercept), 4, verbose)
                 if thispartype not in coveragepars:
@@ -184,7 +184,7 @@ class Programset(object):
                         if progeffect or progeffect!=0:
                             printv('WARNING: %s %s %s program effect is none' % (thispartype, str(thispop), thisprog.short), 4, verbose)
                             result = False
-                            details.append(pars()[thispartype].name)
+                            details.append(pars[thispartype].name)
                         else:
                             printv('%s %s %s program effect is %s' % (thispartype, str(thispop), thisprog.short, progeffect), 4, verbose)
         if detail: return list(set(details))

@@ -336,7 +336,7 @@ def load_project(project_id, raise_exception=True, db_session=None, authenticate
             return None
     project = project_record.load()
     project.restorelinks()
-    return 
+    return project
 
 
 def load_project_name(project_id):
