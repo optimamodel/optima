@@ -8,7 +8,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       scenariosResponse, modalService, toastr) {
 
     function findOptimizable() {
-      return $http.get('/api/project/' + vm.project.id + '/optimizable')
+      return $http.get('/api/project/' + $scope.project.id + '/optimizable')
     }
 
     function initialize() {
