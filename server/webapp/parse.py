@@ -833,6 +833,9 @@ def set_outcome_summaries_on_progset(outcomes, progset):
                 covout_by_poptuple[poptuple].addccopar(ccopar, overwrite=True)
 
             covout_by_poptuple[poptuple].interaction = outcome['interact']
+    
+    progset.updateprogset()
+    return None
 
 
 def get_progset_summary(project, progset_name):
@@ -1010,8 +1013,11 @@ def set_program_summary_on_progset(progset, summary):
     program = create_or_extract_program_from_progset(progset, summary)
     if summary["active"]:
         progset.addprograms(program)
+        progset.updateprogset()
     else:
         progset.inactive_programs[program.short] = program
+        progset.updateprogset()
+    return None
 
 
 def set_progset_summary_on_progset(progset, progset_summary):
@@ -1026,6 +1032,8 @@ def set_progset_summary_on_progset(progset, progset_summary):
             progset.inactive_programs[program.short] = program
     progset.programs = op.odict()
     progset.addprograms(updated_programs)
+    progset.updateprogset()
+    return None
 
 
 def set_progset_summary_on_project(project, progset_summary, progset_id=None):
@@ -1036,6 +1044,8 @@ def set_progset_summary_on_project(project, progset_summary, progset_id=None):
     """
     progset = get_progset_from_name(project, progset_summary['name'], progset_id)
     set_progset_summary_on_progset(progset, progset_summary)
+    progset.updateprogset()
+    return None
 
 
 

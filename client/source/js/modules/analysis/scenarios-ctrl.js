@@ -17,8 +17,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
       $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
       $scope.isMissingData = !$scope.project.hasParset;
-      $scope.isOptimizable = $scope.project.isOptimizable;
-      $scope.isMissingProgset = $scope.project.nProgram == 0;
+      $scope.anyOptimizable = false;
+      $http.get('/api/project/' + $scope.project.id + '/optimizable')
+        .success(function (response) {
+          $scope.anyOptimizable = response;
+        });
+      console.log('anyoptimizable', $scope.anyOptimizable);
       $scope.state = {
         start: $scope.project.startYear,
         end: $scope.project.endYear,
@@ -82,7 +86,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           })
         .success(function (data) {
           $scope.state.graphs = data.graphs;
-          toastr.success('loaded graphs');
+          toastr.success('Loaded graphs');
         });
     };
 

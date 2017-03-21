@@ -23,7 +23,6 @@ from zipfile import ZipFile
 from uuid import uuid4, UUID
 from datetime import datetime
 import dateutil
-import shutil
 from pprint import pprint
 
 from flask import current_app, abort, request, session, make_response, jsonify
@@ -335,7 +334,9 @@ def load_project(project_id, raise_exception=True, db_session=None, authenticate
             raise ProjectDoesNotExist(id=project_id)
         else:
             return None
-    return project_record.load()
+    project = project_record.load()
+    project.restorelinks()
+    return project
 
 
 def load_project_name(project_id):
@@ -358,6 +359,7 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
         db_session = db.session
     project_record = load_project_record(project_id, db_session=db_session)
     project = project_record.load()
+    project.restorelinks()
     resolve_project(project)
     update_project_fn(project)
     project.modified = datetime.now(dateutil.tz.tzutc())
@@ -370,6 +372,7 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
 def load_project_summary_from_project_record(project_record):
     try:
         project = project_record.load()
+        project.restorelinks()
     except:
         return {
             'id': project_record.id,
@@ -444,6 +447,7 @@ def update_project_from_summary(project_id, project_summary, is_delete_data):
     """
     project_entry = load_project_record(project_id)
     project = project_entry.load()
+    project.restorelinks()
 
     if is_delete_data:
         parse.clear_project_data(project)
@@ -479,6 +483,7 @@ def update_project_followed_by_template_data_spreadsheet(
     Returns (dirname, basename) of template data spreadsheet on the server
     """
     project = update_project_from_summary(project_id, project_summary, is_delete_data)
+    project.restorelinks()
 
     secure_project_name = secure_filename(project.name)
     new_project_template = secure_project_name
@@ -537,6 +542,7 @@ def copy_project(project_id, new_project_name):
     user_id = project_record.user_id
 
     project = project_record.load()
+    project.restorelinks()
     project.name = new_project_name
     save_project_as_new(project, user_id)
 
@@ -618,6 +624,7 @@ def download_project_with_result(project_id):
     """
     project_record = load_project_record(project_id, raise_exception=True)
     project = project_record.load()
+    project.restorelinks()
     result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
     if result_records is not None:
         for result_record in result_records:
@@ -1186,6 +1193,7 @@ def create_progset(project_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
     parse.set_progset_summary_on_project(project, progset_summary)
+    project.restorelinks()
     project_record.save_obj(project)
     return parse.get_progset_summary(project, progset_summary["name"])
 
@@ -1197,6 +1205,7 @@ def save_progset(project_id, progset_id, progset_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
     parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
+    project.restorelinks()
     project_record.save_obj(project)
     return parse.get_progset_summary(project, progset_summary["name"])
 
@@ -1207,12 +1216,14 @@ def upload_progset(project_id, progset_id, progset_summary):
     """
     project_record = load_project_record(project_id)
     project = project_record.load()
+    
     old_progset = parse.get_progset_from_project(project, progset_id)
     print(">> Upload progset '%s' into '%s'" % (progset_summary['name'], old_progset.name))
     progset_summary['id'] = progset_id
     progset_summary['name'] = old_progset.name
     parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project_record.save_obj(project)
+    project.restorelinks()
     return parse.get_progset_summary(project, progset_summary["name"])
 
 
@@ -1238,6 +1249,7 @@ def copy_progset(project_id, progset_id, new_progset_name):
 def delete_progset(project_id, progset_id):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
 
     progset = parse.get_progset_from_project(project, progset_id)
 
@@ -1267,6 +1279,7 @@ def save_outcome_summaries(project_id, progset_id, outcome_summaries):
     """
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
     progset = parse.get_progset_from_project(project, progset_id)
     parse.set_outcome_summaries_on_progset(outcome_summaries, progset)
     project_record.save_obj(project)
@@ -1276,13 +1289,14 @@ def save_outcome_summaries(project_id, progset_id, outcome_summaries):
 def save_program(project_id, progset_id, program_summary):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
 
     progset = parse.get_progset_from_project(project, progset_id)
 
     print("> Saving program " + program_summary['name'])
     parse.set_program_summary_on_progset(progset, program_summary)
 
-    progset.updateprogset()
+    progset.updateprogset(verbose=4)
 
     project_record.save_obj(project)
 
@@ -1290,6 +1304,7 @@ def save_program(project_id, progset_id, program_summary):
 def load_costcov_graph(project_id, progset_id, program_id, parset_id, year):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
     progset = parse.get_progset_from_project(project, progset_id)
 
     program = parse.get_program_from_progset(progset, program_id)
@@ -1311,14 +1326,26 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
     project = load_and_resolve_project(project_id)
     progset = parse.get_progset_from_project(project, progset_id)
     parset = parse.get_parset_from_project_by_id(project, parset_id)
+    project.restorelinks()
 
     budgets = progset.getdefaultbudget()
-    pars = progset.compareoutcomes(parset=parset, year=t)
+    print('Checking progset....')
+    progset.readytooptimize(verbose=4)
+    print('Done checking progset.')
+    print('Program set %s is ready to optimize: %s' % (progset.name, progset.readytooptimize()))
+    if progset.readytooptimize():
+        pars = progset.compareoutcomes(parset=parset, year=t)
+    else:
+        msg = progset.readytooptimize(detail=True)
+        print('Program set %s is not ready to optimize: %s' % (progset.name, msg))
+        pars = [[msg, '', 0, 0]]
+        print(progset.programs)
 
     return {
         'budgets': parse.normalize_obj(budgets),
         'pars': parse.normalize_obj(pars),
     }
+
 
 def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
 
@@ -1331,6 +1358,21 @@ def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
     update_project_with_fn(project_id, update_project_fn)
 
     return load_reconcile_summary(project_id, progset_id, parset_id, year)
+
+
+def any_optimizable(project_id):
+    ''' Loop over all progsets and see if any of them are ready to optimize '''
+    
+    project = load_and_resolve_project(project_id)
+    project.restorelinks()
+    
+    optimizable = False
+    for progset in project.progsets.values():
+        if progset.readytooptimize(verbose=4):
+            optimizable = True
+        
+    print('Checking optimizability for %s: %s' % (project.name, optimizable))
+    return optimizable
 
 
 #############################################################################################
@@ -1374,6 +1416,7 @@ def save_scenario_summaries(project_id, scenario_summaries):
     delete_result_by_parset_id(project_id, None, "scenarios")
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
     parse.set_scenario_summaries_on_project(project, scenario_summaries)
     project_record.save_obj(project)
     return {'scenarios': parse.get_scenario_summaries(project)}
@@ -1382,6 +1425,7 @@ def save_scenario_summaries(project_id, scenario_summaries):
 def load_and_resolve_project(project_id):
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
     if resolve_project(project):
         print(">> Resolved project updated")
         project_record.save_obj(project)
@@ -1390,6 +1434,7 @@ def load_and_resolve_project(project_id):
 
 def load_scenario_summaries(project_id):
     project = load_and_resolve_project(project_id)
+    project.restorelinks()
     return {
         'scenarios': parse.get_scenario_summaries(project),
         'ykeysByParsetId': parse.get_parameters_for_scenarios(project),
@@ -1411,6 +1456,7 @@ def load_startval_for_parameter(project_id, parset_id, par_short, pop, year):
 
 def load_optimization_summaries(project_id):
     project = load_and_resolve_project(project_id)
+    project.restorelinks()
     return {
         'optimizations': parse.get_optimization_summaries(project),
         'defaultOptimizationsByProgsetId': parse.get_default_optimization_summaries(project)
@@ -1423,6 +1469,7 @@ def save_optimization_summaries(project_id, optimization_summaries):
     """
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
     old_names = [o.name for o in project.optims.values()]
     parse.set_optimization_summaries_on_project(project, optimization_summaries)
     new_names = [o.name for o in project.optims.values()]
@@ -1440,6 +1487,7 @@ def upload_optimization_summary(project_id, optimization_id, optimization_summar
     """
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
     old_optim = parse.get_optimization_from_project(project, optimization_id)
     optimization_summary['id'] = optimization_id
     optimization_summary['name'] = old_optim.name
@@ -1665,6 +1713,7 @@ def make_region_template_spreadsheet(project_id, n_region, year):
         dirname = TEMPLATEDIR
     project_record = load_project_record(project_id)
     project = project_record.load()
+    project.restorelinks()
     prj_basename = project_record.as_file(dirname)
     prj_fname = os.path.join(dirname, prj_basename)
     xlsx_fname = prj_fname.replace('.prj', '.xlsx')
@@ -1680,6 +1729,7 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
     project_record = load_project_record(project_id)
     baseproject = project_record.load()
+    project.restorelinks()
 
     projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
 

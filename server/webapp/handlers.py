@@ -1041,6 +1041,15 @@ class OptimizationGraph(Resource):
 api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
 
 
+class AnyOptimizable(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Gets whether the project contains at least one optimizable progset')
+    def get(self, project_id):
+        return dataio.any_optimizable(project_id)
+
+api.add_resource(AnyOptimizable, '/api/project/<uuid:project_id>/optimizable')
+
 
 #############################################################################################
 ### USERS

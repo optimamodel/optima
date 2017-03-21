@@ -4,11 +4,7 @@
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
 
-  <div class="error-hint" ng-show="!isMissingData && isMissingProgset">
-    Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a>.
-  </div>
-
-  <div class="error-hint" ng-show="!isMissingData && !isMissingProgset && !isOptimizable">
+  <div class="error-hint" ng-show="!anyOptimizable">
     Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
   </div>
 
@@ -16,7 +12,7 @@
       style="
         display: flex;
         flex-direction: column"
-      ng-if="!isMissingData && isOptimizable && !isMissingProgset" >
+      ng-if="!isMissingData && anyOptimizable">
 
     <div
         style="
@@ -129,7 +125,7 @@
             <div class="error-hint" ng-show="isMissingProgset">
               Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
             </div>
-            <div class="error-hint" ng-show="!isMissingProgset && !isOptimizable">
+            <div class="error-hint" ng-show="!anyOptimizable">
               Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
             </div>
           </div>

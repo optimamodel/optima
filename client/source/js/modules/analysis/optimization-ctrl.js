@@ -9,10 +9,6 @@ define(
 
     function initialize() {
 
-      $scope.isMissingData = !activeProject.data.hasParset;
-      $scope.isOptimizable = activeProject.data.isOptimizable;
-      $scope.isMissingProgset = activeProject.data.nProgram == 0;
-
       $scope.editOptimization = openEditOptimizationModal;
       $scope.getParsetName = getParsetName;
       $scope.getProgsetName = getProgsetName;
@@ -29,9 +25,16 @@ define(
         end: project.endYear,
       };
 
+      $scope.isMissingData = !activeProject.data.hasParset;
+      $scope.anyOptimizable = false;
+      $http.get('/api/project/' + $scope.state.project.id + '/optimizable')
+        .success(function (response) {
+          $scope.anyOptimizable = response;
+        });
+      console.log('anyoptimizable', $scope.anyOptimizable);
       console.log('$scope.state', $scope.state);
 
-      if ($scope.isMissingData || $scope.isMissingProgset || !$scope.isOptimizable) {
+      if ($scope.isMissingData || !$scope.anyOptimizable) {
         return
       }
 

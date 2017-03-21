@@ -103,18 +103,20 @@ class Programset(object):
                                     
                 # Delete any stored programs that are no longer needed (if removing a program)
                 progccopars = dcp(ccopars)
-                del progccopars['t'], progccopars['intercept']
+                progccopars.pop('t', None)
+                progccopars.pop('intercept', None)
                 for prog in progccopars.keys(): 
-                    if prog not in targetingprogs: del ccopars[prog]
+                    if prog not in targetingprogs:
+                        ccopars.pop(prog, None)
 
                 self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=self.default_interaction)
 
         # Delete any stored effects that aren't needed (if removing a program)
         for tpt in self.covout.keys():
-            if tpt not in self.targetpartypes: del self.covout[tpt]
+            if tpt not in self.targetpartypes: self.covout.pop(tpt, None)
             else: 
                 for tp in self.covout[tpt].keys():
-                    if type(tp) in [tuple,str,unicode] and tp not in self.progs_by_targetpar(tpt).keys(): del self.covout[tpt][tp]
+                    if type(tp) in [tuple,str,unicode] and tp not in self.progs_by_targetpar(tpt).keys(): self.covout[tpt].pop(tp, None)
 
     def updateprogset(self, verbose=2):
         ''' Update (run this is you change something... )'''
@@ -122,7 +124,8 @@ class Programset(object):
         self.gettargetpartypes()
         self.gettargetpops()
         self.initialize_covout()
-        printv('\nUpdated programset "%s"' % (self.name), 4, verbose)
+        printv('Updated program set "%s"' % (self.name), 4, verbose)
+        return None
 
     def addprograms(self, newprograms, verbose=2):
         ''' Add new programs'''
@@ -159,37 +162,73 @@ class Programset(object):
     def programswithbudget(self):
         return odict((program.short, program) for program in self.programs.values() if program.hasbudget())
 
-    def hasallcovoutpars(self, detail=False):
+    def hasallcovoutpars(self, detail=False, verbose=2):
         ''' Checks whether all the **required** coverage-outcome parameters are there for coverage-outcome rships'''
         result = True
         details = []
+        printv('Checking covout pars', 4, verbose)
+        pars = self.projectref().pars() # Link to pars for getting full names
         for thispartype in self.covout.keys():
+            printv('Checking %s partype' % thispartype, 4, verbose)
             for thispop in self.covout[thispartype].keys():
-                if self.covout[thispartype][thispop].ccopars.get('intercept', None) is None:
+                printv('Checking %s pop' % str(thispop), 4, verbose)
+                intercept = self.covout[thispartype][thispop].ccopars.get('intercept', None)
+                if not(intercept) and intercept!=0:
+                    printv('WARNING: %s %s intercept is none' % (thispartype, str(thispop)), 4, verbose)
                     result = False
-                    details.append((thispartype,thispop))
+                    details.append(pars[thispartype].name)
+                else:
+                    printv('%s %s intercept is %s' % (thispartype, str(thispop), intercept), 4, verbose)
                 if thispartype not in coveragepars:
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
-                        if self.covout[thispartype][thispop].ccopars.get(thisprog.short, None) is None:
+                        printv('Checking %s program' % thisprog.short, 4, verbose)
+                        progeffect = self.covout[thispartype][thispop].ccopars.get(thisprog.short, None)
+                        if not(progeffect) and progeffect!=0:
+                            printv('WARNING: %s %s %s program effect is none' % (thispartype, str(thispop), thisprog.short), 4, verbose)
                             result = False
-                            details.append((thispartype,thispop))
+                            details.append(pars[thispartype].name)
+                        else:
+                            printv('%s %s %s program effect is %s' % (thispartype, str(thispop), thisprog.short, progeffect), 4, verbose)
         if detail: return list(set(details))
         else: return result
 
-    def hasallcostcovpars(self, detail=False):
+    def hasallcostcovpars(self, detail=False, verbose=2):
         ''' Checks whether all the **required** cost-coverage parameters are there for coverage-outcome rships'''
         result = True
         details = []
-        for prog in self.optimizableprograms().values():
-            if prog.costcovfn.ccopars.get('unitcost', None) is None:
+        printv('Checking costcov pars', 4, verbose)
+        for key,prog in self.optimizableprograms().items():
+            printv('Checking %s program' % key, 4, verbose)
+            unitcost = prog.costcovfn.ccopars.get('unitcost', None)
+            if not(unitcost) and unitcost!=0:
+                printv('WARNING: %s unit cost is none' % key, 4, verbose)
                 details.append(prog.name)
                 result = False
+            else:
+                printv('%s unit cost is %s' % (key, unitcost), 4, verbose)
         if detail: return list(set(details))
         else: return result
                 
-    def readytooptimize(self):
+    def readytooptimize(self, detail=False, verbose=2):
         ''' True if the progset is ready to optimize (i.e. has all required pars) and False otherwise''' 
-        return (self.hasallcostcovpars() and self.hasallcovoutpars())        
+        hasprograms = bool(sum(self.optimizable()))
+        if not detail:
+            costcovready = self.hasallcostcovpars(verbose=verbose)
+            covoutready = self.hasallcovoutpars(verbose=verbose)
+            isready = (hasprograms and costcovready and covoutready)
+            return isready  
+        else:
+            if not hasprograms:
+                msg = 'No programs have been defined'
+            else:
+                msg = ''
+                costcovlist = self.hasallcostcovpars(detail=True, verbose=verbose)
+                covoutlist = self.hasallcovoutpars(detail=True, verbose=verbose)
+                costcovmissing = ', '.join(costcovlist)
+                covoutmissing = ', '.join(covoutlist)
+                if costcovmissing: msg += 'The following program(s) are missing cost-coverage data: %s. ' % costcovmissing
+                if covoutmissing: msg += 'The following parameter(s) are missing coverage-outcome data: %s.'% covoutmissing
+            return msg
 
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
@@ -318,7 +357,7 @@ class Programset(object):
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
                 lastbudget[program] = sanitize(totalbudget[program])[-1]
             else: 
-                printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
+                printv('WARNING: no cost data defined for program "%s"...' % program, 1, verbose)
                 lastbudget[program] = nan
 
             # Extract cost data for particular years, if requested 
@@ -803,7 +842,7 @@ class Program(object):
 
 
     def optimizable(self):
-        return True if self.targetpars else False
+        return True if self.targetpars else False # and self.hasbudget()
 
     def hasbudget(self):
         return True if self.costcovdata['cost'] else False
