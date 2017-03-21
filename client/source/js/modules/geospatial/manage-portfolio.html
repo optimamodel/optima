@@ -311,7 +311,7 @@
         <br>
         <button
             class="btn"
-            ng-disabled="hasNoResults()"
+            ng-disabled="!state.portfolio.hasResult"
             ng-click="exportResults()">
           Export results
         </button>

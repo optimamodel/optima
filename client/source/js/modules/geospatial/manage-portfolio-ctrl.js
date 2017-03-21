@@ -1,18 +1,17 @@
 define(
-  ['./module', 'angular', 'underscore'], function (module, angular, _) {
+  ['./module', 'angular', 'underscore'], function(module, angular, _) {
 
     'use strict';
 
     module.controller(
       'PortfolioController',
-      function (
-        $scope, $http, activeProject, modalService, userManager,
-        $state, toastr, globalPoller, $modal, $upload) {
+      function($scope, $http, activeProject, modalService, userManager,
+               $state, toastr, globalPoller, $modal, $upload) {
 
         function initialize() {
 
           $scope.objectiveKeyLabels = [
-            {'key': 'start', 'label':'Start year' },
+            {'key': 'start', 'label': 'Start year'},
             {'key': 'end', 'label': 'End year'},
             {'key': 'budget', 'label': 'Budget'},
             {'key': 'deathweight', 'label': 'Death weight'},
@@ -93,10 +92,10 @@ define(
 
 
         $scope.downloadPortfolio = function() {
-          $http.get('/api/portfolio/'+ $scope.state.portfolio.id + '/data',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
-            .success(function (response, status, headers, config) {
-              var blob = new Blob([response], { type: 'application/octet-stream' });
+          $http.get('/api/portfolio/' + $scope.state.portfolio.id + '/data',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType: 'blob'})
+            .success(function(response, status, headers, config) {
+              var blob = new Blob([response], {type: 'application/octet-stream'});
               saveAs(blob, ($scope.state.portfolio.name + '.prt'));
             });
         };
@@ -104,11 +103,11 @@ define(
         $scope.uploadPortfolio = function() {
           angular
             .element('<input type="file">')
-            .change(function (event) {
+            .change(function(event) {
               var file = event.target.files[0];
               $upload
                 .upload({
-                  url: '/api/portfolio/'+ $scope.state.portfolio.id + '/data',
+                  url: '/api/portfolio/' + $scope.state.portfolio.id + '/data',
                   fields: {name: file.name},
                   file: file
                 })
@@ -132,7 +131,7 @@ define(
             });
         };
 
-       function reloadPortfolio() {
+        function reloadPortfolio() {
           $scope.bocStatusMessage = {};
           globalPoller.stopPolls();
           $http
@@ -142,12 +141,12 @@ define(
 
         function getCheckFullGaUrl() {
           return "/api/task/" + $scope.state.portfolio.id
-              + "/type/portfolio";
+            + "/type/portfolio";
         }
 
         function getCheckProjectBocUrl(projectId) {
           return "/api/task/" + projectId
-                + "/type/boc";
+            + "/type/boc";
         }
 
         $scope.calculateAllBocCurves = function() {
@@ -167,7 +166,7 @@ define(
           $http
             .delete(
               '/api/portfolio/' + $scope.state.portfolio.id
-                + '/project/' + projectId)
+              + '/project/' + projectId)
             .success(function(portfolios) {
               toastr.success('Deleted project in portfolio');
               loadPortfolios(portfolios);
@@ -216,7 +215,7 @@ define(
 
         function initFullGaPoll() {
           globalPoller.startPoll(
-            $scope.state.gaoptim.id,
+            $scope.state.portfolio.id,
             getCheckFullGaUrl(),
             function(response) {
               if (response.status === 'completed') {
@@ -325,7 +324,7 @@ define(
         $scope.saveTemplateProject = function() {
           $scope.isSelectTemplateProject = false;
           var project = $scope.state.templateProject;
-          $scope.years = _.range(project.startYear, project.endYear+1);
+          $scope.years = _.range(project.startYear, project.endYear + 1);
           $scope.state.templateYear = $scope.years[0];
           console.log('template project', $scope.state.templateProject);
           console.log('years', $scope.years);
@@ -358,14 +357,14 @@ define(
           // then add to portfolio
           angular
             .element('<input type="file">')
-            .change(function (event) {
+            .change(function(event) {
               $upload
                 .upload({
                   url: '/api/spawnregion',
                   fields: {projectId: $scope.state.templateProject.id},
                   file: event.target.files[0]
                 })
-                .success(function (prjNames) {
+                .success(function(prjNames) {
                   $scope.state.prjNames = prjNames;
                   console.log('$scope.state.prjNames', $scope.state.prjNames);
                   _.each(prjNames, function(prjName) {
@@ -390,28 +389,11 @@ define(
           return !allCalculated;
         };
 
-        //$scope.hasNoResults = function(id) {
-        //  if (_.isUndefined($scope.state.portfolio)) {
-        //    return true;
-        //  }
-        //  var result = "/api/portfolio/" + id + "/ready";
-        //  console.log('checking results:');
-        //  console.log(result);
-        //  return !result;
-        //};
-
-        function hasNoResults() {
-          if (_.isUndefined($scope.state.portfolio)) {
-            return true;
-          }
-          return "/api/portfolio/" + $scope.state.portfolio.id + "/ready"
-        }
-
-        $scope.exportResults = function () {
-          $http.get('/api/portfolio/'+ $scope.state.portfolio.id + '/export',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
-            .success(function (response, status, headers, config) {
-              var blob = new Blob([response], { type: 'application/octet-stream' });
+        $scope.exportResults = function() {
+          $http.get('/api/portfolio/' + $scope.state.portfolio.id + '/export',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType: 'blob'})
+            .success(function(response, status, headers, config) {
+              var blob = new Blob([response], {type: 'application/octet-stream'});
               saveAs(blob, ('geospatial-results.xlsx'));
             });
         };
@@ -421,5 +403,4 @@ define(
       }
     );
 
-  }
-);
+});

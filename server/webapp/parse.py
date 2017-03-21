@@ -1415,11 +1415,17 @@ def get_portfolio_summary(portfolio):
             })
         project_summaries.append(project_summary)
 
+    has_result = False
+    if hasattr(portfolio, "results"):
+        if len(portfolio.results) > 0:
+            has_result = True
+
     result = {
         "created": portfolio.created,
         "name": portfolio.name,
         "objectives": objectives_dict,
         "id": portfolio.uid,
+        "hasResult": has_result,
         "version": portfolio.version,
         "gitversion": portfolio.gitversion,
         "outputstring": '',
