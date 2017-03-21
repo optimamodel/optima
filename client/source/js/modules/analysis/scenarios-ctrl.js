@@ -7,10 +7,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope, $http, $modal, info, progsetsResponse, parsetResponse,
       scenariosResponse, modalService, toastr) {
 
-    function findOptimizable() {
-      return $http.get('/api/project/' + $scope.project.id + '/optimizable')
-    }
-
     function initialize() {
       $scope.project = info.data;
       $scope.years = _.range($scope.project.startYear, $scope.project.endYear+1);
@@ -22,9 +18,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
       $scope.years = scenariosResponse.data.years;
       $scope.isMissingData = !$scope.project.hasParset;
-      $scope.anyOptimizable = findOptimizable();
-      console.log('hiiiiiiiiii');
-      console.log($scope.anyOptimizable);
+      $scope.anyOptimizable = false;
+      $http.get('/api/project/' + $scope.project.id + '/optimizable')
+        .success(function (response) {
+          console.log('odfhdfhdfohdo');
+          console.log(response);
+          $scope.anyOptimizable = response;
+        });
+      console.log('anyoptimizable', $scope.anyOptimizable);
       $scope.state = {
         start: $scope.project.startYear,
         end: $scope.project.endYear,

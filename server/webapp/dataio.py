@@ -1371,7 +1371,7 @@ def any_optimizable(project_id):
         if progset.readytooptimize(verbose=4):
             optimizable = True
         
-    print('Checking optimizability for %s: %s' % (progset.name, optimizable))
+    print('Checking optimizability for %s: %s' % (project.name, optimizable))
     return optimizable
 
 

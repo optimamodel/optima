@@ -7,14 +7,7 @@ define(
       $scope, $http, $upload, $modal, toastr, modalService,
       activeProject, $timeout, globalPoller) {
 
-    function findOptimizable() {
-      return $http.get('/api/project/' + $scope.state.project.id + '/optimizable')
-    }
-
     function initialize() {
-
-      $scope.isMissingData = !activeProject.data.hasParset;
-      $scope.anyOptimizable = findOptimizable();
 
       $scope.editOptimization = openEditOptimizationModal;
       $scope.getParsetName = getParsetName;
@@ -31,6 +24,16 @@ define(
         start: project.startYear,
         end: project.endYear,
       };
+
+      $scope.isMissingData = !activeProject.data.hasParset;
+      $scope.anyOptimizable = false;
+      $http.get('/api/project/' + $scope.state.project.id + '/optimizable')
+        .success(function (response) {
+          console.log('odfhdfhdfohdo');
+          console.log(response);
+          $scope.anyOptimizable = response;
+        });
+      console.log('anyoptimizable', $scope.anyOptimizable);
 
       console.log('$scope.state', $scope.state);
 
