@@ -7,10 +7,14 @@ define(
       $scope, $http, $upload, $modal, toastr, modalService,
       activeProject, $timeout, globalPoller) {
 
+    function findOptimizable() {
+      return $http.get('/api/project/' + $scope.state.project.id + '/optimizable')
+    }
+
     function initialize() {
 
       $scope.isMissingData = !activeProject.data.hasParset;
-      $scope.isOptimizable = activeProject.data.isOptimizable;
+      $scope.anyOptimizable = findOptimizable();
       $scope.isMissingProgset = activeProject.data.nProgram == 0;
 
       $scope.editOptimization = openEditOptimizationModal;
