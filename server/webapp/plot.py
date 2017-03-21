@@ -9,6 +9,10 @@ import optima as op
 
 from .parse import normalize_obj
 
+frontendfigsize = (5.5, 2)
+frontendpositionnolegend = [[0.19, 0.12], [0.85, 0.85]]
+frontendpositionlegend = [[0.19, 0.12], [0.63, 0.85]]
+
 
 def extract_graph_selector(graph_key):
     s = repr(str(graph_key))
@@ -28,7 +32,7 @@ def convert_to_mpld3(figure):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
 
-    figure.set_size_inches(5.5, 2)
+    figure.set_size_inches(frontendfigsize) # WARNING, all of this should come from makeplots() instead
 
     if len(figure.axes) == 1:
         ax = figure.axes[0]
@@ -37,9 +41,10 @@ def convert_to_mpld3(figure):
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array([[0.19, 0.1], [0.65, 0.85]])))
+            ax.set_position(Bbox(array(frontendpositionlegend)))
         else:
-            ax.set_position(Bbox(array([[0.19, 0.1], [0.85, 0.85]])))
+            pass
+            ax.set_position(Bbox(array(frontendpositionnolegend)))
 
     mpld3_dict = mpld3.fig_to_dict(figure)
     graph_dict = normalize_obj(mpld3_dict)
@@ -142,7 +147,7 @@ def make_mpld3_graph_dict(result, which=None):
 
     print ">> make_mpld3_graph_dict which:", which
 
-    graphs = op.makeplots(result, toplot=which, figsize=(4, 3), die=False)
+    graphs = op.makeplots(result, toplot=which, die=False)
     op.reanimateplots(graphs)
 
     graph_selectors = []
