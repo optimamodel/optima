@@ -151,6 +151,7 @@ class Portfolio(object):
         if npts is None: npts = 2000 # The number of points to calculate along each BOC
         if mc is None: mc = 0 # Do not use MC by default
         if objectives is not None: self.objectives = objectives # Store objectives, if supplied
+        else:                      objectives = self.objectives # Else, replace with stored objectives
         
         def gatherBOCs():
             ''' Gather the BOCs -- called twice which is why it's a function '''
@@ -183,7 +184,7 @@ class Portfolio(object):
         if not grandtotal:
             errormsg = 'Total budget of all %i projects included in this portfolio is zero' % len(self.projects)
             raise OptimaException(errormsg)
-            
+        
         # Really store the objectives
         if self.objectives is None:
             self.objectives = boclist[0].objectives
