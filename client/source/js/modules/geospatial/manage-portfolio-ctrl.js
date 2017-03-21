@@ -299,7 +299,10 @@ define(
           $http
             .get('/api/project')
             .success(function(response) {
-              var selectedIds = _.pluck($scope.state.portfolio.projects, "id");
+              var selectedIds = [];
+              if ($scope.state.portfolio) {
+                selectedIds = _.pluck($scope.state.portfolio.projects, "id");
+              }
               $scope.projects = [];
               _.each(response.projects, function(project) {
                 var isSelected = _.contains(selectedIds, project.id);
