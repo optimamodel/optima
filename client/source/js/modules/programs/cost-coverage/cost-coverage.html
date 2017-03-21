@@ -40,7 +40,13 @@
 
     </div>
 
-    <div ng-if="vm.state.progset && vm.state.parset">
+    <div ng-if="vm.programs.length == 0">
+      <br>
+      <br>
+      No programs selected, you need to <a ui-sref="programs.manageProgramSet">select some programs</a> for this project.
+    </div>
+
+    <div ng-if="vm.programs.length > 0">
 
       <style>
         .selectTab {
