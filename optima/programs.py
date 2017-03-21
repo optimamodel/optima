@@ -165,6 +165,7 @@ class Programset(object):
         result = True
         details = []
         printv('Checking covout pars', 4, verbose)
+        pars = self.projectref().pars() # Link to pars for getting full names
         for thispartype in self.covout.keys():
             printv('Checking %s partype' % thispartype, 4, verbose)
             for thispop in self.covout[thispartype].keys():
@@ -173,7 +174,7 @@ class Programset(object):
                 if intercept or intercept!=0:
                     printv('WARNING: %s %s intercept is none' % (thispartype, str(thispop)), 4, verbose)
                     result = False
-                    details.append(thispartype+'-'+str(thispop).replace("'","")+'-'+'intercept')
+                    details.append(pars()[thispartype].name)
                 else:
                     printv('%s %s intercept is %s' % (thispartype, str(thispop), intercept), 4, verbose)
                 if thispartype not in coveragepars:
@@ -183,7 +184,7 @@ class Programset(object):
                         if progeffect or progeffect!=0:
                             printv('WARNING: %s %s %s program effect is none' % (thispartype, str(thispop), thisprog.short), 4, verbose)
                             result = False
-                            details.append(thispartype+'-'+str(thispop).replace("'","")+'-'+thisprog.short)
+                            details.append(pars()[thispartype].name)
                         else:
                             printv('%s %s %s program effect is %s' % (thispartype, str(thispop), thisprog.short, progeffect), 4, verbose)
         if detail: return list(set(details))
