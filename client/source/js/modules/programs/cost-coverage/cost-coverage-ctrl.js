@@ -130,6 +130,17 @@ define(['./../module', 'underscore'], function(module, _) {
           });
       };
 
+      function loadReconcileData() {
+        runServerProcedure(
+          'load_reconcile_summary',
+          [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
+        .then(function(response) {
+          vm.state.summary = response.data;
+          console.log('loadReconcileData', response.data);
+        });
+      }
+
+
       vm.changeProgsetAndParset = function() {
         if (vm.state.progset === undefined) {
           return;
@@ -144,6 +155,10 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.programs = _.sortBy(
           _.filter(vm.state.progset.programs, isActive),
           'name');
+        console.log('changeProgsetAndParset', vm.programs);
+        if (vm.programs.length == 0) {
+          return;
+        }
         vm.state.program = vm.programs[0];
         if (!("attr" in vm.state.program)) {
           vm.state.program.attr = {caption: "", xupperlim: null};
@@ -220,6 +235,7 @@ define(['./../module', 'underscore'], function(module, _) {
           .success(function() {
             toastr.success('Cost data were saved');
             vm.updateCostCovGraph();
+            loadReconcileData();
           });
       };
 
@@ -325,6 +341,7 @@ define(['./../module', 'underscore'], function(module, _) {
           toastr.success('Outcomes were saved');
           vm.outcomes = response;
           vm.changeTargetParameter();
+          loadReconcileData();
         });
       };
 
