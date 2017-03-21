@@ -15,7 +15,6 @@ define(
 
       $scope.isMissingData = !activeProject.data.hasParset;
       $scope.anyOptimizable = findOptimizable();
-      $scope.isMissingProgset = activeProject.data.nProgram == 0;
 
       $scope.editOptimization = openEditOptimizationModal;
       $scope.getParsetName = getParsetName;
@@ -35,7 +34,7 @@ define(
 
       console.log('$scope.state', $scope.state);
 
-      if ($scope.isMissingData || $scope.isMissingProgset || !$scope.isOptimizable) {
+      if ($scope.isMissingData || !$scope.anyOptimizable) {
         return
       }
 

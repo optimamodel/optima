@@ -23,7 +23,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.years = scenariosResponse.data.years;
       $scope.isMissingData = !$scope.project.hasParset;
       $scope.anyOptimizable = findOptimizable();
-      $scope.isMissingProgset = $scope.project.nProgram == 0;
+      console.log('hiiiiiiiiii');
+      console.log($scope.anyOptimizable);
       $scope.state = {
         start: $scope.project.startYear,
         end: $scope.project.endYear,
