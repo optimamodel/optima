@@ -29,12 +29,9 @@ define(
       $scope.anyOptimizable = false;
       $http.get('/api/project/' + $scope.state.project.id + '/optimizable')
         .success(function (response) {
-          console.log('odfhdfhdfohdo');
-          console.log(response);
           $scope.anyOptimizable = response;
         });
       console.log('anyoptimizable', $scope.anyOptimizable);
-
       console.log('$scope.state', $scope.state);
 
       if ($scope.isMissingData || !$scope.anyOptimizable) {

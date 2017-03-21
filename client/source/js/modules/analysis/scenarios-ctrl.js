@@ -21,8 +21,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.anyOptimizable = false;
       $http.get('/api/project/' + $scope.project.id + '/optimizable')
         .success(function (response) {
-          console.log('odfhdfhdfohdo');
-          console.log(response);
           $scope.anyOptimizable = response;
         });
       console.log('anyoptimizable', $scope.anyOptimizable);
