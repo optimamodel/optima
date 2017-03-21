@@ -796,8 +796,8 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     orig = outcomecalc(origbudgetvec, outputresults=True, **args)
     args['totalbudget'] = newtotalbudget * fundingfactor
     new = outcomecalc(constrainedbudgetvec, outputresults=True, **args)
-    orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
-    new.name = 'Optimal allocation'
+    orig.name = 'Current' # WARNING, is this really the best way of doing it?
+    new.name = 'Optimal'
     tmpresults = [orig, new]
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
