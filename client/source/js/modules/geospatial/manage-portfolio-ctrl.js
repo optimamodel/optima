@@ -109,15 +109,15 @@ define(
               var file = event.target.files[0];
               $upload
                 .upload({
-                  url: '/api/portfolio/' + $scope.state.portfolio.id + '/data',
+                  url: '/api/portfolio/upload',
                   fields: {name: file.name},
                   file: file
                 })
                 .success(function(response) {
-                  console.log('uploaded portfolio', response);
-                  $scope.portfolios.push(response);
-                  $scope.state.portfolio = response;
+                  console.log('uploadPortfolio', response);
+                  $scope.portfolios.push(response.portfolio);
                   loadPortfolios($scope.portfolios);
+                  $scope.state.portfolio = response.portfolio;
                   toastr.success('Uploaded portfolio');
                 });
             })

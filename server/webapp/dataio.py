@@ -1626,7 +1626,7 @@ def portfolio_results_ready(portfolio_id):
     return result
 
 
-def update_portfolio_from_prt(portfolio_id, prt_filename):
+def update_portfolio_from_prt(prt_filename):
     portfolio = op.loadportfolio(prt_filename)
     create_portfolio(portfolio.name, portfolio=portfolio)
     return parse.get_portfolio_summary(portfolio)

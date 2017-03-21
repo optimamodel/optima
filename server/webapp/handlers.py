@@ -385,20 +385,28 @@ class PortfolioData(Resource):
         dirname, filename = dataio.download_portfolio(portfolio_id)
         return helpers.send_from_directory(dirname, filename)
 
-    @swagger.operation(summary='Update existing project with .prj')
-    def post(self, portfolio_id):
+api.add_resource(PortfolioData, '/api/portfolio/<uuid:portfolio_id>/data')
+
+
+class UploadPortfolio(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Upload portfolio')
+    def post(self):
         """
         post-body: upload-file
         """
         uploaded_prt_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        dataio.update_portfolio_from_prt(portfolio_id, uploaded_prt_fname)
+        portfolio = dataio.update_portfolio_from_prt(uploaded_prt_fname)
         reply = {
             'file': os.path.basename(uploaded_prt_fname),
-            'result': 'Portfolio %s is updated' % portfolio_id,
+            'portfolio': portfolio
         }
         return reply
 
-api.add_resource(PortfolioData, '/api/portfolio/<uuid:portfolio_id>/data')
+api.add_resource(UploadPortfolio, '/api/portfolio/upload')
+
+
 
 
 # WARNING, at the moment the upload is halfway in between upload new portfolio and update existing portfolio
