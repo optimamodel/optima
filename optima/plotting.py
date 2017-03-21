@@ -23,7 +23,7 @@ import os
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-estimatecolor = 'none' # Color of estimates rather than real data
+estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
 defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
 defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
@@ -382,7 +382,6 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                         if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
                             ax.fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
-#                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=gridcolormap(nlinesperplot)[k], alpha=1, lw=0, label=results.popkeys[k])
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             ax.plot((0, 0), (0, 0), color=colors[l], linewidth=10)
@@ -410,7 +409,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 if not ismultisim and databest is not None and plotdata:
                     for y in range(len(results.datayears)):
                         ax.plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-                    ax.scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=int(isestimate))
+                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=1000) # Without zorder, renders behind the graph
+                    if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
+                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=1001)
 
 
 
@@ -711,7 +712,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ## Plot cascade
 ##################################################################
 def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, useSIticks=True, plotdata=True, **kwargs):
+                ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, useSIticks=True, plotdata=True, dotsize=50, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -762,7 +763,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
             ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
         if plotdata and not aspercentage: # Don't try to plot if it's a percentage
             thisdata = results.main['numtreat'].datatot[0]
-            ax.scatter(results.datayears, thisdata, c=(0,0,0), label='Treatment data')
+            ax.scatter(results.datayears, thisdata, c=(0,0,0), label='Treatment data', s=dotsize, lw=0)
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax.get_xaxis().tick_bottom()
