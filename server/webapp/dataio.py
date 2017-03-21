@@ -1346,6 +1346,7 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
         'pars': parse.normalize_obj(pars),
     }
 
+
 def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
 
     def update_project_fn(project):
@@ -1357,6 +1358,21 @@ def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
     update_project_with_fn(project_id, update_project_fn)
 
     return load_reconcile_summary(project_id, progset_id, parset_id, year)
+
+
+def any_optimizable(project_id):
+    ''' Loop over all progsets and see if any of them are ready to optimize '''
+    
+    project = load_and_resolve_project(project_id)
+    project.restorelinks()
+    
+    optimizable = False
+    for progset in project.progsets.values():
+        if progset.readytooptimize(verbose=4):
+            optimizable = True
+        
+    print('Checking optimizability for %s: %s' % (progset.name, optimizable))
+    return optimizable
 
 
 #############################################################################################
