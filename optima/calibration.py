@@ -18,6 +18,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     
     Version: 2016feb07 by cliffk
     '''
+    print('WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARRRRRRRRRRRRRRRRRRRNNNNNNNNNNNING')
+    
     if doplot: # Store global information for debugging
         global autofitfig, autofitresults
         autofitfig, autofitresults = [None]*2
