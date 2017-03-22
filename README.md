@@ -83,7 +83,7 @@ If you followed the steps correctly, you should be able to run
 `import optima`
 from a Python console (either the system console or the Spyder console)
 
-For usage examples, see the scripts in the `tests` folder. In particular, `testworkflow.py` shows a typical usage example.
+For usage examples, see the scripts in the `tests` folder. In particular, `testbest.py` shows a typical usage example.
 
 
 
