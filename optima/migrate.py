@@ -663,7 +663,8 @@ def migrate(project, verbose=2, die=False):
         # Update project info
         project.modified = op.today()
     
-    op.printv('Migration successful!', 3, verbose)
+    # Restore links just in case
+    project.restorelinks()
     
     # If any warnings were generated during the migration, print them now
     warnings = project.getwarnings()
@@ -671,7 +672,8 @@ def migrate(project, verbose=2, die=False):
         errormsg = 'Please resolve warnings in projects before continuing'
         if die: raise op.OptimaException(errormsg)
         else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
-
+    
+    op.printv('Migration successful!', 3, verbose)
     return project
 
 
