@@ -162,29 +162,7 @@ from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotal
 
 
 #####################################################################################################################
-### Want to add more modules to Optima? Do that above this line (unless they're non-essential plotting functions)
-#####################################################################################################################
-
-
-
-#####################################################################################################################
-### Load optional plotting functions
-#####################################################################################################################
-
-## Load high level GUI module
-try: 
-    from . import gui
-    from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, loadplot
-except Exception as E: _failed.append('gui: %s' % E.__repr__())
-
-try: 
-    from . import webserver as _webserver
-    from .webserver import browser
-except Exception as E: _failed.append('webserver: %s' % E.__repr__())
-
-
-#####################################################################################################################
-### Finally, load high-level modules that depend on everything else
+### Load high-level modules that depend on everything else
 #####################################################################################################################
 
 ## Import the Project class that ties everything together
@@ -195,22 +173,34 @@ from .project import Project
 from . import defaults
 from .defaults import defaultproject, defaultprogset, defaultprograms, demo
 
-# And really finally, load other random things that don't matter
+# And really finally, load the code to load everything else
 import migrate as _migrate
 from .migrate import migrate, loadproj, loadportfolio, optimaversion
 
-# And really really finally, load geospatial functions (has to load projects, so has to come after migration)
+# And really really finally, load batch functions (has to load projects, so has to come after migration)
 from . import batchtools
 from .batchtools import batchautofit, batchBOC, reoptimizeprojects
 
-# Really really finally, load the portfolio class (container of Projects), relies on loadproj, hence is here
+# Really really finally, load the portfolio class (container of Projects), relies on batch functions, hence is here
 import portfolio as _portfolio
 from .portfolio import Portfolio, makegeospreadsheet, makegeoprojects
 
-try:
-    import geospatial as _geospatial
-    from .geospatial import geogui # Import GUI tools for geospatial analysis
-except Exception as E: _failed.append('geospatial: %s' % E.__repr__())
+
+#####################################################################################################################
+### Load optional Python GUI
+#####################################################################################################################
+
+## Load high level GUI module
+try: 
+    from . import gui
+    from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, loadplot, geogui
+except Exception as E: _failed.append('gui: %s' % E.__repr__())
+
+try: 
+    from . import webserver as _webserver
+    from .webserver import browser
+except Exception as E: _failed.append('webserver: %s' % E.__repr__())
+
 
 if len(_failed): print('The following import errors were encountered:\n%s' % _failed)
 else: del _failed # If it's empty, don't bother keeping it

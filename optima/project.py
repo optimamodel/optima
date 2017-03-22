@@ -535,15 +535,6 @@ class Project(object):
         return results
 
 
-    def manualfit(self, orig=None, parsubset=None, name=None, verbose=2, **kwargs): # orig=default or orig=0?
-        ''' Function to perform manual fitting '''
-        from optima import manualfit # Put this here so it doesn't matter if it fails
-        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        manualfit(project=self, name=name, parsubset=parsubset, verbose=verbose, **kwargs) # Actually run manual fitting
-        self.modified = today()
-        return None
-
-
     def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
