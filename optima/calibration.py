@@ -18,8 +18,6 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     
     Version: 2016feb07 by cliffk
     '''
-    print('WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARRRRRRRRRRRRRRRRRRRNNNNNNNNNNNING')
-    
     if doplot: # Store global information for debugging
         global autofitfig, autofitresults
         autofitfig, autofitresults = [None]*2
@@ -174,8 +172,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                     nrows = len(datarows)
                     for row in range(nrows): # Loop over each available row
                         datarow = datarows[row]
-                        if nrows==1: modelrow = modelrows # WARNING, kludgy, should have the same shape!
-                        else: modelrow = modelrows[row]
+                        if len(modelrows.shape)>1: modelrow = modelrows[row]
+                        else:                      modelrow = modelrows
                         datax, datay = extractdata(results.datayears, datarow) # Pull out the not-NaN values
                         if doplot: rowname = 'total' if nrows==1 else pars['popkeys'][row]
                         for i,year in enumerate(datax): # Loop over each data point available
