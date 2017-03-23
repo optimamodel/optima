@@ -6,8 +6,6 @@ Version: 2016jan28
 import os
 from numpy import array
 from optima import OptimaException, Project, Program, Programset, printv
-try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
-except: pass
 
 
 
@@ -603,5 +601,10 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
 def demo(doplot=True, **kwargs):
     ''' Do a simple demo of Optima -- similar to simple.py '''
     P = defaultproject(**kwargs)
-    if doplot: pygui(P)
+    if doplot: 
+        try: 
+            import optima as op # Only used for demo.py, don't worry if can't be imported
+            op.pygui(P)
+        except:
+            print('Unable to plot: pygui could not be imported')
     return P
