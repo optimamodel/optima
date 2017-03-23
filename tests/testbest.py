@@ -5,7 +5,7 @@ which is an outdated version of the same thing!
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
+from optima import defaults, pygui, manualfit, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 from optima import tic, toc, blank, pd # analysis:ignore
 
 ## Options
@@ -59,7 +59,7 @@ if 'autocalib' in tests:
     if doplot: pygui(P.parsets[ind].getresults())
 
 if 'manualcalib' in tests: 
-    P.manualfit()
+    manualfit(P)
 
 if 'reconcile' in tests:
     P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016)

@@ -93,10 +93,10 @@ if 'manualfit' in tests and doplot:
     t = tic()
 
     print('Running manual calibration test...')
-    from optima import Project
+    from optima import Project, manualfit
     
     P = Project(spreadsheet='generalized.xlsx')
-    P.manualfit(orig='default', name='manual')
+    manualfit(project=P, orig='default', name='manual')
     
     done(t)
 
