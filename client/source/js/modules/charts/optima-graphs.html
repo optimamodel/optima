@@ -66,10 +66,31 @@
         <br>
       </div>
 
-      <rzslider
-          rz-slider-model="state.slider.value"
-          rz-slider-options="state.slider.options">
-      </rzslider>
+      <div style="display:table">
+        <div style="display:table-row">
+          <div style="display:table-cell; text-align:right; padding-right:10px; vertical-align: middle;">
+            <b>Zoom:</b>
+          </div>
+          <div style="display:table-cell; width:90%">
+            <rzslider
+              rz-slider-model="state.slider.value"
+              rz-slider-options="state.slider.options">
+            </rzslider>
+          </div>
+        </div>
+        <div style="display:table-row">
+          <div style="display:table-cell; text-align:right; padding-right:10px; vertical-align: middle;">
+            <b>Size:</b>
+          </div>
+          <div style="display:table-cell; width:90%">
+            <rzslider
+              rz-slider-model="state.slider.value"
+              rz-slider-options="state.slider.options">
+            </rzslider>
+          </div>
+        </div>
+      </div>
+
       <br>
       <br>
       <button
