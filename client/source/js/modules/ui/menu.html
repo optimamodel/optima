@@ -81,7 +81,7 @@
       ng-mouseleave="showAccountHelpMenu = false">
     <div
         class="menu-item"
-        ng-class="{'menu-active': isState('help') || isState('edit') || isState('contact')}">
+        ng-class="{'menu-active': isState('help') || isState('edit') || isState('feedback')}">
       Account/help
       <i class="fa fa-angle-up" ng-if="showAccountHelpMenu"></i>
       <i class="fa fa-angle-down" ng-if="!showAccountHelpMenu"></i>
@@ -98,7 +98,7 @@
         </a>
       </div>
       <div ui-sref="help">Help</div>
-      <div ui-sref="contact">Feedback</div>
+      <div ui-sref="feedback">Feedback</div>
       <div>
         <a href="http://optima-consortium.com"
            target="_blank"
