@@ -1405,7 +1405,7 @@ def get_portfolio_summary(portfolio):
 
     objectives = None
     objectives_dict = {}
-    if hasattr(portfolio, "objectives"):
+    if hasattr(portfolio, "objectives") and portfolio.objectives is not None: # NB, the former case is just for legacy portfolios
         objectives = portfolio.objectives
         objectives_dict = dict(objectives)
 
@@ -1428,7 +1428,7 @@ def get_portfolio_summary(portfolio):
         project_summaries.append(project_summary)
 
     has_result = False
-    if hasattr(portfolio, "results"):
+    if hasattr(portfolio, "results") and portfolio.results is not None:
         if len(portfolio.results) > 0:
             has_result = True
 
