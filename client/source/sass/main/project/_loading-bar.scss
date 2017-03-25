@@ -75,19 +75,19 @@ $loadingcolor: #008800; /* Was #29d */
 }
 
 #loading-bar-spinner .spinner-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
 
   border:  solid 5px transparent;
   border-top-color:  $loadingcolor;
   border-left-color: $loadingcolor;
-  border-radius: 15px;
+  border-radius: 36px;
 
-  -webkit-animation: loading-bar-spinner 400ms linear infinite;
-  -moz-animation:    loading-bar-spinner 400ms linear infinite;
-  -ms-animation:     loading-bar-spinner 400ms linear infinite;
-  -o-animation:      loading-bar-spinner 400ms linear infinite;
-  animation:         loading-bar-spinner 400ms linear infinite;
+  -webkit-animation: loading-bar-spinner 600ms linear infinite;
+  -moz-animation:    loading-bar-spinner 600ms linear infinite;
+  -ms-animation:     loading-bar-spinner 600ms linear infinite;
+  -o-animation:      loading-bar-spinner 600ms linear infinite;
+  animation:         loading-bar-spinner 600ms linear infinite;
 }
 
 @-webkit-keyframes loading-bar-spinner {
