@@ -6,13 +6,19 @@
  */
 
 
-$lightblue: #29abe2;
-$kalesmoothie: #008800;
+// Define colors -- most taken from colorbrewer, which is also plotting defaults
+$mushroombroth: #e7f6ff; // Not used
+$tomatosoup: #d95f02;
+$tomatocreamsoup: #ff952d;
+$oldcornkernel: #c8c833;
 $cornkernel: #d7d525;
-$tomatosoup: #d74c0f;
-$darkblue: #0b2443; /* Not used */
-$mushroombroth: #e7f6ff; /* Not used */
-$loadingcolor: $kalesmoothie; /* Was #29d (light blue) or #008800 (dark green) or #0b2443 (dark blue) */
+$lightblue: #29abe2;
+$watercresssmoothie: #19906d;
+$kalesmoothie: #008800;
+$seriousblue: #7570b3;
+$darkblue: #0b2443; // Not used
+$bravefuschia: #e7298a;
+$loadingcolor: $kalesmoothie; // Was #29d (light blue) or #008800 (dark green) or #0b2443 (dark blue)
 
 
 /* Make clicks pass-through */
@@ -87,10 +93,10 @@ $loadingcolor: $kalesmoothie; /* Was #29d (light blue) or #008800 (dark green) o
   height: 0px;
 
   border:  solid 7px transparent;
-  border-top-color:  $tomatosoup;
-  border-left-color:  $cornkernel;
-  border-bottom-color: $kalesmoothie;
-  border-right-color:  $lightblue;
+  border-top-color:  $oldcornkernel;
+  border-left-color:  $watercresssmoothie;
+  border-bottom-color: $tomatocreamsoup;
+  border-right-color:  $bravefuschia;
   border-radius: 36px;
 
   -webkit-animation: loading-bar-spinner 1000ms linear infinite;
