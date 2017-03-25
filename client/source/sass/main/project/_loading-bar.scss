@@ -7,17 +7,17 @@
 
 
 // Define colors -- most taken from colorbrewer, which is also plotting defaults
-$mushroombroth: #e7f6ff; // Not used
-$tomatosoup: #d95f02;
-$tomatocreamsoup: #ff952d;
-$oldcornkernel: #c8c833;
-$cornkernel: #d7d525;
-$lightblue: #29abe2;
-$watercresssmoothie: #19906d;
+$mushroombroth: #e7f6ff;
+$tomatosoup: #d95f02; // Not used
+$tomatocreamsoup: #ff952d; // Not used
+$oldcornkernel: #c8c833; // Not used
+$cornkernel: #d7d525; // Not used
+$lightblue: #29abe2; // Not used
+$watercresssmoothie: #19906d; // Not used
 $kalesmoothie: #008800;
-$seriousblue: #7570b3;
+$seriousblue: #7570b3; // Not used
 $darkblue: #0b2443; // Not used
-$bravefuschia: #e7298a;
+$bravefuschia: #e7298a; // Not used
 $loadingcolor: $kalesmoothie; // Was #29d (light blue) or #008800 (dark green) or #0b2443 (dark blue)
 
 
@@ -93,17 +93,17 @@ $loadingcolor: $kalesmoothie; // Was #29d (light blue) or #008800 (dark green) o
   height: 0px;
 
   border:  solid 7px transparent;
-  border-top-color:  $oldcornkernel;
-  border-left-color:  $watercresssmoothie;
-  border-bottom-color: $tomatocreamsoup;
-  border-right-color:  $bravefuschia;
+  border-top-color:  $mushroombroth;
+  border-left-color:  $darkblue;
+  border-bottom-color: $mushroombroth;
+  border-right-color:  $darkblue;
   border-radius: 36px;
 
-  -webkit-animation: loading-bar-spinner 1000ms linear infinite;
-  -moz-animation:    loading-bar-spinner 1000ms linear infinite;
-  -ms-animation:     loading-bar-spinner 1000ms linear infinite;
-  -o-animation:      loading-bar-spinner 1000ms linear infinite;
-  animation:         loading-bar-spinner 1000ms linear infinite;
+  -webkit-animation: loading-bar-spinner 1500ms linear infinite;
+  -moz-animation:    loading-bar-spinner 1500ms linear infinite;
+  -ms-animation:     loading-bar-spinner 1500ms linear infinite;
+  -o-animation:      loading-bar-spinner 1500ms linear infinite;
+  animation:         loading-bar-spinner 1500ms linear infinite;
 }
 
 @-webkit-keyframes loading-bar-spinner {
