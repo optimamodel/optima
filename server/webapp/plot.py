@@ -9,7 +9,7 @@ import optima as op
 
 from .parse import normalize_obj
 
-frontendfigsize = (5.5, 2)
+frontendfigsize = (10.5, 4)
 frontendpositionnolegend = [[0.19, 0.12], [0.85, 0.85]]
 frontendpositionlegend = [[0.19, 0.12], [0.63, 0.85]]
 
