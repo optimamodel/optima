@@ -5,7 +5,11 @@
  * License: MIT
  */
 
-$loadingcolor: #008800; /* Was #29d */
+
+$lightblue: #29abe2;
+$darkblue: #0b2443;
+$darkgreen: #008800;
+$loadingcolor: $darkgreen; /* Was #29d (light blue) or #008800 (dark green) or #0b2443 (dark blue) */
 
 /* Make clicks pass-through */
 #loading-bar,
@@ -70,17 +74,19 @@ $loadingcolor: #008800; /* Was #29d */
   display: block;
   position: fixed;
   z-index: 10002;
-  top: 14px; /* This makes it exactly overlap with the O of Optima :) */
-  left: 14px;
+  top: 24px; /* This makes it exactly overlap with the O of Optima :) */
+  left: 24px;
 }
 
 #loading-bar-spinner .spinner-icon {
-  width: 32px;
-  height: 32px;
+  width: 0px;
+  height: 0px;
 
-  border:  solid 5px transparent;
-  border-top-color:  $loadingcolor;
-  border-left-color: $loadingcolor;
+  border:  solid 35px transparent;
+  border-top-color:  $darkblue;
+  border-left-color:  $lightblue;
+  border-bottom-color: $darkblue;
+  border-right-color:  $lightblue;
   border-radius: 36px;
 
   -webkit-animation: loading-bar-spinner 600ms linear infinite;

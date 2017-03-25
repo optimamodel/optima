@@ -122,26 +122,6 @@ gulp.task('compile-build-js-client-uglify', function () {
     .pipe(gulp.dest('build/js/'));
 });
 
-// Don't optimize the app -- WARNING, could be combined with the above
-gulp.task('compile-build-js-client-quick', function () {
-  var configRequire = require('./source/js/config.js');
-  var configBuild = {
-    baseUrl: 'source',
-    insertRequire: ['js/main'],
-    name: 'js/main',
-    out: 'main.js',
-    optimize: 'none',
-    wrap: true,
-    excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
-  };
-  var config = _(configBuild).extend(configRequire);
-
-  return rjs(config)
-    .on('error', handleError)
-    .pipe(ngAnnotate())
-    .pipe(gulp.dest('build/js/'));
-});
-
 // Copy font-awesome files for icons
 gulp.task('copy-font-awesome-icons', function() {
   return gulp.src('source/vendor/font-awesome/fonts/*')
