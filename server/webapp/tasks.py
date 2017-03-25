@@ -164,12 +164,12 @@ def check_calculation_status(pyobject_id, work_type):
         'work_type': ''
     }
     db_session = init_db_session()
-    print("Check calculation status", pyobject_id, work_type)
+    print ">> check_calculation_status", pyobject_id, work_type
     work_log_record = db_session.query(dbmodels.WorkLogDb)\
         .filter_by(project_id=pyobject_id, work_type=work_type)\
         .first()
     if work_log_record:
-        print ">> Found existing job of '%s' with same project" % work_type
+        print ">> check_calculation_status fail: existing job of '%s' with same project" % work_type
         result = parse_work_log_record(work_log_record)
     close_db_session(db_session)
     return result
@@ -531,5 +531,87 @@ def launch_miminize_portfolio(portfolio_id, maxtime=2):
     if calc_state['status'] != 'started':
         return calc_state, 208
     run_miminize_portfolio.delay(portfolio_id, maxtime)
+
+
+def make_reconcile_work_type(project_id, progset_id, parset_id, year):
+    return "reconcile:" + ":".join([project_id, progset_id, parset_id, str(year)])
+
+
+@celery_instance.task(bind=True)
+def run_reconcile(self, project_id, progset_id, parset_id, year, maxtime):
+
+    status = 'started'
+    error_text = ""
+    work_type = make_reconcile_work_type(project_id, progset_id, parset_id, year)
+    print ">> tasks.run_reconcile", work_type
+
+    db_session = init_db_session()
+    kwargs = {'project_id': project_id, 'work_type': work_type}
+    work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
+    if work_log:
+        work_log_id = work_log.id
+        work_log.task_id = self.request.id
+        print(">> Celery task_id = %s" % work_log.task_id)
+        try:
+            project = work_log.load()
+            db_session.add(work_log)
+            db_session.commit()
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in initialization")
+            print(error_text)
+    close_db_session(db_session)
+
+    if work_log is None:
+        print(">> Error: couldn't find work log")
+        return
+
+    if status == 'started':
+        try:
+            print(">> run_reconcile %s" % work_type, maxtime)
+            progset = parse.get_progset_from_project(project, progset_id)
+            parset = parse.get_parset_from_project_by_id(project, parset_id)
+            progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
+
+            status = 'completed'
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in calculation")
+            print(error_text)
+
+        if status == 'completed':
+            print(">> run_reconcile save project")
+            db_session = init_db_session()
+            project_record = dataio.load_project_record(project_id, db_session=db_session)
+            project_record.save_obj(project)
+            db_session.add(project_record)
+            db_session.commit()
+            close_db_session(db_session)
+
+    db_session = init_db_session()
+    work_log_record = db_session.query(dbmodels.WorkLogDb).get(work_log_id)
+    work_log_record.status = status
+    work_log_record.error = error_text
+    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    work_log_record.cleanup()
+    db_session.commit()
+    close_db_session(db_session)
+
+    print ">> Finish optimization"
+
+
+
+def launch_reconcile(project_id, progset_id, parset_id, year, maxtime=2):
+    work_type = make_reconcile_work_type(project_id, progset_id, parset_id, year)
+    print ">> tasks.launch_reconcile", work_type
+    project = dataio.load_project(project_id)
+    print ">> tasks.launch_reconcile got project", project_id
+    calc_state = setup_work_log(project_id, work_type, project)
+    print ">> tasks.launch_reconcile setup state", calc_state
+    if calc_state['status'] == 'started':
+        run_reconcile.delay(project_id, progset_id, parset_id, year, maxtime)
+    return calc_state
 
 
