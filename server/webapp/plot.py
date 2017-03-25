@@ -49,12 +49,6 @@ def convert_to_mpld3(figure):
     mpld3_dict = mpld3.fig_to_dict(figure)
     graph_dict = normalize_obj(mpld3_dict)
     
-    # WARNING, kludgy -- remove word None that appears
-    texts = graph_dict['axes'][0]['texts']
-    for i in reversed(range(len(texts))):
-        if texts[i]['text'] == 'None':
-            del texts[i]
-    
     return graph_dict
 
 
