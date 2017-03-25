@@ -86,23 +86,23 @@
 }
 
 .rzslider .rz-pointer {
-    top: -14px;
+    top: -7px;
     z-index: 3;
-    width: 32px;
-    height: 32px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
     background-color: #0db9f0;
-    border-radius: 16px;
+    border-radius: 8px;
 }
 
 .rzslider .rz-pointer:after {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    width: 8px;
-    height: 8px;
+    top: 0px;
+    left: 0px;
+    width: 0px;
+    height: 0px;
     background: #ffffff;
-    border-radius: 4px;
+    border-radius: 0px;
     content: '';
 }
 
