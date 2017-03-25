@@ -9,7 +9,7 @@ import optima as op
 
 from .parse import normalize_obj
 
-frontendfigsize = (10.5, 4)
+frontendfigsize = (5.5, 2)
 frontendpositionnolegend = [[0.19, 0.12], [0.85, 0.85]]
 frontendpositionlegend = [[0.19, 0.12], [0.63, 0.85]]
 
@@ -28,11 +28,14 @@ def extract_graph_selector(graph_key):
     return base + suffix
 
 
-def convert_to_mpld3(figure):
+def convert_to_mpld3(figure, figsizefactor=None):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
-
-    figure.set_size_inches(frontendfigsize) # WARNING, all of this should come from makeplots() instead
+    
+    # Handle figure size
+    if figsizefactor is None: figsizefactor = 1
+    figsize = (frontendfigsize[0]*figsizefactor, frontendfigsize[1]*figsizefactor)
+    figure.set_size_inches(figsize) # WARNING, all of this should come from makeplots() instead
 
     if len(figure.axes) == 1:
         ax = figure.axes[0]
@@ -62,7 +65,7 @@ def convert_to_selectors(graph_selectors):
     return selectors
 
 
-def make_mpld3_graph_dict(result, which=None):
+def make_mpld3_graph_dict(result, which=None, figsizefactor=None):
     """
     Converts an Optima sim Result into a dictionary containing
     mpld3 graph dictionaries and associated keys for display,
@@ -71,6 +74,7 @@ def make_mpld3_graph_dict(result, which=None):
     Args:
         result: the Optima simulation Result object
         which: a list of keys to determine which plots to generate
+        figsizefactor: the relative size of the figure
 
     Returns:
         A dictionary of the form:
@@ -148,7 +152,7 @@ def make_mpld3_graph_dict(result, which=None):
     mpld3_graphs = []
     for graph_key in graphs:
         graph_selectors.append(extract_graph_selector(graph_key))
-        graph_dict = convert_to_mpld3(graphs[graph_key])
+        graph_dict = convert_to_mpld3(graphs[graph_key], figsizefactor=figsizefactor)
         if graph_key == "budget":
             graph = graphs[graph_key]
             ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]

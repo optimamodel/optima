@@ -23,7 +23,6 @@ from zipfile import ZipFile
 from uuid import uuid4, UUID
 from datetime import datetime
 import dateutil
-from pprint import pprint
 
 from flask import current_app, abort, request, session, make_response, jsonify
 from flask_login import current_user, login_user, logout_user
@@ -1301,7 +1300,7 @@ def save_program(project_id, progset_id, program_summary):
     project_record.save_obj(project)
 
 
-def load_costcov_graph(project_id, progset_id, program_id, parset_id, year):
+def load_costcov_graph(project_id, progset_id, program_id, parset_id, year, figsizefactor=2):
     project_record = load_project_record(project_id)
     project = project_record.load()
     project.restorelinks()
@@ -1316,7 +1315,7 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, year):
     plot = op.plotcostcov(program=program, year=year, parset=parset, plotoptions=plotoptions)
     op.reanimateplots(plot)
 
-    graph_dict = convert_to_mpld3(plot)
+    graph_dict = convert_to_mpld3(plot, figsizefactor=figsizefactor)
 
     return graph_dict
 
