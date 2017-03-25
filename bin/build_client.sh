@@ -9,6 +9,11 @@ echo 'Building client...'
 cd `dirname $0` # Make sure we're in this folder
 cd ../client # Change to client folder
 
+# Sometimes, old junk gets in the build
+if [ -d "build" ]; then
+  rm -r build
+fi
+
 if [ -d "node_modules" ]; then
   npm prune
 fi
