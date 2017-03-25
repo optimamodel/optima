@@ -139,7 +139,6 @@ define(
         var initialize = function() {
           scope.chartType = attrs.chartType;
           scope.buttonsOff = ('buttonsOff' in attrs);
-          console.log('mpld3Chart', scope.buttonsOff);
         };
 
         function getFigure () {
