@@ -1,8 +1,8 @@
 define([
   './login-ctrl',
-  './edit-ctrl',
-  './contact-ctrl',
-  './help-ctrl',
   './register-ctrl',
+  './edit-ctrl',
+  './help-ctrl',
+  './feedback-ctrl',
   './saved-login-form-directive'
 ], function () {});

@@ -6,7 +6,7 @@ define(['angular', 'ui.router'], function (angular) {
       $stateProvider
         .state('contact', {
           url: '/contact',
-          templateUrl: 'js/modules/user/contact.html'
+          templateUrl: 'js/modules/user/feedback.html'
         });
     });
 

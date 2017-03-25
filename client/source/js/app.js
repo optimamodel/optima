@@ -7,7 +7,7 @@ define([
   'tooltip',
   'rzModule',
   './modules/charts/index',
-  './modules/user/contact-ctrl',
+  './modules/user/feedback-ctrl',
   './modules/user/help-ctrl',
   './modules/user/index',
   './modules/analysis/index',
