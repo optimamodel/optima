@@ -21,7 +21,7 @@ define([
   './modules/geospatial/index',
   './modules/programs/index',
   './modules/user/user-manager-service',
-  './modules/ui/modal/modal-service',
+  './modules/ui/modal-service',
   './modules/ui/index'
 ], function (angular) {
 
