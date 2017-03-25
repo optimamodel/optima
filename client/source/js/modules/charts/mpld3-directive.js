@@ -305,7 +305,7 @@ define(
             slider1: {
               value: 0.5,
               options: {
-                floor: 0,
+                floor: 0.1,
                 ceil: 1,
                 step: 0.01,
                 precision: 2,
@@ -315,9 +315,9 @@ define(
               slider2: {
                 value: 0.5,
                 options: {
-                  floor: 0,
+                  floor: 0.1,
                   ceil: 1,
-                  step: 0.2,
+                  step: 0.1,
                   precision: 1,
                   onEnd: scope.updateGraphs
                 }
@@ -441,9 +441,6 @@ define(
           var allCharts = elem.find('.allcharts');
           var allChartsWidth = parseInt(allCharts.width());
           var width = allChartsWidth * frac - 0.02; // This sets the default to be 0.48
-          if(width<0.1) {
-            width = 0.1;
-          }
           return width;
         }
 
