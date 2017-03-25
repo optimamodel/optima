@@ -303,21 +303,22 @@ define(
 
           scope.state = {
             slider1: {
-              value: 48,
-              min: 0,
+              value: 0.5,
               options: {
-                floor: 10,
-                ceil: 100,
+                floor: 0,
+                ceil: 1,
+                step: 0.01,
+                precision: 2,
                 onChange: scope.changeFigWidth
               }
             },
               slider2: {
-                value: 48,
-                min: 0,
-                max: 1,
+                value: 0.5,
                 options: {
-                  floor: 10,
-                  ceil: 100,
+                  floor: 0,
+                  ceil: 1,
+                  step: 0.2,
+                  precision: 1,
                   onEnd: scope.updateGraphs
                 }
             }
@@ -436,10 +437,13 @@ define(
         }
 
         function getSelectedFigureWidth() {
-          var percentage = scope.state.slider1.value;
+          var frac = scope.state.slider1.value;
           var allCharts = elem.find('.allcharts');
           var allChartsWidth = parseInt(allCharts.width());
-          var width = allChartsWidth * percentage / 100.;
+          var width = allChartsWidth * frac - 0.02; // This sets the default to be 0.48
+          if(width<0.1) {
+            width = 0.1;
+          }
           return width;
         }
 
