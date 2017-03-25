@@ -4,6 +4,12 @@
 #    ./build_client.sh # Build full client and minify JavaScript (slow)
 #    ./build_client.sh quick # Build client but without minifying JavaScript
 
+# Set variables
+gulp="node_modules/gulp/bin/gulp.js"
+fullargs="compile-build-js-client-uglify copy-assets-and-vendor-js"
+quickargs="compile-build-js-client-quick copy-assets-and-vendor-js"
+
+
 echo 'Building client...'
 
 cd `dirname $0` # Make sure we're in this folder
@@ -34,8 +40,10 @@ npm install --skip-installed
 # compile sass scripts
 if [ $# -eq 0 ]; then
 	echo -e '\nCompiling client (including minifying JavaScript)'
-	node_modules/gulp/bin/gulp.js compile-build-js-client-uglify copy-assets-and-vendor-js write-version-js
+  $gulp write-version-js # NB, write-version-js must come first to ensure it's included in the copy
+	$gulp $fullargs
 else
 	echo -e '\nCompiling client (quick version)...'
-	node_modules/gulp/bin/gulp.js compile-build-js-client-quick copy-assets-and-vendor-js write-version-js
+  $gulp write-version-js
+	$gulp $quickargs
 fi
