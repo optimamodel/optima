@@ -135,7 +135,6 @@ define(
 
         var chartStylesheetUrl = './assets/css/chart.css';
 
-        console.log('mpld3-chart attr', attrs);
         var initialize = function() {
           scope.chartType = attrs.chartType;
           scope.buttonsOff = ('buttonsOff' in attrs);
@@ -292,7 +291,7 @@ define(
     };
   });
 
-  module.directive('optimaGraphs', function ($http, toastr, RzSliderOptions1, RzSliderOptions2) {
+  module.directive('optimaGraphs', function ($http, toastr, RzSliderOptions) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/charts/optima-graphs.html',
@@ -315,10 +314,11 @@ define(
               slider2: {
                 value: 48,
                 min: 0,
+                max: 1,
                 options: {
                   floor: 10,
                   ceil: 100,
-                  onChange: scope.updateGraphs
+                  onEnd: scope.updateGraphs
                 }
             }
           };
@@ -373,6 +373,7 @@ define(
             return;
           }
           console.log('updateGraphs resultId', scope.graphs.resultId);
+          console.log(scope.state.slider2.value);
           var which = scope.getSelectors();
           if (scope.graphs.advanced) {
             which.push("advanced");
