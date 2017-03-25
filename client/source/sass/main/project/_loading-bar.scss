@@ -70,18 +70,18 @@ $loadingcolor: #008800; /* Was #29d */
   display: block;
   position: fixed;
   z-index: 10002;
-  top: 10px;
-  left: 10px;
+  top: 14px; /* This makes it exactly overlap with the O of Optima :) */
+  left: 14px;
 }
 
 #loading-bar-spinner .spinner-icon {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
 
   border:  solid 5px transparent;
   border-top-color:  $loadingcolor;
   border-left-color: $loadingcolor;
-  border-radius: 10px;
+  border-radius: 15px;
 
   -webkit-animation: loading-bar-spinner 400ms linear infinite;
   -moz-animation:    loading-bar-spinner 400ms linear infinite;
