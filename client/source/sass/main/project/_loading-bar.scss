@@ -7,9 +7,13 @@
 
 
 $lightblue: #29abe2;
-$darkblue: #0b2443;
-$darkgreen: #008800;
-$loadingcolor: $darkgreen; /* Was #29d (light blue) or #008800 (dark green) or #0b2443 (dark blue) */
+$kalesmoothie: #008800;
+$cornkernel: #d7d525;
+$tomatosoup: #d74c0f;
+$darkblue: #0b2443; /* Not used */
+$mushroombroth: #e7f6ff; /* Not used */
+$loadingcolor: $kalesmoothie; /* Was #29d (light blue) or #008800 (dark green) or #0b2443 (dark blue) */
+
 
 /* Make clicks pass-through */
 #loading-bar,
@@ -82,18 +86,18 @@ $loadingcolor: $darkgreen; /* Was #29d (light blue) or #008800 (dark green) or #
   width: 0px;
   height: 0px;
 
-  border:  solid 35px transparent;
-  border-top-color:  $darkblue;
-  border-left-color:  $lightblue;
-  border-bottom-color: $darkblue;
+  border:  solid 7px transparent;
+  border-top-color:  $tomatosoup;
+  border-left-color:  $cornkernel;
+  border-bottom-color: $kalesmoothie;
   border-right-color:  $lightblue;
   border-radius: 36px;
 
-  -webkit-animation: loading-bar-spinner 600ms linear infinite;
-  -moz-animation:    loading-bar-spinner 600ms linear infinite;
-  -ms-animation:     loading-bar-spinner 600ms linear infinite;
-  -o-animation:      loading-bar-spinner 600ms linear infinite;
-  animation:         loading-bar-spinner 600ms linear infinite;
+  -webkit-animation: loading-bar-spinner 1000ms linear infinite;
+  -moz-animation:    loading-bar-spinner 1000ms linear infinite;
+  -ms-animation:     loading-bar-spinner 1000ms linear infinite;
+  -o-animation:      loading-bar-spinner 1000ms linear infinite;
+  animation:         loading-bar-spinner 1000ms linear infinite;
 }
 
 @-webkit-keyframes loading-bar-spinner {
