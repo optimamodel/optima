@@ -6,7 +6,7 @@
 
 # Set variables
 gulp="node_modules/gulp/bin/gulp.js"
-gulpargs="compile-build-js-client-uglify copy-assets-and-vendor-js"
+gulpargs="compile-build-js-client-uglify copy-assets-and-vendor-js" # WARNING, seems to get overwritten by gulp defaults
 
 echo 'Building client...'
 

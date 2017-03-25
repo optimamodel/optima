@@ -172,12 +172,11 @@ gulp.task('watch', ['compile-sass'], function () {
       'change', livereload.changed);
 });
 
-// Defaults
+// Defaults -- WARNING, do version.js separately
 gulp.task(
   'default',
   [
     'compile-build-js-client-uglify',
-    'copy-assets-and-vendor-js',
-    'write-version-js'
+    'copy-assets-and-vendor-js'
   ]);
 
