@@ -292,7 +292,7 @@ define(
     };
   });
 
-  module.directive('optimaGraphs', function ($http, toastr, RzSliderOptions) {
+  module.directive('optimaGraphs', function ($http, toastr, RzSliderOptions1, RzSliderOptions2) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/charts/optima-graphs.html',
@@ -303,7 +303,7 @@ define(
           var allCharts = elem.find('.allcharts');
 
           scope.state = {
-            slider: {
+            slider1: {
               value: 48,
               min: 0,
               options: {
@@ -311,6 +311,15 @@ define(
                 ceil: 100,
                 onChange: scope.changeFigWidth
               }
+            },
+              slider2: {
+                value: 48,
+                min: 0,
+                options: {
+                  floor: 10,
+                  ceil: 100,
+                  onChange: scope.updateGraphs
+                }
             }
           };
 
@@ -426,7 +435,7 @@ define(
         }
 
         function getSelectedFigureWidth() {
-          var percentage = scope.state.slider.value;
+          var percentage = scope.state.slider1.value;
           var allCharts = elem.find('.allcharts');
           var allChartsWidth = parseInt(allCharts.width());
           var width = allChartsWidth * percentage / 100.;
