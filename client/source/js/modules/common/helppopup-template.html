@@ -1,27 +1,4 @@
 <div class="rqslieder">
-<span class="rq-bar-wrapper"><span class="rq-bar"></span></span> <!-- // 0 The slieder bar -->
-<span class="rq-bar-wrapper">
-  <span class="rq-bar rq-selection" ng-style="barStyle"></span>
-</span> <!-- // 1 Highlight between two handles -->
-<span class="rq-pointer rq-pointer-min" ng-style=minPointerStyle></span> <!-- // 2 Left slieder handle -->
-<span class="rq-pointer rq-pointer-max" ng-style=maxPointerStyle></span> <!-- // 3 Right slieder handle -->
-<span class="rq-bubble rq-limit rq-floor"></span> <!-- // 4 Floor label -->
-<span class="rq-bubble rq-limit rq-ceil"></span> <!-- // 5 Ceiling label -->
-<span class="rq-bubble"></span> <!-- // 6 Label above left slieder handle -->
-<span class="rq-bubble"></span> <!-- // 7 Label above right slieder handle -->
-<span class="rq-bubble"></span> <!-- // 8 Range label when the slieder handles are close ex. 15 - 17 -->
-<ul ng-show="showTicks" class="rq-ticks"> <!-- // 9 The ticks -->
-  <li ng-repeat="t in ticks track by $index" class="rq-tick"
-      ng-class="{'rq-selected': t.selected}" ng-style="t.style"
-      ng-attr-uib-tooltip="{{ t.tooltip }}" ng-attr-tooltip-placement="{{t.tooltipPlacement}}"
-      ng-attr-tooltip-append-to-body="{{ t.tooltip ? true : undefined}}">
-    <span ng-if="t.value != null" class="rq-tick-value"
-          ng-attr-uib-tooltip="{{ t.valueTooltip }}"
-          ng-attr-tooltip-placement="{{t.valueTooltipPlacement}}">{{ t.value }}</span>
-    <span ng-if="t.legend != null" class="rq-tick-legend">{{ t.legend }}</span>
-  </li>
-</ul>
-
   <i
     class="fa fa-question-circle-o"
     tp-text="Help" tooltip tp-class="tooltip"
