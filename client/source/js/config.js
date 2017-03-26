@@ -20,12 +20,13 @@ define({
     'ui.bootstrap': './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'tooltip': './vendor/tooltip/dist/tooltip',
     'rzModule': './vendor/angularjs-slider/dist/rzslider.min',
+    'rqModule': './js/modules/common/helppopup',
     'd3': './vendor/d3/d3',
     'mpld3': './js/modules/charts/mpld3.v0.3.1.dev1',
     'canvas2blob': './vendor/canvas-toBlob.js/canvas-toBlob',
     'saveAs': './vendor/FileSaver/FileSaver',
     'jsPDF': './vendor/jspdf/dist/jspdf.min',
-    'sha224': './js/modules/user/sha224',
+    'sha224': './js/modules/user/sha224'
   },
 
   shim: {
