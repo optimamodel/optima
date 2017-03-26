@@ -28,13 +28,14 @@ def extract_graph_selector(graph_key):
     return base + suffix
 
 
-def convert_to_mpld3(figure, figsizefactor=None):
+def convert_to_mpld3(figure, zoom=None):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
     
     # Handle figure size
-    if figsizefactor is None: figsizefactor = 1
-    figsize = (frontendfigsize[0]*figsizefactor, frontendfigsize[1]*figsizefactor)
+    if zoom is None: zoom = 0.8
+    zoom = 1.8 - zoom
+    figsize = (frontendfigsize[0]*zoom, frontendfigsize[1]*zoom)
     figure.set_size_inches(figsize) # WARNING, all of this should come from makeplots() instead
 
     if len(figure.axes) == 1:
@@ -65,7 +66,7 @@ def convert_to_selectors(graph_selectors):
     return selectors
 
 
-def make_mpld3_graph_dict(result, which=None, figsizefactor=None):
+def make_mpld3_graph_dict(result, which=None, zoom=None):
     """
     Converts an Optima sim Result into a dictionary containing
     mpld3 graph dictionaries and associated keys for display,
@@ -74,7 +75,7 @@ def make_mpld3_graph_dict(result, which=None, figsizefactor=None):
     Args:
         result: the Optima simulation Result object
         which: a list of keys to determine which plots to generate
-        figsizefactor: the relative size of the figure
+        zoom: the relative size of the figure
 
     Returns:
         A dictionary of the form:
@@ -152,7 +153,7 @@ def make_mpld3_graph_dict(result, which=None, figsizefactor=None):
     mpld3_graphs = []
     for graph_key in graphs:
         graph_selectors.append(extract_graph_selector(graph_key))
-        graph_dict = convert_to_mpld3(graphs[graph_key], figsizefactor=figsizefactor)
+        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom)
         if graph_key == "budget":
             graph = graphs[graph_key]
             ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]

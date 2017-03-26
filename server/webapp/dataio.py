@@ -987,9 +987,9 @@ def load_result_by_optimization(project, optimization):
     return None
 
 
-def load_result_mpld3_graphs(result_id, which):
+def load_result_mpld3_graphs(result_id, which, zoom):
     result = load_result_by_id(result_id, which)
-    return make_mpld3_graph_dict(result, which)
+    return make_mpld3_graph_dict(result, which, zoom)
 
 
 def download_figures(result_id=None, which=None, filetype=None, index=None):

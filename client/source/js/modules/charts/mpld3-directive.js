@@ -313,9 +313,9 @@ define(
               }
             },
               slider2: {
-                value: 0.5,
+                value: 0.8,
                 options: {
-                  floor: 0.1,
+                  floor: 0,
                   ceil: 1,
                   step: 0.1,
                   precision: 1,
@@ -374,15 +374,15 @@ define(
             return;
           }
           console.log('updateGraphs resultId', scope.graphs.resultId);
-          console.log(scope.state.slider2.value);
           var which = scope.getSelectors();
+          var zoom = scope.state.slider2.value;
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
           $http
             .post(
               '/api/results/' + resultId,
-              { which: which })
+              { which: which, zoom: zoom})
             .success(function (response) {
               scope.graphs = response.graphs;
               toastr.success('Graphs updated');
@@ -493,7 +493,7 @@ define(
         };
 
         scope.changeFigWidth = function() {
-          var width = getSelectedFigureWidth();
+          var width = getSelectedFigureWidth()-0.02;
           $(elem)
             .find(".allcharts")
             .find('svg.mpld3-figure')
