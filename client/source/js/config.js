@@ -19,7 +19,7 @@ define({
     'ui.router': './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap': './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'tooltip': './vendor/tooltip/dist/tooltip',
-    'rzModule': './js/modules/common/rzslider',
+    'rzModule': './vendor/angularjs-slider/dist/rzslider.min',
     'rqModule': './js/modules/common/rqslieder',
     'd3': './vendor/d3/d3',
     'mpld3': './js/modules/charts/mpld3.v0.3.1.dev1',
