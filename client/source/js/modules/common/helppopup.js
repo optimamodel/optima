@@ -1,33 +1,22 @@
-/*! angularjs-slieder - v5.9.0 - 
- (c) Rafal Zajac <rqajac@gmail.com>, Valentin Hervieu <valentin@hervieu.me>, Jussi Saarivirta <jusasi@gmail.com>, Angelin Sirbu <angelin.sirbu@gmail.com> - 
- https://github.com/angular-slieder/angularjs-slieder - 
- 2016-12-12 */
-/*jslint unparam: true */
-/*global angular: false, console: false, define, module */
+// Create a help popup
+// Based on angularjs-slider
+// Last modified: 2017-03-26 by cliffk
+
 (function(root, factory) {
-  'use strict';
-  /* istanbul ignore next */
   if (typeof define === 'function' && define.amd) {
-    // AMD. Register as an anonymous module.
     define(['angular'], factory);
   } else if (typeof module === 'object' && module.exports) {
-    // Node. Does not work with strict CommonJS, but
-    // only CommonJS-like environments that support module.exports,
-    // like Node.
-    // to support bundler like browserify
     var angularObj = angular || require('angular');
     if ((!angularObj || !angularObj.module) && typeof angular != 'undefined') {
       angularObj = angular;
     }
     module.exports = factory(angularObj);
   } else {
-    // Browser globals (root is window)
-    factory(root.angular);
+    factory(root.angular); // Browser globals (root is window)
   }
 
 }(this, function(angular) {
-  'use strict';
-  var module = angular.module('helppopupModule', [])
+  var module = angular.module('helppopupModule', []) // Define module name
 
   .factory('RqSliederOptions', function() {
     var defaultOptions = {
