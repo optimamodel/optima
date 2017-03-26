@@ -463,18 +463,20 @@ define(
           }
         );
 
+        // WARNING -- do we need this!?
         scope.toggleAdvanced = function() {
           scope.switchGraphs();
+        };
+
+        // Or this?
+        scope.defaultSelectors = function() {
+          scope.defaultGraphs();
         };
 
         scope.clearSelectors = function() {
             _.each(scope.graphs.selectors, function (selector) {
               selector.checked = false;
             });
-        };
-
-        scope.defaultSelectors = function() {
-          scope.defaultGraphs();
         };
 
         scope.getSelectors = function() {
@@ -493,6 +495,7 @@ define(
           return which;
         };
 
+        // Change figure width -- called by the "Zoom" slider
         scope.changeFigWidth = function() {
           var width = getSelectedFigureWidth();
           $(elem)
@@ -503,11 +506,8 @@ define(
             });
         };
 
-        // Update the grahps, but only if the font size has actually changed
+        // Update the grahps, but only if the font size has actually changed -- called by the "Font" slider
         scope.changeFontSize = function() {
-          console.log('change font size');
-          console.log(scope.state.slider2.currentValue);
-          console.log(scope.state.slider2.value);
           if (scope.state.slider2.currentValue !== scope.state.slider2.value) {
             scope.state.slider2.currentValue = scope.state.slider2.value;
             scope.updateGraphs();
