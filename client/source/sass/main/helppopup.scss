@@ -2,7 +2,7 @@
  (c) Rafal Zajac <rqajac@gmail.com>, Valentin Hervieu <valentin@hervieu.me>, Jussi Saarivirta <jusasi@gmail.com>, Angelin Sirbu <angelin.sirbu@gmail.com> -
  https://github.com/angular-slieder/angularjs-slieder -
  2016-12-12 */
-.helpbutton {
+.rqslieder {
     position: relative;
     display: inline-block;
     width: 100%;
@@ -15,48 +15,48 @@
     user-select: none;
 }
 
-.helpbutton.with-legend {
+.rqslieder.with-legend {
     margin-bottom: 40px;
 }
 
-.helpbutton[disabled] {
+.rqslieder[disabled] {
     cursor: not-allowed;
 }
 
-.helpbutton[disabled] .rq-pointer {
+.rqslieder[disabled] .rq-pointer {
     cursor: not-allowed;
     background-color: #d8e0f3;
 }
 
-.helpbutton[disabled] .rq-bar-wrapper.rq-draggable {
+.rqslieder[disabled] .rq-bar-wrapper.rq-draggable {
     cursor: not-allowed;
 }
 
-.helpbutton[disabled] .rq-bar.rq-selection {
+.rqslieder[disabled] .rq-bar.rq-selection {
     background: #8b91a2;
 }
 
-.helpbutton[disabled] .rq-ticks .rq-tick {
+.rqslieder[disabled] .rq-ticks .rq-tick {
     cursor: not-allowed;
 }
 
-.helpbutton[disabled] .rq-ticks .rq-tick.rq-selected {
+.rqslieder[disabled] .rq-ticks .rq-tick.rq-selected {
     background: #8b91a2;
 }
 
-.helpbutton span {
+.rqslieder span {
     position: absolute;
     display: inline-block;
     white-space: nowrap;
 }
 
-.helpbutton .rq-base {
+.rqslieder .rq-base {
     width: 100%;
     height: 100%;
     padding: 0;
 }
 
-.helpbutton .rq-bar-wrapper {
+.rqslieder .rq-bar-wrapper {
     left: 0;
     z-index: 1;
     width: 100%;
@@ -66,11 +66,11 @@
     box-sizing: border-box;
 }
 
-.helpbutton .rq-bar-wrapper.rq-draggable {
+.rqslieder .rq-bar-wrapper.rq-draggable {
     cursor: move;
 }
 
-.helpbutton .rq-bar {
+.rqslieder .rq-bar {
     left: 0;
     z-index: 1;
     width: 100%;
@@ -79,13 +79,13 @@
     border-radius: 2px;
 }
 
-.helpbutton .rq-bar.rq-selection {
+.rqslieder .rq-bar.rq-selection {
     z-index: 2;
     background: #0db9f0;
     border-radius: 2px;
 }
 
-.helpbutton .rq-pointer {
+.rqslieder .rq-pointer {
     top: -7px;
     z-index: 3;
     width: 16px;
@@ -95,7 +95,7 @@
     border-radius: 8px;
 }
 
-.helpbutton .rq-pointer:after {
+.rqslieder .rq-pointer:after {
     position: absolute;
     top: 0px;
     left: 0px;
@@ -106,34 +106,34 @@
     content: '';
 }
 
-.helpbutton .rq-pointer:hover:after {
+.rqslieder .rq-pointer:hover:after {
     background-color: #ffffff;
 }
 
-.helpbutton .rq-pointer.rq-active {
+.rqslieder .rq-pointer.rq-active {
     z-index: 4;
 }
 
-.helpbutton .rq-pointer.rq-active:after {
+.rqslieder .rq-pointer.rq-active:after {
     background-color: #451aff;
 }
 
-.helpbutton .rq-bubble {
+.rqslieder .rq-bubble {
     bottom: 16px;
     padding: 1px 3px;
     color: #55637d;
     cursor: default;
 }
 
-.helpbutton .rq-bubble.rq-selection {
+.rqslieder .rq-bubble.rq-selection {
     top: 16px;
 }
 
-.helpbutton .rq-bubble.rq-limit {
+.rqslieder .rq-bubble.rq-limit {
     color: #55637d;
 }
 
-.helpbutton .rq-ticks {
+.rqslieder .rq-ticks {
     position: absolute;
     top: -3px;
     left: 0;
@@ -145,7 +145,7 @@
     box-sizing: border-box;
 }
 
-.helpbutton .rq-ticks .rq-tick {
+.rqslieder .rq-ticks .rq-tick {
     position: absolute;
     top: 0;
     left: 0;
@@ -158,18 +158,18 @@
     border-radius: 50%;
 }
 
-.helpbutton .rq-ticks .rq-tick.rq-selected {
+.rqslieder .rq-ticks .rq-tick.rq-selected {
     background: #0db9f0;
 }
 
-.helpbutton .rq-ticks .rq-tick .rq-tick-value {
+.rqslieder .rq-ticks .rq-tick .rq-tick-value {
     position: absolute;
     top: -30px;
     -webkit-transform: translate(-50%, 0);
     transform: translate(-50%, 0);
 }
 
-.helpbutton .rq-ticks .rq-tick .rq-tick-legend {
+.rqslieder .rq-ticks .rq-tick .rq-tick-legend {
     position: absolute;
     top: 24px;
     max-width: 50px;
@@ -178,12 +178,12 @@
     transform: translate(-50%, 0);
 }
 
-.helpbutton .rq-ticks.rq-ticks-values-under .rq-tick-value {
+.rqslieder .rq-ticks.rq-ticks-values-under .rq-tick-value {
     top: initial;
     bottom: -32px;
 }
 
-.helpbutton.rq-vertical {
+.rqslieder.rq-vertical {
     position: relative;
     width: 4px;
     height: 100%;
@@ -192,13 +192,13 @@
     vertical-align: baseline;
 }
 
-.helpbutton.rq-vertical .rq-base {
+.rqslieder.rq-vertical .rq-base {
     width: 100%;
     height: 100%;
     padding: 0;
 }
 
-.helpbutton.rq-vertical .rq-bar-wrapper {
+.rqslieder.rq-vertical .rq-bar-wrapper {
     top: auto;
     left: 0;
     width: 32px;
@@ -207,31 +207,31 @@
     margin: 0 0 0 -16px;
 }
 
-.helpbutton.rq-vertical .rq-bar {
+.rqslieder.rq-vertical .rq-bar {
     bottom: 0;
     left: auto;
     width: 4px;
     height: 100%;
 }
 
-.helpbutton.rq-vertical .rq-pointer {
+.rqslieder.rq-vertical .rq-pointer {
     top: auto;
     bottom: 0;
     left: -14px !important;
 }
 
-.helpbutton.rq-vertical .rq-bubble {
+.rqslieder.rq-vertical .rq-bubble {
     bottom: 0;
     left: 16px !important;
     margin-left: 3px;
 }
 
-.helpbutton.rq-vertical .rq-bubble.rq-selection {
+.rqslieder.rq-vertical .rq-bubble.rq-selection {
     top: auto;
     left: 16px !important;
 }
 
-.helpbutton.rq-vertical .rq-ticks {
+.rqslieder.rq-vertical .rq-ticks {
     top: 0;
     left: -3px;
     z-index: 1;
@@ -239,20 +239,20 @@
     height: 100%;
 }
 
-.helpbutton.rq-vertical .rq-ticks .rq-tick {
+.rqslieder.rq-vertical .rq-ticks .rq-tick {
     margin-top: 11px;
     margin-left: auto;
     vertical-align: middle;
 }
 
-.helpbutton.rq-vertical .rq-ticks .rq-tick .rq-tick-value {
+.rqslieder.rq-vertical .rq-ticks .rq-tick .rq-tick-value {
     top: initial;
     left: 24px;
     -webkit-transform: translate(0, -28%);
     transform: translate(0, -28%);
 }
 
-.helpbutton.rq-vertical .rq-ticks .rq-tick .rq-tick-legend {
+.rqslieder.rq-vertical .rq-ticks .rq-tick .rq-tick-legend {
     top: initial;
     right: 24px;
     max-width: none;
@@ -261,7 +261,7 @@
     transform: translate(0, -28%);
 }
 
-.helpbutton.rq-vertical .rq-ticks.rq-ticks-values-under .rq-tick-value {
+.rqslieder.rq-vertical .rq-ticks.rq-ticks-values-under .rq-tick-value {
     right: 24px;
     bottom: initial;
     left: initial;
