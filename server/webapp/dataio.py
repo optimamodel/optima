@@ -1300,7 +1300,7 @@ def save_program(project_id, progset_id, program_summary):
     project_record.save_obj(project)
 
 
-def load_costcov_graph(project_id, progset_id, program_id, parset_id, year, figsizefactor=1.3):
+def load_costcov_graph(project_id, progset_id, program_id, parset_id, year, zoom=1.3):
     project_record = load_project_record(project_id)
     project = project_record.load()
     project.restorelinks()
@@ -1315,7 +1315,7 @@ def load_costcov_graph(project_id, progset_id, program_id, parset_id, year, figs
     plot = op.plotcostcov(program=program, year=year, parset=parset, plotoptions=plotoptions)
     op.reanimateplots(plot)
 
-    graph_dict = convert_to_mpld3(plot, figsizefactor=figsizefactor)
+    graph_dict = convert_to_mpld3(plot, zoom=zoom)
 
     return graph_dict
 
