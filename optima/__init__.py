@@ -67,7 +67,7 @@ from .pchip import pchip, plotpchip
 
 ## Color definitions
 from . import colortools # Load high-level module as well
-from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
+from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor
 
 
 #####################################################################################################################
