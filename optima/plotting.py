@@ -763,7 +763,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
             ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
         if plotdata and not aspercentage: # Don't try to plot if it's a percentage
             thisdata = results.main['numtreat'].datatot[0]
-            ax.scatter(results.datayears, thisdata, c=(0,0,0), label='Treatment data', s=dotsize, lw=0)
+            ax.scatter(results.datayears, thisdata, c=(0,0,0), s=dotsize, lw=0)
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax.get_xaxis().tick_bottom()

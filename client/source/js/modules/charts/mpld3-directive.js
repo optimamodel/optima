@@ -303,7 +303,7 @@ define(
 
           scope.state = {
             slider1: {
-              value: 0.5,
+              value: 0.48,
               options: {
                 floor: 0.1,
                 ceil: 1,
@@ -315,7 +315,7 @@ define(
               slider2: {
                 value: 0.8,
                 options: {
-                  floor: 0,
+                  floor: 0.1,
                   ceil: 1,
                   step: 0.1,
                   precision: 1,
@@ -493,7 +493,7 @@ define(
         };
 
         scope.changeFigWidth = function() {
-          var width = getSelectedFigureWidth()-0.02;
+          var width = getSelectedFigureWidth();
           $(elem)
             .find(".allcharts")
             .find('svg.mpld3-figure')
