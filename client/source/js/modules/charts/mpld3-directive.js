@@ -440,7 +440,7 @@ define(
           var frac = scope.state.slider1.value;
           var allCharts = elem.find('.allcharts');
           var allChartsWidth = parseInt(allCharts.width());
-          var width = allChartsWidth * frac - 0.02; // This sets the default to be 0.48
+          var width = allChartsWidth * frac; // This sets the default to be 0.48
           return width;
         }
 
