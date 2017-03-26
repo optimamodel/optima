@@ -18,7 +18,7 @@
 }(this, function(angular) {
   var module = angular.module('helppopupModule', []) // Define module name
 
-  .factory('RqSlieder', ['$timeout', '$document', '$window', '$compile', 'RqSliederOptions', 'rqThrottle', function($timeout, $document, $window, $compile, RqSliederOptions, rqThrottle) {
+  .factory('RqSlieder', ['$timeout', '$document', '$window', '$compile', function($timeout, $document, $window, $compile) {
     var Slieder = function(scope, sliederElem) {
       this.scope = scope;
       this.lowValue = 0;
@@ -36,6 +36,7 @@
         rqSliederModel: '=?',
       },
       templateUrl: 'js/modules/common/helppopup-template.html' ,
+
       link: function(scope, elem) {
         scope.slieder = new RqSlieder(scope, elem); //attach on scope so we can test it
       }
