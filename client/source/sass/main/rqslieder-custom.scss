@@ -1,0 +1,268 @@
+/*! angularjs-slieder - v5.9.0 -
+ (c) Rafal Zajac <rqajac@gmail.com>, Valentin Hervieu <valentin@hervieu.me>, Jussi Saarivirta <jusasi@gmail.com>, Angelin Sirbu <angelin.sirbu@gmail.com> -
+ https://github.com/angular-slieder/angularjs-slieder -
+ 2016-12-12 */
+.rqslieder {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    height: 4px;
+    margin: 35px 0 15px 0;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.rqslieder.with-legend {
+    margin-bottom: 40px;
+}
+
+.rqslieder[disabled] {
+    cursor: not-allowed;
+}
+
+.rqslieder[disabled] .rq-pointer {
+    cursor: not-allowed;
+    background-color: #d8e0f3;
+}
+
+.rqslieder[disabled] .rq-bar-wrapper.rq-draggable {
+    cursor: not-allowed;
+}
+
+.rqslieder[disabled] .rq-bar.rq-selection {
+    background: #8b91a2;
+}
+
+.rqslieder[disabled] .rq-ticks .rq-tick {
+    cursor: not-allowed;
+}
+
+.rqslieder[disabled] .rq-ticks .rq-tick.rq-selected {
+    background: #8b91a2;
+}
+
+.rqslieder span {
+    position: absolute;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.rqslieder .rq-base {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+}
+
+.rqslieder .rq-bar-wrapper {
+    left: 0;
+    z-index: 1;
+    width: 100%;
+    height: 32px;
+    padding-top: 16px;
+    margin-top: -16px;
+    box-sizing: border-box;
+}
+
+.rqslieder .rq-bar-wrapper.rq-draggable {
+    cursor: move;
+}
+
+.rqslieder .rq-bar {
+    left: 0;
+    z-index: 1;
+    width: 100%;
+    height: 4px;
+    background: #d8e0f3;
+    border-radius: 2px;
+}
+
+.rqslieder .rq-bar.rq-selection {
+    z-index: 2;
+    background: #0db9f0;
+    border-radius: 2px;
+}
+
+.rqslieder .rq-pointer {
+    top: -7px;
+    z-index: 3;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    background-color: #0db9f0;
+    border-radius: 8px;
+}
+
+.rqslieder .rq-pointer:after {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 0px;
+    height: 0px;
+    background: #ffffff;
+    border-radius: 0px;
+    content: '';
+}
+
+.rqslieder .rq-pointer:hover:after {
+    background-color: #ffffff;
+}
+
+.rqslieder .rq-pointer.rq-active {
+    z-index: 4;
+}
+
+.rqslieder .rq-pointer.rq-active:after {
+    background-color: #451aff;
+}
+
+.rqslieder .rq-bubble {
+    bottom: 16px;
+    padding: 1px 3px;
+    color: #55637d;
+    cursor: default;
+}
+
+.rqslieder .rq-bubble.rq-selection {
+    top: 16px;
+}
+
+.rqslieder .rq-bubble.rq-limit {
+    color: #55637d;
+}
+
+.rqslieder .rq-ticks {
+    position: absolute;
+    top: -3px;
+    left: 0;
+    z-index: 1;
+    width: 100%;
+    height: 0;
+    margin: 0;
+    list-style: none;
+    box-sizing: border-box;
+}
+
+.rqslieder .rq-ticks .rq-tick {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    margin-left: 11px;
+    text-align: center;
+    cursor: pointer;
+    background: #d8e0f3;
+    border-radius: 50%;
+}
+
+.rqslieder .rq-ticks .rq-tick.rq-selected {
+    background: #0db9f0;
+}
+
+.rqslieder .rq-ticks .rq-tick .rq-tick-value {
+    position: absolute;
+    top: -30px;
+    -webkit-transform: translate(-50%, 0);
+    transform: translate(-50%, 0);
+}
+
+.rqslieder .rq-ticks .rq-tick .rq-tick-legend {
+    position: absolute;
+    top: 24px;
+    max-width: 50px;
+    white-space: normal;
+    -webkit-transform: translate(-50%, 0);
+    transform: translate(-50%, 0);
+}
+
+.rqslieder .rq-ticks.rq-ticks-values-under .rq-tick-value {
+    top: initial;
+    bottom: -32px;
+}
+
+.rqslieder.rq-vertical {
+    position: relative;
+    width: 4px;
+    height: 100%;
+    padding: 0;
+    margin: 0 20px;
+    vertical-align: baseline;
+}
+
+.rqslieder.rq-vertical .rq-base {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+}
+
+.rqslieder.rq-vertical .rq-bar-wrapper {
+    top: auto;
+    left: 0;
+    width: 32px;
+    height: 100%;
+    padding: 0 0 0 16px;
+    margin: 0 0 0 -16px;
+}
+
+.rqslieder.rq-vertical .rq-bar {
+    bottom: 0;
+    left: auto;
+    width: 4px;
+    height: 100%;
+}
+
+.rqslieder.rq-vertical .rq-pointer {
+    top: auto;
+    bottom: 0;
+    left: -14px !important;
+}
+
+.rqslieder.rq-vertical .rq-bubble {
+    bottom: 0;
+    left: 16px !important;
+    margin-left: 3px;
+}
+
+.rqslieder.rq-vertical .rq-bubble.rq-selection {
+    top: auto;
+    left: 16px !important;
+}
+
+.rqslieder.rq-vertical .rq-ticks {
+    top: 0;
+    left: -3px;
+    z-index: 1;
+    width: 0;
+    height: 100%;
+}
+
+.rqslieder.rq-vertical .rq-ticks .rq-tick {
+    margin-top: 11px;
+    margin-left: auto;
+    vertical-align: middle;
+}
+
+.rqslieder.rq-vertical .rq-ticks .rq-tick .rq-tick-value {
+    top: initial;
+    left: 24px;
+    -webkit-transform: translate(0, -28%);
+    transform: translate(0, -28%);
+}
+
+.rqslieder.rq-vertical .rq-ticks .rq-tick .rq-tick-legend {
+    top: initial;
+    right: 24px;
+    max-width: none;
+    white-space: nowrap;
+    -webkit-transform: translate(0, -28%);
+    transform: translate(0, -28%);
+}
+
+.rqslieder.rq-vertical .rq-ticks.rq-ticks-values-under .rq-tick-value {
+    right: 24px;
+    bottom: initial;
+    left: initial;
+}
