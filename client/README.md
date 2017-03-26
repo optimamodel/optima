@@ -105,6 +105,8 @@ In AngularJS it's a little tricky to define new elements -- there are a lot of t
   0. HTML file: included in the JavaScript in this case, but also `source/vendor/angularjs-slider/src/rzSliderTpl.html`
   0. SASS file: `source/sass/main/rzslider-custom.scss`
 0. Copy these to appropriate places, e.g.:
-  0. JavaScript file: `source/vendor/angularjs-slider/dist/rzslider.min.js`
-  0. HTML file: included in the JavaScript in this case, but also `source/vendor/angularjs-slider/src/rzSliderTpl.html`
-  0. SASS file: `source/sass/main/rzslider-custom.scss`
+  0. JavaScript file: `source/js/modules/common/helppopup.js`
+  0. HTML file: `source/js/modules/common/helppopup-template.html`
+  0. SASS file: `source/sass/main/helppopup.scss`
+0. Make everything point to the correct places:
+  0. SASS: add `@import 'main/helppopup';` to `source/sass/main.scss`
