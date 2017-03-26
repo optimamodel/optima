@@ -314,12 +314,13 @@ define(
             },
               slider2: {
                 value: 0.8,
+                currentValue: 0.8, // To look at changes
                 options: {
                   floor: 0.1,
                   ceil: 1,
                   step: 0.1,
                   precision: 1,
-                  onEnd: scope.updateGraphs
+                  onEnd: scope.changeFontSize
                 }
             }
           };
@@ -375,7 +376,7 @@ define(
           }
           console.log('updateGraphs resultId', scope.graphs.resultId);
           var which = scope.getSelectors();
-          var zoom = scope.state.slider2.value;
+          var zoom = scope.state.slider2.currentValue;
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
@@ -415,7 +416,7 @@ define(
           if (_.isUndefined(resultId)) {
             return;
           }
-          console.log('switchGraphs', scope.graphs.advanced, 'reusltId', scope.graphs.resultId);
+          console.log('defaultGraphs', scope.graphs.advanced, 'resultId', scope.graphs.resultId);
           var which = ["default"];
           if (scope.graphs.advanced) {
             which.push("advanced");
@@ -500,6 +501,18 @@ define(
             .each(function(i, svg) {
               changeWidthOfSvg(svg, width);
             });
+        };
+
+        // Update the grahps, but only if the font size has actually changed
+        scope.changeFontSize = function() {
+          console.log('change font size');
+          console.log(scope.state.slider2.currentValue);
+          console.log(scope.state.slider2.value);
+          if (scope.state.slider2.currentValue !== scope.state.slider2.value) {
+            scope.state.slider2.currentValue = scope.state.slider2.value;
+            scope.updateGraphs();
+          }
+
         };
 
         initialize();
