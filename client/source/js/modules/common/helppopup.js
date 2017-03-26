@@ -2266,25 +2266,13 @@
        * @param {Object} attrs
        * @return {string}
        */
-      templateUrl: function(elem, attrs) {
-        //noinspection JSUnresolvedVariable
-        return attrs.rqSliederTplUrl || 'rqSliederTpl.html';
-      },
+      templateUrl: 'js/modules/common/helppopup-template.html' ,
 
       link: function(scope, elem) {
         scope.slieder = new RqSlieder(scope, elem); //attach on scope so we can test it
       }
     };
   }]);
-
-  module.run(['$templateCache', function($templateCache) {
-  'use strict';
-
-  $templateCache.put('rqSliederTpl.html',
-    "<div class=rqslieder><span class=rq-bar-wrapper><span class=rq-bar></span></span> <span class=rq-bar-wrapper><span class=\"rq-bar rq-selection\" ng-style=barStyle></span></span> <span class=\"rq-pointer rq-pointer-min\" ng-style=minPointerStyle></span> <span class=\"rq-pointer rq-pointer-max\" ng-style=maxPointerStyle></span> <span class=\"rq-bubble rq-limit rq-floor\"></span> <span class=\"rq-bubble rq-limit rq-ceil\"></span> <span class=rq-bubble></span> <span class=rq-bubble></span> <span class=rq-bubble></span><ul ng-show=showTicks class=rq-ticks><li ng-repeat=\"t in ticks track by $index\" class=rq-tick ng-class=\"{'rq-selected': t.selected}\" ng-style=t.style ng-attr-uib-tooltip=\"{{ t.tooltip }}\" ng-attr-tooltip-placement={{t.tooltipPlacement}} ng-attr-tooltip-append-to-body=\"{{ t.tooltip ? true : undefined}}\"><span ng-if=\"t.value != null\" class=rq-tick-value ng-attr-uib-tooltip=\"{{ t.valueTooltip }}\" ng-attr-tooltip-placement={{t.valueTooltipPlacement}}>{{ t.value }}</span> <span ng-if=\"t.legend != null\" class=rq-tick-legend>{{ t.legend }}</span></li></ul></div>"
-  );
-
-}]);
 
   return module.name
 }));
