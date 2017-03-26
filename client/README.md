@@ -110,3 +110,6 @@ In AngularJS it's a little tricky to define new elements -- there are a lot of t
   0. SASS file: `source/sass/main/helppopup.scss`
 0. Make everything point to the correct places:
   0. SASS: add `@import 'main/helppopup';` to `source/sass/main.scss`
+  0. JavaScript:
+    0. In `source/js/app.js`, add e.g. `helppopupModule` to _both_ `define` and to `.module('app')`
+    0. 

@@ -6,7 +6,7 @@ define([
   'ui.router',
   'tooltip',
   'rzModule',
-  'rqModule',
+  'helppopupModule',
   './modules/charts/index',
   './modules/user/feedback-ctrl',
   './modules/user/help-ctrl',
@@ -39,7 +39,7 @@ define([
         'ui.router',
         'tooltip.module',
         'rzModule',
-        'rqModule',
+        'helppopupModule',
         'app.feedback',
         'app.help',
         'app.user',
@@ -71,10 +71,10 @@ define([
             } else {
               var message, errorText;
               if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
-                message = 'Something went wrong. Please try again or contact the support team.';
+                message = 'We are very sorry, but it seems an error has occurred. Please contact us (info@optimamodel.com). In your email, copy and paste the error message below, and please also provide the date and time, your user name, the project you were working on (if applicable), as much detail as possible about the steps leading up to the error. We apologize for the inconvenience';
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else {
-                message = 'Sorry, but our servers feel bad right now. Please, give them some time to recover or contact the support team.';
+                message = 'We are very sorry, but it seems an unknown server error has occurred. Please contact us (info@optimamodel.com), including the date and time, your user name, the project you were working on (if applicable), as much detail as possible about the steps leading up to the error. We apologize for the inconvenience';
               }
               var modalService = $injector.get('modalService');
               modalService.inform(angular.noop, 'Okay', message, 'Server Error', errorText);
