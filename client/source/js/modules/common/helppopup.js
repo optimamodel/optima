@@ -27,7 +27,7 @@
 
 }(this, function(angular) {
   'use strict';
-  var module = angular.module('rqModule', [])
+  var module = angular.module('helppopupModule', [])
 
   .factory('RqSliederOptions', function() {
     var defaultOptions = {
@@ -86,15 +86,6 @@
     var globalOptions = {};
 
     var factory = {};
-    /**
-     * `options({})` allows global configuration of all slieders in the
-     * application.
-     *
-     *   var app = angular.module( 'App', ['rqModule'], function( RqSliederOptions ) {
-     *     // show ticks for all slieders
-     *     RqSliederOptions.options( { showTicks: true } );
-     *   });
-     */
     factory.options = function(value) {
       angular.extend(globalOptions, value);
     };
@@ -2255,7 +2246,7 @@
     return Slieder;
   }])
 
-  .directive('rqslieder', ['RqSlieder', function(RqSlieder) {
+  .directive('helpbutton', ['RqSlieder', function(RqSlieder) {
     'use strict';
 
     return {
@@ -2286,44 +2277,11 @@
     };
   }]);
 
-  // IDE assist
-
-  /**
-   * @name ngScope
-   *
-   * @property {number} rqSliederModel
-   * @property {number} rqSliederHigh
-   * @property {Object} rqSliederOptions
-   */
-
-  /**
-   * @name jqLite
-   *
-   * @property {number|undefined} rqsp rqslieder label position position
-   * @property {number|undefined} rqsd rqslieder element dimension
-   * @property {string|undefined} rqsv rqslieder label value/text
-   * @property {Function} css
-   * @property {Function} text
-   */
-
-  /**
-   * @name Event
-   * @property {Array} touches
-   * @property {Event} originalEvent
-   */
-
-  /**
-   * @name ThrottleOptions
-   *
-   * @property {boolean} leading
-   * @property {boolean} trailing
-   */
-
   module.run(['$templateCache', function($templateCache) {
   'use strict';
 
   $templateCache.put('rqSliederTpl.html',
-    "<div class=rqslieder><span class=rq-bar-wrapper><span class=rq-bar></span></span> <span class=rq-bar-wrapper><span class=\"rq-bar rq-selection\" ng-style=barStyle></span></span> <span class=\"rq-pointer rq-pointer-min\" ng-style=minPointerStyle></span> <span class=\"rq-pointer rq-pointer-max\" ng-style=maxPointerStyle></span> <span class=\"rq-bubble rq-limit rq-floor\"></span> <span class=\"rq-bubble rq-limit rq-ceil\"></span> <span class=rq-bubble></span> <span class=rq-bubble></span> <span class=rq-bubble></span><ul ng-show=showTicks class=rq-ticks><li ng-repeat=\"t in ticks track by $index\" class=rq-tick ng-class=\"{'rq-selected': t.selected}\" ng-style=t.style ng-attr-uib-tooltip=\"{{ t.tooltip }}\" ng-attr-tooltip-placement={{t.tooltipPlacement}} ng-attr-tooltip-append-to-body=\"{{ t.tooltip ? true : undefined}}\"><span ng-if=\"t.value != null\" class=rq-tick-value ng-attr-uib-tooltip=\"{{ t.valueTooltip }}\" ng-attr-tooltip-placement={{t.valueTooltipPlacement}}>{{ t.value }}</span> <span ng-if=\"t.legend != null\" class=rq-tick-legend>{{ t.legend }}</span></li></ul></div>"
+    "<div class=helpbutton><span class=rq-bar-wrapper><span class=rq-bar></span></span> <span class=rq-bar-wrapper><span class=\"rq-bar rq-selection\" ng-style=barStyle></span></span> <span class=\"rq-pointer rq-pointer-min\" ng-style=minPointerStyle></span> <span class=\"rq-pointer rq-pointer-max\" ng-style=maxPointerStyle></span> <span class=\"rq-bubble rq-limit rq-floor\"></span> <span class=\"rq-bubble rq-limit rq-ceil\"></span> <span class=rq-bubble></span> <span class=rq-bubble></span> <span class=rq-bubble></span><ul ng-show=showTicks class=rq-ticks><li ng-repeat=\"t in ticks track by $index\" class=rq-tick ng-class=\"{'rq-selected': t.selected}\" ng-style=t.style ng-attr-uib-tooltip=\"{{ t.tooltip }}\" ng-attr-tooltip-placement={{t.tooltipPlacement}} ng-attr-tooltip-append-to-body=\"{{ t.tooltip ? true : undefined}}\"><span ng-if=\"t.value != null\" class=rq-tick-value ng-attr-uib-tooltip=\"{{ t.valueTooltip }}\" ng-attr-tooltip-placement={{t.valueTooltipPlacement}}>{{ t.value }}</span> <span ng-if=\"t.legend != null\" class=rq-tick-legend>{{ t.legend }}</span></li></ul></div>"
   );
 
 }]);
