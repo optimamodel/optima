@@ -1347,17 +1347,11 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
     }
 
 
-def reconcile_progset(project_id, progset_id, parset_id, year, maxtime):
-
-    def update_project_fn(project):
-        print(">> reconcile_progset %s" % project.progsets)
-        progset = parse.get_progset_from_project(project, progset_id)
-        parset = parse.get_parset_from_project_by_id(project, parset_id)
-        progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
-
-    update_project_with_fn(project_id, update_project_fn)
-
-    return load_reconcile_summary(project_id, progset_id, parset_id, year)
+def launch_reconcile_calc(project_id, progset_id, parset_id, year, maxtime):
+    import server.webapp.tasks as tasks
+    print(">> launch_reconcile_calc")
+    calc_status = tasks.launch_reconcile(project_id, progset_id, parset_id, year, maxtime)
+    return calc_status
 
 
 def any_optimizable(project_id):

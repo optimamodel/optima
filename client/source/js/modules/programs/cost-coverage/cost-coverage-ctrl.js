@@ -4,7 +4,7 @@ define(['./../module', 'underscore'], function(module, _) {
 
   module.controller(
     'ModelCostCoverageController',
-    function($scope, toastr, $http, $state, activeProject, modalService) {
+    function($scope, toastr, $http, $state, activeProject, globalPoller, modalService) {
 
       var vm = this;
 
@@ -347,6 +347,9 @@ define(['./../module', 'underscore'], function(module, _) {
 
       vm.selectTab = function(tab) {
         vm.activeTab = tab;
+        if (tab == "summary") {
+          vm.selectSummary();
+        }
       };
 
       vm.makePopKeyLabel = function(popKey) {
@@ -489,6 +492,8 @@ define(['./../module', 'underscore'], function(module, _) {
         buildParameterSelectors();
       };
 
+      // RECONCILE FUNCTIONS
+
       vm.updateSummary = function() {
         runServerProcedure(
           'load_reconcile_summary',
@@ -499,13 +504,54 @@ define(['./../module', 'underscore'], function(module, _) {
         });
       };
 
+      function makeWorkType(project_id, parset_id, progset_id, year) {
+        var tokens = [project_id, parset_id, progset_id, year];
+        return "reconcile:" + tokens.join(":");
+      }
+
+      vm.selectSummary = function() {
+        var workType = makeWorkType(
+          vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
+        $http
+          .get('/api/task/' + vm.project.id + '/type/' + workType)
+          .then(function(response) {
+            console.log('selectSummary', response.data);
+            if (response.data.status === 'started') {
+              initReconcilePoll();
+            }
+          });
+      };
+
+      function initReconcilePoll() {
+        var workType = makeWorkType(
+          vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
+        globalPoller.startPoll(
+          workType,
+          '/api/task/' + vm.project.id + '/type/' + workType,
+          function (response) {
+            if (response.status === 'completed') {
+              vm.state.statusMessage = '';
+              toastr.success('Reconcile completed');
+            } else if (response.status === 'started') {
+              var start = new Date(response.start_time);
+              var now = new Date(response.current_time);
+              var diff = now.getTime() - start.getTime();
+              var seconds = parseInt(diff / 1000);
+              vm.state.statusMessage = "Reconcile running for " + seconds + " s";
+            } else {
+              vm.state.statusMessage = 'Reconcile failed';
+            }
+          }
+        );
+      }
+
       vm.reconcilePrograms = function() {
         runServerProcedure(
-            'reconcile_progset',
+            'launch_reconcile_calc',
             [vm.project.id, vm.state.progset.id, vm.state.parset.id, Number(vm.state.year), Number(vm.state.maxtime)])
           .success(function(data) {
-            vm.state.summary = data;
-            toastr.success('Program set reconciled');
+            initReconcilePoll();
+            toastr.success('Reconcile started...');
           });
       };
 
