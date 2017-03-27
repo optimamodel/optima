@@ -135,11 +135,9 @@ define(
 
         var chartStylesheetUrl = './assets/css/chart.css';
 
-        console.log('mpld3-chart attr', attrs);
         var initialize = function() {
           scope.chartType = attrs.chartType;
           scope.buttonsOff = ('buttonsOff' in attrs);
-          console.log('mpld3Chart', scope.buttonsOff);
         };
 
         function getFigure () {
@@ -205,7 +203,7 @@ define(
               {responseType: 'blob'})
             .then(function(response) {
               var blob = new Blob([response.data], { type:'application/'+filetype });
-              saveAs(blob, ('optima-figure.'+filetype));
+              saveAs(blob, (response.headers('filename')));
             });
         };
 
@@ -337,7 +335,7 @@ define(
               {responseType: 'blob'})
             .then(function(response) {
               var blob = new Blob([response.data], { type:'application/pdf' });
-              saveAs(blob, ('optima-figures.pdf'));
+              saveAs(blob, (response.headers('filename')));
             });
         };
 

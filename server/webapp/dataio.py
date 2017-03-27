@@ -1660,7 +1660,7 @@ def export_portfolio(portfolio_id):
         dirname = TEMPLATEDIR
     xlsx_fname = os.path.join(dirname, 'geospatial-results.xlsx')
     portfolio.export(filename=xlsx_fname)
-    return os.path.split(xlsx_fname)
+    return xlsx_fname
     
 
 def portfolio_results_ready(portfolio_id):
