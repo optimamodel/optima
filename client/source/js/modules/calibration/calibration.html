@@ -134,7 +134,8 @@
           justify-content: space-between;
           width: 100%;
           height: calc(100vh - 210px)">
-      <div
+      <form
+        name="calibrateForm"
         class="small_bordered_list"
         style="flex: 0 0 330px;"
         ng-if="parameters.length > 0">
@@ -170,15 +171,14 @@
               style="width: 45%">
               <input
                 my-enter="saveAndUpdateGraphs()"
-                type="number"
-                step="any"
-                min="0"
+                validate-with="/^[+]?[0-9]*\.?([0-9]+)?$/"
+                type="string"
                 class="txbox __m"
                 ng-model="parameter.value">
             </span>
           </div>
         </div>
-      </div>
+      </form>
 
       <div
         style="

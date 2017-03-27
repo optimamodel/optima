@@ -2,18 +2,44 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   'use strict';
 
-  module.directive('myEnter', function () {
-      return function (scope, element, attrs) {
-          element.bind("keydown keypress", function (event) {
-              if(event.which === 13) {
-                  scope.$apply(function (){
-                      scope.$eval(attrs.myEnter);
-                  });
-
-                  event.preventDefault();
-              }
+  module.directive('myEnter', function() {
+    return function(scope, element, attrs) {
+      element.bind("keydown keypress", function(event) {
+        if (event.which === 13) {
+          scope.$apply(function() {
+            scope.$eval(attrs.myEnter);
           });
-      };
+
+          event.preventDefault();
+        }
+      });
+    };
+  });
+
+
+  module.directive('validateWith', function() {
+    return {
+      require: 'ngModel',
+      link: function($scope, $el, $attrs, ngModel) {
+        var regexp = eval($attrs.validateWith);
+        var origVal;
+        // store the current value as it was before the change was made
+        $el.on("keypress", function(e) {
+          origVal = $el.val();
+        });
+
+        ngModel.$parsers.push(function(val){
+          var valid = regexp.test(val);
+          console.log('parse-regex regex', valid, val, origVal);
+          if (!valid) {
+            ngModel.$setViewValue(origVal);
+            ngModel.$render();
+            return origVal;
+          }
+          return val;
+        });
+      }
+    }
   });
 
   module.controller('ModelCalibrationController', function (
@@ -21,6 +47,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $modal, $timeout, toastr, globalPoller) {
 
     var project = info.data;
+
+      $scope.inputPattern = /^3+/;
 
     function initialize() {
 
@@ -93,10 +121,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parameters = angular.copy(response.parameters);
     }
 
-    function fetchParameters() {
-      return $scope.parameters;
-    }
-
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
       $http
@@ -124,6 +148,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.parameters) {
         return;
       }
+      var hasEmptyValues = false;
+      _.each($scope.parameters, function(parameter) {
+        if (parameter.value === "") {
+          console.log('saveAndUpdateGraphs error', parameter.value);
+          hasEmptyValues = true;
+        }
+        parameter.value = parseFloat(parameter.value);
+      });
+      if (hasEmptyValues) {
+        modalService.informError([{message:'There are empty values'}]);
+        return;
+      }
       console.log('saveAndUpdateGraphs', $scope.parameters);
       $http
         .post(
@@ -131,7 +167,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           + '/parsets/' + $scope.state.parset.id
           + '/calibration',
           {
-            parameters: fetchParameters(),
+            parameters: $scope.parameters,
             which: getSelectors(),
             startYear: $scope.state.startYear,
             endYear: $scope.state.endYear
