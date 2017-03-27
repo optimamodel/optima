@@ -474,17 +474,6 @@ class MinimizePortfolio(Resource):
 api.add_resource(MinimizePortfolio, '/api/portfolio/<uuid:portfolio_id>/minimize')
 
 
-class ExportPortfolio(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Download .xlsx file of portfolio results')
-    def get(self, portfolio_id):
-        dirname, filename = dataio.export_portfolio(portfolio_id)
-        return helpers.send_from_directory(dirname, filename)
-
-api.add_resource(ExportPortfolio, '/api/portfolio/<uuid:portfolio_id>/export')
-
-
 class RegionTemplate(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
