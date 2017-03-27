@@ -135,11 +135,9 @@ define(
 
         var chartStylesheetUrl = './assets/css/chart.css';
 
-        console.log('mpld3-chart attr', attrs);
         var initialize = function() {
           scope.chartType = attrs.chartType;
           scope.buttonsOff = ('buttonsOff' in attrs);
-          console.log('mpld3Chart', scope.buttonsOff);
         };
 
         function getFigure () {
@@ -304,14 +302,26 @@ define(
           var allCharts = elem.find('.allcharts');
 
           scope.state = {
-            slider: {
-              value: 48,
-              min: 0,
+            slider1: {
+              value: 0.48,
               options: {
-                floor: 10,
-                ceil: 100,
+                floor: 0.1,
+                ceil: 1,
+                step: 0.01,
+                precision: 2,
                 onChange: scope.changeFigWidth
               }
+            },
+              slider2: {
+                value: 0.8,
+                currentValue: 0.8, // To look at changes
+                options: {
+                  floor: 0.1,
+                  ceil: 1,
+                  step: 0.1,
+                  precision: 1,
+                  onEnd: scope.changeFontSize
+                }
             }
           };
 
@@ -366,13 +376,14 @@ define(
           }
           console.log('updateGraphs resultId', scope.graphs.resultId);
           var which = scope.getSelectors();
+          var zoom = scope.state.slider2.currentValue;
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
           $http
             .post(
               '/api/results/' + resultId,
-              { which: which })
+              { which: which, zoom: zoom})
             .success(function (response) {
               scope.graphs = response.graphs;
               toastr.success('Graphs updated');
@@ -405,7 +416,7 @@ define(
           if (_.isUndefined(resultId)) {
             return;
           }
-          console.log('switchGraphs', scope.graphs.advanced, 'reusltId', scope.graphs.resultId);
+          console.log('defaultGraphs', scope.graphs.advanced, 'resultId', scope.graphs.resultId);
           var which = ["default"];
           if (scope.graphs.advanced) {
             which.push("advanced");
@@ -427,10 +438,10 @@ define(
         }
 
         function getSelectedFigureWidth() {
-          var percentage = scope.state.slider.value;
+          var frac = scope.state.slider1.value;
           var allCharts = elem.find('.allcharts');
           var allChartsWidth = parseInt(allCharts.width());
-          var width = allChartsWidth * percentage / 100.;
+          var width = allChartsWidth * frac; // This sets the default to be 0.48
           return width;
         }
 
@@ -452,18 +463,20 @@ define(
           }
         );
 
+        // WARNING -- do we need this!?
         scope.toggleAdvanced = function() {
           scope.switchGraphs();
+        };
+
+        // Or this?
+        scope.defaultSelectors = function() {
+          scope.defaultGraphs();
         };
 
         scope.clearSelectors = function() {
             _.each(scope.graphs.selectors, function (selector) {
               selector.checked = false;
             });
-        };
-
-        scope.defaultSelectors = function() {
-          scope.defaultGraphs();
         };
 
         scope.getSelectors = function() {
@@ -482,6 +495,7 @@ define(
           return which;
         };
 
+        // Change figure width -- called by the "Zoom" slider
         scope.changeFigWidth = function() {
           var width = getSelectedFigureWidth();
           $(elem)
@@ -490,6 +504,15 @@ define(
             .each(function(i, svg) {
               changeWidthOfSvg(svg, width);
             });
+        };
+
+        // Update the grahps, but only if the font size has actually changed -- called by the "Font" slider
+        scope.changeFontSize = function() {
+          if (scope.state.slider2.currentValue !== scope.state.slider2.value) {
+            scope.state.slider2.currentValue = scope.state.slider2.value;
+            scope.updateGraphs();
+          }
+
         };
 
         initialize();

@@ -7,8 +7,8 @@ define([
   'tooltip',
   'rzModule',
   './modules/charts/index',
-  './modules/contact/index',
-  './modules/help/index',
+  './modules/user/feedback-ctrl',
+  './modules/user/help-ctrl',
   './modules/user/index',
   './modules/analysis/index',
   './modules/admin/index',
@@ -21,7 +21,7 @@ define([
   './modules/geospatial/index',
   './modules/programs/index',
   './modules/user/user-manager-service',
-  './modules/ui/modal/modal-service',
+  './modules/ui/modal-service',
   './modules/ui/index'
 ], function (angular) {
 
@@ -38,7 +38,7 @@ define([
         'ui.router',
         'tooltip.module',
         'rzModule',
-        'app.contact',
+        'app.feedback',
         'app.help',
         'app.user',
         'app.active-project',

@@ -1,4 +1,4 @@
-define(['./module', '../sha224/sha224'], function (module, SHA224) {
+define(['./module', 'sha224/sha224'], function (module, SHA224) {
   'use strict';
 
   return module.controller('RegisterController', function ($scope, $window, userApi) {

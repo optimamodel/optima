@@ -716,7 +716,7 @@ class ResultsExport(Resource):
             result_id: uuid of results
         """
         args = get_post_data_json()
-        return dataio.load_result_mpld3_graphs(result_id, args.get('which'))
+        return dataio.load_result_mpld3_graphs(result_id, args.get('which'), args.get('zoom'))
     
     # CK: not sure whether it's better to use this or the /api/download endpoint
 #    @swagger.operation(summary="Returns result as downloadable figure file")

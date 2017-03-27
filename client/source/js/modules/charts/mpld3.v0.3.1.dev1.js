@@ -4,7 +4,7 @@
     figures: [],
     plugin_map: {}
   };
-  mpld3.version = "0.3.patched-1";
+  mpld3.version = "0.3.1.dev1";
   mpld3.register_plugin = function(name, obj) {
     mpld3.plugin_map[name] = obj;
   };
@@ -327,22 +327,18 @@
     return new mpld3_Grid(this.ax, gridprop);
   };
   mpld3_Axis.prototype.draw = function() {
-    if (this.props.tickvalues && this.props.tickformat) {
-      tick_labels = d3.scale.threshold().domain(this.props.tickvalues.slice(1)).range(this.props.tickformat);
-    } else {
-      if (this.props.position === 'bottom') {
-        // force format to >=4 digits rounded number
-        tick_labels = function(d, i){
-          if(!d || isNaN(d)) {
-            return d;
-          }
-          return d3.format('r')(d, i);
-        }
-      } else {
-        tick_labels = null;
-      }
+    var scale = this.props.xy === "x" ? this.parent.props.xscale : this.parent.props.yscale;
+    if (scale === "date" && this.props.tickvalues) {
+      var domain = this.props.xy === "x" ? this.parent.x.domain() : this.parent.y.domain();
+      var range = this.props.xy === "x" ? this.parent.xdom.domain() : this.parent.ydom.domain();
+      var ordinal_to_js_date = d3.scale.linear().domain(domain).range(range);
+      this.props.tickvalues = this.props.tickvalues.map(function(value) {
+        return new Date(ordinal_to_js_date(value));
+      });
     }
-    this.axis = d3.svg.axis().scale(this.scale).orient(this.props.position).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(tick_labels);
+    var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues);
+    this.axis = d3.svg.axis().scale(this.scale).orient(this.props.position).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(tickformat);
+    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " line, " + " ." + this.cssclass + " path", {
       "shape-rendering": "crispEdges",
@@ -356,14 +352,23 @@
       stroke: "none"
     });
   };
+  function mpld3_tickFormat(tickformat, tickvalues) {
+    if (tickformat === "" || tickformat === null) {
+      return tickformat;
+    } else {
+      return d3.scale.threshold().domain(tickvalues.slice(1)).range(tickformat);
+    }
+  }
   mpld3_Axis.prototype.zoomed = function() {
+    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    this.elem.call(this.axis);
+  };
+  mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {
     if (this.props.tickvalues != null) {
-      var d = this.axis.scale().domain();
-      this.axis.tickValues(this.props.tickvalues.filter(function(v) {
-        return v >= d[0] && v <= d[1];
+      tickValues(this.props.tickvalues.filter(function(v) {
+        return v >= domain[0] && v <= domain[1];
       }));
     }
-    this.elem.call(this.axis);
   };
   mpld3.Coordinates = mpld3_Coordinates;
   function mpld3_Coordinates(trans, ax) {
@@ -560,7 +565,8 @@
     linewidth: 2,
     dasharray: "none",
     alpha: 1,
-    zorder: 2
+    zorder: 2,
+    drawstyle: "none"
   };
   function mpld3_Line(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
@@ -570,9 +576,27 @@
     delete pathProps.color;
     pathProps.edgewidth = pathProps.linewidth;
     delete pathProps.linewidth;
+    drawstyle = pathProps.drawstyle;
+    delete pathProps.drawstyle;
     this.defaultProps = mpld3_Path.prototype.defaultProps;
     mpld3_Path.call(this, ax, pathProps);
-    this.datafunc = d3.svg.line().interpolate("linear");
+    switch (drawstyle) {
+     case "steps":
+     case "steps-pre":
+      this.datafunc = d3.svg.line().interpolate("step-before");
+      break;
+
+     case "steps-post":
+      this.datafunc = d3.svg.line().interpolate("step-after");
+      break;
+
+     case "steps-mid":
+      this.datafunc = d3.svg.line().interpolate("step");
+      break;
+
+     default:
+      this.datafunc = d3.svg.line().interpolate("linear");
+    }
   }
   mpld3.Markers = mpld3_Markers;
   mpld3_Markers.prototype = Object.create(mpld3_PathCollection.prototype);
@@ -1353,11 +1377,9 @@
     this.buttons = [];
     this.root = d3.select("#" + figid).append("div").style("position", "relative");
     this.axes = [];
-    if(this.props.axes)
-      for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
+    for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
     this.plugins = [];
-    if(this.props.plugins)
-      for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
+    for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
     this.toolbar = new mpld3.Toolbar(this, {
       buttons: this.buttons
     });

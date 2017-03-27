@@ -16,13 +16,12 @@
   @each $icon in (
     'circle-gray',
     'donut-blue',
-    'kirby-logo',
+    'valid',
+    'invalid',
     'plus',
     'question-mark',
-    'unsw-logo',
-    'world-bank-logo',
   ) {
-    $icon-path: "base/icon/#{$icon}.png";
+    $icon-path: "icons/#{$icon}.png";
     &.__#{$icon} {
       @include image-size($icon-path);
       background-image: inline($icon-path);
