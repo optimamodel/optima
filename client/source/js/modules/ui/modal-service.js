@@ -20,7 +20,7 @@ define(['angular', 'ui.bootstrap' ], function (angular) {
           };
 
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-confirm.html',
+            templateUrl: 'js/modules/ui/modal-confirm.html',
             controller: ['$scope', '$document', function ($scope, $document) {
               $scope.title = title ? title : 'Please respond …';
               $scope.message = message || 'Are you sure?';
@@ -48,7 +48,7 @@ define(['angular', 'ui.bootstrap' ], function (angular) {
           };
 
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-inform.html',
+            templateUrl: 'js/modules/ui/modal-inform.html',
             controller: ['$scope', '$document', function ($scope, $document) {
               $scope.message = message || 'Be informed';
               $scope.title = title || 'Attention...';
@@ -73,7 +73,7 @@ define(['angular', 'ui.bootstrap' ], function (angular) {
           };
 
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-inform-errors.html',
+            templateUrl: 'js/modules/ui/modal-inform-errors.html',
             controller: ['$scope', '$document', function ($scope, $document) {
               $scope.errors = errors;
               $scope.title = title ? title : 'Error';
@@ -96,7 +96,7 @@ define(['angular', 'ui.bootstrap' ], function (angular) {
           options = options || {};
 
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-prompt.html',
+            templateUrl: 'js/modules/ui/modal-prompt.html',
             controller: ['$scope', '$document', function ($scope, $document) {
               $scope.title = title;
               $scope.label = label;
@@ -127,7 +127,7 @@ define(['angular', 'ui.bootstrap' ], function (angular) {
             if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
           };
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-choice.html',
+            templateUrl: 'js/modules/ui/modal-choice.html',
             controller: ['$scope', '$document', function ($scope, $document) {
               $scope.title = title || '';
               $scope.message = message || '';
@@ -161,7 +161,7 @@ define(['angular', 'ui.bootstrap' ], function (angular) {
         rename: function(acceptName, title, message, name, errorMessage, invalidNames) {
 
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-rename.html',
+            templateUrl: 'js/modules/ui/modal-rename.html',
             controller: ['$scope', '$document', function($scope, $document) {
 
                 $scope.name = name;

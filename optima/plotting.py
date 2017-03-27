@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017mar17
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -355,7 +355,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
-                if colorsarg is None: colors = gridcolormap(nlinesperplot) # This is needed because this loop gets run multiple times, so can't just set and forget
+                if colorsarg is None: colors = gridcolors(nlinesperplot) # This is needed because this loop gets run multiple times, so can't just set and forget
                 
 
                 ################################################################################################################
@@ -483,7 +483,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     fig = Figure(facecolor=(1,1,1), figsize=figsize)
     ax = fig.add_subplot(111)
     ax.set_position(position)
-    colors = gridcolormap(ncurves)
+    colors = gridcolors(ncurves)
     
     # Plot model estimates with uncertainty
     absimprove = zeros(ncurves)
@@ -550,7 +550,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     proglabels = budgets[0].keys() 
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
-    progcolors = gridcolormap(nprogs)
+    progcolors = gridcolors(nprogs)
     
     budgetplots = odict()
     
@@ -640,7 +640,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     nallocs = len(alloclabels)
     
     
-    colors = gridcolormap(nprogs)
+    colors = gridcolors(nprogs)
     ax = []
     ymax = 0
     
@@ -739,7 +739,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
     cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
     # Handle colors
-    if colors is None: colors = gridcolormap(len(cascadelist))
+    if colors is None: colors = gridcolors(len(cascadelist), reverse=True)
     elif colors=='alpine': colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
     elif type(colors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=colors)[1:-1] # Remove first and last element
     else: raise OptimaException('Can''t figure out color %s' % colors)
@@ -763,7 +763,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
             ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
         if plotdata and not aspercentage: # Don't try to plot if it's a percentage
             thisdata = results.main['numtreat'].datatot[0]
-            ax.scatter(results.datayears, thisdata, c=(0,0,0), label='Treatment data', s=dotsize, lw=0)
+            ax.scatter(results.datayears, thisdata, c=(0,0,0), s=dotsize, lw=0)
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax.get_xaxis().tick_bottom()
@@ -820,7 +820,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
     progs = [progs[i] for i in indices] # Trim programs
     
     if colors is None:
-        colors = gridcolormap(nprogs)
+        colors = gridcolors(nprogs)
             
     
     fig = Figure(facecolor=(1,1,1), figsize=(10,10))
@@ -892,7 +892,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
     settings = results.projectref().settings
     hivstates = settings.hivstates
     indices = arange(0, len(results.raw[ind]['tvec']), int(round(1.0/(results.raw[ind]['tvec'][1]-results.raw[ind]['tvec'][0]))))
-    colors = gridcolormap(len(hivstates))
+    colors = gridcolors(len(hivstates))
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0.*results.tvec # Easy way of setting to 0...
@@ -937,7 +937,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     
     # Put plotting imports here so fails at the last possible moment
     year = promotetoarray(year)
-    colors = gridcolormap(len(year))
+    colors = gridcolors(len(year))
     plotdata = odict()
     
     # Get caption & scatter data 

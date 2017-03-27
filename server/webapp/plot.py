@@ -28,11 +28,15 @@ def extract_graph_selector(graph_key):
     return base + suffix
 
 
-def convert_to_mpld3(figure):
+def convert_to_mpld3(figure, zoom=None):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
-
-    figure.set_size_inches(frontendfigsize) # WARNING, all of this should come from makeplots() instead
+    
+    # Handle figure size
+    if zoom is None: zoom = 0.8
+    zoom = 1.8 - zoom
+    figsize = (frontendfigsize[0]*zoom, frontendfigsize[1]*zoom)
+    figure.set_size_inches(figsize) # WARNING, all of this should come from makeplots() instead
 
     if len(figure.axes) == 1:
         ax = figure.axes[0]
@@ -49,12 +53,6 @@ def convert_to_mpld3(figure):
     mpld3_dict = mpld3.fig_to_dict(figure)
     graph_dict = normalize_obj(mpld3_dict)
     
-    # WARNING, kludgy -- remove word None that appears
-    texts = graph_dict['axes'][0]['texts']
-    for i in reversed(range(len(texts))):
-        if texts[i]['text'] == 'None':
-            del texts[i]
-    
     return graph_dict
 
 
@@ -68,7 +66,7 @@ def convert_to_selectors(graph_selectors):
     return selectors
 
 
-def make_mpld3_graph_dict(result, which=None):
+def make_mpld3_graph_dict(result, which=None, zoom=None):
     """
     Converts an Optima sim Result into a dictionary containing
     mpld3 graph dictionaries and associated keys for display,
@@ -77,6 +75,7 @@ def make_mpld3_graph_dict(result, which=None):
     Args:
         result: the Optima simulation Result object
         which: a list of keys to determine which plots to generate
+        zoom: the relative size of the figure
 
     Returns:
         A dictionary of the form:
@@ -154,7 +153,7 @@ def make_mpld3_graph_dict(result, which=None):
     mpld3_graphs = []
     for graph_key in graphs:
         graph_selectors.append(extract_graph_selector(graph_key))
-        graph_dict = convert_to_mpld3(graphs[graph_key])
+        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom)
         if graph_key == "budget":
             graph = graphs[graph_key]
             ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]

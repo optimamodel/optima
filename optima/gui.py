@@ -8,7 +8,7 @@ Version: 2017mar22
 '''
 
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
+from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
 from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -361,7 +361,7 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     ppl = transpose(ppl) # So time is plotted on x-axis
     
     nstates = len(labels)
-    colors = gridcolormap(nstates)
+    colors = gridcolors(nstates)
     if tvec is None:
         tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl, supply as argument if so
     bottom = 0*tvec

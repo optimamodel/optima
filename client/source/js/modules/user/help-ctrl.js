@@ -6,7 +6,7 @@ define(['angular', '../../version', 'ui.router'], function (angular, version) {
       $stateProvider
         .state('help', {
           url: '/help',
-          templateUrl: 'js/modules/help/help.html',
+          templateUrl: 'js/modules/user/help.html',
           controller: function ($scope) {
             $scope.version = version;
           }
