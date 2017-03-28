@@ -113,7 +113,7 @@
                   width: 100%;
                   margin-top: 10px">
 
-            <div style="flex: 0 0 500px;">
+            <form name="costFunction" style="flex: 0 0 500px;">
 
               <h3>Define cost function</h3>
 
@@ -141,18 +141,23 @@
                   </td>
                   <td>
                     <input
-                        name="cost"
+                        name="costLow"
                         ng-model="row[2]"
+                        min="0"
+                        max="100"
                         type="number"
                         style="width: 50px"
                         class="txbox __inline"/>
                     -
                     <input
-                        name="cost"
+                        name="costHigh"
                         ng-model="row[3]"
                         type="number"
                         style="width: 50px"
                         class="txbox __inline"/>
+                    <span ng-show="costFunction.costLow.$invalid">
+                      A cc number should be minimum 10 chars
+                    </span>
                   </td>
                   <td>
                     <input
@@ -244,7 +249,7 @@
               </div>
 
 
-            </div>
+            </form>
 
             <div
                 ng-if="!vm.chartData"
