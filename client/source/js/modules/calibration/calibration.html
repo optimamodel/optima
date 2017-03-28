@@ -9,7 +9,8 @@
     for this project.
   </div>
 
-  <div
+  <form
+    name="calibrateForm"
     ng-if="!isMissingData">
 
     <div style="display: table;">
@@ -17,14 +18,15 @@
         <div style="display: table-cell; padding-right: 70px">
           <div
             style="
-        display: flex;
-        align-items: center;
-        padding-top: 10px;
-        padding-bottom: 15px;">
+              display: flex;
+              align-items: center;
+              padding-top: 10px;
+              padding-bottom: 15px;">
 
             <button
               type="submit"
               class="btn __green __m"
+              ng-disabled="calibrateForm.$invalid"
               ng-click="saveAndUpdateGraphs()">
               Save & run
             </button>
@@ -51,8 +53,8 @@
 
           <div
             style="
-        display: flex;
-        align-items: center">
+              display: flex;
+              align-items: center">
 
             Parameter set:
             &nbsp;
@@ -134,8 +136,7 @@
           justify-content: space-between;
           width: 100%;
           height: calc(100vh - 210px)">
-      <form
-        name="calibrateForm"
+      <div
         class="small_bordered_list"
         style="flex: 0 0 330px;"
         ng-if="parameters.length > 0">
@@ -167,18 +168,21 @@
               style="width: 45%">
               {{parameter.label}}
             </span>
-            <span
-              style="width: 45%">
+            <span style="width: 45%">
+              <ng-form name="inputForm">
               <input
-                my-enter="saveAndUpdateGraphs()"
-                validate-with="/^[+]?[0-9]*\.?([0-9]+)?$/"
-                type="string"
+                ng-class="{ invalid: inputForm.value.$invalid }"
+                name="value"
+                type="number"
+                min="0"
+                step="any"
                 class="txbox __m"
                 ng-model="parameter.value">
+              </ng-form>
             </span>
           </div>
         </div>
-      </form>
+      </div>
 
       <div
         style="
@@ -191,5 +195,5 @@
       </div>
 
     </div>
-  </div>
+  </form>
 </div>

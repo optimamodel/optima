@@ -8,59 +8,6 @@ define(['angular', 'ui.bootstrap'], function(angular) {
 
   var module = angular.module('app.ui.modal', ['ui.bootstrap']);
 
-  /**
-   * directive validate-with="regular expression" - will parse
-   * for regular expressions on key-resses and reset if the
-   * regular-expression has failed
-   */
-  module.directive('validateWith', function() {
-    return {
-      require: 'ngModel',
-      link: function(scope, element, attrs, ctrl) {
-        var regexp = eval(attrs.validateWith);
-        var origVal;
-        // store the current value as it was before the change was made
-        element.on("keypress", function(e) {
-          origVal = element.val();
-        });
-
-        ctrl.$parsers.push(function(val) {
-          if (val == "") {
-            return val;
-          }
-          var valid = regexp.test(val);
-          console.log('parse-regex regex', valid, val, origVal);
-          console.log('parse-regex attrs name', attrs['name']);
-          console.log('parse-regex $invalid', scope[attrs['name']]);
-          if (!valid) {
-            ctrl.$setViewValue(origVal);
-            ctrl.$render();
-            return origVal;
-          }
-          return val;
-        });
-      }
-    }
-  })
-
-  /**
-   * directive my-enter="callbackfn()" to catch <input> elements
-   * for enter key presses
-   */
-  module.directive('myEnter', function() {
-    return function(scope, element, attrs) {
-      element.bind("keydown keypress", function(event) {
-        if (event.which === 13) {
-          scope.$apply(function() {
-            scope.$eval(attrs.myEnter);
-          });
-
-          event.preventDefault();
-        }
-      });
-    };
-  })
-
   module.factory('modalService', ['$modal', function($modal) {
 
     return {

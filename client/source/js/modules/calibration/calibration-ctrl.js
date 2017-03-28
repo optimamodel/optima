@@ -2,46 +2,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   'use strict';
 
-  module.directive('myEnter', function() {
-    return function(scope, element, attrs) {
-      element.bind("keydown keypress", function(event) {
-        if (event.which === 13) {
-          scope.$apply(function() {
-            scope.$eval(attrs.myEnter);
-          });
-
-          event.preventDefault();
-        }
-      });
-    };
-  });
-
-
-  module.directive('validateWith', function() {
-    return {
-      require: 'ngModel',
-      link: function($scope, $el, $attrs, ngModel) {
-        var regexp = eval($attrs.validateWith);
-        var origVal;
-        // store the current value as it was before the change was made
-        $el.on("keypress", function(e) {
-          origVal = $el.val();
-        });
-
-        ngModel.$parsers.push(function(val){
-          var valid = regexp.test(val);
-          console.log('parse-regex regex', valid, val, origVal);
-          if (!valid) {
-            ngModel.$setViewValue(origVal);
-            ngModel.$render();
-            return origVal;
-          }
-          return val;
-        });
-      }
-    }
-  });
-
   module.controller('ModelCalibrationController', function (
       $scope, $http, info, modalService, $upload,
       $modal, $timeout, toastr, globalPoller) {
@@ -145,6 +105,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.saveAndUpdateGraphs = function() {
+      // if ($scope.calibrateForm.$invalid) {
+      //   console.log('saveAndUpdateGraphs is invalid')
+      //   return;
+      // }
       if (!$scope.parameters) {
         return;
       }
