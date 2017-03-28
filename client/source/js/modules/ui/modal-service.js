@@ -25,8 +25,13 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         });
 
         ctrl.$parsers.push(function(val) {
+          if (val == "") {
+            return val;
+          }
           var valid = regexp.test(val);
           console.log('parse-regex regex', valid, val, origVal);
+          console.log('parse-regex attrs name', attrs['name']);
+          console.log('parse-regex $invalid', scope[attrs['name']]);
           if (!valid) {
             ctrl.$setViewValue(origVal);
             ctrl.$render();
