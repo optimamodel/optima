@@ -112,18 +112,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.parameters) {
         return;
       }
-      var hasEmptyValues = false;
-      _.each($scope.parameters, function(parameter) {
-        if (parameter.value === "") {
-          console.log('saveAndUpdateGraphs error', parameter.value);
-          hasEmptyValues = true;
-        }
-        parameter.value = parseFloat(parameter.value);
-      });
-      if (hasEmptyValues) {
-        modalService.informError([{message:'There are empty values'}]);
-        return;
-      }
       console.log('saveAndUpdateGraphs', $scope.parameters);
       $http
         .post(
