@@ -851,7 +851,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                             tmpdiffcd4 = min(tmpdiff, totalppltomoveupcd4-eps)
                                             newmovers[cd4,:] = tmpdiffcd4*ppltomoveupcd4/totalppltomoveupcd4 # Pull out evenly from each population
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
-                                # Need to handle USVL and SVL separately
                                 people[care,:,t+1] -= newmovers # Shift people out of care
                                 people[usvl,:,t+1] += newmovers # Shift people to newly suppressed
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
