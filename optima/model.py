@@ -502,7 +502,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##################################################################################################################
     
     # Preallocate here -- supposedly the most computationally efficient way to do this
-    alltransmatrices = zeros((npts, transmatrix.shape[0], transmatrix.shape[1], transmatrix.shape[2]))
+    alltransmatrices = ones((npts, transmatrix.shape[0], transmatrix.shape[1], transmatrix.shape[2]))
     alltransmatrices[:] = transmatrix
     
     for t in range(npts): # Loop over time
@@ -603,6 +603,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ### Calculate probabilities of shifting along cascade (if programmatically determined)
         ##############################################################################################################
 
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         # Undiagnosed to diagnosed
         if isnan(propdx[t]):
             dxprob = [hivtest[:,t]]*ncd4
