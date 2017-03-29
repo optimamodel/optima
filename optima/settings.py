@@ -25,11 +25,11 @@ class Settings(object):
         self.dataend = 2020.0 # Default end year for data entry
         self.end = 2030.0 # Default end year for projections
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
-        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'fail', 'svl']
+        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'fail', 'lost']
         self.ncd4 = len(self.hivstates)
         self.nhealth = len(self.healthstates)
         self.hivstatesfull = ['Acute infection', 'CD4>500', '350<CD4<500', '200<CD4<350', '50<CD4<200', 'CD4<50']
-        self.healthstatesfull = ['Susceptible', 'Programmatically circumcised', 'Undiagnosed', 'Diagnosed', 'Linked to care', 'Lost to follow up', 'Initiated on ART (USVL)', 'On failed ART (USVL)', 'On suppressive ART']
+        self.healthstatesfull = ['Susceptible', 'Programmatically circumcised', 'Undiagnosed', 'Diagnosed', 'Linked to care', 'Initiated on ART (USVL)', 'On suppressive ART', 'On failed ART (USVL)', 'Lost to follow up']
         
         # Health states by diagnosis
         self.susreg   = arange(0,1) # Regular uninfected, may be uncircumcised
@@ -37,10 +37,10 @@ class Settings(object):
         self.undx     = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
         self.dx       = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
         self.care     = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
-        self.lost     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, but lost to follow-up
-        self.usvl     = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
+        self.usvl     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
+        self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.fail     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
-        self.svl      = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, on treatment, with suppressed viral load
+        self.lost     = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, but lost to follow-up
         self.notonart = cat([self.undx,self.dx,self.care,self.lost])
         self.dxnotincare = cat([self.dx,self.lost])
 

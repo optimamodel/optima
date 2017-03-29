@@ -170,7 +170,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     propdx_list     = ('propdx',   propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx)
     propcare_list   = ('propcare', propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare)
     proptx_list     = ('proptx',   proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx) 
-    propsupp_list   = ('propsupp', propsupp, fail, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp)
+    propsupp_list   = ('propsupp', propsupp, allusvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -271,7 +271,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             
 
     # Recovery and progression and deaths for people on unsuppressive ART
-    for fromstate in usvl:
+    for fromstate in allusvl:
         fromhealthstate = [(fromstate in j) for j in allcd4].index(True) # CD4 count of fromstate
     
         # Iterate over the states you could be going to  
@@ -490,8 +490,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
-                            people[errstate,errpop,t] = 0.0 # Reset
                             errormsg = label + 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t])
+                            people[errstate,errpop,t] = 0.0 # Reset
                             if die: raise OptimaException(errormsg)
                             else:   printv(errormsg, 1, verbose=verbose)
                                 
@@ -502,7 +502,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##################################################################################################################
     
     # Preallocate here -- supposedly the most computationally efficient way to do this
-    alltransmatrices = ones((npts, transmatrix.shape[0], transmatrix.shape[1], transmatrix.shape[2]))
+    alltransmatrices = zeros((npts, transmatrix.shape[0], transmatrix.shape[1], transmatrix.shape[2]))
     alltransmatrices[:] = transmatrix
     
     for t in range(npts): # Loop over time
@@ -603,13 +603,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ### Calculate probabilities of shifting along cascade (if programmatically determined)
         ##############################################################################################################
 
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         # Undiagnosed to diagnosed
         if isnan(propdx[t]):
             dxprob = [hivtest[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): dxprob[cd4] = maximum(aidstest[t],hivtest[:,t])
         else: dxprob = zeros(ncd4)
-        
         for cd4, fromstate in enumerate(undx):
             for tostate in fromto[fromstate]:
                 if tostate in undx: # Probability of not being tested
@@ -668,7 +666,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for tostate in fromto[fromstate]:
                 if tostate in fail: # Probability of not receiving a VL test & thus remaining failed
                     thistransit[fromstate,tostate,:] *= (1.-svlprob)
-                elif tostate in fail: # Probability of receiving a VL test, switching to a new regime & becoming suppressed
+                elif tostate in svl: # Probability of receiving a VL test, switching to a new regime & becoming suppressed
                     thistransit[fromstate,tostate,:] *= svlprob
         
         # Check that probabilities all sum to 1
@@ -832,11 +830,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Move the people who started treatment last timestep from usvl to svl
                 if isnan(prop[t+1]):
                     if   name == 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
-#                    elif name == 'propsupp': wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
                     else:                    wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
                     wanted = prop[t+1]*available
-#                if name=='propsupp': import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                
+                if name=='propsupp' and ~isnan(propsupp[t]): import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 # Reconcile the differences between the number we have and the number we want
                 if wanted is not None:
@@ -859,18 +857,18 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
                                 # Need to handle USVL and SVL separately
                                 people[care,:,t+1] -= newmovers # Shift people out of care
-                                people[usvl,:,t+1] -= newmovers # Shift people out of care
-                                totcurrentusvl = people[usvl,:,t+1].sum()
-                                totcurrentsvl  = people[svl,:,t+1].sum()
-                                totcurrenttx   = totcurrentusvl + totcurrentsvl
-                                if totcurrenttx<eps: # There's no one on treatment: assign a proportion
-                                    currentfracsvl = treatvs
-                                    currentfracusvl = 1.0 - currentfracsvl
-                                else: # There are people on treatment: use existing proportions
-                                    currentfracusvl = totcurrentusvl/totcurrenttx
-                                    currentfracsvl  = totcurrentsvl/totcurrenttx
-                                people[usvl,:,t+1]  += newmovers*currentfracusvl # ... and onto treatment, according to existing proportions
-                                people[svl,:,t+1]   += newmovers*currentfracsvl # Likewise for SVL
+                                people[usvl,:,t+1] += newmovers # Shift people to newly suppressed
+#                                totcurrentusvl = people[usvl,:,t+1].sum()
+#                                totcurrentsvl  = people[svl,:,t+1].sum()
+#                                totcurrenttx   = totcurrentusvl + totcurrentsvl
+#                                if totcurrenttx<eps: # There's no one on treatment: assign a proportion
+#                                    currentfracsvl = treatvs
+#                                    currentfracusvl = 1.0 - currentfracsvl
+#                                else: # There are people on treatment: use existing proportions
+#                                    currentfracusvl = totcurrentusvl/totcurrenttx
+#                                    currentfracsvl  = totcurrentsvl/totcurrenttx
+#                                people[usvl,:,t+1]  += newmovers*currentfracusvl # ... and onto treatment, according to existing proportions
+#                                people[svl,:,t+1]   += newmovers*currentfracsvl # Likewise for SVL
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
@@ -883,6 +881,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             diff = min(-diff, totalppltomovedown-eps) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
                             if name == 'proptx': # Handle SVL and USVL separately
+                                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                                 newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
                                 newmoverssvl  = newmovers[ncd4:,:] # Second group is SVL
                                 people[usvl,:,t+1] -= newmoversusvl # Shift people out of USVL treatment
