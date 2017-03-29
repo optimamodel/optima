@@ -54,7 +54,7 @@ define(['./module', 'sha224/sha224'], function (module, SHA224) {
             case 400:
               break;
             default:
-              $scope.error = 'Server feels bad. Please try again in a bit';
+              $scope.error = 'HTTP status code:' + error.status;
           }
         }
       );

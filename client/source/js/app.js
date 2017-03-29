@@ -72,7 +72,12 @@ define([
                 message = 'Something went wrong. Please try again or contact the support team.';
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else {
-                message = 'Sorry, but our servers feel bad right now. Please, give them some time to recover or contact the support team.';
+                message = 'HTTP status code: ' + rejection.status;
+                if (!rejection.statusText) {
+                  errorText = 'No response from server';
+                } else {
+                  errorText = rejection.statusText;
+                }
               }
               var modalService = $injector.get('modalService');
               modalService.inform(angular.noop, 'Okay', message, 'Server Error', errorText);
