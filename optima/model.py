@@ -88,11 +88,14 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     alldx           = settings.alldx                # All diagnosed
     allcare         = settings.allcare              # All in care
     alltx           = settings.alltx                # All on treatment
+    allesttx        = settings.allesttx             # All on established treatment
+    allusvl         = settings.allusvl              # All people with unsuppressed viral load
     allplhiv        = settings.allplhiv             # All PLHIV
     notonart        = settings.notonart             # All PLHIV who are not on ART    
     dxnotincare     = settings.dxnotincare          # Diagnosed people not in care
     care            = settings.care                 # In care
-    usvl            = settings.usvl                 # On treatment - Unsuppressed Viral Load
+    usvl            = settings.usvl                 # Newly inititated on treatment & not suppressed yet
+    fail            = settings.fail                 # On failed treatment with detectable viral load
     svl             = settings.svl                  # On treatment - Suppressed Viral Load
     lost            = settings.lost                 # Not on ART (anymore) and lost to follow-up
     acute           = settings.acute                # Acute
@@ -137,6 +140,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     alltrans[care] = cd4trans*dxfactor
     alltrans[usvl] = cd4trans*dxfactor*efftxunsupp
     alltrans[svl] = cd4trans*dxfactor*efftxsupp
+    alltrans[fail] = cd4trans*dxfactor*efftxunsupp
     alltrans[lost] = cd4trans*dxfactor
     
     # Proportion aware and treated (for 90/90/90) -- these are the only arrays that get used directly, so have to be dcp'd
@@ -157,16 +161,16 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         return fixind
         
     fixpropdx      = findfixind('fixpropdx')
-    fixpropcare    = findfixind('fixpropcare')# findinds(simpars['tvec']>=simpars['fixpropcare'])[0] if simpars['fixpropcare'] < simpars['tvec'][-1] else nan
-    fixproptx      = findfixind('fixproptx')# findinds(simpars['tvec']>=simpars['fixproptx'])[0] if simpars['fixproptx'] < simpars['tvec'][-1] else nan
-    fixpropsupp    = findfixind('fixpropsupp')# findinds(simpars['tvec']>=simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] < simpars['tvec'][-1] else nan
+    fixpropcare    = findfixind('fixpropcare')
+    fixproptx      = findfixind('fixproptx')
+    fixpropsupp    = findfixind('fixpropsupp')
     
-    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
-    #                  name,       prop,    lower, to,    num,      denom,   raw_new,        fixyear
+    # These all have the same format, so we put them in tuples 
+    #                  name,       prop,    lower, to,    num,     denom,    raw_new,        fixyear
     propdx_list     = ('propdx',   propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx)
     propcare_list   = ('propcare', propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare)
     proptx_list     = ('proptx',   proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx) 
-    propsupp_list   = ('propsupp', propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp)
+    propsupp_list   = ('propsupp', propsupp, fail, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp)
             
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -334,7 +338,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             else:   printv(errormsg, 1, verbose)
                 
                 
-    
     # If it wasn't specified, or if there's something wrong with it, determine what it should be here
     if initpeople is None:
 
@@ -380,7 +383,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         initdx      = einsum('ij,j,i->ij',dxdist,nevertreated,untxdist)
         initcare    = einsum('ij,j,i->ij',incaredist,nevertreated,untxdist)
         initlost    = einsum('ij,j,i->ij',lostdist,nevertreated,untxdist)
-        initusvl    = (1.-treatvs)*einsum('i,j->ji',treatment,txdist)
+        initusvl    = (1.-treatvs)/2*einsum('i,j->ji',treatment,txdist) # Assume that half the failers are not-yet-suppressed and half are failed. Improve this!!!
+        initfail    = (1.-treatvs)/2*einsum('i,j->ji',treatment,txdist) 
         initsvl     = treatvs*einsum('i,j->ji',treatment,txdist)
  
         # Populated equilibrated array
@@ -391,6 +395,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         initpeople[care, :]        = initcare
         initpeople[usvl, :]        = initusvl
         initpeople[svl, :]         = initsvl
+        initpeople[fail, :]        = initfail
         initpeople[lost, :]        = initlost
 
     if debug and not(initpeople.all()>=0): # If not every element is a real number >0, throw an error
@@ -398,8 +403,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         errormsg = label + 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
         if die: raise OptimaException(errormsg)
         else:   printv(errormsg, 1, verbose)
-            
-            
             
     people[:,:,0] = initpeople
 
@@ -627,12 +630,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 else: # Probability of moving into care
                     thistransit[fromstate,tostate,:] *= careprob[cd4]
 
-        # Care/USVL/SVL to lost
+        # Care/USVL/SVL/fail to lost
         if isnan(propcare[t]):
             lossprob = [leavecare[:,t]]*ncd4 
             for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
         else: lossprob = zeros(ncd4)
-        for cd4ind, fromstate in enumerate(allcare): # 3 categories x 6 states per category = 18 states
+        for cd4ind, fromstate in enumerate(allcare): # 4 categories x 6 states per category = 18 states
             cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
             for tostate in fromto[fromstate]:
                 if tostate in allcare: # Probability of not being lost and remaining in care
@@ -640,14 +643,32 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 else: # Probability of being lost
                     thistransit[fromstate,tostate,:] *= lossprob[cd4]
     
-        # SVL to USVL
+        # USVL to SVL
+        initsvlprob = treatvs if isnan(propsupp[t]) else 0.
+        for fromstate in usvl:
+            for tostate in fromto[fromstate]:
+                if tostate in usvl: # Probability of remaining suppressed
+                    thistransit[fromstate,tostate,:] *= (1.-initsvlprob)
+                elif tostate in svl: # Probability of failing
+                    thistransit[fromstate,tostate,:] *= initsvlprob
+    
+        # SVL to fail
         usvlprob = treatfail if isnan(propsupp[t]) else 0.
         for fromstate in svl:
             for tostate in fromto[fromstate]:
                 if tostate in svl: # Probability of remaining suppressed
                     thistransit[fromstate,tostate,:] *= (1.-usvlprob)
-                elif tostate in usvl: # Probability of becoming unsuppressed
+                elif tostate in fail: # Probability of failing
                     thistransit[fromstate,tostate,:] *= usvlprob
+        
+        # fail to SVL
+        svlprob = numvlmon[t]/numtx[t] if isnan(propsupp[t]) else 0.
+        for fromstate in fail:
+            for tostate in fromto[fromstate]:
+                if tostate in fail: # Probability of not receiving a VL test & thus remaining failed
+                    thistransit[fromstate,tostate,:] *= (1.-svlprob)
+                elif tostate in fail: # Probability of receiving a VL test, switching to a new regime & becoming suppressed
+                    thistransit[fromstate,tostate,:] *= svlprob
         
         # Check that probabilities all sum to 1
         if debug:
@@ -790,7 +811,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             
 
             #######################################################################################
-            ## Proportions -- these happen after the Euler step, which is why it's t+1 instead of t
+            ## Proportions -- these happen after the transitions, which is why it's t+1 instead of t
             #######################################################################################
 
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
@@ -810,10 +831,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Move the people who started treatment last timestep from usvl to svl
                 if isnan(prop[t+1]):
                     if   name == 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
-                    elif name == 'propsupp': wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
+#                    elif name == 'propsupp': wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
                     else:                    wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
                     wanted = prop[t+1]*available
+#                if name=='propsupp': import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 # Reconcile the differences between the number we have and the number we want
                 if wanted is not None:
@@ -836,6 +858,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
                                 # Need to handle USVL and SVL separately
                                 people[care,:,t+1] -= newmovers # Shift people out of care
+                                people[usvl,:,t+1] -= newmovers # Shift people out of care
                                 totcurrentusvl = people[usvl,:,t+1].sum()
                                 totcurrentsvl  = people[svl,:,t+1].sum()
                                 totcurrenttx   = totcurrentusvl + totcurrentsvl
