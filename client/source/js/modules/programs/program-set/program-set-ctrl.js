@@ -37,7 +37,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       // Load a default set of inactive programs for new
       projectApi
-        .getDefault(project.id)
+        .getDefaultPrograms(project.id)
         .success(function(response) {
           defaultPrograms = response;
           console.log("ProgramSetController.init defaultPrograms", defaultPrograms);

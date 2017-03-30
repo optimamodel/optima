@@ -1,9 +1,40 @@
 define(['./module'], function (module) {
   'use strict';
 
-  module.factory('projectApi', [ '$http', 'activeProject', function ($http, activeProject) {
+  module.service('projectApi',
+    [ '$http', '$q', 'activeProject', function ($http, $q, activeProject) {
 
-    return {
+    var projectApi = {
+      projects: []
+    };
+
+    function getProjectList() {
+      var deferred = $q.defer();
+      $http
+        .get('/api/project')
+        .then(
+          function(response) {
+            while (projectApi.projects.length) {
+              projectApi.projects.pop(0);
+            }
+            _.each(response.data.projects, function(project) {
+              project.creationTime = Date.parse(project.creationTime);
+              project.updatedTime = Date.parse(project.updatedTime);
+              project.dataUploadTime = Date.parse(project.dataUploadTime);
+              projectApi.projects.push(project);
+            });
+            deferred.resolve(response);
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
+    getProjectList();
+
+    _.assign(projectApi, {
+      getProjectList: getProjectList,
       getActiveProject: function () {
         var projectId = activeProject.getProjectIdForCurrentUser();
         if (projectId) {
@@ -34,15 +65,13 @@ define(['./module'], function (module) {
       copyProject: function(sourceId, destinationName) {
         return $http.post('/api/project/' + sourceId + '/copy', {to: destinationName});
       },
-      exportProject: function(data) {
-        return $http.post('/api/project/export', data);
-      },
-      getProjectData: function(id) {
-        return $http.get('/api/project/'+ id + '/data',
-          {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'});
-      },
-      getProjectList: function () {
-        return $http.get('/api/project');
+      downloadProjectFile: function(projectId) {
+        return $http.get(
+          '/api/project/'+ projectId + '/data',
+          {
+            headers: {'Content-type': 'application/octet-stream'},
+            responseType:'blob'
+          });
       },
       getAllProjectList: function () {
         return $http.get('/api/project/all');
@@ -50,12 +79,15 @@ define(['./module'], function (module) {
       getPopulations: function () {
         return $http.get('/api/project/populations');
       },
-      getDefault: function (projectId) {
+      getDefaultPrograms: function (projectId) {
         return $http.get('/api/project/' + projectId + '/defaults');
       },
       getSpreadsheetUrl: function(id) {
         return '/api/project/' + id + '/spreadsheet';
       }
-    };
+    });
+
+    return projectApi;
+
   }]);
 });

@@ -4,13 +4,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller(
     'ProjectOpenController',
-    function ($scope, $http, activeProject, projects, modalService,
+    function ($scope, $http, activeProject, projects, util, modalService,
         userManager, projectApi, $state, $upload,
         $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
+        $scope.activeProject = activeProject;
         $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
         loadProjects(projects.data.projects);
         setActiveProject();
@@ -27,9 +28,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       function loadProjects(projects) {
         $scope.projects = _.map(projects, function(project) {
-          project.creationTime = Date.parse(project.creationTime);
-          project.updatedTime = Date.parse(project.updatedTime);
-          project.dataUploadTime = Date.parse(project.dataUploadTime);
+          // project.creationTime = Date.parse(project.creationTime);
+          // project.updatedTime = Date.parse(project.updatedTime);
+          // project.dataUploadTime = Date.parse(project.dataUploadTime);
           return project;
         });
         console.log('loadProjects ', $scope.projects);
@@ -91,19 +92,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         activeProject.setActiveProjectFor(name, id, userManager.user);
       };
 
-      function getUniqueName(name, otherNames) {
-        var i = 0;
-        var uniqueName = name;
-        while (_.indexOf(otherNames, uniqueName) >= 0) {
-          i += 1;
-          uniqueName = name + ' (' + i + ')';
-        }
-        return uniqueName;
+      function existingProjectName() {
+        return _.pluck($scope.projects, 'name');
       }
 
       $scope.copy = function(name, id) {
-        var otherNames = _.pluck($scope.projects, 'name');
-        var newName = getUniqueName(name, otherNames);
+        var newName = util.getUniqueName(name, existingProjectName());
         projectApi
           .copyProject(id, newName)
           .success(function(response) {
@@ -117,14 +111,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 $state.reload();
               });
           });
-      };
-
-      /**
-       * Opens to edit an existing project using name and id in /project/create screen.
-       */
-      $scope.edit = function (name, id) {
-        activeProject.setActiveProjectFor(name, id, userManager.user);
-        $state.go('project.edit');
       };
 
       $scope.downloadSpreadsheet = function (name, id) {
@@ -143,32 +129,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
-      function isExistingProjectName(projectName) {
-        var projectNames = _.pluck($scope.projects, 'name');
-        return _(projectNames).contains(projectName);
-      }
-
-      function getUniqueName(fname) {
-        var fileName = fname.replace(/\.prj$/, "").replace(/\.xlsx$/, "");
-        // if project name taken, try variants
-        var i = 0;
-        var result = fileName;
-        while (isExistingProjectName(result)) {
-          i += 1;
-          result = fileName + " (" + i + ")";
-        }
-        return result;
-      }
-
       $scope.uploadProject = function() {
         angular
           .element('<input type="file">')
           .change(function (event) {
             var file = event.target.files[0];
+            var name = file.name;
+            name = name.replace(/\.prj$/, "").replace(/\.xlsx$/, "");
             $upload
               .upload({
                 url: '/api/project/data',
-                fields: {name: getUniqueName(file.name)},
+                fields: {name: util.getUniqueName(name, existingProjectName())},
                 file: file
               })
               .success(function (data, status, headers, config) {
@@ -188,10 +159,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .element('<input type="file">')
           .change(function (event) {
             var file = event.target.files[0];
+            var name = file.name;
+            name = name.replace(/\.prj$/, "").replace(/\.xlsx$/, "");
             $upload
               .upload({
                 url: '/api/project/data',
-                fields: {name: getUniqueName(file.name), xls: true},
+                fields: {name: util.getUniqueName(name, existingProjectName()), xls: true},
                 file: file
               })
               .success(function (data, status, headers, config) {
@@ -253,7 +226,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadProject = function (name, id) {
-        projectApi.getProjectData(id)
+        projectApi.downloadProjectFile(id)
           .success(function (response, status, headers, config) {
             var blob = new Blob([response], { type: 'application/octet-stream' });
             saveAs(blob, (name + '.prj'));

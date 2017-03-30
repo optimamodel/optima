@@ -118,8 +118,17 @@
             <b>project:</b>
           </div>
           <div style="display:table-cell">
-            <span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>
-            <span ng-show="!activeProject.isSet()">[none]</span>
+            <select
+                ng-model="activeProject.project.id"
+                ng-change="changeProject(activeProject.project.id)">
+              <option
+                  ng-repeat="project in projects"
+                  value="{{project.id}}">
+                {{ project.name}}
+              </option>
+            </select>
+            <!--<span ng-show="activeProject.isSet()">{{ activeProject.name }}</span>-->
+            <!--<span ng-show="!activeProject.isSet()">[none]</span>-->
           </div>
         </div>
       </div>
