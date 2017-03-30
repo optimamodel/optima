@@ -94,3 +94,4 @@
 0.664 2017-Mar-02_22:05:53 289c5d8 rethink-GA
 0.671 2017-Mar-02_23:22:55 66208c6 rethink-GA
 0.585 2017-Mar-02_23:34:39 d05c6d7 rethink-GA
+1.08 2017-Mar-30_14:18:37 936a234 feature/cascade-improvements

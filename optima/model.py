@@ -660,7 +660,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # fail to SVL
-        svlprob = min((numvlmon[t]*requiredvl)/numtx[t],1) if isnan(propsupp[t]) else 0.
+        svlprob = min(numvlmon[t]/(numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
         for fromstate in fail:
             for tostate in fromto[fromstate]:
                 if tostate in fail: # Probability of not receiving a VL test & thus remaining failed
