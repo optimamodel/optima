@@ -844,17 +844,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
                                 # Need to handle USVL and SVL separately
                                 people[care,:,t+1] -= newmovers # Shift people out of care
-                                totcurrentusvl = people[usvl,:,t+1].sum()
-                                totcurrentsvl  = people[svl,:,t+1].sum()
-                                totcurrenttx   = totcurrentusvl + totcurrentsvl
-                                if totcurrenttx<eps: # There's no one on treatment: assign a proportion
-                                    currentfracsvl = treatvs
-                                    currentfracusvl = 1.0 - currentfracsvl
-                                else: # There are people on treatment: use existing proportions
-                                    currentfracusvl = totcurrentusvl/totcurrenttx
-                                    currentfracsvl  = totcurrentsvl/totcurrenttx
-                                people[usvl,:,t+1]  += newmovers*currentfracusvl # ... and onto treatment, according to existing proportions
-                                people[svl,:,t+1]   += newmovers*currentfracsvl # Likewise for SVL
+                                people[usvl,:,t+1]  += newmovers*(1.0-treatvs) # ... and onto treatment, according to existing proportions
+                                people[svl,:,t+1]   += newmovers*treatvs # Likewise for SVL
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
