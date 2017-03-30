@@ -48,7 +48,10 @@ T = tic()
 
 ## Make or load&migrate a project
 if 'standardrun' in tests:
-    P = defaults.defaultproject('generalized',dorun=False)
+    P = defaults.defaultproject('best',dorun=False)
+    P.pars()['numvlmon'].m = .1
+    P.pars()['fixproptx'].t = 2200.
+    P.pars()['fixpropsupp'].t = 2200.
     P.runsim(debug=True, start=2000, end=2030)
     if runsensitivity: P.sensitivity()
     if doplot: pygui(P)

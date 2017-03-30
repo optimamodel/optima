@@ -261,7 +261,7 @@ if '90-90-90' in tests:
               'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'endval': .9,
+              'endval': .1,
               },
               
               {'name': 'propsupp',

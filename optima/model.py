@@ -70,6 +70,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     deathprob       = zeros((nstates))              # Initialise death probability array
 
     # Cascade-related parameters
+    requiredvl      = simpars['requiredvl']                               # Number of VL tests required per year
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
     treatfail       = simpars['treatfail']*dt                             # Probability of treatment failure in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
@@ -659,7 +660,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # fail to SVL
-        svlprob = numvlmon[t]/numtx[t] if isnan(propsupp[t]) else 0.
+        svlprob = min((numvlmon[t]*requiredvl)/numtx[t],1) if isnan(propsupp[t]) else 0.
         for fromstate in fail:
             for tostate in fromto[fromstate]:
                 if tostate in fail: # Probability of not receiving a VL test & thus remaining failed
@@ -857,7 +858,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[shiftfrom,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 for ind in range(len(shiftfrom)/ncd4):
-                                    people[tostate,:,t+1]   += newmovers[ncd4*ind:ncd4*(ind+1)] # ... and into the more progressed state
+                                    people[tostate,:,t+1]   += newmovers[ncd4*ind:ncd4*(ind+1),:] # ... and into the more progressed state
                             raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
@@ -865,15 +866,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if totalppltomovedown>eps: # To avoid having to add eps
                             diff = min(-diff, totalppltomovedown-eps) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
-                            if name == 'proptx': # Handle SVL and USVL separately
-                                newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
-                                newmoverssvl  = newmovers[ncd4:,:] # Second group is SVL
-                                people[usvl,:,t+1] -= newmoversusvl # Shift people out of USVL treatment
-                                people[svl,:,t+1]  -= newmoverssvl  # Shift people out of SVL treatment
-                                people[care,:,t+1] += newmoversusvl+newmoverssvl # Add both groups of movers into care
-                            else:
-                                people[tostate,:,t+1] -= newmovers # Shift people out of the more progressed state... 
-                                people[shiftto,:,t+1] += newmovers # ... and into the less progressed state
+                            people[tostate,:,t+1] -= newmovers # Shift people out of the more progressed state... 
+                            for ind in range(len(tostate)/ncd4):
+                                people[shiftto,:,t+1]   += newmovers[ncd4*ind:ncd4*(ind+1),:] # ... and into the less progressed state
                             raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
             if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
