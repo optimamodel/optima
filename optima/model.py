@@ -633,7 +633,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             lossprob = [leavecare[:,t]]*ncd4 
             for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
         else: lossprob = zeros(ncd4)
-        for cd4ind, fromstate in enumerate(allcare): # 4 categories x 6 states per category = 18 states
+        for cd4ind, fromstate in enumerate(allcare): # 4 categories x 6 states per category = 24 states
             cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
             for tostate in fromto[fromstate]:
                 if tostate in allcare: # Probability of not being lost and remaining in care
