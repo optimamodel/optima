@@ -15,7 +15,7 @@
     factory(root.angular); // Browser globals (root is window)
   }
 
-}(this, function(angular) {
+}(this, function(angular, toastr) {
   var module = angular.module('helppopupModule', []) // Define module name
 
   .factory('RqSlieder', ['$timeout', '$document', '$window', '$compile', function($timeout, $document, $window, $compile) {
