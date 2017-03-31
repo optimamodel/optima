@@ -21,6 +21,8 @@ class Optim(object):
         if progsetname is None: progsetname = -1
         if objectives is None:  objectives = defaultobjectives(project=project, progset=progsetname, verbose=0)
         if constraints is None: constraints = defaultconstraints(project=project, progset=progsetname, verbose=0)
+        print('hiiiiiii')
+        print constraints
         self.name         = name # Name of the parameter set, e.g. 'default'
         self.uid          = uuid() # ID
         self.projectref   = Link(project) # Store pointer for the project, if available
@@ -149,9 +151,6 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
-    # If no programs in the progset, return None
-    if not(len(progset.programs)): return None
-    
     constraints = odict() # Dictionary of all constraints -- WARNING, change back to odict!
     constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
