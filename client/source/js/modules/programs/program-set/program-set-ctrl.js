@@ -10,12 +10,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     var parameters;
 
     function initialize() {
+      $scope.state = {};
       $scope.activeProject = activeProject;
       $scope.$watch('activeProject.project.id', function() {
-        console.log('detected project change', activeProject.project.id);
+        console.log('ProgramSetController project-change', activeProject.project.id);
         reloadActiveProject();
       });
-      $scope.state = {};
       reloadActiveProject();
     }
 

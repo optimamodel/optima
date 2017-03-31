@@ -46,11 +46,6 @@ define([
           url: '/optimization',
           templateUrl: 'js/modules/analysis/optimization.html',
           controller: 'AnalysisOptimizationController',
-          resolve: {
-            activeProject: function (projectApi) {
-              return projectApi.getActiveProject();
-            }
-          }
         });
     });
 
