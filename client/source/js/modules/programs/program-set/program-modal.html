@@ -1,9 +1,10 @@
 <div>
 
   <div class="modal-header">
-
-    <a ng-include="'js/modules/common/icon-cancel.html'" ng-click="$dismiss('cancel')"></a>
-
+    <a class="modal-close"
+       ng-click="$dismiss('cancel')">
+      <i class="fa fa-times"></i>
+    </a>
     <h4 class="modal-title">
       {{ state.isNew ? 'Create' : 'Edit'}} program
     </h4>
@@ -104,7 +105,10 @@
 
         <div class="section grid">
 
-          <a ng-include="'js/modules/common/icon-remove.html'" ng-click="removeParameter($index)"></a>
+          <a style="float: right;"
+             ng-click="removeParameter($index)">
+            <i class="fa fa-times"></i>
+          </a>
 
           Parameter &nbsp;
           <select
@@ -240,7 +244,11 @@
                 class="txbox __inline"/>
           </td>
           <td>
-            <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteAddData(costcovData)"></a>
+            <span
+                style="padding-left: 1em"
+                class="fa fa-trash-o"
+                ng-click="deleteAddData(costcovData)">
+            </span>
           </td>
         </tr>
         <tr>

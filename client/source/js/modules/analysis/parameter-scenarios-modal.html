@@ -93,12 +93,19 @@
           type="number"/>
     </td>
     <td>
-      <a ng-include="'js/modules/common/icon-remove.html'" ng-click="removePar($index)"></a>
+      <span
+          class="fa fa-times"
+          style="float: right"
+          ng-click="removePar($index)">
+      </span>
     </td>
   </tr>
 </table>
 
-<a ng-include="'js/modules/common/icon-cancel.html'"></a>
+<a
+  class="modal-close fa fa-times"
+  ng-click="cancel()">
+</a>
 
 <div style="width: 100%; text-align: left">
   <button
