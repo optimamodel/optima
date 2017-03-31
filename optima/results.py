@@ -364,9 +364,13 @@ class Resultset(object):
                     if self.main[key].ispercentage: output += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                           output += ('%i'+sep) % data[t]
        
-        if hasattr(self, 'budgets'):   thisbudget = self.budgets[ind]
+        if hasattr(self, 'budgets'):
+            if len(self.budgets):      thisbudget = self.budgets[ind]
+            else:                      thisbudget = [] 
         else:                          thisbudget = self.budget
-        if hasattr(self, 'coverages'): thiscoverage = self.coverages[ind]
+        if hasattr(self, 'coverages'):
+            if len(self.coverages):    thiscoverage = self.coverages[ind]
+            else:                      thiscoverage = [] 
         else:                          thiscoverage = self.coverage
         
         if len(thisbudget): # WARNING, does not support multiple years

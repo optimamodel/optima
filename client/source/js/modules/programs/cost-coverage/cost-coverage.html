@@ -107,7 +107,8 @@
             </select>
           </div>
 
-          <div ng-if="vm.state.program"
+          <form name="bigForm"
+               ng-if="vm.state.program"
                style="
                   display: flex;
                   width: 100%;
@@ -140,34 +141,52 @@
                     </div>
                   </td>
                   <td>
-                    <input
-                        name="cost"
-                        ng-model="row[2]"
-                        type="number"
-                        style="width: 50px"
-                        class="txbox __inline"/>
-                    -
-                    <input
-                        name="cost"
-                        ng-model="row[3]"
-                        type="number"
-                        style="width: 50px"
-                        class="txbox __inline"/>
+                    <ng-form name="saturationForm">
+                      <input
+                          ng-class="{ invalid: saturationForm.low.$invalid }"
+                          name="low"
+                          ng-model="row[2]"
+                          min="0"
+                          max="100"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                      -
+                      <input
+                          ng-class="{ invalid: saturationForm.high.$invalid }"
+                          name="high"
+                          ng-model="row[3]"
+                          min="0"
+                          max="100"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                    </ng-form>
                   </td>
                   <td>
-                    <input
-                        name="cost"
-                        ng-model="row[4]"
-                        type="number"
-                        style="width: 50px"
-                        class="txbox __inline"/>
-                    -
-                    <input
-                        name="cost"
-                        ng-model="row[5]"
-                        type="number"
-                        style="width: 50px"
-                        class="txbox __inline"/>
+                    <ng-form name="unitForm">
+                      <input
+                          ng-class="{ invalid: unitForm.low.$invalid }"
+                          name="low"
+                          ng-model="row[4]"
+                          min="0"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                      -
+                      <input
+                          ng-class="{ invalid: unitForm.high.$invalid }"
+                          name="high"
+                          ng-model="row[5]"
+                          min="0"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                    </ng-form>
                   </td>
                   <td>
                     <i class="fa fa-trash-o"
@@ -202,27 +221,35 @@
                         class="txbox __inline"/>
                   </td>
                   <td>
-                    <input
-                        name="cost"
-                        ng-model="costcovYear.cost"
-                        type="number"
-                        style="width: 120px"
-                        class="txbox __inline"/>
+                    <ng-form name="spendingForm">
+                      <input
+                          ng-class="{ invalid: spendingForm.spending.$invalid }"
+                          name="spending"
+                          ng-model="costcovYear.cost"
+                          min="0"
+                          type="number"
+                          style="width: 120px"
+                          class="txbox __inline"/>
+                    </ng-form>
                   </td>
                   <td>
-                    <input
-                        name="coverage"
-                        ng-model="costcovYear.coverage"
-                        style="width: 120px"
-                        type="number"
-                        class="txbox __inline"/>
+                    <ng-form name="coverageForm">
+                      <input
+                          ng-class="{ invalid: coverageForm.coverage.$invalid }"
+                          name="coverage"
+                          ng-model="costcovYear.coverage"
+                          min="0"
+                          style="width: 120px"
+                          type="number"
+                          class="txbox __inline"/>
+                    </ng-form>
                   </td>
                   <td>
-                    <span
-                        style="padding-left: 1em"
-                        class="fa fa-trash-o"
-                        ng-click="vm.deleteCostCovDataYear($index)">
-                    </span>
+                      <span
+                          style="padding-left: 1em"
+                          class="fa fa-trash-o"
+                          ng-click="vm.deleteCostCovDataYear($index)">
+                      </span>
                   </td>
                 </tr>
                 <tr>
@@ -235,12 +262,13 @@
               </table>
 
               <div style="text-align: left">
-                <a
+                <button
                     ng-click="vm.saveProgram()"
                     class="btn __green"
+                    ng-disabled="bigForm.$invalid"
                     style="margin-left: 0em; margin-bottom: 3em">
                   Save & update
-                </a>
+                </button>
               </div>
 
 
@@ -292,7 +320,7 @@
 
             </div>
 
-          </div>
+          </form>
         </div>
 
         <!-- Outcome functions tab window -->
