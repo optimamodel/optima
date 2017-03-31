@@ -1376,8 +1376,6 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
         optim.objectives["which"] = summary["which"]
         progkeys = project.progsets[optim.progsetname].programs.keys() # To ensure the order is correct
         if "constraints" in summary:
-            if optim.constraints is None: # Rare case where it's created in a project with no programs defined
-                optim.constraints = op.defaultconstraints(project=project)
             for conskeys in optim.constraints.keys(): # name, min, max
                 if conskeys in summary["constraints"]:
                     for progkey in progkeys: # e.g. Condom, ART, MSM...
