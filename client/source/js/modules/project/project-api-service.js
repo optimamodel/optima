@@ -45,7 +45,7 @@ define(['./module'], function (module) {
               .then(function(response) {
                 var project = _.findWhere(
                   projectApi.projects, {name: newName});
-                console.log('copyProject', project, projects);
+                console.log('copyProject', project, projectApi.projects);
                 activeProject.setActiveProjectFor(
                   project.name, project.id, userManager.user);
                 deferred.resolve(response);
