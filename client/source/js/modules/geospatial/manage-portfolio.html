@@ -218,10 +218,7 @@
               </span>
             </td>
             <td width="30px">
-              <span
-                  ng-click="deleteProject(project.id)""
-                  class="fa fa-trash">
-              </span>
+              <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteProject(project.id)"></a>
             </td>
           </tr>
           <tr>

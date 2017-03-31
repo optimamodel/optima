@@ -52,41 +52,9 @@
               {{getProgsetName(optimization)}}
             </td>
             <td>
-              <i
-                  ng-click="editOptimization(optimization)"
-                  class="fa fa-pencil"
-                  tp-text="Edit" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>
-              <i
-                  ng-click="copyOptimization(optimization)"
-                  class="fa fa-copy"
-                  tp-text="Copy" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>
-<!--              <i
-                  ng-click="downloadOptimization(optimization)"
-                  class="fa fa-download"
-                  tp-text="Download" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>
-              <i
-                  ng-click="uploadOptimization(optimization)"
-                  class="fa fa-upload"
-                  tp-text="Upload" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>-->
-              <i
-                  ng-click="deleteOptimization(optimization)"
-                  class="fa fa-trash-o"
-                  tp-text="Delete" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>
+              <a ng-include="'js/modules/common/icon-edit.html'" ng-click="editOptimization(optimization)"></a>
+              <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="copyOptimization(optimization)"></a>
+              <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteOptimization(optimization)"></a>
             </td>
           </tr>
 
