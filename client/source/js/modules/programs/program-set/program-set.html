@@ -17,48 +17,10 @@
           style="width: 150px; display: inline">
       </select>
 
-      <i
-          ng-click="addProgramSet()"
-          class="fa fa-file-o"
-          tp-text="New" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-      </i>
-      <i
-          ng-click="copyProgramSet()"
-          class="fa fa-copy"
-          tp-text="Copy" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-      </i>
-      <i
-          ng-click="renameProgramSet()"
-          class="fa fa-pencil"
-          tp-text="Rename" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-      </i>
-      <!--<i-->
-          <!--ng-click="downloadProgramSet()"-->
-          <!--class="fa fa-download"-->
-          <!--tp-text="Download" tooltip tp-class="tooltip"-->
-          <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-          <!--style="margin-left: 0.5em">-->
-      <!--</i>-->
-      <!--<i-->
-          <!--ng-click="uploadProgramSet()"-->
-          <!--class="fa fa-upload"-->
-          <!--tp-text="Upload" tooltip tp-class="tooltip"-->
-          <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-          <!--style="margin-left: 0.5em">-->
-      <!--</i>-->
-      <i
-          ng-click="deleteProgramSet()"
-          class="fa fa-trash-o"
-          tp-text="Delete" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-      </i>
+      <a ng-include="'js/modules/common/icon-new.html'"    ng-click="addProgramSet()"></a>
+      <a ng-include="'js/modules/common/icon-edit.html'"   ng-click="renameProgramSet()"></a>
+      <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="copyProgramSet()"></a>
+      <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteProgramSet()"></a>
     </div>
 
     <h2>Manage programs</h2>

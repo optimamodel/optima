@@ -19,49 +19,12 @@
       <option style="display:none" value="">{ No portfolios found }</option>
     </select>
 
-    <a ng-include="'js/modules/common/icon-edit.html'" ng-click="openModal(scenario, 'edit', $event)"></a>
-    <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="openModal(scenario, 'copy', $event)"></a>
-    <a ng-include="'js/modules/common/icon-delete.html'" ng-click="openModal(scenario, 'delete', $event)"></a>
-
-    <i
-      ng-click="createPortfolio()"
-      class="fa fa-file-o"
-      tp-text="New" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-      style="margin-left: 0.5em">
-    </i>
-
-    <!--<i-->
-      <!--ng-click="renamePortfolio()"-->
-      <!--class="fa fa-pencil"-->
-      <!--tp-text="Rename" tooltip tp-class="tooltip"-->
-      <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-      <!--style="margin-left: 0.5em">-->
-    <!--</i>-->
-
-    <i
-      ng-click="downloadPortfolio()"
-      class="fa fa-download"
-      tp-text="Download" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-      style="margin-left: 0.5em">
-    </i>
-    <i
-      ng-click="uploadPortfolio()"
-      class="fa fa-upload"
-      tp-text="Upload" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-      style="margin-left: 0.5em">
-    </i>
-
-    <i
-      class="fa fa-trash-o"
-      ng-click="deletePortfolio()"
-      tp-text="Delete" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
-    </i>
-
-
+    <a ng-include="'js/modules/common/icon-new.html'"      ng-click="createPortfolio()"></a>
+    <a ng-include="'js/modules/common/icon-edit.html'"     ng-click="renamePortfolio()"></a>
+    <a ng-include="'js/modules/common/icon-copy.html'"     ng-click="copyPortfolio()"></a>
+    <a ng-include="'js/modules/common/icon-download.html'" ng-click="downloadPortfolio()"></a>
+    <a ng-include="'js/modules/common/icon-upload.html'"   ng-click="uploadPortfolio()"></a>
+    <a ng-include="'js/modules/common/icon-delete.html'"   ng-click="deletePortfolio()"></a>
 
     <div style="
         width: 100%;
