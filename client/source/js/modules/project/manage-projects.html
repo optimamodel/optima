@@ -2,7 +2,7 @@
 <div class="rich">
 
   <h2>Create projects
-    <a ng-include="'js/modules/common/icon-help.html'" ng-click="userGuide('optimamodel.com/man/create-projects')"></a>
+
   </h2>
 
   <div style="padding-top:1em" ng-hide="projects.length">
@@ -10,8 +10,11 @@
   </div>
 
   <a class="btn" ui-sref="project.create">Create new project</a> &nbsp;
+  <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('create-new-project')"></a> &nbsp; &nbsp;
   <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp;
+  <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('upload-project-from-prj')"></a> &nbsp; &nbsp;
   <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xlsx</a> &nbsp;
+  <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('upload-project-from-xlsx')"></a> &nbsp; &nbsp;
 
   <br>
   <br>
@@ -19,7 +22,9 @@
 
   <div class="section" ng-show="projects.length">
 
-    <h2>Manage projects</h2>
+    <h2>Manage projects
+      <a ng-include="'js/modules/common/icon-help.html'" ng-click="userGuide('manage-projects')"></a>
+    </h2>
 
     <input type="text"
            class="txbox"
