@@ -19,6 +19,10 @@
       <option style="display:none" value="">{ No portfolios found }</option>
     </select>
 
+    <a ng-include="'js/modules/common/icon-edit.html'" ng-click="openModal(scenario, 'edit', $event)"></a>
+    <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="openModal(scenario, 'copy', $event)"></a>
+    <a ng-include="'js/modules/common/icon-delete.html'" ng-click="openModal(scenario, 'delete', $event)"></a>
+
     <i
       ng-click="createPortfolio()"
       class="fa fa-file-o"
