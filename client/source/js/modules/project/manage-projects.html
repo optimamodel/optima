@@ -2,19 +2,16 @@
 <div class="rich">
 
   <h2>Create projects
-
+    <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('create-new-project')"></a>
   </h2>
 
   <div style="padding-top:1em" ng-hide="projects.length">
     To begin, please create or upload a project:
   </div>
 
-  <a class="btn" ui-sref="project.create">Create new project</a> &nbsp;
-  <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('create-new-project')"></a> &nbsp; &nbsp;
-  <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp;
-  <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('upload-project-from-prj')"></a> &nbsp; &nbsp;
-  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xlsx</a> &nbsp;
-  <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('upload-project-from-xlsx')"></a> &nbsp; &nbsp;
+  <a class="btn" ui-sref="project.create">Create new project</a> &nbsp; &nbsp;
+  <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp; &nbsp;
+  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xlsx</a> &nbsp; &nbsp;
 
   <br>
   <br>
