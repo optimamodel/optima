@@ -590,10 +590,6 @@ def get_unique_name(name):
 def create_project_from_prj(prj_filename=None, user_id=None, project=None):
     """
     Returns the project id of the new project.
-        results.name
-            - 'scenarios' - scenarios results
-            - 'parset-' - calibration/autofit results
-            - 'optim-' - optimization results
     """
 
     print ">> create_project_from_prj", prj_filename, user_id, project

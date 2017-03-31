@@ -129,7 +129,6 @@ define(['./module'], function (module) {
             deferred.reject(response);
           });
       return deferred.promise;
-
     }
 
     function deleteSelectedProjects(projects) {
@@ -217,7 +216,7 @@ define(['./module'], function (module) {
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
       getActiveProject: function () {
-        var projectId = activeProject.getProjectIdForCurrentUser();
+        var projectId = activeProject.project.id;
         if (projectId) {
           return $http.get('/api/project/' + projectId);
         }
@@ -225,15 +224,15 @@ define(['./module'], function (module) {
       downloadSelectedProjects: function(projects) {
         return $http.post(
           '/api/project/portfolio',
-          { projects: projects},
-          {responseType:'arraybuffer'});
+          {projects: projects},
+          {responseType: 'arraybuffer'});
       },
       downloadProjectFile: function(projectId) {
         return $http.get(
-          '/api/project/'+ projectId + '/data',
+          '/api/project/' + projectId + '/data',
           {
             headers: {'Content-type': 'application/octet-stream'},
-            responseType:'blob'
+            responseType: 'blob'
           });
       },
       getAllProjectList: function () {

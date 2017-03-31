@@ -128,7 +128,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.editProjectName = function(project) {
-        var otherNames = _.without(getProjectNames(), project.name);
         modalService.rename(
           function(name) {
             project.name = name;
@@ -143,7 +142,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           "Enter project name",
           project.name,
           "Name already exists",
-          otherNames);
+          _.without(getProjectNames(), project.name));
       };
 
       $scope.downloadProject = function (name, id) {
