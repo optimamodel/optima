@@ -65,49 +65,10 @@
               ng-options="parset.name for parset in parsets"
               style="width: 300px;">
             </select>
-            <i
-              ng-click="addParameterSet()"
-              class="fa fa-file-o"
-              tp-text="New" tooltip tp-class="tooltip"
-              tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-              style="margin-left: 0.5em">
-            </i>
-            <i
-              ng-click="copyParameterSet()"
-              class="fa fa-copy"
-              tp-text="Copy" tooltip tp-class="tooltip"
-              tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-              style="margin-left: 0.5em">
-            </i>
-            <i
-              ng-click="renameParameterSet()"
-              class="fa fa-pencil"
-              tp-text="Rename" tooltip tp-class="tooltip"
-              tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-              style="margin-left: 0.5em">
-            </i>
+            <a ng-include="'js/modules/common/icon-add.html'"    ng-click="addParameterSet()"></a>
+            <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="copyParameterSet()"></a>
             <a ng-include="'js/modules/common/icon-rename.html'" ng-click="renameParameterSet()"></a>
-            <!--<i-->
-            <!--ng-click="downloadParameterSet()"-->
-            <!--class="fa fa-download"-->
-            <!--tp-text="Download" tooltip tp-class="tooltip"-->
-            <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-            <!--style="margin-left: 0.5em">-->
-            <!--</i>-->
-            <!--<i-->
-            <!--ng-click="uploadParameterSet()"-->
-            <!--class="fa fa-upload"-->
-            <!--tp-text="Upload" tooltip tp-class="tooltip"-->
-            <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-            <!--style="margin-left: 0.5em">-->
-            <!--</i>-->
-            <i
-              ng-click="deleteParameterSet()"
-              class="fa fa-trash-o"
-              tp-text="Delete" tooltip tp-class="tooltip"
-              tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-              style="margin-left: 0.5em">
-            </i>
+            <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteParameterSet()"></a>
           </div>
 
         </div>
