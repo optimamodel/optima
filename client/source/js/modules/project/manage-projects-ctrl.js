@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller(
     'ProjectOpenController',
-    function ($scope, $http, activeProject, projects, util, modalService,
+    function ($scope, $http, activeProject, util, modalService,
         userManager, projectApi, $state, $upload,
         $modal, toastr) {
 
@@ -12,28 +12,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
         $scope.activeProject = activeProject;
-        $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
-        loadProjects(projects.data.projects);
-        setActiveProject();
+        $scope.projectApi = projectApi;
       }
 
-      function setActiveProject() {
-        $scope.project = null;
-        _.each($scope.projects, function(project) {
-          if ($scope.activeProjectId === project.id) {
-            $scope.project = project;
-          }
-        });
-      }
-
-      function loadProjects(projects) {
-        $scope.projects = _.map(projects, function(project) {
-          // project.creationTime = Date.parse(project.creationTime);
-          // project.updatedTime = Date.parse(project.updatedTime);
-          // project.dataUploadTime = Date.parse(project.dataUploadTime);
-          return project;
-        });
-        console.log('loadProjects ', $scope.projects);
+      function getProjectNames() {
+        return _.pluck(projectApi.projects, 'name');
       }
 
       $scope.filterByName = function(project) {
@@ -52,30 +35,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.selectAll = function() {
-        _.forEach($scope.projects, function(project) {
+        _.forEach(projectApi.projects, function(project) {
           project.selected = $scope.allSelected;
         });
       };
 
       $scope.deleteSelected = function() {
-        const selectedProjectIds = _.filter($scope.projects, function(project) {
+        const selectedProjectIds = _.filter(projectApi.projects, function(project) {
           return project.selected;
         }).map(function(project) {
           return project.id;
         });
-        projectApi.deleteSelectedProjects(selectedProjectIds)
-          .success(function () {
-            $scope.projects = _.filter($scope.projects, function(project) {
-              return !project.selected;
-            });
-            _.each(selectedProjectIds, function(projectId) {
-              activeProject.ifActiveResetFor(projectId, userManager.user);
-            });
-          });
+        projectApi
+          .deleteSelectedProjects(selectedProjectIds)
       };
 
       $scope.downloadSelected = function() {
-        const selectedProjectsIds = _.filter($scope.projects, function(project) {
+        const selectedProjectsIds = _.filter(projectApi.projects, function(project) {
           return project.selected;
         }).map(function(project) {
           return project.id;
@@ -87,29 +63,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.open = function (name, id) {
-        $scope.activeProjectId = id;
-        setActiveProject();
         activeProject.setActiveProjectFor(name, id, userManager.user);
       };
 
-      function existingProjectName() {
-        return _.pluck($scope.projects, 'name');
-      }
-
-      $scope.copy = function(name, id) {
-        var newName = util.getUniqueName(name, existingProjectName());
+      $scope.copy = function(name, projectId) {
         projectApi
-          .copyProject(id, newName)
-          .success(function(response) {
-            projectApi
-              .getProjectList()
-              .success(function(response) {
-                loadProjects(response.projects);
-                var project = _.findWhere($scope.projects, {name: newName});
-                activeProject.setActiveProjectFor(project.name, project.id, userManager.user);
-                toastr.success('Copied project ');
-                $state.reload();
-              });
+          .copyProject(
+            projectId,
+            util.getUniqueName(name, getProjectNames()))
+          .then(function() {
+            toastr.success('Copied project');
+            $state.reload();
           });
       };
 
@@ -130,53 +94,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.uploadProject = function() {
-        angular
-          .element('<input type="file">')
-          .change(function (event) {
-            var file = event.target.files[0];
-            var name = file.name;
-            name = name.replace(/\.prj$/, "").replace(/\.xlsx$/, "");
-            $upload
-              .upload({
-                url: '/api/project/data',
-                fields: {name: util.getUniqueName(name, existingProjectName())},
-                file: file
-              })
-              .success(function (data, status, headers, config) {
-                var name = data['name'];
-                var projectId = data['id'];
-                toastr.success('Project uploaded');
-                activeProject.setActiveProjectFor(
-                  name, projectId, userManager.user);
-                $state.reload();
-              });
-          })
-          .click();
+        projectApi
+          .uploadProject()
+          .then(function() {
+            toastr.success('Project uploaded');
+          });
       };
 
       $scope.uploadProjectFromSpreadsheet = function() {
-        angular
-          .element('<input type="file">')
-          .change(function (event) {
-            var file = event.target.files[0];
-            var name = file.name;
-            name = name.replace(/\.prj$/, "").replace(/\.xlsx$/, "");
-            $upload
-              .upload({
-                url: '/api/project/data',
-                fields: {name: util.getUniqueName(name, existingProjectName()), xls: true},
-                file: file
-              })
-              .success(function (data, status, headers, config) {
-                var name = data['name'];
-                var projectId = data['id'];
-                activeProject.setActiveProjectFor(
-                  name, projectId, userManager.user);
-                toastr.success('Project created from spreadsheet');
-                $state.reload();
-              });
-          })
-          .click();
+        projectApi
+          .uploadProjectFromSpreadsheet()
+          .then(function() {
+            toastr.success('Project uploaded from spreadsheet');
+          });
       };
 
       $scope.uploadSpreadsheet = function (name, id) {
@@ -198,23 +128,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.editProjectName = function(project) {
-        var otherNames = _.pluck($scope.projects, 'name');
-        otherNames = _.without(otherNames, project.name)
+        var otherNames = _.without(getProjectNames(), project.name);
         modalService.rename(
           function(name) {
             project.name = name;
             projectApi
-              .updateProject(
-                project.id,
-                {
-                  project: project,
-                  isSpreadsheet: false,
-                  isDeleteData: false,
-                })
-              .success(function () {
-                project.name = name;
+              .renameProject(project.id, project)
+              .then(function () {
                 toastr.success('Renamed project');
-                activeProject.setActiveProjectFor(name, project.id, userManager.user);
                 $state.reload();
               });
           },
@@ -226,9 +147,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadProject = function (name, id) {
-        projectApi.downloadProjectFile(id)
-          .success(function (response, status, headers, config) {
-            var blob = new Blob([response], { type: 'application/octet-stream' });
+        projectApi
+          .downloadProjectFile(id)
+          .success(function(data) {
+            var blob = new Blob([data], {type: 'application/octet-stream'});
             saveAs(blob, (name + '.prj'));
           });
       };
@@ -250,28 +172,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
-      /**
-       * Removes the project.
-       */
-      var removeProject = function (name, id, index) {
-        projectApi.deleteProject(id).success(function (response) {
-          $scope.projects = _($scope.projects).filter(function (item) {
-            return item.id != id;
-          });
-          activeProject.ifActiveResetFor(id, userManager.user);
-        });
-      };
-
-      /**
-       * Opens a modal window to ask the user for confirmation to remove the project and
-       * removes the project if the user confirms.
-       * Closes it without further action otherwise.
-       */
       $scope.remove = function ($event, name, id, index) {
         if ($event) { $event.preventDefault(); }
         var message = 'Are you sure you want to permanently remove project "' + name + '"?';
         modalService.confirm(
-          function (){ removeProject(name, id, index); },
+          function() {
+            projectApi
+              .deleteProject(id)
+              .then(function(response) {
+                toastr.success('Deleted project');
+                $state.reload();
+              });
+          },
           function (){  },
           'Yes, remove this project',
           'No',

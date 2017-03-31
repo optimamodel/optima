@@ -9,12 +9,7 @@ define(['angular', 'ui.router', '../common/active-project-service'], function (a
         .state('home', {
           url: '/',
           templateUrl: 'js/modules/project/manage-projects.html',
-          controller: 'ProjectOpenController',
-          resolve: {
-            projects: function (projectApi) {
-              return projectApi.getProjectList();
-            }
-          }
+          controller: 'ProjectOpenController'
         })
         .state('project', {
           url: '/project',

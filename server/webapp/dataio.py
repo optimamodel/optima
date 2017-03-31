@@ -577,7 +577,17 @@ def copy_project(project_id, new_project_name):
     return copy_project_id
 
 
-def create_project_from_prj(prj_filename=None, project_name=None, user_id=None, project=None):
+def get_unique_name(name):
+    other_names = [p['name'] for p in load_project_summaries()]
+    i = 0
+    unique_name = name
+    while unique_name in other_names:
+        i += 1
+        unique_name = "%s (%d)" % (name, i)
+    return unique_name
+
+
+def create_project_from_prj(prj_filename=None, user_id=None, project=None):
     """
     Returns the project id of the new project.
         results.name
@@ -585,24 +595,26 @@ def create_project_from_prj(prj_filename=None, project_name=None, user_id=None, 
             - 'parset-' - calibration/autofit results
             - 'optim-' - optimization results
     """
-    if project is None:
+
+    print ">> create_project_from_prj", prj_filename, user_id, project
+    if prj_filename:
         project = op.loadproj(prj_filename)
-    if project_name is not None:
-        project.name = project_name
+    project.name = get_unique_name(project.name)
     resolve_project(project)
     save_project_as_new(project, user_id)
-    return project.uid
+    return { 'projectId': str(project.uid) }
 
 
-def create_project_from_spreadsheet(prj_filename, project_name, user_id):
+def create_project_from_spreadsheet(prj_filename, user_id):
     """
     Returns the project id of the new project.
     """
+    print ">> create_project_from_spreadsheet", prj_filename, user_id
     project = op.Project(spreadsheet=prj_filename)
-    project.name = project_name
+    project.name = get_unique_name(project.name)
     resolve_project(project)
     save_project_as_new(project, user_id)
-    return project.uid
+    return { 'projectId': str(project.uid) }
 
 
 def download_project(project_id):
