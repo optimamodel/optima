@@ -47,21 +47,9 @@
               <td>{{ scenario.scenario_type }}</td>
 
               <td style="white-space: nowrap; width:200px; max-width:200px">
-                <i class="fa fa-pencil"
-                   tp-text="Edit" tooltip tp-class="tooltip"
-                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                   ng-click="openModal(scenario, 'edit', $event)">
-                </i>
-                <i class="fa fa-copy"
-                   tp-text="Copy" tooltip tp-class="tooltip"
-                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                   ng-click="openModal(scenario, 'copy', $event)">
-                </i>
-                <i class="fa fa-trash-o"
-                   tp-text="Delete" tooltip tp-class="tooltip"
-                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                   ng-click="openModal(scenario, 'delete', $event)">
-                </i>
+                <a ng-include="'js/modules/common/icon-edit.html'" ng-click="openModal(scenario, 'edit', $event)"></a>
+                <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="openModal(scenario, 'copy', $event)"></a>
+                <a ng-include="'js/modules/common/icon-delete.html'" ng-click="openModal(scenario, 'delete', $event)"></a>
               </td>
             </tr>
           </table>

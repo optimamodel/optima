@@ -1,5 +1,5 @@
 
-<a class="modal-close fa fa-times" ng-click="cancel()"></a>
+<a ng-include="'js/modules/common/icon-cancel.html'" ng-click="cancel()"></a>
 
 <div class="modal-header">
   CREATE/EDIT A {{scenario.scenario_type}} PROGRAM SCENARIO
@@ -104,11 +104,7 @@
           style="width: 200px;"
           ng-model="program.value"
           type="number"/>
-      <i
-        class="fa fa-times"
-        style="padding-left: 1em"
-        ng-click="removeProgram(yearEntry, $index)">
-      </i>
+      <a ng-include="'js/modules/common/icon-remove.html'" ng-click="removeProgram(yearEntry, $index)"></a>
     </div>
 
     <button
@@ -122,11 +118,7 @@
   </td>
 
   <td valign="top">
-    <div
-      class="fa fa-times"
-      style="float: right"
-      ng-click="removeYearEntry($index)">
-    </div>
+    <a ng-include="'js/modules/common/icon-remove.html'" ng-click="removeYearEntry($index)"></a>
   </td>
 
 </table>
