@@ -122,7 +122,11 @@
   </td>
 
   <td valign="top">
-    <a ng-include="'js/modules/common/icon-remove.html'" ng-click="removeYearEntry($index)"></a>
+    <div
+      class="fa fa-times"
+      style="float: right"
+      ng-click="removeYearEntry($index)">
+    </div>
   </td>
 
 </table>
