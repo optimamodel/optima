@@ -8,11 +8,9 @@ import redis
 from flask import Flask, redirect, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from flask_cors import CORS, cross_origin #analysis:ignore -- from https://flask-cors.readthedocs.io/en/latest/
 
 # Create Flask app that does everything
 app = Flask(__name__)
-CORS(app) # Allow cross-domain calls for the help buttons
 
 # Try to load the config file -- this often fails, so predefine a warning message
 errormsg = 'Could not load Optima configuration file\n'
