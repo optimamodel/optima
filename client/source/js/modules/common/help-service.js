@@ -7,7 +7,7 @@ define(['angular' ], function (angular) {
 
       function openHelp(helpURL) {
         return $modal.open({
-          templateUrl: 'js/modules/programs/program-set/program-modal.html',
+          templateUrl: 'js/modules/common/help-modal.html',
           size: 'lg'
         });
       }
