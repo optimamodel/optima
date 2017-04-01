@@ -186,7 +186,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Return
     x = reshape(x,origshape) # Parameters
     fvals = fvals[:count+1] # Function evaluations
-    if verbose>=2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count)+multisigfig([fval[0], fval[-1], fval[-1]/fval[0]])))
+    if verbose>=2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count)+multisigfig([fvals[0], fvals[-1], fvals[-1]/fvals[0]])))
     if fulloutput: 
         details = dict()
         details['exitreason'] = exitreason
