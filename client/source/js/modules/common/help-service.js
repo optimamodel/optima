@@ -5,16 +5,11 @@ define(['angular' ], function (angular) {
 
     .factory('helpService', ['$modal', function($modal) {
 
-      //function openHelp(helpURL) {
-      //  return $modal.open({
-      //    templateUrl: 'js/modules/common/help-modal.html',
-      //    size: 'lg'
-      //  });
-      //}
-
       function openHelp(helpURL) {
         newwindow = window.open(helpURL,'name','height=80%,width=80%');
-        if (window.focus) {newwindow.focus()}
+        if (window.focus) {
+          newwindow.focus()
+        }
         return false;
       }
 
