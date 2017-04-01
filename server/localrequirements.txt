@@ -4,6 +4,7 @@ Flask-OpenID
 Flask-RESTful
 flask-restful-swagger
 Flask-SQLAlchemy
+flask-cors
 SQLAlchemy
 Tempita
 decorator
