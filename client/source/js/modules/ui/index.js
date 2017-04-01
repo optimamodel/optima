@@ -11,7 +11,6 @@ define([
       .module(
         'app.ui', [
           'app.active-project',
-          'app.open-help',
           'app.ui.modal',
           'app.ui.menu'
         ])
