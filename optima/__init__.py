@@ -178,7 +178,7 @@ import portfolio as _portfolio; del portfolio
 
 # Finally, load defaults
 from .defaults import defaultproject, defaultprogset, defaultprograms, demo
-import default as _defaults; del defaults
+import defaults as _defaults; del defaults
 
 
 #####################################################################################################################
