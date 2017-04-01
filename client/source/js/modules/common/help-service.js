@@ -6,7 +6,10 @@ define(['angular' ], function (angular) {
     .factory('helpService', ['$modal', function($modal) {
 
       function openHelp(helpURL) {
-        newwindow = window.open(helpURL,'name','height=80%,width=80%');
+        var fullURL = 'http://optimamodel.com/man/'+helpURL;
+        var h = screen.height*0.8;
+        var w = screen.width*0.5;
+        newwindow = window.open(fullURL,'Reference manual','width='+w +',height=' +h);
         if (window.focus) {
           newwindow.focus()
         }

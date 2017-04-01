@@ -2,7 +2,7 @@
 <div class="rich">
 
   <h2>Create projects
-    <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('https://docs.google.com/document/d/18hGjBb1GO8cR_sZRTjMqBvBb0Fkmsz-DwzslstaqG-Y/edit?usp=sharing')"></a>
+    <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('create-projects')"></a>
   </h2>
 
   <div style="padding-top:1em" ng-hide="projects.length">
@@ -20,7 +20,7 @@
   <div class="section" ng-show="projects.length">
 
     <h2>Manage projects
-      <a ng-include="'js/modules/common/icon-help.html'" ng-click="userGuide('manage-projects')"></a>
+      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('manage-projects')"></a>
     </h2>
 
     <input type="text"
