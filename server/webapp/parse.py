@@ -61,7 +61,7 @@ def normalize_obj(obj):
     if isinstance(obj, dict):
         return {str(k): normalize_obj(v) for k, v in obj.items()}
 
-    if isinstance(obj, op.utils.odict):
+    if isinstance(obj, op.odict):
         result = OrderedDict()
         for k, v in obj.items():
             result[str(k)] = normalize_obj(v)
