@@ -84,7 +84,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         errormsg = 'At least one value in the vector of starting points is NaN:\n%s' % x
         raise Exception(errormsg)
     if label is None: label = ''
-    if stalliters is None: stalliters = 5*nparams # By default, try five times per parameter on average
+    if stalliters is None: stalliters = 10*nparams # By default, try 10 times per parameter on average
     stalliters = int(stalliters)
     maxiters = int(maxiters)
     
@@ -179,8 +179,14 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     x = reshape(x,origshape) # Parameters
     fval = fulloutputfval[:count] # Function evaluations
     if verbose>=2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count)+multisigfig([fval[0], fval[-1], fval[-1]/fval[0]])))
-    if fulloutput: return (x, fval, exitreason)
-    else:          return x
+    if fulloutput: 
+        details = dict()
+        details['exitreason'] = exitreason
+        details['probabilities'] = p
+        details['stepsizes'] = s1
+        return (x, fval, details)
+    else:          
+        return x
 
 
 
