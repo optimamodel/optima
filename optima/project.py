@@ -385,6 +385,7 @@ class Project(object):
             saveobj(filename, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
+            tmpproject.restorelinks() # Ensure links have been refreshed
             tmpproject.cleanresults() # Get rid of all results
             saveobj(filename, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
