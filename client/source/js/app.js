@@ -47,7 +47,7 @@ define([
         'app.admin',
         'app.common.form-input-validate',
         'app.common.global-poller',
-        'app.open-help',
+        'app.common.help-service',
         'app.charts',
         'app.local-storage',
         'app.model',

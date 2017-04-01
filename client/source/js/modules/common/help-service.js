@@ -16,13 +16,17 @@
 define(['angular'], function (angular) {
   'use strict';
 
-  return angular.module('app.open-help', [])
-    .factory('openHelpFactory', ['$modal', 'helpURL',
+  return angular.module('app.common.help-service', [])
+    .factory('helpService', ['$modal', 'helpURL',
       function ($modal, helpURL) {
-        return $modal.open({
-          templateUrl: 'js/modules/programs/program-set/program-modal.html',
-          size: 'lg'
-        });
+
+        function openHelp(helpURL) {
+
+          return $modal.open({
+            templateUrl: 'js/modules/programs/program-set/program-modal.html',
+            size: 'lg'
+          });
+        }
       }
     ])
 });

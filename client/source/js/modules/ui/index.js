@@ -3,7 +3,6 @@ define([
     './menu-directive',
     './modal-service',
     '../common/active-project-service',
-    '../common/help-service',
     '../user/user-manager-service'
   ],
   function (angular) {
@@ -18,12 +17,12 @@ define([
         ])
       .controller(
         'MainCtrl',
-        function ($scope, $state, activeProject, openHelpFactory, userManager) {
+        function ($scope, $state, activeProject, helpService, userManager) {
           $scope.user = userManager.user;
           $scope.state = $state;
           $scope.userLogged = function () { return userManager.isLoggedIn; };
           $scope.activeProject = activeProject;
-          $scope.openHelp = openHelpFactory;
+          $scope.openHelp = helpService.openHelp;
          });
     return module;
   }
