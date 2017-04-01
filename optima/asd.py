@@ -49,38 +49,41 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     Version: 2017mar08 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
-    from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, hstack, floor, flatnonzero, isnan, inf
+    from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
     from numpy.random import random, seed
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time
     if randseed is not None: seed(randseed) # Don't reset it if not supplied
     
-    def consistentshape(userinput, keeporig=False):
+    def consistentshape(userinput, origshape=False):
         """
         Make sure inputs have the right shape and data type.
         """
-        origshape = shape(userinput)
         output = reshape(array(userinput,dtype='float'),-1)
-        if keeporig: return output, origshape
-        else:        return output
+        if origshape: return output, shape(userinput)
+        else:         return output
     
-    ## Handle inputs and set defaults
+    # Handle inputs and set defaults
     if maxtime  is None: maxtime = 3600
     if maxiters is None: maxiters = 1000
-    x, origshape = consistentshape(x, keeporig=True) # Turn it into a vector but keep the original shape (not necessarily class, though)
+    maxrangeiters = 1000 # Number of times to try generating a new parameter
+    x, origshape = consistentshape(x, origshape=True) # Turn it into a vector but keep the original shape (not necessarily class, though)
     nparams = len(x) # Number of parameters
-    p = ones(2*nparams) if pinitial is None else consistentshape(pinitial)  # Set initial parameter selection probabilities -- uniform by default
+    
+    # Set initial parameter selection probabilities -- uniform by default
+    if pinitial is None: probabilities = ones(2*nparams)
+    else:                probabilities = consistentshape(pinitial)
     
     # Handle step sizes
-    if absinitial is None: s1 = abs(stepsize*x),0 if sinitial is None else consistentshape([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
-    else:                  s1 = consistentshape([abs(i) for i in absinitial])
-    s1 = hstack((s1,s1)) # need to duplicate since two for each parameter
+    if sinitial is None: 
+        stepsizes = abs(stepsize*x) 
+        stepsizes = concatenate((stepsizes,stepsizes)) # need to duplicate since two for each parameter
+    else:
+        stepsizes = consistentshape(sinitial)
     
     # Handle x limits
-    if xmin is None: xmin = zeros(nparams)-inf
-    else:            xmin,tmp = consistentshape(xmin)
-    if xmax is None: xmax = zeros(nparams)+inf
-    else:            xmax,tmp = consistentshape(xmax)
+    xmin = zeros(nparams)-inf if xmin is None else consistentshape(xmin)
+    xmax = zeros(nparams)+inf if xmax is None else consistentshape(xmax)
     
     # Final input checking
     if sum(isnan(x)): 
@@ -91,40 +94,44 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     stalliters = int(stalliters)
     maxiters = int(maxiters)
     
-    ## Initialization
-    s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
+    # Initialization
+    if all(stepsizes==0): stepsizes += stepsize # Handle the case where all step sizes are 0
+    if any(stepsizes==0): stepsizes[stepsizes==0] = mean(stepsizes[stepsizes!=0]) # Replace step sizes of zeros with the mean of non-zero entries
     fval = function(x, **args) # Calculate initial value of the objective function
     fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
-    count = 0 # Keep track of how many iterations have occurred
+    xorig = deepcopy(x) # Keep the original x, just in case
+    
+    # Initialize history
     abserrorhistory = zeros(stalliters) # Store previous error changes
     relerrorhistory = zeros(stalliters) # Store previous error changes
-    fulloutputfval = zeros(maxiters) # Store all objective function values
-    fulloutputx = zeros((maxiters, nparams)) # Store all parameters
+    fvals = zeros(maxiters+1) # Store all objective function values
+    allsteps = zeros((maxiters+1, nparams)) # Store all parameters
+    fvals[0] = fvalorig # Store initial function output
+    allsteps[0,:] = xorig # Store initial input vector
     
-    ## Loop
-    start = time()
+    # Loop
+    count = 0 # Keep track of how many iterations have occurred
+    start = time() # Keep track of when we begin looping
     offset = ' '*4 # Offset the print statements
-    maxrangeiters = 1000 # Number of times to try generating a new parameter
     exitreason = 'Unknown exit reason' # Catch everything else
     while True:
-        if verbose==1: print(offset+label+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval)) # For more verbose, use other print statement below
+        count += 1 # Increment the count
+        if verbose==1: print(offset+label+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count, time()-start, fval)) # For more verbose, use other print statement below
         
         # Calculate next parameters
-        count += 1 # On each iteration there are two function evaluations
-        p = p/sum(p) # Normalize probabilities
-        cumprobs = cumsum(p) # Calculate the cumulative distribution
+        probabilities = probabilities/sum(probabilities) # Normalize probabilities
+        cumprobs = cumsum(probabilities) # Calculate the cumulative distribution
         inrange = False
-        for r in range(maxrangeiters):
+        for r in range(maxrangeiters): # Try to find parameters within range
             choice = flatnonzero(cumprobs > random())[0] # Choose a parameter and upper/lower at random
             par = mod(choice,nparams) # Which parameter was chosen
             pm = floor((choice)/nparams) # Plus or minus
-            newval = x[par] + ((-1)**pm)*s1[choice] # Calculate the new parameter set
-            if newval>=xmin[par] and newval<=xmax[par]:
+            newval = x[par] + ((-1)**pm)*stepsizes[choice] # Calculate the new vector
+            if newval>=xmin[par] and newval<=xmax[par]: # Make sure it's in range
                 inrange = True
                 break
             else:
-                p[choice] = p[choice]/pdec # decrease probability of picking this parameter again
-                s1[choice] = s1[choice]/sdec # decrease size of step for next time
+                stepsizes[choice] = stepsizes[choice]/sdec # Decrease size of step for next time
         
         if not inrange:
             if verbose>=2: print('======== Can\'t find parameters within range after %i tries, terminating ========' % maxrangeiters)
@@ -136,30 +143,28 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
         abserrorhistory[mod(count,stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[mod(count,stalliters)] = max(0, fval/float(fvalnew)-1.0) # Keep track of improvements in the error  
-        if verbose>=3:
-            print(offset+'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, choice, par, pm, x[par], xnew[par], inrange))
+        if verbose>=3: print(offset+'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, choice, par, pm, x[par], xnew[par], inrange))
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
         if fvalnew < fvalold: # New parameter set is better than previous one
-            p[choice] = p[choice]*pinc # Increase probability of picking this parameter again
-            s1[choice] = s1[choice]*sinc # Increase size of step for next time
+            probabilities[choice] = probabilities[choice]*pinc # Increase probability of picking this parameter again
+            stepsizes[choice] = stepsizes[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
             flag = '++' # Marks an improvement
         elif fvalnew >= fvalold: # New parameter set is the same or worse than the previous one
-            p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
-            s1[choice] = s1[choice]/sdec # Decrease size of step for next time
+            probabilities[choice] = probabilities[choice]/pdec # Decrease probability of picking this parameter again
+            stepsizes[choice] = stepsizes[choice]/sdec # Decrease size of step for next time
             flag = '--' # Marks no change
         else:
             exitreason = 'Objective function returned NaN'
             break
-        if verbose>=2: 
-            print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
+        if verbose>=2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
         
         # Store output information
-        fulloutputfval[count-1] = fval # Store objective function evaluations
-        fulloutputx[count-1,:] = x # Store parameters
+        fvals[count] = fval # Store objective function evaluations
+        allsteps[count,:] = x # Store parameters
         
         # Stopping criteria
         if count >= maxiters: # Stop if the iteration limit is exceeded
@@ -180,14 +185,15 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Return
     x = reshape(x,origshape) # Parameters
-    fval = fulloutputfval[:count] # Function evaluations
+    fvals = fvals[:count+1] # Function evaluations
     if verbose>=2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count)+multisigfig([fval[0], fval[-1], fval[-1]/fval[0]])))
     if fulloutput: 
         details = dict()
         details['exitreason'] = exitreason
-        details['probabilities'] = p
-        details['stepsizes'] = s1
-        return (x, fval, details)
+        details['probabilities'] = probabilities
+        details['stepsizes'] = stepsizes
+        details['allsteps'] = allsteps[:count+1,:]
+        return (x, fvals, details)
     else:          
         return x
 
