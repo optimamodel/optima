@@ -18,12 +18,12 @@ define([
         ])
       .controller(
         'MainCtrl',
-        function ($scope, $state, activeProject, helpModalController, userManager) {
+        function ($scope, $state, activeProject, openHelpFactory, userManager) {
           $scope.user = userManager.user;
           $scope.state = $state;
           $scope.userLogged = function () { return userManager.isLoggedIn; };
           $scope.activeProject = activeProject;
-          $scope.openHelp = helpModalController.openHelp;
+          $scope.openHelp = openHelpFactory;
          });
     return module;
   }
