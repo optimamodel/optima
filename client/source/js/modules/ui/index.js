@@ -21,7 +21,7 @@ define([
           $scope.state = $state;
           $scope.userLogged = function () { return userManager.isLoggedIn; };
           $scope.activeProject = activeProject;
-          $scope.openHelp = tmpHelpService;
+          $scope.openHelp = tmpHelpService.openHelp;
          });
     return module;
   }
