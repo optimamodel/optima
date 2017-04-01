@@ -7,7 +7,9 @@
 
     <div class="section">
       <div class="6">
-        <h1>Project details</h1>
+        <h1>Project details
+          <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('create-new-project')"></a>
+        </h1>
         <b>Project name</b>
         <input class="txbox" type="text" ng-pattern="/^[\x20-\x7E]*$/" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
         <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
@@ -33,7 +35,9 @@
 
     <div class="section">
       <div class="6">
-        <h1>Manage populations</h1>
+        <h1>Manage populations
+          <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('manage-populations')"></a>
+        </h1>
         <div class="error-hint" ng-show="invalidPopulationSelected()"> Please select at least one population. </div>
 
         <table class="section table table-bordered">
@@ -74,6 +78,7 @@
 
     <div class="section">
       <button class="btn" ng-disabled="invalid()" type="submit">{{ submitButtonText }}</button>
+      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('create-data-spreadsheet')"></a>
     </div>
 
     <input type="hidden" id="edit_params" name="edit_params" value = "{{ editParams }}">
