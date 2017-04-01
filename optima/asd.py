@@ -12,9 +12,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     
     If fulloutput is False, then asd() returns x only. If it is true, then it returns
     a tuple with the following items:
-        x          -- The parameter set that minimizes the objective function
-        fval       -- The value of the objective function at each iteration (use fval[-1] for final)
-        exitreason -- The reason the algorithm terminated
+        x       -- The parameter set that minimizes the objective function
+        fval    -- The value of the objective function at each iteration (use fval[-1] for final)
+        details -- A dictionary with additional output: exitreason, why the algorithm terminated;
+                   probabilities, the probability of each step; and stepsizes, the size of each
+                   step for each parameter
     
     asd() has the following options that can be set using keyword arguments. Their
     names and default values are as follows:
@@ -53,24 +55,25 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     from time import time
     if randseed is not None: seed(randseed) # Don't reset it if not supplied
     
-    def consistentshape(userinput):
+    def consistentshape(userinput, keeporig=False):
         """
         Make sure inputs have the right shape and data type.
         """
         origshape = shape(userinput)
         output = reshape(array(userinput,dtype='float'),-1)
-        return output, origshape
+        if keeporig: return output, origshape
+        else:        return output
     
     ## Handle inputs and set defaults
     if maxtime  is None: maxtime = 3600
     if maxiters is None: maxiters = 1000
-    x, origshape = consistentshape(x) # Turn it into a vector but keep the original shape (not necessarily class, though)
+    x, origshape = consistentshape(x, keeporig=True) # Turn it into a vector but keep the original shape (not necessarily class, though)
     nparams = len(x) # Number of parameters
-    p,tmp = ones(2*nparams),0 if pinitial is None else consistentshape(pinitial)  # Set initial parameter selection probabilities -- uniform by default
+    p = ones(2*nparams) if pinitial is None else consistentshape(pinitial)  # Set initial parameter selection probabilities -- uniform by default
     
     # Handle step sizes
-    if absinitial is None: s1,tmp = abs(stepsize*x),0 if sinitial is None else consistentshape([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
-    else:                  s1,tmp = consistentshape([abs(i) for i in absinitial])
+    if absinitial is None: s1 = abs(stepsize*x),0 if sinitial is None else consistentshape([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
+    else:                  s1 = consistentshape([abs(i) for i in absinitial])
     s1 = hstack((s1,s1)) # need to duplicate since two for each parameter
     
     # Handle x limits
