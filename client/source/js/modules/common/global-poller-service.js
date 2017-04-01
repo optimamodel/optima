@@ -10,7 +10,7 @@ define(['angular' ], function (angular) {
 
   return angular.module('app.common.global-poller', [])
 
-    .factory('globalPoller', ['$http', '$timeout', function($http, $timeout) {
+    .factory('globalPollster', ['$http', '$timeout', function($http, $timeout) {
 
       var polls = {};
 
