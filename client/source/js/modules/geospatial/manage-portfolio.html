@@ -2,7 +2,9 @@
   <div class="section">
 
 
-    <h2>Manage portfolios</h2>
+    <h2>Manage portfolios
+      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('portfolios')"></a>
+    </h2>
 
     <div ng-if="portfolios.length == 0" style="font-weight: bold; color: red">
       Please create a portfolio first<br><br>
@@ -34,7 +36,9 @@
     </div>
 
 
-    <h2>Create regions (optional)</h2>
+    <h2>Create regions
+      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('create-regions')"></a>
+    </h2>
 
     <button
       class="btn __m __inline"
@@ -130,7 +134,9 @@
         margin-bottom: 30px">
     </div>
 
-    <h2>Geospatial analysis</h2>
+    <h2>Geospatial analysis
+      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('running-geo-analyses')"></a>
+    </h2>
 
     <div
       style="
