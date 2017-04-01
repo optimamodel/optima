@@ -69,6 +69,7 @@
             <a ng-include="'js/modules/common/icon-edit.html'"   ng-click="renameParameterSet()"></a>
             <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="copyParameterSet()"></a>
             <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteParameterSet()"></a>
+            &nbsp; &nbsp; <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('parameter-sets')"></a>
           </div>
 
         </div>
@@ -112,7 +113,7 @@
             <button
               class="btn"
               ng-click="startAutoCalibration()"
-              ng-disabled="checkNotRunnable()">Automatic calibration</button>
+              ng-disabled="checkNotRunnable()">Automatic fitting</button>
             &nbsp; for &nbsp;
             <select ng-init="state.maxtime=10" ng-model="state.maxtime">
               <option value="10">10 seconds</option>
@@ -120,6 +121,7 @@
               <option value="60">1 minute</option>
               <option value="300">5 minutes</option>
             </select>
+            &nbsp; &nbsp; <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('calibratoin-panel')"></a>
           </div>
           <br>
           <div
