@@ -175,7 +175,7 @@ if 'reconcilepars' in tests:
     ps = P.parsets[0]
 
     before = op.dcp(P.progsets[0])
-    P.progsets[0].reconcile(parset=ps, year=2016, maxtime=10, uselimits=True)
+    P.progsets[0].reconcile(parset=ps, year=2016, maxtime=3, uselimits=True)
     after = P.progsets[0]
     print('\n\nBEFORE:')
     before.compareoutcomes(parset=ps, year=2016, doprint=True)
