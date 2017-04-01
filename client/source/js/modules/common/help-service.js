@@ -13,7 +13,7 @@ define(['angular' ], function (angular) {
       //}
 
       function openHelp(helpURL) {
-        newwindow = window.open('https://docs.google.com/document/d/18hGjBb1GO8cR_sZRTjMqBvBb0Fkmsz-DwzslstaqG-Y/edit?usp=sharing','name','height=200,width=150');
+        newwindow = window.open(helpURL,'name','height=80%,width=80%');
         if (window.focus) {newwindow.focus()}
         return false;
       }
