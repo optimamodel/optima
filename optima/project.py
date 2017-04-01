@@ -601,6 +601,21 @@ class Project(object):
         self.addresult(result=multires)
         self.modified = today()
         return multires
+    
+    
+    def multioptimize(self, name=None, optim=None, optimname=None, objectives=None, constraints=None, parsetname=None, progsetname=None, nchains=4, blockiters=10, batch=True, *args, **kwargs):
+        
+        # Check inputs
+        if optim is None:
+            if optimname is not None: # Get the optimization by name if supplied
+                optim = self.optims[optimname] 
+            else: # If neither an optim nor an optimname is supplied, create one
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+
+        
+        multires = optim.optimize(nchains=nchains, blockiters=blockiters, batch=batch, *args, **kwargs)
+        
+        return multires
 
 
 
