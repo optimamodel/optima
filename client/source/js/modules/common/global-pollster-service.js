@@ -8,11 +8,19 @@ define(['angular' ], function (angular) {
    * sends the response to `callback`
    */
 
-  return angular.module('app.common.global-poller', [])
+  return angular.module('app.common.global-pollster', [])
 
-    .factory('globalPoller', ['$http', '$timeout', function($http, $timeout) {
+    .factory('tmpHelpService', ['$http', '$modal', '$timeout', function($http, $modal, $timeout) {
 
       var polls = {};
+
+      function openHelp(helpURL) {
+
+        return $modal.open({
+          templateUrl: 'js/modules/programs/program-set/program-modal.html',
+          size: 'lg'
+        });
+      }
 
       function getPoll(id) {
         if (!(id in polls)) {
@@ -78,6 +86,7 @@ define(['angular' ], function (angular) {
       }
 
       return {
+        openHelp: openHelp,
         startPoll: startPoll,
         stopPolls: stopPolls,
         killJob: killJob
