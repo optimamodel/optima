@@ -8,32 +8,34 @@ import optima as op
 or
 from optima import *
 
+This file has an unusual structure, since it builds up Optima as it goes along,
+so within each module, you can use "from optima import <...>". In addition,
+it imports the modules themselves starting with an underscore, then deletes the
+original (so, e.g. optima.project is imported as optima._project, and optima.project
+is deleted since it's confusing when "project" is used as an instance of a project).
+
 
 Now, the legal part:
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-Version: 2016nov03 by cliffk
+Version: 2017apr01 by cliffk
 """
 
 
-
-
-
-
-## Specify the version, for the purposes of figuring out which version was used to create a project
+# Specify the version, for the purposes of figuring out which version was used to create a project
 from .version import version
 
 # Print the license
@@ -48,33 +50,31 @@ _failed = []
 ### Load helper functions/modules
 #####################################################################################################################
 
-## General modules
+# General modules
 from uuid import uuid4 as uuid
 from datetime import datetime; today = datetime.today
 from copy import deepcopy as dcp
 
-## Utilities
-from . import utils # Load high-level module as well
+# Utilities
 from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, percentcomplete, perturb, printarr, printdata, printv, promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
+import utils as _utils; del utils
 
-## Optimization algorithm
-from . import asd as _asd
+# Optimization algorithm
 from .asd import asd
 
-## Interpolation
-from . import pchip as _pchip
+# Interpolation
 from .pchip import pchip, plotpchip
 
-## Color definitions
-from . import colortools # Load high-level module as well
+# Color definitions
 from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor
+import colortools as _colortools; del colortools
 
 
 #####################################################################################################################
 ### Define debugging and exception functions/classes
 #####################################################################################################################
 
-## Optima Path
+# Optima Path
 def optimapath(subdir=None, trailingsep=True):
     ''' Returns the parent path of the Optima module. If subdir is not None, include it in the path '''
     import os
@@ -85,7 +85,7 @@ def optimapath(subdir=None, trailingsep=True):
         path = os.path.join(*tojoin) # e.g. ['/home/optima', 'tests', '']
     return path
 
-## Debugging information
+# Debugging information
 def debuginfo(dooutput=False):
     output = '\nOptima debugging info:\n'
     output += '   Version: %s\n' % version
@@ -110,95 +110,90 @@ class OptimaException(Exception):
 ### Load Optima functions and classes
 #####################################################################################################################
 
-## Data I/O
-from . import dataio
-from .dataio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+# File I/O
+from .fileio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+import fileio as _fileio; del fileio
 
-## Project settings
-from . import settings as _settings # Inter-project definitions, e.g. health states
+# Project settings
 from .settings import Settings, convertlimits, gettvecdt
+import settings as _settings; del settings
 
-## Generate results -- import first because parameters use results
-from . import results as _results
+# Generate results -- import first because parameters use results
 from .results import Result, Resultset, Multiresultset, BOC, getresults
+import results as _results; del results
 
-## Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
-from . import parameters as _parameters
+# Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
 from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset, makepars, makesimpars, applylimits, comparepars, comparesimpars, sanitycheck # Parameter and Parameterset classes
+import parameters as _parameters; del parameters
 
-## Create a blank spreadsheet
-try:
-    from . import makespreadsheet as _makespreadsheet
-    from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
+# Create a blank spreadsheet
+try: from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
 except Exception as E: _failed.append('makespreadsheet: %s' % E.__repr__())
 
-## Load a completed a spreadsheet
-from . import loadspreadsheet as _loadspreadsheet
+# Load a completed a spreadsheet
 from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 
-## Define and run the model
-from . import model as _model
+# Define and run the model
 from .model import model, runmodel
 
-## Define the programs and cost functions
-from . import programs as _programs
+# Define the programs and cost functions
 from .programs import Program, Programset
+import programs as _programs; del programs
 
-## Automatic calibration and sensitivity
-from . import calibration as _calibration
-from .calibration import autofit 
+# Automatic calibration and sensitivity
+from .calibration import autofit
+import calibration as _calibration; del calibration
 
-## Scenario analyses
-from . import scenarios as _scenarios 
+# Scenario analyses
 from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios
+import scenarios as _scenarios; del scenarios
 
-## Optimization analyses
-from . import optimization as _optimization
+# Optimization analyses
 from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, outcomecalc
+import optimization as _optimization; del optimization
 
-## Plotting functions
-from . import plotting as _plotting 
+# Plotting functions
 from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, saveplots, reanimateplots, sanitizeresults
-
+import plotting as _plotting; del plotting
 
 #####################################################################################################################
 ### Load high-level modules that depend on everything else
 #####################################################################################################################
 
-## Import the Project class that ties everything together
-import project as _project
+# Load the code to load projects and portfolios (before defining them, oddly!)
+from .loadtools import migrate, loadproj, loadportfolio, optimaversion
+import loadtools as _loadtools; del loadtools
+
+# Load batch functions (has to load projects, so has to come after migration)
+from .batchtools import batchautofit, batchBOC, reoptimizeprojects
+import batchtools as _batchtools; del batchtools
+
+# Import the Project class that ties everything together
 from .project import Project
+import project as _project; del project
+
+# Load the portfolio class (container of Projects), relies on batch functions, hence is here
+from .portfolio import Portfolio, makegeospreadsheet, makegeoprojects
+import portfolio as _portfolio; del portfolio
 
 # Finally, load defaults
-from . import defaults
 from .defaults import defaultproject, defaultprogset, defaultprograms, demo
-
-# And really finally, load the code to load everything else
-import migrate as _migrate
-from .migrate import migrate, loadproj, loadportfolio, optimaversion
-
-# And really really finally, load batch functions (has to load projects, so has to come after migration)
-from . import batchtools
-from .batchtools import batchautofit, batchBOC, reoptimizeprojects
-
-# Really really finally, load the portfolio class (container of Projects), relies on batch functions, hence is here
-import portfolio as _portfolio
-from .portfolio import Portfolio, makegeospreadsheet, makegeoprojects
+import default as _defaults; del defaults
 
 
 #####################################################################################################################
 ### Load optional Python GUI
 #####################################################################################################################
 
-## Load high level GUI module
+# Load high level GUI module
 try: 
-    from . import gui
     from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, loadplot, geogui
+    import gui as _gui; del gui
 except Exception as E: _failed.append('gui: %s' % E.__repr__())
 
 try: 
-    from . import webserver as _webserver
     from .webserver import browser
+    import webserver as _webserver; del webserver
 except Exception as E: _failed.append('webserver: %s' % E.__repr__())
 
 
