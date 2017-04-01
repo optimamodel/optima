@@ -81,26 +81,31 @@
               ng-model="state.end"
               ng-options="year for year in years"></select>
 
+            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('viewing-scenarios')"></a>
+
           </div>
 
           <div style="float: right">
+            <button
+              class="btn"
+              ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
+              Add parameter scenario
+            </button>
+            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('parameter-scenarios')"></a> &nbsp; &nbsp;
             <button
                 class="btn"
                 ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
                 ng-disabled="!anyOptimizable">
               Add budget scenario
             </button>
+            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('budget-scenarios')"></a> &nbsp; &nbsp;
             <button
                 class="btn"
                 ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
                 ng-disabled="!anyOptimizable">
               Add coverage scenario
             </button>
-            <button
-                class="btn"
-                ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
-              Add parameter scenario
-            </button>
+            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('coverage-scenarios')"></a>
           </div>
 
           <br clear="all">
