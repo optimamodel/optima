@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
-from optima import loadspreadsheet, model, gitinfo, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, runmodel # Import functions
+from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
+from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize # Import functions
 from optima import version # Get current version
 from numpy import argmin, argsort
 from numpy.random import seed, randint
@@ -556,6 +556,7 @@ class Project(object):
         self.modified = today()
         return None
     
+    
     def defaultscenarios(self, **kwargs):
         ''' Wrapper for default scenarios '''
         defaultscenarios(self, **kwargs)
@@ -579,10 +580,23 @@ class Project(object):
         self.modified = today()
         return None
 
-    
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, 
-                 stoppingfunc=None, method='asd', die=False, origbudget=None, ccsample='best', randseed=None, mc=3, optim=None, optimname=None, **kwargs):
-        ''' Function to minimize outcomes or money '''
+
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
+                 verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
+                 nchains=None, nblocks=None, blockiters=None, batch=None, **kwargs):
+        '''
+        Function to minimize outcomes or money.
+        
+        Usage examples:
+            P.optimize() # Use defaults
+            P.optimize(maxiters=5, mc=0) # Do a very simple run
+            P.optimize(parsetname=0, progsetname=0) # Use first parset and progset
+            P.optimize(optim=P.optims[-1]) # Use a pre-existing optim
+            P.optimize(optimname=-1) # Same as previous
+            P.optimize(multi=True) # Do a multi-chain optimization
+            P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
+        
+        '''
         
         # Check inputs
         if optim is None:
@@ -592,8 +606,13 @@ class Project(object):
                 optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         
         # Run the optimization
-        multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                  method=method, die=die, origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, **kwargs)
+        if not multi:
+            multires = optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+        else:
+            multires = multioptimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
+                                     blockiters=blockiters, batch=batch, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name
@@ -603,20 +622,6 @@ class Project(object):
         return multires
     
     
-    def multioptimize(self, name=None, optim=None, optimname=None, objectives=None, constraints=None, parsetname=None, progsetname=None, nchains=4, blockiters=10, batch=True, *args, **kwargs):
-        
-        # Check inputs
-        if optim is None:
-            if optimname is not None: # Get the optimization by name if supplied
-                optim = self.optims[optimname] 
-            else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-
-        
-        multires = optim.optimize(nchains=nchains, blockiters=blockiters, batch=batch, *args, **kwargs)
-        
-        return multires
-
 
 
     #######################################################################################################

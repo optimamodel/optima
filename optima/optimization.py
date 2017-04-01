@@ -53,19 +53,8 @@ class Optim(object):
             results = getresults(project=self.projectref(), pointer=self.resultsref)
             return results
         else:
-            print('WARNING, no results associated with this parameter set')
+            print('WARNING, no results associated with this optimization')
             return None
-
-
-    def optimize(self, name=None, parsetname=None, progsetname=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, 
-                 method='asd', die=False, origbudget=None, ccsample='best', randseed=None, **kwargs):
-        ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
-        if name is None: name='default'
-        multires = optimize(which=self.objectives['which'], project=self.projectref(), optim=self, maxiters=maxiters, 
-                            maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, die=die, 
-                            origbudget=origbudget, ccsample=ccsample, randseed=randseed, **kwargs)
-        multires.name = 'optim-'+name # Multires might be None if couldn't meet targets
-        return multires
 
 
 
@@ -400,41 +389,43 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
 
 
-def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', 
-             die=False, origbudget=None, ccsample='best', randseed=None, mc=3, label=None, **kwargs):
+def optimize(project=None, optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=None, 
+             die=False, origbudget=None, randseed=None, mc=None, label=None, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
     Arguments:
-        which = 'outcome' or 'money'
         project = the project file
         optim = the optimization object
         maxiters = how many iterations to optimize for
         maxtime = how many secons to optimize for
         verbose = how much detail to provide
         stoppingfunc = a function called to decide on stopping
-        method = 'asd', currently the only option
         die = whether or not to check things in detail
         origbudget = the budget to start from (if not supplied, use default
-        ccsample = which sample of the cost curves to use (deprecated)
         randseed = optionally reset the seed
         mc = how many Monte Carlo iterations to run for (if -1, run other starting points but not MC)
         label = a string to append to error messages to make it clear where things went wrong
 
-    Version: 1.3 (2017mar02)
+    Version: 1.4 (2017apr01)
     '''
     
     ## Input validation
+    if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
+    which = optim.objectives['which']
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
     if which not in ['outcomes','money']:
         errormsg = '"which" must be "outcomes" or "money"; you entered "%s"' % which
         raise OptimaException(errormsg)
-    if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     printv('Running %s optimization...' % which, 1, verbose)
     
-    progset = project.progsets[optim.progsetname] # Link to the original parameter set
+    # Set defaults
+    if maxiters is None: maxiters = 1000
+    if maxtime is None: maxtime = 3600
+    if mc is None: mc = 3
     
-    # optim structure validation
+    # Optim structure validation
+    progset = project.progsets[optim.progsetname] # Link to the original parameter set
     if not(hasattr(optim, 'objectives')) or optim.objectives is None:
         optim.objectives = defaultobjectives(project=project, progset=progset, which=which, verbose=verbose)
     if not(hasattr(optim, 'constraints')) or optim.constraints is None:
@@ -454,25 +445,31 @@ def optimize(which=None, project=None, optim=None, maxiters=1000, maxtime=180, v
     # Run outcomes minimization
     if which=='outcomes':
         multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, 
-                               origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
+                               origbudget=origbudget, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
 
     # Run money minimization
     elif which=='money':
         multires = minmoney(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, 
-                            fundingchange=1.2, ccsample=ccsample, randseed=randseed, **kwargs)
+                            fundingchange=1.2, randseed=randseed, **kwargs)
 
     return multires
 
 
 
 
-def multioptimize(nchains=4, blockiters=10, batch=True, *args, **kwargs):
+def multioptimize(nchains=None, nblocks=None, blockiters=None, batch=None, mc=None, *args, **kwargs):
     '''
     Run a multi-chain optimization.
     '''
 
-    # Import dependencies here so no biggiei if they fail
+    # Import dependencies here so no biggie if they fail
     from multiprocessing import Process, Queue
+    
+    # Set defaults
+    if nchains is None:    nchains = 4
+    if nblocks is None:    nblocks = 10
+    if blockiters is None: blockiters = 10
+    if mc is None:         mc = 0
     
     # Optionally plot
     if doplot:
