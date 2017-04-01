@@ -1,21 +1,13 @@
 define(['angular' ], function (angular) {
   'use strict';
 
-  /**
-   * GlobalPoller provide generic services to run polling tasks
-   * on a URL. It expects a return JSON data structure
-   * { 'status': 'started' } to continue polling, otherwise it
-   * sends the response to `callback`
-   */
-
   return angular.module('app.common.global-pollster', [])
 
-    .factory('tmpHelpService', ['$http', '$modal', '$timeout', function($http, $modal, $timeout) {
+    .factory('tmpHelpService', ['$modal', function($modal) {
 
       var polls = {};
 
       function openHelp(helpURL) {
-
         return $modal.open({
           templateUrl: 'js/modules/programs/program-set/program-modal.html',
           size: 'lg'
