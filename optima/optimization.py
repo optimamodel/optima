@@ -149,6 +149,9 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
+    # If no programs in the progset, return None        
+    if not(len(progset.programs)): return None
+
     constraints = odict() # Dictionary of all constraints -- WARNING, change back to odict!
     constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
