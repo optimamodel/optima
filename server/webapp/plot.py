@@ -115,7 +115,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
 
     print ">> make_mpld3_graph_dict advanced:", advanced
 
-    graph_selectors = op.getplotselections(result, advanced=advanced) # BOSCO MODIFY
+    graph_selectors = op.getplotselections(result, advanced=advanced)
     if advanced:
         normal_graph_selectors = op.getplotselections(result)
         n = len(normal_graph_selectors['keys'])
