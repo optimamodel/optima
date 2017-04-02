@@ -15,7 +15,7 @@ define(
           })
           .state('portfolio.manage', {
             url: '/portfolio',
-            templateUrl: 'js/modules/geospatial/manage-portfolio.html',
+            templateUrl: 'js/modules/geospatial/geospatial.html',
             controller: 'PortfolioController',
           })
       });
