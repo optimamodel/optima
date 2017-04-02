@@ -13,8 +13,8 @@ from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sq
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 
-global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
-if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
+global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotkwargs  # For manualfit GUI
+if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotkwargs = [None]*18
 
 ##############################################################################
 ### USER-VISIBLE FUNCTIONS
@@ -32,9 +32,10 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
         
     Version: 1.3 (2016jan25) by cliffk
     '''
+    global plotkwargs
     
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
-    if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
+    if fig is None: fig = figure(facecolor=(1,1,1)) # Create a figure based on supplied kwargs, if any
     
     # Do plotting
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
@@ -42,7 +43,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     width,height = fig.get_size_inches()
     
     # Actually create plots
-    plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height))
+    plots = makeplots(results, toplot=toplot, die=True, **kwargs)
     reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
@@ -87,7 +88,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     Version: 1.3 (2017feb07)
     '''
     
-    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results
+    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results, kwargs
     results = sanitizeresults(tmpresults)
     
     ## Define options for selection
@@ -120,7 +121,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     figwidth = 7
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
-    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95), **kwargs) # Open control panel
+    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
     checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
     updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location
     clearaxes    = axes([0.4, 0.02, 0.2, 0.03]) # Create close button location

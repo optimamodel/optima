@@ -987,9 +987,9 @@ def load_result_by_optimization(project, optimization):
     return None
 
 
-def load_result_mpld3_graphs(result_id, which, zoom):
+def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=None, endYear=None):
     result = load_result_by_id(result_id, which)
-    return make_mpld3_graph_dict(result, which, zoom)
+    return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)
 
 
 def download_figures(result_id=None, which=None, filetype=None, index=None):
@@ -1106,7 +1106,7 @@ def save_parameters(project_id, parset_id, parameters):
 
 def load_parset_graphs(
         project_id, parset_id, calculation_type, which=None,
-        parameters=None, startYear=None, endYear=None):
+        parameters=None, zoom=None, startYear=None, endYear=None):
 
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
@@ -1130,18 +1130,14 @@ def load_parset_graphs(
         result = None
 
     if result is None:
-        if startYear is None:
-            startYear = project.settings.start
-        if endYear is None:
-            endYear = project.settings.end
-        result = project.runsim(name=parset.name, start=startYear, end=endYear)
+        result = project.runsim(name=parset.name, end=endYear) # When running, possibly modify the end year, but not the start
         result.which = which
         update_or_create_result_record_by_id(
             result, project_id, parset_id, calculation_type, db_session=db.session)
         print(">> load_parset_graphs calc result for parset '%s'" % parset.name)
         db.session.commit()
 
-    graph_dict = make_mpld3_graph_dict(result, which)
+    graph_dict = make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)
 
     return {
         "parameters": parse.get_parameters_from_parset(parset),
@@ -1372,7 +1368,7 @@ def any_optimizable(project_id):
 ### SCENARIOS
 #############################################################################################
 
-def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=None):
+def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, startYear=None, endYear=None):
     result = load_result(project_id, None, "scenarios", which)
 
     if result is None:
@@ -1389,9 +1385,9 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=
             print(">> No scenarios in project")
             return {}
         print(">> Run scenarios for project '%s' from %s to %s" % (
-            project_id, start, end))
+            project_id, startYear, endYear))
         # start=None, end=None -> does nothing
-        project.runscenarios(start=start, end=end)
+        project.runscenarios(end=endYear) # Only change end year from default
         result = project.results[-1]
         if which:
             result.which = which
@@ -1399,7 +1395,7 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=
             result, project.uid, None, 'scenarios')
         db.session.add(record)
         db.session.commit()
-    return make_mpld3_graph_dict(result, which)
+    return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)
 
 
 def save_scenario_summaries(project_id, scenario_summaries):
@@ -1489,7 +1485,7 @@ def upload_optimization_summary(project_id, optimization_id, optimization_summar
     return {'optimizations': parse.get_optimization_summaries(project)}
 
 
-def load_optimization_graphs(project_id, optimization_id, which):
+def load_optimization_graphs(project_id=None, optimization_id=None, which=None, zoom=None, startYear=None, endYear=None):
     project = load_project(project_id)
     optimization = parse.get_optimization_from_project(project, optimization_id)
     result_name = "optim-" + optimization.name
@@ -1500,7 +1496,7 @@ def load_optimization_graphs(project_id, optimization_id, which):
         if hasattr(result, 'which'):
             which = result.which
         print(">> Loading graphs for result '%s' %s" % (result.name, which))
-        return make_mpld3_graph_dict(result, which)
+        return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)
 
 
 
