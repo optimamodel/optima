@@ -66,7 +66,7 @@ def convert_to_selectors(graph_selectors):
     return selectors
 
 
-def make_mpld3_graph_dict(result, which=None, zoom=None):
+def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, endYear=None):
     """
     Converts an Optima sim Result into a dictionary containing
     mpld3 graph dictionaries and associated keys for display,
@@ -146,7 +146,7 @@ def make_mpld3_graph_dict(result, which=None, zoom=None):
 
     print ">> make_mpld3_graph_dict which:", which
 
-    graphs = op.makeplots(result, toplot=which, die=False)
+    graphs = op.makeplots(result, toplot=which, plotstartyear=startYear, plotendyear=endYear, die=False)
     op.reanimateplots(graphs)
 
     graph_selectors = []
