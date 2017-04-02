@@ -3,6 +3,12 @@
 
 <div class="modal-header">
   CREATE/EDIT A {{scenario.scenario_type}} PROGRAM SCENARIO
+  <div ng-if="scenario.scenario_type=='budget'">
+    <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('budget-scenarios')"></a>
+  </div>
+  <div ng-if="scenario.scenario_type=='coverage'">
+    <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('coverage-scenarios')"></a>
+  </div>
 </div>
 
 <!-- Name -->
