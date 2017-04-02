@@ -221,7 +221,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=50, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, **kwargs):
+            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -281,7 +281,46 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
         
         # Remove failed ones
         toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
+        
+        # Get year indices for producing plot
+        if plotstartyear is not None:
+            try: startind = findinds(results.tvec,plotstartyear)[0] # Get the index of the year to start the plots
+            except: 
+                errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotstartyear,results.tvec[0])
+                if die: raise OptimaException(errormsg)
+                else:
+                    printv(errormsg, 3, verbose)
+                    startind = 0
+            try: startdataind = findinds(results.datayears,plotstartyear)[0] # Get the index of the year to start the plots
+            except: 
+                errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotstartyear,results.tvec[0])
+                if die: raise OptimaException(errormsg)
+                else:
+                    printv(errormsg, 3, verbose)
+                    startdataind = 0
+        else:
+            startind = 0
+            startdataind = 0
 
+        if plotendyear is not None:
+            try: endind = findinds(results.tvec,plotendyear)[0] # Get the index of the year to end the plots
+            except: 
+                errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotendyear,results.tvec[-1])
+                if die: raise OptimaException(errormsg)
+                else:
+                    printv(errormsg, 3, verbose)
+                    endind = None
+            try: enddataind = findinds(results.datayears,plotendyear)[0] # Get the index of the year to end the plots
+            except: 
+                errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotendyear,results.tvec[-1])
+                if die: raise OptimaException(errormsg)
+                else:
+                    printv(errormsg, 3, verbose)
+                    enddataind = None
+        else:
+            endind = None
+            enddataind = None
+            
 
         ################################################################################################################
         ## Loop over each plot
@@ -364,36 +403,36 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 # e.g. single simulation, prev-tot: single line, single plot
                 if not ismultisim and istotal:
-                    ax.plot(results.tvec, factor*best[0], lw=lw, c=colors[0]) # Index is 0 since only one possibility
+                    ax.plot(results.tvec[startind:endind], factor*best[0][startind:endind], lw=lw, c=colors[0]) # Index is 0 since only one possibility
                 
                 # e.g. single simulation, prev-pop: single line, separate plot per population
                 if not ismultisim and isperpop: 
-                    ax.plot(results.tvec, factor*best[i], lw=lw, c=colors[0]) # Index is each individual population in a separate window
+                    ax.plot(results.tvec[startind:endind], factor*best[i][startind:endind], lw=lw, c=colors[0]) # Index is each individual population in a separate window
                 
                 # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
                 if not ismultisim and isstacked:
                     if ispercentage: # Multi-line plot
                         for l in range(nlinesperplot):
-                            ax.plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
+                            ax.plot(results.tvec[startind:endind], factor*best[l][startind:endind], lw=lw, c=colors[l]) # Index is each different population
                     else: # Stacked plot
-                        bottom = 0*results.tvec # Easy way of setting to 0...
+                        bottom = 0*results.tvec[startind:endind] # Easy way of setting to 0...
                         origorder = arange(nlinesperplot)
                         plotorder = nlinesperplot-1-origorder
                         if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
-                            ax.fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
-                            bottom += best[k]
+                            ax.fill_between(results.tvec[startind:endind], factor*bottom[startind:endind], factor*(bottom[startind:endind]+best[k][startind:endind]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
+                            bottom += best[k][startind:endind]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             ax.plot((0, 0), (0, 0), color=colors[l], linewidth=10)
                 
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
+                        ax.plot(results.tvec[startind:endind], factor*best[nlinesperplot-1-l][startind:endind], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l][i], lw=lw, c=colors[nlinesperplot-1-l]) # Indices are different populations (i), then different e..g scenarios (l)
+                        ax.plot(results.tvec[startind:endind], factor*best[nlinesperplot-1-l][i][startind:endind], lw=lw, c=colors[nlinesperplot-1-l]) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -403,15 +442,15 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 # Plot uncertainty, but not for stacked plots
                 if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
-                    ax.fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[0], alpha=alpha, lw=0)
+                    ax.fill_between(results.tvec[startind:endind], factor*lower[i][startind:endind], factor*upper[i][startind:endind], facecolor=colors[0], alpha=alpha, lw=0)
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
                 if not ismultisim and databest is not None and plotdata:
-                    for y in range(len(results.datayears)):
+                    for y in range(len(results.datayears[startdataind:enddataind])):
                         ax.plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=1000) # Without zorder, renders behind the graph
+                    ax.scatter(results.datayears[startdataind:enddataind], factor*databest[i][startdataind:enddataind], c=realdatacolor, s=dotsize, lw=0, zorder=1000) # Without zorder, renders behind the graph
                     if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
-                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=1001)
+                        ax.scatter(results.datayears[startdataind:enddataind], factor*databest[i][startdataind:enddataind], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=1001)
 
 
 
