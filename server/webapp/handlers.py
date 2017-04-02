@@ -929,7 +929,7 @@ class ScenarioSimulationGraphs(Resource):
             is_run=args.get('isRun', False),
             zoom=args.get('zoom', None), # BOSCO MODIFY
             startYear=args.get('start', None),
-            endEnd=args.get('end', None))
+            endYear=args.get('end', None))
 
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
 
