@@ -4,31 +4,51 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, info, progsetsResponse, parsetResponse,
-      scenariosResponse, modalService, toastr) {
+      $scope, $http, $modal, activeProject, projectApi, modalService, toastr) {
 
     function initialize() {
-      $scope.project = info.data;
-      $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
-      $scope.parsets = parsetResponse.data.parsets;
-      $scope.progsets = progsetsResponse.data.progsets;
-      console.log("scenarios response", scenariosResponse.data);
-      $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
-      $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
-      $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
-      $scope.isMissingData = !$scope.project.hasParset;
-      $scope.anyOptimizable = false;
-      $http.get('/api/project/' + $scope.project.id + '/optimizable')
-        .success(function (response) {
-          $scope.anyOptimizable = response;
+      $scope.activeProject = activeProject;
+      $scope.$watch('activeProject.project.id', function() {
+        reloadActiveProject();
+      });
+      reloadActiveProject();
+    }
+
+    function reloadActiveProject() {
+      projectApi
+        .getActiveProject()
+        .then(function(response) {
+          $scope.project = response.data;
+          $scope.state = {
+            start: $scope.project.startYear,
+            end: $scope.project.endYear,
+          };
+          $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
+          $scope.isMissingData = !$scope.project.hasParset;
+          return $http.get('/api/project/'+$scope.project.id+'/parsets')
+        })
+        .then(function(parsetResponse) {
+          $scope.parsets = parsetResponse.data.parsets;
+          return $http.get('/api/project/' + $scope.project.id + '/progsets');
+        })
+        .then(function(progsetsResponse) {
+          $scope.progsets = progsetsResponse.data.progsets;
+          $scope.anyOptimizable = false;
+          return $http.get('/api/project/' + $scope.project.id + '/optimizable')
+        })
+        .then(function (response) {
+          $scope.anyOptimizable = response.data;
+          console.log('anyoptimizable', $scope.anyOptimizable);
+          return $http.get('/api/project/'+$scope.project.id+'/scenarios');
+        })
+        .then(function(scenariosResponse) {
+          console.log("scenarios response", scenariosResponse.data);
+          $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+          $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
+          $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
+          loadScenarios(scenariosResponse.data.scenarios);
+          $scope.graphScenarios(false);
         });
-      console.log('anyoptimizable', $scope.anyOptimizable);
-      $scope.state = {
-        start: $scope.project.startYear,
-        end: $scope.project.endYear,
-      };
-      loadScenarios(scenariosResponse.data.scenarios);
-      $scope.graphScenarios(false);
     }
 
     function loadScenarios(scenarios) {

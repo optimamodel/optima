@@ -27,9 +27,7 @@ define(
       $scope.anyOptimizable = false;
 
       $scope.activeProject = activeProject;
-      console.log('ModelCostCoverageController project-change', activeProject.project);
       $scope.$watch('activeProject.project.id', function() {
-        console.log('ModelCostCoverageController project-change', activeProject.project);
         reloadActiveProject();
       });
 
@@ -52,7 +50,7 @@ define(
         .then(function(response) {
           $scope.anyOptimizable = response.data;
 
-          if ($scope.isMissingData || !$scope.anyOptimizable) {
+          if (!$scope.isMissingData && $scope.anyOptimizable) {
             $http
               .get('/api/project/' + $scope.state.project.id + '/progsets')
               .then(function(response) {
