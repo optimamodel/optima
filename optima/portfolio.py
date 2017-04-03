@@ -425,7 +425,7 @@ class Portfolio(object):
         ''' Export the results to Excel format '''
         
         if filename is None:
-            filename = self.name+'-results.xlsx'
+            filename = self.name+'-geospatial-results.xlsx'
         workbook = Workbook(filename)
         worksheet = workbook.add_worksheet()
         
