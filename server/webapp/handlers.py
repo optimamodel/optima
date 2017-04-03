@@ -377,17 +377,6 @@ api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
 
 
 
-class PortfolioData(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Download .prt file for portfolio')
-    def get(self, portfolio_id):
-        dirname, filename = dataio.download_portfolio(portfolio_id)
-        return helpers.send_from_directory(dirname, filename)
-
-api.add_resource(PortfolioData, '/api/portfolio/<uuid:portfolio_id>/data')
-
-
 class UploadPortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 

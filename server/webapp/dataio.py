@@ -1639,7 +1639,7 @@ def download_portfolio(portfolio_id):
     if not dirname:
         dirname = TEMPLATEDIR
     filename = portfolio_record.as_portfolio_file(dirname)
-    return dirname, filename
+    return os.path.join(dirname, filename)
 
 
 def export_portfolio(portfolio_id):
