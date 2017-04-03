@@ -649,6 +649,15 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 elif tostate in usvl: # Probability of becoming unsuppressed
                     thistransit[fromstate,tostate,:] *= usvlprob
         
+        # USVL to SVL
+        svlprob = min(numvlmon[t]/(numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
+        for fromstate in usvl:
+            for tostate in fromto[fromstate]:
+                if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
+                    thistransit[fromstate,tostate,:] *= (1.-svlprob)
+                elif tostate in svl: # Probability of receiving a VL test, switching to a new regime & becoming suppressed
+                    thistransit[fromstate,tostate,:] *= svlprob
+        
         # Check that probabilities all sum to 1
         if debug:
             transtest = array([(abs(thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))>eps).any() for j in range(nstates)])
@@ -810,7 +819,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Move the people who started treatment last timestep from usvl to svl
                 if isnan(prop[t+1]):
                     if   name == 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
-                    elif name == 'propsupp': wanted = numvlmon[t+1]/requiredvl # If propsupp is nan, we use numvlmon
                     else:                    wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
                     wanted = prop[t+1]*available
@@ -836,17 +844,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                             tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
                                 # Need to handle USVL and SVL separately
                                 people[care,:,t+1] -= newmovers # Shift people out of care
-                                totcurrentusvl = people[usvl,:,t+1].sum()
-                                totcurrentsvl  = people[svl,:,t+1].sum()
-                                totcurrenttx   = totcurrentusvl + totcurrentsvl
-                                if totcurrenttx<eps: # There's no one on treatment: assign a proportion
-                                    currentfracsvl = treatvs
-                                    currentfracusvl = 1.0 - currentfracsvl
-                                else: # There are people on treatment: use existing proportions
-                                    currentfracusvl = totcurrentusvl/totcurrenttx
-                                    currentfracsvl  = totcurrentsvl/totcurrenttx
-                                people[usvl,:,t+1]  += newmovers*currentfracusvl # ... and onto treatment, according to existing proportions
-                                people[svl,:,t+1]   += newmovers*currentfracsvl # Likewise for SVL
+                                people[usvl,:,t+1]  += newmovers*(1.0-treatvs) # ... and onto treatment, according to existing proportions
+                                people[svl,:,t+1]   += newmovers*treatvs # Likewise for SVL
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 

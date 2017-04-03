@@ -600,7 +600,7 @@ def redotranstable(project, **kwargs):
     
     # Even though fixed by fixsettings above, just make it explicit that we're adding this as well
     project.settings.infmoney = 1e10
-    project.version = '2.3.3'
+    project.version = '2.3.4'
     return None
 
 
@@ -639,6 +639,7 @@ migrations = {
 '2.3':   removespreadsheet,
 '2.3.1': addagetopars,
 '2.3.2': redotranstable,
+'2.3.3': redotranstable, # Same migration, but need to rerun since transtable changed again
 #'2.2': redoprograms,
 }
 
