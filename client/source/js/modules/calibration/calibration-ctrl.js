@@ -2,23 +2,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   'use strict';
 
-  module.directive('myEnter', function () {
-      return function (scope, element, attrs) {
-          element.bind("keydown keypress", function (event) {
-              if(event.which === 13) {
-                  scope.$apply(function (){
-                      scope.$eval(attrs.myEnter);
-                  });
-
-                  event.preventDefault();
-              }
-          });
-      };
-  });
-
   module.controller('ModelCalibrationController', function (
       $scope, $http, modalService, $upload,
       $modal, $timeout, toastr, activeProject, projectApi, globalPoller) {
+
+      $scope.inputPattern = /^3+/;
 
     function initialize() {
       $scope.parsets = [];
@@ -108,10 +96,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parameters = angular.copy(response.parameters);
     }
 
-    function fetchParameters() {
-      return $scope.parameters;
-    }
-
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
       $http
@@ -136,6 +120,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.saveAndUpdateGraphs = function() {
+      // if ($scope.calibrateForm.$invalid) {
+      //   console.log('saveAndUpdateGraphs is invalid')
+      //   return;
+      // }
       if (!$scope.parameters) {
         return;
       }
@@ -146,7 +134,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           + '/parsets/' + $scope.state.parset.id
           + '/calibration',
           {
-            parameters: fetchParameters(),
+            parameters: $scope.parameters,
             which: getSelectors(),
             startYear: $scope.state.startYear,
             endYear: $scope.state.endYear
