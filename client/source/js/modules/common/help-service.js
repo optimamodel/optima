@@ -13,7 +13,7 @@ define(['angular' ], function (angular) {
         var w = scrw*0.6; // Width of window
         var t = scrh*0.1; // Position from top of screen -- centered
         var l = scrw*0.37; // Position from left of screen -- almost all the way right
-        newwindow = window.open(fullURL,'Reference manual','width='+w + ',height='+h + ',top='+t + ',left='+l);
+        var newwindow = window.open(fullURL,'Reference manual','width='+w + ',height='+h + ',top='+t + ',left='+l);
         if (window.focus) {
           newwindow.focus()
         }
