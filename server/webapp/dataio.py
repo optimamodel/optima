@@ -950,7 +950,7 @@ def delete_result_by_name(
     db_session.commit()
 
 
-def load_result_csv(result_id):
+def download_result_data(result_id):
     """
     Returns (dirname, basename) of the the result.csv on the server -- WARNING, deprecated function name!
     """
@@ -958,12 +958,10 @@ def load_result_csv(result_id):
     if not dirname:
         dirname = TEMPLATEDIR
     filestem = 'results'
-    filename = filestem + '.xlsx'
-
     result = load_result_by_id(result_id)
     result.export(filestem=os.path.join(dirname, filestem))
-
-    return dirname, filename
+    filename = filestem + '.xlsx'
+    return os.path.join(dirname, filename)
 
 
 def load_result_by_optimization(project, optimization):

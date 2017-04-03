@@ -357,16 +357,15 @@ define(
             return;
           }
           console.log('resultId', resultId);
-          $http.get(
-            '/api/results/' + resultId,
-            {
-              headers: {'Content-type': 'application/octet-stream'},
-              responseType: 'blob'
-            })
-          .success(function (response) {
-            var blob = new Blob([response], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, ('optima-results.xlsx'));
-          });
+          $http
+            .post(
+              '/api/download',
+              {name: 'download_result_data', args: [resultId]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+              saveAs(blob, (response.headers('filename')));
+            });
         };
 
         scope.updateGraphs = function() {

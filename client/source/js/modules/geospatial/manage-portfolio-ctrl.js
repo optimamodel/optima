@@ -98,7 +98,7 @@ define(
           $http
             .post(
               '/api/download',
-              { name: 'download_portfolio', args: [$scope.state.portfolio.id]},
+              {name: 'download_portfolio', args: [$scope.state.portfolio.id]},
               {responseType: 'blob'})
             .then(function(response) {
               var blob = new Blob([response.data], { type:'application/octet-stream' });

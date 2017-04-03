@@ -680,13 +680,6 @@ api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<
 class ResultsExport(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(summary="Returns result as downloadable .csv file")
-    def get(self, result_id):
-        load_dir, filename = dataio.load_result_csv(result_id)
-        response = helpers.send_from_directory(load_dir, filename)
-        response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
-        return response
-
     @swagger.operation(summary="Returns graphs of a result_id, using which selectors")
     def post(self, result_id):
         """
