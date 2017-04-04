@@ -20,37 +20,16 @@ define([
           url: '/analysis',
           abstract: true,
           template: '<div ui-view></div>',
-          resolve: {
-            info: function (projectApi) {
-              return projectApi.getActiveProject();
-            }
-          }
         })
         .state('analysis.scenarios', {
           url: '/scenarios',
           templateUrl: 'js/modules/analysis/scenarios.html' ,
           controller: 'AnalysisScenariosController',
-          resolve: {
-            scenariosResponse: function($http, info) {
-              return $http.get('/api/project/'+info.data.id+'/scenarios');
-            },
-            progsetsResponse: function($http, info) {
-              return $http.get('/api/project/'+info.data.id+'/progsets')
-            },
-            parsetResponse: function($http, info) {
-              return $http.get('/api/project/'+info.data.id+'/parsets')
-            }
-          }
         })
         .state('analysis.optimization', {
           url: '/optimization',
           templateUrl: 'js/modules/analysis/optimization.html',
           controller: 'AnalysisOptimizationController',
-          resolve: {
-            activeProject: function (projectApi) {
-              return projectApi.getActiveProject();
-            }
-          }
         });
     });
 

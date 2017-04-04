@@ -67,7 +67,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr ng-repeat="project in projects | orderBy:sortType:sortReverse | filter:filterByName" ng-class="{highlighted: activeProjectId === project.id}">
+      <tr ng-repeat="project in projectApi.projects | orderBy:sortType:sortReverse | filter:filterByName" ng-class="{highlighted: activeProject.project.id === project.id}">
         <td>
           <input type="checkbox" ng-model="project.selected"/>
         </td>
@@ -91,7 +91,6 @@
           <button class="btn" ng-click="editProjectName(project)">Rename</button>
         </td>
         <td style="white-space: nowrap">
-          <!--<button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>-->
           <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload</button>
           <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download</button>
         </td>

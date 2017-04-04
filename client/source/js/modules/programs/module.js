@@ -21,22 +21,12 @@ define([
           url: '/programs',
           templateUrl: 'js/modules/programs/program-set/program-set.html',
           controller: 'ProgramSetController',
-          resolve: {
-            currentProject: function(projectApi) {
-              return projectApi.getActiveProject();
-            }
-          }
         })
         .state('programs.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
           controller: 'ModelCostCoverageController as vm',
           templateUrl: 'js/modules/programs/cost-coverage/cost-coverage.html',
           bindToController: true,
-          resolve: {
-            activeProject: function (projectApi) {
-              return projectApi.getActiveProject();
-            }
-          }
         });
     });
 });
