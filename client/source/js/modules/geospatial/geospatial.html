@@ -3,7 +3,7 @@
 
 
     <h2>Manage portfolios
-      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('portfolios')"></a>
+      <help ref="portfolios"/>
     </h2>
 
     <div ng-if="portfolios.length == 0" style="font-weight: bold; color: red">
@@ -21,12 +21,12 @@
       <option style="display:none" value="">{ No portfolios found }</option>
     </select>
 
-    <a ng-include="'js/modules/common/icon-new.html'"      ng-click="createPortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-edit.html'"     ng-click="renamePortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-copy.html'"     ng-click="copyPortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-download.html'" ng-click="downloadPortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-upload.html'"   ng-click="uploadPortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-delete.html'"   ng-click="deletePortfolio()"></a>
+    <icon action="new" click="createPortfolio()"/>
+    <icon action="edit" click="renamePortfolio()"/>
+    <icon action="copy" click="copyPortfolio()"/>
+    <icon action="download" click="downloadPortfolio()"/>
+    <icon action="upload" click="uploadPortfolio()"/>
+    <icon action="delete" click="deletePortfolio()"/>
 
     <div style="
         width: 100%;
@@ -37,7 +37,7 @@
 
 
     <h2>Create regions
-      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('create-regions')"></a>
+      <help ref="create-regions"/>
     </h2>
 
     <button
@@ -135,7 +135,7 @@
     </div>
 
     <h2>Geospatial analysis
-      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('running-geo-analyses')"></a>
+      <help ref="running-geo-analyses"/>
     </h2>
 
     <div
@@ -191,7 +191,7 @@
               </span>
             </td>
             <td width="30px">
-              <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteProject(project.id)"></a>
+              <icon action="delete" click="deleteProject(project.id)"/>
             </td>
           </tr>
           <tr>
@@ -200,6 +200,7 @@
                 ng-click="addProject()">
                 Add region
               </button>
+              <help ref="adding-regions"/>
 
               <div
                   style="
@@ -252,7 +253,7 @@
         </select>
 
         &nbsp; per optimization
-
+        <help ref="running-budget-objective-curves"/>
 
         <br>
         <button
@@ -273,7 +274,9 @@
           <option value="600">10 minutes</option>
           <option value="1800">30 minutes</option>
         </select>
-        &nbsp; per optimization &nbsp;
+        &nbsp; per optimization
+        <help ref="running-geospatial-analysis"/>
+        &nbsp; &nbsp;
         <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
           {{ statusMessage }}
         </span>
@@ -281,12 +284,12 @@
         <br>
         <br>
         <button
-            class="btn"
+            class="btn __green __m"
             ng-disabled="!state.portfolio.hasResult"
             ng-click="exportResults()">
           Export results
         </button>
-
+        <help ref="exporting-geospatial-results"/>
       </div>
 
     </div>

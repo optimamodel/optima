@@ -17,15 +17,15 @@
           style="width: 150px; display: inline">
       </select>
 
-      <a ng-include="'js/modules/common/icon-new.html'"    ng-click="addProgramSet()"></a>
-      <a ng-include="'js/modules/common/icon-edit.html'"   ng-click="renameProgramSet()"></a>
-      <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="copyProgramSet()"></a>
-      <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteProgramSet()"></a>
-      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('program-set')"></a>
+      <icon action="new" click="addProgramSet()"/>
+      <icon action="edit" click="renameProgramSet()"/>
+      <icon action="copy" click="copyProgramSet()"/>
+      <icon action="delete" click="deleteProgramSet()"/>
+      <help ref="program-sets"/>
     </div>
 
     <h2>Manage programs
-      <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('programs')"></a>
+      <help ref="programs"/>
     </h2>
 
     <div
