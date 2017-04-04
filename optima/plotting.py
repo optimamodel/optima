@@ -594,9 +594,9 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         ax.set_position(position)
         
         # Need to build up piece by piece since need to loop over budgets and then budgets
-        for b,budget in enumerate(budgets.item()):
+        for b,budget in enumerate(budgets.values()):
             for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
-                progkey = budget.keys()[i]
+                progkey = budget.keys()[p]
                 ydata = budget[p]
                 xdata = p+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
                 bottomdata = sum(budget[:p])
