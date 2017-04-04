@@ -4,7 +4,7 @@
 
   module.controller('ProgramModalController', function (
     $scope, $modalInstance, program, populations, programList, modalService,
-    parameters, categories, openProject, helpService) {
+    parameters, categories, openProject) {
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
@@ -33,8 +33,6 @@
         newAddData: {},
         progPopReadOnly: false
       };
-
-      $scope.openHelp = helpService.openHelp;
 
       /**
        All populations for the project will be listed for

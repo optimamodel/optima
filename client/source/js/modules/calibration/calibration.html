@@ -69,7 +69,7 @@
             <a ng-include="'js/modules/common/icon-edit.html'"   ng-click="renameParameterSet()"></a>
             <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="copyParameterSet()"></a>
             <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteParameterSet()"></a>
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('parameter-sets')"></a>
+            <help ref="parameter-sets"/>
           </div>
 
         </div>
@@ -121,7 +121,7 @@
               <option value="60">1 minute</option>
               <option value="300">5 minutes</option>
             </select>
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('calibration-panel')"></a>
+            <help ref="calibration-panel"/>
           </div>
           <br>
           <div

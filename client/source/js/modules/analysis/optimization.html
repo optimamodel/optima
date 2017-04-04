@@ -82,8 +82,8 @@
               <option value="600">10 minutes</option>
               <option value="1800">30 minutes</option>
             </select>
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('viewing-optimizations')"></a>
-            &nbsp;
+            <help ref='viewing-optimizations'/>
+            &nbsp
           <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
             {{ statusMessage }}
           </span>
@@ -101,13 +101,13 @@
               value="Add outcomes optimization"
               class="btn"
               ng-click="addOptimization('outcomes')">
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('outcomes-optimization')"></a> &nbsp; &nbsp;
+            <help ref='outcomes-optimization'/>
             <input
               type="button"
               value="Add money optimization"
               class="btn"
               ng-click="addOptimization('money')">
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('money-optimization')"></a>
+            <help ref='money-optimization'/>
 
           </div>
           </div>

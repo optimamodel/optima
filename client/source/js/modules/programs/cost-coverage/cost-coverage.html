@@ -117,7 +117,7 @@
             <div style="flex: 0 0 500px;">
 
               <h3>Define cost function
-                <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('define-cost-function')"></a>
+                <help ref="define-cost-function"/>
               </h3>
 
               <table
@@ -204,7 +204,7 @@
               </table>
 
               <h3>Past spending and coverage data
-                <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('spending-and-coverage')"></a>
+                <help ref="spending-and-coverage"/>
               </h3>
 
               <table
@@ -339,7 +339,7 @@
               ng-change="vm.changeTargetParameter()"
               ng-model="vm.state.parameter">
             </select>
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('define-outcome-functions')"></a>
+            <help ref="define-outcome-functions"/>
           </div>
 
           <button class="btn __green __m" ng-click="vm.saveProgsetOutcomes()">
@@ -454,7 +454,7 @@
              class="c-tab"
              ng-if="vm.activeTab === 'summary'">
           <h1>Most recent budget
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('most-recent-budget')"></a>
+            <help ref="most-recent-budget"/>
           </h1>
           <table
               class="section table table-bordered"
@@ -470,7 +470,7 @@
           </table>
 
           <h1>Parameters
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('program-parameters')"></a>
+            <help ref="program-parameters"/>
           </h1>
           Year:
           <select
@@ -507,7 +507,7 @@
             <option value=300>5 minutes</option>
           </select>
 
-          <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('program-parameters')"></a>
+          <help ref="program-parameters"/>
 
           <span style="color: #00aeef; padding-left: 1em"> {{ vm.state.statusMessage }} </span>
 
