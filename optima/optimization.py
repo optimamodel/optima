@@ -391,7 +391,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
 
 def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=None, 
-             die=False, origbudget=None, randseed=None, mc=None, label=None, **kwargs):
+             die=False, origbudget=None, randseed=None, mc=None, label=None, outputqueue=None, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
@@ -457,8 +457,13 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     elif which=='money':
         multires = minmoney(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, 
                             fundingchange=1.2, randseed=randseed, **kwargs)
-
-    return multires
+    
+    # If running parallel, put on the queue; otherwise, return
+    if outputqueue is not None:
+        outputqueue.put(multires)
+        return None
+    else:
+        return multires
 
 
 
@@ -467,8 +472,13 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
                   batch=None, mc=None, randseed=None, maxiters=None, maxtime=None, verbose=2, 
                   stoppingfunc=None, die=False, origbudget=None, label=None, *args, **kwargs):
     '''
-    Run a multi-chain optimization. See project.multioptimize() for usage examples, and optimize()
+    Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
+    
+    Small usage example:
+        P = demo(0)
+        P.optimize(multi=True, nchains=4, blockiters=10, nblocks=2)
+        pygui(P, toplot=['improvement', 'budgets', 'numinci'])
     '''
 
     # Import dependencies here so no biggie if they fail
@@ -479,8 +489,11 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     if nblocks is None:    nblocks = 10
     if blockiters is None: blockiters = 10
     if mc is None:         mc = 0
+    if mc>0:
+        errormsg = 'Monte Carlo optimization with multithread optimization has not been implemented'
+        raise OptimaException(errormsg)
     totaliters = blockiters*nblocks
-    fvalarray = zeros((nchains,totaliters)) + nan
+    fvalarray = zeros((nchains,totaliters+1)) + nan
     
     printv('Starting a parallel optimization with %i threads for %i iterations each for %i blocks' % (nchains, blockiters, nblocks), 2, verbose)
     
@@ -498,7 +511,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
             threadrand = (thread+1)*(2**10-1) 
             if randseed is None: thisseed  = (blockrand+threadrand)*int((time()-floor(time()))*1e4) # Get a random number based on both the time and the thread
             else:                thisseed +=  blockrand+threadrand
-            args = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, randseed, mc, label)
+            args = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, randseed, mc, label, outputqueue)
             prc = Process(target=optimize, args=args)
             prc.start()
             processes.append(prc)
@@ -515,7 +528,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         bestfvalval = inf
         bestfvalind = None
         for i in range(nchains):
-            fvalarray[i,block*blockiters:(block+1)*blockiters] = outputlist[i].improvement
+            if block==0 and i==0: fvalarray[i,:] = outputlist[i].improvement[0][0] # Store the initial value
+            fvalarray[i,block*blockiters+1:(block+1)*blockiters+1] = outputlist[i].improvement[0][1:] # Improvement is an odict
             thisbestval = outputlist[i].outcome
             if thisbestval<bestfvalval:
                 bestfvalval = thisbestval
@@ -525,7 +539,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     
     # Assemble final results object from the initial and final run
     finalresults = outputlist[bestfvalind]
-    results.improvement = fvalarray[bestfvalind,:] # Store fval vector in normal format
+    results.improvement[0] = fvalarray[bestfvalind,:] # Store fval vector in normal format
     results.multiimprovement = fvalarray # Store full fval array
     results.outcome = finalresults.outcome
     results.budget = finalresults.budget
