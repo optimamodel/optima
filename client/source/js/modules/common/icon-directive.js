@@ -1,6 +1,10 @@
 define(['angular' ], function (angular) {
   'use strict';
 
+  var module = angular.module('app.common.icon-service', []);
+
+  // <help ref="section-marker">
+
   function openHelp(helpURL) {
     var fullURL = 'http://optimamodel.com/man/' + helpURL; // Actual mapping is defined in mapping.json in the optimawebsite repository
     console.log('openHelp ', fullURL)
@@ -16,8 +20,6 @@ define(['angular' ], function (angular) {
     }
     return false;
   }
-
-  var module = angular.module('app.common.help-service', []);
 
   module.directive('help', function() {
     return {
