@@ -2,7 +2,9 @@
   <div class="section">
 
 
-    <h2>Manage portfolios</h2>
+    <h2>Manage portfolios
+      <help ref="portfolios"/>
+    </h2>
 
     <div ng-if="portfolios.length == 0" style="font-weight: bold; color: red">
       Please create a portfolio first<br><br>
@@ -19,45 +21,12 @@
       <option style="display:none" value="">{ No portfolios found }</option>
     </select>
 
-    <i
-      ng-click="createPortfolio()"
-      class="fa fa-file-o"
-      tp-text="New" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-      style="margin-left: 0.5em">
-    </i>
-
-    <!--<i-->
-      <!--ng-click="renamePortfolio()"-->
-      <!--class="fa fa-pencil"-->
-      <!--tp-text="Rename" tooltip tp-class="tooltip"-->
-      <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-      <!--style="margin-left: 0.5em">-->
-    <!--</i>-->
-
-    <i
-      ng-click="downloadPortfolio()"
-      class="fa fa-download"
-      tp-text="Download" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-      style="margin-left: 0.5em">
-    </i>
-    <i
-      ng-click="uploadPortfolio()"
-      class="fa fa-upload"
-      tp-text="Upload" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-      style="margin-left: 0.5em">
-    </i>
-
-    <i
-      class="fa fa-trash-o"
-      ng-click="deletePortfolio()"
-      tp-text="Delete" tooltip tp-class="tooltip"
-      tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0">
-    </i>
-
-
+    <icon action="new" click="createPortfolio()"/>
+    <icon action="edit" click="renamePortfolio()"/>
+    <icon action="copy" click="copyPortfolio()"/>
+    <icon action="download" click="downloadPortfolio()"/>
+    <icon action="upload" click="uploadPortfolio()"/>
+    <icon action="delete" click="deletePortfolio()"/>
 
     <div style="
         width: 100%;
@@ -67,7 +36,9 @@
     </div>
 
 
-    <h2>Create regions (optional)</h2>
+    <h2>Create regions
+      <help ref="create-regions"/>
+    </h2>
 
     <button
       class="btn __m __inline"
@@ -163,7 +134,9 @@
         margin-bottom: 30px">
     </div>
 
-    <h2>Geospatial analysis</h2>
+    <h2>Geospatial analysis
+      <help ref="running-geo-analyses"/>
+    </h2>
 
     <div
       style="
@@ -218,10 +191,7 @@
               </span>
             </td>
             <td width="30px">
-              <span
-                  ng-click="deleteProject(project.id)""
-                  class="fa fa-trash">
-              </span>
+              <icon action="delete" click="deleteProject(project.id)"/>
             </td>
           </tr>
           <tr>
@@ -230,6 +200,7 @@
                 ng-click="addProject()">
                 Add region
               </button>
+              <help ref="adding-regions"/>
 
               <div
                   style="
@@ -282,7 +253,7 @@
         </select>
 
         &nbsp; per optimization
-
+        <help ref="running-budget-objective-curves"/>
 
         <br>
         <button
@@ -303,7 +274,9 @@
           <option value="600">10 minutes</option>
           <option value="1800">30 minutes</option>
         </select>
-        &nbsp; per optimization &nbsp;
+        &nbsp; per optimization
+        <help ref="running-geospatial-analysis"/>
+        &nbsp; &nbsp;
         <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
           {{ statusMessage }}
         </span>
@@ -311,12 +284,12 @@
         <br>
         <br>
         <button
-            class="btn"
+            class="btn __green __m"
             ng-disabled="!state.portfolio.hasResult"
             ng-click="exportResults()">
           Export results
         </button>
-
+        <help ref="exporting-geospatial-results"/>
       </div>
 
     </div>
