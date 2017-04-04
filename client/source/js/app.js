@@ -12,8 +12,9 @@ define([
   './modules/user/index',
   './modules/analysis/index',
   './modules/admin/index',
+  './modules/common/util-service',
   './modules/common/global-poller-service',
-  './modules/common/help-service',
+  './modules/common/icon-directive',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
   './modules/common/local-storage-polyfill',
@@ -29,9 +30,7 @@ define([
   'use strict';
 
   return angular
-
-    .module(
-      'app',
+    .module('app',
       [
         'angularFileUpload',
         'angular-loading-bar',
@@ -39,6 +38,7 @@ define([
         'ui.router',
         'tooltip.module',
         'rzModule',
+        'app.util',
         'app.feedback',
         'app.help',
         'app.user',
@@ -47,7 +47,7 @@ define([
         'app.admin',
         'app.common.form-input-validate',
         'app.common.global-poller',
-        'app.common.help-service',
+        'app.common.icon-service',
         'app.charts',
         'app.local-storage',
         'app.model',
@@ -73,7 +73,7 @@ define([
               if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else {
-                errorText = rejection;
+                errorText = JSON.stringify(rejection, null, 2);
               }
               message = 'We are very sorry, but it seems an error has occurred. Please contact us (info@optimamodel.com). In your email, copy and paste the error message below, and please also provide the date and time, your user name, the project you were working on (if applicable), and as much detail as possible about the steps leading up to the error. We apologize for the inconvenience.';
               var modalService = $injector.get('modalService');

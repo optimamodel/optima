@@ -16,12 +16,21 @@ define([
         ])
       .controller(
         'MainCtrl',
-        function ($scope, $state, activeProject, helpService, userManager) {
+        function ($scope, $state, activeProject, userManager, projectApi) {
           $scope.user = userManager.user;
           $scope.state = $state;
           $scope.userLogged = function () { return userManager.isLoggedIn; };
           $scope.activeProject = activeProject;
-          $scope.openHelp = helpService.openHelp;
+          $scope.projects = projectApi.projects;
+          $scope.changeProject = function(projectId) {
+            console.log('changeProject', projectId);
+            _.each(projectApi.projects, function(project) {
+              if (project.id == projectId) {
+                activeProject.setActiveProjectFor(
+                  project.name, projectId, $scope.user)
+              }
+            });
+          }
          });
     return module;
   }

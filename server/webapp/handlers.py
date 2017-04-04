@@ -207,36 +207,6 @@ class ProjectData(Resource):
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 
 
-class ProjectFromData(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Upload project with .prj/.xls')
-    def post(self):
-        """
-        file-upload
-        request-form:
-            name: name of project
-            xls: true
-        """
-        project_name = request.form.get('name')
-        is_xls = request.form.get('xls', False)
-        uploaded_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        if is_xls:
-            project_id = dataio.create_project_from_spreadsheet(
-                uploaded_fname, project_name, current_user.id)
-        else:
-            project_id = dataio.create_project_from_prj(
-                uploaded_fname, project_name, current_user.id)
-        response = {
-            'file': os.path.basename(uploaded_fname),
-            'name': project_name,
-            'id': project_id
-        }
-        return response, 201
-
-api.add_resource(ProjectFromData, '/api/project/data')
-
-
 class ProjectCopy(Resource):
     method_decorators = [report_exception_decorator, login_required]
 

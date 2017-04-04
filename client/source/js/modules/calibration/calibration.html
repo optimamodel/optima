@@ -65,11 +65,12 @@
               ng-options="parset.name for parset in parsets"
               style="width: 300px;">
             </select>
-            <a ng-include="'js/modules/common/icon-new.html'"    ng-click="addParameterSet()"></a>
-            <a ng-include="'js/modules/common/icon-edit.html'"   ng-click="renameParameterSet()"></a>
-            <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="copyParameterSet()"></a>
-            <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteParameterSet()"></a>
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('parameter-sets')"></a>
+
+            <icon action="new" click="addParameterSet()"/>
+            <icon action="edit" click="renameParameterSet()"/>
+            <icon action="copy" click="copyParameterSet()"/>
+            <icon action="delete" click="deleteParameterSet()"/>
+            <help ref="parameter-sets"/>
           </div>
 
         </div>
@@ -121,7 +122,7 @@
               <option value="60">1 minute</option>
               <option value="300">5 minutes</option>
             </select>
-            <a ng-include="'js/modules/common/icon-help.html'" ng-click="openHelp('calibration-panel')"></a>
+            <help ref="calibration-panel"/>
           </div>
           <br>
           <div

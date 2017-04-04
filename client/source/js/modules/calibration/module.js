@@ -17,11 +17,6 @@ define([
           url: '/manual',
           templateUrl: 'js/modules/calibration/calibration.html',
           controller: 'ModelCalibrationController',
-          resolve: {
-            info: function (projectApi) {
-              return projectApi.getActiveProject();
-            }
-          }
         })
     });
 });

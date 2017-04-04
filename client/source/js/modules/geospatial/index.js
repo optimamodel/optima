@@ -1,3 +1,3 @@
 define([
-  './manage-portfolio-ctrl',
+  './geospatial-ctrl',
 ], function () {});
