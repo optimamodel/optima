@@ -149,7 +149,7 @@ from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios
 import scenarios as _scenarios; del scenarios
 
 # Optimization analyses
-from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, outcomecalc
+from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, multioptimize, outcomecalc
 import optimization as _optimization; del optimization
 
 # Plotting functions
