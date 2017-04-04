@@ -7,7 +7,7 @@ define(['angular' ], function (angular) {
 
   function openHelp(helpURL) {
 
-    // Define mapping
+    // Define mapping between help buttons and headings in the user manual
     var baseURL = "https://docs.google.com/document/d/18hGjBb1GO8cR_sZRTjMqBvBb0Fkmsz-DwzslstaqG-Y/edit#heading=";
     var mapping = {"create-projects":"h.r0x9aoct97nw",
       "manage-projects":"h.v0igq6vp8yvu",
