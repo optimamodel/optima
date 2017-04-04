@@ -98,7 +98,7 @@ define(['angular' ], function (angular) {
       return {
         rpcRun: rpcRun,
         rpcDownload: rpcDownload,
-        rpcUpload, rpcUpload,
+        rpcUpload: rpcUpload,
         getUniqueName: getUniqueName
       };
 
