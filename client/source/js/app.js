@@ -13,6 +13,7 @@ define([
   './modules/analysis/index',
   './modules/admin/index',
   './modules/common/global-poller-service',
+  './modules/common/icon-directive',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
   './modules/common/local-storage-polyfill',
@@ -46,6 +47,7 @@ define([
         'app.admin',
         'app.common.form-input-validate',
         'app.common.global-poller',
+        'app.common.icon-service',
         'app.charts',
         'app.local-storage',
         'app.model',
@@ -69,11 +71,11 @@ define([
             } else {
               var message, errorText;
               if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
-                message = 'Something went wrong. Please try again or contact the support team.';
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else {
-                message = 'Sorry, but our servers feel bad right now. Please, give them some time to recover or contact the support team.';
+                errorText = JSON.stringify(rejection, null, 2);
               }
+              message = 'We are very sorry, but it seems an error has occurred. Please contact us (info@optimamodel.com). In your email, copy and paste the error message below, and please also provide the date and time, your user name, the project you were working on (if applicable), and as much detail as possible about the steps leading up to the error. We apologize for the inconvenience.';
               var modalService = $injector.get('modalService');
               modalService.inform(angular.noop, 'Okay', message, 'Server Error', errorText);
 

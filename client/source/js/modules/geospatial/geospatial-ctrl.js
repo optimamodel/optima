@@ -205,7 +205,7 @@ define(
               if (response.status === 'completed') {
                 $scope.bocStatusMessage[projectId] = "calculated";
                 reloadPortfolio();
-                toastr.success('BOC calculation finished');
+                toastr.success('Budget-objective curves calculated');
               } else if (response.status === 'started') {
                 var start = new Date(response.start_time);
                 var now = new Date(response.current_time);
@@ -228,7 +228,7 @@ define(
               if (response.status === 'completed') {
                 $scope.statusMessage = "";
                 reloadPortfolio();
-                toastr.success('GA Optimization completed');
+                toastr.success('Geospatial optimization completed');
               } else if (response.status === 'started') {
                 var start = new Date(response.start_time);
                 var now = new Date(response.current_time);

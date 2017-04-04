@@ -17,51 +17,16 @@
           style="width: 150px; display: inline">
       </select>
 
-      <i
-          ng-click="addProgramSet()"
-          class="fa fa-file-o"
-          tp-text="New" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-      </i>
-      <i
-          ng-click="copyProgramSet()"
-          class="fa fa-copy"
-          tp-text="Copy" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-      </i>
-      <i
-          ng-click="renameProgramSet()"
-          class="fa fa-pencil"
-          tp-text="Rename" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-      </i>
-      <!--<i-->
-          <!--ng-click="downloadProgramSet()"-->
-          <!--class="fa fa-download"-->
-          <!--tp-text="Download" tooltip tp-class="tooltip"-->
-          <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-          <!--style="margin-left: 0.5em">-->
-      <!--</i>-->
-      <!--<i-->
-          <!--ng-click="uploadProgramSet()"-->
-          <!--class="fa fa-upload"-->
-          <!--tp-text="Upload" tooltip tp-class="tooltip"-->
-          <!--tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"-->
-          <!--style="margin-left: 0.5em">-->
-      <!--</i>-->
-      <i
-          ng-click="deleteProgramSet()"
-          class="fa fa-trash-o"
-          tp-text="Delete" tooltip tp-class="tooltip"
-          tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-          style="margin-left: 0.5em">
-      </i>
+      <icon action="new" click="addProgramSet()"/>
+      <icon action="edit" click="renameProgramSet()"/>
+      <icon action="copy" click="copyProgramSet()"/>
+      <icon action="delete" click="deleteProgramSet()"/>
+      <help ref="program-sets"/>
     </div>
 
-    <h2>Manage programs</h2>
+    <h2>Manage programs
+      <help ref="programs"/>
+    </h2>
 
     <div
         class="6"
