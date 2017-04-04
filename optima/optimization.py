@@ -467,7 +467,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
                   batch=None, mc=None, randseed=None, maxiters=None, maxtime=None, verbose=2, 
                   stoppingfunc=None, die=False, origbudget=None, label=None, *args, **kwargs):
     '''
-    Run a multi-chain optimization.
+    Run a multi-chain optimization. See project.multioptimize() for usage examples, and optimize()
+    for kwarg explanation.
     '''
 
     # Import dependencies here so no biggie if they fail
@@ -504,8 +505,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         
         # Tidy up: close the threads and gather the results
         for i in range(nchains):
-            thread, result = outputqueue.get()  # This is needed or else the process never finishes
-            outputlist[thread] = result
+            result = outputqueue.get() # This is needed or else the process never finishes
+            outputlist[i] = result # WARNING, this randomizes the order
+            if block==0 and i==0: results = dcp(result) # Copy the original results from the first optimization
         for prc in processes:
             prc.join() # Wait for them to finish
         
@@ -513,17 +515,22 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         bestfvalval = inf
         bestfvalind = None
         for i in range(nchains):
-            fvalarray[i,block*blockiters:(block+1)*blockiters] = outputlist[i][1]
-            thisbestval = outputlist[i][1][-1]
+            fvalarray[i,block*blockiters:(block+1)*blockiters] = outputlist[i].improvement
+            thisbestval = outputlist[i].outcome
             if thisbestval<bestfvalval:
                 bestfvalval = thisbestval
                 bestfvalind = i
         
-        origbudget = outputlist[bestfvalind][0] # Update the budget and use it as the input for the next block -- this is key!
-        
-    results = (options['init_alloc'], fvalarray[bestfvalind,:], 'Parallel optimization')
+        origbudget = outputlist[bestfvalind].budget # Update the budget and use it as the input for the next block -- this is key!
     
-    if fullfval: results[1] = fvalarray # Use the full fvalarray instead of just the best one
+    # Assemble final results object from the initial and final run
+    finalresults = outputlist[bestfvalind]
+    results.improvement = fvalarray[bestfvalind,:] # Store fval vector in normal format
+    results.multiimprovement = fvalarray # Store full fval array
+    results.outcome = finalresults.outcome
+    results.budget = finalresults.budget
+    try: results.budgets['Optimal'] = finalresults.budgets['Optimal']
+    except: pass
     
     return results
 
