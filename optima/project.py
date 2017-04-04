@@ -375,11 +375,12 @@ class Project(object):
         return None
     
     
-    def save(self, filename=None, saveresults=False, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
         if filename is None:
             if self.filename: filename = self.filename
             else:             filename = self.name+'.prj'
+        if folder is not None: filename = os.path.join(folder, filename) # If a folder is supplied, use it
         self.filename = os.path.abspath(filename) # Store file path
         if saveresults:
             saveobj(filename, self, verbose=verbose)

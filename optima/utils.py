@@ -894,6 +894,70 @@ def getfilelist(folder=None, ext=None):
     return filelist
 
 
+def makefilepath(filename=None, folder=None, ext=None, defaultnames=None, split=False, abspath=True, makedirs=True, verbose=2):
+    '''
+    Utility for taking a filename and folder -- or not -- and generating a valid path from them.
+    
+    Inputs:
+        filename = the filename, or full file path, to save to -- in which case this utility does nothing
+        folder = the name of the folder to be prepended to the filename
+        ext = the extension to ensure the file has
+        defaultnames = a name or list of names to use if filename is None
+        split = whether to return the path and filename separately
+        makedirs = whether or not to make the folders to save into if they don't exist
+        verbose = how much detail to print
+    
+    Example:
+        makefilepath(filename=None, folder='/congee', ext='prj', defaultnames=[project.filename, project.name], split=True, abspath=True, makedirs=True)
+    
+    Assuming project.filename is None and project.name is "soggyrice" and /congee doesn't exist:
+        * Makes folder /congee
+        * Returns ('/congee', 'wetrice.prj')
+    
+    Version: 2017apr04    
+    '''
+    
+    # Initialize
+    import os
+    filefolder = ''
+    filebasename = ''
+    
+    # Process filename
+    if filename is not None: # If filename is supplied, use it
+        filebasename = os.path.basename(filename)
+        filefolder = os.path.dirname(filename)
+    else:
+        defaultnames = promotetolist(defaultnames) # Loop over list of default names
+        for defaultname in defaultnames:
+            if not filebasename and defaultname: filebasename = defaultname # Replace empty name with default name
+    if not filebasename: filebasename = 'default' # If all else fails
+    
+    
+    # Add extension if it's defined but missing from the filebasename
+    if ext and not filebasename.endswith(ext): 
+        filebasename += '.'+ext
+    if verbose:
+        print('From filename="%s", defaultnames="%s", extension="%s", made basename "%s"' % (filename, defaultnames, ext, filebasename))
+    
+    # Process folder
+    if folder: # Replace with specified folder, if defined
+        filefolder = folder 
+    if abspath: # Convert to absolute path
+        filefolder = os.path.abspath(filefolder) 
+    if makedirs: # Make sure folder exists
+        try: os.makedirs(filefolder)
+        except: pass
+    if verbose:
+        print('From filename="%s", folder="%s", abspath="%s", makedirs="%s", made folder name "%s"' % (filename, folder, abspath, makedirs, filefolder))
+    
+    fullfile = os.path.join(filefolder, filebasename) # And the full thing
+    
+    if split:
+        return filefolder, filebasename
+    else:
+        return fullfile
+
+
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
     ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
     from psutil import cpu_percent
