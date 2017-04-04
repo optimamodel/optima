@@ -64,13 +64,13 @@
   <b>Timeline: </b>
 
   <span ng-show="state.optimization.which == 'outcomes'">
-    from
+    &nbsp; from &nbsp;
     <input
       type="number"
       class="txbox"
       style="display: inline; width: 5em;"
       ng-model="state.optimization.objectives.start"/>
-    to
+    &nbsp; to &nbsp;
     <input
       type="number"
       class="txbox"
@@ -79,19 +79,19 @@
   </span>
 
   <span ng-show="state.optimization.which == 'money'">
-    compare to base year
+    &nbsp; compare to base year &nbsp;
     <input
       type="number"
       class="txbox"
       style="display: inline; width: 5em;"
       ng-model="state.optimization.objectives.base"/>
-    and run from
+    &nbsp; and run from &nbsp;
     <input
       type="number"
       class="txbox"
       style="display: inline; width: 5em;"
       ng-model="state.optimization.objectives.start"/>
-    to
+    &nbsp; to &nbsp;
     <input
       type="number"
       class="txbox"
@@ -102,13 +102,13 @@
   <br/>
   <br/>
 
-  <b>Budget:</b>
+  <b>Budget:</b> &nbsp;
   <input
     type="number"
     class="txbox"
     style="display: inline; width: 8em;"
     ng-model="state.optimization.objectives.budget"/>
-  per year
+  &nbsp; per year
 
   <br/>
   <br/>
@@ -116,14 +116,14 @@
   <b>Weighting:</b>
 
   <span ng-show="state.optimization.which == 'money'">
-    Fraction of deaths to be averted:
+    Fraction of deaths to be averted: &nbsp;
     <input
         type="number"
         class="txbox"
         style="display: inline; width: 5em;"
         ng-model="state.optimization.objectives.incifrac"/>
     &nbsp;
-    Fraction of infections to be averted:
+    &nbsp; Fraction of infections to be averted:&nbsp;
     <input
         type="number"
         class="txbox"
@@ -132,14 +132,13 @@
   </span>
 
   <span ng-show="state.optimization.which == 'outcomes'">
-    Infections:
+    Infections:&nbsp;
     <input
         type="number"
         class="txbox"
         style="display: inline; width: 5em;"
         ng-model="state.optimization.objectives.inciweight"/>
-    &nbsp;
-    Deaths:
+    &nbsp; Deaths: &nbsp;
     <input
         type="number"
         class="txbox"
