@@ -547,10 +547,19 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0
     
     alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
-    proglabels = budgets[0].keys() 
-    nprogs = len(proglabels)
+    allprogkeys = [] # Create master list of all programs in all budgets
+    nprogslist = []
+    for budget in budgets.values():
+        nprogslist.append(len(budget.keys())) # Get the number of programs in this budget
+        for key in budget.keys():
+            if key not in allprogkeys:
+                allprogkeys.append(key)
+    nallprogs = len(allprogkeys)
     nallocs = len(alloclabels)
-    progcolors = gridcolors(nprogs)
+    allprogcolors = gridcolors(nallprogs)
+    colordict = odict()
+    for k,key in enumerate(allprogkeys):
+        colordict[key] = allprogcolors[i]
     
     budgetplots = odict()
     
@@ -563,10 +572,11 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             
             # Make a pie
             ydata = budgets[i][:]
-            ax.pie(ydata, colors=progcolors)
+            piecolors = [colordict[key] for key in budgets[i].keys()]
+            ax.pie(ydata, colors=piecolors)
             
             # Set up legend
-            labels = dcp(proglabels)
+            labels = dcp(allprogkeys)
             labels.reverse() # Wrong order otherwise, don't know why
             legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
             ax.legend(labels, **legendsettings) # Multiple entries, all populations
@@ -583,11 +593,14 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             position[2] = 0.5 # Make narrower
         ax.set_position(position)
         
-        for i in range(nprogs-1,-1,-1):
-            xdata = arange(nallocs)+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
-            ydata = array([budget[i] for budget in budgets.values()])
-            bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-            ax.barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0, label=proglabels[i])
+        # Need to build up piece by piece since need to loop over budgets and then budgets
+        for b,budget in enumerate(budgets.item()):
+            for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
+                progkey = budget.keys()[i]
+                ydata = budget[p]
+                xdata = p+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+                bottomdata = sum(budget[:p])
+                ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=progkey)
     
         # Set up legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
@@ -634,22 +647,26 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     toplot = [item for item in coverages.values() if item] # e.g. [budget for budget in multires.budget]
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
-    proglabels = toplot[0].keys() 
+    progkeylists = []
+    for tp in toplot:
+        progkeylists.append(tp.keys()) # A list of key lists
     alloclabels = [key for k,key in enumerate(coverages.keys()) if coverages.values()[k]] # WARNING, will this actually work if some values are None?
-    nprogs = len(proglabels)
     nallocs = len(alloclabels)
+    nprogslist = []
+    for progkeylist in progkeylists:
+        nprogslist.append(len(progkeylist))
     
-    
-    colors = gridcolors(nprogs)
     ax = []
     ymax = 0
-    
     coverageplots = odict()
     
     for plt in range(nallocs):
         
         fig = Figure(facecolor=(1,1,1), figsize=figsize)
         
+        nprogs = nprogslist[plt]
+        proglabels = progkeylists[plt]
+        colors = gridcolors(nprogs)
         nbudgetyears = len(budgetyearstoplot[plt])
         ax.append(fig.add_subplot(111))
         ax[-1].set_position(position)
