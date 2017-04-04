@@ -416,7 +416,6 @@ class Project(object):
         self.modified = today()
         return None
         
-        
 
     def reconcileparsets(self, name=None, orig=None):
         ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
