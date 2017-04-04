@@ -6,8 +6,9 @@ Version: 2017mar03
 
 from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
-from numpy import zeros, arange, maximum, array, inf, isfinite, argmin, argsort
+from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
 from numpy.random import random
+from time import time
 
 ################################################################################################################################################
 ### The container class
@@ -462,7 +463,9 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
 
 
 
-def multioptimize(nchains=None, nblocks=None, blockiters=None, batch=None, mc=None, *args, **kwargs):
+def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, 
+                  batch=None, mc=None, randseed=None, maxiters=None, maxtime=None, verbose=2, 
+                  stoppingfunc=None, die=False, origbudget=None, label=None, *args, **kwargs):
     '''
     Run a multi-chain optimization.
     '''
@@ -475,63 +478,48 @@ def multioptimize(nchains=None, nblocks=None, blockiters=None, batch=None, mc=No
     if nblocks is None:    nblocks = 10
     if blockiters is None: blockiters = 10
     if mc is None:         mc = 0
+    totaliters = blockiters*nblocks
+    fvalarray = zeros((nchains,totaliters)) + nan
     
-    # Optionally plot
-    if doplot:
-        from pylab import figure, plot, clf
-        figure()
-    
-    # Handle inputs
-    if options is None: 
-        options = defaultOptimOptions(settings = settings, progset = progset)
-    if max_iter is not None:
-        block_iter = np.floor(max_iter/float(max_blocks)) # Calculate block_iter from max_iter, if supplied
-    
-    # Crucial step that ensures an original allocation is always stored, regardless of initial allocation changes per block.
-    if 'orig_alloc' not in options:
-        options['orig_alloc'] = dcp(options['init_alloc'])
-    
-    total_iters = block_iter*max_blocks
-    fvalarray = np.zeros((num_threads,total_iters)) + np.nan
-    
-    msg = "Starting a parallel optimization with %i threads for %i iterations each for %i blocks" % (num_threads, block_iter, max_blocks)
-    logger.info(msg)
+    printv('Starting a parallel optimization with %i threads for %i iterations each for %i blocks' % (nchains, blockiters, nblocks), 2, verbose)
     
     # Loop over the optimization blocks
-    for block in range(max_blocks):
+    for block in range(nblocks):
         
         # Set up the parallel process
         outputqueue = Queue()
-        outputlist = np.empty(num_threads, dtype=object)
+        outputlist = empty(nchains, dtype=object)
         processes = []
             
         # Loop over the threads, starting the processes
-        for thread in range(num_threads):
-            if randseed is None:
-                randseed = (block+1)*int((time()-np.floor(time()))*1e7) # Get a random number based on both the time and the thread
-            args = (settings, parset, progset, options, block_iter, outputqueue, thread, randseed)
-            prc = Process(target=optimizeFunc, args=args)
+        for thread in range(nchains):
+            blockrand = (block+1)*(2**6-1) # Pseudorandom seeds
+            threadrand = (thread+1)*(2**10-1) 
+            if randseed is None: thisseed  = (blockrand+threadrand)*int((time()-floor(time()))*1e4) # Get a random number based on both the time and the thread
+            else:                thisseed +=  blockrand+threadrand
+            args = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, randseed, mc, label)
+            prc = Process(target=optimize, args=args)
             prc.start()
             processes.append(prc)
         
         # Tidy up: close the threads and gather the results
-        for i in range(num_threads):
+        for i in range(nchains):
             thread, result = outputqueue.get()  # This is needed or else the process never finishes
             outputlist[thread] = result
         for prc in processes:
             prc.join() # Wait for them to finish
         
         # Figure out which one did best
-        bestfvalval = np.inf
+        bestfvalval = inf
         bestfvalind = None
-        for i in range(num_threads):
-            fvalarray[i,block*block_iter:(block+1)*block_iter] = outputlist[i][1]
+        for i in range(nchains):
+            fvalarray[i,block*blockiters:(block+1)*blockiters] = outputlist[i][1]
             thisbestval = outputlist[i][1][-1]
             if thisbestval<bestfvalval:
                 bestfvalval = thisbestval
                 bestfvalind = i
         
-        options['init_alloc'] = outputlist[bestfvalind][0] # Update the budget and use it as the input for the next block -- this is key!
+        origbudget = outputlist[bestfvalind][0] # Update the budget and use it as the input for the next block -- this is key!
         
     results = (options['init_alloc'], fvalarray[bestfvalind,:], 'Parallel optimization')
     
