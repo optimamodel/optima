@@ -5,11 +5,11 @@ define(['angular' ], function (angular) {
 
   // <help ref="section-marker">
 
-  function openHelp(helpURL) {
+  function openHelp(helpKey) {
 
     // Define mapping between help buttons and headings in the user manual
     var baseURL = "https://docs.google.com/document/d/18hGjBb1GO8cR_sZRTjMqBvBb0Fkmsz-DwzslstaqG-Y/edit#heading=";
-    var mapping = {"create-projects":"h.r0x9aoct97nw",
+    var headingMap = {"create-projects":"h.r0x9aoct97nw",
       "manage-projects":"h.v0igq6vp8yvu",
       "create-new-project":"h.a7h2uof7zeek",
       "manage-populations":"h.vn479lpgxo0t",
@@ -43,7 +43,7 @@ define(['angular' ], function (angular) {
       "running-geospatial-analysis":"h.m0zeriqn6g9q",
       "exporting-geospatial-results":"h.10vjtd9maa2d"};
 
-    var headingURL = mapping[helpURL];
+    var headingURL = headingMap[helpKey];
 
     var fullURL = baseURL + headingURL;
     console.log('openHelp ', fullURL);

@@ -44,7 +44,18 @@
     class="section"
     ng-if="state.optimization.objectives">
 
-  <h3>Objectives</h3>
+  <h3>
+    Objectives
+    <div ng-if="state.optimization.which == 'outcomes'">
+      <help ref="optimization-set-objectives"/>
+    </div>
+    <div ng-if="state.optimization.which == 'money'">
+      <help ref="optimization-set-money-objectives"/>
+    </div>
+    <div ng-if="">
+
+    </div>
+  </h3>
   <b>Timeline: </b>
 
   <span ng-show="state.optimization.which == 'outcomes'">
@@ -131,7 +142,10 @@
 
 <div ng-if="state.optimization.constraints" class="section">
 
-  <h3>Constraints</h3>
+  <h3>
+    Constraints
+    <help ref="optimization-set-constraints"/>
+  </h3>
 
   Maximum changes in funding over the program period
 
