@@ -556,8 +556,9 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
     
-    optimizable = progset.optimizable()
+    optimizable = array(progset.optimizable())
     optiminds = findinds(optimizable)
+    nonoptiminds = findinds(optimizable==False)
     optimkeys = [key for k,key in enumerate(origbudget.keys()) if optimizable[k]]
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     nprogs = len(origbudget[:]) # Number of programs total
@@ -590,8 +591,9 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
     
     # Set up extremes
     extremebudgets = odict()
-    extremebudgets['Current']    = zeros(nprogs)
-    for p in optiminds:  extremebudgets['Current'][p] = constrainedbudgetvecorig[p] # Must be a better way of doing this :(
+    extremebudgets['Current'] = zeros(nprogs)
+    for i,p in enumerate(optiminds): extremebudgets['Current'][p] = constrainedbudgetvecorig[i] # Must be a better way of doing this :(
+    for i in nonoptiminds:           extremebudgets['Current'][i] = origbudget[i] # Copy the original budget
     extremebudgets['Zero']     = zeros(nprogs)
     extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
     firstkeys = ['Current', 'Zero', 'Infinite'] # These are special, store them
@@ -599,6 +601,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
             extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
+            for i in nonoptiminds: extremebudgets[prog][p] = origbudget[p] # Copy the original budget
     
     # Run extremes
     extremeresults  = odict()
