@@ -894,7 +894,7 @@ def getfilelist(folder=None, ext=None):
     return filelist
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=2):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False):
     '''
     Utility for taking a filename and folder -- or not -- and generating a valid path from them.
     
@@ -939,7 +939,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if ext and not filebasename.endswith(ext): 
         filebasename += '.'+ext
     if verbose:
-        print('From filename="%s", defaultnames="%s", extension="%s", made basename "%s"' % (filename, defaultnames, ext, filebasename))
+        print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
     
     # Process folder
     if folder: # Replace with specified folder, if defined
