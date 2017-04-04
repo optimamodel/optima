@@ -27,6 +27,6 @@
     "underscore": "=1.8.3"
   },
   "scripts": {
-    "postinstall": "node_modules/bower/bin/bower install"
+    "postinstall": "./node_modules/bower/bin/bower install"
   }
 }

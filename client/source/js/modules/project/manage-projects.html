@@ -1,15 +1,17 @@
 
 <div class="rich">
 
-  <h2>Create projects</h2>
+  <h2>Create projects
+    <help ref="create-projects"/>
+  </h2>
 
   <div style="padding-top:1em" ng-hide="projects.length">
     To begin, please create or upload a project:
   </div>
 
-  <a class="btn" ui-sref="project.create">Create new project</a> &nbsp;
-  <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp;
-  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xlsx</a> &nbsp;
+  <a class="btn" ui-sref="project.create">Create new project</a> &nbsp; &nbsp;
+  <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp; &nbsp;
+  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xlsx</a> &nbsp; &nbsp;
 
   <br>
   <br>
@@ -17,7 +19,9 @@
 
   <div class="section" ng-show="projects.length">
 
-    <h2>Manage projects</h2>
+    <h2>Manage projects
+      <help ref="manage-projects"/>
+    </h2>
 
     <input type="text"
            class="txbox"
@@ -85,7 +89,6 @@
         <td style="white-space: nowrap">
           <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
           <button class="btn" ng-click="editProjectName(project)">Rename</button>
-          <button class="btn" ng-click="remove($event, project.name, project.id, $index)">Delete</button>
         </td>
         <td style="white-space: nowrap">
           <!--<button class="btn" ng-click="edit(project.name, project.id)">Edit populations</button>-->

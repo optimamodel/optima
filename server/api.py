@@ -12,7 +12,6 @@ from flask_login import LoginManager
 # Create Flask app that does everything
 app = Flask(__name__)
 
-
 # Try to load the config file -- this often fails, so predefine a warning message
 errormsg = 'Could not load Optima configuration file\n'
 errormsg += 'Please ensure that you have copied server/config.example.py to server/config.py\n'

@@ -5,6 +5,7 @@
 /coverage
 /selenium
 /source/vendor
+/source/assets/fonts/*wesome*
 errors.log
 nginx.conf
 node_modules
