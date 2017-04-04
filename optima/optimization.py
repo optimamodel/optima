@@ -615,7 +615,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
             args['totalbudget'] = origtotalbudget
             doconstrainbudget = False
-        extremeresults[key] = outcomecalc(exbudget, outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+        extremeresults[key] = outcomecalc(exbudget[optiminds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
