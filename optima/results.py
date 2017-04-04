@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist, checktype
+from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, makefilepath, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist, checktype
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 from xlsxwriter import Workbook
@@ -345,24 +345,24 @@ class Resultset(object):
         return None # make()
         
         
-    def export(self, filestem=None, bypop=True, sep=',', ind=0, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
+    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=0, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
         ''' Method for exporting results to an Excel or CSV file '''
 
         npts = len(self.tvec)
         keys = self.main.keys()
-        output = sep.join(['Indicator','Population'] + ['%i'%t for t in self.tvec]) # Create header and years
+        outputstr = sep.join(['Indicator','Population'] + ['%i'%t for t in self.tvec]) # Create header and years
         for key in keys:
-            if bypop: output += '\n' # Add a line break between different indicators
+            if bypop: outputstr += '\n' # Add a line break between different indicators
             if bypop: popkeys = ['tot']+self.popkeys # include total even for bypop -- WARNING, don't try to change this!
             else:     popkeys = ['tot']
             for pk,popkey in enumerate(popkeys):
-                output += '\n'
+                outputstr += '\n'
                 if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
                 else:                       data = self.main[key].tot[ind][:]
-                output += self.main[key].name+sep+popkey+sep
+                outputstr += self.main[key].name+sep+popkey+sep
                 for t in range(npts):
-                    if self.main[key].ispercentage: output += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
-                    else:                           output += ('%i'+sep) % data[t]
+                    if self.main[key].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    else:                           outputstr += ('%i'+sep) % data[t]
        
         if hasattr(self, 'budgets'):
             if len(self.budgets):      thisbudget = self.budgets[ind]
@@ -374,10 +374,10 @@ class Resultset(object):
         else:                          thiscoverage = self.coverage
         
         if len(thisbudget): # WARNING, does not support multiple years
-            output += '\n\n\n'
-            output += sep*2+'Budget\n'
-            output += sep*2+sep.join(thisbudget.keys()) + '\n'
-            output += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
+            outputstr += '\n\n\n'
+            outputstr += sep*2+'Budget\n'
+            outputstr += sep*2+sep.join(thisbudget.keys()) + '\n'
+            outputstr += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
         
         if len(thiscoverage): # WARNING, does not support multiple years
             covvals = thiscoverage.values()
@@ -385,25 +385,24 @@ class Resultset(object):
                 if checktype(covvals[c], 'arraylike'):
                     covvals[c] = covvals[c][0] # Only pull out the first element if it's an array/list
                 if covvals[c] is None: covvals[c] = 0 # Just reset
-            output += '\n\n\n'
-            output += sep*2+'Coverage\n'
-            output += sep*2+sep.join(thiscoverage.keys()) + '\n'
-            output += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
+            outputstr += '\n\n\n'
+            outputstr += sep*2+'Coverage\n'
+            outputstr += sep*2+sep.join(thiscoverage.keys()) + '\n'
+            outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
             
         if writetofile: 
-            if filestem is None:  # Doesn't include extension, hence filestem
-                filestem = self.projectinfo['name']+'-'+self.name
+            ext = 'xlsx' if asexcel else 'csv'
+            defaultname = self.projectinfo['name']+'-'+self.name # Default filename if none supplied
+            fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=ext)
             if asexcel:
-                filename = filestem + '.xlsx'
-                outputdict = {'Results':output}
-                exporttoexcel(filename, outputdict)
+                outputdict = {'Results':outputstr}
+                exporttoexcel(fullpath, outputdict)
             else:
-                filename = filestem + '.csv'
-                with open(filename, 'w') as f: f.write(output)
-            printv('Results exported to "%s"' % filename, 2, verbose)
-            return filename
+                with open(fullpath, 'w') as f: f.write(outputstr)
+            printv('Results exported to "%s"' % fullpath, 2, verbose)
+            return fullpath
         else:
-            return output
+            return outputstr
         
     
     def get(self, what=None, year=None, pop='tot'):
@@ -510,16 +509,13 @@ class Multiresultset(Resultset):
         return output
     
     
-    def export(self, filestem=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
+    def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
-        if filestem is None: # Filestem rather than filename since doesn't include extension
-            filestem = self.projectinfo['name']+'-'+self.name
         
         if asexcel: outputdict = odict()
         else:       outputstr = ''
         for k,key in enumerate(self.keys):
-            thisfilestem = filestem+'-'+key
-            thisoutput = Resultset.export(self, filestem=thisfilestem, ind=k, writetofile=False, **kwargs)
+            thisoutput = Resultset.export(self, ind=k, writetofile=False, **kwargs)
             if asexcel:
                 outputdict[key] = thisoutput
             else:
@@ -528,13 +524,15 @@ class Multiresultset(Resultset):
                 outputstr += '\n'*5
         
         if writetofile: 
+            ext = 'xlsx' if asexcel else 'csv'
+            defaultname = self.projectinfo['name']+'-'+self.name # Default filename if none supplied
+            fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=ext)
             if asexcel:
-                filename = filestem+'.xlsx'
-                exporttoexcel(filename, outputdict)
+                exporttoexcel(fullpath, outputdict)
             else:
-                filename = filestem+'.csv'
-            printv('Results exported to "%s"' % filename, 2, verbose)
-            return filename
+                with open(fullpath, 'w') as f: f.write(outputstr)
+            printv('Results exported to "%s"' % fullpath, 2, verbose)
+            return fullpath
         else:
             if asexcel: return outputdict
             else:       return outputstr
