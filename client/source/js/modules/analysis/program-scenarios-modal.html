@@ -3,6 +3,12 @@
 
 <div class="modal-header">
   CREATE/EDIT A {{scenario.scenario_type}} PROGRAM SCENARIO
+  <div ng-if="scenario.scenario_type=='budget'" style="display: inline-block">
+    <help ref="budget-scenarios"/>
+  </div>
+  <div ng-if="scenario.scenario_type=='coverage'" style="display: inline-block">
+    <help ref="coverage-scenarios"/>
+  </div>
 </div>
 
 <!-- Name -->

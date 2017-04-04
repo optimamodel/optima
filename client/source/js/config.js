@@ -6,7 +6,7 @@ if (typeof define !== 'function') {
 define({
   waitSeconds: 300, // timeout after 5min
 
-  // Here paths are set relative to `/source/js` folder
+  // Here paths are set relative to `source` folder
   paths: {
     'underscore': './vendor/underscore/underscore',
     'jquery': './vendor/jquery/dist/jquery',
@@ -25,7 +25,7 @@ define({
     'canvas2blob': './vendor/canvas-toBlob.js/canvas-toBlob',
     'saveAs': './vendor/FileSaver/FileSaver',
     'jsPDF': './vendor/jspdf/dist/jspdf.min',
-    'sha224': './js/modules/user/sha224',
+    'sha224': './js/modules/user/sha224'
   },
 
   shim: {

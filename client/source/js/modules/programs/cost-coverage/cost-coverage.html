@@ -116,7 +116,9 @@
 
             <div style="flex: 0 0 500px;">
 
-              <h3>Define cost function</h3>
+              <h3>Define cost function
+                <help ref="define-cost-function"/>
+              </h3>
 
               <table
                   class="section table table-bordered">
@@ -189,9 +191,7 @@
                     </ng-form>
                   </td>
                   <td>
-                    <i class="fa fa-trash-o"
-                       ng-click="vm.deleteCccoparYear($index)"
-                    </i>
+                    <icon action="delete" click="vm.deleteCccoparYear($index)"/>
                   </td>
                 </tr>
                 <tr>
@@ -203,7 +203,9 @@
                 </tr>
               </table>
 
-              <h3>Past spending and coverage data</h3>
+              <h3>Past spending and coverage data
+                <help ref="spending-and-coverage"/>
+              </h3>
 
               <table
                   class="section table table-bordered">
@@ -245,11 +247,7 @@
                     </ng-form>
                   </td>
                   <td>
-                      <span
-                          style="padding-left: 1em"
-                          class="fa fa-trash-o"
-                          ng-click="vm.deleteCostCovDataYear($index)">
-                      </span>
+                    <icon action="delete" click="vm.deleteCostCovDataYear($index)"/>
                   </td>
                 </tr>
                 <tr>
@@ -341,6 +339,7 @@
               ng-change="vm.changeTargetParameter()"
               ng-model="vm.state.parameter">
             </select>
+            <help ref="define-outcome-functions"/>
           </div>
 
           <button class="btn __green __m" ng-click="vm.saveProgsetOutcomes()">
@@ -454,7 +453,9 @@
         <div style="width: 100%;"
              class="c-tab"
              ng-if="vm.activeTab === 'summary'">
-          <h1>Most recent budget</h1>
+          <h1>Most recent budget
+            <help ref="most-recent-budget"/>
+          </h1>
           <table
               class="section table table-bordered"
               style="max-width: 500px">
@@ -468,7 +469,9 @@
             </tr>
           </table>
 
-          <h1>Parameters</h1>
+          <h1>Parameters
+            <help ref="program-parameters"/>
+          </h1>
           Year:
           <select
               ng-model="vm.state.year"
@@ -503,6 +506,8 @@
             <option value=60>1 minute</option>
             <option value=300>5 minutes</option>
           </select>
+
+          <help ref="program-parameters"/>
 
           <span style="color: #00aeef; padding-left: 1em"> {{ vm.state.statusMessage }} </span>
 

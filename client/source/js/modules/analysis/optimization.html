@@ -52,41 +52,9 @@
               {{getProgsetName(optimization)}}
             </td>
             <td>
-              <i
-                  ng-click="editOptimization(optimization)"
-                  class="fa fa-pencil"
-                  tp-text="Edit" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>
-              <i
-                  ng-click="copyOptimization(optimization)"
-                  class="fa fa-copy"
-                  tp-text="Copy" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>
-<!--              <i
-                  ng-click="downloadOptimization(optimization)"
-                  class="fa fa-download"
-                  tp-text="Download" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>
-              <i
-                  ng-click="uploadOptimization(optimization)"
-                  class="fa fa-upload"
-                  tp-text="Upload" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>-->
-              <i
-                  ng-click="deleteOptimization(optimization)"
-                  class="fa fa-trash-o"
-                  tp-text="Delete" tooltip tp-class="tooltip"
-                  tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                  style="margin-left: 0.5em">
-              </i>
+              <icon action="edit" click="editOptimization(optimization)"/>
+              <icon action="copy" click="copyOptimization(optimization)"/>
+              <icon action="delete" click="deleteOptimization(optimization)"/>
             </td>
           </tr>
 
@@ -114,7 +82,8 @@
               <option value="600">10 minutes</option>
               <option value="1800">30 minutes</option>
             </select>
-            &nbsp;
+            <help ref='viewing-optimizations'/>
+            &nbsp
           <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
             {{ statusMessage }}
           </span>
@@ -129,15 +98,17 @@
           <div style="display: table-cell; text-align: right">
             <input
               type="button"
-              value="Add money optimization"
-              class="btn"
-              ng-click="addOptimization('money')">
-            &nbsp;
-            <input
-              type="button"
               value="Add outcomes optimization"
               class="btn"
               ng-click="addOptimization('outcomes')">
+            <help ref='outcomes-optimization'/> &nbsp; &nbsp;
+            <input
+              type="button"
+              value="Add money optimization"
+              class="btn"
+              ng-click="addOptimization('money')">
+            <help ref='money-optimization'/>
+
           </div>
           </div>
         </div>
