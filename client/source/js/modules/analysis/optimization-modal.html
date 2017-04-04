@@ -1,5 +1,13 @@
 
-<div class="modal-header"> CREATE/EDIT {{state.optimization.which}} OPTIMIZATION</div>
+<div class="modal-header">
+  CREATE/EDIT {{state.optimization.which}} OPTIMIZATION
+  <div ng-if="state.optimization.which == 'outcomes'" style="display: inline-block">
+    <help ref='outcomes-optimization'/>
+  </div>
+  <div ng-if="state.optimization.which == 'money'" style="display: inline-block">
+    <help ref='money-optimization'/>
+  </div>
+</div>
 
 <div class="section">
   <div style="float: left; width: 40%; padding-right:20px">
@@ -51,9 +59,6 @@
     </div>
     <div ng-if="state.optimization.which == 'money'" style="display: inline-block">
       <help ref="optimization-set-money-objectives"/>
-    </div>
-    <div ng-if="">
-
     </div>
   </h3>
   <b>Timeline: </b>
