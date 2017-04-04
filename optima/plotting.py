@@ -559,7 +559,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     allprogcolors = gridcolors(nallprogs)
     colordict = odict()
     for k,key in enumerate(allprogkeys):
-        colordict[key] = allprogcolors[i]
+        colordict[key] = allprogcolors[k]
     
     budgetplots = odict()
     
@@ -598,9 +598,13 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
                 progkey = budget.keys()[p]
                 ydata = budget[p]
-                xdata = p+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+                xdata = b+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
                 bottomdata = sum(budget[:p])
-                ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=progkey)
+                label = None
+                if progkey in allprogkeys:
+                    label = progkey # Only add legend if not already added
+                    allprogkeys.remove(progkey) # Pop label so it doesn't get added to legend multiple times
+                ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=label)
     
         # Set up legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
