@@ -894,7 +894,7 @@ def getfilelist(folder=None, ext=None):
     return filelist
 
 
-def makefilepath(filename=None, folder=None, ext=None, defaultnames=None, split=False, abspath=True, makedirs=True, verbose=2):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=2):
     '''
     Utility for taking a filename and folder -- or not -- and generating a valid path from them.
     
@@ -902,39 +902,38 @@ def makefilepath(filename=None, folder=None, ext=None, defaultnames=None, split=
         filename = the filename, or full file path, to save to -- in which case this utility does nothing
         folder = the name of the folder to be prepended to the filename
         ext = the extension to ensure the file has
-        defaultnames = a name or list of names to use if filename is None
+        default = a name or list of names to use if filename is None
         split = whether to return the path and filename separately
         makedirs = whether or not to make the folders to save into if they don't exist
         verbose = how much detail to print
     
     Example:
-        makefilepath(filename=None, folder='./congee', ext='prj', defaultnames=[project.filename, project.name], split=True, abspath=True, makedirs=True)
+        makefilepath(filename=None, folder='./congee', ext='prj', default=[project.filename, project.name], split=True, abspath=True, makedirs=True)
     
     Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
         * Makes folder ./congee
         * Returns e.g. ('/home/cliffk/optima/congee', 'soggyrice.prj')
     
     Actual code example from project.py:
-        fullpath = makefilepath(filename=filename, folder=folder, defaultnames=[self.filename, self.name], ext='prj')
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
     
     Version: 2017apr04    
     '''
     
     # Initialize
     import os
-    filefolder = ''
-    filebasename = ''
+    filefolder = '' # The folder the file will be located in
+    filebasename = '' # The filename
     
     # Process filename
-    if filename is not None: # If filename is supplied, use it
+    if filename is None:
+        defaultnames = promotetolist(default) # Loop over list of default names
+        for defaultname in defaultnames:
+            if not filename and defaultname: filename = defaultname # Replace empty name with default name
+    if filename is not None: # If filename exists by now, use it
         filebasename = os.path.basename(filename)
         filefolder = os.path.dirname(filename)
-    else:
-        defaultnames = promotetolist(defaultnames) # Loop over list of default names
-        for defaultname in defaultnames:
-            if not filebasename and defaultname: filebasename = defaultname # Replace empty name with default name
     if not filebasename: filebasename = 'default' # If all else fails
-    
     
     # Add extension if it's defined but missing from the filebasename
     if ext and not filebasename.endswith(ext): 

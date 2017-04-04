@@ -139,11 +139,10 @@ class Project(object):
         return None
 
 
-    def makespreadsheet(self, filename=None, pops=None):
+    def makespreadsheet(self, filename=None, folder=None, pops=None):
         ''' Create a spreadsheet with the data from the project'''
-        if filename is None: filename = self.name+'.xlsx'
-        if filename[-5:]!='.xlsx': filename += '.xlsx'
-        makespreadsheet(filename=filename, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
+        fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='xlsx')
+        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
         return None
 
 
@@ -377,7 +376,7 @@ class Project(object):
     
     def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
-        fullpath = makefilepath(filename=filename, folder=folder, defaultnames=[self.filename, self.name], ext='prj')
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
         self.filename = fullpath # Store file path
         if saveresults:
             saveobj(fullpath, self, verbose=verbose)
