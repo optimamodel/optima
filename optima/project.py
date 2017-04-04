@@ -600,6 +600,8 @@ class Project(object):
         
         # Check inputs
         if optim is None:
+            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname]]):
+                optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
