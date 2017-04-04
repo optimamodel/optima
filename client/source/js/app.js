@@ -13,7 +13,7 @@ define([
   './modules/analysis/index',
   './modules/admin/index',
   './modules/common/global-poller-service',
-  './modules/common/help-service',
+  './modules/common/icon-directive',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
   './modules/common/local-storage-polyfill',

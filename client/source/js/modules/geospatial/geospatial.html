@@ -21,12 +21,12 @@
       <option style="display:none" value="">{ No portfolios found }</option>
     </select>
 
-    <a ng-include="'js/modules/common/icon-new.html'"      ng-click="createPortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-edit.html'"     ng-click="renamePortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-copy.html'"     ng-click="copyPortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-download.html'" ng-click="downloadPortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-upload.html'"   ng-click="uploadPortfolio()"></a>
-    <a ng-include="'js/modules/common/icon-delete.html'"   ng-click="deletePortfolio()"></a>
+    <icon action="new" click="createPortfolio()"/>
+    <icon action="edit" click="renamePortfolio()"/>
+    <icon action="copy" click="copyPortfolio()"/>
+    <icon action="download" click="downloadPortfolio()"/>
+    <icon action="upload" click="uploadPortfolio()"/>
+    <icon action="delete" click="deletePortfolio()"/>
 
     <div style="
         width: 100%;

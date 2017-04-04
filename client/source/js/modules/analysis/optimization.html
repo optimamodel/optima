@@ -52,9 +52,9 @@
               {{getProgsetName(optimization)}}
             </td>
             <td>
-              <a ng-include="'js/modules/common/icon-edit.html'" ng-click="editOptimization(optimization)"></a>
-              <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="copyOptimization(optimization)"></a>
-              <a ng-include="'js/modules/common/icon-delete.html'" ng-click="deleteOptimization(optimization)"></a>
+              <icon action="edit" click="editOptimization(optimization)"/>
+              <icon action="copy" click="copyOptimization(optimization)"/>
+              <icon action="delete" click="deleteOptimization(optimization)"/>
             </td>
           </tr>
 

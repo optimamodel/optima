@@ -47,9 +47,9 @@
               <td>{{ scenario.scenario_type }}</td>
 
               <td style="white-space: nowrap; width:200px; max-width:200px">
-                <a ng-include="'js/modules/common/icon-edit.html'" ng-click="openModal(scenario, 'edit', $event)"></a>
-                <a ng-include="'js/modules/common/icon-copy.html'"   ng-click="openModal(scenario, 'copy', $event)"></a>
-                <a ng-include="'js/modules/common/icon-delete.html'" ng-click="openModal(scenario, 'delete', $event)"></a>
+                <icon action="edit" click="openModal(scenario, 'edit', $event)"/>
+                <icon action="copy" click="openModal(scenario, 'copy', $event)"/>
+                <icon action="delete" click="openModal(scenario, 'delete', $event)"/>
               </td>
             </tr>
           </table>

@@ -23,18 +23,54 @@ define(['angular' ], function (angular) {
     return {
       restrict: 'E',
       template:
-        '<a '
+        '<i '
           + 'class="fa fa-question-circle-o"'
           + 'tp-text="Help" tooltip tp-class="tooltip"'
           + 'tp-x="-50" tp-y="-150" tp-anchor-x="0" tp-anchor-y="0"'
           + 'style="margin-left: 0.5em; color: #29abe2; font-size: 14px"'
           + 'ng-click="run()"'
-          + '>'
+          + '></i>'
         ,
       link: function(scope, elem, attrs) {
         scope.run = function(info) { openHelp(attrs['ref']); };
       }
     }
-  })
+  });
+
+  // <icon action="copy" click="someFn()"/>
+
+  module.directive('icon', function($compile) {
+
+    var iconTypes = {
+      'copy': { iconName: 'fa-copy', helpText: 'Copy'},
+      'new': { iconName: 'fa-file-o', helpText: 'New'},
+      'edit': { iconName: 'fa-pencil', helpText: 'Edit'},
+      'delete': { iconName: 'fa-trash-o', helpText: 'Delete'},
+      'upload': { iconName: 'fa-upload', helpText: 'Upload'},
+      'download': { iconName: 'fa-download', helpText: 'Download'},
+    };
+
+    return {
+      restrict: 'E',
+      scope: {
+        click: '&',
+        action: '@'
+      },
+      link: function(scope, element){
+        var html =
+          '<i'
+          + ' class="fa ' + iconTypes[scope.action].iconName + '"'
+          + ' tp-text="' + iconTypes[scope.action].helpText + '" '
+          + ' tooltip tp-class="tooltip" '
+          + ' tp-x="-50" tp-y="-150" '
+          + ' tp-anchor-x="0" tp-anchor-y="0"'
+          + ' style="margin-left: 0.5em; font-size: 14px"'
+          + ' ng-click="click()"'
+          + '></i>';
+        var el = $compile(html)(scope);
+        element.append(el);
+      }
+    }
+  });
 
 });
