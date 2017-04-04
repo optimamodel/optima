@@ -908,11 +908,14 @@ def makefilepath(filename=None, folder=None, ext=None, defaultnames=None, split=
         verbose = how much detail to print
     
     Example:
-        makefilepath(filename=None, folder='/congee', ext='prj', defaultnames=[project.filename, project.name], split=True, abspath=True, makedirs=True)
+        makefilepath(filename=None, folder='./congee', ext='prj', defaultnames=[project.filename, project.name], split=True, abspath=True, makedirs=True)
     
-    Assuming project.filename is None and project.name is "soggyrice" and /congee doesn't exist:
-        * Makes folder /congee
-        * Returns ('/congee', 'wetrice.prj')
+    Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
+        * Makes folder ./congee
+        * Returns e.g. ('/home/cliffk/optima/congee', 'soggyrice.prj')
+    
+    Actual code example from project.py:
+        fullpath = makefilepath(filename=filename, folder=folder, defaultnames=[self.filename, self.name], ext='prj')
     
     Version: 2017apr04    
     '''

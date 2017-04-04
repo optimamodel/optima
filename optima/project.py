@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
+from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
@@ -377,17 +377,15 @@ class Project(object):
     
     def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
-        if filename is None:
-            if self.filename: filename = self.filename
-            else:             filename = self.name+'.prj'
-        if folder is not None: filename = os.path.join(folder, filename) # If a folder is supplied, use it
-        self.filename = os.path.abspath(filename) # Store file path
+        fullpath = makefilepath(filename=filename, folder=folder, defaultnames=[self.filename, self.name], ext='prj')
+        self.filename = fullpath # Store file path
         if saveresults:
-            saveobj(filename, self, verbose=verbose)
+            saveobj(fullpath, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
+            tmpproject.restorelinks() # Make sure links are restored
             tmpproject.cleanresults() # Get rid of all results
-            saveobj(filename, tmpproject, verbose=verbose) # Save it to file
+            saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
         return None
 
