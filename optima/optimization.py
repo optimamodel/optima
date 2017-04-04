@@ -389,7 +389,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
 
 
-def optimize(project=None, optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=None, 
+def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=None, 
              die=False, origbudget=None, randseed=None, mc=None, label=None, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
@@ -411,7 +411,8 @@ def optimize(project=None, optim=None, maxiters=None, maxtime=None, verbose=2, s
     '''
     
     ## Input validation
-    if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
+    if optim is None: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
+    project = optim.projectref() # Get the project
     which = optim.objectives['which']
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
     if which not in ['outcomes','money']:
@@ -439,7 +440,11 @@ def optimize(project=None, optim=None, maxiters=None, maxtime=None, verbose=2, s
     if not progset.readytooptimize():
         detail_costcov = progset.hasallcostcovpars(detail=True)
         detail_covout = progset.hasallcovoutpars(detail=True)
-        errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Parameters are missing from:\n%s' % ((detail_costcov+detail_covout))
+        details = (detail_costcov+detail_covout)
+        if len(details):
+            errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Parameters are missing from:\n%s' % details
+        else:
+            errormsg = 'The program set that you provided does not include any optimizable programs, so optimization cannot be performed.'
         raise OptimaException(errormsg)
 
     # Run outcomes minimization
