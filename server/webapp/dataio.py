@@ -73,7 +73,7 @@ def upload_dir_user(dirpath, user_id=None):
     Returns a unique directory on the server for the user's files
     """
     try:
-        from flask.ext.login import current_user  # pylint: disable=E0611,F0401
+        from flask.ext.login import current_user
 
         # get current user
         if current_user.is_anonymous() == False:
@@ -84,11 +84,11 @@ def upload_dir_user(dirpath, user_id=None):
             user_path = os.path.join(dirpath, str(current_user_id))
 
             # if dir does not exist
-            if not (os.path.exists(dirpath)):
+            if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
 
             # if dir with user id does not exist
-            if not (os.path.exists(user_path)):
+            if not os.path.exists(user_path):
                 os.makedirs(user_path)
 
             return user_path
@@ -996,7 +996,7 @@ def download_figures(result_id=None, which=None, filetype=None, index=None):
     if not dirname:
         dirname = TEMPLATEDIR
     
-    filenames = op.saveplots(result, toplot=which, filepath=dirname, filename=None, filetype=filetype, index=index)
+    filenames = op.saveplots(result, toplot=which, folder=dirname, filename=None, filetype=filetype, index=index)
     if len(filenames)>1:
         errormsg = 'Webapp only supports saving one figure at a time; you are trying to save %s' % len(filenames)
         raise op.OptimaException(errormsg)
