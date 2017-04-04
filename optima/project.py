@@ -143,7 +143,7 @@ class Project(object):
         ''' Create a spreadsheet with the data from the project'''
         fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='xlsx')
         makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
-        return None
+        return fullpath
 
 
     
@@ -386,7 +386,7 @@ class Project(object):
             tmpproject.cleanresults() # Get rid of all results
             saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
-        return None
+        return fullpath
 
 
     #######################################################################################################
