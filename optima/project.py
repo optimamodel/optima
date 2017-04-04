@@ -29,14 +29,13 @@ class Project(object):
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
 
-
     Methods for structure lists:
         1. add -- add a new structure to the odict
         2. remove -- remove a structure from the odict
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2016jan22 by cliffk
+    Version: 2017apr04 by cliffk
     """
 
 
@@ -58,7 +57,7 @@ class Project(object):
         ## Define other quantities
         self.name = name
         self.settings = Settings(verbose=verbose) # Global settings
-        self.data = {} # Data from the spreadsheet
+        self.data = odict() # Data from the spreadsheet
 
         ## Define metadata
         self.uid = uuid()
@@ -71,7 +70,7 @@ class Project(object):
         self.warnings = None # Place to store information about warnings (mostly used during migrations)
 
         ## Load spreadsheet, if available
-        if spreadsheet is not None:
+        if spreadsheet:
             self.loadspreadsheet(spreadsheet, dorun=dorun, makedefaults=makedefaults, verbose=verbose, **kwargs)
 
         return None
@@ -99,14 +98,16 @@ class Project(object):
         output += self.getwarnings(doprint=False) # Don't print since print later
         return output
     
+    
     def getinfo(self):
-        ''' Return an odict with basic information about the project '''
+        ''' Return an odict with basic information about the project -- used in resultsets '''
         info = odict()
         for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
             info[attr] = getattr(self, attr) # Populate the dictionary
         info['parsetkeys'] = self.parsets.keys()
         info['progsetkeys'] = self.parsets.keys()
         return info
+
 
     def getwarnings(self, doprint=True):
         ''' Tiny method to print the warnings in the project, if any '''
@@ -119,10 +120,10 @@ class Project(object):
             print(output)
         return output
 
+
     #######################################################################################################
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
-
 
     def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
@@ -146,39 +147,35 @@ class Project(object):
         makespreadsheet(filename=filename, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
         return None
 
-
     
-    def reorderpops(self, poporder=None):
-        '''
-        Reorder populations according to a defined list.
+#    def reorderpops(self, poporder=None):
+#        '''
+#        Reorder populations according to a defined list.
+#        
+#        WARNING, doesn't reorder things like circumcision or birthrates, or programsets, or anything...
+#        
+#        '''
+#        def reorder(origlist, neworder):
+#            return [origlist[i] for i in neworder]
+#        
+#        if self.data is None: raise OptimaException('Need to load spreadsheet before can reorder populations')
+#        if len(poporder) != self.data['npops']: raise OptimaException('Wrong number of populations')
+#        origdata = dcp(self.data)
+#        for key in self.data['pops']:
+#            self.data['pops'][key] = reorder(origdata['pops'][key], poporder)
+#        for key1 in self.data:
+#            try:
+#                if len(self.data[key1])==self.data['npops']:
+#                    self.data[key1] = reorder(origdata[key1], poporder)
+#                    print('    %s succeeded' % key1)
+#                else:
+#                    print('  %s wrong length' % key1)
+#            except:
+#                print('%s failed' % key1)
         
-        WARNING, doesn't reorder things like circumcision or birthrates
-        
-        '''
-        def reorder(origlist, neworder):
-            return [origlist[i] for i in neworder]
-        
-        if self.data is None: raise OptimaException('Need to load spreadsheet before can reorder populations')
-        if len(poporder) != self.data['npops']: raise OptimaException('Wrong number of populations')
-        origdata = dcp(self.data)
-        for key in self.data['pops']:
-            self.data['pops'][key] = reorder(origdata['pops'][key], poporder)
-        for key1 in self.data:
-            try:
-                if len(self.data[key1])==self.data['npops']:
-                    self.data[key1] = reorder(origdata[key1], poporder)
-                    print('    %s succeeded' % key1)
-                else:
-                    print('  %s wrong length' % key1)
-            except:
-                print('%s failed' % key1)
-        
-        
-
 
     def makeparset(self, name='default', overwrite=True):
         ''' If parameter set of that name doesn't exist, create it '''
-        # question: what is that parset does exist? delete it first?
         if not self.data:
             raise OptimaException('No data in project "%s"!' % self.name)
         if overwrite or name not in self.parsets:
@@ -395,7 +392,6 @@ class Project(object):
     #######################################################################################################
     ### Utilities
     #######################################################################################################
-
 
     def refreshparset(self, name=None, orig='default'):
         '''
