@@ -368,7 +368,7 @@ class Project(object):
         return None
     
     
-    def addscenlist(self, scenlist): 
+    def addscenlist(self, scenlist=None): 
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
         self.modified = today()
@@ -557,9 +557,9 @@ class Project(object):
         return None
     
     
-    def defaultscenarios(self, **kwargs):
+    def defaultscenarios(self, which=None, **kwargs):
         ''' Wrapper for default scenarios '''
-        defaultscenarios(self, **kwargs)
+        defaultscenarios(self, which=which, **kwargs)
         return None
     
 

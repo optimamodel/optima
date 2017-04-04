@@ -652,7 +652,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         
         nbudgetyears = len(budgetyearstoplot[plt])
         ax.append(fig.add_subplot(111))
-        ax.set_position(position)
+        ax[-1].set_position(position)
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):

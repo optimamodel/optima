@@ -294,8 +294,10 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
 
 
 
-def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020, parset=-1, progset=-1, dorun=True, doplot=True):
+def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, parset=-1, progset=-1, dorun=True, doplot=True):
     ''' Add default scenarios to a project...examples include min-max budgets and 90-90-90 '''
+    
+    if which is None: which = 'budgets'
     
     if which=='budgets':
         defaultbudget = project.progsets[progset].getdefaultbudget()
