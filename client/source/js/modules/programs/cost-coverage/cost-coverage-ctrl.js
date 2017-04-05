@@ -4,14 +4,11 @@ define(['./../module', 'underscore'], function(module, _) {
 
   module.controller(
     'ModelCostCoverageController',
-    function($scope, toastr, $http, $state, activeProject, globalPoller, modalService) {
+    function($scope, toastr, $http, $state, activeProject, projectApi, globalPoller) {
 
       var vm = this;
 
       function initialize() {
-        vm.project = activeProject.data;
-        console.log('vm.project', vm.project);
-
         vm.activeTab = 'cost';
         vm.tabs = [
           {
@@ -33,42 +30,59 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.parsets = [];
 
         vm.state.year = new Date().getFullYear();
-        vm.state.maxtime=10
-        vm.state.yearSelector = _.range(
-          vm.project.startYear, vm.project.endYear+1);
+        vm.state.maxtime = 10
 
-        // Stop here if spreadsheet has not been uploaded
-        vm.isMissingData = !vm.project.hasParset;
-        if (vm.isMissingData) {
-          return;
-        }
+        $scope.activeProject = activeProject;
+        console.log('ModelCostCoverageController project-change', activeProject.project);
+        $scope.$watch('activeProject.project.id', function() {
+          console.log('ModelCostCoverageController project-change', activeProject.project);
+          reloadActiveProject();
+        });
 
-        vm.hasNoProgram = vm.project.nProgram === 0;
-        if (vm.hasNoProgram) {
-          return;
-        }
+        reloadActiveProject();
+      }
 
-        if (_.isUndefined(window.loadCostCovGraphResize)) {
-          $(window).bind('resize', function() {
-            $scope.onResize();
-          });
-          window.loadCostCovGraphResize = true;
-        }
-
-        $http
-          // Fetch progsets
-          .get('/api/project/' + vm.project.id + '/progsets')
+      function reloadActiveProject() {
+        projectApi
+          .getActiveProject()
           .then(function(response) {
+            vm.project = response.data;
+            console.log('reloadActiveProject vm.project', vm.project);
+            return $http.get('/api/project/' + vm.project.id + '/progsets')
+          })
+          .then(function(response) {
+            // Fetch progsets
             vm.progsets = response.data.progsets;
             vm.state.progset = vm.progsets[0];
-            // Fetch parsets
             return $http.get('/api/project/' + vm.project.id + '/parsets')
           })
           .then(function(response) {
+            // Fetch parsets
             vm.parsets = response.data.parsets;
             console.log('ModelCostCoverageController vm.parsets', vm.parsets);
             vm.state.parset = vm.parsets[0];
             vm.changeProgsetAndParset();
+
+            vm.state.yearSelector = _.range(
+              vm.project.startYear, vm.project.endYear + 1);
+
+            // Stop here if spreadsheet has not been uploaded
+            vm.isMissingData = !vm.project.hasParset;
+            if (vm.isMissingData) {
+              return;
+            }
+
+            vm.hasNoProgram = vm.project.nProgram === 0;
+            if (vm.hasNoProgram) {
+              return;
+            }
+
+            if (_.isUndefined(window.loadCostCovGraphResize)) {
+              $(window).bind('resize', function() {
+                $scope.onResize();
+              });
+              window.loadCostCovGraphResize = true;
+            }
           });
       }
 
