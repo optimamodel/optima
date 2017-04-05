@@ -708,6 +708,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
     projlist = []
     for c,districtname in enumerate(districtlist):
         newproject = dcp(project)
+        newproject.restorelinks() # Ensure that the link objects have been updated
         newproject.name = districtname
         
         # Scale data        

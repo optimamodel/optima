@@ -64,9 +64,9 @@ if 'makeprogramspreadsheet' in tests:
     t = tic()
     
     print('Making programs spreadsheet ...')
-    from optima import defaults, makeprogramspreadsheet
+    from optima import defaultproject, makeprogramspreadsheet
 
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
+    P = defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
     R = P.progsets[0]
     filename = 'tmpprogramspreadsheet.xlsx'
     progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
@@ -197,11 +197,11 @@ if 'makespreadsheetwithdata' in tests:
     t = tic()
     print('Running makespreadsheetwithdata test...')
     
-    from optima import makespreadsheet, defaults, Project
+    from optima import makespreadsheet, defaultproject, Project
     from os import remove
 
     # Create simple project
-    P = defaults.defaultproject('best')
+    P = defaultproject('best')
     P.runsim(debug=True)
     
     # Modify pop names
