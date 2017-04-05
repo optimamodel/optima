@@ -7,7 +7,7 @@ Version: 2017mar03
 from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
 from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
-from numpy.random import random
+from numpy.random import random, seed
 from time import time
 
 ################################################################################################################################################
@@ -680,6 +680,11 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
                 if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
                     allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
                 for i in range(mc): # For the remainder, do randomizations
+                    if randseed is not None:
+                        scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
+                        mcrand = i*(2**6-1)
+                        thisseed = randseed + scalefactorrand + mcrand
+                        seed(int(thisseed))
                     randbudget = random(noptimprogs)
                     allbudgetvecs['Random %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
             
