@@ -306,18 +306,18 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
         for key in maxbudget: maxbudget[key] += project.settings.infmoney
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
-            Parscen(name='Current conditions', parsetname='default', pars=[]),
-            Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[startyear], budget=nobudget),
-            Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[startyear], budget=defaultbudget),
-            Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[startyear], budget=maxbudget),
+            Parscen(name='Current conditions', parsetname=0, pars=[]),
+            Budgetscen(name='No budget', parsetname=0, progsetname=0, t=[startyear], budget=nobudget),
+            Budgetscen(name='Current budget', parsetname=0, progsetname=0, t=[startyear], budget=defaultbudget),
+            Budgetscen(name='Unlimited spending', parsetname=0, progsetname=0, t=[startyear], budget=maxbudget),
             ]
     
     # WARNING, this may not entirely work
     elif which=='90-90-90':
         scenlist = [
-            Parscen(name='Current conditions', parsetname='default', pars=[]),
+            Parscen(name='Current conditions', parsetname=0, pars=[]),
             Parscen(name='90-90-90',
-                  parsetname='default',
+                  parsetname=0,
                   pars=[
                   {'name': 'propdx',
                   'for': ['tot'],
