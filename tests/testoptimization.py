@@ -115,13 +115,13 @@ if 'minimizemoney' in tests:
     constraints = defaultconstraints(P.progsets[0])
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
     
-    print('Original allocation: ($%g)' % sum(P.results[-1].budget[0][:]))
-    print(P.results[-1].budget[0])
-    print('Optimal allocation: ($%g)' % sum(P.optims[-1].getresults().budget[1][:]))
-    print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
+    print('Original allocation: ($%g)' % sum(P.results[-1].budgets[0][:]))
+    print(P.results[-1].budgets[0])
+    print('Optimal allocation: ($%g)' % sum(P.optims[-1].getresults().budgets[1][:]))
+    print(P.optims[-1].getresults().budgets[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-total', 'prev-population', 'numinci'], advanced=True)
+        pygui(P.results[-1], toplot=['budgets', 'prev-total', 'prev-population', 'numinci-total'], advanced=True)
     
     done(t)
 
