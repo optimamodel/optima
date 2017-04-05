@@ -10,9 +10,9 @@ Version: 2017jan13
 
 ## Define tests to run here!!!
 tests = [
-'minimizeoutcomes',
+#'minimizeoutcomes',
 #'investmentstaircase',
-#'minimizemoney',
+'minimizemoney',
 ]
 
 
@@ -64,7 +64,7 @@ if 'minimizeoutcomes' in tests:
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', maxtime=5, mc=0, parsetname=-1, progsetname=-1, objectives=objectives, method='asd')
+    P.optimize(name='minoutcome', maxtime=5, mc=0, parsetname=-1, progsetname=-1, objectives=objectives)
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
@@ -89,7 +89,7 @@ if 'investmentstaircase' in tests:
     objectives = defaultobjectives(P.progsets[0]) # This or P
     objectives['budgetscale'] = [0.1, 0.2, 0.5, 1., 1.2, 1.5]
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
+    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, mc=0)
     
     if doplot: 
         from optima import pygui
