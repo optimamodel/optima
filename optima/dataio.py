@@ -23,7 +23,7 @@ def saveobj(filename, obj, compresslevel=5, verbose=True):
     with GzipFile(filename, 'wb', compresslevel=compresslevel) as fileobj:
         fileobj.write(pickle.dumps(obj, protocol=-1))
     if verbose: print('Object saved to "%s"' % filename)
-    return None
+    return path.abspath(filename)
 
 
 def loadobj(filename, verbose=True):
