@@ -61,18 +61,10 @@ def get_upload_file(dirname):
     if not (os.path.exists(dirname)):
         os.makedirs(dirname)
     full_filename = os.path.join(dirname, filename)
-    print("> Upload file '%s'" % filename)
+    print("> get_upload_file '%s'" % filename)
     file.save(full_filename)
 
     return full_filename
-
-
-def log_yaml(summary, title=None):
-    if title:
-        print(">> " + title)
-    print(yaml.dump(summary))
-    return summary
-
 
 
 #############################################################################################
@@ -113,7 +105,7 @@ class Projects(Resource):
 
     @swagger.operation(summary="Returns list project summaries for current user")
     def get(self):
-        return log_yaml({'projects': dataio.load_project_summaries(current_user.id)})
+        return {'projects': dataio.load_project_summaries(current_user.id)}
 
     @swagger.operation(summary="Create new project")
     def post(self):
@@ -159,11 +151,9 @@ class Project(Resource):
         project_summary = args['project']
         is_spreadsheet = args['isSpreadsheet']
         is_delete_data = args['isDeleteData']
-        print("> project" % project_summary)
         if is_spreadsheet:
             dirname, basename = dataio.update_project_followed_by_template_data_spreadsheet(
                 project_id, project_summary, is_delete_data)
-            print("> Project template: %s" % basename)
             response = helpers.send_from_directory(
                 dirname,
                 basename,
@@ -219,7 +209,6 @@ class ProjectCopy(Resource):
         new_project_name = args['to']
 
         copy_project_id = dataio.copy_project(project_id, new_project_name)
-        print("> Copied project %s -> %s" % (project_id, copy_project_id))
 
         payload = {
             'project': project_id,
@@ -270,7 +259,6 @@ class Portfolio(Resource): # WARNING, should maybe be called something different
           projects: list of project ids
         """
         project_ids = get_post_data_json()['projects']
-        print("> Portfolio requested for projects {}".format(project_ids))
         dirname, filename = dataio.load_zip_of_prj_files(project_ids)
         return helpers.send_from_directory(dirname, filename)
 
@@ -283,7 +271,6 @@ class ProjectDataSpreadsheet(Resource):
     @swagger.operation(summary='Downloads template/uploaded data spreadsheet')
     def get(self, project_id):
         dirname, basename = dataio.load_data_spreadsheet(project_id, True)
-        print("> Template created: %s" % basename)
         return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
     @swagger.operation(summary='Upload completed data spreadsheet')
@@ -305,7 +292,6 @@ class SpreadsheetDownload(Resource):
     @swagger.operation(summary='Download spreadsheet data')
     def get(self, project_id):
         dirname, basename = dataio.load_data_spreadsheet(project_id, False)
-        print("> Data xls created: %s" % basename)
         return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
 api.add_resource(SpreadsheetDownload, '/api/project/<uuid:project_id>/downloaddata')
@@ -345,17 +331,6 @@ class SavePortfolio(Resource):
 
 api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
 
-
-
-class PortfolioData(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Download .prt file for portfolio')
-    def get(self, portfolio_id):
-        dirname, filename = dataio.download_portfolio(portfolio_id)
-        return helpers.send_from_directory(dirname, filename)
-
-api.add_resource(PortfolioData, '/api/portfolio/<uuid:portfolio_id>/data')
 
 
 class UploadPortfolio(Resource):
@@ -427,7 +402,6 @@ class CalculatePortfolio(Resource):
     @swagger.operation(summary="Returns portfolio information")
     def post(self, portfolio_id):
         maxtime = int(get_post_data_json().get('maxtime'))
-        print("> Run BOC %s" % (portfolio_id))
         return server.webapp.tasks.launch_boc(portfolio_id, maxtime)
 
 api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/calculate')
@@ -444,17 +418,6 @@ class MinimizePortfolio(Resource):
 api.add_resource(MinimizePortfolio, '/api/portfolio/<uuid:portfolio_id>/minimize')
 
 
-class ExportPortfolio(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Download .xlsx file of portfolio results')
-    def get(self, portfolio_id):
-        dirname, filename = dataio.export_portfolio(portfolio_id)
-        return helpers.send_from_directory(dirname, filename)
-
-api.add_resource(ExportPortfolio, '/api/portfolio/<uuid:portfolio_id>/export')
-
-
 class RegionTemplate(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
@@ -465,7 +428,6 @@ class RegionTemplate(Resource):
         n_region = int(args['nRegion'])
         year = int(args['year'])
         dirname, basename = dataio.make_region_template_spreadsheet(project_id, n_region, year)
-        print("> Got spreadsheet now download")
         return helpers.send_from_directory(dirname, basename)
 
 api.add_resource(RegionTemplate, '/api/region')
@@ -526,7 +488,6 @@ class Parsets(Resource):
 
     @swagger.operation(summary='Returns a list of parset summaries')
     def get(self, project_id):
-        print("> Load parsets")
         return {"parsets": dataio.load_parset_summaries(project_id)}
 
     @swagger.operation(summary='Copy/create a parset, and returns a list of parset summaries')
@@ -541,10 +502,8 @@ class Parsets(Resource):
         parset_id = args.get('parset_id')
 
         if not parset_id:
-            print("> Create parset " + new_parset_name)
             dataio.create_parset(project_id, new_parset_name)
         else:
-            print("> Copy parset " + new_parset_name)
             dataio.copy_parset(project_id, parset_id, new_parset_name)
 
         return dataio.load_parset_summaries(project_id)
@@ -557,14 +516,12 @@ class ParsetRenameDelete(Resource):
 
     @swagger.operation(summary='Delete parset with parset_id.')
     def delete(self, project_id, parset_id):
-        print("> Delete parset '%s'" % parset_id)
         dataio.delete_parset(project_id, parset_id)
         return '', 204
 
     @swagger.operation(summary='Rename parset and returns a list of parset summaries')
     def put(self, project_id, parset_id):
         name = get_post_data_json()['name']
-        print("> Rename parset '%s'" % name)
         dataio.rename_parset(project_id, parset_id, name)
         return dataio.load_parset_summaries(project_id)
 
@@ -627,10 +584,8 @@ class ParsetAutofit(Resource):
 
     @swagger.operation(summary='Returns the calc status for the current job')
     def get(self, project_id, parset_id):
-        print "> Checking calc state"
         calc_state = server.webapp.tasks.check_calculation_status(
             project_id, 'autofit-' + str(parset_id))
-        pprint.pprint(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
         return calc_state
@@ -643,7 +598,6 @@ class ParsetUploadDownload(Resource):
 
     @swagger.operation(summary="Return a JSON file of the parameters")
     def get(self, project_id, parset_id):
-        print("> Download JSON file of parset %s" % parset_id)
         parameters = dataio.load_parameters(project_id, parset_id)
         response = make_response(json.dumps(parameters, indent=2))
         response.headers["Content-Disposition"] = "attachment; filename=parset.json"
@@ -655,7 +609,6 @@ class ParsetUploadDownload(Resource):
         file-upload
         """
         par_json = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        print("> Upload parset JSON file '%s'" % par_json)
         parameters = json.load(open(par_json))
         dataio.save_parameters(project_id, parset_id, parameters)
         return dataio.load_parset_summaries(project_id)
@@ -671,13 +624,6 @@ api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<
 
 class ResultsExport(Resource):
     method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary="Returns result as downloadable .csv file")
-    def get(self, result_id):
-        load_dir, filename = dataio.load_result_csv(result_id)
-        response = helpers.send_from_directory(load_dir, filename)
-        response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
-        return response
 
     @swagger.operation(summary="Returns graphs of a result_id, using which selectors")
     def post(self, result_id):
@@ -777,7 +723,6 @@ class ProgsetUploadDownload(Resource):
         file-upload
         """
         json_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        print("> Upload progset JSON file '%s'" % json_fname)
         progset_summary = json.load(open(json_fname))
         return dataio.upload_progset(project_id, progset_id, progset_summary)
 
@@ -860,7 +805,6 @@ class ProgramCostcovGraph(Resource):
         if t is None:
             return {}
 
-        print '>>>> Generating plot...'
         return dataio.load_costcov_graph(
             project_id, progset_id, program_id, parset_id, t)
 

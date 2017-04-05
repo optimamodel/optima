@@ -56,7 +56,7 @@ from datetime import datetime; today = datetime.today
 from copy import deepcopy as dcp
 
 # Utilities
-from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, objectid, objatt, objmeth, objrepr, odict, pd, percentcomplete, perturb, printarr, printdata, printv, promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr, odict, percentcomplete, perturb, printarr, printdata as pd, printv, promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, vec2obj
 import utils as _utils; del utils
 
 # Optimization algorithm

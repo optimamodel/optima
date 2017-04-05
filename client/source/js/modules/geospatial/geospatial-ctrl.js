@@ -44,7 +44,8 @@ define(
               $scope.state.portfolio = $scope.portfolios[0];
             }
             $scope.chooseNewPortfolio();
-          };
+          }
+          ;
           console.log('loadPortfolios portfolio', $scope.state.portfolio)
         }
 
@@ -94,12 +95,16 @@ define(
 
 
         $scope.downloadPortfolio = function() {
-          $http.get('/api/portfolio/' + $scope.state.portfolio.id + '/data',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType: 'blob'})
-            .success(function(response, status, headers, config) {
-              var blob = new Blob([response], {type: 'application/octet-stream'});
-              saveAs(blob, ($scope.state.portfolio.name + '.prt'));
+          $http
+            .post(
+              '/api/download',
+              {name: 'download_portfolio', args: [$scope.state.portfolio.id]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/octet-stream' });
+              saveAs(blob, (response.headers('filename')));
             });
+
         };
 
         $scope.uploadPortfolio = function() {
@@ -395,11 +400,16 @@ define(
         };
 
         $scope.exportResults = function() {
-          $http.get('/api/portfolio/' + $scope.state.portfolio.id + '/export',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType: 'blob'})
-            .success(function(response, status, headers, config) {
-              var blob = new Blob([response], {type: 'application/octet-stream'});
-              saveAs(blob, ('geospatial-results.xlsx'));
+          $http
+            .post(
+              '/api/download',
+              {name: 'export_portfolio', args: [$scope.state.portfolio.id]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob(
+                [response.data],
+                {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+              saveAs(blob, (response.headers('filename')));
             });
         };
 
@@ -408,4 +418,4 @@ define(
       }
     );
 
-});
+  });

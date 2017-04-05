@@ -63,7 +63,7 @@ def setup_work_log(pyobject_id, work_type, pyobject):
     Sets up a work_log for project_id calculation, returns a work_log_record dictionary
     """
 
-    print("> Put on celery, a job of '%s %s'" % (pyobject_id, work_type))
+    print "> setup_work_log '%s %s'" % (pyobject_id, work_type)
 
     db_session = init_db_session()
 
@@ -77,19 +77,19 @@ def setup_work_log(pyobject_id, work_type, pyobject):
             if work_log_record.status == 'started':
                 calc_state = parse_work_log_record(work_log_record)
                 calc_state["status"] = "blocked"
-                print ">> Cancel job: already exists similar job"
+                print ">> setup_work_log cancel job: already exists"
                 is_ready_to_start = False
 
     if is_ready_to_start:
         # clean up completed/error/cancelled records
         if work_log_records.count():
-            print ">> Cleanup %d outdated work logs" %  work_log_records.count()
+            print ">> setup_work_log cleanup %d oldlogs" %  work_log_records.count()
             for work_log in work_log_records:
                 work_log.cleanup()
             work_log_records.delete()
 
         # create a work_log status is 'started by default'
-        print ">> Create work log"
+        print ">> setup_work_log new work log"
         work_log_record = dbmodels.WorkLogDb(
             project_id=pyobject_id, work_type=work_type)
         work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
@@ -106,7 +106,7 @@ def setup_work_log(pyobject_id, work_type, pyobject):
 
 
 def delete_task(pyobject_id, work_type):
-    print("> Delete ", pyobject_id, work_type)
+    print "> delete_task ", pyobject_id, work_type
     work_log_record = db.session.query(dbmodels.WorkLogDb).filter_by(
         project_id=pyobject_id, work_type=work_type).first()
     if not work_log_record:
@@ -117,7 +117,6 @@ def delete_task(pyobject_id, work_type):
         return "No celery task found for job"
 
     task_id = str(task_id)
-    print("Delete task", task_id, type(task_id))
     celery_instance.control.revoke(str(task_id))
     work_log = db.session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
     work_log.status = 'cancelled'
@@ -164,13 +163,13 @@ def check_calculation_status(pyobject_id, work_type):
         'work_type': ''
     }
     db_session = init_db_session()
-    print ">> check_calculation_status", pyobject_id, work_type
     work_log_record = db_session.query(dbmodels.WorkLogDb)\
         .filter_by(project_id=pyobject_id, work_type=work_type)\
         .first()
     if work_log_record:
         print ">> check_calculation_status fail: existing job of '%s' with same project" % work_type
         result = parse_work_log_record(work_log_record)
+    print ">> check_calculation_status", pyobject_id, work_type, result['status']
     close_db_session(db_session)
     return result
 
@@ -178,8 +177,6 @@ def check_calculation_status(pyobject_id, work_type):
 
 def check_task(pyobject_id, work_type):
     calc_state = check_calculation_status(pyobject_id, work_type)
-    print("> Checking calc state")
-    print(pformat(calc_state, indent=2))
     if calc_state['status'] == 'error':
         clear_work_log(pyobject_id, work_type)
         raise Exception(calc_state['error_text'])
@@ -187,7 +184,7 @@ def check_task(pyobject_id, work_type):
 
 
 def clear_work_log(project_id, work_type):
-    print(">> Deleting work logs of '%s'" % work_type)
+    print ">> clear_work_log '%s'" % work_type
     db_session = init_db_session()
     work_logs = db_session.query(dbmodels.WorkLogDb).filter_by(project_id=project_id, work_type=work_type)
     for work_log in work_logs:
@@ -391,8 +388,6 @@ def launch_optimization(project_id, optimization_id, maxtime, start=None, end=No
 def check_optimization(project_id, optimization_id):
     work_type = 'optim-' + str(optimization_id)
     calc_state = check_calculation_status(project_id, work_type)
-    print("> Checking calc state")
-    print(pformat(calc_state, indent=2))
     if calc_state['status'] == 'error':
         clear_work_log(project_id, work_type)
         raise Exception(calc_state['error_text'])
@@ -605,11 +600,9 @@ def run_reconcile(self, project_id, progset_id, parset_id, year, maxtime):
 
 def launch_reconcile(project_id, progset_id, parset_id, year, maxtime=2):
     work_type = make_reconcile_work_type(project_id, progset_id, parset_id, year)
-    print ">> tasks.launch_reconcile", work_type
+    print ">> launch_reconcile", work_type
     project = dataio.load_project(project_id)
-    print ">> tasks.launch_reconcile got project", project_id
     calc_state = setup_work_log(project_id, work_type, project)
-    print ">> tasks.launch_reconcile setup state", calc_state
     if calc_state['status'] == 'started':
         run_reconcile.delay(project_id, progset_id, parset_id, year, maxtime)
     return calc_state

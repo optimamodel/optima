@@ -1,4 +1,4 @@
-from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
 from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
@@ -97,22 +97,20 @@ class Portfolio(object):
         
         
     
-    def save(self, filename=None, saveresults=False, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current portfolio, by default using its name, and without results '''
-        if filename is None:
-            if self.filename: filename = self.filename
-            else:             filename = self.name+'.prt'
-        self.filename = os.path.abspath(filename) # Store file path
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prt')
+        self.filename = fullpath # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
         if saveresults:
-            saveobj(filename, self, verbose=verbose)
+            saveobj(fullpath, self, verbose=verbose)
         else:
             tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
             for P in range(len(self.projects.values())):
                 tmpportfolio.projects[P].cleanresults() # Get rid of all results
-            saveobj(filename, tmpportfolio, verbose=verbose) # Save it to file
+            saveobj(fullpath, tmpportfolio, verbose=verbose) # Save it to file
             del tmpportfolio # Don't need it hanging around any more
-        return None
+        return fullpath
     
     
     
@@ -421,12 +419,11 @@ class Portfolio(object):
             return output
     
     
-    def export(self, filename=None, verbose=2):
+    def export(self, filename=None, folder=None, verbose=2):
         ''' Export the results to Excel format '''
         
-        if filename is None:
-            filename = self.name+'-results.xlsx'
-        workbook = Workbook(filename)
+        fullpath = makefilepath(filename=filename, folder=folder, default=self.name+'-geospatial-results.xlsx', ext='xlsx')
+        workbook = Workbook(fullpath)
         worksheet = workbook.add_worksheet()
         
         # Define formatting
@@ -463,8 +460,8 @@ class Portfolio(object):
         worksheet.set_column(0, 3, colwidth) # Make wider
         workbook.close()
         
-        printv('Results exported to %s' % filename, 2, verbose)
-        return None
+        printv('Results exported to %s' % fullpath, 2, verbose)
+        return fullpath
         
 
 
@@ -472,21 +469,20 @@ class Portfolio(object):
    
 
 
-def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=None, verbose=2):
+def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None, copies=None, refyear=None, verbose=2):
     ''' Create a geospatial spreadsheet template based on a project file '''
     ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
     ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
     
-    ## 1. Load a project file
-    if project is None:
-        raise OptimaException('No project loaded.')
-    
+    # Load a project file and set defaults
+    if project is None: raise OptimaException('No project loaded.')
+    if parsetname is None: parsetname = -1
     bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
+    fullpath = makefilepath(filename=filename, folder=folder, default=project.name+'-geospatial', ext='xlsx')
     
-    try:
-        results = project.parsets[-1].getresults()
-    except:
-        results = project.runsim(name=project.parsets[-1].name)
+    # Try to extract results before 
+    try:    results = project.parsets[parsetname].getresults()
+    except: results = project.runsim(name=project.parsets[parsetname].name)
     
     copies = int(copies)
     refyear = int(refyear)
@@ -497,7 +493,7 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
         refind = [int(x) for x in results.tvec].index(refyear)
 
     ## 2. Extract data needed from project (population names, program names...)
-    workbook = Workbook(spreadsheetpath)
+    workbook = Workbook(fullpath)
     wspopsize = workbook.add_worksheet('Population sizes')
     wsprev = workbook.add_worksheet('Population prevalence')
     plain = workbook.add_format({})
@@ -595,9 +591,9 @@ def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=
         
     # 3. Generate and save spreadsheet
     workbook.close()    
-    printv('Geospatial spreadsheet template saved to "%s".' % spreadsheetpath, 2, verbose)
+    printv('Geospatial spreadsheet template saved to "%s".' % fullpath, 2, verbose)
 
-    return None
+    return fullpath
     
     
 
@@ -754,9 +750,12 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
     
     ## 6. Save each project file into the directory, or return the created projects
     if dosave:
+        filepaths = []
         for subproject in projlist:
-            subproject.filename = destination+os.sep+subproject.name+'.prj'
+            fullpath = makefilepath(filename=subproject.name, folder=destination, ext='prj')
+            filepaths.append(fullpath)
+            subproject.filename = fullpath
             subproject.save()
-        return None
+        return filepaths
     else:
         return projlist

@@ -719,7 +719,7 @@ def gui_makesheet():
     
     # 4. Generate and save spreadsheet
     try:
-        makegeospreadsheet(project=project, spreadsheetpath=spreadsheetpath, copies=copies, refyear=refyear, verbose=2)
+        makegeospreadsheet(project=project, filename=spreadsheetpath, copies=copies, refyear=refyear, verbose=2)
         warning('Multi-project template saved to "%s".' % spreadsheetpath)
     except:
         warning('Error: Template not saved due to a workbook error!')
