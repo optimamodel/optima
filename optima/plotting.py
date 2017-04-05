@@ -124,7 +124,7 @@ def getplotselections(results, advanced=False):
 
 
 
-def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=None, plotendyear=None, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -144,7 +144,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     results = sanitizeresults(results)
-
+        
     ## Add improvement plot
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
@@ -182,7 +182,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
         try: 
-            cascadeplots = plotcascade(results, die=die, **kwargs)
+            cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
             allplots.update(cascadeplots)
         except OptimaException as E: 
             if die: raise E
@@ -210,7 +210,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
     allplots.update(epiplots)
     
     return allplots
@@ -221,7 +221,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=50, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, **kwargs):
+            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -243,6 +243,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
             errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
             raise OptimaException(errormsg)
 
+        # Get year indices for producing plots
+        startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
+        
         # Initialize
         toplot = promotetolist(toplot) # If single value, put inside list
         epiplots = odict()
@@ -281,7 +284,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
         
         # Remove failed ones
         toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
-
+        
 
         ################################################################################################################
         ## Loop over each plot
@@ -440,7 +443,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                     ax.set_ylabel(plotylabel)
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
-                ax.set_xlim((results.tvec[0], results.tvec[-1]))
+                ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:
                     if isstacked: 
                         handles, labels = ax.get_legend_handles_labels()
@@ -711,8 +714,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 ## Plot cascade
 ##################################################################
-def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, useSIticks=True, plotdata=True, dotsize=50, **kwargs):
+def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
+                labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, 
+                useSIticks=True, plotdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -732,6 +736,9 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
     else: 
         errormsg = 'Results input to plotcascade() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
+        
+    # Get year indices for producing plots
+    startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
 
     # Set up figure and do plot
     cascadeplots = odict()
@@ -787,7 +794,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
                 
         if aspercentage: ax.set_ylim((0,100))
         else:            ax.set_ylim((0,ax.get_ylim()[1]))
-        ax.set_xlim((results.tvec[0], results.tvec[-1]))
+        ax.set_xlim((results.tvec[startind], results.tvec[endind]))
         
         if useSIticks: SIticks(fig)
         else:          commaticks(fig)
@@ -1151,3 +1158,27 @@ def commaticks(figure, axis='y'):
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 
+
+def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):
+    ''' Little function to convert the requested start and end years to indices '''
+    if plotstartyear is not None:
+        try: startind = findinds(tvec,plotstartyear)[0] # Get the index of the year to start the plots
+        except: 
+            errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotstartyear, tvec[0])
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 3, verbose)
+                startind = 0
+    else: startind = 0
+
+    if plotendyear is not None:
+        try: endind = findinds(tvec,plotendyear)[0] # Get the index of the year to end the plots
+        except: 
+            errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotendyear, tvec[-1])
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 3, verbose)
+                endind = -1
+    else: endind = -1
+    
+    return startind, endind
