@@ -1713,10 +1713,7 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     project_record = load_project_record(project_id)
     project = project_record.load()
     project.restorelinks()
-    prj_basename = project_record.as_file(dirname)
-    prj_fname = os.path.join(dirname, prj_basename)
-    xlsx_fname = prj_fname.replace('.prj', '.xlsx')
-    op.makegeospreadsheet(project=project, spreadsheetpath=xlsx_fname, copies=n_region, refyear=year)
+    xlsx_fname = op.makegeospreadsheet(project=project, folder=dirname, copies=n_region, refyear=year)
     return os.path.split(xlsx_fname)
 
 
