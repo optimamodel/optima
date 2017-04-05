@@ -419,11 +419,10 @@ class Portfolio(object):
             return output
     
     
-    def export(self, filename=None, verbose=2):
+    def export(self, filename=None, folder=None, verbose=2):
         ''' Export the results to Excel format '''
         
-        if filename is None:
-            filename = self.name+'-geospatial-results.xlsx'
+        filename = makefilepath(filename=filename, folder=folder, default=self.name+'-geospatial-results.xlsx', ext='xlsx')
         workbook = Workbook(filename)
         worksheet = workbook.add_worksheet()
         
@@ -462,7 +461,7 @@ class Portfolio(object):
         workbook.close()
         
         printv('Results exported to %s' % filename, 2, verbose)
-        return None
+        return filename
         
 
 

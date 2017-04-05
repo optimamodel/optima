@@ -966,11 +966,8 @@ def download_result_data(result_id):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filestem = 'results'
     result = load_result_by_id(result_id)
-    result.export(filestem=os.path.join(dirname, filestem))
-    filename = filestem + '.xlsx'
-    return os.path.join(dirname, filename)
+    return result.export(folder=dirname)
 
 
 def load_result_by_optimization(project, optimization):
@@ -1658,9 +1655,7 @@ def export_portfolio(portfolio_id):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    xlsx_fname = os.path.join(dirname, 'geospatial-results.xlsx')
-    portfolio.export(filename=xlsx_fname)
-    return xlsx_fname
+    return portfolio.export(folder=dirname)
     
 
 def portfolio_results_ready(portfolio_id):
