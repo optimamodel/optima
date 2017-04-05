@@ -33,7 +33,7 @@ def print_odict(name, an_odict):
     """
     Helper function to print an odict to the console
     """
-    print(">> %s = <odict>" % name)
+    print(">> print_odict %s = <odict>" % name)
     obj = normalize_obj(an_odict)
     s = pformat(obj, indent=2)
     for line in s.splitlines():
@@ -215,7 +215,7 @@ def revert_populations_to_pop(populations):
 
 
 def clear_project_data(project):
-    print(">> Deleting project.data")
+    print(">> clear_project_data")
     project.data = {}
     project.progsets.clear()
     project.parsets.clear()
@@ -225,7 +225,7 @@ def clear_project_data(project):
 
 def set_project_summary_on_project(project, summary):
 
-    print(">> Update project")
+    print(">> set_project_summary_on_project")
 
     data_pops = revert_populations_to_pop(summary['populations'])
 
@@ -252,7 +252,6 @@ def is_progset_optimizable(progset):
     n_program = len(progset.programs.values())
     has_ccopars = progset.hasallcostcovpars()
     has_covout = progset.hasallcovoutpars()
-    print(">> Check optimizability, progset %s, %s, %s" % (progset.name, has_ccopars, has_covout))
     if n_program > 0 and has_ccopars and has_covout:
         for program in progset.programs.values():
             if not program.costcovdata.get('t', False):
@@ -370,7 +369,7 @@ def set_parameters_on_parset(parameters, parset):
         elif par_type == 'year':
             pars[key].t = value
         else:
-            print('>> Parameter type "%s" not implemented!' % par_type)
+            print('>> set_parameters_on_parset type "%s" not implemented!' % par_type)
 
 
 def make_pop_label(pop):
@@ -399,7 +398,7 @@ def get_parameters_for_scenarios(project):
             - popLabel: string
             - limits: [number, number]
     """
-    print(">> Get parameters for scenarios")
+    print(">> get_parameters_for_scenarios")
     result = {}
     for id, parset in project.parsets.items():
         parset_id = str(parset.uid)
@@ -416,17 +415,15 @@ def get_parameters_for_scenarios(project):
                         'popLabel': make_pop_label(pop),
                         'limits': get_par_limits(project, par),
                     })
-    print(">> Finished calculating startvals for parameters")
     return result
 
 def get_startval_for_parameter(project, parset_id, par_short, pop, year):
-    print(">> Get parameters for scenarios")
+    print(">> get_startval_for_parameter")
     parset = get_parset_from_project(project, parset_id)
     if isinstance(pop, list):
         pop = tuple(pop)
     for par in parset.pars.values():
         if isinstance(par, op.Timepar) and par.short==par_short:
-            print(">> Compare pops %s -> %s" % (pop, par.y.keys()))
             for par_pop in par.y.keys():
                 if par_pop == pop:
                     try:
@@ -464,7 +461,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset = get_progset_from_project(project, progset_id)
     parset = get_parset_from_project(project, parset_id)
 
-    print(">> Fetching target parameters from progset '%s'" % progset.name)
+    print(">> get_parameters_for_outcomes '%s'" % progset.name)
 
     progset.gettargetpops()
     progset.gettargetpars()
@@ -505,7 +502,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
 
 
 def get_budgets_for_scenarios(project):
-    print(">> Get default budges for scenarios")
+    print(">> get_budgets_for_scenarios")
     result = {
         str(progset.uid): normalize_obj(progset.getdefaultbudget())
         for progset in project.progsets.values()}
@@ -521,7 +518,7 @@ def get_coverages_for_scenarios(project, year=None):
                 <year>:
                     <program_short>: coverage (float)
     """
-    print(">> Get default coverages for scenarios")
+    print(">> get_coverages_for_scenarios")
     result = {}
     start = project.settings.start
     end = project.settings.end
@@ -884,7 +881,7 @@ def get_progset_summary(project, progset_name):
         if not program_summary['name']:
             program_summary['name'] = program_summary['short']
 
-    print(">> Extract progset summary %s-%s " % (project.name, progset.name))
+    print(">> get_progset_summary %s-%s " % (project.name, progset.name))
     progset_summary = {
         'id': progset.uid,
         'name': progset.name,
@@ -897,7 +894,6 @@ def get_progset_summary(project, progset_name):
 
 
 def get_progset_summaries(project):
-    print(">> Get progset summaries")
     progset_summaries = [
         get_progset_summary(project, name) for name in project.progsets]
     return {'progsets': normalize_obj(progset_summaries)}
@@ -937,10 +933,10 @@ def get_progset_from_project(project, progset_id):
 
 
 def get_progset_from_name(project, progset_name, progset_id=None):
-    print(">> Finding progset '%s'" % progset_name)
+    print(">> get_progset_from_name '%s'" % progset_name)
     if progset_name not in project.progsets:
         if progset_id:
-            print("> Updated program set %s with new id %s" % (progset_name, progset_id))
+            print("> get_progset_from_name updated %s with %s" % (progset_name, progset_id))
             # It may have changed, so try getting via ID if we have it...
             progset = get_progset_from_project(project, progset_id)
             project.progsets.pop(progset.name)
@@ -949,7 +945,7 @@ def get_progset_from_name(project, progset_name, progset_id=None):
             progset.name = progset_name
             project.progsets[progset_name] = progset
         else:
-            print("> Created program set %s" % progset_name)
+            print("> get_progset_from_name created %s" % progset_name)
             project.progsets[progset_name] = op.Programset(name=progset_name)
     return project.progsets[progset_name]
 
@@ -989,7 +985,6 @@ def create_or_extract_program_from_progset(progset, summary):
     else:
         costcov = None
 
-    print(">> set_program_summary_on_progset", json.dumps(summary, indent=2))
     program = op.Program(
         short=summary["short"],
         name=summary["name"],
@@ -1022,7 +1017,7 @@ def set_program_summary_on_progset(progset, summary):
 
 def set_progset_summary_on_progset(progset, progset_summary):
     progset.inactive_programs = op.odict()
-    print(">> Setting %d programs on progset" % len(progset_summary['programs']))
+    print(">> set_progset_summary_on_progset n progset" % len(progset_summary['programs']))
     updated_programs = []
     for program_summary in progset_summary['programs']:
         program = create_or_extract_program_from_progset(progset, program_summary)
@@ -1180,7 +1175,7 @@ def get_scenario_summary(project, scenario):
 
 
 def get_scenario_summaries(project):
-    print(">> Get scenario summaries")
+    print(">> get_scenario_summaries")
     scenario_summaries = []
     for scen in project.scens.values():
         summary = get_scenario_summary(project, scen)
@@ -1362,9 +1357,9 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
 
         if id is None:
             optim = op.Optim(project=project)
-            print(">> Creating new optimization '%s'" % optim.uid)
+            print(">> set_optimization_summaries_on_project create '%s'" % optim.uid)
         else:
-            print(">> Updating optimization '%s'" % id)
+            print(">> set_optimization_summaries_on_project update '%s'" % id)
             optim = get_optimization_from_project(project, id)
 
         optim.name = summary["name"]
@@ -1461,23 +1456,20 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
     """
     portfolio.objectives = op.odict(summary['objectives']) # WARNING, this destroys order
     
+    print("> set_portfolio_summary_on_portfolio")
     project_ids = [s["id"] for s in summary["projects"]]
 
     old_project_ids = [str(p.uid) for p in portfolio.projects.values()]
-    print("> set_portfolio_summary_on_portfolio old project ids %s" % old_project_ids)
     for old_project_id in old_project_ids:
         if old_project_id not in project_ids:
             delete_project_in_portfolio(portfolio, old_project_id)
 
     new_project_ids = []
     curr_project_ids = [str(p.uid) for p in portfolio.projects.values()]
-    print("> set_portfolio_summary_on_portfolio curr project ids %s" % old_project_ids)
     for project_id in project_ids:
         if project_id not in curr_project_ids:
-            print("set_portfolio_summary_on_portfolio new", project_id, project_id not in curr_project_ids)
             new_project_ids.append(project_id)
 
-    print("> set_portfolio_summary_on_portfolio new project ids %s" % new_project_ids)
 
     return new_project_ids
 
