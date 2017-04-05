@@ -618,11 +618,14 @@ def download_project(project_id):
     Returns the (dirname, filename) of the .prj binary of the project on the server
     """
     project_record = load_project_record(project_id, raise_exception=True)
+    project = project_record.load()
+    project.restorelinks()
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = project_record.as_file(dirname)
-    return dirname, filename
+    server_filename = project.save(folder=dirname, saveresults=False)
+    print(">> download_project %s" % (server_filename))
+    return os.path.split(server_filename)
 
 
 def download_project_with_result(project_id):
@@ -641,11 +644,9 @@ def download_project_with_result(project_id):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = project.name + ".prj"
-    server_filename = os.path.join(dirname, filename)
-    project.save(server_filename, saveresults=True)
-    print(">> Saving download_project %s %s" % (dirname, filename))
-    return os.path.join(dirname, filename)
+    server_filename = project.save(folder=dirname, saveresults=True)
+    print(">> download_project_with_result %s" % (server_filename))
+    return server_filename
 
 
 def update_project_from_prj(project_id, prj_filename):
