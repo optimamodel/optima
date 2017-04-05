@@ -5,7 +5,7 @@ define(
 
     module.controller(
       'PortfolioController',
-      function($scope, $http, activeProject, modalService, userManager,
+      function($scope, $http, activeProject, modalService, userManager, util,
                $state, toastr, globalPoller, $modal, $upload) {
 
         function initialize() {
@@ -44,7 +44,8 @@ define(
               $scope.state.portfolio = $scope.portfolios[0];
             }
             $scope.chooseNewPortfolio();
-          };
+          }
+          ;
           console.log('loadPortfolios portfolio', $scope.state.portfolio)
         }
 
@@ -92,14 +93,38 @@ define(
             _.pluck($scope.portfolios, 'name'));
         };
 
+        $scope.renamePortfolio = function() {
+          modalService.rename(function(newName) {
+            util
+              .rpcRun(
+                'rename_portfolio', [$scope.state.portfolio.id, newName])
+              .then(function(response) {
+                console.log('renamed portfolio', response.data);
+                var renamedPortfolio = response.data;
+                var portfolio = _.findWhere($scope.portfolios, {id: $scope.state.portfolio.id});
+                portfolio.name = newName;
+                $scope.state.portfolio.name = newName;
+                toastr.success('Renamed portfolio');
+              });
+            },
+            'Rename portfolio',
+            'Enter portfolio name',
+            $scope.state.portfolio.name,
+            'Name already exists',
+            _.without(_.pluck($scope.portfolios, 'name'), $scope.state.portfolio.name));
+        };
 
         $scope.downloadPortfolio = function() {
-          $http.get('/api/portfolio/' + $scope.state.portfolio.id + '/data',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType: 'blob'})
-            .success(function(response, status, headers, config) {
-              var blob = new Blob([response], {type: 'application/octet-stream'});
-              saveAs(blob, ($scope.state.portfolio.name + '.prt'));
+          $http
+            .post(
+              '/api/download',
+              {name: 'download_portfolio', args: [$scope.state.portfolio.id]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/octet-stream' });
+              saveAs(blob, (response.headers('filename')));
             });
+
         };
 
         $scope.uploadPortfolio = function() {
@@ -395,11 +420,16 @@ define(
         };
 
         $scope.exportResults = function() {
-          $http.get('/api/portfolio/' + $scope.state.portfolio.id + '/export',
-            {headers: {'Content-type': 'application/octet-stream'}, responseType: 'blob'})
-            .success(function(response, status, headers, config) {
-              var blob = new Blob([response], {type: 'application/octet-stream'});
-              saveAs(blob, ('geospatial-results.xlsx'));
+          $http
+            .post(
+              '/api/download',
+              {name: 'export_portfolio', args: [$scope.state.portfolio.id]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob(
+                [response.data],
+                {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+              saveAs(blob, (response.headers('filename')));
             });
         };
 
@@ -408,4 +438,4 @@ define(
       }
     );
 
-});
+  });

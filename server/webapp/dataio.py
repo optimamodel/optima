@@ -15,7 +15,7 @@ Parsed data structures should have suffix _summary
 
 All parameters and return types are either id's, json-summaries, or mpld3 graphs
 """
-
+from __future__ import print_function
 import traceback
 from functools import wraps
 import os
@@ -73,7 +73,7 @@ def upload_dir_user(dirpath, user_id=None):
     Returns a unique directory on the server for the user's files
     """
     try:
-        from flask.ext.login import current_user  # pylint: disable=E0611,F0401
+        from flask.ext.login import current_user
 
         # get current user
         if current_user.is_anonymous() == False:
@@ -84,11 +84,11 @@ def upload_dir_user(dirpath, user_id=None):
             user_path = os.path.join(dirpath, str(current_user_id))
 
             # if dir does not exist
-            if not (os.path.exists(dirpath)):
+            if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
 
             # if dir with user id does not exist
-            if not (os.path.exists(user_path)):
+            if not os.path.exists(user_path):
                 os.makedirs(user_path)
 
             return user_path
@@ -201,12 +201,12 @@ def do_login_user(args):
     if userisanonymous:
         current_app.logger.debug("current user anonymous, proceed with logging in")
 
-        print("login args", args)
+        print(">> do_login_user args", args)
         try:
             # Get user for this username
             user = UserDb.query.filter_by(username=args['username']).first()
 
-            print("user", user)
+            print(">> do_login_user user", user)
             # Make sure user is valid and password matches
             if user is not None and user.password == args['password']:
                 login_user(user)
@@ -214,7 +214,7 @@ def do_login_user(args):
 
         except Exception:
             var = traceback.format_exc()
-            print("Exception when logging user {}: \n{}".format(args['username'], var))
+            print("do_login_user error logging user {}: \n{}".format(args['username'], var))
 
         raise InvalidCredentials
 
@@ -242,7 +242,7 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
 
-    print("deleted user:{} {} {}".format(user_id, user_name, user_email))
+    print(">> delete_user user:{} {} {}".format(user_id, user_name, user_email))
 
 
 def do_logout_current_user():
@@ -427,7 +427,7 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
         datastart=project_summary['startYear'],
         dataend=project_summary['endYear'])
 
-    print("> Project data template: %s" % new_project_template)
+    print("> create_project_with_spreadsheet_download %s" % new_project_template)
 
     return project.uid, upload_dir_user(TEMPLATEDIR), new_project_template
 
@@ -510,9 +510,9 @@ def save_project_as_new(project, user_id):
         for obj in getattr(project,attr).values():
             obj.uid = op.uuid()
 
+    print(">> save_project_as_new:", project.name)
     for result in project.results.values():
         name = result.name
-        print(">> Store result: %s" % result.name)
         if 'scenarios' in name:
             update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
         if 'optim' in name:
@@ -592,7 +592,7 @@ def create_project_from_prj(prj_filename=None, user_id=None, project=None):
     Returns the project id of the new project.
     """
 
-    print ">> create_project_from_prj", prj_filename, user_id, project
+    print(">> create_project_from_prj", prj_filename, user_id, project)
     if prj_filename:
         project = op.loadproj(prj_filename)
     project.name = get_unique_name(project.name)
@@ -605,7 +605,7 @@ def create_project_from_spreadsheet(prj_filename, user_id):
     """
     Returns the project id of the new project.
     """
-    print ">> create_project_from_spreadsheet", prj_filename, user_id
+    print(">> create_project_from_spreadsheet", prj_filename, user_id)
     project = op.Project(spreadsheet=prj_filename)
     project.name = get_unique_name(project.name)
     resolve_project(project)
@@ -618,11 +618,14 @@ def download_project(project_id):
     Returns the (dirname, filename) of the .prj binary of the project on the server
     """
     project_record = load_project_record(project_id, raise_exception=True)
+    project = project_record.load()
+    project.restorelinks()
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = project_record.as_file(dirname)
-    return dirname, filename
+    server_filename = project.save(folder=dirname, saveresults=False)
+    print(">> download_project %s" % (server_filename))
+    return os.path.split(server_filename)
 
 
 def download_project_with_result(project_id):
@@ -641,11 +644,9 @@ def download_project_with_result(project_id):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filename = project.name + ".prj"
-    server_filename = os.path.join(dirname, filename)
-    project.save(server_filename, saveresults=True)
-    print(">> Saving download_project %s %s" % (dirname, filename))
-    return os.path.join(dirname, filename)
+    server_filename = project.save(folder=dirname, saveresults=True)
+    print(">> download_project_with_result %s" % (server_filename))
+    return server_filename
 
 
 def update_project_from_prj(project_id, prj_filename):
@@ -688,7 +689,7 @@ def resolve_project(project):
     Checks project to ensure that all the cross-reference fields are
     properly specified and that defaults are sensibly populated.
     """
-    print(">> Resolve project")
+    print(">> resolve_project")
     is_change = False
 
     # Restore links always, don't worry about changes
@@ -716,9 +717,10 @@ def resolve_project(project):
                     del_scenario_keys.append(scenario_key)
             if scenario.progsetname not in project.progsets:
                 del_scenario_keys.append(scenario_key)
-    print(">>> Delete deprecated scenarios %s" % del_scenario_keys)
-    for scenario_key in del_scenario_keys:
-        project.scens.pop(scenario_key, None)
+    if del_scenario_keys:
+        print(">>> resolve_project delete scenarios %s" % del_scenario_keys)
+        for scenario_key in del_scenario_keys:
+            project.scens.pop(scenario_key, None)
 
     is_change = is_change or len(del_scenario_keys) > 0
 
@@ -750,16 +752,16 @@ def resolve_project(project):
                     del_optim_keys.append(optim_key)
             if optim.progsetname not in project.progsets:
                 del_optim_keys.append(optim_key)
-    print(">>> Delete deprecated optims %s" % del_optim_keys)
-    for optim_key in del_optim_keys:
-        project.optims.pop(optim_key, None)
+    if del_optim_keys:
+        print(">>> resolve_project delete optims %s" % del_optim_keys)
+        for optim_key in del_optim_keys:
+            project.optims.pop(optim_key, None)
 
     is_change = is_change or len(del_optim_keys) > 0
 
     query = db.session.query(PyObjectDb).filter_by(user_id=current_user.id)
     portfolios = []
     for record in query:
-        print(">> Portfolio id %s" % record.id)
         portfolio = record.load()
         portfolios.append(portfolio)
 
@@ -768,7 +770,6 @@ def resolve_project(project):
         progset_name = optim.progsetname
         progset = project.progsets[progset_name]
         if optim.constraints is None:
-            print(">>> Fill out default constraints for constraints = None")
             optim.constraints = op.defaultconstraints(project=project, progset=progset)
             is_change = True
 
@@ -777,7 +778,7 @@ def resolve_project(project):
     is_delete_result = False
     for result in results:
         if result.parset_id is not None and result.parset_id not in parset_ids:
-            print(">>> Delete deprecated result %s" % result.parset_id)
+            print(">>> resolve_project delete result %s" % result.parset_id)
             db.session.delete(result)
             is_delete_result = True
     db.session.commit()
@@ -911,13 +912,13 @@ def update_or_create_result_record_by_id(
 
     result_record = db_session.query(ResultsDb).get(result.uid)
     if result_record is not None:
-        print(">> Updating record for result '%s'" % (result.name))
+        print(">> update_or_create_result_record_by_id update %s" % (result.name))
     else:
         result_record = ResultsDb(
             parset_id=parset_id,
             project_id=project_id,
             calculation_type=calculation_type)
-        print(">> Creating record for result '%s'" % (result.name))
+        print(">> update_or_create_result_record_by_id create %s" % (result.name))
 
     result_record.id = result.uid
     result_record.save_obj(result)
@@ -952,26 +953,21 @@ def delete_result_by_name(
     for record in records:
         result = record.load()
         if result.name == result_name:
-            print(">> Deleting outdated result '%s'" % result_name)
+            print(">> delete_result_by_name '%s'" % result_name)
             record.cleanup()
             db_session.delete(record)
     db_session.commit()
 
 
-def load_result_csv(result_id):
+def download_result_data(result_id):
     """
     Returns (dirname, basename) of the the result.csv on the server -- WARNING, deprecated function name!
     """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    filestem = 'results'
-    filename = filestem + '.xlsx'
-
     result = load_result_by_id(result_id)
-    result.export(filestem=os.path.join(dirname, filestem))
-
-    return dirname, filename
+    return result.export(folder=dirname)
 
 
 def load_result_by_optimization(project, optimization):
@@ -979,7 +975,7 @@ def load_result_by_optimization(project, optimization):
     result_name = "optim-" + optimization.name
     parset_id = project.parsets[optimization.parsetname].uid
 
-    print(">> Loading result '%s'" % result_name)
+    print(">> load_result_by_optimization '%s'" % result_name)
     result_records = db.session.query(ResultsDb).filter_by(
         project_id=project.uid,
         parset_id=parset_id,
@@ -990,7 +986,7 @@ def load_result_by_optimization(project, optimization):
         if result.name == result_name:
             return result
 
-    print(">> Not found result '%s'" % (optimization.name))
+    print(">> load_result_by_optimization not result for optim '%s'" % (optimization.name))
 
     return None
 
@@ -1006,7 +1002,7 @@ def download_figures(result_id=None, which=None, filetype=None, index=None):
     if not dirname:
         dirname = TEMPLATEDIR
     
-    filenames = op.saveplots(result, toplot=which, filepath=dirname, filename=None, filetype=filetype, index=index)
+    filenames = op.saveplots(result, toplot=which, folder=dirname, filename=None, filetype=filetype, index=index)
     if len(filenames)>1:
         errormsg = 'Webapp only supports saving one figure at a time; you are trying to save %s' % len(filenames)
         raise op.OptimaException(errormsg)
@@ -1048,10 +1044,8 @@ def rename_parset(project_id, parset_id, new_parset_name):
         parset = parse.get_parset_from_project(project, parset_id)
         old_parset_name = parset.name
         parset.name = new_parset_name
-        print(">> old parsets '%s'" % project.parsets.keys())
         del project.parsets[old_parset_name]
         project.parsets[new_parset_name] = parset
-        print(">> new parsets '%s'" % project.parsets.keys())
 
     update_project_with_fn(project_id, update_project_fn)
 
@@ -1071,7 +1065,6 @@ def refresh_parset(project_id, parset_id):
     def update_project_fn(project):
         parset = parse.get_parset_from_project(project, parset_id)
         parset_name = parset.name
-        print(">> Resetting parset %s to match default" % parset_name)
         project.refreshparset(name=parset_name)
 
     update_project_with_fn(project_id, update_project_fn)
@@ -1079,7 +1072,6 @@ def refresh_parset(project_id, parset_id):
 
 
 def load_parset_summaries(project_id):
-    print(">> Get parset summaries")
     project = load_project(project_id)
     return parse.get_parset_summaries(project)
 
@@ -1103,7 +1095,6 @@ def save_parameters(project_id, parset_id, parameters):
 
     def update_project_fn(project):
         parset = parse.get_parset_from_project(project, parset_id)
-        print(">> Updating parset '%s'" % parset.name)
         parset.modified = datetime.now(dateutil.tz.tzutc())
         parse.set_parameters_on_parset(parameters, parset)
 
@@ -1118,9 +1109,6 @@ def load_parset_graphs(
 
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
-
-    print(">> load_parset_graphs input %s %s %s" % (startYear, endYear, parameters is not None))
-    print(">> load_parset_graphs input which %s" % (which))
 
     result = load_result(project_id, parset_id, calculation_type, which)
     if result:
@@ -1225,7 +1213,7 @@ def upload_progset(project_id, progset_id, progset_summary):
     project = project_record.load()
     
     old_progset = parse.get_progset_from_project(project, progset_id)
-    print(">> Upload progset '%s' into '%s'" % (progset_summary['name'], old_progset.name))
+    print(">> upload_progset '%s' into '%s'" % (progset_summary['name'], old_progset.name))
     progset_summary['id'] = progset_id
     progset_summary['name'] = old_progset.name
     parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
@@ -1300,7 +1288,7 @@ def save_program(project_id, progset_id, program_summary):
 
     progset = parse.get_progset_from_project(project, progset_id)
 
-    print("> Saving program " + program_summary['name'])
+    print(">> save_program " + program_summary['name'])
     parse.set_program_summary_on_progset(progset, program_summary)
 
     progset.updateprogset(verbose=4)
@@ -1336,17 +1324,12 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
     project.restorelinks()
 
     budgets = progset.getdefaultbudget()
-    print('Checking progset....')
     progset.readytooptimize(verbose=4)
-    print('Done checking progset.')
-    print('Program set %s is ready to optimize: %s' % (progset.name, progset.readytooptimize()))
     if progset.readytooptimize():
         pars = progset.compareoutcomes(parset=parset, year=t)
     else:
         msg = progset.readytooptimize(detail=True)
-        print('Program set %s is not ready to optimize: %s' % (progset.name, msg))
         pars = [[msg, '', 0, 0]]
-        print(progset.programs)
 
     return {
         'budgets': parse.normalize_obj(budgets),
@@ -1372,7 +1355,7 @@ def any_optimizable(project_id):
         if progset.readytooptimize(verbose=4):
             optimizable = True
         
-    print('Checking optimizability for %s: %s' % (project.name, optimizable))
+    print('>> any_optimizable for %s: %s' % (project.name, optimizable))
     return optimizable
 
 
@@ -1394,9 +1377,9 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, start=None, end=
     if is_run:
         project = load_project(project_id)
         if len(project.scens) == 0:
-            print(">> No scenarios in project")
+            print(">> make_scenarios_graphs no scenarios")
             return {}
-        print(">> Run scenarios for project '%s' from %s to %s" % (
+        print(">> make_scenarios_graphs project '%s' from %s to %s" % (
             project_id, start, end))
         # start=None, end=None -> does nothing
         project.runscenarios(start=start, end=end)
@@ -1428,7 +1411,7 @@ def load_and_resolve_project(project_id):
     project = project_record.load()
     project.restorelinks()
     if resolve_project(project):
-        print(">> Resolved project updated")
+        print(">> load_and_resolve_project updated")
         project_record.save_obj(project)
     return project
 
@@ -1507,7 +1490,7 @@ def load_optimization_graphs(project_id, optimization_id, which):
     else:
         if hasattr(result, 'which'):
             which = result.which
-        print(">> Loading graphs for result '%s' %s" % (result.name, which))
+        print(">> load_optimization_graphs result '%s' %s" % (result.name, which))
         return make_mpld3_graph_dict(result, which)
 
 
@@ -1525,13 +1508,13 @@ def create_portfolio(name, db_session=None, portfolio=None):
     if db_session is None:
         db_session = db.session
     if portfolio is None:
-        print("> Create portfolio %s with default objectives" % name)
+        print("> create_portfolio %s with default objectives" % name)
         portfolio = op.Portfolio()
         portfolio.objectives = op.defaultobjectives()
         portfolio.name = name
     else:
         portfolio.uid = op.uuid() # Have to update this or else the database freaks out
-        print("Create portfolio %s from upload" % portfolio.name)
+        print("> create_portfolio %s from upload" % portfolio.name)
     record = PyObjectDb(user_id=current_user.id, name=portfolio.name, id=portfolio.uid, type="portfolio")
     record.save_obj(portfolio)
     db_session.add(record)
@@ -1545,7 +1528,7 @@ def delete_portfolio(portfolio_id, db_session=None):
     """
     if db_session is None:
         db_session = db.session
-    print("> Delete portfolio %s" % portfolio_id)
+    print("> delete_portfolio %s" % portfolio_id)
     record = db_session.query(PyObjectDb).get(portfolio_id)
     record.cleanup()
     db_session.delete(record)
@@ -1559,7 +1542,7 @@ def load_portfolio(portfolio_id, db_session=None):
     kwargs = {'id': portfolio_id, 'type': "portfolio"}
     record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
     if record:
-        print("> load portfolio %s" % portfolio_id)
+        print("> load_portfolio %s" % portfolio_id)
         return record.load()
     raise Exception("Portfolio %s not found" % portfolio_id)
 
@@ -1568,15 +1551,14 @@ def load_portfolio_summaries(db_session=None):
     if db_session is None:
         db_session = db.session
 
+    print("> load_portfolio_summaries")
     query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
     portfolios = []
     for record in query:
-        print(">> Portfolio id %s" % record.id)
         portfolio = record.load()
         portfolios.append(portfolio)
 
     summaries = map(parse.get_portfolio_summary, portfolios)
-    print("> load_portfolio_summaries")
 
     return summaries
 
@@ -1594,10 +1576,19 @@ def save_portfolio(portfolio, db_session=None):
         record.id = UUID(portfolio_id)
         record.type = "portfolio"
         record.name = portfolio.name
-    print(">> Saved portfolio %s" % (portfolio_id))
+    print(">> save_portfolio %s" % (portfolio_id))
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
+
+
+def rename_portfolio(portfolio_id, newName, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    portfolio = load_portfolio(portfolio_id, db_session)
+    portfolio.name = newName
+    save_portfolio(portfolio, db_session)
+    return parse.get_portfolio_summary(portfolio)
 
 
 def load_or_create_portfolio(portfolio_id, db_session=None):
@@ -1606,10 +1597,10 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
     kwargs = {'id': portfolio_id, 'type': "portfolio"}
     record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
     if record:
-        print("> load portfolio %s" % portfolio_id)
+        print("> load_or_create_portfolio update %s" % portfolio_id)
         portfolio = record.load()
     else:
-        print("> Create portfolio %s with default objectives" % portfolio_id)
+        print("> load_or_create_portfolio create %s" % portfolio_id)
         portfolio = op.Portfolio()
         portfolio.uid = UUID(portfolio_id)
         portfolio.objectives = op.defaultobjectives()
@@ -1647,7 +1638,7 @@ def download_portfolio(portfolio_id):
     if not dirname:
         dirname = TEMPLATEDIR
     filename = portfolio_record.as_portfolio_file(dirname)
-    return dirname, filename
+    return os.path.join(dirname, filename)
 
 
 def export_portfolio(portfolio_id):
@@ -1659,9 +1650,7 @@ def export_portfolio(portfolio_id):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    xlsx_fname = os.path.join(dirname, 'geospatial-results.xlsx')
-    portfolio.export(filename=xlsx_fname)
-    return os.path.split(xlsx_fname)
+    return portfolio.export(folder=dirname)
     
 
 def portfolio_results_ready(portfolio_id):
@@ -1687,7 +1676,7 @@ def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     portfolio = load_or_create_portfolio(portfolio_id)
     new_project_ids = parse.set_portfolio_summary_on_portfolio(portfolio, portfolio_summary)
     for project_id in new_project_ids:
-        print("save_portfolio_by_summary new_project_id", project_id)
+        print(">> save_portfolio_by_summary new_project_id", project_id)
         project = load_project(project_id)
         portfolio.projects[project_id] = project
     save_portfolio(portfolio, db_session)
@@ -1700,7 +1689,7 @@ def delete_portfolio_project(portfolio_id, project_id):
     """
     portfolio = load_portfolio(portfolio_id)
     parse.delete_project_in_portfolio(portfolio, project_id)
-    print(">> Deleted project %s from portfolio %s" % (project_id, portfolio_id))
+    print(">> delete_portfolio_project %s from portfolio %s" % (project_id, portfolio_id))
     save_portfolio(portfolio)
     return load_portfolio_summaries()
 
@@ -1715,10 +1704,7 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     project_record = load_project_record(project_id)
     project = project_record.load()
     project.restorelinks()
-    prj_basename = project_record.as_file(dirname)
-    prj_fname = os.path.join(dirname, prj_basename)
-    xlsx_fname = prj_fname.replace('.prj', '.xlsx')
-    op.makegeospreadsheet(project=project, spreadsheetpath=xlsx_fname, copies=n_region, refyear=year)
+    xlsx_fname = op.makegeospreadsheet(project=project, folder=dirname, copies=n_region, refyear=year)
     return os.path.split(xlsx_fname)
 
 
@@ -1727,7 +1713,7 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
     Return (dirname, basename) of the region template spreadsheet on the server
     """
 
-    print("> Make region projects from %s %s" % (project_id, spreadsheet_fname))
+    print("> make_region_projects from %s %s" % (project_id, spreadsheet_fname))
     project_record = load_project_record(project_id)
     baseproject = project_record.load()
 
@@ -1735,7 +1721,7 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
 
     prj_names = []
     for project in projects:
-        print("> Slurping project %s" % project.name)
+        print("> make_region_projects region - project %s" % project.name)
         prj_name = project.name
         i = 1
         while prj_name in existing_prj_names:
@@ -1744,7 +1730,6 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
         create_project_from_prj(None, prj_name, current_user.id, project=project)
         prj_names.append(prj_name)
 
-    print("> Cleanup districts for template project %s" % baseproject.name)
     return prj_names
 
 

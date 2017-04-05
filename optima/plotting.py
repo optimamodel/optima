@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017mar17
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -1046,7 +1046,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
 
 
-def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, index=None, verbose=2, plots=None, **kwargs):
+def saveplots(results=None, toplot=None, filetype=None, filename=None, folder=None, savefigargs=None, index=None, verbose=2, plots=None, **kwargs):
     '''
     Save the requested plots to disk.
     
@@ -1054,7 +1054,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         results -- either a Resultset, Multiresultset, or a Project
         toplot -- either a plot key or a list of plot keys
         filetype -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
-        filepath -- the folder to save the file(s) in
+        folder -- the folder to save the file(s) in
         filename -- the file to save to (only uses path if multiple files)
         savefigargs -- dictionary of arguments passed to savefig()
         index -- optional argument to only save the specified plot index
@@ -1079,13 +1079,6 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
     results = sanitizeresults(results)
     
-    # Handle filepath
-    if filename is None: filename = ''
-    if filepath is None:
-        filepath = ''
-        if filename: filepath = os.path.dirname(filename)
-    if filepath: filepath += os.sep
-    
     # Either take supplied plots, or generate them
     if plots is None: # NB, this is actually a figure or a list of figures
         plots = makeplots(results=results, toplot=toplot, **kwargs)
@@ -1094,40 +1087,40 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     
     # Handle file types
     filenames = []
-    thisfilename = ''
     if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
-        if not filename: filename = results.projectinfo['name']+'-'+'figures.pdf'
-        thisfilename = filepath+filename
-        pdf = PdfPages(thisfilename)
-        filenames.append(thisfilename)
-        printv('PDF saved to %s' % thisfilename, 2, verbose)
+        defaultname = results.projectinfo['name']+'-'+'figures.pdf'
+        fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
+        pdf = PdfPages(fullpath)
+        filenames.append(fullpath)
+        printv('PDF saved to %s' % fullpath, 2, verbose)
     for p,item in enumerate(plots.items()):
         key,plt = item
         if index is None or index==p:
             # Handle filename
             if filename and nplots==1: # Single plot, filename supplied -- use it
-                thisfilename = filepath+filename
+                fullpath = makefilepath(filename=filename, folder=folder, default='optima-figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
             else: # Any other case, generate a filename
                 keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
-                thisfilename = filepath+results.projectinfo['name']+'-'+keyforfilename+'.'+filetype
+                defaultname = results.projectinfo['name']+'-'+keyforfilename
+                fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
             
             # Do the saving
             if savefigargs is None: savefigargs = {}
             defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
             defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
             if filetype == 'fig':
-                saveobj(thisfilename, plt)
-                filenames.append(thisfilename)
-                printv('Figure object saved to %s' % thisfilename, 2, verbose)
+                saveobj(fullpath, plt)
+                filenames.append(fullpath)
+                printv('Figure object saved to %s' % fullpath, 2, verbose)
             else:
                 reanimateplots(plt)
                 if filetype=='singlepdf':
                     pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
                 else:
-                    plt.savefig(thisfilename, **defaultsavefigargs)
-                    filenames.append(thisfilename)
-                    printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
+                    plt.savefig(fullpath, **defaultsavefigargs)
+                    filenames.append(fullpath)
+                    printv('%s plot saved to %s' % (filetype.upper(),fullpath), 2, verbose)
                 close(plt)
 
     if filetype=='singlepdf': pdf.close()

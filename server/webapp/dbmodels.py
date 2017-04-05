@@ -56,16 +56,16 @@ class PyObjectDb(db.Model):
     attr = db.Column(JSON)
 
     def load(self):
-        print(">> Load pyobject " + self.id.hex)
+        print(">> PyObjectDb load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
         return op.loadstr(redis_entry)
 
     def save_obj(self, obj):
-        print(">> Save pyobject " + self.id.hex)
+        print(">> PyObjectDb save " + self.id.hex)
         redis.set(self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
-        print(">> Cleanup " + self.id.hex)
+        print(">> PyObjectDb cleanup " + self.id.hex)
         redis.delete(self.id.hex)
     
     def as_portfolio_file(self, loaddir, filename=None):
@@ -88,7 +88,7 @@ class ProjectDb(db.Model):
         self.user_id = user_id
 
     def load(self):
-        print(">> Load project " + self.id.hex)
+        print(">> ProjectDb load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
         
         project = op.loadproj(redis_entry, fromdb=True)
@@ -100,7 +100,7 @@ class ProjectDb(db.Model):
         return project
 
     def save_obj(self, obj, is_skip_result=False):
-        print(">> Save project " + self.id.hex)
+        print(">> ProjectDb save " + self.id.hex)
         if isinstance(obj, op.Project):
             # Copy the project, only save what we want...
             new_project = op.dcp(obj)
@@ -110,7 +110,6 @@ class ProjectDb(db.Model):
             redis.set(self.id.hex, op.dumpstr(new_project))
         else:
             redis.set(self.id.hex, op.dumpstr(obj))
-        print("Saved " + self.id.hex)
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
@@ -204,15 +203,15 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
         self.work_type = work_type
 
     def load(self):
-        print(">> Load working-" + self.id.hex)
+        print(">> WorkLogDb load working-" + self.id.hex)
         return op.loadstr(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
-        print(">> Save working-" + self.id.hex)
+        print(">> WorkLogDb save working-" + self.id.hex)
         redis.set("working-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
-        print(">> Cleanup working-" + self.id.hex)
+        print(">> WorkLogDb cleanup working-" + self.id.hex)
         redis.delete("working-" + self.id.hex)
 
 

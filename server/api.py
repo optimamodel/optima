@@ -143,6 +143,7 @@ def get_remote_file():
         as_attachment=True,
         attachment_filename=filename)
     response.status_code = 201
+    response.headers["filename"] = filename
     return response
 
 
