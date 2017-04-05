@@ -94,8 +94,9 @@ define(
 
         $scope.renamePortfolio = function() {
           modalService.rename(function(newName) {
-            util.rpcRun(
-              'rename_portfolio', [$scope.state.portfolio.id, newName])
+            util
+              .rpcRun(
+                'rename_portfolio', [$scope.state.portfolio.id, newName])
               .then(function(response) {
                 console.log('renamed portfolio', response.data);
                 var renamedPortfolio = response.data;
