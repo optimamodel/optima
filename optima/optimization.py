@@ -509,9 +509,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         for thread in range(nchains):
             blockrand = (block+1)*(2**6-1) # Pseudorandom seeds
             threadrand = (thread+1)*(2**10-1) 
-            if randseed is None: thisseed  = (blockrand+threadrand)*int((time()-floor(time()))*1e4) # Get a random number based on both the time and the thread
-            else:                thisseed +=  blockrand+threadrand
-            args = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, randseed, mc, label, outputqueue)
+            if randseed is None: thisseed = (blockrand+threadrand)*int((time()-floor(time()))*1e4) # Get a random number based on both the time and the thread
+            else:                thisseed = randseed + blockrand+threadrand
+            args = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue)
             prc = Process(target=optimize, args=args)
             prc.start()
             processes.append(prc)
@@ -528,7 +528,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         bestfvalval = inf
         bestfvalind = None
         for i in range(nchains):
-            if block==0 and i==0: fvalarray[i,:] = outputlist[i].improvement[0][0] # Store the initial value
+            if block==0 and i==0: fvalarray[:,0] = outputlist[i].improvement[0][0] # Store the initial value
             fvalarray[i,block*blockiters+1:(block+1)*blockiters+1] = outputlist[i].improvement[0][1:] # Improvement is an odict
             thisbestval = outputlist[i].outcome
             if thisbestval<bestfvalval:
