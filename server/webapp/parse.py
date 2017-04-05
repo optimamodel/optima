@@ -726,7 +726,7 @@ def get_program_summary(program, progset, active):
 def get_default_program_summaries(project):
     return [
         get_program_summary(p, None, False)
-        for p in op.defaults.defaultprograms(project)]
+        for p in op.defaultprograms(project)]
 
 
 
