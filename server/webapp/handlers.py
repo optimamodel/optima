@@ -17,15 +17,14 @@ import pprint
 import yaml
 
 import flask.json
-from flask import helpers, current_app, request, Response, flash, \
-    url_for, redirect, Blueprint, g, session, make_response
+from flask import helpers, current_app, request, flash, url_for, redirect, Blueprint, make_response
 from flask_login import login_required, current_user
 from flask_restful import Resource
 from flask_restful_swagger import swagger
 from flask_restful import Api
 from werkzeug.utils import secure_filename
 
-from . import parse, dataio, dbconn
+from . import parse, dataio
 from .dataio import report_exception_decorator, verify_admin_request_decorator
 from .parse import normalize_obj
 
@@ -75,7 +74,10 @@ def log_yaml(summary, title=None):
     return summary
 
 
-# PROJECTS
+
+#############################################################################################
+### PROJECTS
+#############################################################################################
 
 class ProjectsAll(Resource):
     method_decorators = [report_exception_decorator, verify_admin_request_decorator]
@@ -205,36 +207,6 @@ class ProjectData(Resource):
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 
 
-class ProjectFromData(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Upload project with .prj/.xls')
-    def post(self):
-        """
-        file-upload
-        request-form:
-            name: name of project
-            xls: true
-        """
-        project_name = request.form.get('name')
-        is_xls = request.form.get('xls', False)
-        uploaded_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        if is_xls:
-            project_id = dataio.create_project_from_spreadsheet(
-                uploaded_fname, project_name, current_user.id)
-        else:
-            project_id = dataio.create_project_from_prj(
-                uploaded_fname, project_name, current_user.id)
-        response = {
-            'file': os.path.basename(uploaded_fname),
-            'name': project_name,
-            'id': project_id
-        }
-        return response, 201
-
-api.add_resource(ProjectFromData, '/api/project/data')
-
-
 class ProjectCopy(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
@@ -288,7 +260,7 @@ class DefaultPopulations(Resource):
 api.add_resource(DefaultPopulations, '/api/project/populations')
 
 
-class Portfolio(Resource):
+class Portfolio(Resource): # WARNING, should maybe be called something different since actually a project method
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary='Download projects as .zip')
@@ -340,7 +312,9 @@ api.add_resource(SpreadsheetDownload, '/api/project/<uuid:project_id>/downloadda
 
 
 
-# Portfolios
+#############################################################################################
+### PORTFOLIOS
+#############################################################################################
 
 class ManagePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -372,6 +346,71 @@ class SavePortfolio(Resource):
 api.add_resource(SavePortfolio, '/api/portfolio/<uuid:portfolio_id>')
 
 
+
+class PortfolioData(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download .prt file for portfolio')
+    def get(self, portfolio_id):
+        dirname, filename = dataio.download_portfolio(portfolio_id)
+        return helpers.send_from_directory(dirname, filename)
+
+api.add_resource(PortfolioData, '/api/portfolio/<uuid:portfolio_id>/data')
+
+
+class UploadPortfolio(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Upload portfolio')
+    def post(self):
+        """
+        post-body: upload-file
+        """
+        uploaded_prt_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+        portfolio = dataio.update_portfolio_from_prt(uploaded_prt_fname)
+        reply = {
+            'file': os.path.basename(uploaded_prt_fname),
+            'portfolio': portfolio
+        }
+        return reply
+
+api.add_resource(UploadPortfolio, '/api/portfolio/upload')
+
+
+
+
+# WARNING, at the moment the upload is halfway in between upload new portfolio and update existing portfolio
+#class PortfolioFromData(Resource):
+#    method_decorators = [report_exception_decorator, login_required]
+#
+#    @swagger.operation(summary='Upload project with .prj/.xls')
+#    def post(self):
+#        """
+#        file-upload
+#        request-form:
+#            name: name of project
+#            xls: true
+#        """
+#        project_name = request.form.get('name')
+#        is_xls = request.form.get('xls', False)
+#        uploaded_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+#        if is_xls:
+#            project_id = dataio.create_project_from_spreadsheet(
+#                uploaded_fname, project_name, current_user.id)
+#        else:
+#            project_id = dataio.create_project_from_prj(
+#                uploaded_fname, project_name, current_user.id)
+#        response = {
+#            'file': os.path.basename(uploaded_fname),
+#            'name': project_name,
+#            'id': project_id
+#        }
+#        return response, 201
+#
+#api.add_resource(PortfolioFromData, '/api/portfolio/data')
+
+
+
 class DeletePortfolioProject(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
@@ -386,23 +425,34 @@ class CalculatePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Returns portfolio information")
-    def post(self, portfolio_id, gaoptim_id):
+    def post(self, portfolio_id):
         maxtime = int(get_post_data_json().get('maxtime'))
-        print("> Run BOC %s %s" % (portfolio_id, gaoptim_id))
-        return server.webapp.tasks.launch_boc(portfolio_id, gaoptim_id, maxtime)
+        print("> Run BOC %s" % (portfolio_id))
+        return server.webapp.tasks.launch_boc(portfolio_id, maxtime)
 
-api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+api.add_resource(CalculatePortfolio, '/api/portfolio/<uuid:portfolio_id>/calculate')
 
 
 class MinimizePortfolio(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
     @swagger.operation(summary="Starts portfolio minimization")
-    def post(self, portfolio_id, gaoptim_id):
+    def post(self, portfolio_id):
         maxtime = int(get_post_data_json().get('maxtime'))
-        return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, gaoptim_id, maxtime)
+        return server.webapp.tasks.launch_miminize_portfolio(portfolio_id, maxtime)
 
-api.add_resource(MinimizePortfolio, '/api/minimize/portfolio/<uuid:portfolio_id>/gaoptim/<uuid:gaoptim_id>')
+api.add_resource(MinimizePortfolio, '/api/portfolio/<uuid:portfolio_id>/minimize')
+
+
+class ExportPortfolio(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download .xlsx file of portfolio results')
+    def get(self, portfolio_id):
+        dirname, filename = dataio.export_portfolio(portfolio_id)
+        return helpers.send_from_directory(dirname, filename)
+
+api.add_resource(ExportPortfolio, '/api/portfolio/<uuid:portfolio_id>/export')
 
 
 class RegionTemplate(Resource):
@@ -453,7 +503,23 @@ class TaskChecker(Resource):
 api.add_resource(TaskChecker, '/api/task/<uuid:pyobject_id>/type/<work_type>')
 
 
-# PARSETS
+class ResultsReady(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Download .xlsx file of portfolio results')
+    def get(self, portfolio_id):
+        resultready = dataio.portfolio_results_ready(portfolio_id)
+        return not(resultready) # WARNING, not!
+
+api.add_resource(ResultsReady, '/api/portfolio/<uuid:portfolio_id>/ready')
+
+
+
+
+
+#############################################################################################
+### PARSETS
+#############################################################################################
 
 class Parsets(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -597,7 +663,11 @@ class ParsetUploadDownload(Resource):
 api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
 
 
-# RESULTS
+
+
+#############################################################################################
+### RESULTS
+#############################################################################################
 
 class ResultsExport(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -616,12 +686,28 @@ class ResultsExport(Resource):
             result_id: uuid of results
         """
         args = get_post_data_json()
-        return dataio.load_result_mpld3_graphs(result_id, args.get('which'))
+        return dataio.load_result_mpld3_graphs(result_id, args.get('which'), args.get('zoom'))
+    
+    # CK: not sure whether it's better to use this or the /api/download endpoint
+#    @swagger.operation(summary="Returns result as downloadable figure file")
+#    def export(self, result_id):
+#        """
+#        data-json: { graphSelectors: list of plot selections, filetype: image type; index: plot index }
+#        """
+#        args = get_post_data_json()
+#        which = args.get('graphSelectors')
+#        filetype = args.get('filetype')
+#        index = args.get('graphIndex')
+#        dirname, filename = dataio.download_figures(result_id, which, filetype, index)
+#        return helpers.send_from_directory(dirname, filename)
 
 api.add_resource(ResultsExport, '/api/results/<uuid:result_id>')
 
 
-# PROGSETS
+
+#############################################################################################
+### PROGSETS
+#############################################################################################
 
 class Progsets(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -666,6 +752,20 @@ class Progset(Resource):
         return dataio.copy_progset(project_id, progset_id, new_name)
 
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
+
+
+class ProgsetRename(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Update progset with the given id.')
+    def put(self, project_id, progset_id):
+        """
+        data-json: progset_summary
+        """
+        new_name = get_post_data_json()['newName']
+        return dataio.rename_progset(project_id, progset_id, new_name)
+
+api.add_resource(ProgsetRename, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/rename')
 
 
 class ProgsetUploadDownload(Resource):
@@ -768,7 +868,11 @@ api.add_resource(ProgramCostcovGraph,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
 
 
-# SCENARIOS
+
+
+#############################################################################################
+### SCENARIOS
+#############################################################################################
 
 
 class Scenarios(Resource):
@@ -802,7 +906,6 @@ class ScenarioSimulationGraphs(Resource):
             end: int -or- None
         """
         args = get_post_data_json()
-        print("> Get scenario graphs", args)
         return dataio.make_scenarios_graphs(
             project_id,
             which=args.get('which', None),
@@ -837,7 +940,10 @@ class DefaultParStartVal(Resource):
 api.add_resource(DefaultParStartVal, '/api/startval')
 
 
-# OPTIMIZATIONS
+
+#############################################################################################
+### OPTIMIZATIONS
+#############################################################################################
 
 class Optimizations(Resource):
     method_decorators = [report_exception_decorator, login_required]
@@ -905,7 +1011,19 @@ class OptimizationGraph(Resource):
 api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph')
 
 
-# USERS
+class AnyOptimizable(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    @swagger.operation(summary='Gets whether the project contains at least one optimizable progset')
+    def get(self, project_id):
+        return dataio.any_optimizable(project_id)
+
+api.add_resource(AnyOptimizable, '/api/project/<uuid:project_id>/optimizable')
+
+
+#############################################################################################
+### USERS
+#############################################################################################
 
 
 class User(Resource):

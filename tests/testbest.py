@@ -5,11 +5,8 @@ which is an outdated version of the same thing!
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet, optimapath # analysis:ignore
+from optima import defaults, pygui, manualfit, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 from optima import tic, toc, blank, pd # analysis:ignore
-
-# Figure out the path 
-spreadsheetpath = optimapath('tests')
 
 ## Options
 tests = [
@@ -19,12 +16,11 @@ tests = [
 #'reconcile',
 #'runscenarios',
 #'optimize',
-#'dosave',
+'dosave',
 ]
 
 filename = 'best.prj'
 ind = -1 # Default index
-programdatafile = 'concentratedprogramdata.xlsx'   
 
 
 ## Housekeeping
@@ -54,7 +50,7 @@ T = tic()
 if 'standardrun' in tests:
     P = defaults.defaultproject('best',dorun=False)
 #    P.loadspreadsheet(spreadsheetpath+programdatafile) 
-    P.runsim(die=True, start=2000, end=2020)
+    P.runsim(debug=True, start=2000, end=2040)
     if runsensitivity: P.sensitivity()
     if doplot: pygui(P)
 
@@ -64,7 +60,7 @@ if 'autocalib' in tests:
     if doplot: pygui(P.parsets[ind].getresults())
 
 if 'manualcalib' in tests: 
-    P.manualfit()
+    manualfit(P)
 
 if 'reconcile' in tests:
     P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016)
@@ -90,13 +86,12 @@ if 'runscenarios' in tests:
     P.addscens(scenlist)
     P.runscenarios() 
     if doplot:
-        plotpeople(P, P.results[ind].raw[ind][0]['people'])
         pygui(P.results[ind], toplot='default')
 
 
 
 if 'optimize' in tests:
-    P.optimize(maxtime=20)
+    P.optimize(name='demo',maxtime=10, mc=0)
     if doplot: pygui(P.results[ind])
     
 

@@ -8,10 +8,10 @@
 .form-input-validate {
 
   &.valid .txbox {
-    background: inline("base/form/valid.png") #FFF no-repeat 97% 3px;
+    background: inline("icons/valid.png") #FFF no-repeat 97% 3px;
   }
 
   &.invalid .txbox {
-    background: inline("base/form/invalid.png") #FFF no-repeat 97% 3px;
+    background: inline("icons/invalid.png") #FFF no-repeat 97% 3px;
   }
 }

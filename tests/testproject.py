@@ -66,12 +66,12 @@ if 'makeproject' in tests:
 
 
 if 'parametercheck' in tests:
-    from optima import defaults, OptimaException
+    from optima import defaultproject, OptimaException
     
     t = tic()
     print('Running parameters check test...')
     
-    P = defaults.defaultproject()
+    P = defaultproject()
 
     datakeys = P.data.keys()
     
@@ -90,7 +90,7 @@ if 'parametercheck' in tests:
     'condcas', 'condcom', 'condreg', 'numcirc',
     'female', 'force', 'inhomo', 'initprev', 
     'propdx','propcare','proptx','propsupp','proppmtct',
-    'injects', 'male', 'popkeys', 'rawtransit',
+    'injects', 'male', 'popkeys', 'fromto', 'transmatrix',
     'fixproppmtct', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproptx'])
     
     dataminuspars = set(datakeys) - set(parkeys)
@@ -123,8 +123,8 @@ if 'resultsaddition' in tests:
     
     import optima as op
 
-    P = op.defaults.defaultproject()
-    Q = op.defaults.defaultproject()
+    P = op.defaultproject()
+    Q = op.defaultproject()
     
     R1 = P.results[0]
     R2 = Q.results[0]

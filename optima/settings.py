@@ -90,6 +90,7 @@ class Settings(object):
         self.verbose = verbose # Default verbosity for how much to print out -- see definitions in utils.py:printv()
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
+        self.infmoney = 1e10 # A lot of money
         self.forcepopsize = True # Whether or not to force the population size to match the parameters
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
@@ -106,7 +107,7 @@ class Settings(object):
         if start is None: start=self.start
         if end is None: end=self.end
         if dt is None: dt=self.dt
-        tvec = linspace(start, end, round((end-start)/dt)+1)
+        tvec = linspace(start, end, int(round((end-start)/dt)+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
         return tvec
     
     

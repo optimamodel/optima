@@ -3,12 +3,10 @@ define([
   'ui.router',
   'toastr',
   '../project/project-api-service',
-  '../charts/export-all-charts-directive',
   ], function (angular) {
   'use strict';
 
   return angular.module('app.programs', [
-    'app.export-all-charts',
     'ui.router',
     'toastr'
   ])
@@ -23,22 +21,12 @@ define([
           url: '/programs',
           templateUrl: 'js/modules/programs/program-set/program-set.html',
           controller: 'ProgramSetController',
-          resolve: {
-            currentProject: function(projectApi) {
-              return projectApi.getActiveProject();
-            }
-          }
         })
         .state('programs.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
           controller: 'ModelCostCoverageController as vm',
           templateUrl: 'js/modules/programs/cost-coverage/cost-coverage.html',
           bindToController: true,
-          resolve: {
-            activeProject: function (projectApi) {
-              return projectApi.getActiveProject();
-            }
-          }
         });
     });
 });

@@ -150,7 +150,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         
         eps = project.settings.eps # 'eps' is also kludgy -- specify absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
         pars = convert(pars, parlist, parvec)
-        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0)
+        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0, label=project.name+'-autofit')
         
         ## Loop over all results
         allmismatches = []
@@ -172,8 +172,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
                     nrows = len(datarows)
                     for row in range(nrows): # Loop over each available row
                         datarow = datarows[row]
-                        if nrows==1: modelrow = modelrows # WARNING, kludgy, should have the same shape!
-                        else: modelrow = modelrows[row]
+                        if len(modelrows.shape)>1: modelrow = modelrows[row]
+                        else:                      modelrow = modelrows
                         datax, datay = extractdata(results.datayears, datarow) # Pull out the not-NaN values
                         if doplot: rowname = 'total' if nrows==1 else pars['popkeys'][row]
                         for i,year in enumerate(datax): # Loop over each data point available
@@ -252,11 +252,6 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         return mismatch
 
 
-
-
-
-
-    
     # Create the list of parameters to be fitted and set the limits
     parlist = makeparlist(pars, fitwhat)
     parlower  = array([item['limits'][0] for item in parlist])
@@ -265,11 +260,11 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Perform fit
     parvec = convert(pars, parlist)
     args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
-    parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    parvecnew, fval, details = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
     
     # Save
     pars = convert(pars, parlist, parvecnew)        
     parset.pars = pars
-    parset.improvement.append(output.fval) # Store improvement history
+    parset.improvement.append(fval) # Store improvement history
     
     return parset

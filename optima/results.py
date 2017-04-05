@@ -4,9 +4,10 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist
+from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist, checktype
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
+from xlsxwriter import Workbook
 
 
 
@@ -50,7 +51,8 @@ class Resultset(object):
         # Read things in from the project if defined
         if project is not None:
             if parset is None:
-                parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
+                try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
+                except: pass # Don't really worry if the parset can't be populated
             if progset is None:
                 try: progset = project.progset[simpars[0]['progsetname']] # Get parset if not supplied -- WARNING, UGLY
                 except: progset = None # Should be OK to skip, not always supplied
@@ -58,8 +60,8 @@ class Resultset(object):
             if settings is None: settings = project.settings
         
         # Fundamental quantities -- populated by project.runsim()
-        if keepraw: self.raw = raw
-        self.simpars = simpars # ...and sim parameters
+        if keepraw: self.raw = raw # Keep raw, but only if asked
+        if keepraw: self.simpars = simpars # ...likewise sim parameters
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.projectref = Link(project) # ...and just store the whole project
@@ -109,7 +111,6 @@ class Resultset(object):
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
         self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
-
 
         self.other = odict() # For storing other results -- not available in the interface
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
@@ -213,6 +214,7 @@ class Resultset(object):
         allmtct      = dcp(array([raw[i]['mtct']      for i in range(nraw)]))
         allhivbirths = dcp(array([raw[i]['hivbirths'] for i in range(nraw)]))
         allpmtct     = dcp(array([raw[i]['pmtct']     for i in range(nraw)]))
+        allcosttreat = dcp(array([raw[i]['costtreat'] for i in range(nraw)]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -298,8 +300,8 @@ class Resultset(object):
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
-        self.main['costtreat'].pops = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['costtreat'].tot = quantile((allpeople[:,alltx,:,:]*self.simpars[0]['costtx'])[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['costtreat'].pops = quantile(allcosttreat[:,:,indices], quantiles=quantiles).round()
+        self.main['costtreat'].tot = quantile(allcosttreat[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['proptreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['proptreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
@@ -343,11 +345,9 @@ class Resultset(object):
         return None # make()
         
         
-    def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, writetofile=True, verbose=2):
-        ''' Method for exporting results to a CSV file '''
-        if filestem is None:  # Doesn't include extension, hence filestem
-            filestem = self.projectinfo['name']+'-'+self.name
-        filename = filestem + '.csv'
+    def export(self, filestem=None, bypop=True, sep=',', ind=0, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
+        ''' Method for exporting results to an Excel or CSV file '''
+
         npts = len(self.tvec)
         keys = self.main.keys()
         output = sep.join(['Indicator','Population'] + ['%i'%t for t in self.tvec]) # Create header and years
@@ -364,22 +364,44 @@ class Resultset(object):
                     if self.main[key].ispercentage: output += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                           output += ('%i'+sep) % data[t]
        
-        if len(self.budget)>ind: # WARNING, does not support multiple years
-            output += '\n\n\n'
-            output += 'Budget\n'
-            output += sep.join(self.budget[ind].keys()) + '\n'
-            output += sep.join([str(val) for val in self.budget[ind].values()]) + '\n'
+        if hasattr(self, 'budgets'):
+            if len(self.budgets):      thisbudget = self.budgets[ind]
+            else:                      thisbudget = [] 
+        else:                          thisbudget = self.budget
+        if hasattr(self, 'coverages'):
+            if len(self.coverages):    thiscoverage = self.coverages[ind]
+            else:                      thiscoverage = [] 
+        else:                          thiscoverage = self.coverage
         
-        if len(self.coverage)>ind: # WARNING, does not support multiple years
+        if len(thisbudget): # WARNING, does not support multiple years
             output += '\n\n\n'
-            output += 'Coverage\n'
-            output += sep.join(self.coverage[ind].keys()) + '\n'
-            output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
+            output += sep*2+'Budget\n'
+            output += sep*2+sep.join(thisbudget.keys()) + '\n'
+            output += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
+        
+        if len(thiscoverage): # WARNING, does not support multiple years
+            covvals = thiscoverage.values()
+            for c in range(len(covvals)):
+                if checktype(covvals[c], 'arraylike'):
+                    covvals[c] = covvals[c][0] # Only pull out the first element if it's an array/list
+                if covvals[c] is None: covvals[c] = 0 # Just reset
+            output += '\n\n\n'
+            output += sep*2+'Coverage\n'
+            output += sep*2+sep.join(thiscoverage.keys()) + '\n'
+            output += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
             
         if writetofile: 
-            with open(filename, 'w') as f: f.write(output)
+            if filestem is None:  # Doesn't include extension, hence filestem
+                filestem = self.projectinfo['name']+'-'+self.name
+            if asexcel:
+                filename = filestem + '.xlsx'
+                outputdict = {'Results':output}
+                exporttoexcel(filename, outputdict)
+            else:
+                filename = filestem + '.csv'
+                with open(filename, 'w') as f: f.write(output)
             printv('Results exported to "%s"' % filename, 2, verbose)
-            return None
+            return filename
         else:
             return output
         
@@ -424,8 +446,8 @@ class Multiresultset(Resultset):
         self.created = today()
         self.nresultsets = len(resultsetlist)
         self.keys = []
-        self.budget = odict()
-        self.coverage = odict()
+        self.budgets = odict()
+        self.coverages = odict()
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
@@ -433,11 +455,10 @@ class Multiresultset(Resultset):
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
-        commonattrs = ['projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
-        diffattrs = ['parset', 'progset', 'simpars'] # Things that differ between between results sets
-        for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
-        for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
+        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
+        diffattrs = ['parset', 'progset'] # Things that differ between between results sets
+        for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
+        for attr in diffattrs: setattr(self, attr+'dict', odict()) # Store a copy for each resultset, e.g. 'parsetdict'
 
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
@@ -450,29 +471,31 @@ class Multiresultset(Resultset):
             self.keys.append(key)
             
             # First, loop over shared attributes, and ensure they match
-            for attr in sameattrs+commonattrs:
+            for attr in sameattrs:
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
                 if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
             
             # Loop over different attributes and append to the odict
             for attr in diffattrs:
-                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
+                getattr(self, attr+'dict')[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
+                setattr(self, attr, getattr(rset, attr)) # And then also just store the last value, because most of the time they'll match anyway
             
             # Now, the real deal: fix self.main
+            best = 0 # Key for best data -- discard uncertainty
             for key2 in self.main.keys():
                 for at in ['pops', 'tot']:
-                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
-            if getattr(rset,'budget'): # If it has a budget, overwrite coverage information by calculating from budget
-                self.budget[key]      = rset.budget
+            if len(rset.budget): # If it has a budget, overwrite coverage information by calculating from budget
+                self.budgets[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
-                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
-            elif getattr(rset,'coverage'): # If no budget, compute budget from coverage
-                self.coverage[key]      = rset.coverage
+                self.coverages[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+            elif len(rset.coverage): # If no budget, compute budget from coverage
+                self.coverages[key]      = rset.coverage
                 self.budgetyears[key] = rset.budgetyears
-                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
+                self.budgets[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
         
         
     def __repr__(self):
@@ -487,24 +510,34 @@ class Multiresultset(Resultset):
         return output
     
     
-    def export(self, filestem=None, ind=None, writetofile=True, verbose=2, **kwargs):
+    def export(self, filestem=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         if filestem is None: # Filestem rather than filename since doesn't include extension
             filestem = self.projectinfo['name']+'-'+self.name
-        output = ''
+        
+        if asexcel: outputdict = odict()
+        else:       outputstr = ''
         for k,key in enumerate(self.keys):
             thisfilestem = filestem+'-'+key
-            output += '%s\n\n' % key
-            output += Resultset.export(self, filestem=thisfilestem, ind=k, writetofile=False, **kwargs)
-            output += '\n'*5
+            thisoutput = Resultset.export(self, filestem=thisfilestem, ind=k, writetofile=False, **kwargs)
+            if asexcel:
+                outputdict[key] = thisoutput
+            else:
+                outputstr += '%s\n\n' % key
+                outputstr += thisoutput
+                outputstr += '\n'*5
         
         if writetofile: 
-            filename = filestem+'.csv'
-            with open(filename, 'w') as f: f.write(output)
+            if asexcel:
+                filename = filestem+'.xlsx'
+                exporttoexcel(filename, outputdict)
+            else:
+                filename = filestem+'.csv'
             printv('Results exported to "%s"' % filename, 2, verbose)
-            return None
+            return filename
         else:
-            return output
+            if asexcel: return outputdict
+            else:       return outputstr
 
 
 
@@ -514,22 +547,24 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='unspecified', x=None, y=None, objectives=None):
+    def __init__(self, name='unspecified', x=None, y=None, yinf=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, parsetname=None, progsetname=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
         self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
+        self.yinf = yinf # Store the outcome for infinite money to be plotted separately if desired
+        self.parsetname = parsetname
+        self.progsetname = progsetname
+        self.budgets = budgets if budgets else odict() # A list of actual budgets
+        self.defaultbudget = defaultbudget # The initial budget, pre-optimization
+        self.gaoptimbudget = None # The optimized budget, assigned by GA
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
-        
+        self.constraints = constraints # Likewise...
         self.name = name # Required by rmresult in Project.
 
     def __repr__(self):
         ''' Print out summary stats '''
-        output = '============================================================\n'
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
+        output = defaultrepr(self)
         return output
         
     def getoutcome(self, budgets):
@@ -635,3 +670,60 @@ def getresults(project=None, pointer=None, die=True):
     else: 
         if die: raise OptimaException('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
         else: return None
+
+
+
+def exporttoexcel(filename=None, outdict=None):
+    '''
+    Little function to format an output results string nicely for Excel
+    Expects an odict of output strings.
+    '''
+    workbook = Workbook(filename)
+    
+    for key,outstr in outdict.items():
+        worksheet = workbook.add_worksheet(key)
+        
+        # Define formatting
+        colors = {'gentlegreen':'#3c7d3e', 'fadedstrawberry':'#ffeecb', 'edgyblue':'#bcd5ff','accountantgrey':'#f6f6f6', 'white':'#ffffff'}
+        formats = dict()
+        formats['plain'] = workbook.add_format({})
+        formats['bold'] = workbook.add_format({'bg_color': colors['edgyblue'], 'bold': True})
+        formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format':0x04})
+        formats['budcov'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
+        
+        # Convert from a string to a 2D array
+        outlist = []
+        for line in outstr.split('\n'):
+            outlist.append([])
+            for cell in line.split(','):
+                if cell=='tot': cell = 'Total' # Hack to replace internal key with something more user-friendly
+                outlist[-1].append(str(cell)) # If unicode, doesn't work
+        
+        # Iterate over the data and write it out row by row.
+        row, col = 0, 0
+        maxcol = 0
+        for row in range(len(outlist)):
+            for col in range(len(outlist[row])):
+                maxcol = max(col,maxcol)
+                thistxt = outlist[row][col]
+                thisformat = 'plain'
+                emptycell = not(thistxt)
+                try: 
+                    thistxt = float(thistxt)
+                    numbercell = True
+                except:
+                    numbercell = False
+                if row==0:                                     thisformat = 'budcov'
+                elif str(thistxt) in ['Budget', 'Coverage']:   thisformat = 'budcov'
+                elif not emptycell and not numbercell:         thisformat = 'bold'
+                elif numbercell:                               thisformat = 'number'
+                worksheet.write(row, col, thistxt, formats[thisformat])
+        
+        worksheet.set_column(2, maxcol, 15) # Make wider
+        worksheet.set_column(1, 1, 20) # Make wider
+        worksheet.set_column(0, 0, 50) # Make wider
+        worksheet.freeze_panes(1, 2) # Freeze first row, first two columns
+        
+    workbook.close()
+    
+    return None

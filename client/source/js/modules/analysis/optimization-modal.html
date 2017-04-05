@@ -1,8 +1,16 @@
 
-<div class="modal-header"> CREATE/EDIT {{state.optimization.which}} OPTIMIZATION</div>
+<div class="modal-header">
+  CREATE/EDIT {{state.optimization.which}} OPTIMIZATION
+  <div ng-if="state.optimization.which == 'outcomes'" style="display: inline-block">
+    <help ref='outcomes-optimization'/>
+  </div>
+  <div ng-if="state.optimization.which == 'money'" style="display: inline-block">
+    <help ref='money-optimization'/>
+  </div>
+</div>
 
 <div class="section">
-  <div style="float: left; width: 40%">
+  <div style="float: left; width: 40%; padding-right:20px">
     <label> Name </label>
     <input
         class="txbox"
@@ -15,8 +23,8 @@
       Scenario with this name already exists, please choose a different name.
     </div>
   </div>
-  <div style="float: left; width: 30%">
-    <label> Select a parameter set to use as baseline </label>
+  <div style="float: left; width: 30%; padding-right: 20px">
+    <label>Parameter set</label>
     <select
         class="txbox"
         type="text"
@@ -25,8 +33,8 @@
         ng-options="parset.id as parset.name for parset in parsets">
     </select>
   </div>
-  <div style="float: left; width: 30%">
-    <label> Select a program set to use as baseline </label>
+  <div style="float: left; width: 30%; padding-right: 20px">
+    <label>Program set</label>
     <select
         class="txbox"
         type="text"
@@ -44,17 +52,25 @@
     class="section"
     ng-if="state.optimization.objectives">
 
-  <h3>OBJECTIVES</h3>
+  <h3>
+    Objectives
+    <div ng-if="state.optimization.which == 'outcomes'" style="display: inline-block">
+      <help ref="optimization-set-objectives"/>
+    </div>
+    <div ng-if="state.optimization.which == 'money'" style="display: inline-block">
+      <help ref="optimization-set-money-objectives"/>
+    </div>
+  </h3>
   <b>Timeline: </b>
 
   <span ng-show="state.optimization.which == 'outcomes'">
-    from
+    from &nbsp;
     <input
       type="number"
       class="txbox"
       style="display: inline; width: 5em;"
       ng-model="state.optimization.objectives.start"/>
-    to
+    &nbsp; to &nbsp;
     <input
       type="number"
       class="txbox"
@@ -63,19 +79,19 @@
   </span>
 
   <span ng-show="state.optimization.which == 'money'">
-    compare to base year
+    compare to base year &nbsp;
     <input
       type="number"
       class="txbox"
       style="display: inline; width: 5em;"
       ng-model="state.optimization.objectives.base"/>
-    and run from
+    &nbsp; and run from &nbsp;
     <input
       type="number"
       class="txbox"
       style="display: inline; width: 5em;"
       ng-model="state.optimization.objectives.start"/>
-    to
+    &nbsp; to &nbsp;
     <input
       type="number"
       class="txbox"
@@ -84,27 +100,30 @@
   </span>
 
   <br/>
+  <br/>
 
-  <b>Budget:</b>
+  <b>Budget:</b> &nbsp;
   <input
     type="number"
     class="txbox"
     style="display: inline; width: 8em;"
     ng-model="state.optimization.objectives.budget"/>
+  &nbsp; per year
 
   <br/>
+  <br/>
 
-  <b>Objectives:</b>
+  <b>Weighting:</b>
 
   <span ng-show="state.optimization.which == 'money'">
-    Fractions of deaths to be averted:
+    Fraction of deaths to be averted: &nbsp;
     <input
         type="number"
         class="txbox"
         style="display: inline; width: 5em;"
         ng-model="state.optimization.objectives.incifrac"/>
     &nbsp;
-    Fractions of infections to be averted:
+    &nbsp; Fraction of infections to be averted:&nbsp;
     <input
         type="number"
         class="txbox"
@@ -113,14 +132,13 @@
   </span>
 
   <span ng-show="state.optimization.which == 'outcomes'">
-    Infection weight:
+    Infections:&nbsp;
     <input
         type="number"
         class="txbox"
         style="display: inline; width: 5em;"
         ng-model="state.optimization.objectives.inciweight"/>
-    &nbsp;
-    Death weight:
+    &nbsp; Deaths: &nbsp;
     <input
         type="number"
         class="txbox"
@@ -131,9 +149,10 @@
 
 <div ng-if="state.optimization.constraints" class="section">
 
-  <h3>CONSTRAINTS</h3>
-
-  <b>Maximum changes in funding over the program period</b>
+  <h3>
+    Constraints
+    <help ref="optimization-set-constraints"/>
+  </h3>
 
   <style>
     .mytable th, .mytable td {
@@ -153,10 +172,10 @@
           border-spacing: 10px;">
     <tr style="
           border-top: 1px solid #999;
-          border-bottom: 1px solid #999;">
-      <th>Program</th>
-      <th style="width: 6em">Not less than</th>
-      <th style="width: 5em">Not more than</th>
+          border-bottom: 1px solid #999">
+      <th style="vertical-align:bottom">Program</th>
+      <th style="width: 6em">Not less than<br>(% of current)</th>
+      <th style="width: 5em">Not more than<br>(% of current)</th>
     </tr>
     <tr style="justify-content: space-around"
         class="option"
@@ -166,17 +185,17 @@
       </td>
       <td style="width: 6em">
         <input
-            style="width: 5em;"
+            style="width: 5em; display: inline;"
             class="txbox"
             type="number"
-            ng-model="constraint.min"/>
+            ng-model="constraint.min"/> %
       </td>
       <td style="width: 5em">
         <input
-            style="width: 5em;"
+            style="width: 5em; display: inline;"
             class="txbox"
             type="number"
-            ng-model="constraint.max"/>
+            ng-model="constraint.max"/> %
       </td>
     </tr>
   </table>

@@ -12,17 +12,14 @@
           flex-direction: column;
           align-items: flex-start;
           width: 100%;
-          height: calc(100vh - 110px)">
+          ">
 
       <div
         style="
-          flex: 0 0;
+          flex: 0 0 auto;
           width: 100%">
 
-        <div style="
-              overflow: scroll;
-              border: 0px solid #AAA;
-              max-height: 300px;">
+        <div style="border: 0px solid #AAA;">
 
           <table
               class="table table-bordered table-hover table-striped"
@@ -30,10 +27,10 @@
 
             <tr>
               <th style="width: 50px">Active</th>
-              <th>Scenario Name</th>
-              <th>Parameter Set</th>
-              <th>Program Set</th>
-              <th>Scenario Type</th>
+              <th>Scenario name</th>
+              <th>Parameter set</th>
+              <th>Program set</th>
+              <th>Scenario type</th>
               <th style="width:200px; max-width:200px">Manage</th>
             </tr>
 
@@ -50,21 +47,9 @@
               <td>{{ scenario.scenario_type }}</td>
 
               <td style="white-space: nowrap; width:200px; max-width:200px">
-                <i class="fa fa-pencil"
-                   tp-text="Edit" tooltip tp-class="tooltip"
-                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                   ng-click="openModal(scenario, 'edit', $event)">
-                </i>
-                <i class="fa fa-copy"
-                   tp-text="Copy" tooltip tp-class="tooltip"
-                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                   ng-click="openModal(scenario, 'copy', $event)">
-                </i>
-                <i class="fa fa-trash-o"
-                   tp-text="Delete" tooltip tp-class="tooltip"
-                   tp-x="-100" tp-y="-200" tp-anchor-x="0" tp-anchor-y="0"
-                   ng-click="openModal(scenario, 'delete', $event)">
-                </i>
+                <icon action="edit" click="openModal(scenario, 'edit', $event)"/>
+                <icon action="copy" click="openModal(scenario, 'copy', $event)"/>
+                <icon action="delete" click="openModal(scenario, 'delete', $event)"/>
               </td>
             </tr>
           </table>
@@ -78,7 +63,7 @@
 
           <div style="float: left">
             <button
-                class="btn"
+                class="btn __green __m"
                 ng-click="graphScenarios(true)"
                 ng-disabled="!isRunnable()">
               Run scenarios
@@ -95,27 +80,31 @@
             <select
               ng-model="state.end"
               ng-options="year for year in years"></select>
+            <help ref="viewing-scenarios"/>
 
           </div>
 
           <div style="float: right">
             <button
+              class="btn"
+              ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
+              Add parameter scenario
+            </button>
+            <help ref="parameter-scenarios"/> &nbsp; &nbsp;
+            <button
                 class="btn"
                 ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
-                ng-disabled="isMissingProgset || !isOptimizable">
-              + budget scenario
+                ng-disabled="!anyOptimizable">
+              Add budget scenario
             </button>
+            <help ref="budget-scenarios"/> &nbsp; &nbsp;
             <button
                 class="btn"
                 ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
-                ng-disabled="isMissingProgset || !isOptimizable">
-              + coverage scenario
+                ng-disabled="!anyOptimizable">
+              Add coverage scenario
             </button>
-            <button
-                class="btn"
-                ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
-              + parameter scenario
-            </button>
+            <help ref="coverage-scenarios"/>
           </div>
 
           <br clear="all">
@@ -124,7 +113,7 @@
             Please <a ui-sref="programs.manageProgramSet">add programs to a program set</a> for budget and coverage scenario.
           </div>
 
-          <div class="error-hint" ng-show="!isMissingProgset && !isOptimizable">
+          <div class="error-hint" ng-show="!anyOptimizable">
             Programs not ready, you need to <a ui-sref="programs.define-cost-coverage-outcome">define cost and outcome functions</a>.
           </div>
 

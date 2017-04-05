@@ -51,9 +51,7 @@ Note: do **not** use `python setup.py install`, as this will copy the source cod
 
 If you use Anaconda, everything should be taken care of, except possibly `pyqt4`, which is needed for the Python GUI.
 
-If you don't want to use Anaconda, you'll need to install the dependencies yourself (via e.g. `pip install`). If you install the latest versions of `numpy`, `matplotlib`, `xlrd`, `xlsxwriter`, and `pyqt4`, and `mpld3`, all of the backend should work.
-
-The full list of requirements (including for the frontend) is given in `server/requirements.txt`. However, note that `run.sh` will create a virtual environment with these packages even if you don't have them available on your system.
+If you don't want to use Anaconda, you'll need to install the dependencies yourself (via e.g. `pip install`). If you install the latest versions of `numpy`, `matplotlib`, `xlrd`, and `xlsxwriter`, all of the backend should work. The full list of requirements (including for the frontend) is given in `server/requirements.txt`.
 
 ### 2.2.3 Python path
 
@@ -85,7 +83,7 @@ If you followed the steps correctly, you should be able to run
 `import optima`
 from a Python console (either the system console or the Spyder console)
 
-For usage examples, see the scripts in the `tests` folder. In particular, `testworkflow.py` shows a typical usage example.
+For usage examples, see the scripts in the `tests` folder. In particular, `testbest.py` shows a typical usage example.
 
 
 

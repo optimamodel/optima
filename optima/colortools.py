@@ -1,8 +1,26 @@
-def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False, newwindow=True):
-    """
-    GRIDCOLORMAP
+def processcolors(colors=None, asarray=False, reverse=False):
+    ''' 
+    Small helper function to do common transformations on the colors, once generated.
+    Expects colors to be an array. If asarray is True and reverse are False, returns 
+    that array. Otherwise, does the required permutations.    
+    '''
+    
+    if asarray:
+        output = colors
+        if reverse: output = output[::-1] # Reverse the array
+    else:
+        output = []
+        for c in colors: output.append(tuple(c)) # Gather output
+        if reverse: output.reverse() # Reverse the list
+    
+    return output
 
-    Create a qualitative colormap by assigning points according to the maximum pairwise distance in the
+
+def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False, doplot=False):
+    """
+    GRIDCOLORS
+
+    Create a qualitative "color map" by assigning points according to the maximum pairwise distance in the
     color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the
     [R, G, B] color cube.
     
@@ -12,17 +30,16 @@ def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False
         nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
         asarray: whether to return the colors as an array instead of as a list of tuples
         doplot: whether or not to plot the color cube itself
-        newwindow: if doplot=True, whether to use a new window
 
     Usage example:
         from pylab import *
-        from colortools import gridcolormap
+        from colortools import gridcolors
         ncolors = 10
         piedata = rand(ncolors)
-        colors = gridcolormap(ncolors)
+        colors = gridcolors(ncolors)
         figure()
         pie(piedata, colors=colors)
-        gridcolormap(ncolors, doplot=True)
+        gridcolors(ncolors, doplot=True)
         show()
 
     Version: 1.2 (2015dec29) by cliffk
@@ -72,22 +89,15 @@ def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False
         
         colors = dots[indices,:]
     
-    ## Wrap up: optionally turn into a list of tuples
-    if asarray:
-        output = colors
-    else:
-        output = []
-        for i in range(ncolors): output.append(tuple(colors[i,:])) # Gather output
+    ## Wrap up -- turn color array into a list, or reverse
+    output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
     
-    ## For plotting
+    ## For plotting -- optional
     if doplot:
         from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
-        from pylab import figure, gca
-        if newwindow:
-            fig = figure()
-            ax = fig.add_subplot(111, projection='3d')
-        else: 
-            ax = gca(projection='3d')
+        from pylab import figure
+        fig = figure()
+        ax = fig.add_subplot(111, projection='3d')
         ax.scatter(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False)
         ax.set_xlabel('R')
         ax.set_ylabel('G')
@@ -157,7 +167,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
    cmap = makecolormap('alpinecolormap',cdict,256)
    return cmap
 
-## Show the staggering beauty of the color map's infinite possibilities
+## Test
 def testalpinecolormap():
     from pylab import randn, show, convolve, array, seed, linspace, meshgrid, xlabel, ylabel, figure, pcolor
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
@@ -202,7 +212,7 @@ def testalpinecolormap():
 
 
 
-def vectocolor(vector,cmap=None):
+def vectocolor(vector, cmap=None, asarray=True, reverse=False):
    """
    VECTOCOLOR
    This function converts a vector of N values into an Nx3 matrix of color
@@ -247,8 +257,11 @@ def vectocolor(vector,cmap=None):
 
    # It doesn't; just return black
    else: colors=(0,0,0,1)
+   
+   # Process output
+   output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
 
-   return colors
+   return output
 
 
 
@@ -305,7 +318,7 @@ def bicolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
 
    return cmap
 
-## Show the staggering beauty of the color map's infinite possibilities
+## Test
 def testbicolormap():
     from pylab import figure, subplot, imshow, colorbar, rand, show
     

@@ -5,56 +5,74 @@ define(
 
   module.controller('AnalysisOptimizationController', function (
       $scope, $http, $upload, $modal, toastr, modalService,
-      activeProject, $timeout, globalPoller) {
+      activeProject, projectApi, $timeout, globalPoller) {
 
     function initialize() {
 
-      $scope.isMissingData = !activeProject.data.hasParset;
-      $scope.isOptimizable = activeProject.data.isOptimizable;
-      $scope.isMissingProgset = activeProject.data.nProgram == 0;
+      $scope.state = {
+        project: null,
+        maxtime: 10,
+        isRunnable: false,
+        graphs: undefined,
+        optimizations: [],
+        years: null,
+        start: null,
+        end: null
+      };
 
       $scope.editOptimization = openEditOptimizationModal;
       $scope.getParsetName = getParsetName;
       $scope.getProgsetName = getProgsetName;
 
-      var project = activeProject.data;
-      $scope.state = {
-        project: activeProject.data,
-        maxtime: 10,
-        isRunnable: false,
-        graphs: undefined,
-        optimizations: [],
-        years: _.range(project.startYear, project.endYear+1),
-        start: project.startYear,
-        end: project.endYear,
-      };
+      $scope.anyOptimizable = false;
 
-      console.log('$scope.state', $scope.state);
+      $scope.activeProject = activeProject;
+      $scope.$watch('activeProject.project.id', function() {
+        reloadActiveProject();
+      });
 
-      if ($scope.isMissingData || $scope.isMissingProgset || !$scope.isOptimizable) {
-        return
-      }
+      reloadActiveProject();
+    }
 
-      $http
-        .get('/api/project/' + $scope.state.project.id + '/progsets')
-        .then(function (response) {
-          $scope.state.progsets = response.data.progsets;
-          return $http.get('/api/project/' + $scope.state.project.id + '/parsets');
+    function reloadActiveProject() {
+      projectApi
+        .getActiveProject()
+        .then(function(response) {
+          var project = response.data;
+          $scope.state.project = project;
+          $scope.state.years = _.range(project.startYear, project.endYear + 1);
+          $scope.state.start = project.startYear;
+          $scope.state.end = project.endYear;
+          $scope.isMissingData = !project.hasParset;
+
+          return $http.get('/api/project/' + $scope.state.project.id + '/optimizable');
         })
-        .then(function (response) {
-          $scope.state.parsets = response.data.parsets;
-          return $http.get('/api/project/' + $scope.state.project.id + '/optimizations')
-        })
-        .then(function (response) {
-          var data = response.data;
-          $scope.state.optimizations = data.optimizations;
-          console.log('optimizations', data.optimizations);
-          $scope.defaultOptimizationsByProgsetId = data.defaultOptimizationsByProgsetId;
-          console.log('defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
-          $scope.state.optimization = undefined;
-          if ($scope.state.optimizations.length > 0) {
-            $scope.setActiveOptimization($scope.state.optimizations[0]);
-            selectDefaultProgsetAndParset($scope.state.optimization);
+        .then(function(response) {
+          $scope.anyOptimizable = response.data;
+
+          if (!$scope.isMissingData && $scope.anyOptimizable) {
+            $http
+              .get('/api/project/' + $scope.state.project.id + '/progsets')
+              .then(function(response) {
+                $scope.state.progsets = response.data.progsets;
+                return $http.get('/api/project/' + $scope.state.project.id + '/parsets');
+              })
+              .then(function(response) {
+                $scope.state.parsets = response.data.parsets;
+                return $http.get('/api/project/' + $scope.state.project.id + '/optimizations')
+              })
+              .then(function(response) {
+                var data = response.data;
+                $scope.state.optimizations = data.optimizations;
+                console.log('optimizations', data.optimizations);
+                $scope.defaultOptimizationsByProgsetId = data.defaultOptimizationsByProgsetId;
+                console.log('defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
+                $scope.state.optimization = undefined;
+                if ($scope.state.optimizations.length > 0) {
+                  $scope.setActiveOptimization($scope.state.optimizations[0]);
+                  selectDefaultProgsetAndParset($scope.state.optimization);
+                }
+              });
           }
         });
     }
@@ -268,21 +286,20 @@ define(
     }
 
     function getSelectors() {
-      if ($scope.state.graphs) {
-        var selectors = $scope.state.graphs.selectors;
+      function getChecked(s) { return s.checked; }
+      function getKey(s) { return s.key }
+      var scope = $scope.state;
+      var which = [];
+      if (scope.graphs) {
+        if (scope.graphs.advanced) {
+          which.push('advanced');
+        }
+        var selectors = scope.graphs.selectors;
         if (selectors) {
-          var which = _.filter(selectors, function(selector) {
-            return selector.checked;
-          })
-          .map(function(selector) {
-            return selector.key;
-          });
-          if (which.length > 0) {
-            return which;
-          }
+          which = which.concat(_.filter(selectors, getChecked).map(getKey));
         }
       }
-      return null;
+      return which;
     }
 
     function getOptimizationGraphs() {
@@ -396,6 +413,18 @@ define(
           return result;
         }
 
+        function scaleConstraints(constraints, scale) {
+          _.each(constraints, function(constraint) {
+            if (constraint.max !== null) {
+              constraint.max = constraint.max*scale;
+            }
+            if (constraint.min !== null) {
+              constraint.min = constraint.min*scale;
+            }
+          });
+
+        }
+
         function selectProgset() {
           var progsetId = $scope.state.optimization.progset_id;
           $scope.defaultConstraints = listifyConstraints(
@@ -412,14 +441,15 @@ define(
             }
           });
           constraints = _.sortBy(constraints, function(c) { return c.key });
+          scaleConstraints(constraints, 100.0)
           $scope.state.optimization.constraints = constraints;
-
-          console.log("patched constraints", $scope.state.optimization.constraints);
+          console.log("selectProgset constraints", $scope.state.optimization.constraints);
         }
 
         function cancel() { $modalInstance.dismiss("cancel"); }
 
         function save() {
+          scaleConstraints($scope.state.optimization.constraints, 0.01);
           $scope.state.optimization.constraints = revertToConstraints(
             $scope.state.optimization.constraints);
           $modalInstance.close($scope.state.optimization);

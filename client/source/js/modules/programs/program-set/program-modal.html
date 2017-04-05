@@ -67,6 +67,7 @@
 
     <div class="title">
       Target populations
+      <help ref="programs-target-populations"/>
     </div>
 
     <div class="section_dashed_border"
@@ -97,6 +98,7 @@
 
     <div class="title" style="padding-bottom: 0em">
       Parameters in model influenced by this program
+      <help ref="programs-target-parameters"/>
     </div>
 
     <div class="section_dashed_border">
@@ -202,7 +204,7 @@
 
 
     <div class="title" style="padding-bottom: 0em">
-       Historical cost-coverage data
+       Past spending and coverage data
     </div>
 
     <div
@@ -247,13 +249,13 @@
             <span
                 style="padding-left: 1em"
                 class="fa fa-trash-o"
-                ng-click="vm.deleteAddData(costcovData)">
+                ng-click="deleteAddData(costcovData)">
             </span>
           </td>
         </tr>
         <tr>
           <td colspan="3">
-            <a class="btn" ng-click="vm.addHistoricalYearCostcovData()">
+            <a class="btn" ng-click="addHistoricalYearCostcovData()">
               + Year
             </a>
           </td>

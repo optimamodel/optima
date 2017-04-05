@@ -1,11 +1,11 @@
 define(
-  ['angular', 'ui.router', '../project/project-api-service', '../charts/export-all-charts-directive'],
+  ['angular', 'ui.router', '../project/project-api-service'],
   function (angular) {
 
     'use strict';
 
     return angular
-      .module('app.geospatial', ['app.export-all-charts', 'ui.router'])
+      .module('app.geospatial', ['ui.router'])
       .config(function ($stateProvider) {
         $stateProvider
           .state('portfolio', {
@@ -15,7 +15,7 @@ define(
           })
           .state('portfolio.manage', {
             url: '/portfolio',
-            templateUrl: 'js/modules/geospatial/manage-portfolio.html',
+            templateUrl: 'js/modules/geospatial/geospatial.html',
             controller: 'PortfolioController',
           })
       });

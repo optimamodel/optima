@@ -1,5 +1,5 @@
 ##############################################################################
-## PRINTING FUNCTIONS
+### PRINTING FUNCTIONS
 ##############################################################################
 
 
@@ -16,7 +16,7 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
         3 = extra debugging detail (e.g., printout on each iteration)
         4 = everything possible (e.g., printout on each timestep)
     
-    Thus you a very important statement might be e.g.
+    Thus a very important statement might be e.g.
         printv('WARNING, everything is wrong', 1, verbose)
 
     whereas a much less important message might be
@@ -108,7 +108,7 @@ def defaultrepr(obj, maxlen=300):
 
 
 def printarr(arr, arrformat='%0.2f  '):
-    """ 
+    ''' 
     Print a numpy array nicely.
     
     Example:
@@ -117,7 +117,7 @@ def printarr(arr, arrformat='%0.2f  '):
         printarr(rand(3,7,4))
     
     Version: 2014dec01 by cliffk
-    """
+    '''
     from numpy import ndim
     if ndim(arr)==1:
         string = ''
@@ -180,10 +180,16 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
 
 
 
-def sigfig(X, sigfigs=5):
-    """ Return a string representation of variable x with sigfigs number of significant figures -- copied from asd.py """
+def sigfig(X, sigfigs=5, SI=False):
+    '''
+    Return a string representation of variable x with sigfigs number of significant figures -- 
+    copied from asd.py.
+    
+    If SI=True, then will return e.g. 32433 as 32.433K
+    '''
     from numpy import log10, floor
     output = []
+    
     try: 
         n=len(X)
         islist = True
@@ -193,9 +199,21 @@ def sigfig(X, sigfigs=5):
         islist = False
     for i in range(n):
         x = X[i]
+        
+        suffix = ''
+        formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'t'), (1e9,'b'), (1e6,'m'), (1e3,'k')]
+        if SI:
+            for val,suff in formats:
+                if abs(x)>=val:
+                    x = x/val
+                    suffix = suff
+                    break # Find at most one match
+        
         try:
             if x==0:
                 output.append('0')
+            elif sigfigs is None:
+                output.append(str(x)+suffix)
             else:
                 magnitude = floor(log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
@@ -204,6 +222,7 @@ def sigfig(X, sigfigs=5):
                 decimals = int(max(0,-magnitude+sigfigs-1))
                 strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
                 string = strformat % x
+                string += suffix
                 output.append(string)
         except:
             output.append(str(x))
@@ -258,7 +277,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     if   objtype in ['str','string']:  objinstance = basestring
     elif objtype in ['num', 'number']: objinstance = Number
     elif objtype in ['arr', 'array']:  objinstance = type(array([]))
-    elif objtype is 'arraylike':       objinstance = (list, tuple, type(array([]))) # Anything suitable as a numerical array
+    elif objtype=='arraylike':         objinstance = (list, tuple, type(array([]))) # Anything suitable as a numerical array
     elif type(objtype)==type:          objinstance = objtype  # Don't need to do anything
     elif objtype is None:              return None # If not supplied, exit
     else:
@@ -269,7 +288,9 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     result = isinstance(obj, objinstance)
     
     # Do second round checking
-    if subtype is None and objtype is 'arraylike': subtype = 'number' # This is the default
+    if result and objtype=='arraylike': # Special case for handling arrays which may be multi-dimensional
+        obj = promotetoarray(obj).flatten() # Flatten all elements
+        if subtype is None: subtype = 'number' # This is the default
     if isiterable(obj) and subtype is not None:
         for item in obj:
             result = result and checktype(item, subtype)
@@ -318,8 +339,23 @@ def promotetolist(obj=None, objtype=None):
     return obj
 
 
+def promotetoodict(obj=None):
+    ''' Like promotetolist, but for odicts -- WARNING, could be made into a method for odicts '''
+    if isinstance(obj, odict):
+        return obj # Don't need to do anything
+    elif isinstance(obj, dict):
+        return odict(obj)
+    elif isinstance(obj, list):
+        newobj = odict()
+        for i,val in enumerate(obj):
+            newobj['Key %i'%i] = val
+        return newobj
+    else:
+        return odict({'Key':obj})
+
+
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
-    """
+    '''
     Nicely print a complicated data structure, a la Matlab.
     Arguments:
       data: the data to display
@@ -331,7 +367,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
     Note: "printdata" is aliased to "pd".
 
     Version: 1.0 (2015aug21)    
-    """
+    '''
     datatype = type(data)
     def printentry(data):
         from numpy import shape, ndarray
@@ -386,18 +422,18 @@ pd = printdata # Alias to make it easier to use
 
 
 ##############################################################################
-## MATHEMATICAL FUNCTIONS
+### MATHEMATICAL FUNCTIONS
 ##############################################################################
 
 
 def quantile(data, quantiles=[0.5, 0.25, 0.75]):
-    """
+    '''
     Custom function for calculating quantiles most efficiently for a given dataset.
         data = a list of arrays, or an array where he first dimension is to be sorted
         quantiles = a list of floats >=0 and <=1
     
     Version: 2014nov23
-    """
+    '''
     from numpy import array
     nsamples = len(data) # Number of samples in the dataset
     indices = (array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
@@ -410,12 +446,12 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 def sanitize(data=None, returninds=False):
-        """
+        '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
         
         Example:
             sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
-        """
+        '''
         from numpy import array, isnan, nonzero
         try:
             data = array(data,dtype=float) # Make sure it's an array of float type
@@ -460,7 +496,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
 
 
 def findinds(val1, val2=None, eps=1e-6):
-    """
+    '''
     Little function to find matches even if two things aren't eactly equal (eg. 
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
     check for equality using eps. Returns a tuple of arrays if val1 is multidimensional,
@@ -471,7 +507,7 @@ def findinds(val1, val2=None, eps=1e-6):
         findinds([2,3,6,3], 6) # e.g. array([2])
     
     Version: 2016jun06 by cliffk
-    """
+    '''
     from numpy import nonzero, array, ndim
     if val2==None: # Check for equality
         output = nonzero(val1) # If not, just check the truth condition
@@ -486,7 +522,7 @@ def findinds(val1, val2=None, eps=1e-6):
 
 
 def findnearest(series=None, value=None):
-    """
+    '''
     Return the index of the nearest match in series to value
     
     Examples:
@@ -496,7 +532,7 @@ def findnearest(series=None, value=None):
         findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     
     Version: 2017jan07 by cliffk
-    """
+    '''
     from numpy import argmin
     series = promotetoarray(series)
     if isnumber(value):
@@ -509,7 +545,7 @@ def findnearest(series=None, value=None):
     
     
 def dataindex(dataarray, index):        
-    """ Take an array of data and return either the first or last (or some other) non-NaN entry. """
+    ''' Take an array of data and return either the first or last (or some other) non-NaN entry. '''
     from numpy import zeros, shape
     
     nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
@@ -521,7 +557,7 @@ def dataindex(dataarray, index):
 
 
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, strictnans=False):
-    """
+    '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
     Example:
@@ -535,7 +571,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         scatter(origx,origy)
     
     Version: 2016nov02 by cliffk
-    """
+    '''
     from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
     # Ensure arrays and remove NaNs
@@ -598,16 +634,19 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
 
 def perturb(n=1, span=0.5, randseed=None):
-    """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
+    ''' Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1.'''
     from numpy.random import rand, seed
-    if randseed>=0: seed(randseed) # Optionally reset random seed
+    if randseed is not None: seed(int(randseed)) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
     return output
     
+    
 def scaleratio(inarray,total):
-    """ Multiply a list or array by some factor so that its sum is equal to the total. """
+    ''' Multiply a list or array by some factor so that its sum is equal to the total. '''
     from numpy import array
-    outarray = array([float(x)*total/float(sum(inarray)) for x in inarray])
+    origtotal = float(sum(inarray))
+    ratio = total/origtotal
+    outarray = array(inarray)*ratio
     if type(inarray)==list: outarray = outarray.tolist() # Preserve type
     return outarray
 
@@ -645,10 +684,10 @@ def vec2obj(orig=None, newvec=None, inds=None):
 
 
 ##############################################################################
-## NESTED DICTIONARY FUNCTIONS
+### NESTED DICTIONARY FUNCTIONS
 ##############################################################################
 
-"""
+'''
 Four little functions to get and set data from nested dictionaries. The first two were stolen from:
     http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
 
@@ -690,21 +729,21 @@ Example 2:
         setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
 Version: 2014nov29 by cliffk
-"""
+'''
 
 def getnested(nesteddict, keylist, safe=False): 
-    """ Get a value from a nested dictionary"""
+    ''' Get a value from a nested dictionary'''
     from functools import reduce
     output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
     return output
 
 def setnested(nesteddict, keylist, value): 
-    """ Set a value in a nested dictionary """
+    ''' Set a value in a nested dictionary '''
     getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
     return None # Modify nesteddict in place
 
 def makenested(nesteddict, keylist,item=None):
-    """ Insert item into nested dictionary, creating keys if required """
+    ''' Insert item into nested dictionary, creating keys if required '''
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
     	if not(key in currentlevel):
@@ -738,27 +777,27 @@ def iternested(nesteddict,previous = []):
 
 
 ##############################################################################
-## MISCELLANEOUS FUNCTIONS
+### MISCELLANEOUS FUNCTIONS
 ##############################################################################
 
 
 def tic():
-    """
+    '''
     A little pair of functions to calculate a time difference, sort of like Matlab:
     t = tic()
     toc(t)
-    """
+    '''
     from time import time
     return time()
 
 
 
 def toc(start=0, label='', sigfigs=3):
-    """
+    '''
     A little pair of functions to calculate a time difference, sort of like Matlab:
     t = tic()
     toc(t)
-    """
+    '''
     from time import time
     elapsed = time() - start
     if label=='': base = 'Elapsed time: '
@@ -768,14 +807,23 @@ def toc(start=0, label='', sigfigs=3):
     
 
 
+def percentcomplete(step=None, maxsteps=None, indent=1):
+    ''' Display progress '''
+    onepercent = max(1,round(maxsteps/100)); # Calculate how big a single step is -- not smaller than 1
+    if not step%onepercent: # Does this value lie on a percent
+        thispercent = round(step/maxsteps*100) # Calculate what percent it is
+        print('%s%i%%\n'% (' '*indent, thispercent)) # Display the output
+    return None
+
+
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
-    """
+    '''
     Checks how much memory the variable in question uses by dumping it to file.
     
     Example:
         from utils import checkmem
         checkmem(['spiffy',rand(2483,589)],descend=1)
-    """
+    '''
     from os import getcwd, remove
     from os.path import getsize
     from cPickle import dump
@@ -837,30 +885,46 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     return None
 
 
-def loadbalancer(maxload=0.5, index=None, refresh=1.0, maxtime=3600, verbose=True):
+def getfilelist(folder=None, ext=None):
+    ''' A short-hand since glob is annoying '''
+    from glob import glob
+    import os
+    if folder is None: folder = os.getcwd()
+    if ext is None: ext = '*'
+    filelist = sorted(glob(os.path.join(folder, '*.'+ext)))
+    return filelist
+
+
+def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
     ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
     from psutil import cpu_percent
     from time import sleep
     from numpy.random import random
     
     # Set up processes to start asynchronously
-    if index is None:  delay = random()
-    else:              delay = index*refresh
+    if maxload is None: maxload = 0.5
+    if interval is None: interval = 10.0
+    if maxtime is None: maxtime = 3600
+    if label is None: label = ''
+    else: label += ': '
+    if index is None:  pause = random()*interval
+    else:              pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
-    sleep(delay) # Give it time to asynchronize
+    sleep(pause) # Give it time to asynchronize
     
     # Loop until load is OK
     toohigh = True # Assume too high
     count = 0
-    maxcount = maxtime/float(refresh)
+    maxcount = maxtime/float(interval)
     while toohigh and count<maxcount:
         count += 1
-        currentload = cpu_percent()/100.
+        currentload = cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
         if currentload>maxload:
-            if verbose: print('CPU load too high (%0.2f/%0.2f); process %s queued for the %ith time' % (currentload, maxload, index, count))
-            sleep(refresh)
+            if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
+            sleep(interval*2*random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else: 
-            toohigh = False # print('CPU load fine (%0.2f/%0.2f)' % (currentload, maxload))
+            toohigh = False 
+            if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
     return None
     
     
@@ -868,7 +932,7 @@ def loadbalancer(maxload=0.5, index=None, refresh=1.0, maxtime=3600, verbose=Tru
 
 
 def runcommand(command, printinput=False, printoutput=False):
-   """ Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 """
+   ''' Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 '''
    from subprocess import Popen, PIPE
    if printinput: print(command)
    try: output = Popen(command, shell=True, stdout=PIPE).communicate()[0].decode("utf-8")
@@ -991,7 +1055,7 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
 
 
 ##############################################################################
-## CLASS FUNCTIONS
+### CLASS FUNCTIONS
 ##############################################################################
 
 
@@ -1004,7 +1068,7 @@ def getdate(obj, which='modified', fmt='str'):
         dateformat = '%Y-%b-%d %H:%M:%S'
         
         try:
-            if type(obj)==str: return obj # Return directly if it's a string
+            if isinstance(obj, basestring): return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
         except: # It's not a date object
@@ -1028,7 +1092,7 @@ def getdate(obj, which='modified', fmt='str'):
 
 
 ##############################################################################
-## ORDERED DICTIONARY
+### ORDERED DICTIONARY
 ##############################################################################
 
 
@@ -1065,10 +1129,10 @@ class odict(OrderedDict):
             try:
                 output = OrderedDict.__getitem__(self, key)
                 return output
-            except: # WARNING, should be KeyError, but this can't print newlines!!!
+            except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
-                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
-                        '\n'.join([str(k) for k in self.keys()]))
+                    errormsg = E.__repr__()+'\n'
+                    errormsg += 'odict key "%s" not found; available keys are:\n%s' % (str(key), '\n'.join([str(k) for k in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
@@ -1135,7 +1199,7 @@ class odict(OrderedDict):
     
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
-        if type(key)==str:
+        if isinstance(key, basestring):
             return OrderedDict.pop(self, key, *args, **kwargs)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
@@ -1168,20 +1232,20 @@ class odict(OrderedDict):
                 raise Exception(errormsg)
     
     
-    def __repr__(self, maxlen=None, spaces=True, divider=True):
+    def __repr__(self, maxlen=None, spaces=True, divider=False):
         ''' Print a meaningful representation of the odict '''
          # Maximum length of string to display
         toolong = ' [...]'
-        divider = '#############################################################\n'
+        dividerstr = '#############################################################\n'
         if len(self.keys())==0: 
             output = 'odict()'
         else: 
             output = ''
             hasspaces = 0
             for i in range(len(self)):
-                if divider and spaces and hasspaces: output += divider
+                if divider and spaces and hasspaces: output += dividerstr
                 thiskey = str(self.keys()[i]) # Probably don't need to cast to str, but just to be sure
-                thisval = str(self.values()[i])
+                thisval = str(self.values()[i].__repr__()) # __repr__() is slightly more accurate
                 if not(spaces):                    thisval = thisval.replace('\n','\\n') # Replace line breaks with characters
                 if maxlen and len(thisval)>maxlen: thisval = thisval[:maxlen-len(toolong)] + toolong # Trim long entries
                 if thisval.find('\n'): hasspaces = True
@@ -1193,31 +1257,87 @@ class odict(OrderedDict):
         print(self.__repr__(maxlen=maxlen, spaces=spaces, divider=divider))
     
     def _repr_pretty_(self, p, cycle):
-        ''' Stupid function to fix __repr__ because IPython is stupid '''
+        ''' Function to fix __repr__ in IPython'''
         print(self.__repr__())
     
     
-    def index(self, item):
+    def index(self, value):
         ''' Return the index of a given key '''
-        return self.keys().index(item)
+        return self.keys().index(value)
     
-    def valind(self, item):
+    def valind(self, value):
         ''' Return the index of a given value '''
-        return self.items().index(item)
+        return self.items().index(value)
     
-    def append(self, item):
+    def append(self, key=None, value=None):
         ''' Support an append method, like a list '''
-        keyname = str(len(self)) # Define the key just to be the current index
-        self.__setitem__(keyname, item)
+        needkey = False
+        if value is None: # Assume called with a single argument
+            value = key
+            needkey = True
+        if key is None or needkey:
+            keyname = 'key'+str(len(self))  # Define the key just to be the current index
+        else:
+            keyname = key
+        self.__setitem__(keyname, value)
         return None
     
+    def insert(self, pos=None, key=None, value=None):
+        '''
+        Stupid, slow function to do insert -- WARNING, should be able to use approach more like rename...
+        
+        Usage:
+            z = odict()
+            z['foo'] = 1492
+            z.insert(1604)
+            z.insert(0, 'ganges', 1444)
+            z.insert(2, 'midway', 1234)
+        '''
+        
+        # Handle inputs
+        realpos, realkey, realvalue = pos, key, value
+        if key is None and value is None: # Assume it's called like odict.insert(666)
+            realvalue = pos
+            realkey = 'key'+str(len(self))
+            realpos = 0
+        elif value is None: # Assume it's called like odict.insert('devil', 666)
+            realvalue = key
+            realkey = pos
+            realpos = 0
+        if pos is None:
+            realpos = 0
+        if realpos>len(self):
+            errormsg = 'Cannot insert %s at position %i since length of odict is %i ' % (key, pos, len(self))
+            raise Exception(errormsg)
+        
+        # Create a temporary dictionary to hold all of the items after the insertion point
+        tmpdict = odict()
+        origkeys = self.keys()
+        originds = range(len(origkeys))
+        if not len(originds) or realpos==len(originds): # It's empty or in the final position, just append
+            self.__setitem__(realkey, realvalue)
+        else: # Main usage case, it's not empty
+            try: insertind = originds.index(realpos) # Figure out which index we're inseting at
+            except:
+                errormsg = 'Could not insert item at position %i in odict with %i items' % (realpos, len(originds))
+                raise Exception(errormsg)
+            keystopop = origkeys[insertind:] # Pop these keys until we get far enough back
+            for keytopop in keystopop:
+                tmpdict.__setitem__(keytopop, self.pop(keytopop))
+            self.__setitem__(realkey, realvalue) # Insert the new item at the right location
+            for keytopop in keystopop: # Insert popped items back in
+                self.__setitem__(keytopop, tmpdict.pop(keytopop))
+
+        return None
+        
+        
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
         if isinstance(oldkey, Number): 
             index = oldkey
             keystr = self.keys()[index]
-        elif type(oldkey) is str: 
+        elif isinstance(oldkey, basestring): 
             index = self.keys().index(oldkey)
             keystr = oldkey
         else: raise Exception('Key type not recognized: must be int or str')
@@ -1229,12 +1349,17 @@ class odict(OrderedDict):
                 self.__setitem__(key, value)
         return None
     
-    def sort(self, sortby=None):
-        ''' Return a sorted copy of the odict. 
-        Sorts by order of sortby, if provided, otherwise alphabetical'''
-        if not sortby: allkeys = sorted(self.keys())
+    
+    def sort(self, sortby=None, copy=False):
+        '''
+        Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
+        If copy is True, then returns a copy (like sorted())
+        
+        Note: very slow, do not use for serious computations!!
+        '''
+        if sortby is None: allkeys = sorted(self.keys())
         else:
-            if not isinstance(sortby, list): raise Exception('Please provide a list to determine the sort order.')
+            if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
             if all(isinstance(x,basestring) for x in sortby): # Going to sort by keys
                 if not set(sortby)==set(self.keys()): 
                     errormsg = 'List of keys to sort by must be the same as list of keys in odict.\n You provided the following list of keys to sort by:\n'
@@ -1243,15 +1368,24 @@ class odict(OrderedDict):
                     errormsg += '\n'.join(self.keys())
                     raise Exception(errormsg)
                 else: allkeys = sortby
-            elif all(isinstance(x,int) for x in sortby): # Going to sort by numbers
+            elif all(isinstance(x,Number) for x in sortby): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
                     errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
                     raise Exception(errormsg)
                 else: allkeys = [y for (x,y) in sorted(zip(sortby,self.keys()))]
             else: raise Exception('Cannot figure out how to sort by "%s"' % sortby)
-        out = odict()
-        for key in allkeys: out[key] = self[key]
-        return out
+        tmpdict = odict()
+        if copy:
+            for key in allkeys: tmpdict[key] = self[key]
+            return tmpdict
+        else:
+            for key in allkeys: tmpdict.__setitem__(key, self.pop(key))
+            for key in allkeys: self.__setitem__(key, tmpdict.pop(key))
+            return None
+    
+    def sorted(self, sortby=None):
+        ''' Shortcut for making a copy of the sorted odict '''
+        return self.sort(sortby=sortby, copy=True)
 
 
 
@@ -1260,7 +1394,7 @@ class odict(OrderedDict):
 
 
 ##############################################################################
-## DATA FRAME CLASS
+### DATA FRAME CLASS
 ##############################################################################
 
 # Some of these are repeated to make this frationally more self-contained
@@ -1527,7 +1661,7 @@ class dataframe(object):
 
 
 ##############################################################################
-## OTHER CLASSES
+### OTHER CLASSES
 ##############################################################################
 
 

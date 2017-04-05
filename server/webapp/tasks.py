@@ -1,27 +1,15 @@
 import traceback
-from pprint import pformat
+from pprint import pprint, pformat
 import datetime
 import dateutil.tz
-import server.webapp.parse
-
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
-
-import optima
-
-from multiprocessing.dummy import Process, Queue
-
-# this is needed to disable multiprocessing in the portfolio
-# module so that celery can handle the multiprocessing itself
-optima.portfolio.Process = Process
-optima.portfolio.Queue = Queue
+import optima as op
 
 # must import api first
 from ..api import app
-from .dbconn import db
 from . import dbmodels, parse, dataio
-
 
 db = SQLAlchemy(app)
 
@@ -176,12 +164,12 @@ def check_calculation_status(pyobject_id, work_type):
         'work_type': ''
     }
     db_session = init_db_session()
-    print("Check calculation status", pyobject_id, work_type)
+    print ">> check_calculation_status", pyobject_id, work_type
     work_log_record = db_session.query(dbmodels.WorkLogDb)\
         .filter_by(project_id=pyobject_id, work_type=work_type)\
         .first()
     if work_log_record:
-        print ">> Found existing job of '%s' with same project" % work_type
+        print ">> check_calculation_status fail: existing job of '%s' with same project" % work_type
         result = parse_work_log_record(work_log_record)
     close_db_session(db_session)
     return result
@@ -241,7 +229,7 @@ def run_autofit(project_id, parset_id, maxtime=60):
         )
 
         result = project.parsets[autofit_parset_name].getresults()
-        result.uid = optima.uuid()
+        result.uid = op.uuid()
         result_name = 'parset-' + orig_parset_name
         result.name = result_name
 
@@ -321,6 +309,7 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
         try:
             project = work_log.load()
             optim = parse.get_optimization_from_project(project, optimization_id)
+            optim.projectref = op.Link(project) # Need to restore project link
             progset = project.progsets[optim.progsetname]
             if not progset.readytooptimize():
                 status = 'error'
@@ -348,24 +337,19 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
     if status == 'started':
         result = None
         try:
-            print ">> Start optimization '%s'" % optim.name
-            objectives = server.webapp.parse.normalize_obj(optim.objectives)
-            constraints = server.webapp.parse.normalize_obj(optim.constraints)
-            constraints["max"] = optima.odict(constraints["max"])
-            constraints["min"] = optima.odict(constraints["min"])
-            constraints["name"] = optima.odict(constraints["name"])
-            print(">> maxtime = %f" % maxtime)
-            parse.print_odict("objectives", objectives)
-            parse.print_odict("constraints", constraints)
+            print(">> Start optimization '%s' for maxtime = %f" % (optim.name, maxtime))
             result = project.optimize(
                 name=optim.name,
                 parsetname=optim.parsetname,
                 progsetname=optim.progsetname,
-                objectives=objectives,
-                constraints=constraints,
+                objectives=optim.objectives,
+                constraints=optim.constraints,
                 maxtime=maxtime,
+                mc=0, # Set this to zero for now while we decide how to handle uncertainties etc.
             )
-            result.uid = optima.uuid()
+            
+            print(">> %s" % result.budgets)
+            result.uid = op.uuid()
             status = 'completed'
         except Exception:
             status = 'error'
@@ -415,24 +399,14 @@ def check_optimization(project_id, optimization_id):
     return calc_state
 
 
-def get_gaoptim(project, gaoptim_id):
-    for gaoptim in project.gaoptims.values():
-        if str(gaoptim.uid) == str(gaoptim_id):
-            return gaoptim
-    return None
-
-
 @celery_instance.task(bind=True)
-def run_boc(self, portfolio_id, project_id, gaoptim_id, maxtime=2):
+def run_boc(self, portfolio_id, project_id, maxtime=2, objectives=None):
 
     status = 'started'
     error_text = ""
 
     db_session = init_db_session()
-    kwargs = {
-        'project_id': project_id,
-        'work_type': 'gaoptim-' + str(gaoptim_id)
-    }
+    kwargs = {'project_id': project_id, 'work_type':'boc'}
     work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
     if work_log:
         work_log_id = work_log.id
@@ -454,12 +428,9 @@ def run_boc(self, portfolio_id, project_id, gaoptim_id, maxtime=2):
         return
 
     if status == 'started':
-        result = None
         try:
-            gaoptim = get_gaoptim(project, gaoptim_id)
             print ">> Start BOC:"
-            parse.print_odict("gaoptim", gaoptim)
-            project.genBOC(objectives=gaoptim.objectives, maxtime=maxtime)
+            project.genBOC(maxtime=maxtime, objectives=objectives, mc=0) # WARNING, might want to run with MC one day
             status = 'completed'
         except Exception:
             status = 'error'
@@ -488,30 +459,23 @@ def run_boc(self, portfolio_id, project_id, gaoptim_id, maxtime=2):
 
 
 
-def launch_boc(portfolio_id, gaoptim_id, maxtime=2):
+def launch_boc(portfolio_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
-    gaoptims = portfolio.gaoptims
     for project in portfolio.projects.values():
         project_id = project.uid
-        optima.migrate(project)
-        project.gaoptims = gaoptims
-        calc_state = setup_work_log(
-            project_id, 'gaoptim-' + str(gaoptim_id), project)
-        run_boc.delay(portfolio_id, project_id, gaoptim_id, maxtime)
+        setup_work_log(project_id, 'boc', project)
+        run_boc.delay(portfolio_id, project_id, maxtime=maxtime, objectives=portfolio.objectives)
 
 
 
 @celery_instance.task(bind=True)
-def run_miminize_portfolio(self, portfolio_id, gaoptim_id, maxtime):
+def run_miminize_portfolio(self, portfolio_id, maxtime):
 
     status = 'started'
     error_text = ""
 
     db_session = init_db_session()
-    kwargs = {
-        'project_id': portfolio_id,
-        'work_type': 'portfolio-' + str(gaoptim_id)
-    }
+    kwargs = {'project_id': portfolio_id, 'work_type': 'portfolio'}
     work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
     if work_log:
         work_log_id = work_log.id
@@ -534,11 +498,8 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id, maxtime):
 
     if status == 'started':
         try:
-            gaoptim = get_gaoptim(portfolio, gaoptim_id)
-            objectives = gaoptim.objectives
-            print ">> Start BOC:"
-            parse.print_odict("gaoptim", gaoptim)
-            portfolio.fullGA(objectives=objectives, maxtime=maxtime)
+            print(">> Start GA with maxtime=%s and budget=%s:" % (maxtime, portfolio.objectives['budget']))
+            portfolio.runGA(maxtime=maxtime, mc=0, batch=False)
             status = 'completed'
         except Exception:
             status = 'error'
@@ -564,14 +525,93 @@ def run_miminize_portfolio(self, portfolio_id, gaoptim_id, maxtime):
 
 
 
-def launch_miminize_portfolio(portfolio_id, gaoptim_id, maxtime=2):
+def launch_miminize_portfolio(portfolio_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
-    for project in portfolio.projects.values():
-        optima.migrate(project)
-    calc_state = setup_work_log(
-        portfolio_id, 'portfolio-' + str(gaoptim_id), portfolio)
+    calc_state = setup_work_log(portfolio_id, 'portfolio', portfolio)
     if calc_state['status'] != 'started':
         return calc_state, 208
-    run_miminize_portfolio.delay(portfolio_id, gaoptim_id, maxtime)
+    run_miminize_portfolio.delay(portfolio_id, maxtime)
+
+
+def make_reconcile_work_type(project_id, progset_id, parset_id, year):
+    return "reconcile:" + ":".join([project_id, progset_id, parset_id, str(year)])
+
+
+@celery_instance.task(bind=True)
+def run_reconcile(self, project_id, progset_id, parset_id, year, maxtime):
+
+    status = 'started'
+    error_text = ""
+    work_type = make_reconcile_work_type(project_id, progset_id, parset_id, year)
+    print ">> tasks.run_reconcile", work_type
+
+    db_session = init_db_session()
+    kwargs = {'project_id': project_id, 'work_type': work_type}
+    work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
+    if work_log:
+        work_log_id = work_log.id
+        work_log.task_id = self.request.id
+        print(">> Celery task_id = %s" % work_log.task_id)
+        try:
+            project = work_log.load()
+            db_session.add(work_log)
+            db_session.commit()
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in initialization")
+            print(error_text)
+    close_db_session(db_session)
+
+    if work_log is None:
+        print(">> Error: couldn't find work log")
+        return
+
+    if status == 'started':
+        try:
+            print(">> run_reconcile %s" % work_type, maxtime)
+            progset = parse.get_progset_from_project(project, progset_id)
+            parset = parse.get_parset_from_project_by_id(project, parset_id)
+            progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
+
+            status = 'completed'
+        except Exception:
+            status = 'error'
+            error_text = traceback.format_exc()
+            print(">> Error in calculation")
+            print(error_text)
+
+        if status == 'completed':
+            print(">> run_reconcile save project")
+            db_session = init_db_session()
+            project_record = dataio.load_project_record(project_id, db_session=db_session)
+            project_record.save_obj(project)
+            db_session.add(project_record)
+            db_session.commit()
+            close_db_session(db_session)
+
+    db_session = init_db_session()
+    work_log_record = db_session.query(dbmodels.WorkLogDb).get(work_log_id)
+    work_log_record.status = status
+    work_log_record.error = error_text
+    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    work_log_record.cleanup()
+    db_session.commit()
+    close_db_session(db_session)
+
+    print ">> Finish optimization"
+
+
+
+def launch_reconcile(project_id, progset_id, parset_id, year, maxtime=2):
+    work_type = make_reconcile_work_type(project_id, progset_id, parset_id, year)
+    print ">> tasks.launch_reconcile", work_type
+    project = dataio.load_project(project_id)
+    print ">> tasks.launch_reconcile got project", project_id
+    calc_state = setup_work_log(project_id, work_type, project)
+    print ">> tasks.launch_reconcile setup state", calc_state
+    if calc_state['status'] == 'started':
+        run_reconcile.delay(project_id, progset_id, parset_id, year, maxtime)
+    return calc_state
 
 

@@ -3,19 +3,21 @@ BATCHTOOLS
 
 Functions for doing things in batch...yeah, should make better.
 
-Version: 2016mar20
+Note - tasks have to be standalone functions or they break on windows, see
+http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
+
+Version: 2017mar17
 """
 
-from multiprocessing import Process, Queue
-from numpy import empty
-from glob import glob
-from optima import loadproj, loadbalancer, printv
-from os import path
+from optima import loadproj, loadbalancer, printv, getfilelist, dcp, odict, outcomecalc
+from numpy import empty, inf
+try: from multiprocessing import Process, Queue
+except: Process, Queue = None, None # OK to skip these if batch is False
 
 
-# Note - tasks have to be standalone functions or they break on windows, see
-# http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
-
+####################################################################################################
+### Simple template functions
+####################################################################################################
 
 def batchtest_task(obj, ind, outputqueue, nprocs, nrepeats, maxload):
     loadbalancer(maxload=maxload, index=ind)
@@ -36,90 +38,131 @@ def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
     processes = []
     for i in range(nprocs):
         obj = rand()
-        prc = Process(
-            target=batchtest_task, 
-            args=(obj, i, outputqueue, nprocs, nrepeats, maxload))
+        prc = Process(target=batchtest_task, 
+                      args=(obj, i, outputqueue, nprocs, nrepeats, maxload))
         prc.start()
         processes.append(prc)
     for i in range(nprocs):
         outputlist[i] = outputqueue.get()
+    for prc in processes:
+        prc.join() # Wait for them to finish
     
     return outputlist
 
 
-def autofit_task(
-        project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters,
-        verbose, maxload):
-    """Kick off the autofit task for a given project file."""
-    loadbalancer(index=ind, maxload=maxload)
-    print('Running autofitting...')
-    # Run automatic fitting and update calibration
-    project.autofit(
-        name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, 
-        maxiters=maxiters, verbose=verbose)
-    project.save()
-    outputqueue.put(project)
-    print('...done.')
-    return None
+####################################################################################################
+### Housekeeping functions
+####################################################################################################
+
+def getprojects(projects=None, folder=None, verbose=2):
+    ''' Small helper method to decide what to do about projects '''
+    if projects is None: # If a projects odict is not supplied -- load from file
+        fromfolder = True
+        if folder is None: folder = '.'
+        filelist = getfilelist(folder, 'prj')
+        nprojects = len(filelist)
+        projects = odict()
+        for i in range(nprojects):
+            proj = loadproj(filelist[i])
+            proj.filename = filelist[i] # Ensure the filename is up-to-date since we'll save later
+            projects[proj.name] = proj
+    else:
+        nprojects = len(projects)
+        fromfolder = False # If it is, just set fromfolder
+    
+    # Ensure these match, since used to repopulate the odict
+    for key,project in projects.items():
+        if project.name != key: 
+            msg = 'Warning, project name and key do not match (%s vs. %s), updating...' % (project.name, key)
+            printv(msg, 2, verbose)
+        project.name = key 
+    
+    return projects, nprojects, fromfolder
 
 
-def batchautofit(
-        folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None, 
-        maxiters=200, verbose=2, maxload=0.5):
+def housekeeping(nprojects, batch):
+    ''' Small function to return the required variables for running the batch functions '''
+    if batch: outputqueue = Queue()
+    else: outputqueue = None
+    outputlist = empty(nprojects, dtype=object)
+    processes = []
+    return outputqueue, outputlist, processes
+
+
+def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqueue=None, processes=None):
+    '''
+    Functions to execute after the parallel process has been run. If batch is True, then outputlist will
+    be empty and will be populated from outputqueue. If it's False, then outputlist will be a list of
+    the processed projects.    
+    '''
+    
+    # Extra tasks required for batch runs
+    if batch:
+        for i in range(len(projects)):
+            outputlist[i] = outputqueue.get()  # This is needed or else the process never finishes
+        for prc in processes:
+            prc.join() # Wait for them to finish
+    
+    # Update the odict
+    for project in outputlist:
+        projects[project.name] = project
+    
+    # If loaded from a folder, save
+    if fromfolder:
+        for project in projects.values():
+            project.save(filename=project.filename)
+    
+    return projects
+
+
+####################################################################################################
+### The meat of the matter -- batch functions and their tasks
+####################################################################################################
+
+def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5, batch=True):
     ''' Perform batch autofitting '''
     
-    filelist = sorted(glob(path.join(folder, '*.prj')))
-    nfiles = len(filelist)
+    # Praeludium
+    projects, nprojects, fromfolder = getprojects(projects, folder, verbose) # If no projects supplied, load them from the folder
+    outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
 
-    outputqueue = Queue()
-    outputlist = empty(nfiles, dtype=object)
-    processes = []
-    for i in range(nfiles):
-        printv('Calibrating file "%s"' % filelist[i], 3, verbose)
-        project = loadproj(filelist[i])
-        project.filename = filelist[i]
-        prc = Process(
-            target=autofit_task, 
-            args=(project, i, outputqueue, name, fitwhat, fitto, maxtime, 
-                  maxiters, verbose, maxload))
-        prc.start()
-        processes.append(prc)
+    for i,project in enumerate(projects.values()):
+        args = (project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch)
+        if batch:
+            prc = Process(target=autofit_task, args=args)
+            prc.start()
+            processes.append(prc)
+        else:
+            outputlist[i] = autofit_task(*args) # Simply store here 
     
-    return outputlist
+    # Encore
+    projects = tidyup(projects=projects, batch=batch, fromfolder=fromfolder, outputlist=outputlist, outputqueue=outputqueue, processes=processes)
+    
+    return projects
 
 
-def boc_task(project, ind, outputqueue, budgetlist, name, parsetname,
-             progsetname, objectives, constraints, maxiters, maxtime,
-             verbose, stoppingfunc, method, maxload, prerun):
-    loadbalancer(index=ind, maxload=maxload)
-    printv('Running BOC generation...', 1, verbose)
-    if prerun:
-        if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
-        rerun = False
-        try:
-            results = project.parsets[parsetname].getresults() # First, try getting results 
-            if results is None: rerun = True
-        except:
-            rerun = True
-        if rerun: 
-            printv('No results set found, so rerunning model...', 2, verbose)
-            project.runsim(parsetname) # Rerun if exception or if results is None
-    project.genBOC(
-        budgetlist=budgetlist, name=name, parsetname=parsetname,
-        progsetname=progsetname, objectives=objectives, 
-        constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-        verbose=verbose, stoppingfunc=stoppingfunc, method=method)
-    project.save(filename=project.tmpfilename)
-    outputqueue.put(project)
+def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch):
+    """Kick off the autofit task for a given project file."""
+    
+    # Standard opening
+    if batch: loadbalancer(index=ind, maxload=maxload, label=project.name)
+    printv('Running autofitting on %s...' % project.name, 2, verbose)
+    
+    # The meat
+    project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
+    
+    # Standardized close
     print('...done.')
-    return None
+    if batch: 
+        outputqueue.put(project)
+        return None
+    else:
+        return project
 
 
-def batchBOC(
-        folder='.', budgetlist=None, name=None, parsetname=None, 
-        progsetname=None, objectives=None, constraints=None, 
-        maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-        method='asd', maxload=0.5, prerun=True):
+def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
+             constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
     """
     Perform batch BOC calculation.
 
@@ -130,8 +173,10 @@ def batchBOC(
 
     Arguments:
         folder - the directory containing all projects for which a BOC will be
-                calculated
-        budgetlist - a vector of multiples of the current budget for which an
+                calculated (optional)
+        projects - an odict of projects, as from a portfolio; if not None, will
+                be used instead of the folder
+        budgetratios - a vector of multiples of the current budget for which an
                 optimization will be performed to comprise the BOC (default:
                 [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0])
         name - name of the stored BOC result
@@ -159,27 +204,164 @@ def batchBOC(
         method - optimization algorithm to use for optimization runs that
                 comprise the BOC
         maxload - how much of the CPU to use
+        interval - the interval for the loadbalancer to use
+        prerun - whether or not to precalculate the results to use for e.g.
+                population size denominators
+        batch - whether or not to actually run as batch
+        mc - the number of Monte Carlo runs
+        die - whether to crash or give a warning if something goes wrong
+        recalculate - whether to calculate BOCs for projects that already have BOCs
+        strict - whether to recalculate BOCs for projects that have non-matching BOCs
+        
     """
     
-    filelist = sorted(glob(path.join(folder, '*.prj')))
-    nfiles = len(filelist)
+    # Praeludium
+    projects, nprojects, fromfolder = getprojects(projects, folder, verbose) # If no projects supplied, load them from the folder
+    outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
     
-    outputqueue = Queue()
-    outputlist = empty(nfiles, dtype=object)
-    processes = []
-    for i in range(nfiles):
-        project = loadproj(filelist[i])
-        project.tmpfilename = filelist[i]
-        prjobjectives = project.optims[-1].objectives \
-            if objectives == 'latest' else objectives
-        prjconstraints = project.optims[-1].constraints \
-            if constraints == 'latest' else constraints
-        prc = Process(
-            target=boc_task,
-            args=(project, i, outputqueue, budgetlist, name, parsetname, 
-                  progsetname, prjobjectives, prjconstraints, maxiters, 
-                  maxtime, verbose, stoppingfunc, method, maxload, prerun))
-        prc.start()
-        processes.append(prc)
+    # Loop over the projects
+    for i,project in enumerate(projects.values()):
+        prjobjectives = project.optims[-1].objectives if objectives == 'latest' else objectives
+        prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
+        args = (project, i, outputqueue, budgetratios, name, parsetname, progsetname, prjobjectives, 
+                prjconstraints, maxiters, maxtime, verbose, stoppingfunc, method, maxload, interval, 
+                prerun, batch, mc, die, recalculate, strict)
+        if batch:
+            prc = Process(target=boc_task, args=args)
+            prc.start()
+            processes.append(prc)
+        else:
+            outputlist[i] = boc_task(*args) # Simply store here 
     
-    return outputlist
+    # Encore
+    projects = tidyup(projects=projects, batch=batch, fromfolder=fromfolder, outputlist=outputlist, outputqueue=outputqueue, processes=processes)
+    
+    return projects
+
+
+def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints, maxiters, 
+             maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die, recalculate, strict):
+    
+    # Custom opening
+    if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
+    printv('Running BOC generation...', 1, verbose)
+    if prerun:
+        if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
+        rerun = False
+        try:
+            results = project.parsets[parsetname].getresults() # First, try getting results 
+            if results is None: rerun = True
+        except:
+            rerun = True
+        if rerun: 
+            printv('No results set found, so rerunning model...', 2, verbose)
+            project.runsim(parsetname) # Rerun if exception or if results is None
+    
+    # The meat
+    boc = None
+    if not recalculate: # If we're not recalculating BOCs, check to see if this project already has one
+        boc = project.getBOC(objectives=objectives, strict=strict, verbose=verbose)
+    if recalculate or boc is None: # Only run if requested or if a BOC can't be found -- otherwise, skip and return immediately
+        project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
+                       progsetname=progsetname, objectives=objectives, 
+                       constraints=constraints, maxiters=maxiters, maxtime=maxtime,
+                       verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
+    
+    # Standardized close
+    print('...done.')
+    if batch: 
+        outputqueue.put(project)
+        return None
+    else:
+        return project
+
+
+
+def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2):
+    ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
+    
+    printv('Reoptimizing portfolio projects...', 2, verbose)
+    resultpairs = odict()
+    if batch:
+        outputqueue = Queue()
+        processes = []
+    else:
+        outputqueue = None
+    for pind,project in enumerate(projects.values()):
+        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose)
+        if batch:
+            prc = Process(target=reoptimizeprojects_task, args=args)
+            prc.start()
+            processes.append(prc)
+        else:
+            resultpair = reoptimizeprojects_task(*args)
+            resultpairs[resultpair['key']] = resultpair
+    if batch:
+        for key in projects:
+            resultpair = outputqueue.get()
+            resultpairs[resultpair['key']] = resultpair
+        for prc in processes:
+            prc.join()
+    
+    printv('Reoptimization complete', 2, verbose)
+    
+    return resultpairs      
+        
+
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose):
+    """Batch function for final re-optimization step of geospatial analysis."""
+    if batch: loadbalancer(index=pind, maxload=maxload, interval=interval, label=project.name)
+    
+    # Figure out which budget to use as a starting point
+    boc = project.getBOC(objectives)
+    defaultbudget = boc.defaultbudget[:].sum()
+    totalbudget = boc.gaoptimbudget
+    smallestmismatch = inf
+    for budget in boc.budgets.values(): # Could be done with argmin() but this is more explicit...
+        thismismatch = abs(totalbudget-budget[:].sum())
+        if thismismatch<smallestmismatch:
+            closestbudget = dcp(budget)
+            smallestmismatch = thismismatch
+    
+    # Extract info from the BOC and specify argument lists...painful
+    sharedargs = {'objectives':boc.objectives, 
+                  'constraints':boc.constraints, 
+                  'parsetname':boc.parsetname, 
+                  'progsetname':boc.progsetname,
+                  'verbose':verbose
+                  }
+    outcalcargs = {'project':project,
+                   'outputresults':True,
+                   'doconstrainbudget':True}
+    optimargs = {'label':project.name,
+                 'maxtime': maxtime,
+                 'maxiters': maxiters,
+                 'mc':mc}
+
+    # Run the analyses
+    resultpair = odict()
+    
+    # Initial spending
+    printv('%s: calculating initial outcome for budget $%0.0f' % (project.name, defaultbudget), 2, verbose)
+    sharedargs['origbudget'] = boc.defaultbudget
+    sharedargs['objectives']['budget'] = defaultbudget
+    outcalcargs.update(sharedargs)
+    resultpair['init'] = outcomecalc(**outcalcargs)
+    
+    # Optimal spending -- reoptimize
+    if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
+    else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)
+    sharedargs['origbudget'] = closestbudget
+    sharedargs['objectives']['budget'] = totalbudget
+    optimargs.update(sharedargs)
+    if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
+    else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
+    resultpair['init'].name = project.name+' GA initial'
+    resultpair['opt'].name = project.name+' GA optimal'
+    resultpair['key'] = project.name # Store the project name to avoid mix-ups
+    
+    if batch: 
+        outputqueue.put(resultpair)
+        return None
+    else:
+        return resultpair

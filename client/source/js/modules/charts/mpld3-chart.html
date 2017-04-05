@@ -13,16 +13,28 @@
        ng-class="{'active-icon': panEnabled}">
     </i>
   </div>
-  <div style="float: right;">
+  <div
+      style="float: right;"
+      ng-if="!buttonsOff">
     <button
-        class="btn figure"
-        ng-click="exportGraphAsPng({$event:$event})">
+        class="btn __tiny"
+        ng-click="exportFigure('png')">
       PNG
     </button>
     <button
-        class="btn figure"
-        ng-click="exportGraphAsSvg({$event:$event})">
+      class="btn __tiny"
+      ng-click="exportFigure('pdf')">
+      PDF
+    </button>
+    <button
+        class="btn __tiny"
+        ng-click="exportFigure('svg')">
       SVG
+    </button>
+    <button
+      class="btn __tiny"
+      ng-click="exportFigure('fig')">
+      FIG
     </button>
   </div>
   <br clear="all">

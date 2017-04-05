@@ -1,6 +1,6 @@
 define(
-  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
-  function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
+  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs'],
+  function (module, _, $, mpld3, saveAs) {
 
   'use strict';
 
@@ -61,10 +61,10 @@ define(
       _.each(pathsToCopy, function(path) {
         var $path = $(path);
 
-        // we look for the background and make it opaque
-        if ($path.css('fill')=="rgb(255, 255, 255)") {
-          $path.css('fill', "rgba(255, 255, 255, 0)");
-          $path.css('stroke', "rgba(255, 255, 255, 0)");
+        // we look for the background and make it opaque -- WARNING, can probably remove this
+        if (($path.css('fill')=="rgb(255, 255, 255)") || ($path.css('fill')=='#ffffff')) {
+          $path.css('fill-opacity', 0);
+          $path.css('stroke', "none");
         }
       });
 
@@ -126,7 +126,7 @@ define(
     $svg.attr('height', height);
   }
 
-  module.directive('mpld3Chart', function ($http, modalService, exportHelpers) {
+  module.directive('mpld3Chart', function ($http, modalService) {
 
     return {
       scope: { chart: '=mpld3Chart' },
@@ -137,6 +137,7 @@ define(
 
         var initialize = function() {
           scope.chartType = attrs.chartType;
+          scope.buttonsOff = ('buttonsOff' in attrs);
         };
 
         function getFigure () {
@@ -190,65 +191,20 @@ define(
           }
         };
 
-        scope.exportGraphAsSvg = function() {
-          var originalStyle;
-          var elementId = elem.attr('id');
-
-          var $originalSvg = elem.parent().find('svg');
-          var viewBox = $originalSvg[0].getAttribute('viewBox');
-          var orginalWidth, orginalHeight;
-          if (viewBox) {
-            var tokens = viewBox.split(" ");
-            orginalWidth = parseFloat(tokens[2]);
-            orginalHeight = parseFloat(tokens[3]);
-          } else {
-            orginalWidth = $originalSvg.width();
-            orginalHeight = $originalSvg.height();
-          }
-
-          originalStyle = 'padding: ' + $originalSvg.css('padding');
-          var scalingFactor = 1;
-
-          // In order to have styled graphs the css content used to render
-          // graphs is retrieved & inject it into the svg as style tag
-          var chartStylesheetRequest = $http.get(chartStylesheetUrl, { cache: true });
-          chartStylesheetRequest
-            .success(function(chartStylesheetContent) {
-              // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
-              var $styleTagContentList = $('style').map(function(index, style) {
-                var styleContent = $(style).html();
-                if (styleContent.indexOf('div#' + elementId) != -1) {
-                  return styleContent.replace(/div#/g, '#');
-                } else {
-                  return styleContent;
-                }
-              });
-
-              var styleContent = $styleTagContentList.get().join('\n');
-              styleContent = styleContent + '\n' + chartStylesheetContent;
-
-              // create svg element
-              var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle, elementId);
-
-              // add styles and content to the svg
-              var styles = '<style>' + styleContent + '</style>';
-              svg.innerHTML = styles + $originalSvg.html();
-
-              // create img element with the svg as data source
-              var svgXML = (new XMLSerializer()).serializeToString(svg);
-              saveAs(new Blob([svgXML], { type: 'image/svg' }), 'graph.svg');
-
-            })
-            .error(function() {
-              alert("Please reload and try again, something went wrong while generating the graph.");
+        scope.exportFigure = function(filetype) { /* Adding function(name) brings up save dialog box */
+          var resultId = attrs.resultId;
+          var graphIndex = attrs.graphIndex;
+          var graphSelectorsString = attrs.graphSelectors; // graphSelectors gets converted to a string, so convert back: e.g. '["a","b"]' -> 'a, b' -> 'a','b'
+          var graphSelectors = graphSelectorsString.split('"').join('').slice(1,-1).split(','); // http://stackoverflow.com/questions/19156148/i-want-to-remove-double-quotes-from-a-string
+          $http
+            .post(
+              '/api/download',
+              { name: 'download_figures', args: [resultId, graphSelectors, filetype, Number(graphIndex)]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/'+filetype });
+              saveAs(blob, ('optima-figure.'+filetype));
             });
-        };
-
-        scope.exportGraphAsPng = function() {
-          exportHelpers.generateGraphAsPngOrJpeg(
-              elem.parent(),
-              function(blob) { saveAs(blob, "graph.png"); },
-              'blob');
         };
 
         scope.$watch(
@@ -344,18 +300,28 @@ define(
         function initialize() {
 
           var allCharts = elem.find('.allcharts');
-          console.log('allCharts', allCharts);
-          console.log('allCharts width', allCharts.width());
 
           scope.state = {
-            slider: {
-              value: 30,
-              min: 0,
+            slider1: {
+              value: 0.48,
               options: {
-                floor: 5,
-                ceil: 100,
+                floor: 0.1,
+                ceil: 1,
+                step: 0.01,
+                precision: 2,
                 onChange: scope.changeFigWidth
               }
+            },
+              slider2: {
+                value: 0.8,
+                currentValue: 0.8, // To look at changes
+                options: {
+                  floor: 0.1,
+                  ceil: 1,
+                  step: 0.1,
+                  precision: 1,
+                  onEnd: scope.changeFontSize
+                }
             }
           };
 
@@ -366,7 +332,26 @@ define(
           });
         }
 
-        scope.exportAllData = function() {
+        scope.exportAllFigures = function(name) { /* Adding function(name) brings up save dialog box */
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          var which = scope.getSelectors();
+          var index = null;
+          var filetype = 'singlepdf';
+          $http
+            .post(
+              '/api/download',
+              { name: 'download_figures', args: [resultId, which, filetype, index]},
+              {responseType: 'blob'})
+            .then(function(response) {
+              var blob = new Blob([response.data], { type:'application/pdf' });
+              saveAs(blob, ('optima-figures.pdf'));
+            });
+        };
+
+        scope.exportAllData = function(name) { /* Adding function(name) brings up save dialog box */
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
@@ -379,39 +364,71 @@ define(
               responseType: 'blob'
             })
           .success(function (response) {
-            var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
-            saveAs(blob, ('export_graphs.csv'));
+            var blob = new Blob([response], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, ('optima-results.xlsx'));
           });
         };
-
-        function getSelectors() {
-          if (scope.graphs) {
-            function getChecked(s) { return s.checked; }
-            function getKey(s) { return s.key }
-            var selectors = scope.graphs.selectors;
-            if (selectors) {
-              var which = _.filter(selectors, getChecked).map(getKey);
-              if (which.length > 0) {
-                return which;
-              }
-            }
-          }
-          return null;
-        }
 
         scope.updateGraphs = function() {
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
           }
-          console.log('fetching graphs reusltId', scope.graphs.resultId);
-          $http.post(
-            '/api/results/' + resultId,
-            {which: getSelectors()})
-          .success(function (response) {
-            scope.graphs = response.graphs;
-            toastr.success('Graphs updated');
-          });
+          console.log('updateGraphs resultId', scope.graphs.resultId);
+          var which = scope.getSelectors();
+          var zoom = scope.state.slider2.currentValue;
+          if (scope.graphs.advanced) {
+            which.push("advanced");
+          }
+          $http
+            .post(
+              '/api/results/' + resultId,
+              { which: which, zoom: zoom})
+            .success(function (response) {
+              scope.graphs = response.graphs;
+              toastr.success('Graphs updated');
+            });
+        };
+
+        scope.switchGraphs = function() {
+          scope.graphs.advanced = !scope.graphs.advanced;
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('switchGraphs', scope.graphs.advanced, 'reusltId', scope.graphs.resultId);
+          var which = ["default"];
+          if (scope.graphs.advanced) {
+            which.push("advanced");
+          }
+          $http
+            .post(
+              '/api/results/' + resultId,
+              { which: which })
+            .success(function (response) {
+              scope.graphs = response.graphs;
+              toastr.success('Graphs updated');
+            });
+        };
+
+        scope.defaultGraphs = function() {  // Same as above, except don't invert advanced
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('defaultGraphs', scope.graphs.advanced, 'resultId', scope.graphs.resultId);
+          var which = ["default"];
+          if (scope.graphs.advanced) {
+            which.push("advanced");
+          }
+          $http
+            .post(
+              '/api/results/' + resultId,
+              { which: which })
+            .success(function (response) {
+              scope.graphs = response.graphs;
+              toastr.success('Graphs updated');
+            });
         };
 
         function isChecked(iGraph) {
@@ -421,11 +438,10 @@ define(
         }
 
         function getSelectedFigureWidth() {
-          var percentage = scope.state.slider.value;
+          var frac = scope.state.slider1.value;
           var allCharts = elem.find('.allcharts');
           var allChartsWidth = parseInt(allCharts.width());
-          var width = allChartsWidth * percentage / 100.;
-          console.log('changing width to ', width, '/', allChartsWidth, ' based on slider ', percentage);
+          var width = allChartsWidth * frac; // This sets the default to be 0.48
           return width;
         }
 
@@ -436,8 +452,6 @@ define(
               return;
             }
             if (scope.graphs) {
-              console.log('detected graphs in directive', scope.graphs);
-              console.log('current graph width state', scope.state);
               var width = getSelectedFigureWidth();
               _.each(scope.graphs.mpld3_graphs, function(g, i) {
                 g.isChecked = function() {
@@ -449,12 +463,39 @@ define(
           }
         );
 
+        // WARNING -- do we need this!?
+        scope.toggleAdvanced = function() {
+          scope.switchGraphs();
+        };
+
+        // Or this?
+        scope.defaultSelectors = function() {
+          scope.defaultGraphs();
+        };
+
         scope.clearSelectors = function() {
             _.each(scope.graphs.selectors, function (selector) {
               selector.checked = false;
             });
         };
 
+        scope.getSelectors = function() {
+          function getChecked(s) { return s.checked; }
+          function getKey(s) { return s.key }
+          var which = [];
+          if (scope.graphs) {
+            if (scope.graphs.advanced) {
+              which.push('advanced');
+            }
+            var selectors = scope.graphs.selectors;
+            if (selectors) {
+              which = which.concat(_.filter(selectors, getChecked).map(getKey));
+            }
+          }
+          return which;
+        };
+
+        // Change figure width -- called by the "Zoom" slider
         scope.changeFigWidth = function() {
           var width = getSelectedFigureWidth();
           $(elem)
@@ -463,6 +504,15 @@ define(
             .each(function(i, svg) {
               changeWidthOfSvg(svg, width);
             });
+        };
+
+        // Update the grahps, but only if the font size has actually changed -- called by the "Font" slider
+        scope.changeFontSize = function() {
+          if (scope.state.slider2.currentValue !== scope.state.slider2.value) {
+            scope.state.slider2.currentValue = scope.state.slider2.value;
+            scope.updateGraphs();
+          }
+
         };
 
         initialize();

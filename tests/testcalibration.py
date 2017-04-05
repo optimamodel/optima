@@ -93,10 +93,10 @@ if 'manualfit' in tests and doplot:
     t = tic()
 
     print('Running manual calibration test...')
-    from optima import Project
+    from optima import Project, manualfit
     
     P = Project(spreadsheet='generalized.xlsx')
-    P.manualfit(orig='default', name='manual')
+    manualfit(project=P, orig='default', name='manual')
     
     done(t)
 
@@ -113,12 +113,12 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='generalized.xlsx')
-    P.autofit(name='autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=30) # Run automatic fitting
-    results1 = P.runsim('default', end=2015) # Generate results
-    results2 = P.runsim('autofit', end=2015)
+    P.autofit(name='autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=5) # Run automatic fitting
     
     if doplot:
         from optima import plotresults
+        results1 = P.runsim('default', end=2015) # Generate results
+        results2 = P.runsim('autofit', end=2015)
         plotresults(P.parsets['default'].getresults(), toplot=['prev-total', 'prev-population', 'numinci-population'])
         plotresults(P.parsets['autofit'].getresults(), toplot=['improvement', 'prev-total', 'prev-population', 'numinci-population'])
     

@@ -105,6 +105,73 @@ class Programset(object):
             else:      budget += thisspend # Or, just sum
         return budget
 
+    def hasallcovoutpars(self, detail=False, verbose=2):
+        ''' Checks whether all the **required** coverage-outcome parameters are there for coverage-outcome rships'''
+        result = True
+        details = []
+        printv('Checking covout pars', 4, verbose)
+        pars = self.projectref().pars() # Link to pars for getting full names
+        for thispartype in self.covout.keys():
+            printv('Checking %s partype' % thispartype, 4, verbose)
+            for thispop in self.covout[thispartype].keys():
+                printv('Checking %s pop' % str(thispop), 4, verbose)
+                intercept = self.covout[thispartype][thispop].ccopars.get('intercept', None)
+                if not(intercept) and intercept!=0:
+                    printv('WARNING: %s %s intercept is none' % (thispartype, str(thispop)), 4, verbose)
+                    result = False
+                    details.append(pars[thispartype].name)
+                else:
+                    printv('%s %s intercept is %s' % (thispartype, str(thispop), intercept), 4, verbose)
+                if thispartype not in coveragepars:
+                    for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
+                        printv('Checking %s program' % thisprog.short, 4, verbose)
+                        progeffect = self.covout[thispartype][thispop].ccopars.get(thisprog.short, None)
+                        if not(progeffect) and progeffect!=0:
+                            printv('WARNING: %s %s %s program effect is none' % (thispartype, str(thispop), thisprog.short), 4, verbose)
+                            result = False
+                            details.append(pars[thispartype].name)
+                        else:
+                            printv('%s %s %s program effect is %s' % (thispartype, str(thispop), thisprog.short, progeffect), 4, verbose)
+        if detail: return list(set(details))
+        else: return result
+
+    def hasallcostcovpars(self, detail=False, verbose=2):
+        ''' Checks whether all the **required** cost-coverage parameters are there for coverage-outcome rships'''
+        result = True
+        details = []
+        printv('Checking costcov pars', 4, verbose)
+        for key,prog in self.optimizableprograms().items():
+            printv('Checking %s program' % key, 4, verbose)
+            unitcost = prog.costcovfn.ccopars.get('unitcost', None)
+            if not(unitcost) and unitcost!=0:
+                printv('WARNING: %s unit cost is none' % key, 4, verbose)
+                details.append(prog.name)
+                result = False
+            else:
+                printv('%s unit cost is %s' % (key, unitcost), 4, verbose)
+        if detail: return list(set(details))
+        else: return result
+                
+    def readytooptimize(self, detail=False, verbose=2):
+        ''' True if the progset is ready to optimize (i.e. has all required pars) and False otherwise''' 
+        hasprograms = bool(sum(self.optimizable()))
+        if not detail:
+            costcovready = self.hasallcostcovpars(verbose=verbose)
+            covoutready = self.hasallcovoutpars(verbose=verbose)
+            isready = (hasprograms and costcovready and covoutready)
+            return isready  
+        else:
+            if not hasprograms:
+                msg = 'No programs have been defined'
+            else:
+                msg = ''
+                costcovlist = self.hasallcostcovpars(detail=True, verbose=verbose)
+                covoutlist = self.hasallcovoutpars(detail=True, verbose=verbose)
+                costcovmissing = ', '.join(costcovlist)
+                covoutmissing = ', '.join(covoutlist)
+                if costcovmissing: msg += 'The following program(s) are missing cost-coverage data: %s. ' % costcovmissing
+                if covoutmissing: msg += 'The following parameter(s) are missing coverage-outcome data: %s.'% covoutmissing
+            return msg
 
     def reconcile(self):
         ''' reconcile with parset '''

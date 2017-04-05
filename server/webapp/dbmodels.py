@@ -67,6 +67,12 @@ class PyObjectDb(db.Model):
     def cleanup(self):
         print(">> Cleanup " + self.id.hex)
         redis.delete(self.id.hex)
+    
+    def as_portfolio_file(self, loaddir, filename=None):
+        portfolio = self.load()
+        filename = os.path.join(loaddir, portfolio.name + ".prt")
+        op.saveobj(filename, portfolio)
+        return portfolio.name + ".prt"
 
 
 @swagger.model
@@ -166,14 +172,15 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
+        print(">> ResultsDb load result-" + self.id.hex)
         return op.loadstr(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
-        print(">> Save result-" + self.id.hex)
+        print(">> ResultsDb save result-" + self.id.hex)
         redis.set("result-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
-        print(">> Cleanup result-" + self.id.hex)
+        print(">> ResultsDb cleanup result-" + self.id.hex)
         redis.delete("result-" + self.id.hex)
 
 

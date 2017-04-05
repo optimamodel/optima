@@ -73,9 +73,9 @@ if 'loadprogramspreadsheet' in tests:
     t = tic()
     
     print('Loading programs spreadsheet ...')
-    from optima import defaults
+    from optima import defaultproject
 
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
+    P = defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=True)
     R = P.progsets[0]
     filename = 'concentratedprogramdata.xlsx'
     R.loadspreadsheet(filename)    
@@ -88,8 +88,8 @@ if 'demonstrateprogrammethods' in tests:
     t = tic()
 
     print('Demonstrating typical programs methods...')
-    from optima import defaults
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
+    from optima import defaultproject
+    P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
     progs = P.progs()
     HTC = progs['HTC']
@@ -152,7 +152,7 @@ if 'demonstrateprogrammethods' in tests:
 
 ## Try program plotting
 if 'plotprogram' in tests:
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
+    P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
     progs = P.progs()
     HTC = progs['HTC']
@@ -174,7 +174,7 @@ if 'plotprogram' in tests:
 
 ## Project creation test
 if 'compareoutcomes' in tests:
-    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
+    P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2016, doprint=True)
     done(t)
 
@@ -183,11 +183,11 @@ if 'compareoutcomes' in tests:
 # Reconciliation test
 if 'reconcilepars' in tests:
     import optima as op
-    P = op.defaults.defaultproject('best')
+    P = op.defaultproject('best')
     ps = P.parsets[0]
 
     before = op.dcp(P.progsets[0])
-    P.progsets[0].reconcile(parset=ps, year=2016, maxtime=10, uselimits=True)
+    P.progsets[0].reconcile(parset=ps, year=2016, maxtime=3, uselimits=True)
     after = P.progsets[0]
     print('\n\nBEFORE:')
     before.compareoutcomes(parset=ps, year=2016, doprint=True)

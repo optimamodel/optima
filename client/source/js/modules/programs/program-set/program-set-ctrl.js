@@ -2,57 +2,58 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function (
-      $scope, $http, $modal, modalService, toastr,
-      currentProject, projectApi, $upload, $state) {
+      $scope, $http, $modal, modalService, toastr, activeProject,
+      projectApi, $upload, $state) {
 
-    var project = currentProject.data;
+    var project;
     var defaultPrograms;
     var parameters;
 
     function initialize() {
-
-      $scope.isMissingData = !project.hasParset;
-      if ($scope.isMissingData) {
-        return;
-      }
-
-      // need to use state as there is an inherited scope
-      // in this page, and writing to a property of an object
-      // avoids the inherited scope problem. bleah.
       $scope.state = {};
-      
-      // Load program sets; set first as active
-      $http
-        .get(
-            '/api/project/' + project.id + '/progsets')
-        .success(function(response) {
-          if (response.progsets) {
-            $scope.programSetList = response.progsets;
-            console.log("loaded program sets", $scope.programSetList);
-            if (response.progsets && response.progsets.length > 0) {
-              $scope.state.activeProgramSet = response.progsets[0];
-            }
-          }
-        });
-
-      // Load a default set of inactive programs for new
-      projectApi
-        .getDefault(project.id)
-        .success(function(response) {
-          defaultPrograms = response;
-          console.log("default_programs = ", defaultPrograms);
-        });
-
-      // Load parameters that can be used to set custom programs
-      $http
-        .get('/api/project/' + project.id + '/parameters')
-        .success(function(response) {
-          parameters = response.parameters;
-        });
+      $scope.activeProject = activeProject;
+      $scope.$watch('activeProject.project.id', function() {
+        console.log('ProgramSetController project-change', activeProject.project.id);
+        reloadActiveProject();
+      });
+      reloadActiveProject();
     }
 
-    function deepCopyJson(jsonObject) {
-      return JSON.parse(JSON.stringify(jsonObject));
+    function reloadActiveProject() {
+      projectApi
+        .getActiveProject()
+        .then(function(response) {
+          project = response.data;
+          console.log('reloadActiveProject', project);
+          $scope.isMissingData = !project.hasParset;
+          if ($scope.isMissingData) {
+            return;
+          }
+          return $http.get('/api/project/' + project.id + '/progsets');
+        })
+        .then(function(response) {
+          // Load program sets; set first as active
+          var data = response.data;
+          if (data.progsets) {
+            $scope.programSetList = data.progsets;
+            console.log("ProgramSetController.init progsets", $scope.programSetList);
+            if (data.progsets && data.progsets.length > 0) {
+              $scope.state.activeProgramSet = data.progsets[0];
+            }
+          }
+          return projectApi.getDefaultPrograms(project.id)
+        })
+        .then(function(response) {
+          // Load a default set of inactive programs for new
+          defaultPrograms = response.data;
+          console.log("ProgramSetController.init defaultPrograms", defaultPrograms);
+          return $http.get('/api/project/' + project.id + '/parameters')
+        })
+        .then(function(response) {
+          // Load parameters that can be used to set custom programs
+          parameters = response.data.parameters;
+          console.log("ProgramSetController.init parameters", parameters);
+        });
     }
 
     /* Program set functions */
@@ -90,8 +91,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         function rename(name) {
-          $scope.state.activeProgramSet.name = name;
-          $scope.saveActiveProgramSet('Progset renamed');
+        // Load parameters that can be used to set custom programs
+        $http
+          .put(
+            '/api/project/' + project.id
+              + '/progset/' + $scope.state.activeProgramSet.id
+              + '/rename',
+            { newName: name })
+          .success(function(response) {
+            $scope.state.activeProgramSet.name = name;
+          });
         }
         var name = $scope.state.activeProgramSet.name;
         var otherNames = _.pluck($scope.programSetList, 'name');
@@ -132,30 +141,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .click();
     };
 
-    $scope.deleteProgramSet = function () {
-      if (!$scope.state.activeProgramSet) {
-        modalService.informError([{message: 'No program set selected.'}]);
-      } else {
-        var remove = function () {
-          if ($scope.state.activeProgramSet.id) {
-            $http
-              .delete('/api/project/' + project.id +  '/progset' + '/' + $scope.state.activeProgramSet.id)
-              .success(deleteProgramSetFromPage);
-          } else {
-            deleteProgramSetFromPage();
-          }
-        };
-        modalService.confirm(
-          remove,
-          function () { },
-          'Yes, remove this program set',
-          'No',
-          'Are you sure you want to permanently remove program set "' + $scope.state.activeProgramSet.name + '"?',
-          'Delete program set'
-        );
-      }
-    };
-
     function deleteProgramSetFromPage() {
       $scope.programSetList = _.filter($scope.programSetList, function(programSet) {
         return programSet.name !== $scope.state.activeProgramSet.name;
@@ -172,6 +157,35 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       toastr.success("Program set deleted");
       $state.reload();
     }
+
+
+    $scope.deleteProgramSet = function () {
+      if (!$scope.state.activeProgramSet) {
+        modalService.informError([{message: 'No program set selected.'}]);
+        return;
+      }
+
+      if ($scope.programSetList.length == 1) {
+        modalService.informError([{message: 'Cannot delete last program set.'}]);
+        return;
+      }
+
+      modalService.confirm(
+        function () {
+          $http
+            .delete(
+              '/api/project/' + project.id +  '/progset' + '/' + $scope.state.activeProgramSet.id)
+            .success(
+              deleteProgramSetFromPage);
+        },
+        function () {},
+        'Yes, remove this program set',
+        'No',
+        'Are you sure you want to permanently remove program set "' + $scope.state.activeProgramSet.name + '"?',
+        'Delete program set'
+      );
+
+    };
 
     $scope.copyProgramSet = function () {
       if (!$scope.state.activeProgramSet) {
@@ -200,7 +214,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         msg = 'Changes saved';
       }
       var programSet = $scope.state.activeProgramSet;
-      console.log('saving', programSet);
+      console.log('saveActiveProgramSet', programSet);
       if (!programSet || !programSet.name) {
         modalService.inform(
           function (){ },
@@ -270,6 +284,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             program, project, $scope.state.activeProgramSet.programs, parameters, $scope.getCategories())
         .result
         .then(function (newProgram) {
+          console.log('openAddProgramModal', newProgram);
           $scope.state.activeProgramSet.programs.push(newProgram);
           $scope.saveActiveProgramSet("Program added");
         });

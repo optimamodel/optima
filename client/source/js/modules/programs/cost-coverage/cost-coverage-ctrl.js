@@ -4,14 +4,11 @@ define(['./../module', 'underscore'], function(module, _) {
 
   module.controller(
     'ModelCostCoverageController',
-    function($scope, toastr, $http, $state, activeProject, modalService) {
+    function($scope, toastr, $http, $state, activeProject, projectApi, globalPoller) {
 
       var vm = this;
 
       function initialize() {
-        vm.project = activeProject.data;
-        console.log('vm.project', vm.project);
-
         vm.activeTab = 'cost';
         vm.tabs = [
           {
@@ -21,6 +18,10 @@ define(['./../module', 'underscore'], function(module, _) {
           {
             name: 'Define outcome functions',
             slug: 'outcome'
+          },
+          {
+            name: 'Summary',
+            slug: 'summary'
           }
         ];
 
@@ -28,46 +29,66 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.progsets = [];
         vm.parsets = [];
 
-        vm.state.yearSelector = _.range(
-          vm.project.startYear, vm.project.endYear+1);
+        vm.state.year = new Date().getFullYear();
+        vm.state.maxtime = 10
 
-        // Stop here if spreadsheet has not been uploaded
-        vm.isMissingData = !vm.project.hasParset;
-        if (vm.isMissingData) {
-          return;
-        }
+        $scope.activeProject = activeProject;
+        console.log('ModelCostCoverageController project-change', activeProject.project);
+        $scope.$watch('activeProject.project.id', function() {
+          console.log('ModelCostCoverageController project-change', activeProject.project);
+          reloadActiveProject();
+        });
 
-        vm.hasNoProgram = vm.project.nProgram === 0;
-        if (vm.hasNoProgram) {
-          return;
-        }
+        reloadActiveProject();
+      }
 
-        if (_.isUndefined(window.loadCostCovGraphResize)) {
-          $(window).bind('resize', function() {
-            $scope.onResize();
-          });
-          window.loadCostCovGraphResize = true;
-        }
-
-        // Fetch progsets
-        $http
-          .get(
-            '/api/project/' + vm.project.id + '/progsets')
-          .success(function(response) {
-            vm.progsets = response.progsets;
+      function reloadActiveProject() {
+        projectApi
+          .getActiveProject()
+          .then(function(response) {
+            vm.project = response.data;
+            console.log('reloadActiveProject vm.project', vm.project);
+            return $http.get('/api/project/' + vm.project.id + '/progsets')
+          })
+          .then(function(response) {
+            // Fetch progsets
+            vm.progsets = response.data.progsets;
             vm.state.progset = vm.progsets[0];
+            return $http.get('/api/project/' + vm.project.id + '/parsets')
+          })
+          .then(function(response) {
+            // Fetch parsets
+            vm.parsets = response.data.parsets;
+            console.log('ModelCostCoverageController vm.parsets', vm.parsets);
+            vm.state.parset = vm.parsets[0];
+            vm.changeProgsetAndParset();
 
-            // Fetch parsets (independent of progset)
-            $http
-              .get(
-                '/api/project/' + vm.project.id + '/parsets')
-              .success(function(response) {
-                vm.parsets = response.parsets;
-                console.log('vm.parsets', vm.parsets);
-                vm.state.parset = vm.parsets[0];
-                vm.changeProgsetAndParset();
+            vm.state.yearSelector = _.range(
+              vm.project.startYear, vm.project.endYear + 1);
+
+            // Stop here if spreadsheet has not been uploaded
+            vm.isMissingData = !vm.project.hasParset;
+            if (vm.isMissingData) {
+              return;
+            }
+
+            vm.hasNoProgram = vm.project.nProgram === 0;
+            if (vm.hasNoProgram) {
+              return;
+            }
+
+            if (_.isUndefined(window.loadCostCovGraphResize)) {
+              $(window).bind('resize', function() {
+                $scope.onResize();
               });
+              window.loadCostCovGraphResize = true;
+            }
           });
+      }
+
+      function runServerProcedure(procName, args, kwargs) {
+        return $http.post(
+          '/api/procedure', { name: procName, args: args, kwargs: kwargs });
       }
 
       $scope.onResize = function() {
@@ -92,7 +113,7 @@ define(['./../module', 'underscore'], function(module, _) {
       }
 
       function changeParset() {
-        console.log('vm.state.parset', vm.state.parset);
+        console.log('changeParset', vm.state.parset);
         if (vm.state.progset && vm.state.parset) {
           $http
             .get(
@@ -101,7 +122,7 @@ define(['./../module', 'underscore'], function(module, _) {
                 + '/parameters/' + vm.state.parset.id)
             .success(function(parameters) {
               vm.parameters = parameters;
-              console.log('vm.parameters', vm.parameters);
+              console.log('changeParset parameters', vm.parameters);
               vm.state.parameter = vm.parameters[0];
               vm.changeTargetParameter();
             });
@@ -117,12 +138,22 @@ define(['./../module', 'underscore'], function(module, _) {
               + '/parset/' + vm.state.parset.id
               + '/popsizes')
           .success(function(response) {
-            console.log('Est populations for program', response);
             vm.state.popsizes = response;
             buildCostFunctionTables();
             vm.updateCostCovGraph();
           });
       };
+
+      function loadReconcileData() {
+        runServerProcedure(
+          'load_reconcile_summary',
+          [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
+        .then(function(response) {
+          vm.state.summary = response.data;
+          console.log('loadReconcileData', response.data);
+        });
+      }
+
 
       vm.changeProgsetAndParset = function() {
         if (vm.state.progset === undefined) {
@@ -138,26 +169,36 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.programs = _.sortBy(
           _.filter(vm.state.progset.programs, isActive),
           'name');
+        console.log('changeProgsetAndParset', vm.programs);
+        if (vm.programs.length == 0) {
+          return;
+        }
         vm.state.program = vm.programs[0];
         if (!("attr" in vm.state.program)) {
-          console.log('new attr for program');
           vm.state.program.attr = {caption: "", xupperlim: null};
         }
-        console.log('selected program', vm.state.program);
+        console.log('changeProgsetAndParset program', vm.state.program);
         vm.state.popsizes = {};
 
-        // Fetch outcomes for this progset
-        $http
-          .get(
+        runServerProcedure(
+          'load_reconcile_summary',
+          [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
+        .then(function(response) {
+          vm.state.summary = response.data;
+          console.log('changeProgsetAndParset reoncile', response.data);
+
+          // Fetch outcomes for this progset
+          return $http.get(
             '/api/project/' + vm.project.id
-              + '/progsets/' + vm.state.progset.id
-              + '/effects')
-          .success(function(response) {
-            vm.outcomes = response;
-            console.log('outcome summaries', vm.outcomes);
-            changeParset();
-            vm.changeProgram();
-          })
+            + '/progsets/' + vm.state.progset.id
+            + '/effects')
+        })
+        .then(function(response) {
+          vm.outcomes = response.data;
+          console.log('changeProgsetAndParset outcomes', vm.outcomes);
+          changeParset();
+          vm.changeProgram();
+        })
       };
 
       vm.updateCostCovGraph = function() {
@@ -167,23 +208,20 @@ define(['./../module', 'underscore'], function(module, _) {
           vm.chartData = null;
           return;
         }
-        var url = '/api/project/' + vm.project.id
-          + '/progsets/' + vm.state.progset.id
-          + '/programs/' + vm.state.program.id
-          + '/costcoverage/graph?t=' + years.join(',')
-          + '&parset_id=' + vm.state.parset.id;
         $http
           .get(
-            url)
-          .success(
-            function(data) {
-              vm.state.chartData = data;
-            })
-          .error(
-            function() {
-              console.log('Failed to load graph for', vm.state.program.short);
-            }
-          );
+            '/api/project/' + vm.project.id
+              + '/progsets/' + vm.state.progset.id
+              + '/programs/' + vm.state.program.id
+              + '/costcoverage/graph?t=' + years.join(',')
+              + '&parset_id=' + vm.state.parset.id)
+          .success(function(data) {
+            vm.state.chartData = data;
+            console.log('updateCostCovGraph', data);
+          })
+          .error(function() {
+            console.log('Failed to load graph for', vm.state.program.short);
+          });
       };
 
       function revertCcoparsTable() {
@@ -211,6 +249,7 @@ define(['./../module', 'underscore'], function(module, _) {
           .success(function() {
             toastr.success('Cost data were saved');
             vm.updateCostCovGraph();
+            loadReconcileData();
           });
       };
 
@@ -316,11 +355,15 @@ define(['./../module', 'underscore'], function(module, _) {
           toastr.success('Outcomes were saved');
           vm.outcomes = response;
           vm.changeTargetParameter();
+          loadReconcileData();
         });
       };
 
       vm.selectTab = function(tab) {
         vm.activeTab = tab;
+        if (tab == "summary") {
+          vm.selectSummary();
+        }
       };
 
       vm.makePopKeyLabel = function(popKey) {
@@ -351,7 +394,6 @@ define(['./../module', 'underscore'], function(module, _) {
             existingPops.push(outcome.pop);
           }
         });
-        console.log('existing pop in outcome', existingPops);
 
         var missingPops = [];
         _.each(vm.state.parameter.populations, function(population) {
@@ -362,7 +404,6 @@ define(['./../module', 'underscore'], function(module, _) {
             missingPops.push(population.pop);
           }
         });
-        console.log('missing pop in outcome', missingPops);
 
         _.each(missingPops, function(pop) {
           outcomes.push({
@@ -461,9 +502,73 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.targetedOutcomes = _.filter(vm.outcomes, function(outcome) {
           return outcome.name == vm.state.parameter.short;
         });
-        console.log('selected outcomes', vm.state.targetedOutcomes);
+        console.log('changeTargetParameter outcomes', vm.state.targetedOutcomes);
         buildParameterSelectors();
       };
+
+      // RECONCILE FUNCTIONS
+
+      vm.updateSummary = function() {
+        runServerProcedure(
+          'load_reconcile_summary',
+          [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
+        .then(function(response) {
+          vm.state.summary = response.data;
+          console.log('updateSummary renconcile', response.data);
+        });
+      };
+
+      function makeWorkType(project_id, parset_id, progset_id, year) {
+        var tokens = [project_id, parset_id, progset_id, year];
+        return "reconcile:" + tokens.join(":");
+      }
+
+      vm.selectSummary = function() {
+        var workType = makeWorkType(
+          vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
+        $http
+          .get('/api/task/' + vm.project.id + '/type/' + workType)
+          .then(function(response) {
+            console.log('selectSummary', response.data);
+            if (response.data.status === 'started') {
+              initReconcilePoll();
+            }
+          });
+      };
+
+      function initReconcilePoll() {
+        var workType = makeWorkType(
+          vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
+        globalPoller.startPoll(
+          workType,
+          '/api/task/' + vm.project.id + '/type/' + workType,
+          function (response) {
+            if (response.status === 'completed') {
+              vm.state.statusMessage = '';
+              toastr.success('Reconcile completed');
+            } else if (response.status === 'started') {
+              var start = new Date(response.start_time);
+              var now = new Date(response.current_time);
+              var diff = now.getTime() - start.getTime();
+              var seconds = parseInt(diff / 1000);
+              vm.state.statusMessage = "Reconcile running for " + seconds + " s";
+            } else {
+              vm.state.statusMessage = 'Reconcile failed';
+            }
+          }
+        );
+      }
+
+      vm.reconcilePrograms = function() {
+        runServerProcedure(
+            'launch_reconcile_calc',
+            [vm.project.id, vm.state.progset.id, vm.state.parset.id, Number(vm.state.year), Number(vm.state.maxtime)])
+          .success(function(data) {
+            initReconcilePoll();
+            toastr.success('Reconcile started...');
+          });
+      };
+
 
       initialize();
 
@@ -472,44 +577,3 @@ define(['./../module', 'underscore'], function(module, _) {
 });
 
 
-// $scope.Math = window.Math;
-
-// ccDataForm.cost.$setValidity("required", !angular.isUndefined($scope.state.newCCData.cost));
-// ccDataForm.coverage.$setValidity("required", !angular.isUndefined($scope.state.newCCData.coverage));
-// ccDataForm.year.$setValidity("valid", isValidCCDataYear());
-
-// var isValidCCDataYear = function() {
-//   if ($scope.state.newCCData.year) {
-//     if ($scope.state.newCCData.year >= $scope.vm.project.startYear ||
-//       $scope.state.newCCData.year <= $scope.vm.project.endYear) {
-//       var recordExisting = _.filter($scope.state.ccData, function(ccData) {
-//         return ccData.year === $scope.state.newCCData.year;
-//       });
-//       if(recordExisting.length === 0) {
-//         return true;
-//       }
-//     }
-//   }
-//   return false;
-// };
-
-// cpDataForm.splower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_lower));
-// cpDataForm.spupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_upper));
-// cpDataForm.uclower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_lower));
-// cpDataForm.ucupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_upper));
-// cpDataForm.year.$setValidity("valid", isValidCPDataYear());
-
-// var isValidCPDataYear = function() {
-//   if ($scope.state.newCPData.year) {
-//     if ($scope.state.newCPData.year >= $scope.vm.project.startYear ||
-//       $scope.state.newCPData.year <= $scope.vm.project.endYear) {
-//       var recordExisting = _.filter($scope.state.cpData, function(cpData) {
-//         return cpData.year === $scope.state.newCPData.year;
-//       });
-//       if(recordExisting.length === 0) {
-//         return true;
-//       }
-//     }
-//   }
-//   return false;
-// };

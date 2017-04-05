@@ -9,6 +9,10 @@ import optima as op
 
 from .parse import normalize_obj
 
+frontendfigsize = (5.5, 2)
+frontendpositionnolegend = [[0.19, 0.12], [0.85, 0.85]]
+frontendpositionlegend = [[0.19, 0.12], [0.63, 0.85]]
+
 
 def extract_graph_selector(graph_key):
     s = repr(str(graph_key))
@@ -24,53 +28,45 @@ def extract_graph_selector(graph_key):
     return base + suffix
 
 
-def convert_to_mpld3(figure):
+def convert_to_mpld3(figure, zoom=None):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
-
-    figure.set_size_inches(5.5, 2)
-
-    # is_stack_plot = False
+    
+    # Handle figure size
+    if zoom is None: zoom = 0.8
+    zoom = 1.8 - zoom
+    figsize = (frontendfigsize[0]*zoom, frontendfigsize[1]*zoom)
+    figure.set_size_inches(figsize) # WARNING, all of this should come from makeplots() instead
 
     if len(figure.axes) == 1:
         ax = figure.axes[0]
         legend = ax.get_legend()
         if legend is not None:
-            labels = [t.get_text() for t in legend.get_texts()]
-            if len(labels) == 1:
-                if labels[0] == "Model":
-                    legend.remove()
-                    legend = None
-        if legend is not None:
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array([[0.19, 0.3], [0.65, 0.9]])))
+            ax.set_position(Bbox(array(frontendpositionlegend)))
         else:
-            ax.set_position(Bbox(array([[0.19, 0.3], [0.85, 0.9]])))
-
-        # if is_stack_plot:
-        #     figure.set_size_inches(5, 4)
-
-        for ax in figure.axes:
-            ax.yaxis.label.set_size(14)
-            ax.xaxis.label.set_size(14)
-            ax.title.set_size(14)
-
-            ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
-            for ticklabel in ticklabels:
-                ticklabel.set_size(10)
-            legend = ax.get_legend()
-            if legend is not None:
-                texts = legend.get_texts()
-                for text in texts:
-                    text.set_size(10)
+            pass
+            ax.set_position(Bbox(array(frontendpositionnolegend)))
 
     mpld3_dict = mpld3.fig_to_dict(figure)
-    return normalize_obj(mpld3_dict)
+    graph_dict = normalize_obj(mpld3_dict)
+    
+    return graph_dict
 
 
-def make_mpld3_graph_dict(result, which=None):
+def convert_to_selectors(graph_selectors):
+    keys = graph_selectors['keys']
+    names = graph_selectors['names']
+    defaults = graph_selectors['defaults']
+    selectors = [
+        {'key': key, 'name': name, 'checked': checked}
+         for (key, name, checked) in zip(keys, names, defaults)]
+    return selectors
+
+
+def make_mpld3_graph_dict(result, which=None, zoom=None):
     """
     Converts an Optima sim Result into a dictionary containing
     mpld3 graph dictionaries and associated keys for display,
@@ -79,6 +75,7 @@ def make_mpld3_graph_dict(result, which=None):
     Args:
         result: the Optima simulation Result object
         which: a list of keys to determine which plots to generate
+        zoom: the relative size of the figure
 
     Returns:
         A dictionary of the form:
@@ -96,32 +93,67 @@ def make_mpld3_graph_dict(result, which=None):
               }
         }
     """
-
-    graph_selectors = op.getplotselections(result, advanced=False) # BOSCO MODIFY
-    keys = graph_selectors['keys']
-    names = graph_selectors['names']
-    checks = graph_selectors['defaults']
-    selectors = [
-        {'key': key, 'name': name, 'checked': checked}
-         for (key, name, checked) in zip(keys, names, checks)]
-
-    if which is None and hasattr(result, 'which'):
-        print ">> Loading saved which options"
-        which = result.which
+    print ">> make_mpld3_graph_dict input which:", which
 
     if which is None:
-        which = [s["key"] for s in selectors if s["checked"]]
+        advanced = False
+        if hasattr(result, 'which'):
+            which = result.which
+            if which is None:
+                which = {}
+            print ">> make_mpld3_graph_dict has cache:", which
+            if 'advanced' in which:
+                advanced = True
+                which.remove("advanced")
+        else:
+            which = ["default"]
     else:
+        advanced = False
+        if 'advanced' in which:
+            advanced = True
+            which.remove('advanced')
+
+    print ">> make_mpld3_graph_dict advanced:", advanced
+
+    graph_selectors = op.getplotselections(result, advanced=advanced) # BOSCO MODIFY
+    if advanced:
+        normal_graph_selectors = op.getplotselections(result)
+        n = len(normal_graph_selectors['keys'])
+        normal_default_keys = []
+        for i in range(n):
+            if normal_graph_selectors["defaults"][i]:
+                normal_default_keys.append(normal_graph_selectors["keys"][i])
+        normal_default_keys = tuple(normal_default_keys)
+        # rough and dirty defaults for missing defaults in advanced
+        n = len(graph_selectors['keys'])
+        for i in range(n):
+            key = graph_selectors['keys'][i]
+            if key.startswith(normal_default_keys) and ('total' in key or 'stacked' in key):
+                graph_selectors['defaults'][i] = True
+    selectors = convert_to_selectors(graph_selectors)
+
+    default_which = []
+    for i in range(len(graph_selectors['defaults'])):
+        if graph_selectors['defaults'][i]:
+            default_which.append(graph_selectors['keys'][i])
+
+    if len(which) == 0 or 'default' in which:
+        which = default_which
+    else:
+        which = [w for w in which if w in graph_selectors["keys"]]
         for selector in selectors:
             selector['checked'] = selector['key'] in which
 
-    graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
+    print ">> make_mpld3_graph_dict which:", which
+
+    graphs = op.makeplots(result, toplot=which, die=False)
+    op.reanimateplots(graphs)
 
     graph_selectors = []
     mpld3_graphs = []
     for graph_key in graphs:
         graph_selectors.append(extract_graph_selector(graph_key))
-        graph_dict = convert_to_mpld3(graphs[graph_key])
+        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom)
         if graph_key == "budget":
             graph = graphs[graph_key]
             ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]
@@ -130,6 +162,7 @@ def make_mpld3_graph_dict(result, which=None):
 
     return {
         'graphs': {
+            "advanced": advanced,
             "mpld3_graphs": mpld3_graphs,
             "selectors": selectors,
             'graph_selectors': graph_selectors,

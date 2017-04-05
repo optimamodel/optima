@@ -4,28 +4,51 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, info, progsetsResponse, parsetResponse,
-      scenariosResponse, modalService, toastr) {
+      $scope, $http, $modal, activeProject, projectApi, modalService, toastr) {
 
     function initialize() {
-      $scope.project = info.data;
-      $scope.years = _.range($scope.project.startYear, $scope.project.endYear+1);
-      $scope.parsets = parsetResponse.data.parsets;
-      $scope.progsets = progsetsResponse.data.progsets;
-      console.log("scenarios response", scenariosResponse.data);
-      $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
-      $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
-      $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
-      $scope.years = scenariosResponse.data.years;
-      $scope.isMissingData = !$scope.project.hasParset;
-      $scope.isOptimizable = $scope.project.isOptimizable;
-      $scope.isMissingProgset = $scope.project.nProgram == 0;
-      $scope.state = {
-        start: $scope.project.startYear,
-        end: $scope.project.endYear,
-      };
-      loadScenarios(scenariosResponse.data.scenarios);
-      $scope.graphScenarios(false);
+      $scope.activeProject = activeProject;
+      $scope.$watch('activeProject.project.id', function() {
+        reloadActiveProject();
+      });
+      reloadActiveProject();
+    }
+
+    function reloadActiveProject() {
+      projectApi
+        .getActiveProject()
+        .then(function(response) {
+          $scope.project = response.data;
+          $scope.state = {
+            start: $scope.project.startYear,
+            end: $scope.project.endYear,
+          };
+          $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
+          $scope.isMissingData = !$scope.project.hasParset;
+          return $http.get('/api/project/'+$scope.project.id+'/parsets')
+        })
+        .then(function(parsetResponse) {
+          $scope.parsets = parsetResponse.data.parsets;
+          return $http.get('/api/project/' + $scope.project.id + '/progsets');
+        })
+        .then(function(progsetsResponse) {
+          $scope.progsets = progsetsResponse.data.progsets;
+          $scope.anyOptimizable = false;
+          return $http.get('/api/project/' + $scope.project.id + '/optimizable')
+        })
+        .then(function (response) {
+          $scope.anyOptimizable = response.data;
+          console.log('anyoptimizable', $scope.anyOptimizable);
+          return $http.get('/api/project/'+$scope.project.id+'/scenarios');
+        })
+        .then(function(scenariosResponse) {
+          console.log("scenarios response", scenariosResponse.data);
+          $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+          $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
+          $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
+          loadScenarios(scenariosResponse.data.scenarios);
+          $scope.graphScenarios(false);
+        });
     }
 
     function loadScenarios(scenarios) {
@@ -51,21 +74,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     function getSelectors() {
-      if ($scope.state.graphs) {
-        var selectors = $scope.state.graphs.selectors;
+      function getChecked(s) { return s.checked; }
+      function getKey(s) { return s.key }
+      var scope = $scope;
+      var which = [];
+      if (scope.graphs) {
+        if (scope.graphs.advanced) {
+          which.push('advanced');
+        }
+        var selectors = scope.graphs.selectors;
         if (selectors) {
-          var which = _.filter(selectors, function(selector) {
-            return selector.checked;
-          })
-          .map(function(selector) {
-            return selector.key;
-          });
-          if (which.length > 0) {
-            return which;
-          }
+          which = which.concat(_.filter(selectors, getChecked).map(getKey));
         }
       }
-      return null;
+      return which;
     }
 
     $scope.graphScenarios = function(isRun) {
@@ -84,7 +106,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           })
         .success(function (data) {
           $scope.state.graphs = data.graphs;
-          toastr.success('loaded graphs');
+          toastr.success('Loaded graphs');
         });
     };
 

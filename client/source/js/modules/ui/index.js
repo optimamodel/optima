@@ -1,7 +1,7 @@
 define([
     'angular',
-    './menu/menu-directive',
-    './modal/modal-service',
+    './menu-directive',
+    './modal-service',
     '../common/active-project-service',
     '../user/user-manager-service'
   ],
@@ -16,11 +16,21 @@ define([
         ])
       .controller(
         'MainCtrl',
-        function ($scope, $state, activeProject, userManager) {
+        function ($scope, $state, activeProject, userManager, projectApi) {
           $scope.user = userManager.user;
           $scope.state = $state;
           $scope.userLogged = function () { return userManager.isLoggedIn; };
           $scope.activeProject = activeProject;
+          $scope.projects = projectApi.projects;
+          $scope.changeProject = function(projectId) {
+            console.log('changeProject', projectId);
+            _.each(projectApi.projects, function(project) {
+              if (project.id == projectId) {
+                activeProject.setActiveProjectFor(
+                  project.name, projectId, $scope.user)
+              }
+            });
+          }
          });
     return module;
   }

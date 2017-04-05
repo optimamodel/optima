@@ -3,7 +3,7 @@
 
 .btn {
   @extend .btn.__m;
-  @extend .btn.__light-blue;
+  @extend .btn.__medium-blue;
   border-radius: 2px;
   border-style: solid;
   border-width: 1px;
@@ -28,6 +28,11 @@
   // ---------
 
   // ### Sizes
+
+  &.__tiny {
+    @include font-height(10px, 10px);
+    padding: 5px 12px;
+  }
 
   &.__m {
     @include font-height(13px, 16px);
@@ -95,6 +100,37 @@
       color: #3F4D55;
     }
   }
+
+
+  &.__medium-blue {
+    background: #d2e6ff;
+    border-color: #9DC6DF;
+    color: #000;
+
+    &:disabled {
+      color: #708897
+    }
+
+    &:hover:not(:disabled) {
+      background: #b7d7ec;
+      border-color: #9DC6DF;
+      color: #000;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #a3c7e0;
+      border-color: #9DC6DF;
+      color: #000;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: #AFD8F2;
+      color: #000;
+    }
+  }
+
 
   &.__blue {
     background: #00aeef;

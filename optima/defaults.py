@@ -5,9 +5,7 @@ Version: 2016jan28
 """
 import os
 from numpy import array
-from optima import OptimaException, Project, Program, Programset, printv, optimapath
-try: from optima import pygui # Only used for demo.py, don't worry if can't be imported
-except: pass
+from optima import OptimaException, Project, Program, Programset, printv
 
 
 
@@ -16,6 +14,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     
     # Shorten variable names
     pops = project.pars()['popkeys']
+    hivstates = project.settings.hivstates
     malelist   = array(pops)[project.pars()['male']].tolist()
     femalelist = array(pops)[project.pars()['female']].tolist()
     pwidlist   = array(pops)[project.pars()['injects']].tolist()
@@ -300,7 +299,23 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     
     if which=='simple':
         printv('Creating simple epidemic project...', 2, verbose)
+        
+        # Set up project
+        dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
+        kwargs['dorun'] = False # Don't run now, run after calibration
         P = Project(spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
+        P.pars()['transnorm'].y = 0.8 # "Calibration"
+        P.pars()['fixproptx'].t = 2100 # For optimization to work
+        if dorun: P.runsim() # Run after calibration
+        
+        # Programs
+        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['HTC', 'ART'])
+        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[20e6],'coverage':[1e6]}
+        R.programs['ART'].costcovdata =          {'t':[2014],'cost': [2e6],'coverage':[1e4]}
+        R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})
+        R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})
+        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,10.0), 't': 2016.0})
+        P.addprogset(R)
     
 
 
@@ -502,5 +517,10 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
 def demo(doplot=True, **kwargs):
     ''' Do a simple demo of Optima -- similar to simple.py '''
     P = defaultproject(**kwargs)
-    if doplot: pygui(P)
+    if doplot: 
+        try: 
+            import optima as op # Only used for demo.py, don't worry if can't be imported
+            op.pygui(P)
+        except:
+            print('Unable to plot: pygui could not be imported')
     return P

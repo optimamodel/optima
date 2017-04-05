@@ -53,7 +53,7 @@ if 'odict' in tests:
     from optima import odict
     
     foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8})
-    bar = foo.sort() # Sort the list
+    bar = foo.sorted() # Sort the list
     assert(bar['boo'] == 4) # Show get item by value
     assert(bar[1] == 4) # Show get item by index
     assert((bar[0:2] == [3,4]).all()) # Show get item by slice

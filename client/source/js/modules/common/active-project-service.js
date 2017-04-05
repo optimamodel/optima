@@ -14,63 +14,65 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       '$http', 'localStorage', 'userManager',
       function ($http, localStorage, userManager) {
 
-        var project = {
+        var activeProject = {
+          project: {}
+        };
+
+        _.assign(activeProject, {
           setActiveProjectFor: function (projectName, projectId, user) { 
             // Sets the active project to be projectName for the given user.
-            project.name = projectName;
-            project.id   = projectId;
-            $http.defaults.headers.common.project = project.name;
-            $http.defaults.headers.common['project-id'] = project.id;
-            localStorage[project.getProjectKeyFor(user)] = JSON.stringify({'name':project.name,'id':project.id});
+            activeProject.project.name = projectName;
+            activeProject.project.id   = projectId;
+            var str = JSON.stringify({'name':activeProject.project.name,'id':activeProject.project.id});
+            localStorage[activeProject.getProjectKeyFor(user)] = str;
           },
           loadProjectFor: function (user) { 
             // Load the active project for the given user.
             // Do nothing if no project found for that user.`
-            if(!project.hasProjectFor(user)) { return; }
-            var loaded_project = JSON.parse(project.getProjectFor(user));
-            project.name = loaded_project.name;
-            project.id = loaded_project.id;
-            $http.defaults.headers.common.project = project.name;
-            $http.defaults.headers.common['project-id'] = project.id;
+            if(!activeProject.hasProjectFor(user)) { return; }
+            var loaded_project = JSON.parse(activeProject.getProjectFor(user));
+            activeProject.project.name = loaded_project.name;
+            activeProject.project.id = loaded_project.id;
           },
           getProjectKeyFor: function (user) {
             // Answers the key used to locally store this project as active for the given user.
             return 'activeProjectFor:'+ user.id;
           },
           getProjectFor: function (user) {
-            return localStorage[project.getProjectKeyFor(user)];
+            return localStorage[activeProject.getProjectKeyFor(user)];
           },
           getProjectForCurrentUser: function (user) {
-            var openProjectStr = this.getProjectFor(userManager.user);
+            var openProjectStr = activeProject.getProjectFor(userManager.user);
             return openProjectStr ? JSON.parse(openProjectStr) : void 0;
           },
           getProjectIdForCurrentUser: function (user) {
-            var openProjectStr = this.getProjectFor(userManager.user);
+            var openProjectStr = activeProject.getProjectFor(userManager.user);
             var openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
             return openProject ? openProject.id : void 0;
           },
           ifActiveResetFor: function (projectId, user) {
-            if (project.id === projectId) {
-              project.resetFor(user);
+            if (activeProject.project.id === projectId) {
+              activeProject.resetFor(user);
             }
           },
           resetFor: function (user) {
             // Resets the projectName as the active project for the given user.
-            delete project.name;
-            delete project.id;
-            delete $http.defaults.headers.common.project;
-            delete $http.defaults.headers.common['project-id'];
-            localStorage.removeItem(project.getProjectKeyFor(user));
+            delete activeProject.project.name;
+            delete activeProject.project.id;
+            localStorage.removeItem(activeProject.getProjectKeyFor(user));
           },
           removeProjectForUserId: function (userId) {
             localStorage.removeItem('activeProjectFor:' + userId);
           },
           isSet: function() {
-            return (project.name !== null && project.name !== undefined && project.id !== null && project.id !== undefined);
+            return (activeProject.project.name !== null
+              && activeProject.project.name !== undefined
+              && activeProject.project.id !== null
+              && activeProject.project.id !== undefined);
           },
           hasProjectFor: function (user) {
             // Answers true if there is a local project stored for the given user.
-            var foundOrNot = project.getProjectFor(user);
+            var foundOrNot = activeProject.getProjectFor(user);
             if (foundOrNot !== null && foundOrNot !== undefined) {
               try {
                 JSON.parse(foundOrNot);
@@ -80,9 +82,9 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               }
             }
           }
-        };
+        });
 
-        return project;
+        return activeProject;
 
     }]);
 

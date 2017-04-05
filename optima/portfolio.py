@@ -1,26 +1,21 @@
-from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, findinds, saveobj, loadproj, promotetolist # Import utilities
-from optima import version # Get current version
-from multiprocessing import Process, Queue
-from optima import loadbalancer
-from optima import defaultobjectives, asd, Project
-from numpy import arange, argsort
-from glob import glob
-import sys
+from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
+from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
+from xlsxwriter import Workbook
+from xlsxwriter.utility import xl_rowcol_to_cell as rc
+from xlrd import open_workbook
 import os
+import re
 
 #######################################################################################################
-## Portfolio class -- this contains Projects and GA optimisations
+## Portfolio class
 #######################################################################################################
-
-budgeteps = 1e-8        # Project optimisations will fail for budgets that are optimised by GA to be zero. This avoids zeros.
-tol = 1.0 # Tolerance for checking that budgets match
-
 
 class Portfolio(object):
     """
     PORTFOLIO
 
-    The super Optima portfolio class.
+    The super Optima portfolio class  -- this contains Projects and GA optimizations.
 
     Version: 2016jan20 by davidkedz
     """
@@ -29,7 +24,7 @@ class Portfolio(object):
     ## Built-in methods -- initialization, and the thing to print if you call a portfolio
     #######################################################################################################
 
-    def __init__(self, name='default', projects=None, gaoptims=None):
+    def __init__(self, name='default', objectives=None, projects=None):
         ''' Initialize the portfolio '''
 
         ## Set name
@@ -37,8 +32,10 @@ class Portfolio(object):
 
         ## Define the structure sets
         self.projects = odict()
+        self.objectives = objectives
         if projects is not None: self.addprojects(projects)
-        self.gaoptims = gaoptims if gaoptims else odict()
+        self.spendperproject = odict() # Store the list of the final spend per project
+        self.results = odict() # List of before-and-after result pairs after reoptimization
 
         ## Define metadata
         self.uid = uuid()
@@ -46,6 +43,7 @@ class Portfolio(object):
         self.modified = today()
         self.version = version
         self.gitbranch, self.gitversion = gitinfo()
+        self.filename = None # File path, only present if self.save() is used
 
         return None
 
@@ -56,7 +54,6 @@ class Portfolio(object):
         output += '            Portfolio name: %s\n' % self.name
         output += '\n'
         output += '        Number of projects: %i\n' % len(self.projects)
-        output += 'Number of GA Optimizations: %i\n' % len(self.gaoptims)
         output += '\n'
         output += '            Optima version: %s\n' % self.version
         output += '              Date created: %s\n' % getdate(self.created)
@@ -80,68 +77,33 @@ class Portfolio(object):
         if replace: self.projects = odict() # Wipe clean before adding new projects
         for project in projects:
             project.uid = uuid() # TEMPPPP WARNING overwrite UUID
-            self.projects[str(project.uid)] = project        
-            printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
+            keyname = project.name if project.name not in self.projects.keys() else str(project.uid) # Only fall back on UID if the project name is taken
+            self.projects[keyname] = project        
+            printv('Added project %s to portfolio %s' % (project.name, self.name), 2, verbose)
         return None
     
     
     def addfolder(self, folder=None, replace=True, verbose=2):
         ''' Add a folder of projects to a portfolio '''
-        filelist = sorted(glob(os.path.join(folder, '*.prj')))
+        filelist = getfilelist(folder, 'prj')
         projects = []
         if replace: self.projects = odict() # Wipe clean before adding new projects
         for f,filename in enumerate(filelist):
             printv('Loading project %i/%i "%s"...' % (f+1, len(filelist), filename), 3, verbose)
-            project = loadproj(filename)
+            project = loadproj(filename, verbose=0)
             projects.append(project)
-        self.addprojects(projects)
+        self.addprojects(projects, verbose=verbose)
         return None
         
-        
-        
-    def getdefaultbudgets(self, progsetnames=None, verbose=2):
-        ''' Get the default allocation totals of each project, using the progset names or indices specified '''
-        budgets = []
-        printv('Getting budgets...', 2, verbose)
-        
-        # Validate inputs
-        if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using default budget from first saved progset for each project for portfolio "%s".' % (self.name), 4, verbose)
-            progsetnames = [0]*len(self.projects)
-        if not len(progsetnames)==len(self.projects):
-            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using default budget from first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 4, verbose)
-            progsetnames = [0]*len(self.projects)
-
-        # Loop over projects & get defaul budget for each, if you can
-        for pno, P in enumerate(self.projects.values()):
-
-            # Crash if any project doesn't have progsets
-            if not P.progsets: 
-                errormsg = 'Project "%s" does not have a progset. Cannot get default budgets.'
-                raise OptimaException(errormsg)
-
-            # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-            if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in P.progsets]:
-                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], P.name, P.progsets[progsetnames[0]].name), 3, verbose)
-                pno=0
-            elif isinstance(progsetnames[pno],int) and len(P.progsets)<=progsetnames[pno]:
-                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], P.name, len(P.progsets)), 1, verbose)
-                pno=0
-            else: 
-                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (P.name), 3, verbose)
-                pno=0            
-                
-            printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (P.progsets[progsetnames[pno]].name, P.name, self.name), 4, verbose)
-            budgets.append(P.progsets[progsetnames[pno]].defaultbudget())
-        
-        return budgets
         
     
     def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current portfolio, by default using its name, and without results '''
-        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
-        if filename is None: filename = self.name+'.prj'
+        if filename is None:
+            if self.filename: filename = self.filename
+            else:             filename = self.name+'.prt'
         self.filename = os.path.abspath(filename) # Store file path
+        printv('Saving portfolio to %s...' % self.filename, 2, verbose)
         if saveresults:
             saveobj(filename, self, verbose=verbose)
         else:
@@ -153,11 +115,182 @@ class Portfolio(object):
         return None
     
     
+    
     #######################################################################################################
     ## Methods to perform major tasks
     #######################################################################################################
+    
+    def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
+             constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
+        '''
+        Just like genBOC, but run on each of the projects in the portfolio. See batchBOC() for explanation
+        of kwargs.
+        
+        Version: 2017mar17
+        '''
+        
+        # If objectives not supplied, use the ones from the portfolio
+        if objectives is None: objectives = self.objectives
         
         
+        # All we need to do is run batchBOC on the portfolio's odict of projects
+        self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
+             constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, 
+             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict)
+             
+        return None
+        
+    
+    def runGA(self, grandtotal=None, objectives=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True, strict=True):
+        ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
+        
+        GAstart = tic()
+        
+        # Check inputs
+        if npts is None: npts = 2000 # The number of points to calculate along each BOC
+        if mc is None: mc = 0 # Do not use MC by default
+        if objectives is not None: self.objectives = objectives # Store objectives, if supplied
+        else:                      objectives = self.objectives # Else, replace with stored objectives
+        
+        def gatherBOCs():
+            ''' Gather the BOCs -- called twice which is why it's a function '''
+            bocsvalid = True
+            boclist = []
+            for pno,project in enumerate(self.projects.values()):
+                thisboc = project.getBOC(objectives=objectives, strict=strict)
+                if thisboc is None:
+                    bocsvalid = False
+                    errormsg = 'GA FAILED: Project %s has no BOC' % project.name
+                    if die: raise OptimaException(errormsg) # By default die here, but optionally just recalculate
+                    else:   printv(errormsg, 1, verbose)
+                boclist.append(thisboc)
+            return boclist, bocsvalid
+        
+        # If any BOCs failed, recalculate the ones that did     
+        boclist, bocsvalid = gatherBOCs() # If die==True, this will crash if a BOC isn't found; otherwise, return False
+        if not bocsvalid:
+            self.genBOCs(objectives=objectives, maxiters=maxiters, maxtime=maxtime, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, die=die, recalculate=False)
+            boclist, bocsvalid = gatherBOCs() # Seems odd to repeat this here...
+        
+        # Get the grand total
+        if grandtotal is None:
+            if objectives is not None and objectives['budget']: # If 0, then calculate based on the BOCs
+                grandtotal = objectives['budget']
+            else:
+                grandtotal = 0.0
+                for boc in boclist:
+                    grandtotal += sum(boc.defaultbudget[:])
+        if not grandtotal:
+            errormsg = 'Total budget of all %i projects included in this portfolio is zero' % len(self.projects)
+            raise OptimaException(errormsg)
+        
+        # Really store the objectives
+        if self.objectives is None:
+            self.objectives = boclist[0].objectives
+            self.objectives['budget'] = grandtotal
+        
+        # Run actual geospatial analysis optimization
+        printv('Performing geospatial optimization for grand total budget of %0.0f' % grandtotal, 2, verbose)
+
+        # Set up vectors
+        nbocs = len(boclist)
+        bocxvecs = []
+        bocyvecs = []
+        for boc in boclist:
+            maxbudget = min(grandtotal,max(boc.x))+1 # Add one for the log
+            tmpx1 = linspace(0,log(maxbudget), npts) # Exponentially distributed
+            tmpx2 = linspace(1, maxbudget, npts) # Uniformly distributed
+            tmpx3 = (tmpx1+log(tmpx2))/2. # Halfway in between, logarithmically speaking
+            tmpxvec = exp(tmpx3)-1 # Subtract one from the log
+            tmpyvec = pchip(boc.x, boc.y, tmpxvec)
+            newtmpyvec = tmpyvec[0] - tmpyvec # Flip to an improvement
+            bocxvecs.append(tmpxvec)
+            bocyvecs.append(newtmpyvec)
+        
+        # Extract BOC derivatives
+        relspendvecs = []
+        relimprovevecs = []
+        costeffvecs = []
+        for b in range(nbocs):
+            withinbudget = nonzero(bocxvecs[b]<=grandtotal)[0] # Stupid nonzero returns stupid
+            relspendvecs.append(dcp(bocxvecs[b][withinbudget[1:]])) # Exclude 0 spend
+            relimprovevecs.append(bocyvecs[b][withinbudget[1:]])
+            costeffvecs.append(relimprovevecs[b]/relspendvecs[b])
+        
+        # Iterate over vectors, finding best option
+        maxgaiters = int(1e6) # This should be a lot -- just not infinite, but should break first
+        spendperproject = zeros(nbocs)
+        runningtotal = grandtotal
+        for i in range(maxgaiters):
+            bestval = -inf
+            bestboc = None
+            for b in range(nbocs):
+                if len(costeffvecs[b]):
+                    tmpbestind = argmax(costeffvecs[b])
+                    tmpbestval = costeffvecs[b][tmpbestind]
+                    if tmpbestval>bestval:
+                        bestval = tmpbestval
+                        bestind = tmpbestind
+                        bestboc = b
+            
+            # Update everything
+            if bestboc is not None:
+                money = relspendvecs[bestboc][bestind]
+                runningtotal -= money
+                relspendvecs[bestboc] -= money
+                spendperproject[bestboc] += money
+                relimprovevecs[bestboc] -= relimprovevecs[bestboc][bestind]
+                relspendvecs[bestboc]   = relspendvecs[bestboc][bestind+1:]
+                relimprovevecs[bestboc] = relimprovevecs[bestboc][bestind+1:]
+                for b in range(nbocs):
+                    withinbudget = nonzero(relspendvecs[b]<=runningtotal)[0]
+                    relspendvecs[b] = relspendvecs[b][withinbudget]
+                    relimprovevecs[b] = relimprovevecs[b][withinbudget]
+                    costeffvecs[b] = relimprovevecs[b]/relspendvecs[b]
+                if not i%100:
+                    printv('  Allocated %0.1f%% of the portfolio budget...' % ((grandtotal-runningtotal)/float(grandtotal)*100), 2, verbose)
+            else:
+                break # We're done, there's nothing more to allocate
+        
+        # Scale to make sure budget is correct
+        spendperproject = (array(spendperproject)/array(spendperproject.sum())*grandtotal).tolist()
+        
+        # Calculate outcomes
+        origspend = zeros(nbocs)
+        origoutcomes = zeros(nbocs)
+        optimoutcomes = zeros(nbocs)
+        for b,boc in enumerate(boclist):
+            origspend[b] = sum(boclist[b].defaultbudget[:])
+            origoutcomes[b] = pchip(boc.x, boc.y, origspend[b])
+            optimoutcomes[b] = pchip(boc.x, boc.y, spendperproject[b])
+        
+        origsum = sum(origoutcomes[:])
+        optsum = sum(optimoutcomes[:])
+        improvement = (1.0-optsum/origsum)*100
+        printv('Geospatial analysis reduced outcome from %0.0f to %0.0f (%0.1f%%)' % (origsum, optsum, improvement), 2, verbose)
+        
+        # Store results
+        self.spendperproject = odict([(key,spp) for key,spp in zip(self.projects.keys(), spendperproject)]) # Convert to odict
+        for b,boc in enumerate(boclist):
+            boc.gaoptimbudget = spendperproject[b]
+        
+        # Reoptimize projects
+        if reoptimize: 
+            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
+            self.results = resultpairs
+        # Tidy up
+        if doprint and self.results: self.makeoutput(doprint=True, verbose=verbose)
+        if export:
+            if self.results:
+                self.export(filename=outfile, verbose=verbose)
+            else:
+                errormsg = 'Could not export results for portfolio %s since no results generated' % self.name
+                raise OptimaException(errormsg)
+        toc(GAstart)
+        return None
+
+
     # Note: Lists of lists extrax and extray allow for extra custom points to be plotted.
     def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2, extrax=None, extray=None, baseline=0):
         ''' Loop through stored projects and plot budget-outcome curves '''
@@ -180,338 +313,80 @@ class Portfolio(object):
                 for k in xrange(len(extrax[c])):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
                     if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
-            
-    def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, minbound=None, maxtime=None, verbose=2):
-        ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
-        printv('Calculating minimum BOC outcomes...', 2, verbose)
-
-        # Check inputs
-        if objectives == None: 
-            printv('WARNING, you have called minBOCoutcomes on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
-        if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 3, verbose)
-            progsetnames = [0]*len(self.projects)
-        if not len(progsetnames)==len(self.projects):
-            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 1, verbose)
-            progsetnames = [0]*len(self.projects)
-        if parsetnames==None:
-            printv('\nWARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 3, verbose)
-            parsetnames = [0]*len(self.projects)
-        if not len(parsetnames)==len(self.projects):
-            printv('WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 1, verbose)
-            parsetnames = [0]*len(self.projects)
-        
-        # Initialise internal parameters
-        BOClist = []
-        grandtotal = objectives['budget']
-        
-        # Scale seedbudgets just in case they don't add up to the required total.
-        if not seedbudgets == None:
-            seedbudgets = scaleratio(seedbudgets, objectives['budget'])
-            
-        for pno,P in enumerate(self.projects.values()):
-            
-            if P.getBOC(objectives) is None:
-                errormsg = 'GA FAILED: Project %s has no BOC' % P.name
-                errormsg += str(objectives)
-                errormsg += str(P.getBOC())
-                errormsg += 'Debugging information above'
-                raise OptimaException(errormsg)
-
-            BOClist.append(P.getBOC(objectives))
-            
-        optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, minbound=minbound, maxtime=maxtime)
-            
-        return optbudgets
-        
-        
-    def fullGA(self, objectives=None, budgetratio=None, minbound=None, maxtime=None, doplotBOCs=False, verbose=2):
-        ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
-        printv('Performing full geospatial analysis', 1, verbose)
-        
-        GAstart = tic()
-
-		# Check inputs
-        if objectives == None: 
-            printv('WARNING, you have called fullGA on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
-        objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
-        
-        gaoptim = GAOptim(objectives = objectives)
-        self.gaoptims[str(gaoptim.uid)] = gaoptim
-        
-        if budgetratio == None: budgetratio = self.getdefaultbudgets()
-        initbudgets = scaleratio(budgetratio,objectives['budget'])
-        
-        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, minbound = minbound, maxtime = maxtime)
-        if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
-        
-        gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
-        self.outputstring = gaoptim.printresults() # Store the results as an output string
-        
-        toc(GAstart)
         return None
-        
-        
-        
-        
-#%% Functions for geospatial analysis
-
-def constrainbudgets(x, grandtotal, minbound):
     
-    # First make sure all values are not below the respective minimum bounds.
-    for i in xrange(len(x)):
-        if x[i] < minbound[i]:
-            x[i] = minbound[i]
     
-    # Then scale all excesses over the minimum bounds so that the new sum is grandtotal.
-    constrainedx = []
-    for i in xrange(len(x)):
-        xi = (x[i] - minbound[i])*(grandtotal - sum(minbound))/(sum(x) - sum(minbound)) + minbound[i]
-        constrainedx.append(xi)
-    
-    return constrainedx
-
-def objectivecalc(x, BOClist, grandtotal, minbound):
-    ''' Objective function. Sums outcomes from all projects corresponding to budget list x. '''
-    x = constrainbudgets(x, grandtotal, minbound)
-    
-    totalobj = 0
-    for i in xrange(len(x)):
-        totalobj += BOClist[i].getoutcome([x[i]])[-1]     # Outcomes are currently passed to and from pchip as lists.
-    return totalobj
-    
-def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=2):
-    ''' Actual runs geospatial optimisation across provided BOCs. '''
-    printv('Calculating minimum outcomes for grand total budget of %f' % grandtotal, 2, verbose)
-    
-    if minbound == None: minbound = [0]*len(BOClist)
-    if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
-    if not len(budgetvec) == len(BOClist): 
-        errormsg = 'Geospatial analysis is minimising %i BOCs with %i initial budgets' % (len(BOClist), len(budgetvec))
-        raise OptimaException(errormsg)
-        
-    args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}    
-    
-#    budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-    X, FVAL, EXITFLAG, OUTPUT = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-    X = constrainbudgets(X, grandtotal, minbound)
-#    assert sum(X)==grandtotal      # Commenting out assertion for the time being, as it doesn't handle floats.
-
-    return X
-
-
-
-#%% Geospatial analysis batch functions for multiprocessing.
-
-def batch_reopt(
-        gaoptim, P, pind, outputqueue, projects, initbudgets, optbudgets,
-        parsetnames, progsetnames, maxtime, parprogind, verbose):
-    """Batch function for final re-optimization step of geospatial analysis."""
-    loadbalancer(index=pind)
-    printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
-    sys.stdout.flush()
-
-    tmp = odict()
-
-    # Crash if any project doesn't have progsets
-    if not P.progsets or not P.parsets:
-        errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
-        raise OptimaException(errormsg)
-
-    initobjectives = dcp(gaoptim.objectives)
-    initobjectives['budget'] = initbudgets[pind] + budgeteps
-    printv("Generating initial-budget optimization for project '%s'." % P.name, 2, verbose)
-    tmp['init'] = P.optimize(name=P.name+' GA initial', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
-    sys.stdout.flush()
-
-    optobjectives = dcp(gaoptim.objectives)
-    optobjectives['budget'] = optbudgets[pind] + budgeteps
-    printv("Generating optimal-budget optimization for project '%s'." % P.name, 2, verbose)
-    tmp['opt'] = P.optimize(name=P.name+' GA optimal', parsetname=P.parsets[parsetnames[parprogind]].name, progsetname=P.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
-    sys.stdout.flush()
-
-    outputqueue.put(tmp)
-    return None
-    
-#%% Geospatial analysis runs are stored in a GAOptim object.
-
-class GAOptim(object):
-    """
-    GAOPTIM
-
-    Short for geospatial analysis optimisation. This class stores results from an optimisation run.
-
-    Version: 2016jan26 by davidkedz
-    """
-    #######################################################################################################
-    ## Built-in methods -- initialization, and the thing to print if you call a portfolio
-    #######################################################################################################
-
-    def __init__(self, name='default', objectives = None):
-        ''' Initialize the GA optim object '''
-
-        ## Define the structure sets
-        self.objectives = objectives
-        self.resultpairs = odict()
-
-        ## Define other quantities
-        self.name = name
-
-        ## Define metadata
-        self.uid = uuid()
-        self.created = today()
-        self.modified = today()
-        self.version = version
-        self.gitbranch, self.gitversion = gitinfo()
-
-        return None
-
-
-    def __repr__(self):
-        ''' Print out useful information when called '''
-        output = '============================================================\n'
-        output += '      GAOptim name: %s\n'    % self.name
-        output += '\n'
-        output += '    Optima version: %s\n'    % self.version
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '        Git branch: %s\n'    % self.gitbranch
-        output += '       Git version: %s\n'    % self.gitversion
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
-        return output
-
-
-
-    def complete(self, projects, initbudgets, optbudgets, parsetnames=None, progsetnames=None, maxtime=None, parprogind=0, verbose=2):
-        ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
-        printv('Finalizing geospatial analysis...', 1, verbose)
-        printv('Warning, using default programset/programset!', 2, verbose)
-        
-        # Validate inputs
-        if not len(projects) == len(initbudgets) or not len(projects) == len(optbudgets):
-            errormsg = 'Cannot complete optimisations for %i projects given %i initial budgets (%i required) and %i optimal budgets (%i required).' % (len(self.projects), len(initbudgets), len(self.projects), len(optbudgets), len(self.projects))
-            raise OptimaException(errormsg)
-        if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using first saved progset for each project.', 3, verbose)
-            progsetnames = [0]*len(projects)
-        if not len(progsetnames)==len(projects):
-            printv('WARNING: %i program set names/indices were provided, but %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), len(self.projects)), 1, verbose)
-            progsetnames = [0]*len(projects)
-        if parsetnames==None:
-            printv('\nWARNING: no parsets specified. Using first saved parset for each project.', 3, verbose)
-            parsetnames = [0]*len(projects)
-        if not len(parsetnames)==len(projects):
-            printv('WARNING: %i parset names/indices were provided, but %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), len(self.projects)), 1, verbose)
-            parsetnames = [0]*len(projects)
-
-        # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
-        # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        
-        outputqueue = Queue()
-        processes = []
-        for pind,P in enumerate(projects.values()):
-            prc = Process(
-                target=batch_reopt,
-                args=(self, P, pind, outputqueue, projects, initbudgets,
-                      optbudgets, parsetnames, progsetnames, maxtime,
-                      parprogind, verbose))
-            prc.start()
-            processes.append(prc)
-        for pind,P in enumerate(projects.values()):
-            self.resultpairs[str(P.uid)] = outputqueue.get()
-    
-        return None
-
-
-    # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
-    # Be very wary of the indices being used...
-    def printresults(self, verbose=2):
+    def makeoutput(self, doprint=False, verbose=2):
         ''' Just displays results related to the GA run '''
-        printv('Printing results...', 2, verbose)
+        if doprint: printv('Printing results...', 2, verbose)
+        if not self.results:
+            errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
+            raise OptimaException(errormsg)
         
-        overallbudgetinit = 0
-        overallbudgetopt = 0
-        overalloutcomeinit = 0
-        overalloutcomeopt = 0
+        # Keys for initial and optimized
+        iokeys = ['init', 'opt'] 
         
-        overalloutcomesplit = odict()
-        for key in self.objectives['keys']:
-            overalloutcomesplit['num'+key] = odict()
-            overalloutcomesplit['num'+key]['init'] = 0
-            overalloutcomesplit['num'+key]['opt'] = 0
-        
+        # Initialize to zero
         projnames = []
         projbudgets = []
         projcov = []
         projoutcomes = []
         projoutcomesplit = []
         
-        for prj,x in enumerate(self.resultpairs.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
+        overallbud = odict() # Overall budget
+        overallout = odict() # Overall outcomes
+        for io in iokeys:
+            overallbud[io] = 0
+            overallout[io] = 0
+        
+        overalloutcomesplit = odict()
+        for obkey in self.objectives['keys']:
+            overalloutcomesplit['num'+obkey] = odict()
+            for io in iokeys:
+                overalloutcomesplit['num'+obkey][io] = 0
+        
+        for k,key in enumerate(self.results.keys()):
             # Figure out which indices to use
-            tvector = self.resultpairs[x]['init'].tvec          # WARNING: NOT USING DT NORMALISATIONS LATER, SO ASSUME DT = 1 YEAR.
-            initial = findinds(tvector, self.objectives['start'])
-            final = findinds(tvector, self.objectives['end'])
-            indices = arange(initial, final)
-            
-            projectname = self.resultpairs[x]['init'].projectinfo['name']
-            initalloc = self.resultpairs[x]['init'].budget['Current']
-            gaoptalloc = self.resultpairs[x]['opt'].budget['Optimal']
-            initoutcome = self.resultpairs[x]['init'].improvement[0][0]     # The first 0 corresponds to best.
-                                                                            # The second 0 corresponds to outcome pre-optimisation (which shouldn't matter anyway due to pre-GA budget 'init' being optimised for 0 seconds).
-            gaoptoutcome = self.resultpairs[x]['opt'].improvement[0][-1]    # The -1 corresponds to outcome post-optimisation (with 'opt' being a maxtime optimisation of a post-GA budget).
-            suminitalloc = sum(initalloc.values())
-            sumgaoptalloc = sum(gaoptalloc.values())
-            
-            overallbudgetinit += suminitalloc
-            overallbudgetopt += sumgaoptalloc
-            overalloutcomeinit += initoutcome
-            overalloutcomeopt += gaoptoutcome
-            
+            projectname = self.results[key]['init'].projectinfo['name']
             projnames.append(projectname)
             projbudgets.append(odict())
             projoutcomes.append(odict())
-            projbudgets[prj]['init']  = initalloc
-            projbudgets[prj]['opt']   = gaoptalloc
-            projoutcomes[prj]['init'] = initoutcome
-            projoutcomes[prj]['opt']  = gaoptoutcome
-            
             projoutcomesplit.append(odict())
-            projoutcomesplit[prj]['init'] = odict()
-            projoutcomesplit[prj]['opt'] = odict()
-            
-            initpars = self.resultpairs[x]['init'].parset[0]
-            optpars = self.resultpairs[x]['opt'].parset[-1]
-            initprog = self.resultpairs[x]['init'].progset[0]
-            optprog = self.resultpairs[x]['opt'].progset[-1]
-            initcov = initprog.getprogcoverage(initalloc,self.objectives['start'],parset=initpars)
-            optcov = optprog.getprogcoverage(gaoptalloc,self.objectives['start'],parset=optpars)
-            
             projcov.append(odict())
-            projcov[prj]['init']  = initcov
-            projcov[prj]['opt']   = optcov
-            
-            
-            for key in self.objectives['keys']:
-                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot['Current'][indices].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot['Optimal'][indices].sum()
-                overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
-                overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
+            tvector, initial, final, indices, alloc, outcome, sumalloc = [odict() for o in range(7)] # Allocate all dicts
+            for io in iokeys:
+                tvector[io]  = self.results[key][io].tvec # WARNING, can differ between initial and optimized!
+                initial[io]  = findinds(tvector[io], self.objectives['start'])
+                final[io]    = findinds(tvector[io], self.objectives['end'])
+                indices[io]  = arange(initial[io], final[io])
+                alloc[io]    = self.results[key][io].budget
+                outcome[io]  = self.results[key][io].outcome 
+                sumalloc[io] = alloc[io][:].sum() # Should be a budget odict that we're summing
+                overallbud[io] += sumalloc[io]
+                overallout[io] += outcome[io]
+                projbudgets[k][io]  = alloc[io]
+                projoutcomes[k][io] = outcome[io]
                 
-                 
+                tmppars = self.results[key][io].parset
+                tmpprog = self.results[key][io].progset
+                tmpcov = tmpprog.getprogcoverage(alloc[io], self.objectives['start'], parset=tmppars)
+                projcov[k][io]  = tmpcov
+                
+                projoutcomesplit[k][io] = odict()
+                for obkey in self.objectives['keys']:
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[0][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                    overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
+                
         ## Actually create the output
         output = ''
         output += 'Geospatial analysis results: minimize outcomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
         output += '\n\n'
         output += '\n\t\tInitial\tOptimal'
         output += '\nOverall summary'
-        output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbudgetinit, overallbudgetopt)
-        output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overalloutcomeinit, overalloutcomeopt)
-        for key in self.objectives['keys']:
-            output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
+        output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbud['init'], overallbud['opt'])
+        output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overallout['init'], overallout['opt'])
+        for obkey in self.objectives['keys']:
+            output += '\n\t' + self.objectives['keylabels'][obkey] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+obkey]['init'], overalloutcomesplit['num'+obkey]['opt'])
         
         ## Sort, then export
         projindices = argsort(projnames)
@@ -538,174 +413,350 @@ class GAOptim(object):
                 if optval is None: optval = 0
                 output += '\n\t%s\t%0.0f\t%0.0f' % (prg, initval, optval)
         
-        print(output)
-        
-        return output
-        
-    def getinitbudgets(self):
-        bl = []
-        for proj in self.resultpairs:
-            bl.append(sum(self.resultpairs[proj]['init'].budget[0].values()))
-        return bl
-        
-    def getoptbudgets(self):
-        bl = []
-        for proj in self.resultpairs:
-            bl.append(sum(self.resultpairs[proj]['opt'].budget[-1].values()))
-        return bl
-        
+        # Tidy up
+        if doprint: 
+            print(output)
+            return None
+        else:
+            return output
     
-#%% 'EASY' STACK-PLOTTING CODE PULLED FROM v1.5 FOR CLIFF. DOES NOT WORK.   :)
+    
+    def export(self, filename=None, verbose=2):
+        ''' Export the results to Excel format '''
+        
+        if filename is None:
+            filename = self.name+'-results.xlsx'
+        workbook = Workbook(filename)
+        worksheet = workbook.add_worksheet()
+        
+        # Define formatting
+        originalblue = '#18C1FF' # analysis:ignore
+        hotpink = '#FFC0CB' # analysis:ignore
+        formats = dict()
+        formats['plain'] = workbook.add_format({})
+        formats['bold'] = workbook.add_format({'bold': True})
+        formats['number'] = workbook.add_format({'bg_color': hotpink, 'num_format':0x04})
+        colwidth = 30
+        
+        # Convert from a string to a 2D array
+        outlist = []
+        outstr = self.makeoutput(doprint=False) # Gather the results to export
+        for line in outstr.split('\n'):
+            outlist.append([])
+            for cell in line.split('\t'):
+                outlist[-1].append(str(cell)) # If unicode, doesn't work
+        
+        # Iterate over the data and write it out row by row.
+        row, col = 0, 0
+        for row in range(len(outlist)):
+            for col in range(len(outlist[row])):
+                thistxt = outlist[row][col]
+                thisformat = 'plain'
+                if col==0: thisformat = 'bold'
+                tmptxt = thistxt.lower()
+                for word in ['budget','outcome','allocation','initial','optimal','coverage']:
+                    if tmptxt.find(word)>=0: thisformat = 'bold'
+                if col in [2,3] and thisformat=='plain': thisformat = 'number'
+                if thisformat=='number':thistxt = float(thistxt)
+                worksheet.write(row, col, thistxt, formats[thisformat])
+        
+        worksheet.set_column(0, 3, colwidth) # Make wider
+        workbook.close()
+        
+        printv('Results exported to %s' % filename, 2, verbose)
+        return None
+        
+
+
+
+   
+
+
+def makegeospreadsheet(project=None, spreadsheetpath=None, copies=None, refyear=None, verbose=2):
+    ''' Create a geospatial spreadsheet template based on a project file '''
+    ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
+    ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
+    
+    ## 1. Load a project file
+    if project is None:
+        raise OptimaException('No project loaded.')
+    
+    bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
+    
+    try:
+        results = project.parsets[-1].getresults()
+    except:
+        results = project.runsim(name=project.parsets[-1].name)
+    
+    copies = int(copies)
+    refyear = int(refyear)
+    if not refyear in [int(x) for x in results.tvec]:
+        errormsg = "Input not within range of years used by aggregate project's last stored calibration."
+        raise OptimaException(errormsg)
+    else:
+        refind = [int(x) for x in results.tvec].index(refyear)
+
+    ## 2. Extract data needed from project (population names, program names...)
+    workbook = Workbook(spreadsheetpath)
+    wspopsize = workbook.add_worksheet('Population sizes')
+    wsprev = workbook.add_worksheet('Population prevalence')
+    plain = workbook.add_format({})
+    num = workbook.add_format({'num_format':0x04})
+    bold = workbook.add_format({'bold': True})
+    orfmt = workbook.add_format({'bold': True, 'align':'center'})
+    gold = workbook.add_format({'bg_color': '#ffef9d'})
+    
+    nprogs = len(project.data['pops']['short'])
+    
+    # Start with pop and prev data.
+    maxcol = 0
+    row, col = 0, 0
+    for row in range(copies+1):
+        if row != 0:
+            wspopsize.write(row, col, '%s - region %i' % (project.name, row), bold)
+            wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
+        for popname in project.data['pops']['short']:
+            col += 1
+            if row == 0:
+                wspopsize.write(row, col, popname, bold)
+                wsprev.write(row, col, popname, bold)
+            else:
+                wspopsize.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)), num)
+
+                # Prevalence scaling by function r/(r-1+1/x).
+                # If n is intended district prevalence and d is calibrated national prevalence, then...
+                # 'Unbound' (scaleup) ratio r is n(1-d)/(d(1-n)).
+                # Variable x is calibrated national prevalence specific to pop group.
+                natpopcell = rc(copies+2,col)
+                disttotcell = rc(row,nprogs+2)
+                nattotcell = rc(copies+2,nprogs+2)
+                wsprev.write(row, col, "=(%s*(1-%s)/(%s*(1-%s)))/(%s*(1-%s)/(%s*(1-%s))-1+1/%s)" % (disttotcell,nattotcell,nattotcell,disttotcell,disttotcell,nattotcell,nattotcell,disttotcell,natpopcell), plain)
+
+            maxcol = max(maxcol,col)
+        col += 1
+        if row > 0:
+            wspopsize.write(row, col, "OR", orfmt)
+            wsprev.write(row, col, "OR", orfmt)
+        col += 1
+        if row == 0:
+            wspopsize.write(row, col, "Total (intended)", bold)
+            wsprev.write(row, col, "Total (intended)", bold)
+            for p in range(copies):
+                wspopsize.write(row+1+p, col, None, gold)
+                wsprev.write(row+1+p, col, None, gold)
+        col += 1
+        if row == 0:
+            wspopsize.write(row, col, "Total (actual)", bold)
+            wsprev.write(row, col, "Total (actual)", bold)
+        else:
+            wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+            wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)), plain)
+        maxcol = max(maxcol,col)
+        col = 0
+    
+    # Just a check to make sure the sum and calibrated values match.
+    # Using the last parset stored in project! Assuming it is the best calibration.
+    row += 1              
+    wspopsize.write(row, col, '---')
+    wsprev.write(row, col, '---')
+    row += 1
+    wspopsize.write(row, col, 'Calibration %i' % refyear)
+    wsprev.write(row, col, 'Calibration %i' % refyear)
+    for popname in project.data['pops']['short']:
+        col += 1
+        wspopsize.write(row, col, results.main['popsize'].pops[bestindex][col-1][refind], num)
+        wsprev.write(row, col, results.main['prev'].pops[bestindex][col-1][refind])
+    col += 2
+    wspopsize.write(row, col, results.main['popsize'].tot[bestindex][refind], num)
+    wsprev.write(row, col, results.main['prev'].tot[bestindex][refind])
+    col += 1
+    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
+    col = 0
+    
+    row += 1
+    wspopsize.write(row, col, 'District aggregate')
+    wsprev.write(row, col, 'District aggregate')
+    for popname in project.data['pops']['short']:
+        col += 1
+        wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
+        wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
+    col += 2
+    wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
+    col += 1
+    wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)), num)
+    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
+    col = 0
+        
+    colwidth = 20
+    wsprev.set_column(0, maxcol, colwidth) # Make wider
+    wspopsize.set_column(0, maxcol, colwidth) # Make wider
+        
+    # 3. Generate and save spreadsheet
+    workbook.close()    
+    printv('Geospatial spreadsheet template saved to "%s".' % spreadsheetpath, 2, verbose)
+
+    return None
+    
     
 
-#    def sortfixed(somelist):
-#        # Prog array help: [VMMC, FSW, MSM, HTC, ART, PMTCT, OVC, Other Care, MGMT, HR, ENV, SP, M&E, Other, SBCC, CT]
-#        sortingarray = [2, 4, 5, 7, 8, 6, 1, 9, 10, 11, 12, 13, 14, 15, 3, 0]
-#        return [y for x,y in sorted(zip(sortingarray,somelist), key = lambda x:x[0])]
-#    #    return [y for x,y in sorted(enumerate(somelist), key = lambda x: -len(progs[x[0]]['effects']))]
-        
+# ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
+def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave=True, verbose=2):
+    ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
     
-#    def superplot(self):
-#        
-#        from pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
-#        from gridcolormap import gridcolormap
-#        from matplotlib import gridspec
-#        import numpy
-#        
-#        progs = p1.regionlist[0].metadata['programs']    
-#        
-#        figure(figsize=(22,15))
-#        
-#        nprograms = len(p1.gpalist[-1][0].region.data['origalloc'])
-##        colors = sortfixed(gridcolormap(nprograms))
-##        colors[0] = numpy.array([ 0.20833333,  0.20833333,  0.54166667])  #CT
-##        colors[1] = numpy.array([ 0.45833333,  0.875     ,  0.79166667])  #OVC
-##        colors[2] = numpy.array([0.125, 0.125, 0.125])  #VMMC
-##        colors[3] = numpy.array([ 0.79166667,  0.45833333,  0.875     ])+numpy.array([ 0.125,  0.125,  0.125     ])  #SBCC
-##        colors[4] = numpy.array([ 0.54166667,  0.20833333,  0.20833333])  #FSW
-##        colors[5] = numpy.array([ 0.875     ,  0.45833333,  0.125     ])  #MSM
-##        colors[6] = numpy.array([ 0.125     ,  0.875     ,  0.45833333])+numpy.array([ 0.0,  0.125,  0.0     ])  #PMTCT
-##        colors[7] = numpy.array([ 0.54166667,  0.875     ,  0.125     ])   #HTC
-##        colors[8] = numpy.array([ 0.20833333,  0.54166667,  0.20833333])  #ART
-##        for i in xrange(7): colors[-(i+1)] = numpy.array([0.25+0.5*i/6.0, 0.25+0.5*i/6.0, 0.25+0.5*i/6.0])
-#    
-#        
-#        
-#        gpl = sorted(p1.gpalist[-1], key=lambda sbo: sbo.name)
-#        ind = [val for pair in ([x, 0.25+x] for x in xrange(len(gpl))) for val in pair]
-#        width = [0.25, 0.55]*(len(gpl))       # the width of the bars: can also be len(x) sequence
-#        
-#        bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-1] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
-#        for p in xrange(2,nprograms+1):
-#            bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-p] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val*1e-6 for pair in zip([sum(sortfixed(sb.simlist[1].alloc)[1-p:]) for sb in gpl], [sum(sortfixed(sb.simlist[2].alloc)[1-p:]) for sb in gpl]) for val in pair])
-#        
-#        xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
-#        xlim([0,32])
-#        tick_params(axis='both', which='major', labelsize=15)
-#        tick_params(axis='both', which='minor', labelsize=15)
-#        ylabel('Budget Allocation (US$m)', fontsize=15)
-#        
-#    
-#    
-#        fig = figure(figsize=(22,15))    
-#        
-#        gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
-#        
-#        for x in xrange(len(gpl)):
-#            sb = gpl[x]
-#            r = sb.region
-#    
-#            ind = xrange(len(sb.simlist[1:]))
-#            width = 0.8       # the width of the bars: can also be len(x) sequence
-#            
-#            if x < 10: subplot(gs[x])
-#            else: subplot(gs[x+1])
-#            bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
-#            for p in xrange(2,nprograms+1):
-#                bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed([x*1e-6 for x in sim.alloc])[1-p:]) for sim in sb.simlist[1:]])
-#            #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
-#            xlabel(r.getregionname(), fontsize=18)
-#            if x in [0,10,21]: ylabel('Budget Allocation (US$m)', fontsize=18)
-#            tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
-#        
-#    #        ax = gca()
-#    #        ax.ticklabel_format(style='sci', axis='y')
-#    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
-#            
-#            tick_params(axis='both', which='major', labelsize=14)
-#            tick_params(axis='both', which='minor', labelsize=14)
-#        
-#        fig.tight_layout()
-#        
-#        
-#        
-#    #    bar(ind, [val for pair in zip([sb.simlist[1].alloc[-1] for sb in gpl], [sb.simlist[2].alloc[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
-#    #    for p in xrange(2,nprograms+1):
-#    #        bar(ind, [val for pair in zip([sb.simlist[1].alloc[-p] for sb in gpl], [sb.simlist[2].alloc[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val for pair in zip([sum(sb.simlist[1].alloc[1-p:]) for sb in gpl], [sum(sb.simlist[2].alloc[1-p:]) for sb in gpl]) for val in pair])
-#    #    
-#    #    xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
-#    #    xlim([0,32])
-#    #    tick_params(axis='both', which='major', labelsize=15)
-#    #    tick_params(axis='both', which='minor', labelsize=15)
-#    #    ylabel('Budget Allocation ($)', fontsize=15)
-#    #    
-#    #
-#    #
-#    #    fig = figure(figsize=(22,15))    
-#    #    
-#    #    gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
-#    #    
-#    #    for x in xrange(len(gpl)):
-#    #        sb = gpl[x]
-#    #        r = sb.region
-#    #
-#    #        ind = xrange(len(sb.simlist[1:]))
-#    #        width = 0.8       # the width of the bars: can also be len(x) sequence
-#    #        
-#    #        if x < 10: subplot(gs[x])
-#    #        else: subplot(gs[x+1])
-#    #        bar(ind, [sim.alloc[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
-#    #        for p in xrange(2,nprograms+1):
-#    #            bar(ind, [sim.alloc[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sim.alloc[1-p:]) for sim in sb.simlist[1:]])
-#    #        #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
-#    #        xlabel(r.getregionname(), fontsize=18)
-#    #        if x in [0,10,21]: ylabel('Budget Allocation ($)', fontsize=18)
-#    #        tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
-#    #    
-#    #        ax = gca()
-#    #        ax.ticklabel_format(style='sci', axis='y')
-#    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
-#    #        
-#    #        tick_params(axis='both', which='major', labelsize=13)
-#    #        tick_params(axis='both', which='minor', labelsize=13)
-#    #    
-#    #    fig.tight_layout()    
-#        
-#        
-#        
-#    #    for x in xrange(len(p1.gpalist[-1])):
-#        for x in xrange(1):
-#            sb = p1.gpalist[-1][x]
-#            r = sb.region
-#            
-#            nprograms = len(r.data['origalloc'])
-#    #        colors = sortfixed(gridcolormap(nprograms))
-#            
-#            figure(figsize=(len(sb.simlist[1:])*2+4,nprograms/2))
-#            gs = gridspec.GridSpec(1, 2, width_ratios=[len(sb.simlist[1:]), 2]) 
-#            ind = xrange(len(sb.simlist[1:]))
-#            width = 0.8       # the width of the bars: can also be len(x) sequence
-#            
-#            subplot(gs[0])
-#            bar(ind, [sortfixed(sim.alloc)[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
-#            for p in xrange(2,nprograms+1):
-#                bar(ind, [sortfixed(sim.alloc)[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed(sim.alloc)[1-p:]) for sim in sb.simlist[1:]])
-#            xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
-#            ylabel('Budget Allocation ($)')
-#            
-#            subplot(gs[1])
-#            for prog in xrange(nprograms): plot(0, 0, linewidth=3, color=colors[prog])
-#            legend(sortfixed(r.data['meta']['progs']['short']))
-#            
-#        show()
-                
+    ## 1. Get results and defaults
+    if project is None or spreadsheetpath is None:
+        errormsg = 'makegeoprojects requires a project and a spreadsheet path as inputs'
+        raise OptimaException(errormsg)
+    try:    results = project.parset().getresults()
+    except: results = project.runsim()
+    
+    ## 2. Load a spreadsheet file
+    workbook = open_workbook(spreadsheetpath)
+    wspopsize = workbook.sheet_by_name('Population sizes')
+    wsprev = workbook.sheet_by_name('Population prevalence')
+    
+    ## 3. Get a destination folder
+    if dosave:
+        if destination is None: destination = '.'+os.sep # Use current folder
+        try:
+            if not os.path.exists(destination):
+                os.makedirs(destination)
+        except: 
+            errormsg = 'Was unable to make target directory "%s"' % destination
+            raise OptimaException(errormsg)
+    
+    ## 4. Read the spreadsheet
+    poplist = []
+    for colindex in range(1,wspopsize.ncols-3): # Skip first column and last 3
+        poplist.append(wspopsize.cell_value(0, colindex))
+    npops = len(poplist)
+    if npops!=project.data['npops']:
+        errormsg = 'Selected project and selected spreadsheet are incompatible: %i vs. %i populations' % (npops, project.data['npops'])
+        raise OptimaException(errormsg)
+        
+    districtlist = []
+    popratio = odict()
+    prevfactors = odict()
+    plhivratio = odict()
+    isdistricts = True
+    for rowindex in xrange(wspopsize.nrows):
+        if wspopsize.cell_value(rowindex, 0) == '---':
+            isdistricts = False
+        if isdistricts and rowindex > 0:
+            districtlist.append(wspopsize.cell_value(rowindex, 0))
+            
+            # 'Actual' total ratios.
+            if rowindex == 1:
+                popratio['tot'] = []
+                prevfactors['tot'] = []
+                plhivratio['tot'] = []
+            popratio['tot'].append(wspopsize.cell_value(rowindex, npops+3))
+            prevfactors['tot'].append(wsprev.cell_value(rowindex, npops+3))
+            plhivratio['tot'].append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
+            
+            # Population group ratios.
+            for popid in xrange(npops):
+                popname = poplist[popid]
+                colindex = popid + 1
+                if rowindex == 1:
+                    popratio[popname] = []
+                    prevfactors[popname] = []
+                    plhivratio[popname] = []
+                popratio[popname].append(wspopsize.cell_value(rowindex, colindex))
+                prevfactors[popname].append(wsprev.cell_value(rowindex, colindex))
+                plhivratio[popname].append(wspopsize.cell_value(rowindex, colindex)*wsprev.cell_value(rowindex, colindex))
+    print('Districts...')
+    print districtlist
+    ndistricts = len(districtlist)
+    
+    # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.
+    refind = -1
+    try:
+        refyear = int(re.sub("[^0-9]", "", wspopsize.cell_value(ndistricts+2, 0)))         
+        if refyear in [int(x) for x in project.data['years']]:
+            refind = [int(x) for x in project.data['years']].index(refyear)
+            print('Reference year %i found in data year range with index %i.' % (refyear,refind))
+        else:
+            print('Reference year %i not found in data year range %i-%i.' % (refyear,int(project.data['years'][0]),int(project.data['years'][-1])))
+    except:
+        OptimaException('Warning: Cannot determine calibration reference year for this spreadsheet.')
+    
+    # Important note. Calibration value will be used as the denominator! So ratios can sum to be different from 1.
+    # This allows for 'incomplete' subdivisions, e.g. a country into 2 of 3 states.
+    popdenom = wspopsize.cell_value(ndistricts+2, npops+3)
+    popratio['tot'] = [x/popdenom for x in popratio['tot']]
+    prevdenom = wsprev.cell_value(ndistricts+2, npops+3)
+    prevfactors['tot'] = [x/prevdenom for x in prevfactors['tot']]
+    plhivdenom = wspopsize.cell_value(ndistricts+2, npops+3)*wsprev.cell_value(ndistricts+2, npops+3)
+    plhivratio['tot'] = [x/plhivdenom for x in plhivratio['tot']]        
+    for popid in xrange(npops):
+        colindex = popid + 1
+        popname = poplist[popid]
+        popdenom = wspopsize.cell_value(ndistricts+2, colindex)
+        popratio[popname] = [x/popdenom for x in popratio[popname]]
+        prevdenom = wsprev.cell_value(ndistricts+2, colindex)
+        prevfactors[popname] = [x/prevdenom for x in prevfactors[popname]]
+        plhivdenom = wspopsize.cell_value(ndistricts+2, colindex)*wsprev.cell_value(ndistricts+2, colindex)
+        plhivratio[popname] = [x/plhivdenom for x in plhivratio[popname]]
+
+    printv('Population ratio...', 4, verbose)
+    printv(popratio, 4, verbose)                     # Proportions of national population split between districts.
+    printv('Prevalence multiples...', 4, verbose)
+    printv(prevfactors, 4, verbose)                   # Factors by which to multiply prevalence in a district.        
+    printv('PLHIV ratio...', 4, verbose)
+    printv(plhivratio, 4, verbose)                    # Proportions of PLHIV split between districts.
+    
+    ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
+    projlist = []
+    for c,districtname in enumerate(districtlist):
+        newproject = dcp(project)
+        newproject.restorelinks() # Ensure that the link objects have been updated
+        newproject.name = districtname
+        
+        # Scale data        
+        for popid in xrange(npops):
+            popname = poplist[popid]
+            for x in newproject.data['popsize']:
+                x[popid] = [z*popratio[popname][c] for z in x[popid]]
+            for x in newproject.data['hivprev']:
+                x[popid] = [z*prevfactors[popname][c] for z in x[popid]]
+        newproject.data['numtx'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numtx']]
+        newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
+        newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
+        
+        # Scale calibration
+        for popid in xrange(npops):
+            popname = poplist[popid]
+            newproject.parsets[-1].pars['popsize'].i[popname] *= popratio[popname][c]
+            newproject.parsets[-1].pars['initprev'].y[popname] *= prevfactors[popname][c]
+            newproject.parsets[-1].pars['numcirc'].y[popname] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numtx'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numpmtct'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numost'].y['tot'] *= plhivratio['tot'][c]
+        
+        # Scale programs
+        if len(project.progsets) > 0:
+            for progid in newproject.progsets[-1].programs:
+                program = newproject.progsets[-1].programs[progid]
+                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
+                if program.costcovdata.get('coverage') is not None:
+                    if not program.costcovdata['coverage'] == [None]:
+                        program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
+            
+        datayears = len(newproject.data['years'])
+        newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in results.main['prev'].pops]
+#       newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
+        newproject.runsim(newproject.parsets[-1].name) # Re-simulate autofit curves, but for old data.
+        projlist.append(newproject)
+    project.runsim(project.parsets[-1].name)
+    
+    ## 6. Save each project file into the directory, or return the created projects
+    if dosave:
+        for subproject in projlist:
+            subproject.filename = destination+os.sep+subproject.name+'.prj'
+            subproject.save()
+        return None
+    else:
+        return projlist

@@ -1,5 +1,6 @@
 <div class="page rich c-cost-coverage">
 
+  <p></p>
   <div class="error-hint" ng-show="vm.isMissingData">
     No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
   </div>
@@ -12,34 +13,40 @@
 
     <div style="width: 100%">
 
-      Select program set
+      Parameter set:
       <select
         class="txbox"
         style="
-          width: 15em;
+          width: 12em;
           display: inline;
           margin-left: 0.5em;
           margin-right: 2em; "
-        ng-options="progset as progset.name for progset in vm.progsets"
-        ng-change="vm.changeProgsetAndParset()"
-        ng-model="vm.state.progset">
-      </select>
-
-      Select parameter set
-      <select
-        class="txbox"
-        style="
-          width: 15em;
-          display: inline;
-          margin-left: 0.5em; "
         ng-options="parset as parset.name for parset in vm.parsets"
         ng-change="vm.changeProgsetAndParset()"
         ng-model="vm.state.parset">
       </select>
 
+      Program set:
+      <select
+        class="txbox"
+        style="
+          width: 12em;
+          display: inline;
+          margin-left: 0.5em;"
+        ng-options="progset as progset.name for progset in vm.progsets"
+        ng-change="vm.changeProgsetAndParset()"
+        ng-model="vm.state.progset">
+      </select>
+
     </div>
 
-    <div ng-if="vm.state.progset && vm.state.parset">
+    <div ng-if="vm.programs.length == 0">
+      <br>
+      <br>
+      No programs selected, you need to <a ui-sref="programs.manageProgramSet">select some programs</a> for this project.
+    </div>
+
+    <div ng-if="vm.programs.length > 0">
 
       <style>
         .selectTab {
@@ -84,14 +91,10 @@
              class="c-tab"
              ng-if="vm.activeTab === 'cost'">
 
-          <div style="font-style: italic; padding:30px 0px 10px">
-            Every program must have parameters for cost function and cost data for at least 1 year.
-          </div>
-
           <div style="
                 width: 100%;
                 margin: 10px 0px 30px;">
-            <label>Select program</label>
+            <label>Program</label>
             <select
                 style="
                   margin-left: 0.5em;
@@ -104,14 +107,8 @@
             </select>
           </div>
 
-          <a
-              ng-click="vm.saveProgram()"
-              class="btn"
-              style="margin-bottom: 3em">
-            Update cost function & graph
-          </a>
-
-          <div ng-if="vm.state.program"
+          <form name="bigForm"
+               ng-if="vm.state.program"
                style="
                   display: flex;
                   width: 100%;
@@ -119,13 +116,15 @@
 
             <div style="flex: 0 0 500px;">
 
-              <h3>Parameters for defining cost function</h3>
+              <h3>Define cost function
+                <help ref="define-cost-function"/>
+              </h3>
 
               <table
                   class="section table table-bordered">
                 <tr>
                   <td>Year</td>
-                  <td>Estimated<br>Population</td>
+                  <td>Estimated<br>population</td>
                   <td>Saturation %</td>
                   <td>Unit cost</td>
                   <td></td>
@@ -144,51 +143,69 @@
                     </div>
                   </td>
                   <td>
-                    <input
-                        name="cost"
-                        ng-model="row[2]"
-                        type="number"
-                        style="width: 50px"
-                        class="txbox __inline"/>
-                    -
-                    <input
-                        name="cost"
-                        ng-model="row[3]"
-                        type="number"
-                        style="width: 50px"
-                        class="txbox __inline"/>
+                    <ng-form name="saturationForm">
+                      <input
+                          ng-class="{ invalid: saturationForm.low.$invalid }"
+                          name="low"
+                          ng-model="row[2]"
+                          min="0"
+                          max="100"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                      -
+                      <input
+                          ng-class="{ invalid: saturationForm.high.$invalid }"
+                          name="high"
+                          ng-model="row[3]"
+                          min="0"
+                          max="100"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                    </ng-form>
                   </td>
                   <td>
-                    <input
-                        name="cost"
-                        ng-model="row[4]"
-                        type="number"
-                        style="width: 50px"
-                        class="txbox __inline"/>
-                    -
-                    <input
-                        name="cost"
-                        ng-model="row[5]"
-                        type="number"
-                        style="width: 50px"
-                        class="txbox __inline"/>
+                    <ng-form name="unitForm">
+                      <input
+                          ng-class="{ invalid: unitForm.low.$invalid }"
+                          name="low"
+                          ng-model="row[4]"
+                          min="0"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                      -
+                      <input
+                          ng-class="{ invalid: unitForm.high.$invalid }"
+                          name="high"
+                          ng-model="row[5]"
+                          min="0"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                    </ng-form>
                   </td>
                   <td>
-                    <i class="fa fa-trash-o"
-                       ng-click="vm.deleteCccoparYear($index)"
-                    </i>
+                    <icon action="delete" click="vm.deleteCccoparYear($index)"/>
                   </td>
                 </tr>
                 <tr>
                   <td colspan="5">
                     <a class="btn" ng-click="vm.addCcoparYear()">
-                      + Year
+                      Add year
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <h3>Historical cost and coverage data</h3>
+              <h3>Past spending and coverage data
+                <help ref="spending-and-coverage"/>
+              </h3>
 
               <table
                   class="section table table-bordered">
@@ -206,43 +223,58 @@
                         class="txbox __inline"/>
                   </td>
                   <td>
-                    <input
-                        name="cost"
-                        ng-model="costcovYear.cost"
-                        type="number"
-                        style="width: 120px"
-                        class="txbox __inline"/>
+                    <ng-form name="spendingForm">
+                      <input
+                          ng-class="{ invalid: spendingForm.spending.$invalid }"
+                          name="spending"
+                          ng-model="costcovYear.cost"
+                          min="0"
+                          type="number"
+                          style="width: 120px"
+                          class="txbox __inline"/>
+                    </ng-form>
                   </td>
                   <td>
-                    <input
-                        name="coverage"
-                        ng-model="costcovYear.coverage"
-                        style="width: 120px"
-                        type="number"
-                        class="txbox __inline"/>
+                    <ng-form name="coverageForm">
+                      <input
+                          ng-class="{ invalid: coverageForm.coverage.$invalid }"
+                          name="coverage"
+                          ng-model="costcovYear.coverage"
+                          min="0"
+                          style="width: 120px"
+                          type="number"
+                          class="txbox __inline"/>
+                    </ng-form>
                   </td>
                   <td>
-                    <span
-                        style="padding-left: 1em"
-                        class="fa fa-trash-o"
-                        ng-click="vm.deleteCostCovDataYear($index)">
-                    </span>
+                    <icon action="delete" click="vm.deleteCostCovDataYear($index)"/>
                   </td>
                 </tr>
                 <tr>
                   <td colspan="4">
                     <a class="btn" ng-click="vm.addCostCovDataYear()">
-                      + Year
+                      Add year
                     </a>
                   </td>
                 </tr>
               </table>
+
+              <div style="text-align: left">
+                <button
+                    ng-click="vm.saveProgram()"
+                    class="btn __green"
+                    ng-disabled="bigForm.$invalid"
+                    style="margin-left: 0em; margin-bottom: 3em">
+                  Save & update
+                </button>
+              </div>
+
+
             </div>
 
             <div
                 ng-if="!vm.chartData"
                 style=" margin-left: 30px;">
-              <h3>Graph of cost function (spending vs. number-covered)</h3>
               <i>Parameters need to be defined to show graph</i>
 
             </div>
@@ -256,25 +288,25 @@
                    flex-grow: 1;
                    overflow: hidden;">
 
-              <h3>Graph of cost function (spending vs. number-covered)</h3>
+              <div
+                  style="overflow: hidden"
+                  mpld3-chart="vm.state.chartData"
+                  chart-id="{{ vm.state.chartData.id }}"
+                  buttons-off
+                  ng-if="vm.state.chartData">
+              </div>
 
-              Maximum spending shown on graph:
+              <br>
+              <br>
+
+              Maximum spending shown:
               <input
                   placeholder="e.g. 1000000"
                   sytle="width: 150px"
                   ng-model="vm.state.program.attr.xupperlim"
                   type="number"/>
-              <br>
-              <br>
-              <br>
 
-              <div
-                  style="overflow: hidden"
-                  mpld3-chart="vm.state.chartData"
-                  chart-id="{{ vm.state.chartData.id }}"
-                  ng-if="vm.state.chartData">
-              </div>
-
+              <br>
               <br>
               Remarks
               <br>
@@ -286,16 +318,12 @@
 
             </div>
 
-          </div>
+          </form>
         </div>
 
         <!-- Outcome functions tab window -->
         <div style="width: 100%;"
              ng-if="vm.activeTab === 'outcome'">
-
-          <div style="font-style: italic; padding:30px 0px 10px">
-            Every parameter must have values for its outcome functions
-          </div>
 
           <div style="margin: 30px 0 20px 0;">
             <label>
@@ -311,10 +339,11 @@
               ng-change="vm.changeTargetParameter()"
               ng-model="vm.state.parameter">
             </select>
+            <help ref="define-outcome-functions"/>
           </div>
 
-          <button class="btn __m" ng-click="vm.saveProgsetOutcomes()">
-            Save outcome functions
+          <button class="btn __green __m" ng-click="vm.saveProgsetOutcomes()">
+            Save
           </button>
           <br>
           <br>
@@ -333,20 +362,14 @@
                 ng-repeat="yearEntry in outcome.years"
                 cellpadding="10px"
                 style="
-                    width: 100%;
+                    max-width: 900px;
                     border-top: 1px solid #999;
                     border-bottom: 1px solid #999;
                     border-spacing: 10px;">
               <tr style="border-bottom: 1px solid #DDD">
+                <th>{{vm.state.parameter.name}} for {{vm.makePopKeyLabel(outcome.pop)}}</th>
                 <th>
-                  Population /
-                  <br>
-                  Partnerships
-                </th>
-                <th>Year</th>
-                <th>Description of program impact</th>
-                <th>
-                  Parameter Value
+                  Parameter value
                   <br>
                   ({{vm.state.parameter.limits[0]}}
                   -
@@ -355,19 +378,11 @@
               </tr>
 
               <tr>
-                <td>{{vm.makePopKeyLabel(outcome.pop)}}</td>
                 <td>
-                  <input
-                    style="width:4em"
-                    type="number"
-                    ng-model="yearEntry.year">
-                </td>
-                <td>
-                  "{{vm.state.parameter.name}}"
                   in the absence of any programs targeting this parameter
                   <br>
                   <br>
-                  <i ng-if="vm.state.parameter.coverage != 1">Program Effects</i>
+                  <i ng-if="vm.state.parameter.coverage != 1">Value for maximum attainable coverage of each program acting in isolation:</i>
                 </td>
                 <td style="width:12em">
                   <input
@@ -383,15 +398,10 @@
               </tr>
 
               <tr ng-if="vm.state.parameter.coverage != 1" ng-repeat="program in yearEntry.programs">
-                <td></td>
-                <td></td>
                 <td>
                   <ul>
                     <li>
-                  "{{vm.state.parameter.name}}"
-                  under maximal attainable coverage of
-                  "{{vm.getProgramName(program.name)}}"
-                  in isolation
+                  {{vm.getProgramName(program.name)}}
                     </li>
                   </ul>
                 </td>
@@ -408,38 +418,101 @@
                 </td>
               </tr>
 
-              <tr ng-if="vm.state.parameter.coverage != 1">
-                <td></td>
-                <td></td>
-                <td>
-                  <i>Program interactions</i>:
-                  &nbsp; &nbsp;
-                  <input
-                      type="radio"
-                      ng-model="outcome.interact"
-                      value="random">
-                  <label> random </label> &nbsp; &nbsp;
-                  <input
-                      type="radio"
-                      ng-model="outcome.interact"
-                      ng-value="nested">
-                  <label> nested </label> &nbsp; &nbsp;
-                  <input
-                      type="radio"
-                      ng-model="outcome.interact"
-                      value="additive">
-                  <label> additive </label>
-                  <br>
-                  <br>
-                </td>
-                <td></td>
-              </tr>
+              <!--<tr ng-if="vm.state.parameter.coverage != 1">-->
+                <!--<td>-->
+                  <!--<i>Program interactions</i>:-->
+                  <!--&nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--value="random">-->
+                  <!--<label> random </label> &nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--ng-value="nested">-->
+                  <!--<label> nested </label> &nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--value="additive">-->
+                  <!--<label> additive </label>-->
+                  <!--<br>-->
+                  <!--<br>-->
+                <!--</td>-->
+                <!--<td></td>-->
+              <!--</tr>-->
 
             </table>
 
           </div>
 
         </div>
+
+        <!--Summary tab window-->
+        <div style="width: 100%;"
+             class="c-tab"
+             ng-if="vm.activeTab === 'summary'">
+          <h1>Most recent budget
+            <help ref="most-recent-budget"/>
+          </h1>
+          <table
+              class="section table table-bordered"
+              style="max-width: 500px">
+            <tr>
+              <th style="width: 15em;">Program</th>
+              <th>Budget</th>
+            </tr>
+            <tr ng-repeat="(programShort, budget) in vm.state.summary.budgets">
+              <td style="width: 15em;">{{programShort}}</td>
+              <td>{{budget}}</td>
+            </tr>
+          </table>
+
+          <h1>Parameters
+            <help ref="program-parameters"/>
+          </h1>
+          Year:
+          <select
+              ng-model="vm.state.year"
+              ng-options="year for year in vm.state.yearSelector"
+              ng-change="vm.updateSummary()"
+              class="txbox __inline"/>
+          <br><br>
+          <table
+              class="section table table-bordered"
+              style="max-width: 900px">
+            <tr>
+              <th>Parameter</th>
+              <th>Population</th>
+              <th>Calibration value</th>
+              <th>Coverage value</th>
+            </tr>
+            <tr ng-repeat="par in vm.state.summary.pars">
+              <td>{{par[0]}}</td>
+              <td>{{par[1]}}</td>
+              <td>{{par[2]|number:2}}</td>
+              <td>{{par[3]|number:2}}</td>
+            </tr>
+          </table>
+
+          <button ng-click="vm.reconcilePrograms()" class="btn">Reconcile</button>
+
+          &nbsp; for &nbsp;
+
+          <select ng-init="vm.state.maxtime=30" ng-model="vm.state.maxtime">
+            <option value=15>15 seconds</option>
+            <option value=30>30 seconds</option>
+            <option value=60>1 minute</option>
+            <option value=300>5 minutes</option>
+          </select>
+
+          <help ref="program-parameters"/>
+
+          <span style="color: #00aeef; padding-left: 1em"> {{ vm.state.statusMessage }} </span>
+
+        </div>
+
       </div>
     </div>
 
