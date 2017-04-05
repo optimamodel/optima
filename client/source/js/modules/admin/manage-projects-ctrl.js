@@ -86,7 +86,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Gets the data for the given project `name` as <name>.prj  file
      */
     $scope.getData = function (name, id) {
-      projectApi.getProjectData(id).success(function (response) {
+      projectApi.downloadProjectFile(id).success(function (response) {
         var blob = new Blob([response], { type: 'application/json' });
         saveAs(blob, (name + '.prj'));
       });

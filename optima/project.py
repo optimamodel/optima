@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
+from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel # Import functions
 from optima import version # Get current version
@@ -139,12 +139,11 @@ class Project(object):
         return None
 
 
-    def makespreadsheet(self, filename=None, pops=None):
+    def makespreadsheet(self, filename=None, folder=None, pops=None):
         ''' Create a spreadsheet with the data from the project'''
-        if filename is None: filename = self.name+'.xlsx'
-        if filename[-5:]!='.xlsx': filename += '.xlsx'
-        makespreadsheet(filename=filename, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
-        return None
+        fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='xlsx')
+        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
+        return fullpath
 
 
     
@@ -375,20 +374,19 @@ class Project(object):
         return None
     
     
-    def save(self, filename=None, saveresults=False, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
-        if filename is None:
-            if self.filename: filename = self.filename
-            else:             filename = self.name+'.prj'
-        self.filename = os.path.abspath(filename) # Store file path
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
+        self.filename = fullpath # Store file path
         if saveresults:
-            saveobj(filename, self, verbose=verbose)
+            saveobj(fullpath, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
+            tmpproject.restorelinks() # Make sure links are restored
             tmpproject.cleanresults() # Get rid of all results
-            saveobj(filename, tmpproject, verbose=verbose) # Save it to file
+            saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
-        return None
+        return fullpath
 
 
     #######################################################################################################

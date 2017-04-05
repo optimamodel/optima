@@ -5,9 +5,10 @@ import logging
 import matplotlib
 import redis
 
-from flask import Flask, redirect, abort, jsonify
+from flask import Flask, redirect, abort, jsonify, request, json
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from werkzeug.utils import secure_filename
 
 # Create Flask app that does everything
 app = Flask(__name__)
@@ -88,7 +89,7 @@ def root():
     return 'Optima API v.1.0.0'
 
 
-from .webapp.handlers import api_blueprint, get_post_data_json, report_exception_decorator, login_required
+from .webapp.handlers import get_upload_file, api_blueprint, get_post_data_json, report_exception_decorator, login_required
 from .webapp import dataio
 
 
@@ -142,7 +143,41 @@ def get_remote_file():
         as_attachment=True,
         attachment_filename=filename)
     response.status_code = 201
+    response.headers["filename"] = filename
     return response
+
+
+@app.route('/api/upload', methods=['POST'])
+@report_exception_decorator
+def receive_uploaded_file():
+    """
+    file-upload
+    request-form:
+        name: name of project
+        xls: true
+    """
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    dirname = app.config['UPLOAD_FOLDER']
+    if not (os.path.exists(dirname)):
+        os.makedirs(dirname)
+    uploaded_fname = os.path.join(dirname, filename)
+    file.save(uploaded_fname)
+    print("> receive_uploaded_file save %s" % (uploaded_fname))
+
+    fn_name = request.form.get('name')
+    args = json.loads(request.form.get('args', "[]"))
+    kwargs = json.loads(request.form.get('kwargs', "{}"))
+    args.insert(0, uploaded_fname)
+
+    fn = getattr(dataio, fn_name)
+    print("> receive_uploaded_file %s '%s'" % (fn_name, args))
+    result = fn(*args, **kwargs)
+
+    if result is None:
+        return ''
+    else:
+        return jsonify(result)
 
 
 def init_db():

@@ -5,40 +5,52 @@ define(
 
   module.controller('AnalysisOptimizationController', function (
       $scope, $http, $upload, $modal, toastr, modalService,
-      activeProject, $timeout, globalPoller) {
+      activeProject, projectApi, $timeout, globalPoller) {
 
     function initialize() {
+
+      $scope.state = {
+        project: null,
+        maxtime: 10,
+        isRunnable: false,
+        graphs: undefined,
+        optimizations: [],
+        years: null,
+        start: null,
+        end: null
+      };
 
       $scope.editOptimization = openEditOptimizationModal;
       $scope.getParsetName = getParsetName;
       $scope.getProgsetName = getProgsetName;
 
-      var project = activeProject.data;
-      $scope.state = {
-        project: activeProject.data,
-        maxtime: 10,
-        isRunnable: false,
-        graphs: undefined,
-        optimizations: [],
-        years: _.range(project.startYear, project.endYear+1),
-        start: project.startYear,
-        end: project.endYear,
-      };
-
-      $scope.isMissingData = !activeProject.data.hasParset;
       $scope.anyOptimizable = false;
-      $http
-        .get(
-          '/api/project/' + $scope.state.project.id + '/optimizable')
-        .success(function(response) {
 
-          console.log('init optimizable', response);
-          $scope.anyOptimizable = response;
-          console.log('anyoptimizable', $scope.anyOptimizable);
-          console.log('$scope.state', $scope.state);
+      $scope.activeProject = activeProject;
+      $scope.$watch('activeProject.project.id', function() {
+        reloadActiveProject();
+      });
+
+      reloadActiveProject();
+    }
+
+    function reloadActiveProject() {
+      projectApi
+        .getActiveProject()
+        .then(function(response) {
+          var project = response.data;
+          $scope.state.project = project;
+          $scope.state.years = _.range(project.startYear, project.endYear + 1);
+          $scope.state.start = project.startYear;
+          $scope.state.end = project.endYear;
+          $scope.isMissingData = !project.hasParset;
+
+          return $http.get('/api/project/' + $scope.state.project.id + '/optimizable');
+        })
+        .then(function(response) {
+          $scope.anyOptimizable = response.data;
 
           if (!$scope.isMissingData && $scope.anyOptimizable) {
-
             $http
               .get('/api/project/' + $scope.state.project.id + '/progsets')
               .then(function(response) {
@@ -62,9 +74,7 @@ define(
                 }
               });
           }
-
         });
-
     }
 
     function selectDefaultProgsetAndParset(optimization) {

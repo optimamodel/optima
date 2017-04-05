@@ -3,12 +3,12 @@ This module defines the Constant, Metapar, Timepar, and Popsizepar classes, whic
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2.1 (2017mar14)
+Version: 2.1 (2017apr04)
 """
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist # Utilities 
+from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
 
@@ -324,7 +324,7 @@ class Parameterset(object):
     
                 # parset.interp() and calculate results are supposed to be called from the outside
     
-    def export(self, filename=None, compare=None):
+    def export(self, filename=None, folder=None, compare=None):
         '''
         Little function to export code for the current parameter set. To use, do something like:
         
@@ -388,8 +388,10 @@ class Parameterset(object):
                             output += prefix2+oneline(values2)+'\n'
         
         if filename is not None:
-            with open(filename, 'w') as f:
+            fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='par')
+            with open(fullpath, 'w') as f:
                 f.write(output)
+            return fullpath
         else:
             return output
 

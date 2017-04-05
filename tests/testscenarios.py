@@ -47,10 +47,10 @@ if 'standardscen' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, Budgetscen, Coveragescen, defaults, setparscenvalues
+    from optima import Parscen, Budgetscen, Coveragescen, defaultproject, setparscenvalues
     from numpy import array
     
-    P = defaults.defaultproject('concentrated')
+    P = defaultproject('concentrated')
     pops = P.data['pops']['short']
     malelist = [i for i in range(len(pops)) if P.data['pops']['male'][i]]
     
@@ -223,9 +223,9 @@ if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, defaults, pygui, findinds, plotpeople
+    from optima import Parscen, defaultproject, pygui, findinds, plotpeople
     
-    P = defaults.defaultproject('best')
+    P = defaultproject('best')
     P.cleanresults() # Check that scenarios can be run even if no results stored
     P.pars()['fixproptx'].t = 2100 # WARNING, kludgy
     
@@ -334,11 +334,11 @@ if 'maxcoverage' in tests:
     t = tic()
 
     print('Running maximum coverage scenario test...')
-    from optima import Coveragescen, Parscen, defaults, dcp
+    from optima import Coveragescen, Parscen, defaultproject, dcp
     from numpy import array
     
     ## Set up default project
-    P = defaults.defaultproject('generalized')
+    P = defaultproject('generalized')
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
@@ -367,11 +367,11 @@ if 'maxbudget' in tests:
     t = tic()
 
     print('Running maximum budget scenario test...')
-    from optima import Budgetscen, defaults, dcp
+    from optima import Budgetscen, defaultproject, dcp
     from numpy import array
     
     ## Set up default project
-    P = defaults.defaultproject('generalized')
+    P = defaultproject('generalized')
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
@@ -402,9 +402,9 @@ if 'VMMC' in tests:
     t = tic()
 
     print('Running VMMC scenario test...')
-    from optima import Parscen, Budgetscen, findinds, defaults
+    from optima import Parscen, Budgetscen, findinds, defaultproject
     
-    P = defaults.defaultproject('generalized')
+    P = defaultproject('generalized')
     pops = P.data['pops']['short']
 
     malelist = findinds(P.data['pops']['male'])

@@ -191,36 +191,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function saveProject(isUpdate, isDeleteData, isSpreadsheet) {
-      console.log('isUpdate', isUpdate, 'isDeleteData', isDeleteData, 'isSpreadsheet', isSpreadsheet)
       var params = angular.copy($scope.projectParams);
       params.populations = getSelectedPopulations();
-      var promise;
-      var responseType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      if (isUpdate) {
-        promise = projectApi.updateProject(
-          $scope.projectInfo.id,
-          {
-            project: params,
-            isSpreadsheet: isSpreadsheet,
-            isDeleteData: true,
-          });
-      } else {
-        promise = projectApi.createProject(params);
-      }
-      promise
-        .success(function (response, status, headers) {
-          if (responseType) {
-            var blob = new Blob([response], {type: responseType});
-            saveAs(blob, ($scope.projectParams.name + '.xlsx'));
-            var newProjectId = headers()['x-project-id'];
-            activeProject.setActiveProjectFor(
-                $scope.projectParams.name, newProjectId, userManager.user);
-          }
+      projectApi
+        .createProject(params)
+        .then(function() {
           $state.go('home');
         });
     }
 
-    $scope.prepareCreateOrEditForm = function () {
+    $scope.submit = function () {
       var errors = [];
 
       if ($scope.invalidName()) {

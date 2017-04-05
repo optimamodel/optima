@@ -12,6 +12,7 @@ define([
   './modules/user/index',
   './modules/analysis/index',
   './modules/admin/index',
+  './modules/common/util-service',
   './modules/common/global-poller-service',
   './modules/common/icon-directive',
   './modules/common/active-project-service',
@@ -29,9 +30,7 @@ define([
   'use strict';
 
   return angular
-
-    .module(
-      'app',
+    .module('app',
       [
         'angularFileUpload',
         'angular-loading-bar',
@@ -39,6 +38,7 @@ define([
         'ui.router',
         'tooltip.module',
         'rzModule',
+        'app.util',
         'app.feedback',
         'app.help',
         'app.user',
