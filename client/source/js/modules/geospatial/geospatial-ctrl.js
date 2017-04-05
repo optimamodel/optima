@@ -5,7 +5,7 @@ define(
 
     module.controller(
       'PortfolioController',
-      function($scope, $http, activeProject, modalService, userManager,
+      function($scope, $http, activeProject, modalService, userManager, util,
                $state, toastr, globalPoller, $modal, $upload) {
 
         function initialize() {
@@ -93,6 +93,26 @@ define(
             _.pluck($scope.portfolios, 'name'));
         };
 
+        $scope.renamePortfolio = function() {
+          modalService.rename(function(newName) {
+            util
+              .rpcRun(
+                'rename_portfolio', [$scope.state.portfolio.id, newName])
+              .then(function(response) {
+                console.log('renamed portfolio', response.data);
+                var renamedPortfolio = response.data;
+                var portfolio = _.findWhere($scope.portfolios, {id: $scope.state.portfolio.id});
+                portfolio.name = newName;
+                $scope.state.portfolio.name = newName;
+                toastr.success('Renamed portfolio');
+              });
+            },
+            'Rename portfolio',
+            'Enter portfolio name',
+            $scope.state.portfolio.name,
+            'Name already exists',
+            _.without(_.pluck($scope.portfolios, 'name'), $scope.state.portfolio.name));
+        };
 
         $scope.downloadPortfolio = function() {
           $http

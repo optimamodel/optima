@@ -1582,6 +1582,15 @@ def save_portfolio(portfolio, db_session=None):
     db_session.commit()
 
 
+def rename_portfolio(portfolio_id, newName, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    portfolio = load_portfolio(portfolio_id, db_session)
+    portfolio.name = newName
+    save_portfolio(portfolio, db_session)
+    return parse.get_portfolio_summary(portfolio)
+
+
 def load_or_create_portfolio(portfolio_id, db_session=None):
     if db_session is None:
         db_session = db.session
