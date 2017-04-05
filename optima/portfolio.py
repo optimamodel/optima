@@ -422,8 +422,8 @@ class Portfolio(object):
     def export(self, filename=None, folder=None, verbose=2):
         ''' Export the results to Excel format '''
         
-        filename = makefilepath(filename=filename, folder=folder, default=self.name+'-geospatial-results.xlsx', ext='xlsx')
-        workbook = Workbook(filename)
+        fullpath = makefilepath(filename=filename, folder=folder, default=self.name+'-geospatial-results.xlsx', ext='xlsx')
+        workbook = Workbook(fullpath)
         worksheet = workbook.add_worksheet()
         
         # Define formatting
@@ -460,8 +460,8 @@ class Portfolio(object):
         worksheet.set_column(0, 3, colwidth) # Make wider
         workbook.close()
         
-        printv('Results exported to %s' % filename, 2, verbose)
-        return filename
+        printv('Results exported to %s' % fullpath, 2, verbose)
+        return fullpath
         
 
 
