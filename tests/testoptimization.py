@@ -40,7 +40,7 @@ blank()
 ## The tests
 ##############################################################################
 
-from optima import defaults
+from optima import defaultproject
 from pylab import seed
 seed(0) # Ensure consistency across runs
 
@@ -60,11 +60,11 @@ if 'minimizeoutcomes' in tests:
     print('Running minimize outcomes test...')
     from optima import defaultobjectives, defaultconstraints
     
-    P = defaults.defaultproject('best') 
+    P = defaultproject('best') 
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', maxtime=10, mc=0, parsetname=-1, progsetname=-1, objectives=objectives, method='asd')
+    P.optimize(name='minoutcome', maxtime=5, mc=0, parsetname=-1, progsetname=-1, objectives=objectives, method='asd')
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
@@ -84,7 +84,7 @@ if 'investmentstaircase' in tests:
     print('Running investment staircase test...')
     from optima import defaultobjectives, defaultconstraints
     
-    P = defaults.defaultproject('best') 
+    P = defaultproject('best') 
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
     objectives['budgetscale'] = [0.1, 0.2, 0.5, 1., 1.2, 1.5]
@@ -107,7 +107,7 @@ if 'minimizemoney' in tests:
     print('Running minimize money test...')
     from optima import defaultobjectives, defaultconstraints
     
-    P = defaults.defaultproject('best')
+    P = defaultproject('best')
     
     objectives = defaultobjectives(which='money', progset=P.progsets[0])
     objectives['deathfrac'] = 0.1 # Yes, this means an increase in deaths

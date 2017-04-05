@@ -68,11 +68,11 @@ def loadpickle(fileobj, verbose=False):
     except: # If that fails, create legacy classes and try again
         if verbose: print('Initial loading failed, trying again with legacy classes...')
         class EmptyClass(object): pass
-        op.project.Spreadsheet = EmptyClass
-        op.portfolio.GAOptim = EmptyClass
+        op._project.Spreadsheet = EmptyClass
+        op._portfolio.GAOptim = EmptyClass
         obj = pickle.loads(filestr) # Actually load it
-        del op.project.Spreadsheet
-        del op.portfolio.GAOptim
+        del op._project.Spreadsheet
+        del op._portfolio.GAOptim
     
     return obj
     
