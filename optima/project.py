@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
-from optima import loadspreadsheet, model, gitinfo, autofit, runscenarios, defaultscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, runmodel # Import functions
+from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
+from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize # Import functions
 from optima import version # Get current version
 from numpy import argmin, argsort
 from numpy.random import seed, randint
@@ -29,14 +29,13 @@ class Project(object):
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
 
-
     Methods for structure lists:
         1. add -- add a new structure to the odict
         2. remove -- remove a structure from the odict
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2016jan22 by cliffk
+    Version: 2017apr04 by cliffk
     """
 
 
@@ -58,7 +57,7 @@ class Project(object):
         ## Define other quantities
         self.name = name
         self.settings = Settings(verbose=verbose) # Global settings
-        self.data = {} # Data from the spreadsheet
+        self.data = odict() # Data from the spreadsheet
 
         ## Define metadata
         self.uid = uuid()
@@ -71,7 +70,7 @@ class Project(object):
         self.warnings = None # Place to store information about warnings (mostly used during migrations)
 
         ## Load spreadsheet, if available
-        if spreadsheet is not None:
+        if spreadsheet:
             self.loadspreadsheet(spreadsheet, dorun=dorun, makedefaults=makedefaults, verbose=verbose, **kwargs)
 
         return None
@@ -99,14 +98,16 @@ class Project(object):
         output += self.getwarnings(doprint=False) # Don't print since print later
         return output
     
+    
     def getinfo(self):
-        ''' Return an odict with basic information about the project '''
+        ''' Return an odict with basic information about the project -- used in resultsets '''
         info = odict()
         for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
             info[attr] = getattr(self, attr) # Populate the dictionary
         info['parsetkeys'] = self.parsets.keys()
         info['progsetkeys'] = self.parsets.keys()
         return info
+
 
     def getwarnings(self, doprint=True):
         ''' Tiny method to print the warnings in the project, if any '''
@@ -119,10 +120,10 @@ class Project(object):
             print(output)
         return output
 
+
     #######################################################################################################
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
-
 
     def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
@@ -147,37 +148,34 @@ class Project(object):
 
 
     
-    def reorderpops(self, poporder=None):
-        '''
-        Reorder populations according to a defined list.
+#    def reorderpops(self, poporder=None):
+#        '''
+#        Reorder populations according to a defined list.
+#        
+#        WARNING, doesn't reorder things like circumcision or birthrates, or programsets, or anything...
+#        
+#        '''
+#        def reorder(origlist, neworder):
+#            return [origlist[i] for i in neworder]
+#        
+#        if self.data is None: raise OptimaException('Need to load spreadsheet before can reorder populations')
+#        if len(poporder) != self.data['npops']: raise OptimaException('Wrong number of populations')
+#        origdata = dcp(self.data)
+#        for key in self.data['pops']:
+#            self.data['pops'][key] = reorder(origdata['pops'][key], poporder)
+#        for key1 in self.data:
+#            try:
+#                if len(self.data[key1])==self.data['npops']:
+#                    self.data[key1] = reorder(origdata[key1], poporder)
+#                    print('    %s succeeded' % key1)
+#                else:
+#                    print('  %s wrong length' % key1)
+#            except:
+#                print('%s failed' % key1)
         
-        WARNING, doesn't reorder things like circumcision or birthrates
-        
-        '''
-        def reorder(origlist, neworder):
-            return [origlist[i] for i in neworder]
-        
-        if self.data is None: raise OptimaException('Need to load spreadsheet before can reorder populations')
-        if len(poporder) != self.data['npops']: raise OptimaException('Wrong number of populations')
-        origdata = dcp(self.data)
-        for key in self.data['pops']:
-            self.data['pops'][key] = reorder(origdata['pops'][key], poporder)
-        for key1 in self.data:
-            try:
-                if len(self.data[key1])==self.data['npops']:
-                    self.data[key1] = reorder(origdata[key1], poporder)
-                    print('    %s succeeded' % key1)
-                else:
-                    print('  %s wrong length' % key1)
-            except:
-                print('%s failed' % key1)
-        
-        
-
 
     def makeparset(self, name='default', overwrite=True):
         ''' If parameter set of that name doesn't exist, create it '''
-        # question: what is that parset does exist? delete it first?
         if not self.data:
             raise OptimaException('No data in project "%s"!' % self.name)
         if overwrite or name not in self.parsets:
@@ -367,7 +365,7 @@ class Project(object):
         return None
     
     
-    def addscenlist(self, scenlist): 
+    def addscenlist(self, scenlist=None): 
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
         self.modified = today()
@@ -393,7 +391,6 @@ class Project(object):
     ### Utilities
     #######################################################################################################
 
-
     def refreshparset(self, name=None, orig='default'):
         '''
         Reset the chosen (or all) parsets to reflect the parameter values from the spreadsheet (or another parset).
@@ -406,6 +403,7 @@ class Project(object):
         
         if name is None: name = self.parsets.keys() # If none is given, use all
         name = promotetolist(name) # Make sure it's a list
+        if orig not in self.parsets.keys(): self.makeparset(name=orig) # Make sure the parset exists
         origpars = self.parsets[orig].pars # "Original" parameters to copy from (based on data)
         for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
             keys = parset.pars.keys() # Assume all pars structures have the same keys
@@ -416,7 +414,6 @@ class Project(object):
         
         self.modified = today()
         return None
-        
         
 
     def reconcileparsets(self, name=None, orig=None):
@@ -553,9 +550,10 @@ class Project(object):
         self.modified = today()
         return None
     
-    def defaultscenarios(self, **kwargs):
+    
+    def defaultscenarios(self, which=None, **kwargs):
         ''' Wrapper for default scenarios '''
-        defaultscenarios(self, **kwargs)
+        defaultscenarios(self, which=which, **kwargs)
         return None
     
 
@@ -576,21 +574,41 @@ class Project(object):
         self.modified = today()
         return None
 
-    
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, 
-                 stoppingfunc=None, method='asd', die=False, origbudget=None, ccsample='best', randseed=None, mc=3, optim=None, optimname=None, **kwargs):
-        ''' Function to minimize outcomes or money '''
+
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
+                 verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
+                 nchains=None, nblocks=None, blockiters=None, batch=None, **kwargs):
+        '''
+        Function to minimize outcomes or money.
+        
+        Usage examples:
+            P.optimize() # Use defaults
+            P.optimize(maxiters=5, mc=0) # Do a very simple run
+            P.optimize(parsetname=0, progsetname=0) # Use first parset and progset
+            P.optimize(optim=P.optims[-1]) # Use a pre-existing optim
+            P.optimize(optimname=-1) # Same as previous
+            P.optimize(multi=True) # Do a multi-chain optimization
+            P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
+        
+        '''
         
         # Check inputs
         if optim is None:
+            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname]]):
+                optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
                 optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         
         # Run the optimization
-        multires = optim.optimize(name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                  method=method, die=die, origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, **kwargs)
+        if not multi:
+            multires = optimize(optim=optim, name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+        else:
+            multires = multioptimize(optim=optim, name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
+                                     blockiters=blockiters, batch=batch, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name
@@ -598,7 +616,8 @@ class Project(object):
         self.addresult(result=multires)
         self.modified = today()
         return multires
-
+    
+    
 
 
     #######################################################################################################

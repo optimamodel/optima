@@ -109,7 +109,7 @@ def make_years_range(name=None, row_names=None, ref_range=None, data_start=None,
     output = OptimaContent(name=name, row_names=row_names, column_names=range(int(data_start), int(data_end+1)), data=data)
     return output
 
-def make_populations_range(name, items):
+def make_populations_range(name=None, items=None):
     """ 
     every populations item is a dictionary is expected to have the following fields:
     short_name, name, male, female, age_from, age_to
@@ -134,7 +134,7 @@ def make_populations_range(name, items):
             age_from = 15
             age_to = 49
         coded_params.append([short_name, item_name, male, female, age_from, age_to])
-    return OptimaContent(name=name, row_names=row_names, column_names=column_names, data=coded_params)
+    return OptimaContent(name=name, row_names=row_names, column_names=column_names, data=coded_params, assumption=False)
 
 
 def make_programs_range(name=None, popnames=None, items=None):
@@ -279,11 +279,11 @@ class SheetRange:
         return [ "='%s'!%s" % (sheet_name, self.get_cell_address(row, self.first_col + column_number)) for row in par_range ]
 
 
-class TitledRange:
+class TitledRange(object):
     FIRST_COL = 2
     ROW_INTERVAL = 3
 
-    def __init__(self, sheet, first_row, content):
+    def __init__(self, sheet=None, first_row=None, content=None):
         self.sheet = sheet
         self.content = content
         first_data_col = TitledRange.FIRST_COL

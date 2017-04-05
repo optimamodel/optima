@@ -710,9 +710,10 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 def perturb(n=1, span=0.5, randseed=None):
     ''' Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1.'''
     from numpy.random import rand, seed
-    if randseed>=0: seed(randseed) # Optionally reset random seed
+    if randseed is not None: seed(int(randseed)) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
     return output
+    
     
 def scaleratio(inarray,total):
     ''' Multiply a list or array by some factor so that its sum is equal to the total. '''
