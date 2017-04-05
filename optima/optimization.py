@@ -476,9 +476,15 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     for kwarg explanation.
     
     Small usage example:
-        P = demo(0)
-        P.optimize(multi=True, nchains=4, blockiters=10, nblocks=2)
-        pygui(P, toplot=['improvement', 'budgets', 'numinci'])
+        import optima as op
+        import pylab as pl
+        P = op.demo(0)
+        results = P.optimize(multi=True, nchains=4, blockiters=10, nblocks=2, randseed=1)
+        op.pygui(P, toplot=['improvement', 'budgets', 'numinci'])
+        pl.figure(); pl.plot(results.multiimprovement.transpose())
+    
+    You can see how after 10 iterations, the blocks talk to each other, and the optimization
+    for each thread restarts from the best solution found for each.
     '''
 
     # Import dependencies here so no biggie if they fail
