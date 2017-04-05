@@ -405,6 +405,7 @@ class Project(object):
         
         if name is None: name = self.parsets.keys() # If none is given, use all
         name = promotetolist(name) # Make sure it's a list
+        if orig not in self.parsets.keys(): self.makeparset(name=orig) # Make sure the parset exists
         origpars = self.parsets[orig].pars # "Original" parameters to copy from (based on data)
         for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
             keys = parset.pars.keys() # Assume all pars structures have the same keys
