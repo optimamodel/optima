@@ -371,7 +371,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         # Set up project
         dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
         kwargs['dorun'] = False # Don't run now, run after calibration
-        P = Project(name='demo-simple', spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
+        P = Project(name='Simple (demo)', spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
         P.pars()['transnorm'].y = 0.8 # "Calibration"
         P.pars()['fixproptx'].t = 2100 # For optimization to work
         if dorun: P.runsim() # Run after calibration
@@ -397,7 +397,9 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         # Make project and store results from default sim
         dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
         kwargs['dorun'] = False # Don't run now, run after calibration
-        P = Project(name='demo-concentrated', spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
+        if which=='best': name = 'demo' # Just keep it simple
+        else:             name = 'Concentrated (demo)' # If asked for concentrated, keep it in the name
+        P = Project(name=name, spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
         
         # "Calibrate"
         P.pars()['force'].y[:] = [3.5, 1.5, 1.5, 1.7, 3.0, 0.4]
@@ -460,7 +462,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     ##########################################################################################################################
     elif which=='generalized':
         printv('Creating generalized epidemic project...', 2, verbose)
-        P = Project(name='demo-generalized', spreadsheet=spreadsheetpath+'generalized.xlsx', verbose=verbose, **kwargs)
+        P = Project(name='Generalized (demo)', spreadsheet=spreadsheetpath+'generalized.xlsx', verbose=verbose, **kwargs)
 
         # Get a default progset 
         R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'Lab', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
