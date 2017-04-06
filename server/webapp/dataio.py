@@ -624,7 +624,7 @@ def download_project(project_id):
         dirname = TEMPLATEDIR
     server_filename = project.save(folder=dirname, saveresults=False)
     print(">> download_project %s" % (server_filename))
-    return os.path.split(server_filename)
+    return server_filename
 
 
 def download_project_with_result(project_id):

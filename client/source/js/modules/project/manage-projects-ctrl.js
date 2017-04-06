@@ -144,28 +144,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadProject = function (name, id) {
-        projectApi
-          .downloadProjectFile(id)
-          .success(function(data) {
-            var blob = new Blob([data], {type: 'application/octet-stream'});
-            saveAs(blob, (name + '.prj'));
+        util
+          .rpcDownload(
+            'download_project', [id])
+          .then(function() {
+            toastr.success('Project downloaded');
           });
       };
 
       $scope.downloadPrjWithResults = function (name, id) {
-        $http.post(
-          '/api/download',
-          {
-            'name': 'download_project_with_result',
-            'args': [id]
-          },
-          {
-            headers: {'Content-type': 'application/octet-stream'},
-            responseType:'blob'
-          })
-          .then(function(response) {
-            var blob = new Blob([response.data], {type: 'application/octet-stream'});
-            saveAs(blob, (name + '.prj'));
+        util
+          .rpcDownload(
+            'download_project_with_result', [id])
+          .then(function() {
+            toastr.success('Project downloaded');
           });
       };
 
