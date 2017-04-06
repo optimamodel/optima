@@ -87,7 +87,7 @@ def normalize_obj(obj):
         return list(obj)
 
     if isinstance(obj, UUID):
-        return list(obj)
+        return str(obj)
 
     return obj
 
