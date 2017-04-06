@@ -6,8 +6,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope, $http, modalService, $upload,
       $modal, $timeout, toastr, activeProject, projectApi, globalPoller) {
 
-      $scope.inputPattern = /^3+/;
-
     function initialize() {
       $scope.parsets = [];
       $scope.state = {
@@ -19,45 +17,47 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         graphs: undefined,
       };
 
-      projectApi
-        .getProjectList()
-        .then(function() {
-          reloadActiveProject();
-        });
+      reloadActiveProject();
 
       $scope.activeProject = activeProject;
       $scope.$watch('activeProject.project.id', function() {
-        reloadActiveProject();
+        if (!_.isUndefined($scope.project) && ($scope.project.id !== activeProject.project.id)) {
+          reloadActiveProject();
+        }
       });
     }
 
     function reloadActiveProject() {
-      var project =  _.findWhere(projectApi.projects, {id: activeProject.project.id});
-      if (!project) {
-        return;
-      }
-      $scope.isMissingData = !project.hasParset;
-      if ($scope.isMissingData) {
-        return;
-      }
-      console.log("project", project);
-
-      var extrayears = 21;
-      $scope.years = _.range(project.startYear, project.endYear+extrayears);
-      var defaultindex = $scope.years.length - extrayears;
-      $scope.state.startYear = $scope.years[0];
-      $scope.state.endYear = $scope.years[defaultindex];
-
-      // Fetching list of parsets for open project
-      $http
-        .get('/api/project/' + activeProject.project.id + '/parsets')
-        .success(function(response) {
-          var parsets = response.parsets;
-          if (parsets) {
-            $scope.parsets = parsets;
-            $scope.state.parset = getMostRecentItem(parsets, 'updated');
-            $scope.setActiveParset();
+      projectApi
+        .getActiveProject()
+        .then(function(response) {
+          $scope.project = response.data;
+          if (!$scope.project) {
+            return;
           }
+          $scope.isMissingData = !$scope.project.hasParset;
+          if ($scope.isMissingData) {
+            return;
+          }
+
+          console.log("reloadActiveProject project", $scope.project.name);
+          var extrayears = 21;
+          $scope.years = _.range($scope.project.startYear, $scope.project.endYear + extrayears);
+          var defaultindex = $scope.years.length - extrayears;
+          $scope.state.startYear = $scope.years[0];
+          $scope.state.endYear = $scope.years[defaultindex];
+
+          // Fetching list of parsets for open project
+          $http
+            .get('/api/project/' + $scope.project.id + '/parsets')
+            .success(function(response) {
+              var parsets = response.parsets;
+              if (parsets) {
+                $scope.parsets = parsets;
+                $scope.state.parset = getMostRecentItem(parsets, 'updated');
+                $scope.setActiveParset();
+              }
+            });
         });
     }
 

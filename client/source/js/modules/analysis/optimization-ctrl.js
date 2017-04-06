@@ -10,7 +10,7 @@ define(
     function initialize() {
 
       $scope.state = {
-        project: null,
+        project: undefined,
         maxtime: 10,
         isRunnable: false,
         graphs: undefined,
@@ -28,7 +28,9 @@ define(
 
       $scope.activeProject = activeProject;
       $scope.$watch('activeProject.project.id', function() {
-        reloadActiveProject();
+        if (!_.isUndefined($scope.state.project) && ($scope.state.project.id !== activeProject.project.id)) {
+          reloadActiveProject();
+        }
       });
 
       reloadActiveProject();

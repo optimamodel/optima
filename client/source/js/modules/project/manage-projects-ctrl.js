@@ -63,7 +63,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.open = function (name, id) {
-        activeProject.setActiveProjectFor(name, id, userManager.user);
+        activeProject.setActiveProjectFor(id);
       };
 
       $scope.copy = function(name, projectId) {

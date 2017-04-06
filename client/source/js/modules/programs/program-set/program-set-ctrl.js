@@ -13,8 +13,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.state = {};
       $scope.activeProject = activeProject;
       $scope.$watch('activeProject.project.id', function() {
-        console.log('ProgramSetController project-change', activeProject.project.id);
-        reloadActiveProject();
+        if (!_.isUndefined(project) && (project.id !== activeProject.project.id)) {
+          console.log('ProgramSetController project-change', activeProject.project.name);
+          reloadActiveProject();
+        }
       });
       reloadActiveProject();
     }

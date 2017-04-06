@@ -23,15 +23,9 @@ define([
           $scope.activeProject = activeProject;
           $scope.projects = projectApi.projects;
           $scope.changeProject = function(projectId) {
-            console.log('changeProject', projectId);
-            _.each(projectApi.projects, function(project) {
-              if (project.id == projectId) {
-                activeProject.setActiveProjectFor(
-                  project.name, projectId, $scope.user)
-              }
-            });
-          }
-         });
+            activeProject.setActiveProjectFor(projectId);
+          };
+        });
     return module;
   }
 );

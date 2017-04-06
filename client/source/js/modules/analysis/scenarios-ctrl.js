@@ -9,7 +9,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function initialize() {
       $scope.activeProject = activeProject;
       $scope.$watch('activeProject.project.id', function() {
-        reloadActiveProject();
+        if (!_.isUndefined($scope.project) && ($scope.project.id !== activeProject.project.id)) {
+          reloadActiveProject();
+        }
       });
       reloadActiveProject();
     }
