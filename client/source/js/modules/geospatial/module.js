@@ -1,5 +1,5 @@
 define(
-  ['angular', 'ui.router', '../project/project-api-service'],
+  ['angular', 'ui.router'],
   function (angular) {
 
     'use strict';

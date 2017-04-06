@@ -509,7 +509,7 @@ def save_project_as_new(project, user_id):
         for obj in getattr(project,attr).values():
             obj.uid = op.uuid()
 
-    print(">> save_project_as_new:", project.name)
+    print(">> save_project_as_new '%s'" % project.name)
     for result in project.results.values():
         name = result.name
         if 'scenarios' in name:
@@ -591,7 +591,7 @@ def create_project_from_prj(prj_filename=None, user_id=None, project=None):
     Returns the project id of the new project.
     """
 
-    print(">> create_project_from_prj", prj_filename, user_id, project)
+    print(">> create_project_from_prj '%s'" % prj_filename)
     if prj_filename:
         project = op.loadproj(prj_filename)
     project.name = get_unique_name(project.name)
@@ -604,7 +604,7 @@ def create_project_from_spreadsheet(prj_filename, user_id):
     """
     Returns the project id of the new project.
     """
-    print(">> create_project_from_spreadsheet", prj_filename, user_id)
+    print(">> create_project_from_spreadsheet '%s'" % prj_filename)
     project = op.Project(spreadsheet=prj_filename)
     project.name = get_unique_name(project.name)
     resolve_project(project)
@@ -624,7 +624,7 @@ def download_project(project_id):
         dirname = TEMPLATEDIR
     server_filename = project.save(folder=dirname, saveresults=False)
     print(">> download_project %s" % (server_filename))
-    return os.path.split(server_filename)
+    return server_filename
 
 
 def download_project_with_result(project_id):
@@ -638,7 +638,7 @@ def download_project_with_result(project_id):
     if result_records is not None:
         for result_record in result_records:
             result = result_record.load()
-            print(">> download_project_with_result result", result.name)
+            print(">> download_project_with_result result '%s'" % result.name)
             project.addresult(result)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
@@ -688,9 +688,8 @@ def resolve_project(project):
     Checks project to ensure that all the cross-reference fields are
     properly specified and that defaults are sensibly populated.
     """
-    print(">> resolve_project")
     is_change = False
-
+    print(">> resolve_project '%s'" % project.name)
     # Restore links always, don't worry about changes
     project.restorelinks() 
 
@@ -717,17 +716,11 @@ def resolve_project(project):
             if scenario.progsetname not in project.progsets:
                 del_scenario_keys.append(scenario_key)
     if del_scenario_keys:
-        print(">>> resolve_project delete scenarios %s" % del_scenario_keys)
         for scenario_key in del_scenario_keys:
+            print(">> resolve_project delete %s" % scenario_key)
             project.scens.pop(scenario_key, None)
 
     is_change = is_change or len(del_scenario_keys) > 0
-
-    # makes sure there is a parset called default as defaultprograms requires this
-    if "default" not in project.parsets and len(project.parsets) > 0:
-        parsetname = project.parsets[0].name
-        project.copyparset(orig=parsetname, new="default")
-        is_change = True
 
     # check optimizations are good
     del_optim_keys = []
@@ -752,17 +745,11 @@ def resolve_project(project):
             if optim.progsetname not in project.progsets:
                 del_optim_keys.append(optim_key)
     if del_optim_keys:
-        print(">>> resolve_project delete optims %s" % del_optim_keys)
         for optim_key in del_optim_keys:
+            print(">> resolve_project delete optim %s" % optim_key)
             project.optims.pop(optim_key, None)
 
     is_change = is_change or len(del_optim_keys) > 0
-
-    query = db.session.query(PyObjectDb).filter_by(user_id=current_user.id)
-    portfolios = []
-    for record in query:
-        portfolio = record.load()
-        portfolios.append(portfolio)
 
     # ensure constraints set to None are given a default
     for optim in project.optims.values():
@@ -777,7 +764,7 @@ def resolve_project(project):
     is_delete_result = False
     for result in results:
         if result.parset_id is not None and result.parset_id not in parset_ids:
-            print(">>> resolve_project delete result %s" % result.parset_id)
+            print(">> resolve_project delete result %s" % result.parset_id)
             db.session.delete(result)
             is_delete_result = True
     db.session.commit()

@@ -4,14 +4,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller(
     'ProjectOpenController',
-    function ($scope, $http, activeProject, util, modalService,
-        userManager, projectApi, $state, $upload,
-        $modal, toastr) {
+    function ($scope, $http, util, modalService, userManager,
+              projectApi, $state, $upload, $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
-        $scope.activeProject = activeProject;
         $scope.projectApi = projectApi;
       }
 
@@ -63,7 +61,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.open = function (name, id) {
-        activeProject.setActiveProjectFor(name, id, userManager.user);
+        projectApi.setActiveProjectId(id);
       };
 
       $scope.copy = function(name, projectId) {
@@ -146,28 +144,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadProject = function (name, id) {
-        projectApi
-          .downloadProjectFile(id)
-          .success(function(data) {
-            var blob = new Blob([data], {type: 'application/octet-stream'});
-            saveAs(blob, (name + '.prj'));
+        util
+          .rpcDownload(
+            'download_project', [id])
+          .then(function() {
+            toastr.success('Project downloaded');
           });
       };
 
       $scope.downloadPrjWithResults = function (name, id) {
-        $http.post(
-          '/api/download',
-          {
-            'name': 'download_project_with_result',
-            'args': [id]
-          },
-          {
-            headers: {'Content-type': 'application/octet-stream'},
-            responseType:'blob'
-          })
-          .then(function(response) {
-            var blob = new Blob([response.data], {type: 'application/octet-stream'});
-            saveAs(blob, (name + '.prj'));
+        util
+          .rpcDownload(
+            'download_project_with_result', [id])
+          .then(function() {
+            toastr.success('Project downloaded');
           });
       };
 

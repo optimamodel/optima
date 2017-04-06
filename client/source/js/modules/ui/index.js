@@ -2,7 +2,7 @@ define([
     'angular',
     './menu-directive',
     './modal-service',
-    '../common/active-project-service',
+    '../project/index',
     '../user/user-manager-service'
   ],
   function (angular) {
@@ -10,28 +10,24 @@ define([
     var module = angular
       .module(
         'app.ui', [
-          'app.active-project',
+          'app.project',
           'app.ui.modal',
           'app.ui.menu'
         ])
       .controller(
         'MainCtrl',
-        function ($scope, $state, activeProject, userManager, projectApi) {
+        function ($scope, $state, userManager, projectApi) {
           $scope.user = userManager.user;
           $scope.state = $state;
           $scope.userLogged = function () { return userManager.isLoggedIn; };
-          $scope.activeProject = activeProject;
+          $scope.projectApi = projectApi;
           $scope.projects = projectApi.projects;
           $scope.changeProject = function(projectId) {
-            console.log('changeProject', projectId);
-            _.each(projectApi.projects, function(project) {
-              if (project.id == projectId) {
-                activeProject.setActiveProjectFor(
-                  project.name, projectId, $scope.user)
-              }
-            });
-          }
-         });
+            var project = _.findWhere($scope.projects, { id: projectId });
+            console.log('changeProject', project.name);
+            projectApi.setActiveProjectId(projectId);
+          };
+        });
     return module;
   }
 );
