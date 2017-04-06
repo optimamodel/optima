@@ -56,18 +56,21 @@ define(
               .get('/api/project/' + $scope.state.project.id + '/progsets')
               .then(function(response) {
                 $scope.state.progsets = response.data.progsets;
+                console.log('reloadActiveProject progsets', $scope.state.progsets);
                 return $http.get('/api/project/' + $scope.state.project.id + '/parsets');
               })
               .then(function(response) {
                 $scope.state.parsets = response.data.parsets;
+                console.log('reloadActiveProject parsets', $scope.state.parsets);
                 return $http.get('/api/project/' + $scope.state.project.id + '/optimizations')
               })
               .then(function(response) {
+                console.log('reloadActiveProject optims', response.data);
                 var data = response.data;
                 $scope.state.optimizations = data.optimizations;
-                console.log('optimizations', data.optimizations);
+                console.log('reloadActiveProject optimizations', data.optimizations);
                 $scope.defaultOptimizationsByProgsetId = data.defaultOptimizationsByProgsetId;
-                console.log('defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
+                console.log('reloadActiveProject defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
                 $scope.state.optimization = undefined;
                 if ($scope.state.optimizations.length > 0) {
                   $scope.setActiveOptimization($scope.state.optimizations[0]);
@@ -96,7 +99,7 @@ define(
       var parset = _.find($scope.state.parsets, function(parset) {
         return parset.id == parset_id;
       });
-      return parset.name
+      return _.property('name')(parset);
     }
 
     function getProgsetName(optimization) {
@@ -104,7 +107,7 @@ define(
       var progset = _.find($scope.state.progsets, function(progset) {
         return progset.id == progsetId;
       });
-      return progset.name
+      return _.property('name')(progset)
     }
 
     $scope.checkNotRunnable = function() {
