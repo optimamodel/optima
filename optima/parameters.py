@@ -1020,7 +1020,7 @@ def makepars(data=None, verbose=2, die=True):
     try: 
         rawpars = loadpartable() # Read the parameters structure
     except OptimaException as E: 
-        errormsg = 'Could not load parameter table: "%s"' % E.message
+        errormsg = 'Could not load parameter table: "%s"' % E.__repr__()
         raise OptimaException(errormsg)
         
     pars['fromto'], pars['transmatrix'] = loadtranstable(npops=len(popkeys)) # Read the transitions
@@ -1070,7 +1070,7 @@ def makepars(data=None, verbose=2, die=True):
                 pars[parname] = Yearpar(t=nan, **rawpar)
             
         except Exception as E:
-            errormsg = 'Failed to convert parameter %s:\n%s' % (parname, E.message)
+            errormsg = 'Failed to convert parameter %s:\n%s' % (parname, E.__repr__())
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
     
@@ -1210,7 +1210,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                 simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
-                errormsg += 'Error: "%s"' % E.message
+                errormsg += 'Error: "%s"' % E.__repr__()
                 raise OptimaException(errormsg)
 
 

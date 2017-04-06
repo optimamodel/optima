@@ -517,10 +517,10 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
                         printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
                     except Exception as E: 
                         if die: raise E
-                        else: print('??????: %s' % E.message)
+                        else: print('??????: %s' % E.__repr__())
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
-                    except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.message))
+                    except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.__repr__()))
                     if pd==len(allplotdata)-1: # Do this for the last plot only
                         ax.set_ylim((0,1.1*ax.get_ylim()[1]))
                         ax.set_xlim((tvec[0],tvec[-1]))
@@ -685,7 +685,7 @@ def gui_loadproj():
     project = None
     if filepath:
         try: project = loadproj(filepath, verbose=0)
-        except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.message))
+        except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.__repr__()))
         if type(project)==Project: return project
         else: print('File "%s" is not an Optima project file' % filepath)
     else:
@@ -784,7 +784,7 @@ def gui_loadport():
     if filepath:
         try: tmpport = loadobj(filepath, verbose=0)
         except Exception as E: 
-            warning('Could not load file "%s" because "%s"' % (filepath, E.message))
+            warning('Could not load file "%s" because "%s"' % (filepath, E.__repr__()))
             return None
         if tmpport is not None: 
             if type(tmpport)==Portfolio:
