@@ -4,14 +4,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller(
     'ProjectOpenController',
-    function ($scope, $http, activeProject, util, modalService,
-        userManager, projectApi, $state, $upload,
-        $modal, toastr) {
+    function ($scope, $http, util, modalService, userManager,
+              projectApi, $state, $upload, $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
-        $scope.activeProject = activeProject;
         $scope.projectApi = projectApi;
       }
 
@@ -63,7 +61,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.open = function (name, id) {
-        activeProject.setActiveProjectId(id);
+        projectApi.setActiveProjectId(id);
       };
 
       $scope.copy = function(name, projectId) {

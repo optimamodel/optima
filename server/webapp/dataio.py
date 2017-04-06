@@ -591,7 +591,7 @@ def create_project_from_prj(prj_filename=None, user_id=None, project=None):
     Returns the project id of the new project.
     """
 
-    print(">> create_project_from_prj", prj_filename, user_id, project)
+    print(">> create_project_from_prj '%s'" % prj_filename)
     if prj_filename:
         project = op.loadproj(prj_filename)
     project.name = get_unique_name(project.name)
@@ -604,7 +604,7 @@ def create_project_from_spreadsheet(prj_filename, user_id):
     """
     Returns the project id of the new project.
     """
-    print(">> create_project_from_spreadsheet", prj_filename, user_id)
+    print(">> create_project_from_spreadsheet '%s'" % prj_filename)
     project = op.Project(spreadsheet=prj_filename)
     project.name = get_unique_name(project.name)
     resolve_project(project)
@@ -623,7 +623,7 @@ def download_project(project_id):
     if not dirname:
         dirname = TEMPLATEDIR
     server_filename = project.save(folder=dirname, saveresults=False)
-    print(">> download_project %s" % (server_filename))
+    print(">> download_project '%s'" % (server_filename))
     return os.path.split(server_filename)
 
 
@@ -638,13 +638,13 @@ def download_project_with_result(project_id):
     if result_records is not None:
         for result_record in result_records:
             result = result_record.load()
-            print(">> download_project_with_result result", result.name)
+            print(">> download_project_with_result result '%s'" % result.name)
             project.addresult(result)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
     server_filename = project.save(folder=dirname, saveresults=True)
-    print(">> download_project_with_result %s" % (server_filename))
+    print(">> download_project_with_result '%s'" % (server_filename))
     return server_filename
 
 

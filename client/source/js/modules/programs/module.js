@@ -2,7 +2,6 @@ define([
   'angular',
   'ui.router',
   'toastr',
-  '../project/project-api-service',
   ], function (angular) {
   'use strict';
 

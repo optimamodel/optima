@@ -108,7 +108,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return item.id != id;
           });
 
-          activeProject.ifActiveResetFor(id, userManager.user);
+          activeProject.clearProjectIdIfActive(id);
         });
     };
   });

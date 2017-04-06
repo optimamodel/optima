@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ModelCalibrationController', function (
       $scope, $http, modalService, $upload,
-      $modal, $timeout, toastr, activeProject, projectApi, globalPoller) {
+      $modal, $timeout, toastr, projectApi, globalPoller) {
 
     function initialize() {
       $scope.parsets = [];
@@ -19,9 +19,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       reloadActiveProject();
 
-      $scope.activeProject = activeProject;
-      $scope.$watch('activeProject.project.id', function() {
-        if (!_.isUndefined($scope.project) && ($scope.project.id !== activeProject.project.id)) {
+      $scope.projectApi = projectApi;
+      $scope.$watch('projectApi.project.id', function() {
+        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectApi.project.id)) {
           reloadActiveProject();
         }
       });
@@ -100,7 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       console.log('active parset id', $scope.state.parset.id);
       $http
         .post(
-          '/api/project/' + activeProject.project.id
+          '/api/project/' + projectApi.project.id
           + '/parsets/' + $scope.state.parset.id
           + '/calibration',
           {
@@ -130,7 +130,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       console.log('saveAndUpdateGraphs', $scope.parameters);
       $http
         .post(
-          '/api/project/' + activeProject.project.id
+          '/api/project/' + projectApi.project.id
           + '/parsets/' + $scope.state.parset.id
           + '/calibration',
           {
@@ -153,7 +153,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       function add(name) {
         $http
           .post(
-            '/api/project/' + activeProject.project.id + '/parsets',
+            '/api/project/' + projectApi.project.id + '/parsets',
             {name: name})
           .success(function(response) {
             $scope.parsets = response;
@@ -177,7 +177,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         function copy(name) {
           $http
             .post(
-              '/api/project/' + activeProject.project.id + '/parsets',
+              '/api/project/' + projectApi.project.id + '/parsets',
               {
                 name: name,
                 parset_id: $scope.state.parset.id
@@ -210,7 +210,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       function rename(name) {
         $http
           .put(
-            '/api/project/' + activeProject.project.id
+            '/api/project/' + projectApi.project.id
             + '/parsets/' + $scope.state.parset.id,
             {name: name})
           .success(function() {
@@ -242,7 +242,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       function remove() {
         $http
           .delete(
-            '/api/project/' + activeProject.project.id
+            '/api/project/' + projectApi.project.id
             + '/parsets/' + $scope.state.parset.id)
           .success(function() {
             $scope.parsets = _.filter(
@@ -273,7 +273,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.downloadParameterSet = function() {
       $http
         .get(
-          '/api/project/' + activeProject.project.id
+          '/api/project/' + projectApi.project.id
           + '/parsets/' + $scope.state.parset.id
           + '/data',
           {
@@ -292,7 +292,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .element('<input type=\'file\'>')
         .change(function(event) {
           $upload.upload({
-            url: '/api/project/' + activeProject.project.id
+            url: '/api/project/' + projectApi.project.id
             + '/parsets/' + $scope.state.parset.id
             + '/data',
             file: event.target.files[0]
@@ -308,7 +308,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         function () {
           $http
             .post(
-              '/api/project/' + activeProject.project.id
+              '/api/project/' + projectApi.project.id
               + '/refreshparset/' + $scope.state.parset.id)
             .success(function(response) {
               toastr.success('refreshed parameter set')
@@ -337,7 +337,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.state.isRunnable = false;
         $http
           .get(
-            '/api/project/' + activeProject.project.id
+            '/api/project/' + projectApi.project.id
               + '/parsets/' + $scope.state.parset.id
               + '/automatic_calibration')
           .success(function(response) {
@@ -360,7 +360,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
       $http
         .post(
-          '/api/project/' + activeProject.project.id
+          '/api/project/' + projectApi.project.id
             + '/parsets/' + $scope.state.parset.id
             + '/automatic_calibration',
           data)
@@ -378,7 +378,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function initPollAutoCalibration() {
       globalPoller.startPoll(
         $scope.state.parset.id,
-        '/api/project/' + activeProject.project.id
+        '/api/project/' + projectApi.project.id
           + '/parsets/' + $scope.state.parset.id
           + '/automatic_calibration',
         function (response) {
