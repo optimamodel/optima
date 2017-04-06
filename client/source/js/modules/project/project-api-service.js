@@ -45,7 +45,7 @@ define(['./module'], function (module) {
               .then(function(response) {
                 var project = _.findWhere(projectApi.projects, {name: newName});
                 console.log('copyProject', project, projectApi.projects);
-                activeProject.setActiveProjectFor(project.id);
+                activeProject.setActiveProjectId(project.id);
                 deferred.resolve(response);
               });
           },
@@ -68,7 +68,7 @@ define(['./module'], function (module) {
           {responseType: 'blob'})
         .then(
           function(response) {
-            activeProject.setActiveProjectFor(project.id);
+            activeProject.setActiveProjectId(project.id);
             deferred.resolve(response);
           },
           function(response) {
@@ -111,7 +111,7 @@ define(['./module'], function (module) {
                 console.log('createProject', projectParams);
                 var project = _.findWhere(
                   projectApi.projects, {name: projectParams.name});
-                activeProject.setActiveProjectFor(project.id);
+                activeProject.setActiveProjectId(project.id);
                 if (response.data) {
                   var blob = new Blob(
                     [response.data],
@@ -164,7 +164,7 @@ define(['./module'], function (module) {
               function(response) {
                 var project = _.findWhere(
                   projectApi.projects, {id: projectId});
-                activeProject.setActiveProjectFor(project.id);
+                activeProject.setActiveProjectId(project.id);
                 deferred.resolve(response);
               },
               function(response) {
@@ -188,7 +188,7 @@ define(['./module'], function (module) {
               function(response) {
                 var project = _.findWhere(
                   projectApi.projects, {id: projectId});
-                activeProject.setActiveProjectFor(project.id);
+                activeProject.setActiveProjectId(project.id);
                 deferred.resolve(response);
               },
               function(response) {
