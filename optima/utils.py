@@ -1,7 +1,6 @@
 ##############################################################################
-### PRINTING FUNCTIONS
+### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
-
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     '''
@@ -107,37 +106,6 @@ def defaultrepr(obj, maxlen=300):
 
 
 
-def printarr(arr, arrformat='%0.2f  '):
-    ''' 
-    Print a numpy array nicely.
-    
-    Example:
-        from utils import printarr
-        from numpy import random
-        printarr(rand(3,7,4))
-    
-    Version: 2014dec01 by cliffk
-    '''
-    from numpy import ndim
-    if ndim(arr)==1:
-        string = ''
-        for i in range(len(arr)):
-            string += arrformat % arr[i]
-        print(string)
-    elif ndim(arr)==2:
-        for i in range(len(arr)):
-            printarr(arr[i], arrformat)
-    elif ndim(arr)==3:
-        for i in range(len(arr)):
-            print('='*len(arr[i][0])*len(arrformat % 1))
-            for j in range(len(arr[i])):
-                printarr(arr[i][j], arrformat)
-    else:
-        print(arr) # Give up
-    return None
-    
-
-
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
     '''
     Small wrapper to make textwrap more user friendly.
@@ -176,8 +144,6 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     if n: output = output[n:] # Need to remove the fake prefix
     return output
     
-
-
 
 
 def sigfig(X, sigfigs=5, SI=False):
@@ -233,9 +199,180 @@ def sigfig(X, sigfigs=5, SI=False):
 
 
 
+def printarr(arr, arrformat='%0.2f  '):
+    ''' 
+    Print a numpy array nicely.
+    
+    Example:
+        from utils import printarr
+        from numpy import random
+        printarr(rand(3,7,4))
+    
+    Version: 2014dec01 by cliffk
+    '''
+    from numpy import ndim
+    if ndim(arr)==1:
+        string = ''
+        for i in range(len(arr)):
+            string += arrformat % arr[i]
+        print(string)
+    elif ndim(arr)==2:
+        for i in range(len(arr)):
+            printarr(arr[i], arrformat)
+    elif ndim(arr)==3:
+        for i in range(len(arr)):
+            print('='*len(arr[i][0])*len(arrformat % 1))
+            for j in range(len(arr[i])):
+                printarr(arr[i][j], arrformat)
+    else:
+        print(arr) # Give up
+    return None
 
 
 
+def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
+    '''
+    Nicely print a complicated data structure, a la Matlab.
+    Arguments:
+      data: the data to display
+      name: the name of the variable (automatically read except for first one)
+      depth: how many levels of recursion to follow
+      maxlen: number of characters of data to display (if 0, don't show data)
+      indent: where to start the indent (used internally)
+    
+    Version: 1.0 (2015aug21)    
+    '''
+    datatype = type(data)
+    def printentry(data):
+        from numpy import shape, ndarray
+        if datatype==dict: string = ('dict with %i keys' % len(data.keys()))
+        elif datatype==list: string = ('list of length %i' % len(data))
+        elif datatype==tuple: string = ('tuple of length %i' % len(data))
+        elif datatype==ndarray: string = ('array of shape %s' % str(shape(data)))
+        elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
+        elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
+        else: string = datatype.__name__
+        if showcontents and maxlen>0:
+            datastring = ' | '+str(data)
+            if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
+        else: datastring=''
+        return string+datastring
+    
+    string = printentry(data).replace('\n',' \ ') # Remove newlines
+    print(level*'..' + indent + name + ' | ' + string)
+
+    if depth>0:
+        level += 1
+        if type(data)==dict:
+            keys = data.keys()
+            maxkeylen = max([len(key) for key in keys])
+            for key in keys:
+                thisindent = ' '*(maxkeylen-len(key))
+                printdata(data[key], name=key, depth=depth-1, indent=indent+thisindent, level=level)
+        elif type(data) in [list, tuple]:
+            for i in range(len(data)):
+                printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent, level=level)
+        elif type(data).__name__ in ['module', 'class']:
+            keys = dir(data)
+            maxkeylen = max([len(key) for key in keys])
+            for key in keys:
+                if key[0]!='_': # Skip these
+                    thisindent = ' '*(maxkeylen-len(key))
+                    printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
+        print('\n')
+    return None
+
+
+def getdate(obj, which='modified', fmt='str'):
+        ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
+        from time import mktime
+        
+        dateformat = '%Y-%b-%d %H:%M:%S'
+        
+        try:
+            if isinstance(obj, basestring): return obj # Return directly if it's a string
+            obj.timetuple() # Try something that will only work if it's a date object
+            dateobj = obj # Test passed: it's a date object
+        except: # It's not a date object
+            if which=='created': dateobj = obj.created
+            elif which=='modified': dateobj = obj.modified
+            elif which=='spreadsheet': dateobj = obj.spreadsheetdate
+            else: raise Exception('Getting date for "which=%s" not understood; must be "created", "modified", or "spreadsheet"' % which)
+        
+        if fmt=='str':
+            try:
+                return dateobj.strftime(dateformat).encode('ascii', 'ignore') # Return string representation of time
+            except UnicodeDecodeError:
+                dateformat = '%Y-%m-%d %H:%M:%S'
+                return dateobj.strftime(dateformat)
+        elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
+        else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)
+
+
+
+
+def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=2, die=False):
+    ''' 
+    Send a Slack notification when something is finished.
+    
+    Arguments:
+        to:
+            The Slack channel or user to post to. Note that channels begin with #, while users begin with @.
+        message:
+            The message to be posted.
+        fromuser:
+            The pseudo-user the message will appear from.
+        token:
+            This must be a plain text file containing a single line which is the Slack API URL token.
+            Tokens are effectively passwords and must be kept secure. If you need one, contact me.
+        verbose:
+            How much detail to display.
+        die:
+            If false, prints warnings. If true, raises exceptions.
+    
+    Example usage:
+        slacknotification('#athena', 'Long process is finished')
+        slacknotification(token='/.slackurl', channel='@cliffk', message='Hi, how are you going?')
+    
+    What's the point? Add this to the end of a very long-running script to notify
+    your loved ones that the script has finished.
+        
+    Version: 2017feb09 by cliffk    
+    '''
+    
+    # Imports
+    from requests import post # Simple way of posting data to a URL
+    from json import dumps # For sanitizing the message
+    from getpass import getuser # In case username is left blank
+    
+    # Validate input arguments
+    printv('Sending Slack message...', 2, verbose)
+    if token is None: token = '/.slackurl'
+    if to is None: to = '#athena'
+    if fromuser is None: fromuser = getuser()+'-bot'
+    if message is None: message = 'This is an automated notification: your notifier is notifying you.'
+    printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
+    
+    # Try opening token file    
+    try:
+        with open(token) as f: slackurl = f.read()
+    except:
+        print('Could not open Slack URL/token file "%s"' % token)
+        if die: raise
+        else: return None
+    
+    # Package and post payload
+    payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
+    printv('Full payload: %s' % payload, 4, verbose)
+    response = post(url=slackurl, data=payload)
+    printv(response, 3, verbose) # Optionally print response
+    printv('Message sent.', 1, verbose) # We're done
+    return None
+
+
+##############################################################################
+### TYPE FUNCTIONS
+##############################################################################
 
 
 def isiterable(obj):
@@ -352,69 +489,6 @@ def promotetoodict(obj=None):
         return newobj
     else:
         return odict({'Key':obj})
-
-
-def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
-    '''
-    Nicely print a complicated data structure, a la Matlab.
-    Arguments:
-      data: the data to display
-      name: the name of the variable (automatically read except for first one)
-      depth: how many levels of recursion to follow
-      maxlen: number of characters of data to display (if 0, don't show data)
-      indent: where to start the indent (used internally)
-    
-    Note: "printdata" is aliased to "pd".
-
-    Version: 1.0 (2015aug21)    
-    '''
-    datatype = type(data)
-    def printentry(data):
-        from numpy import shape, ndarray
-        if datatype==dict: string = ('dict with %i keys' % len(data.keys()))
-        elif datatype==list: string = ('list of length %i' % len(data))
-        elif datatype==tuple: string = ('tuple of length %i' % len(data))
-        elif datatype==ndarray: string = ('array of shape %s' % str(shape(data)))
-        elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
-        elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
-        else: string = datatype.__name__
-        if showcontents and maxlen>0:
-            datastring = ' | '+str(data)
-            if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
-        else: datastring=''
-        return string+datastring
-    
-    string = printentry(data).replace('\n',' \ ') # Remove newlines
-    print(level*'..' + indent + name + ' | ' + string)
-
-
-    if depth>0:
-        level += 1
-        if type(data)==dict:
-            keys = data.keys()
-            maxkeylen = max([len(key) for key in keys])
-            for key in keys:
-                thisindent = ' '*(maxkeylen-len(key))
-                printdata(data[key], name=key, depth=depth-1, indent=indent+thisindent, level=level)
-        elif type(data) in [list, tuple]:
-            for i in range(len(data)):
-                printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent, level=level)
-        elif type(data).__name__ in ['module', 'class']:
-            keys = dir(data)
-            maxkeylen = max([len(key) for key in keys])
-            for key in keys:
-                if key[0]!='_': # Skip these
-                    thisindent = ' '*(maxkeylen-len(key))
-                    printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
-        print('\n')
-    return None
-pd = printdata # Alias to make it easier to use
-
-
-
-
-
-
 
 
 
@@ -636,9 +710,10 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 def perturb(n=1, span=0.5, randseed=None):
     ''' Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1.'''
     from numpy.random import rand, seed
-    if randseed>=0: seed(randseed) # Optionally reset random seed
+    if randseed is not None: seed(int(randseed)) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
     return output
+    
     
 def scaleratio(inarray,total):
     ''' Multiply a list or array by some factor so that its sum is equal to the total. '''
@@ -683,100 +758,7 @@ def vec2obj(orig=None, newvec=None, inds=None):
 
 
 ##############################################################################
-### NESTED DICTIONARY FUNCTIONS
-##############################################################################
-
-'''
-Four little functions to get and set data from nested dictionaries. The first two were stolen from:
-    http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-
-"getnested" will get the value for the given list of keys:
-    getnested(foo, ['a','b'])
-
-"setnested" will set the value for the given list of keys:
-    setnested(foo, ['a','b'], 3)
-
-"makenested" will recursively update a dictionary with the given list of keys:
-    makenested(foo, ['a','b'])
-
-"iternested" will return a list of all the twigs in the current dictionary:
-    twigs = iternested(foo)
-
-Example 1:
-    from nested import makenested, getnested, setnested
-    foo = {}
-    makenested(foo, ['a','b'])
-    foo['a']['b'] = 3
-    print getnested(foo, ['a','b'])    # 3
-    setnested(foo, ['a','b'], 7)
-    print getnested(foo, ['a','b'])    # 7
-    makenested(foo, ['yerevan','parcels'])
-    setnested(foo, ['yerevan','parcels'], 'were tasty')
-    print foo['yerevan']  # {'parcels': 'were tasty'}
-
-Example 2:
-    from nested import makenested, iternested, setnested
-    foo = {}
-    makenested(foo, ['a','x'])
-    makenested(foo, ['a','y'])
-    makenested(foo, ['a','z'])
-    makenested(foo, ['b','a','x'])
-    makenested(foo, ['b','a','y'])
-    count = 0
-    for twig in iternested(foo):
-        count += 1
-        setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
-
-Version: 2014nov29 by cliffk
-'''
-
-def getnested(nesteddict, keylist, safe=False): 
-    ''' Get a value from a nested dictionary'''
-    from functools import reduce
-    output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
-    return output
-
-def setnested(nesteddict, keylist, value): 
-    ''' Set a value in a nested dictionary '''
-    getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
-    return None # Modify nesteddict in place
-
-def makenested(nesteddict, keylist,item=None):
-    ''' Insert item into nested dictionary, creating keys if required '''
-    currentlevel = nesteddict
-    for i,key in enumerate(keylist[:-1]):
-    	if not(key in currentlevel):
-    		currentlevel[key] = {}
-    	currentlevel = currentlevel[key]
-    currentlevel[keylist[-1]] = item
-
-def iternested(nesteddict,previous = []):
-	output = []
-	for k in nesteddict.items():
-		if isinstance(k[1],dict):
-			output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
-		else:
-			output.append(previous+[k[0]])
-	return output
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##############################################################################
-### MISCELLANEOUS FUNCTIONS
+### FILE/MISC. FUNCTIONS
 ##############################################################################
 
 
@@ -894,6 +876,70 @@ def getfilelist(folder=None, ext=None):
     return filelist
 
 
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False):
+    '''
+    Utility for taking a filename and folder -- or not -- and generating a valid path from them.
+    
+    Inputs:
+        filename = the filename, or full file path, to save to -- in which case this utility does nothing
+        folder = the name of the folder to be prepended to the filename
+        ext = the extension to ensure the file has
+        default = a name or list of names to use if filename is None
+        split = whether to return the path and filename separately
+        makedirs = whether or not to make the folders to save into if they don't exist
+        verbose = how much detail to print
+    
+    Example:
+        makefilepath(filename=None, folder='./congee', ext='prj', default=[project.filename, project.name], split=True, abspath=True, makedirs=True)
+    
+    Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
+        * Makes folder ./congee
+        * Returns e.g. ('/home/cliffk/optima/congee', 'soggyrice.prj')
+    
+    Actual code example from project.py:
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
+    
+    Version: 2017apr04    
+    '''
+    
+    # Initialize
+    import os
+    filefolder = '' # The folder the file will be located in
+    filebasename = '' # The filename
+    
+    # Process filename
+    if filename is None:
+        defaultnames = promotetolist(default) # Loop over list of default names
+        for defaultname in defaultnames:
+            if not filename and defaultname: filename = defaultname # Replace empty name with default name
+    if filename is not None: # If filename exists by now, use it
+        filebasename = os.path.basename(filename)
+        filefolder = os.path.dirname(filename)
+    if not filebasename: filebasename = 'default' # If all else fails
+    
+    # Add extension if it's defined but missing from the filebasename
+    if ext and not filebasename.endswith(ext): 
+        filebasename += '.'+ext
+    if verbose:
+        print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
+    
+    # Process folder
+    if folder: # Replace with specified folder, if defined
+        filefolder = folder 
+    if abspath: # Convert to absolute path
+        filefolder = os.path.abspath(filefolder) 
+    if makedirs: # Make sure folder exists
+        try: os.makedirs(filefolder)
+        except: pass
+    if verbose:
+        print('From filename="%s", folder="%s", abspath="%s", makedirs="%s", made folder name "%s"' % (filename, folder, abspath, makedirs, filefolder))
+    
+    fullfile = os.path.join(filefolder, filebasename) # And the full thing
+    
+    if split: return filefolder, filebasename
+    else:     return fullfile # Or can do os.path.split() on output
+
+
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
     ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
     from psutil import cpu_percent
@@ -927,8 +973,6 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     return None
     
     
-
-
 
 def runcommand(command, printinput=False, printoutput=False):
    ''' Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 '''
@@ -989,111 +1033,89 @@ def compareversions(version1=None, version2=None):
 
 
 
+##############################################################################
+### NESTED DICTIONARY FUNCTIONS
+##############################################################################
 
+'''
+Four little functions to get and set data from nested dictionaries. The first two were stolen from:
+    http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
 
+"getnested" will get the value for the given list of keys:
+    getnested(foo, ['a','b'])
 
-def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=2, die=False):
-    ''' 
-    Send a Slack notification when something is finished.
-    
-    Arguments:
-        to:
-            The Slack channel or user to post to. Note that channels begin with #, while users begin with @.
-        message:
-            The message to be posted.
-        fromuser:
-            The pseudo-user the message will appear from.
-        token:
-            This must be a plain text file containing a single line which is the Slack API URL token.
-            Tokens are effectively passwords and must be kept secure. If you need one, contact me.
-        verbose:
-            How much detail to display.
-        die:
-            If false, prints warnings. If true, raises exceptions.
-    
-    Example usage:
-        slacknotification('#athena', 'Long process is finished')
-        slacknotification(token='/.slackurl', channel='@cliffk', message='Hi, how are you going?')
-    
-    What's the point? Add this to the end of a very long-running script to notify
-    your loved ones that the script has finished.
-        
-    Version: 2017feb09 by cliffk    
-    '''
-    
-    # Imports
-    from requests import post # Simple way of posting data to a URL
-    from json import dumps # For sanitizing the message
-    from getpass import getuser # In case username is left blank
-    
-    # Validate input arguments
-    printv('Sending Slack message...', 2, verbose)
-    if token is None: token = '/.slackurl'
-    if to is None: to = '#athena'
-    if fromuser is None: fromuser = getuser()+'-bot'
-    if message is None: message = 'This is an automated notification: your notifier is notifying you.'
-    printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
-    
-    # Try opening token file    
-    try:
-        with open(token) as f: slackurl = f.read()
-    except:
-        print('Could not open Slack URL/token file "%s"' % token)
-        if die: raise
-        else: return None
-    
-    # Package and post payload
-    payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
-    printv('Full payload: %s' % payload, 4, verbose)
-    response = post(url=slackurl, data=payload)
-    printv(response, 3, verbose) # Optionally print response
-    printv('Message sent.', 1, verbose) # We're done
-    return None
+"setnested" will set the value for the given list of keys:
+    setnested(foo, ['a','b'], 3)
+
+"makenested" will recursively update a dictionary with the given list of keys:
+    makenested(foo, ['a','b'])
+
+"iternested" will return a list of all the twigs in the current dictionary:
+    twigs = iternested(foo)
+
+Example 1:
+    from nested import makenested, getnested, setnested
+    foo = {}
+    makenested(foo, ['a','b'])
+    foo['a']['b'] = 3
+    print getnested(foo, ['a','b'])    # 3
+    setnested(foo, ['a','b'], 7)
+    print getnested(foo, ['a','b'])    # 7
+    makenested(foo, ['yerevan','parcels'])
+    setnested(foo, ['yerevan','parcels'], 'were tasty')
+    print foo['yerevan']  # {'parcels': 'were tasty'}
+
+Example 2:
+    from nested import makenested, iternested, setnested
+    foo = {}
+    makenested(foo, ['a','x'])
+    makenested(foo, ['a','y'])
+    makenested(foo, ['a','z'])
+    makenested(foo, ['b','a','x'])
+    makenested(foo, ['b','a','y'])
+    count = 0
+    for twig in iternested(foo):
+        count += 1
+        setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
+
+Version: 2014nov29 by cliffk
+'''
+
+def getnested(nesteddict, keylist, safe=False): 
+    ''' Get a value from a nested dictionary'''
+    from functools import reduce
+    output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
+    return output
+
+def setnested(nesteddict, keylist, value): 
+    ''' Set a value in a nested dictionary '''
+    getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
+    return None # Modify nesteddict in place
+
+def makenested(nesteddict, keylist,item=None):
+    ''' Insert item into nested dictionary, creating keys if required '''
+    currentlevel = nesteddict
+    for i,key in enumerate(keylist[:-1]):
+    	if not(key in currentlevel):
+    		currentlevel[key] = {}
+    	currentlevel = currentlevel[key]
+    currentlevel[keylist[-1]] = item
+
+def iternested(nesteddict,previous = []):
+	output = []
+	for k in nesteddict.items():
+		if isinstance(k[1],dict):
+			output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
+		else:
+			output.append(previous+[k[0]])
+	return output
 
 
 
 
 ##############################################################################
-### CLASS FUNCTIONS
+### ODICT CLASS
 ##############################################################################
-
-
-
-
-def getdate(obj, which='modified', fmt='str'):
-        ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
-        from time import mktime
-        
-        dateformat = '%Y-%b-%d %H:%M:%S'
-        
-        try:
-            if isinstance(obj, basestring): return obj # Return directly if it's a string
-            obj.timetuple() # Try something that will only work if it's a date object
-            dateobj = obj # Test passed: it's a date object
-        except: # It's not a date object
-            if which=='created': dateobj = obj.created
-            elif which=='modified': dateobj = obj.modified
-            elif which=='spreadsheet': dateobj = obj.spreadsheetdate
-            else: raise Exception('Getting date for "which=%s" not understood; must be "created", "modified", or "spreadsheet"' % which)
-        
-        if fmt=='str':
-            try:
-                return dateobj.strftime(dateformat).encode('ascii', 'ignore') # Return string representation of time
-            except UnicodeDecodeError:
-                dateformat = '%Y-%m-%d %H:%M:%S'
-                return dateobj.strftime(dateformat)
-        elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
-        else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)
-
-
-
-
-
-
-##############################################################################
-### ORDERED DICTIONARY
-##############################################################################
-
 
 from collections import OrderedDict
 from numpy import array

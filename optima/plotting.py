@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017mar17
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -124,7 +124,7 @@ def getplotselections(results, advanced=False):
 
 
 
-def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=None, plotendyear=None, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -144,7 +144,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     results = sanitizeresults(results)
-
+        
     ## Add improvement plot
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
@@ -182,7 +182,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
         try: 
-            cascadeplots = plotcascade(results, die=die, **kwargs)
+            cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
             allplots.update(cascadeplots)
         except OptimaException as E: 
             if die: raise E
@@ -210,7 +210,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
     allplots.update(epiplots)
     
     return allplots
@@ -221,7 +221,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=50, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, **kwargs):
+            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -243,6 +243,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
             errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
             raise OptimaException(errormsg)
 
+        # Get year indices for producing plots
+        startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
+        
         # Initialize
         toplot = promotetolist(toplot) # If single value, put inside list
         epiplots = odict()
@@ -281,7 +284,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
         
         # Remove failed ones
         toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
-
+        
 
         ################################################################################################################
         ## Loop over each plot
@@ -440,7 +443,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                     ax.set_ylabel(plotylabel)
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
-                ax.set_xlim((results.tvec[0], results.tvec[-1]))
+                ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:
                     if isstacked: 
                         handles, labels = ax.get_legend_handles_labels()
@@ -547,10 +550,19 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0
     
     alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
-    proglabels = budgets[0].keys() 
-    nprogs = len(proglabels)
+    allprogkeys = [] # Create master list of all programs in all budgets
+    nprogslist = []
+    for budget in budgets.values():
+        nprogslist.append(len(budget.keys())) # Get the number of programs in this budget
+        for key in budget.keys():
+            if key not in allprogkeys:
+                allprogkeys.append(key)
+    nallprogs = len(allprogkeys)
     nallocs = len(alloclabels)
-    progcolors = gridcolors(nprogs)
+    allprogcolors = gridcolors(nallprogs)
+    colordict = odict()
+    for k,key in enumerate(allprogkeys):
+        colordict[key] = allprogcolors[k]
     
     budgetplots = odict()
     
@@ -563,10 +575,11 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             
             # Make a pie
             ydata = budgets[i][:]
-            ax.pie(ydata, colors=progcolors)
+            piecolors = [colordict[key] for key in budgets[i].keys()]
+            ax.pie(ydata, colors=piecolors)
             
             # Set up legend
-            labels = dcp(proglabels)
+            labels = dcp(allprogkeys)
             labels.reverse() # Wrong order otherwise, don't know why
             legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
             ax.legend(labels, **legendsettings) # Multiple entries, all populations
@@ -583,11 +596,18 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             position[2] = 0.5 # Make narrower
         ax.set_position(position)
         
-        for i in range(nprogs-1,-1,-1):
-            xdata = arange(nallocs)+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
-            ydata = array([budget[i] for budget in budgets.values()])
-            bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
-            ax.barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0, label=proglabels[i])
+        # Need to build up piece by piece since need to loop over budgets and then budgets
+        for b,budget in enumerate(budgets.values()):
+            for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
+                progkey = budget.keys()[p]
+                ydata = budget[p]
+                xdata = b+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+                bottomdata = sum(budget[:p])
+                label = None
+                if progkey in allprogkeys:
+                    label = progkey # Only add legend if not already added
+                    allprogkeys.remove(progkey) # Pop label so it doesn't get added to legend multiple times
+                ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=label)
     
         # Set up legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
@@ -634,25 +654,29 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     toplot = [item for item in coverages.values() if item] # e.g. [budget for budget in multires.budget]
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
-    proglabels = toplot[0].keys() 
+    progkeylists = []
+    for tp in toplot:
+        progkeylists.append(tp.keys()) # A list of key lists
     alloclabels = [key for k,key in enumerate(coverages.keys()) if coverages.values()[k]] # WARNING, will this actually work if some values are None?
-    nprogs = len(proglabels)
     nallocs = len(alloclabels)
+    nprogslist = []
+    for progkeylist in progkeylists:
+        nprogslist.append(len(progkeylist))
     
-    
-    colors = gridcolors(nprogs)
     ax = []
     ymax = 0
-    
     coverageplots = odict()
     
     for plt in range(nallocs):
         
         fig = Figure(facecolor=(1,1,1), figsize=figsize)
         
+        nprogs = nprogslist[plt]
+        proglabels = progkeylists[plt]
+        colors = gridcolors(nprogs)
         nbudgetyears = len(budgetyearstoplot[plt])
         ax.append(fig.add_subplot(111))
-        ax.set_position(position)
+        ax[-1].set_position(position)
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
@@ -711,8 +735,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 ## Plot cascade
 ##################################################################
-def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, useSIticks=True, plotdata=True, dotsize=50, **kwargs):
+def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
+                labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, 
+                useSIticks=True, plotdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -732,6 +757,9 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
     else: 
         errormsg = 'Results input to plotcascade() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
+        
+    # Get year indices for producing plots
+    startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
 
     # Set up figure and do plot
     cascadeplots = odict()
@@ -787,7 +815,7 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
                 
         if aspercentage: ax.set_ylim((0,100))
         else:            ax.set_ylim((0,ax.get_ylim()[1]))
-        ax.set_xlim((results.tvec[0], results.tvec[-1]))
+        ax.set_xlim((results.tvec[startind], results.tvec[endind]))
         
         if useSIticks: SIticks(fig)
         else:          commaticks(fig)
@@ -1025,7 +1053,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
 
 
-def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=None, savefigargs=None, index=None, verbose=2, plots=None, **kwargs):
+def saveplots(results=None, toplot=None, filetype=None, filename=None, folder=None, savefigargs=None, index=None, verbose=2, plots=None, **kwargs):
     '''
     Save the requested plots to disk.
     
@@ -1033,7 +1061,7 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
         results -- either a Resultset, Multiresultset, or a Project
         toplot -- either a plot key or a list of plot keys
         filetype -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
-        filepath -- the folder to save the file(s) in
+        folder -- the folder to save the file(s) in
         filename -- the file to save to (only uses path if multiple files)
         savefigargs -- dictionary of arguments passed to savefig()
         index -- optional argument to only save the specified plot index
@@ -1058,13 +1086,6 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
     results = sanitizeresults(results)
     
-    # Handle filepath
-    if filename is None: filename = ''
-    if filepath is None:
-        filepath = ''
-        if filename: filepath = os.path.dirname(filename)
-    if filepath: filepath += os.sep
-    
     # Either take supplied plots, or generate them
     if plots is None: # NB, this is actually a figure or a list of figures
         plots = makeplots(results=results, toplot=toplot, **kwargs)
@@ -1073,40 +1094,40 @@ def saveplots(results=None, toplot=None, filetype=None, filepath=None, filename=
     
     # Handle file types
     filenames = []
-    thisfilename = ''
     if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
-        if not filename: filename = results.projectinfo['name']+'-'+'figures.pdf'
-        thisfilename = filepath+filename
-        pdf = PdfPages(thisfilename)
-        filenames.append(thisfilename)
-        printv('PDF saved to %s' % thisfilename, 2, verbose)
+        defaultname = results.projectinfo['name']+'-'+'figures.pdf'
+        fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
+        pdf = PdfPages(fullpath)
+        filenames.append(fullpath)
+        printv('PDF saved to %s' % fullpath, 2, verbose)
     for p,item in enumerate(plots.items()):
         key,plt = item
         if index is None or index==p:
             # Handle filename
             if filename and nplots==1: # Single plot, filename supplied -- use it
-                thisfilename = filepath+filename
+                fullpath = makefilepath(filename=filename, folder=folder, default='optima-figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
             else: # Any other case, generate a filename
                 keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
-                thisfilename = filepath+results.projectinfo['name']+'-'+keyforfilename+'.'+filetype
+                defaultname = results.projectinfo['name']+'-'+keyforfilename
+                fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
             
             # Do the saving
             if savefigargs is None: savefigargs = {}
             defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
             defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
             if filetype == 'fig':
-                saveobj(thisfilename, plt)
-                filenames.append(thisfilename)
-                printv('Figure object saved to %s' % thisfilename, 2, verbose)
+                saveobj(fullpath, plt)
+                filenames.append(fullpath)
+                printv('Figure object saved to %s' % fullpath, 2, verbose)
             else:
                 reanimateplots(plt)
                 if filetype=='singlepdf':
                     pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
                 else:
-                    plt.savefig(thisfilename, **defaultsavefigargs)
-                    filenames.append(thisfilename)
-                    printv('%s plot saved to %s' % (filetype.upper(),thisfilename), 2, verbose)
+                    plt.savefig(fullpath, **defaultsavefigargs)
+                    filenames.append(fullpath)
+                    printv('%s plot saved to %s' % (filetype.upper(),fullpath), 2, verbose)
                 close(plt)
 
     if filetype=='singlepdf': pdf.close()
@@ -1158,3 +1179,27 @@ def commaticks(figure, axis='y'):
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
 
+
+def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):
+    ''' Little function to convert the requested start and end years to indices '''
+    if plotstartyear is not None:
+        try: startind = findinds(tvec,plotstartyear)[0] # Get the index of the year to start the plots
+        except: 
+            errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotstartyear, tvec[0])
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 3, verbose)
+                startind = 0
+    else: startind = 0
+
+    if plotendyear is not None:
+        try: endind = findinds(tvec,plotendyear)[0] # Get the index of the year to end the plots
+        except: 
+            errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotendyear, tvec[-1])
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 3, verbose)
+                endind = -1
+    else: endind = -1
+    
+    return startind, endind

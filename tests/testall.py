@@ -65,8 +65,8 @@ FAILED = []
 SUCCEEDED = []
 for TEST in MASTER:
     try:
-        VARIABLES = locals().keys() # Get the state before the test is run
         THISSTART = TIME()
+        VARIABLES = locals().keys() # Get the state before the test is run
         print('\n'*10+'#'*200)
         print('NOW RUNNING: %s' % TEST)
         print('#'*200+'\n'*3)
