@@ -227,22 +227,28 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-    function deleteSelectedProjects(projects) {
+    function deleteSelectedProjects(projectIds) {
       var deferred = $q.defer();
       $http({
           method: 'DELETE',
           url: '/api/project',
-          data: {projects: projects}
+          data: {projects: projectIds}
         })
         .then(
           function(response) {
-            getProjectList()
-              .then(function() {
-                _.each(projects, function(project) {
-                  clearProjectIdIfActive(project.id);
-                });
-                deferred.resolve(response);
-              });
+            console.log('deleteSelectedProjects', projectIds);
+            console.log('deleteSelectedProjects projects', projectApi.projects)
+            _.each(projectIds, function(projectId) {
+              clearProjectIdIfActive(projectId);
+            });
+            var n = projectApi.projects.length;
+            for (var i=n-1; i>=0; i-=1) {
+              var existingProject = projectApi.projects[i];
+              if (_.contains(projectIds, existingProject.id)) {
+                projectApi.projects.splice(i, 1);
+              }
+            }
+            deferred.resolve(response);
           },
           function(response) {
             deferred.reject(response);
