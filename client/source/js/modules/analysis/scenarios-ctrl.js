@@ -4,13 +4,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, projectApi, modalService, toastr) {
+      $scope, $http, $modal, activeProject, projectApi, modalService, toastr) {
 
     function initialize() {
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectApi.project.id)) {
-          reloadActiveProject();
-        }
+      $scope.activeProject = activeProject;
+      $scope.$watch('activeProject.project.id', function() {
+        reloadActiveProject();
       });
       reloadActiveProject();
     }

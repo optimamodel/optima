@@ -2,10 +2,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function (
-      $scope, $state, $modal, $timeout, $http, userManager, modalService, projectApi) {
+      $scope, $state, $modal, $timeout, $http, activeProject, populations,
+      userManager, modalService, projects, projectApi, info) {
 
     function initialize() {
-      $scope.allProjects = projectApi.projects;
+      $scope.allProjects = projects.data.projects;
       $scope.projectParams = {
         name: ''
       };
@@ -14,18 +15,52 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         canUpdate: true
       };
 
-      projectApi.getActiveProject()
-        .then(function(response) {
-          $scope.projectInfo = response.data;
-        });
+      $scope.projectInfo = info ? info.data : void 0;
 
       $scope.submitButtonText = "Create project & download data entry spreadsheet";
-      projectApi
-        .getPopulations()
-        .then(function(response) {
-          $scope.populations = response.data.populations;
-          console.log('ProjectCreateOrEditController', $scope.populations);
+      $scope.populations = populations.data.populations;
+      console.log('default populations', $scope.populations);
+
+      if (isEditMode()) {
+        $scope.submitButtonText = "Save project & Optima template";
+        $scope.editParams.isEdit = true;
+
+        if (activeProject.isSet()) {
+          $scope.projectParams.id = $scope.projectInfo.id;
+          $scope.projectParams.name = $scope.projectInfo.name;
+          $scope.projectParams.startYear = $scope.projectInfo.startYear;
+          $scope.projectParams.endYear = $scope.projectInfo.endYear;
+        }
+
+        var newPopulations = _($scope.projectInfo.populations).filter(isNotInScopePopulations);
+        $scope.populations = $scope.populations.concat(newPopulations);
+
+        // replace population attrs in $scope.populations
+        // by $scope.projectInfo.populations
+        _($scope.populations).each(function(population) {
+          var source = findByShortAndName($scope.projectInfo.populations, population);
+          if (source) {
+            population.active = true;
+            _.extend(population, source);
+          }
         });
+      }
+    }
+
+    function isNotInScopePopulations(testPopulation) {
+      function sameAsTestPopulation(population) {
+        return testPopulation.name === population.name
+            && testPopulation.short === population.short;
+      }
+      return !_.find($scope.populations, sameAsTestPopulation);
+    }
+
+    function isEditMode(){
+      return $state.current.name == "project.edit";
+    }
+
+    function findByShortAndName(arr, obj){
+        return _.findWhere(arr, {short: obj.short, name: obj.name});
     }
 
     $scope.projectExists = function () {
@@ -79,7 +114,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         controller: 'ProjectCreatePopulationModalController',
         resolve: {
           populations: function(){
-            return $scope.populations;
+            return populations.data.populations;
           },
           population: function(){
             return population;

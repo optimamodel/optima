@@ -13,9 +13,9 @@ define([
   './modules/analysis/index',
   './modules/admin/index',
   './modules/common/util-service',
-  './modules/common/project-api-service',
   './modules/common/global-poller-service',
   './modules/common/icon-directive',
+  './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
   './modules/common/local-storage-polyfill',
   './modules/calibration/index',
@@ -42,10 +42,10 @@ define([
         'app.feedback',
         'app.help',
         'app.user',
+        'app.active-project',
         'app.analysis',
         'app.admin',
         'app.common.form-input-validate',
-        'app.common.project-api-service',
         'app.common.global-poller',
         'app.common.icon-service',
         'app.charts',
@@ -90,7 +90,7 @@ define([
       $urlRouterProvider.otherwise('/');
     })
 
-    .run(function ($rootScope, $state, userManager, projectApi) {
+    .run(function ($rootScope, $state, userManager, activeProject) {
 
       /**
        * an injector has been run in main.js before app.js to fetch
@@ -103,7 +103,7 @@ define([
       }
 
       // Set the active project if any
-      projectApi.loadActiveProject();
+      activeProject.loadProjectFor(userManager.user);
 
       function isStatePublic(stateName) {
         var publicStates = ['contact', 'login', 'register'];

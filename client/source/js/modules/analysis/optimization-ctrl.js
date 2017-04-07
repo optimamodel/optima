@@ -5,12 +5,12 @@ define(
 
   module.controller('AnalysisOptimizationController', function (
       $scope, $http, $upload, $modal, toastr, modalService,
-      projectApi, $timeout, globalPoller) {
+      activeProject, projectApi, $timeout, globalPoller) {
 
     function initialize() {
 
       $scope.state = {
-        project: undefined,
+        project: null,
         maxtime: 10,
         isRunnable: false,
         graphs: undefined,
@@ -26,10 +26,9 @@ define(
 
       $scope.anyOptimizable = false;
 
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined($scope.state.project) && ($scope.state.project.id !== projectApi.project.id)) {
-          reloadActiveProject();
-        }
+      $scope.activeProject = activeProject;
+      $scope.$watch('activeProject.project.id', function() {
+        reloadActiveProject();
       });
 
       reloadActiveProject();
@@ -56,21 +55,18 @@ define(
               .get('/api/project/' + $scope.state.project.id + '/progsets')
               .then(function(response) {
                 $scope.state.progsets = response.data.progsets;
-                console.log('reloadActiveProject progsets', $scope.state.progsets);
                 return $http.get('/api/project/' + $scope.state.project.id + '/parsets');
               })
               .then(function(response) {
                 $scope.state.parsets = response.data.parsets;
-                console.log('reloadActiveProject parsets', $scope.state.parsets);
                 return $http.get('/api/project/' + $scope.state.project.id + '/optimizations')
               })
               .then(function(response) {
-                console.log('reloadActiveProject optims', response.data);
                 var data = response.data;
                 $scope.state.optimizations = data.optimizations;
-                console.log('reloadActiveProject optimizations', data.optimizations);
+                console.log('optimizations', data.optimizations);
                 $scope.defaultOptimizationsByProgsetId = data.defaultOptimizationsByProgsetId;
-                console.log('reloadActiveProject defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
+                console.log('defaultOptimizationsByProgsetId', $scope.defaultOptimizationsByProgsetId);
                 $scope.state.optimization = undefined;
                 if ($scope.state.optimizations.length > 0) {
                   $scope.setActiveOptimization($scope.state.optimizations[0]);
@@ -99,7 +95,7 @@ define(
       var parset = _.find($scope.state.parsets, function(parset) {
         return parset.id == parset_id;
       });
-      return _.property('name')(parset);
+      return parset.name
     }
 
     function getProgsetName(optimization) {
@@ -107,7 +103,7 @@ define(
       var progset = _.find($scope.state.progsets, function(progset) {
         return progset.id == progsetId;
       });
-      return _.property('name')(progset)
+      return progset.name
     }
 
     $scope.checkNotRunnable = function() {

@@ -56,16 +56,16 @@ class PyObjectDb(db.Model):
     attr = db.Column(JSON)
 
     def load(self):
-        print(">> PyObjectDb.load " + self.id.hex)
+        print(">> PyObjectDb load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
         return op.loadstr(redis_entry)
 
     def save_obj(self, obj):
-        print(">> PyObjectDb.save " + self.id.hex)
+        print(">> PyObjectDb save " + self.id.hex)
         redis.set(self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
-        print(">> PyObjectDb.cleanup " + self.id.hex)
+        print(">> PyObjectDb cleanup " + self.id.hex)
         redis.delete(self.id.hex)
     
     def as_portfolio_file(self, loaddir, filename=None):
@@ -88,7 +88,7 @@ class ProjectDb(db.Model):
         self.user_id = user_id
 
     def load(self):
-        print(">> ProjectDb.load " + self.id.hex)
+        print(">> ProjectDb load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
         
         project = op.loadproj(redis_entry, fromdb=True)
@@ -100,7 +100,7 @@ class ProjectDb(db.Model):
         return project
 
     def save_obj(self, obj, is_skip_result=False):
-        print(">> ProjectDb.save " + self.id.hex)
+        print(">> ProjectDb save " + self.id.hex)
         if isinstance(obj, op.Project):
             # Copy the project, only save what we want...
             new_project = op.dcp(obj)
@@ -171,15 +171,15 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
-        print(">> ResultsDb.load result-" + self.id.hex)
+        print(">> ResultsDb load result-" + self.id.hex)
         return op.loadstr(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
-        print(">> ResultsDb.save result-" + self.id.hex)
+        print(">> ResultsDb save result-" + self.id.hex)
         redis.set("result-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
-        print(">> ResultsDb.cleanup result-" + self.id.hex)
+        print(">> ResultsDb cleanup result-" + self.id.hex)
         redis.delete("result-" + self.id.hex)
 
 
@@ -203,15 +203,15 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
         self.work_type = work_type
 
     def load(self):
-        print(">> WorkLogDb.load working-" + self.id.hex)
+        print(">> WorkLogDb load working-" + self.id.hex)
         return op.loadstr(redis.get("working-" + self.id.hex))
 
     def save_obj(self, obj):
-        print(">> WorkLogDb.save working-" + self.id.hex)
+        print(">> WorkLogDb save working-" + self.id.hex)
         redis.set("working-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
-        print(">> WorkLogDb.cleanup working-" + self.id.hex)
+        print(">> WorkLogDb cleanup working-" + self.id.hex)
         redis.delete("working-" + self.id.hex)
 
 

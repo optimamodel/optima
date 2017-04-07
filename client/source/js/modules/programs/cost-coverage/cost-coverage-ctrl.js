@@ -4,7 +4,7 @@ define(['./../module', 'underscore'], function(module, _) {
 
   module.controller(
     'ModelCostCoverageController',
-    function($scope, toastr, $http, $state, projectApi, globalPoller) {
+    function($scope, toastr, $http, $state, activeProject, projectApi, globalPoller) {
 
       var vm = this;
 
@@ -32,12 +32,11 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.year = new Date().getFullYear();
         vm.state.maxtime = 10
 
-        $scope.projectApi = projectApi;
-        $scope.$watch('projectApi.project.id', function() {
-          if (!_.isUndefined(vm.project) && (vm.project.id !== projectApi.project.id)) {
-            console.log('ModelCostCoverageController project-change', projectApi.project.name);
-            reloadActiveProject();
-          }
+        $scope.activeProject = activeProject;
+        console.log('ModelCostCoverageController project-change', activeProject.project);
+        $scope.$watch('activeProject.project.id', function() {
+          console.log('ModelCostCoverageController project-change', activeProject.project);
+          reloadActiveProject();
         });
 
         reloadActiveProject();
@@ -48,7 +47,7 @@ define(['./../module', 'underscore'], function(module, _) {
           .getActiveProject()
           .then(function(response) {
             vm.project = response.data;
-            console.log('reloadActiveProject init vm.project', vm.project);
+            console.log('reloadActiveProject vm.project', vm.project);
             return $http.get('/api/project/' + vm.project.id + '/progsets')
           })
           .then(function(response) {
@@ -60,7 +59,7 @@ define(['./../module', 'underscore'], function(module, _) {
           .then(function(response) {
             // Fetch parsets
             vm.parsets = response.data.parsets;
-            console.log('reloadActiveProject vm.parsets', vm.parsets);
+            console.log('ModelCostCoverageController vm.parsets', vm.parsets);
             vm.state.parset = vm.parsets[0];
             vm.changeProgsetAndParset();
 

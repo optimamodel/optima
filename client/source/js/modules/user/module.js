@@ -1,7 +1,7 @@
-define(['angular', '../common/project-api-service'], function (angular) {
+define(['angular'], function (angular) {
   'use strict';
 
-  return angular.module('app.user', ['app.common.project-api-service'])
+  return angular.module('app.user', ['app.active-project'])
     .config(function ($stateProvider) {
       $stateProvider
         .state('login', {

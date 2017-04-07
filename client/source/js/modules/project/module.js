@@ -1,7 +1,7 @@
-define(['angular', 'ui.router'], function (angular) {
+define(['angular', 'ui.router', '../common/active-project-service'], function (angular) {
   'use strict';
 
-  return angular.module('app.project', ['ui.router'])
+  return angular.module('app.project', ['app.active-project', 'ui.router'])
 
     .config(function ($stateProvider) {
 
@@ -20,6 +20,33 @@ define(['angular', 'ui.router'], function (angular) {
           url: '/create',
           templateUrl: 'js/modules/project/create-or-edit.html',
           controller: 'ProjectCreateOrEditController',
+          resolve: {
+            populations: function(projectApi) {
+              return projectApi.getPopulations();
+            },
+            info: function() {
+              return undefined;
+            },
+            projects: function (projectApi) {
+              return projectApi.getProjectList();
+            }
+          }
+        })
+        .state('project.edit', {
+          url: '/edit',
+          templateUrl: 'js/modules/project/create-or-edit.html',
+          controller: 'ProjectCreateOrEditController',
+          resolve: {
+            populations: function(projectApi) {
+              return projectApi.getPopulations();
+            },
+            info: function (projectApi) {
+              return projectApi.getActiveProject();
+            },
+            projects: function (projectApi) {
+              return projectApi.getProjectList();
+            }
+          }
         })
     });
 });
