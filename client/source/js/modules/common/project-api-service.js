@@ -263,6 +263,14 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           {projects: projects},
           {responseType: 'arraybuffer'});
       },
+      downloadProjectFile: function(projectId) {
+        return $http.get(
+          '/api/project/' + projectId + '/data',
+          {
+            headers: {'Content-type': 'application/octet-stream'},
+            responseType: 'blob'
+          });
+      },
       getAllProjectList: function () {
         return $http.get('/api/project/all');
       },
