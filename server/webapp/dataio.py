@@ -573,11 +573,12 @@ def copy_project(project_id, new_project_name):
 
     db.session.commit()
 
-    return copy_project_id
+    return { 'projectId': copy_project_id }
 
 
-def get_unique_name(name):
-    other_names = [p['name'] for p in load_project_summaries()]
+def get_unique_name(name, other_names=None):
+    if other_names is None:
+        other_names = [p['name'] for p in load_project_summaries()]
     i = 0
     unique_name = name
     while unique_name in other_names:
@@ -586,27 +587,25 @@ def get_unique_name(name):
     return unique_name
 
 
-def create_project_from_prj(prj_filename=None, user_id=None, project=None):
+def create_project_from_prj(prj_filename, user_id, other_names):
     """
     Returns the project id of the new project.
     """
-
     print(">> create_project_from_prj '%s'" % prj_filename)
-    if prj_filename:
-        project = op.loadproj(prj_filename)
-    project.name = get_unique_name(project.name)
+    project = op.loadproj(prj_filename)
+    project.name = get_unique_name(project.name, other_names)
     resolve_project(project)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
 
 
-def create_project_from_spreadsheet(prj_filename, user_id):
+def create_project_from_spreadsheet(xlsx_filename, user_id, other_names):
     """
     Returns the project id of the new project.
     """
-    print(">> create_project_from_spreadsheet '%s'" % prj_filename)
-    project = op.Project(spreadsheet=prj_filename)
-    project.name = get_unique_name(project.name)
+    print(">> create_project_from_spreadsheet '%s'" % xlsx_filename)
+    project = op.Project(spreadsheet=xlsx_filename)
+    project.name = get_unique_name(project.name, other_names)
     resolve_project(project)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
@@ -1465,7 +1464,7 @@ def upload_optimization_summary(project_id, optimization_id, optimization_summar
 def load_optimization_graphs(project_id=None, optimization_id=None, which=None, zoom=None, startYear=None, endYear=None):
     project = load_project(project_id)
     optimization = parse.get_optimization_from_project(project, optimization_id)
-    result_name = "optim-" + optimization.name
+    result_name = optimization.resultsref # Use result name stored in the optimization
     result = load_result(project.uid, None, "optimization", which, result_name)
     if not result:
         return {}

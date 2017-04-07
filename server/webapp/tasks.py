@@ -167,7 +167,7 @@ def check_calculation_status(pyobject_id, work_type):
         .filter_by(project_id=pyobject_id, work_type=work_type)\
         .first()
     if work_log_record:
-        print ">> check_calculation_status fail: existing job of '%s' with same project" % work_type
+        print ">> check_calculation_status: existing job of '%s' with same project" % work_type
         result = parse_work_log_record(work_log_record)
     print ">> check_calculation_status", pyobject_id, work_type, result['status']
     close_db_session(db_session)

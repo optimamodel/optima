@@ -4,8 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller(
     'ProjectOpenController',
-    function ($scope, $http, util, modalService, userManager,
-              projectApi, $state, $upload, $modal, toastr) {
+    function($scope, $http, util, modalService, userManager, projectApi, $state, $upload, $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
@@ -49,12 +48,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadSelected = function() {
-        const selectedProjectsIds = _.filter(projectApi.projects, function(project) {
-          return project.selected;
-        }).map(function(project) {
-          return project.id;
-        });
-        projectApi.downloadSelectedProjects(selectedProjectsIds)
+        const selectedProjectsIds =
+          _.filter(
+            projectApi.projects,
+            function(project) { return project.selected; })
+          .map(
+            function(project) { return project.id; });
+        projectApi
+          .downloadSelectedProjects(selectedProjectsIds)
           .success(function (response) {
             saveAs(new Blob([response], { type: "application/octet-stream", responseType: 'arraybuffer' }), 'portfolio.zip');
           });

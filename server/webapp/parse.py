@@ -15,7 +15,6 @@ There should be no references to the database or web-handlers.
 from collections import defaultdict, OrderedDict
 from pprint import pformat
 from uuid import UUID
-import json
 
 import numpy as np
 import optima as op
@@ -38,6 +37,22 @@ def print_odict(name, an_odict):
     s = pformat(obj, indent=2)
     for line in s.splitlines():
         print(">> " + line)
+
+
+def convert_odict_to_dict_list(o):
+    return {
+        'type': 'odict',
+        'contents': [{'key': k, 'value': v} for k, v in o.items()]
+    }
+
+
+def convert_dict_list_to_odict(dict_list):
+    result = op.odict()
+    assert dict_list['type'] == 'odict'
+    for a_dict in dict_list['contents']:
+        result[a_dict["key"]] = a_dict["value"]
+    return result
+
 
 
 def normalize_obj(obj):
@@ -1247,17 +1262,51 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 ### OPTIMIZATIONS
 #############################################################################################
 
+def parse_constraints(constraints):
+    entries = []
+    for key, value in constraints['name'].items():
+        entries.append({
+            'key': key,
+            'max': constraints['max'][key],
+            'min': constraints['min'][key],
+            'name': constraints['name'][key],
+        })
+    return entries
+
+
+def force_to_none(val):
+    if isinstance(val, str):
+        if val.strip() == "":
+            return None
+    return val
+
+
+def revert_constraints(entries):
+    result = op.odict()
+    result['min'] = op.odict()
+    result['max'] = op.odict()
+    result['name'] = op.odict()
+    for entry in entries:
+        key = entry['key']
+        result['min'][key] = force_to_none(entry['min'])
+        result['max'][key] = force_to_none(entry['max'])
+        result['name'][key] = entry['name']
+    return result
+
+
 def get_default_optimization_summaries(project):
     defaults_by_progset_id = {}
     for progset in project.progsets.values():
         progset_id = progset.uid
         default = {
-            'constraints': op.defaultconstraints(project=project, progset=progset),
+            'constraints': parse_constraints(
+                op.defaultconstraints(project=project, progset=progset)),
             'objectives': {}
         }
         for which in ['outcomes', 'money']:
-            default['objectives'][which] = op.defaultobjectives(
-                project=project, progset=progset, which=which)
+            default['objectives'][which] = normalize_obj(
+                op.defaultobjectives(
+                    project=project, progset=progset, which=which))
         defaults_by_progset_id[progset_id] = default
 
     return normalize_obj(defaults_by_progset_id)
@@ -1327,28 +1376,32 @@ def get_optimization_summaries(project):
     for optim in project.optims.values():
 
         optim_summary = {
-            "id": optim.uid,
-            "name": optim.name,
-            "objectives": optim.objectives,
-            "constraints": optim.constraints,
+            "id": str(optim.uid),
+            "name": str(optim.name),
+            "objectives": normalize_obj(optim.objectives),
+            "constraints": parse_constraints(optim.constraints),
         }
 
-        optim_summary["which"] = optim.objectives["which"]
+        optim_summary["which"] = str(optim.objectives["which"])
 
         if optim.parsetname:
-            optim_summary["parset_id"] = project.parsets[optim.parsetname].uid
+            optim_summary["parset_id"] = str(project.parsets[optim.parsetname].uid)
         else:
             optim_summary["parset_id"] = None
 
         if optim.progsetname:
             progset = project.progsets[optim.progsetname]
-            optim_summary["progset_id"] = progset.uid
+            optim_summary["progset_id"] = str(progset.uid)
         else:
             progset = project.progsets[0]
-            optim_summary["progset_id"] = progset.uid
+            optim_summary["progset_id"] = str(progset.uid)
 
         optim_summaries.append(optim_summary)
 
+    # as some values given can be None or NaN
+    optim_summaries = normalize_obj(optim_summaries)
+
+    print(">> get_optimization_summaries" + pformat(optim_summaries, indent=2))
     return optim_summaries
 
 
@@ -1368,16 +1421,14 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
         optim.name = summary["name"]
         optim.parsetname = get_parset_from_project(project, summary["parset_id"]).name
         optim.progsetname = get_progset_from_project(project, summary["progset_id"]).name
+
         for objkey in optim.objectives.keys(): # Update by keys so we preserve order
             if objkey in summary["objectives"]: # WARNING, this shouldn't be necessary, but just in case...
                 optim.objectives[objkey] = summary["objectives"][objkey]
         optim.objectives["which"] = summary["which"]
-        progkeys = project.progsets[optim.progsetname].programs.keys() # To ensure the order is correct
+
         if "constraints" in summary:
-            for conskeys in optim.constraints.keys(): # name, min, max
-                if conskeys in summary["constraints"]:
-                    for progkey in progkeys: # e.g. Condom, ART, MSM...
-                        optim.constraints[conskeys][progkey] = summary["constraints"][conskeys][progkey]
+            optim.constraints = revert_constraints(summary['constraints'])
 
         new_optims[summary["name"]] = optim
 

@@ -22,7 +22,7 @@ class Optim(object):
         if progsetname is None: progsetname = -1
         if objectives is None:  objectives = defaultobjectives(project=project, progset=progsetname, verbose=0)
         if constraints is None: constraints = defaultconstraints(project=project, progset=progsetname, verbose=0)
-        self.name         = name # Name of the parameter set, e.g. 'default'
+        self.name         = name # Name of the optimization, e.g. 'default'
         self.uid          = uuid() # ID
         self.projectref   = Link(project) # Store pointer for the project, if available
         self.created      = today() # Date created
@@ -556,7 +556,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
 
 
 
-def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
+def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
                 origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
     ''' Split out minimize outcomes '''
 
@@ -721,7 +721,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
             tmpresults['Optimal'].name = 'Optimal' # Rename name to named name
 
     ## Output
-    multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % new.name)
+    multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.extremeoutcomes = extremeoutcomes # Store all of these
@@ -744,7 +744,7 @@ def minoutcomes(project=None, optim=None, name=None, tvec=None, verbose=None, ma
 
 
 
-def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, **kwargs):
+def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, **kwargs):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
 
@@ -897,7 +897,7 @@ def minmoney(project=None, optim=None, name=None, tvec=None, verbose=None, maxti
     orig.name = 'Current' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal'
     tmpresults = [orig, new]
-    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
+    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     optim.resultsref = multires.name # Store the reference for this result
 

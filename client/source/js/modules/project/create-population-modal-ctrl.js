@@ -28,10 +28,9 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.submit = function (form) {
       if (form.$invalid) {
-        modalService.inform(
-            undefined, undefined, 'Please fill in the form correctly');
+        modalService.inform(undefined, undefined, 'Please fill in the form correctly');
       } else {
-        console.log('new population', $scope.population);
+        console.log('submit', $scope.population);
         $modalInstance.close($scope.population);
       }
     };

@@ -121,7 +121,7 @@ class Projects(Resource):
             as_attachment=True,
             attachment_filename=basename)
         response.status_code = 201
-        response.headers['X-project-id'] = project_id
+        response.headers['project-id'] = project_id
         return response
 
     @swagger.operation(summary="Bulk delete projects")
@@ -207,14 +207,7 @@ class ProjectCopy(Resource):
         """
         args = get_post_data_json()
         new_project_name = args['to']
-
-        copy_project_id = dataio.copy_project(project_id, new_project_name)
-
-        payload = {
-            'project': project_id,
-            'copy_id': copy_project_id
-        }
-        return payload
+        return dataio.copy_project(project_id, new_project_name)
 
 api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
 

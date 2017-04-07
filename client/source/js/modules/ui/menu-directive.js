@@ -25,7 +25,7 @@ define(['angular'], function (angular) {
           };
 
           $scope.goIfProjectActive = function(stateName) {
-            if(projectApi.isSet()){
+            if(projectApi.isActiveProjectSet()){
               console.log('current state', $state.current.name, '->', stateName);
               $state.go(stateName);
             } else {

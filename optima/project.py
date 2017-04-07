@@ -603,10 +603,10 @@ class Project(object):
         
         # Run the optimization
         if not multi:
-            multires = optimize(optim=optim, name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+            multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                 die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
         else:
-            multires = multioptimize(optim=optim, name=name, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+            multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
                                      blockiters=blockiters, batch=batch, **kwargs)
         
