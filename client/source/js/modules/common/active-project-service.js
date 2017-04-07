@@ -19,7 +19,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         };
 
         _.assign(activeProject, {
-          setActiveProjectId: function (projectId) {
+          setActiveProjectFor: function (projectId) {
             // Sets the active project to be projectName for the given user.
             activeProject.project.name = '';
             activeProject.project.id   = projectId;

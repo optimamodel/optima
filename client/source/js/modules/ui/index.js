@@ -23,7 +23,7 @@ define([
           $scope.activeProject = activeProject;
           $scope.projects = projectApi.projects;
           $scope.changeProject = function(projectId) {
-            activeProject.setActiveProjectId(projectId);
+            activeProject.setActiveProjectFor(projectId);
           };
         });
     return module;
