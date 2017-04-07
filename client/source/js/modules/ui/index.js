@@ -23,8 +23,6 @@ define([
           $scope.projectApi = projectApi;
           $scope.projects = projectApi.projects;
           $scope.changeProject = function(projectId) {
-            var project = _.findWhere($scope.projects, { id: projectId });
-            console.log('changeProject', project.name);
             projectApi.setActiveProjectId(projectId);
           };
         });
