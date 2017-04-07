@@ -46,6 +46,37 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return (projectApi.project.id !== null && projectApi.project.id !== undefined);
     }
 
+    function clearList(aList) {
+      while (aList.length) {
+        aList.pop(0);
+      }
+    }
+
+    function getProjectAndMakeActive(projectId) {
+      var deferred = $q.defer();
+      $http
+        .get('/api/project/' + projectId)
+        .then(
+          function(response) {
+            var uploadedProject = response.data;
+            var existingProject = _.findWhere(
+              projectApi.projects, {id: uploadedProject.id});
+            if (existingProject) {
+              console.log('getProject update', uploadedProject);
+              _.extend(existingProject, uploadedProject);
+            } else {
+              console.log('getProject new', uploadedProject);
+              projectApi.projects.push(uploadedProject);
+            }
+            setActiveProjectId(uploadedProject.id);
+            deferred.resolve(response);
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
     function getProjectList() {
       var deferred = $q.defer();
       $http
@@ -53,9 +84,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           '/api/project')
         .then(
           function(response) {
-            while (projectApi.projects.length) {
-              projectApi.projects.pop(0);
-            }
+            clearList(projectApi.projects);
             _.each(response.data.projects, function(project) {
               project.creationTime = Date.parse(project.creationTime);
               project.updatedTime = Date.parse(project.updatedTime);
@@ -70,6 +99,72 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
+    function createProject(project) {
+      var deferred = $q.defer();
+      $http
+        .post(
+          '/api/project', project, {responseType:'blob'})
+        .then(
+          function(response) {
+            if (response.data) {
+              var xlsxType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+              var blob = new Blob([response.data], {type: xlsxType});
+              saveAs(blob, (project.name + '.xlsx'));
+              var projectId = response.headers('project-id');
+              getProjectAndMakeActive(projectId)
+                .then(
+                  function(response) { deferred.resolve(response); },
+                  function(response) { deferred.reject(response); });
+            } else {
+              deferred.reject(response);
+            }
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
+    function uploadProject() {
+      var deferred = $q.defer();
+      var otherNames = _.pluck(projectApi.projects, 'name');
+      util
+        .rpcUpload(
+          'create_project_from_prj',
+          [userManager.user.id, otherNames])
+        .then(
+          function(response) {
+            getProjectAndMakeActive(response.data.projectId)
+              .then(
+                function(response) { deferred.resolve(response); },
+                function(response) { deferred.reject(response); });
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
+    function uploadProjectFromSpreadsheet() {
+      var deferred = $q.defer();
+      var otherNames = _.pluck(projectApi.projects, 'name');
+      util
+        .rpcUpload(
+          'create_project_from_spreadsheet',
+          [userManager.user.id, otherNames])
+        .then(
+          function(response) {
+            getProjectAndMakeActive(response.data.projectId)
+              .then(
+                function(response) { deferred.resolve(response); },
+                function(response) { deferred.reject(response); });
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
     function copyProject(projectId, newName) {
       var deferred = $q.defer();
       $http
@@ -77,14 +172,11 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           '/api/project/' + projectId + '/copy', {to: newName})
         .then(
           function(response) {
-            projectApi
-              .getProjectList()
-              .then(function(response) {
-                var project = _.findWhere(projectApi.projects, {name: newName});
-                console.log('copyProject', project, projectApi.projects);
-                setActiveProjectId(project.id);
-                deferred.resolve(response);
-              });
+            console.log('copyProject', response);
+            getProjectAndMakeActive(response.data.projectId)
+              .then(
+                function(response) { deferred.resolve(response); },
+                function(response) { deferred.reject(response); });
           },
           function(response) {
             deferred.reject(response);
@@ -135,35 +227,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-    function createProject(projectParams) {
-      var deferred = $q.defer();
-      $http
-        .post(
-          '/api/project', projectParams, {responseType:'blob'})
-        .then(
-          function(response) {
-            projectApi
-              .getProjectList()
-              .then(function(response) {
-                console.log('createProject', projectParams);
-                var project = _.findWhere(
-                  projectApi.projects, {name: projectParams.name});
-                setActiveProjectId(project.id);
-                if (response.data) {
-                  var blob = new Blob(
-                    [response.data],
-                    {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-                  saveAs(blob, (projectParams.name + '.xlsx'));
-                }
-                deferred.resolve(response);
-              });
-          },
-          function(response) {
-            deferred.reject(response);
-          });
-      return deferred.promise;
-    }
-
     function deleteSelectedProjects(projects) {
       var deferred = $q.defer();
       $http({
@@ -173,8 +236,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         })
         .then(
           function(response) {
-            projectApi
-              .getProjectList()
+            getProjectList()
               .then(function() {
                 _.each(projects, function(project) {
                   clearProjectIdIfActive(project.id);
@@ -188,53 +250,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-    function uploadProject() {
-      var deferred = $q.defer();
-      util
-        .rpcUpload(
-          'create_project_from_prj', [userManager.user.id])
-        .then(function(response) {
-          var projectId = response.data.projectId;
-          projectApi
-            .getProjectList()
-            .then(
-              function(response) {
-                var project = _.findWhere(
-                  projectApi.projects, {id: projectId});
-                setActiveProjectId(project.id);
-                deferred.resolve(response);
-              },
-              function(response) {
-                deferred.reject(response);
-              });
-        });
-      return deferred.promise;
-    }
-
-    function uploadProjectFromSpreadsheet() {
-      var deferred = $q.defer();
-      util
-        .rpcUpload(
-          'create_project_from_spreadsheet', [userManager.user.id])
-        .then(function(response) {
-          var projectId = response.data.projectId;
-          console.log('uploadProject', projectId);
-          projectApi
-            .getProjectList()
-            .then(
-              function(response) {
-                var project = _.findWhere(
-                  projectApi.projects, {id: projectId});
-                setActiveProjectId(project.id);
-                deferred.resolve(response);
-              },
-              function(response) {
-                deferred.reject(response);
-              });
-        });
-      return deferred.promise;
-    }
-
     getProjectList();
 
     _.assign(projectApi, {
@@ -243,6 +258,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       clearProjectIdIfActive: clearProjectIdIfActive,
       clearProjectForUserId: clearProjectForUserId,
       isSet: isSet,
+      getProject: getProjectAndMakeActive,
       getProjectList: getProjectList,
       copyProject: copyProject,
       renameProject: renameProject,
@@ -254,7 +270,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       getActiveProject: function () {
         var projectId = projectApi.project.id;
         if (projectId) {
-          return $http.get('/api/project/' + projectId);
+          return getProjectAndMakeActive(projectId);
         }
       },
       downloadSelectedProjects: function(projects) {

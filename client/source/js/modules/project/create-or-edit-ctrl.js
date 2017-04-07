@@ -5,60 +5,49 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope, $state, $modal, $timeout, $http, userManager, modalService, projectApi) {
 
     function initialize() {
-      $scope.allProjects = projectApi.projects;
-      $scope.projectParams = {
-        name: ''
-      };
-      $scope.editParams = {
-        isEdit: false,
-        canUpdate: true
-      };
-
-      projectApi.getActiveProject()
-        .then(function(response) {
-          $scope.projectInfo = response.data;
-        });
+      $scope.projects = projectApi.projects;
+      $scope.project = {name: ''};
 
       $scope.submitButtonText = "Create project & download data entry spreadsheet";
       projectApi
         .getPopulations()
         .then(function(response) {
           $scope.populations = response.data.populations;
-          console.log('ProjectCreateOrEditController', $scope.populations);
+          console.log('initialize populations', $scope.populations);
         });
     }
 
     $scope.projectExists = function () {
-      return _.some($scope.allProjects, function (project) {
-        return $scope.projectParams.name === project.name && $scope.projectParams.id !== project.id;
+      return _.some($scope.projects, function (project) {
+        return $scope.project.name === project.name && $scope.project.id !== project.id;
       });
     };
 
     $scope.invalidName = function() {
-      return !$scope.projectParams.name;
+      return !$scope.project.name;
     };
 
     $scope.invalidDataStart = function() {
-      if ($scope.projectParams.startYear) {
-        var startYear = parseInt($scope.projectParams.startYear)
+      if ($scope.project.startYear) {
+        var startYear = parseInt($scope.project.startYear)
         return startYear < 1900 || 2100 < startYear;
       }
-      return !$scope.projectParams.startYear;
+      return !$scope.project.startYear;
     };
 
     $scope.invalidDataEnd = function() {
-      if ($scope.projectParams.endYear) {
-        var endYear = parseInt($scope.projectParams.endYear)
+      if ($scope.project.endYear) {
+        var endYear = parseInt($scope.project.endYear)
         if (endYear < 1900 || 2100 < endYear) {
           return true;
         }
         if ($scope.invalidDataStart()) {
           return false;
         }
-        var startYear = parseInt($scope.projectParams.startYear)
+        var startYear = parseInt($scope.project.startYear)
         return endYear <= startYear;
       }
-      return !$scope.projectParams.endYear;
+      return !$scope.project.endYear;
     };
 
     $scope.invalidPopulationSelected = function() {
@@ -78,12 +67,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         templateUrl: 'js/modules/project/create-population-modal.html',
         controller: 'ProjectCreatePopulationModalController',
         resolve: {
-          populations: function(){
-            return $scope.populations;
-          },
-          population: function(){
-            return population;
-          }
+          populations: function(){ return $scope.populations; },
+          population: function(){ return population; }
         }
       });
     }
@@ -155,11 +140,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .value();
     }
 
-    function saveProject(isUpdate, isDeleteData, isSpreadsheet) {
-      var params = angular.copy($scope.projectParams);
-      params.populations = getSelectedPopulations();
+    function createProject(isUpdate, isDeleteData, isSpreadsheet) {
+      var project = angular.copy($scope.project);
+      project.populations = getSelectedPopulations();
       projectApi
-        .createProject(params)
+        .createProject(project)
         .then(function() {
           $state.go('home');
         });
@@ -197,26 +182,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return copyDict;
       }
 
-      if ($state.current.name == "project.edit") {
-        var selectedPopulations = _.map(getSelectedPopulations(), removeExtraFields);
-        var originalPopulations = _.map($scope.projectInfo.populations, removeExtraFields);
-        var isPopulationsSame = angular.equals(selectedPopulations, originalPopulations);
-        if (isPopulationsSame) {
-          saveProject(true, false, true)
-        } else {
-          modalService.confirm(
-              function() { saveProject(true, true, true) },
-              function() {},
-              'Yes, save this project',
-              'No',
-              'You have made changes to populations. All existing data will be lost. Would you like to continue?',
-              'Save Project?'
-          );
-        }
-      } else {
-        // Create new project
-        saveProject(false, false, true);
-      }
+      createProject(false, false, true);
     };
 
     initialize();

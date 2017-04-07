@@ -11,9 +11,9 @@
           <help ref="create-new-project"/>
         </h1>
         <b>Project name</b>
-        <input class="txbox" type="text" ng-pattern="/^[\x20-\x7E]*$/" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
+        <input class="txbox" type="text" ng-pattern="/^[\x20-\x7E]*$/" name="ProjectName" placeholder="e.g. Example" ng-model="project.name" required>
         <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
-        <div class="error-hint" ng-show="CreateOrEditProjectForm.projectParams.$error.pattern"> Special characters are not allowed, please choose a different name. </div>
+        <div class="error-hint" ng-show="CreateOrEditProjectForm.project.$error.pattern"> Special characters are not allowed, please choose a different name. </div>
         <div class="error-hint" ng-show="invalidName()"> Please enter a unique name </div>
       </div>
     </div>
@@ -21,14 +21,14 @@
     <div class="section">
       <div class="3">
         <b>First year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.startYear" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="project.startYear" required>
         <div class="error-hint" ng-show="invalidDataStart()"> Please enter a first year from 1900 to 2100 </div>
       </div>
     </div>
     <div class="section">
       <div class="3">
          <b>Final year for data entry</b>
-         <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.endYear" required>
+         <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="project.endYear" required>
          <div class="error-hint" ng-show="invalidDataEnd()"> Please enter a final year from 1900 to 2100, greater than the first year </div>
       </div>
     </div>
