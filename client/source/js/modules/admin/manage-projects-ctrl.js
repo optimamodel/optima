@@ -43,7 +43,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.edit = function (name, id) {
-      activeProject.setActiveProjectFor(id);
+      activeProject.setActiveProjectFor(name, id, userManager.user);
       $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
       $state.go('project.edit');
     };
@@ -54,7 +54,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.open = function (name, id) {
-      activeProject.setActiveProjectFor(id);
+      activeProject.setActiveProjectFor(name, id, userManager.user);
       $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
     };
 

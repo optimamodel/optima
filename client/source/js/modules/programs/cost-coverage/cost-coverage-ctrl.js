@@ -33,11 +33,10 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.maxtime = 10
 
         $scope.activeProject = activeProject;
+        console.log('ModelCostCoverageController project-change', activeProject.project);
         $scope.$watch('activeProject.project.id', function() {
-          if (!_.isUndefined(vm.project) && (vm.project.id !== activeProject.project.id)) {
-            console.log('ModelCostCoverageController project-change', activeProject.project.name);
-            reloadActiveProject();
-          }
+          console.log('ModelCostCoverageController project-change', activeProject.project);
+          reloadActiveProject();
         });
 
         reloadActiveProject();
@@ -48,7 +47,7 @@ define(['./../module', 'underscore'], function(module, _) {
           .getActiveProject()
           .then(function(response) {
             vm.project = response.data;
-            console.log('reloadActiveProject init vm.project', vm.project);
+            console.log('reloadActiveProject vm.project', vm.project);
             return $http.get('/api/project/' + vm.project.id + '/progsets')
           })
           .then(function(response) {
@@ -60,7 +59,7 @@ define(['./../module', 'underscore'], function(module, _) {
           .then(function(response) {
             // Fetch parsets
             vm.parsets = response.data.parsets;
-            console.log('reloadActiveProject vm.parsets', vm.parsets);
+            console.log('ModelCostCoverageController vm.parsets', vm.parsets);
             vm.state.parset = vm.parsets[0];
             vm.changeProgsetAndParset();
 

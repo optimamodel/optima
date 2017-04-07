@@ -758,6 +758,12 @@ def resolve_project(project):
 
     is_change = is_change or len(del_optim_keys) > 0
 
+    query = db.session.query(PyObjectDb).filter_by(user_id=current_user.id)
+    portfolios = []
+    for record in query:
+        portfolio = record.load()
+        portfolios.append(portfolio)
+
     # ensure constraints set to None are given a default
     for optim in project.optims.values():
         progset_name = optim.progsetname
