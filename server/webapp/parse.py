@@ -15,7 +15,6 @@ There should be no references to the database or web-handlers.
 from collections import defaultdict, OrderedDict
 from pprint import pformat
 from uuid import UUID
-import json
 
 import numpy as np
 import optima as op
