@@ -4,7 +4,7 @@ define(['./../module', 'underscore'], function(module, _) {
 
   module.controller(
     'ModelCostCoverageController',
-    function($scope, toastr, $http, $state, projectApi, globalPoller) {
+    function($scope, toastr, $http, $state, activeProject, projectApi, globalPoller) {
 
       var vm = this;
 
@@ -32,10 +32,10 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.year = new Date().getFullYear();
         vm.state.maxtime = 10
 
-        $scope.projectApi = projectApi;
-        $scope.$watch('projectApi.project.id', function() {
-          if (!_.isUndefined(vm.project) && (vm.project.id !== projectApi.project.id)) {
-            console.log('ModelCostCoverageController project-change', projectApi.project.name);
+        $scope.activeProject = activeProject;
+        $scope.$watch('activeProject.project.id', function() {
+          if (!_.isUndefined(vm.project) && (vm.project.id !== activeProject.project.id)) {
+            console.log('ModelCostCoverageController project-change', activeProject.project.name);
             reloadActiveProject();
           }
         });

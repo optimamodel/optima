@@ -5,7 +5,7 @@ define(
 
   module.controller('AnalysisOptimizationController', function (
       $scope, $http, $upload, $modal, toastr, modalService,
-      projectApi, $timeout, globalPoller) {
+      activeProject, projectApi, $timeout, globalPoller) {
 
     function initialize() {
 
@@ -26,8 +26,9 @@ define(
 
       $scope.anyOptimizable = false;
 
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined($scope.state.project) && ($scope.state.project.id !== projectApi.project.id)) {
+      $scope.activeProject = activeProject;
+      $scope.$watch('activeProject.project.id', function() {
+        if (!_.isUndefined($scope.state.project) && ($scope.state.project.id !== activeProject.project.id)) {
           reloadActiveProject();
         }
       });

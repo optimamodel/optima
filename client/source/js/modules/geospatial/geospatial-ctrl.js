@@ -5,7 +5,7 @@ define(
 
     module.controller(
       'PortfolioController',
-      function($scope, $http, modalService, userManager, util,
+      function($scope, $http, activeProject, modalService, userManager, util,
                $state, toastr, globalPoller, $modal, $upload) {
 
         function initialize() {

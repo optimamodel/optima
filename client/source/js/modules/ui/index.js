@@ -2,7 +2,7 @@ define([
     'angular',
     './menu-directive',
     './modal-service',
-    '../project/index',
+    '../common/active-project-service',
     '../user/user-manager-service'
   ],
   function (angular) {
@@ -10,20 +10,20 @@ define([
     var module = angular
       .module(
         'app.ui', [
-          'app.project',
+          'app.active-project',
           'app.ui.modal',
           'app.ui.menu'
         ])
       .controller(
         'MainCtrl',
-        function ($scope, $state, userManager, projectApi) {
+        function ($scope, $state, activeProject, userManager, projectApi) {
           $scope.user = userManager.user;
           $scope.state = $state;
           $scope.userLogged = function () { return userManager.isLoggedIn; };
-          $scope.projectApi = projectApi;
+          $scope.activeProject = activeProject;
           $scope.projects = projectApi.projects;
           $scope.changeProject = function(projectId) {
-            projectApi.setActiveProjectId(projectId);
+            activeProject.setActiveProjectId(projectId);
           };
         });
     return module;

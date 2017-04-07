@@ -1,6 +1,7 @@
 define([
   'angular',
   'ui.router',
+  '../project/project-api-service',
   '../analysis/parameter-scenarios-modal',
   '../analysis/program-scenarios-modal',
 ], function (angular) {

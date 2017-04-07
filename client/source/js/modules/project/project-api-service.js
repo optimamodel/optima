@@ -1,50 +1,13 @@
-define(['angular', '../common/local-storage-polyfill'], function (angular) {
+define(['./module'], function (module) {
   'use strict';
 
-  var module = angular.module('app.common.project-api-service', []);
-
   module.service('projectApi',
-    ['$http', '$q', 'userManager', 'util', function ($http, $q, userManager, util) {
+    [ '$http', '$q', 'activeProject', 'userManager', 'util',
+      function ($http, $q, activeProject, userManager, util) {
 
     var projectApi = {
-      projects: [],
-      project: {},
+      projects: []
     };
-
-    function makeUserKey(userId) {
-      return 'activeProjectFor:' + userId;
-    }
-
-    function setActiveProjectId(projectId) {
-      projectApi.project.id = projectId;
-      var projectStr = JSON.stringify(projectApi.project);
-      localStorage[makeUserKey(userManager.user.id)] = projectStr;
-    }
-
-    function loadActiveProject() {
-      var projectStr = localStorage[makeUserKey(userManager.user.id)];
-      if (projectStr !== null && projectStr !== undefined) {
-        try {
-          projectApi.project = JSON.parse(projectStr);
-        } catch (exception) {
-        }
-      }
-    }
-
-    function clearProjectIdIfActive(projectId) {
-      if (projectApi.project.id === projectId) {
-        delete projectApi.project.id;
-        localStorage.removeItem(makeUserKey(userManager.user.id));
-      }
-    }
-
-    function clearProjectForUserId(userId) {
-      localStorage.removeItem(makeUserKey(userId));
-    }
-
-    function isSet() {
-      return (projectApi.project.id !== null && projectApi.project.id !== undefined);
-    }
 
     function getProjectList() {
       var deferred = $q.defer();
@@ -82,7 +45,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               .then(function(response) {
                 var project = _.findWhere(projectApi.projects, {name: newName});
                 console.log('copyProject', project, projectApi.projects);
-                setActiveProjectId(project.id);
+                activeProject.setActiveProjectId(project.id);
                 deferred.resolve(response);
               });
           },
@@ -105,7 +68,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           {responseType: 'blob'})
         .then(
           function(response) {
-            setActiveProjectId(project.id);
+            activeProject.setActiveProjectId(project.id);
             deferred.resolve(response);
           },
           function(response) {
@@ -126,7 +89,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
                 projectApi.projects.splice(i, 1);
               }
             }
-            clearProjectIdIfActive(projectId);
+            activeProject.ifActiveResetFor(projectId, userManager.user);
             deferred.resolve(response);
           },
           function(response) {
@@ -148,7 +111,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
                 console.log('createProject', projectParams);
                 var project = _.findWhere(
                   projectApi.projects, {name: projectParams.name});
-                setActiveProjectId(project.id);
+                activeProject.setActiveProjectId(project.id);
                 if (response.data) {
                   var blob = new Blob(
                     [response.data],
@@ -177,7 +140,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               .getProjectList()
               .then(function() {
                 _.each(projects, function(project) {
-                  clearProjectIdIfActive(project.id);
+                  activeProject.ifActiveResetFor(project.id, userManager.user);
                 });
                 deferred.resolve(response);
               });
@@ -201,7 +164,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               function(response) {
                 var project = _.findWhere(
                   projectApi.projects, {id: projectId});
-                setActiveProjectId(project.id);
+                activeProject.setActiveProjectId(project.id);
                 deferred.resolve(response);
               },
               function(response) {
@@ -225,7 +188,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               function(response) {
                 var project = _.findWhere(
                   projectApi.projects, {id: projectId});
-                setActiveProjectId(project.id);
+                activeProject.setActiveProjectId(project.id);
                 deferred.resolve(response);
               },
               function(response) {
@@ -238,11 +201,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     getProjectList();
 
     _.assign(projectApi, {
-      setActiveProjectId: setActiveProjectId,
-      loadActiveProject: loadActiveProject,
-      clearProjectIdIfActive: clearProjectIdIfActive,
-      clearProjectForUserId: clearProjectForUserId,
-      isSet: isSet,
       getProjectList: getProjectList,
       copyProject: copyProject,
       renameProject: renameProject,
@@ -252,7 +210,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
       getActiveProject: function () {
-        var projectId = projectApi.project.id;
+        var projectId = activeProject.project.id;
         if (projectId) {
           return $http.get('/api/project/' + projectId);
         }
