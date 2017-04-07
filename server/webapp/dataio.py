@@ -1464,12 +1464,7 @@ def upload_optimization_summary(project_id, optimization_id, optimization_summar
 def load_optimization_graphs(project_id=None, optimization_id=None, which=None, zoom=None, startYear=None, endYear=None):
     project = load_project(project_id)
     optimization = parse.get_optimization_from_project(project, optimization_id)
-    result_name = optimization.resultsref
-    print('LOOKING FOR %s' % result_name)
-    print('ACTUAL NAMES:')
-    for optim in project.optims.values():
-        print(optim.name)
-    print('TEMP DONE')
+    result_name = optimization.resultsref # Use result name stored in the optimization
     result = load_result(project.uid, None, "optimization", which, result_name)
     if not result:
         return {}
