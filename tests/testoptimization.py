@@ -11,8 +11,8 @@ Version: 2017jan13
 ## Define tests to run here!!!
 tests = [
 'minimizeoutcomes',
-'investmentstaircase',
-'minimizemoney',
+#'investmentstaircase',
+#'minimizemoney',
 ]
 
 
@@ -72,7 +72,7 @@ if 'minimizeoutcomes' in tests:
     print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-total', 'prev-population', 'numinci-total'], advanced=True)
+        pygui(P.results[-1], toplot=['budgets', 'improvement', 'prev-total', 'prev-population', 'numinci-total'], advanced=True)
     
     done(t)
 
