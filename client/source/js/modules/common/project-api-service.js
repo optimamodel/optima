@@ -42,7 +42,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       localStorage.removeItem(makeUserKey(userId));
     }
 
-    function isSet() {
+    function isActiveProjectSet() {
       return (projectApi.project.id !== null && projectApi.project.id !== undefined);
     }
 
@@ -257,9 +257,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       loadActiveProject: loadActiveProject,
       clearProjectIdIfActive: clearProjectIdIfActive,
       clearProjectForUserId: clearProjectForUserId,
-      isSet: isSet,
-      getProject: getProjectAndMakeActive,
-      getProjectList: getProjectList,
+      isActiveProjectSet: isActiveProjectSet,
       copyProject: copyProject,
       renameProject: renameProject,
       createProject: createProject,
