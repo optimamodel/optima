@@ -1275,6 +1275,13 @@ def parse_constraints(constraints):
     return entries
 
 
+def force_to_none(val):
+    if isinstance(val, str):
+        if val.strip() == "":
+            return None
+    return val
+
+
 def revert_constraints(entries):
     result = op.odict()
     result['min'] = op.odict()
@@ -1282,8 +1289,8 @@ def revert_constraints(entries):
     result['name'] = op.odict()
     for entry in entries:
         key = entry['key']
-        result['min'][key] = entry['min']
-        result['max'][key] = entry['max']
+        result['min'][key] = force_to_none(entry['min'])
+        result['max'][key] = force_to_none(entry['max'])
         result['name'][key] = entry['name']
     return result
 
