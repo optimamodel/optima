@@ -237,7 +237,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         .then(
           function(response) {
             console.log('deleteSelectedProjects', projectIds);
-            console.log('deleteSelectedProjects projects', projectApi.projects)
             _.each(projectIds, function(projectId) {
               clearProjectIdIfActive(projectId);
             });

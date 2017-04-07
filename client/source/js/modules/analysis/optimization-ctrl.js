@@ -375,14 +375,6 @@ define(
       return result;
     }
 
-    function listifyConstraints(constraints) {
-      return convertToKeyList(swapKeysOfDictOfDict(constraints));
-    }
-
-    function revertToConstraints(listOfConstraints) {
-      return swapKeysOfDictOfDict(convertToDict(listOfConstraints));
-    }
-
     var optimsScope = $scope;
 
     function openEditOptimizationModal(optimization) {
@@ -397,8 +389,6 @@ define(
         function initialize() {
           $scope.state = {};
           $scope.state.optimization = angular.copy(optimization);
-          $scope.state.optimization.constraints = listifyConstraints(
-            $scope.state.optimization.constraints);
           $scope.parsets = optimsScope.state.parsets;
           $scope.otherNames = _.without(_.pluck(optimsScope.state.optimizations, 'name'), optimization.name);
           $scope.progsets = optimsScope.state.progsets;
@@ -431,8 +421,8 @@ define(
 
         function selectProgset() {
           var progsetId = $scope.state.optimization.progset_id;
-          $scope.defaultConstraints = listifyConstraints(
-            deepCopyJson(optimsScope.defaultOptimizationsByProgsetId[progsetId].constraints));
+          $scope.defaultConstraints = deepCopyJson(
+            optimsScope.defaultOptimizationsByProgsetId[progsetId].constraints);
 
           var constraints = $scope.state.optimization.constraints;
           var defaultKeys = _.pluck($scope.defaultConstraints, 'key');
@@ -444,8 +434,7 @@ define(
               constraints.push(constraint);
             }
           });
-          constraints = _.sortBy(constraints, function(c) { return c.key });
-          scaleConstraints(constraints, 100.0)
+          scaleConstraints(constraints, 100.0);
           $scope.state.optimization.constraints = constraints;
           console.log("selectProgset constraints", $scope.state.optimization.constraints);
         }
@@ -454,8 +443,6 @@ define(
 
         function save() {
           scaleConstraints($scope.state.optimization.constraints, 0.01);
-          $scope.state.optimization.constraints = revertToConstraints(
-            $scope.state.optimization.constraints);
           $modalInstance.close($scope.state.optimization);
         }
 
