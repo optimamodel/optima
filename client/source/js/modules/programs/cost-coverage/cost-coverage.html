@@ -198,7 +198,7 @@
                 </tr>
                 <tr>
                   <td colspan="5">
-                    <div class="error-hint" ng-show="vm.checkLowHigh()">
+                    <div class="error-hint" ng-show="vm.checkLowHighValidationForAllCcopars()">
                       Please ensure low < high in "Saturation %" and "Unit cost"
                     </div>
                     <a class="btn" ng-click="vm.addCcoparYear()">
@@ -268,7 +268,7 @@
                 <button
                     ng-click="vm.saveProgram()"
                     class="btn __green"
-                    ng-disabled="bigForm.$invalid || vm.checkLowHigh()"
+                    ng-disabled="bigForm.$invalid || vm.checkLowHighValidationForAllCcopars()"
                     style="margin-left: 0em; margin-bottom: 3em">
                   Save & update
                 </button>
@@ -347,7 +347,10 @@
             <help ref="define-outcome-functions"/>
           </div>
 
-          <button class="btn __green __m" ng-click="vm.saveProgsetOutcomes()">
+          <button
+              class="btn __green __m"
+              ng-click="vm.saveProgsetOutcomes()"
+              ng-disabled="vm.checkLowHighValidationForAllOutcomes()">
             Save
           </button>
           <br>
@@ -386,6 +389,11 @@
                 <td>
                   in the absence of any programs targeting this parameter
                   <br>
+                  <div
+                      class="error-hint"
+                      ng-show="vm.checkLowHighViolation(yearEntry.intercept_lower, yearEntry.intercept_upper)">
+                      Please ensure low < high
+                  </div>
                   <br>
                   <i ng-if="vm.state.parameter.coverage != 1">Value for maximum attainable coverage of each program acting in isolation:</i>
                 </td>
@@ -407,6 +415,11 @@
                   <ul>
                     <li>
                   {{vm.getProgramName(program.name)}}
+                    </li>
+                    <li
+                        class="error-hint"
+                        ng-show="vm.checkLowHighViolation(program.intercept_lower, program.intercept_upper)">
+                        Please ensure low < high
                     </li>
                   </ul>
                 </td>
