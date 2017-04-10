@@ -773,6 +773,70 @@ def resolve_project(project):
     return is_change
 
 
+def download_project_object(project_id, obj_type, obj_id):
+    """
+    Args:
+        project_id: id of project
+        obj_type: "parset", "progset", "scenario", "optimization" 
+        obj_id: id of object
+
+    Returns: 
+        server filename
+    """
+    project = load_and_resolve_project(project_id)
+    if obj_type == "parset":
+        ext = "par"
+        obj = parse.get_parset_from_project(project, obj_id)
+    elif obj_type == "progset":
+        ext = "prg"
+        obj = parse.get_progset_from_project(project, obj_id)
+    elif obj_type == "scenario":
+        ext = "scn"
+        obj = parse.get_scenario_from_project(project, obj_id)
+    elif obj_type == "optimization":
+        ext = "opt"
+        obj = parse.get_optimization_from_project(project, obj_id)
+
+    basename = "%s-%s.%s" % (project.name, obj.name, ext)
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    filename = os.path.join(dirname, basename)
+    op.saveobj(filename, obj)
+    return filename
+
+
+def save_project(project):
+    project_record = load_project_record(project.uid)
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def upload_project_object(filename, project_id, obj_type):
+    """
+    Args:
+        project_id: id of project
+        obj_type: "parset", "progset", "scenario", "optimization" 
+        obj_id: id of object
+
+    Returns: 
+        server filename
+    """
+    project = load_and_resolve_project(project_id)
+    obj = op.loadobj(filename)
+    if obj_type == "parset":
+        project.addparset(obj, overwrite=True)
+    elif obj_type == "progset":
+        project.addprogset(obj, overwrite=True)
+    elif obj_type == "scenario":
+        project.addscen(obj, overwrite=True)
+    elif obj_type == "optimization":
+        project.addoptim(obj, overwrite=True)
+    save_project(project)
+    return {}
+
+
 
 #############################################################################################
 ### SPREADSHEETS

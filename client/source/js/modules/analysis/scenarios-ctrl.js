@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, projectApi, modalService, toastr) {
+      $scope, $http, $modal, $state, projectApi, modalService, toastr, util) {
 
     function initialize() {
       $scope.$watch('projectApi.project.id', function() {
@@ -71,6 +71,27 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (successMsg) {
             toastr.success(successMsg)
           }
+        });
+    };
+
+    $scope.downloadScenario = function(scenario) {
+      util
+        .rpcDownload(
+          'download_project_object',
+          [projectApi.project.id, 'scenario', scenario.id])
+        .then(function(response) {
+          toastr.success('Scenario downloaded');
+        });
+
+    };
+
+    $scope.uploadScenario = function(scenario) {
+      util
+        .rpcUpload(
+          'upload_project_object', [projectApi.project.id, 'scenario'])
+        .then(function(response) {
+          toastr.success('Scenario uploaded');
+          $state.reload()
         });
     };
 

@@ -5,7 +5,7 @@ define(
 
   module.controller('AnalysisOptimizationController', function (
       $scope, $http, $upload, $modal, toastr, modalService,
-      projectApi, $timeout, globalPoller) {
+      projectApi, $timeout, globalPoller, util, $state) {
 
     function initialize() {
 
@@ -218,26 +218,24 @@ define(
     };
 
     $scope.downloadOptimization = function(optimization) {
-      var data = JSON.stringify(angular.copy(optimization), null, 2);
-      var blob = new Blob([data], { type: 'application/octet-stream' });
-      saveAs(blob, (optimization.name + '.optim.json'));
+      util
+        .rpcDownload(
+          'download_project_object',
+          [projectApi.project.id, 'optimization', optimization.id])
+        .then(function(response) {
+          toastr.success('Optimization downloaded');
+        });
+
     };
 
     $scope.uploadOptimization = function(optimization) {
-      angular
-        .element('<input type=\'file\'>')
-        .change(
-          function(event) {
-            $upload.upload({
-              url: '/api/project/' + $scope.state.project.id
-                    + '/optimization/' + optimization.id
-                    + '/upload',
-              file: event.target.files[0]
-            }).success(function(response) {
-              loadOptimizations(response);
-            });
-          })
-        .click();
+      util
+        .rpcUpload(
+          'upload_project_object', [projectApi.project.id, 'optimization'])
+        .then(function(response) {
+          toastr.success('Optimization uploaded');
+          $state.reload()
+        });
     };
 
     $scope.startOptimization = function(optimization) {
