@@ -239,7 +239,6 @@ define(['./../module', 'underscore'], function(module, _) {
       }
 
       vm.checkLowHigh = function() {
-        console.log('checkLowHigh', vm.state.ccoparsTable);
         if (_.isUndefined(vm.state.ccoparsTable)) {
           return false;
         }
