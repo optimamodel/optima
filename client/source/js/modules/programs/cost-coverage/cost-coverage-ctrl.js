@@ -238,6 +238,24 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.program.ccopars = ccopars;
       }
 
+      vm.checkLowHigh = function() {
+        console.log('checkLowHigh', vm.state.ccoparsTable);
+        if (_.isUndefined(vm.state.ccoparsTable)) {
+          return false;
+        }
+        var result = false;
+        _.each(vm.state.ccoparsTable.rows, function(row) {
+          if (row[3] < row[2]) {
+            result = true;
+          }
+          if (row[5] < row[4]) {
+            result = true;
+          }
+        });
+        return result;
+      };
+
+
       vm.saveProgram = function() {
         revertCcoparsTable();
         console.log('saving program', vm.state.program);
@@ -315,6 +333,8 @@ define(['./../module', 'underscore'], function(module, _) {
         }
         vm.setEstPopulationForCcopar();
       }
+
+      // OUTCOME FUNCTIONS
 
       function getFilteredOutcomes(outcomes) {
 

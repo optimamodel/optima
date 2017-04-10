@@ -102,7 +102,7 @@ gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
 });
 
 // Optimize the app into the build/js directory
-gulp.task('compile-build-js-client-uglify', function () {
+gulp.task('compile-build-js-client-uglify', ['write-version-js'], function () {
   var configRequire = require('./source/js/config.js');
   var configBuild = {
     baseUrl: 'source',
@@ -158,8 +158,9 @@ gulp.task('compile-sass', ['copy-font-awesome-icons'], function () {
 });
 
 // Watch
-gulp.task('watch', ['compile-sass'], function () {
+gulp.task('watch', [], function () {
   gulp.watch('source/sass/**/*.scss', ['sass']);
+  gulp.watch('source/js/**/*.js', ['compile-build-js-client-uglify']);
 
   // enable livereload
   livereload.listen();
@@ -176,7 +177,7 @@ gulp.task('watch', ['compile-sass'], function () {
 gulp.task(
   'default',
   [
+    'copy-assets-and-vendor-js',
     'compile-build-js-client-uglify',
-    'copy-assets-and-vendor-js'
   ]);
 

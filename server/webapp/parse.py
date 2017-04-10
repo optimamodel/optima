@@ -1335,24 +1335,12 @@ def get_optimization_summaries(project):
             parset_id: af6847d6-466b-4fc7-9e41-1347c053a0c2,
             progset_id: cfa49dcc-2b8b-11e6-8a08-57d606501764,
             constraints:
-                max:
-                    ART: None,
-                    Condoms: None,
-                    FSW programs: None,
-                    HTC: None,
-                    Other: 1,
-                min:
-                    ART: 1,
-                    Condoms: 0,
-                    FSW programs: 0,
-                    HTC: 0,
-                    Other: 1,
-                name:
-                    ART: Antiretroviral therapy,
-                    Condoms: Condom promotion and distribution,
-                    FSW programs: Programs for female sex workers and clients,
-                    HTC: HIV testing and counseling,
-                    Other: Other,
+                - 
+                    key: ART
+                    max: None
+                    mi: 1
+                    name: Antiretroviral therapy
+                - ...
             objectives:
                 base: None,
                 budget: 60500000,
@@ -1398,7 +1386,7 @@ def get_optimization_summaries(project):
 
         optim_summaries.append(optim_summary)
 
-    # as some values given can be None or NaN
+    # as some values given can be NaN
     optim_summaries = normalize_obj(optim_summaries)
 
     print(">> get_optimization_summaries" + pformat(optim_summaries, indent=2))

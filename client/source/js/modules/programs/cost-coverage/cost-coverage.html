@@ -175,6 +175,7 @@
                           ng-model="row[4]"
                           min="0"
                           type="number"
+                          step="any"
                           style="width: 50px"
                           class="txbox __inline"
                           required/>
@@ -185,6 +186,7 @@
                           ng-model="row[5]"
                           min="0"
                           type="number"
+                          step="any"
                           style="width: 50px"
                           class="txbox __inline"
                           required/>
@@ -196,6 +198,9 @@
                 </tr>
                 <tr>
                   <td colspan="5">
+                    <div class="error-hint" ng-show="vm.checkLowHigh()">
+                      Values must be low-high
+                    </div>
                     <a class="btn" ng-click="vm.addCcoparYear()">
                       Add year
                     </a>
@@ -263,7 +268,7 @@
                 <button
                     ng-click="vm.saveProgram()"
                     class="btn __green"
-                    ng-disabled="bigForm.$invalid"
+                    ng-disabled="bigForm.$invalid || vm.checkLowHigh()"
                     style="margin-left: 0em; margin-bottom: 3em">
                   Save & update
                 </button>
