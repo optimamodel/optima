@@ -1254,23 +1254,6 @@ def save_progset(project_id, progset_id, progset_summary):
     return parse.get_progset_summary(project, progset_summary["name"])
 
 
-def upload_progset(project_id, progset_id, progset_summary):
-    """
-    Returns progset summary
-    """
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-    
-    old_progset = parse.get_progset_from_project(project, progset_id)
-    print(">> upload_progset '%s' into '%s'" % (progset_summary['name'], old_progset.name))
-    progset_summary['id'] = progset_id
-    progset_summary['name'] = old_progset.name
-    parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
-    project_record.save_obj(project)
-    project.restorelinks()
-    return parse.get_progset_summary(project, progset_summary["name"])
-
-
 def rename_progset(project_id, progset_id, new_name):
     def update_project_fn(project):
         print(">> rename_progset", progset_id, new_name)
