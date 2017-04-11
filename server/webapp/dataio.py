@@ -773,6 +773,20 @@ def resolve_project(project):
     return is_change
 
 
+def save_project(project):
+    project_record = load_project_record(project.uid)
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def get_server_filename(basename):
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    return os.path.join(dirname, basename)
+
+
 def download_project_object(project_id, obj_type, obj_id):
     """
     Args:
@@ -798,19 +812,9 @@ def download_project_object(project_id, obj_type, obj_id):
         obj = parse.get_optimization_from_project(project, obj_id)
 
     basename = "%s-%s.%s" % (project.name, obj.name, ext)
-    dirname = upload_dir_user(TEMPLATEDIR)
-    if not dirname:
-        dirname = TEMPLATEDIR
-    filename = os.path.join(dirname, basename)
+    filename = get_server_filename(basename)
     op.saveobj(filename, obj)
     return filename
-
-
-def save_project(project):
-    project_record = load_project_record(project.uid)
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
 
 
 def upload_project_object(filename, project_id, obj_type):
