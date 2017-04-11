@@ -650,7 +650,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
-        svlprob = min(numvlmon[t]/(numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
+        svlprob = min(numvlmon[t]/(eps+numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
                 if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
@@ -680,6 +680,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         if t<npts-1:
             for fromstate,tostates in enumerate(fromto):
                 people[tostates,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostates,:]
+        
 
         ##############################################################################################################
         ### Calculate births
@@ -751,6 +752,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
 
             
+
             ## Risk-related transitions
             for p1,p2,thisrisktransprob in risktransitlist:
                 peoplemoving1 = people[:, p1, t+1] * thisrisktransprob  # Number of other people who are moving pop1 -> pop2
@@ -770,6 +772,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             allsus = thissusreg+thisprogcirc
             if debug and not all(allsus>0): 
                 errormsg = label + '100%% prevalence detected (t=%f, pop=%s)' % (t+1, array(popkeys)[findinds(allsus>0)][0])
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 raise OptimaException(errormsg)
             newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
