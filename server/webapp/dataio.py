@@ -829,16 +829,17 @@ def upload_project_object(filename, project_id, obj_type):
     """
     project = load_and_resolve_project(project_id)
     obj = op.loadobj(filename)
+    obj.uid = op.uuid()
     if obj_type == "parset":
-        project.addparset(obj, overwrite=True)
+        project.addparset(parset=obj, overwrite=True)
     elif obj_type == "progset":
-        project.addprogset(obj, overwrite=True)
+        project.addprogset(progset=obj, overwrite=True)
     elif obj_type == "scenario":
-        project.addscen(obj, overwrite=True)
+        project.addscen(scen=obj, overwrite=True)
     elif obj_type == "optimization":
-        project.addoptim(obj, overwrite=True)
+        project.addoptim(optim=obj, overwrite=True)
     save_project(project)
-    return {}
+    return { 'name': obj.name }
 
 
 

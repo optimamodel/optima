@@ -231,10 +231,18 @@ define(
     $scope.uploadOptimization = function(optimization) {
       util
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'optimization'])
+          'upload_project_object', [projectApi.project.id, 'optimization'], {}, '.opt')
         .then(function(response) {
           toastr.success('Optimization uploaded');
-          $state.reload()
+          var name = response.data.name;
+          $http
+            .get('/api/project/' + $scope.state.project.id + '/optimizations')
+            .then(function(response) {
+              console.log('reloadActiveProject optims', response.data);
+              $scope.state.optimizations = response.data.optimizations;
+              $scope.state.optimization = _.findWhere(
+                $scope.state.optimizations, {'name': name});
+            });
         });
     };
 
