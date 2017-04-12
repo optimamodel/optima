@@ -234,7 +234,17 @@ define(
           'upload_project_object', [projectApi.project.id, 'optimization'])
         .then(function(response) {
           toastr.success('Optimization uploaded');
-          $state.reload()
+          var name = response.data.name;
+          console.log('uploadOptimization', name);
+          $http
+            .get('/api/project/' + $scope.state.project.id + '/optimizations')
+            .then(function(response) {
+              console.log('reloadActiveProject optims', response.data);
+              var data = response.data;
+              $scope.state.optimizations = response.data.optimizations;
+              $scope.state.optimization = _.findWhere(
+                $scope.state.optimizations, {'name': name});
+            });
         });
     };
 
