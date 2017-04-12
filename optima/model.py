@@ -650,7 +650,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
-        svlprob = min(numvlmon[t]/(numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
+        svlprob = min(numvlmon[t]/(eps+numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
                 if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
@@ -680,6 +680,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         if t<npts-1:
             for fromstate,tostates in enumerate(fromto):
                 people[tostates,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostates,:]
+
 
         ##############################################################################################################
         ### Calculate births
@@ -750,7 +751,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 people[:, p1, t+1] -= peopleleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
 
-            
+
             ## Risk-related transitions
             for p1,p2,thisrisktransprob in risktransitlist:
                 peoplemoving1 = people[:, p1, t+1] * thisrisktransprob  # Number of other people who are moving pop1 -> pop2
