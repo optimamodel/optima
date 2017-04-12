@@ -165,6 +165,12 @@
                           style="width: 50px"
                           class="txbox __inline"
                           required/>
+                      <div class="error-hint" ng-show="saturationForm.$invalid">
+                        Invalid values
+                      </div>
+                      <div class="error-hint" ng-show="vm.checkLowHighViolation(row[2], row[3])">
+                        Please ensure low < high
+                      </div>
                     </ng-form>
                   </td>
                   <td>
@@ -190,6 +196,12 @@
                           style="width: 50px"
                           class="txbox __inline"
                           required/>
+                      <div class="error-hint" ng-show="unitForm.$invalid">
+                        Invalid values
+                      </div>
+                      <div class="error-hint" ng-show="vm.checkLowHighViolation(row[4], row[5])">
+                        Please ensure low < high
+                      </div>
                     </ng-form>
                   </td>
                   <td>
@@ -198,9 +210,6 @@
                 </tr>
                 <tr>
                   <td colspan="5">
-                    <div class="error-hint" ng-show="vm.checkLowHighValidationForAllCcopars()">
-                      Please ensure low < high in "Saturation %" and "Unit cost"
-                    </div>
                     <a class="btn" ng-click="vm.addCcoparYear()">
                       Add year
                     </a>
@@ -237,6 +246,9 @@
                           type="number"
                           style="width: 120px"
                           class="txbox __inline"/>
+                        <div class="error-hint" ng-show="spendingForm.$invalid">
+                          Invalid value
+                        </div>
                     </ng-form>
                   </td>
                   <td>
@@ -249,6 +261,9 @@
                           style="width: 120px"
                           type="number"
                           class="txbox __inline"/>
+                        <div class="error-hint" ng-show="coverageForm.$invalid">
+                          Invalid value
+                        </div>
                     </ng-form>
                   </td>
                   <td>
