@@ -239,7 +239,6 @@ define(
             .get('/api/project/' + $scope.state.project.id + '/optimizations')
             .then(function(response) {
               console.log('reloadActiveProject optims', response.data);
-              var data = response.data;
               $scope.state.optimizations = response.data.optimizations;
               $scope.state.optimization = _.findWhere(
                 $scope.state.optimizations, {'name': name});

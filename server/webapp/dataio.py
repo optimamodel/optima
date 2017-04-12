@@ -835,7 +835,7 @@ def upload_project_object(filename, project_id, obj_type):
     elif obj_type == "progset":
         project.addprogset(progset=obj, overwrite=True)
     elif obj_type == "scenario":
-        project.addscen(addscen=obj, overwrite=True)
+        project.addscen(scen=obj, overwrite=True)
     elif obj_type == "optimization":
         project.addoptim(optim=obj, overwrite=True)
     save_project(project)
