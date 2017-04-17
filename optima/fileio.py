@@ -21,7 +21,7 @@ import optima as op
 def saveobj(filename, obj, compresslevel=5, verbose=True):
     ''' Save an object to file -- use compression 5, since more is much slower but not much smaller '''
     with GzipFile(filename, 'wb', compresslevel=compresslevel) as fileobj:
-        fileobj.write(dumppickle(obj))
+        fileobj.write(pickle.dumps(obj, protocol=-1))
     if verbose: print('Object saved to "%s"' % filename)
     return path.abspath(filename)
 
@@ -43,7 +43,7 @@ def dumpstr(obj):
     result = None
     with closing(StringIO()) as output:
         with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
-            fileobj.write(dumppickle(obj))
+            fileobj.write(pickle.dumps(obj, protocol=-1))
         output.seek(0)
         result = output.read()
     return result
@@ -75,23 +75,6 @@ def loadpickle(fileobj, verbose=False):
         del op._portfolio.GAOptim
     
     return obj
-    
-
-def dumppickle(obj, verbose=False):
-    ''' Loads a pickled object -- need to define legacy classes here since they're needed for unpickling '''
-    
-    try: # Try just loading it
-        string = pickle.dumps(obj, protocol=-1)
-    except: # If that fails, create legacy classes and try again
-        if verbose: print('Initial loading failed, trying again with legacy classes...')
-        class EmptyClass(object): pass
-        op._project.Spreadsheet = EmptyClass
-        op._portfolio.GAOptim = EmptyClass
-        string = pickle.dumps(obj, protocol=-1)
-        del op._project.Spreadsheet
-        del op._portfolio.GAOptim
-    
-    return string
     
 
 #############################################################################################################################
