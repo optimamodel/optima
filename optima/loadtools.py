@@ -116,7 +116,7 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     return None
 
 
-def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False):
+def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False, **kwargs):
     ''' 
     Remove a parameter from a parset
     '''
@@ -141,7 +141,7 @@ def removeparameter(project=None, short=None, datashort=None, verbose=False, die
     return None
 
 
-def addwarning(project=None, message=None):
+def addwarning(project=None, message=None, **kwargs):
     ''' Add a warning to the project, which is printed when migrated or loaded '''
     if not hasattr(project, 'warnings') or type(project.warnings)!=str: # If no warnings attribute, create it
         project.warnings = ''
@@ -149,7 +149,7 @@ def addwarning(project=None, message=None):
     return None
 
 
-def incrementversion(project=None):
+def incrementversion(project=None, **kwargs):
     ''' Ugly little function to increment the version number and do nothing else '''
     
     # Define the version increments
@@ -771,7 +771,7 @@ def migrate(project, verbose=2, die=False):
 
         upgrader = migrations[str(project.version)]
 
-        op.printv("Migrating from %6s ->" % project.version, 2, verbose, newline=False)
+        op.printv('Migrating project "%s" from %6s ->' % (project.name, project.version), 2, verbose, newline=False)
         upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
         op.printv("%6s" % project.version, 2, verbose, indent=False)
         
@@ -832,6 +832,7 @@ def migrateportfolio(portfolio=None, verbose=2):
     
     # Rather than use the dict mapping, use a (series) of if statements
     if op.compareversions(portfolio.version, '2.3.5')<0:
+        op.printv('Migrating portfolio "%s" from %6s -> %6s' % (portfolio.name, portfolio.version, '2.3.5'), 2, verbose)
         portfolio = removegaoptim(portfolio)
     
     # Check to make sure it's the latest version
