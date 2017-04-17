@@ -3,9 +3,8 @@ from numpy import nan, isnan, concatenate as cat, array
 
 
 ##########################################################################################
-### PROJECT MIGRATIONS
+### MIGRATION UTILITIES
 ##########################################################################################
-
 
 
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
@@ -60,6 +59,30 @@ def addwarning(project=None, message=None):
         project.warnings = ''
     project.warnings += '\n'*3+str(message) # # Add this warning
     return None
+
+
+def incrementversion(project=None):
+    ''' Ugly little function to increment the version number and do nothing else '''
+    
+    # Define the version increments
+    versionmapping = { 
+        '2.3.4': '2.3.5',
+    }
+    
+    # Do the super-simple incrementation
+    try:
+        project.version = versionmapping[project.version]
+    except:
+        errormsg = 'Cannot migrate since version %s is not defined; choices are: %s' % (project.version, versionmapping.keys())
+        raise op.OptimaException(errormsg)
+    
+    return project
+
+
+
+##########################################################################################
+### PROJECT MIGRATIONS
+##########################################################################################
 
 
 def versiontostr(project, **kwargs):
@@ -654,12 +677,14 @@ def migrate(project, verbose=2, die=False):
     '2.3.1': addagetopars,
     '2.3.2': redotranstable,
     '2.3.3': redotranstable, # Same migration, but need to rerun since transtable changed again
+    '2.3.4': incrementversion,
     #'2.2': redoprograms,
     }
 
     while str(project.version) != str(op.version):
         if not str(project.version) in migrations:
-            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.version))
+            errormsg = "No migration exists from version %s to the latest version (%s)" % (project.version, op.version)
+            raise op.OptimaException(errormsg)
 
         upgrader = migrations[str(project.version)]
 
@@ -701,6 +726,21 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
 
 def migrateportfolio(portfolio=None, verbose=2):
     
+    def removegaoptim(portfolio):
+        if hasattr(portfolio, 'gaoptims'):
+        
+        portfolio.version = '2.3.5'
+        return portfolio
+    
+    if op.compareversions(portfolio.version, '2.3.5')<0:
+        portfolio = removegaoptim(portfolio)
+    
+    if portfolio.version != op.version:
+        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
+        raise op.OptimaException(errormsg)
+        
+        
+    
     
     return portfolio
 
@@ -709,15 +749,15 @@ def loadportfolio(filename=None, verbose=2):
     ''' Load a saved portfolio, migrating constituent projects -- NB, portfolio itself is not migrated (no need yet), only the projects '''
     
     op.printv('Loading portfolio %s...' % filename, 2, verbose)
-    F = op.loadobj(filename, verbose=verbose) # Load portfolio
+    portfolio = op.loadobj(filename, verbose=verbose) # Load portfolio
+    portfolio = migrateportfolio(portfolio)
     
     
-    for i in range(len(F.projects)): # Migrate projects one by one
+    for i in range(len(portfolio.projects)): # Migrate projects one by one
         op.printv('Loading project %s...' % F.projects[i].name, 3, verbose)
-        F.projects[i] = migrate(F.projects[i], verbose=verbose)
+        portfolio.projects[i] = migrate(portfolio.projects[i], verbose=verbose)
     
-    F.version = op.version # Update version number
-    F.filename = filename # Update filename
+    portfolio.filename = filename # Update filename
     
     return F
 
