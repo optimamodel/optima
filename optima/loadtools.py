@@ -724,23 +724,32 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
 
 
 
+
+# Define the migrations here since not likely to be many
+def removegaoptim(portfolio):
+    if hasattr(portfolio, 'gaoptims'): # If it has GAOptims, "migrate" these to the new structure
+        if len(portfolio.gaoptims)>1:
+            print('WARNING, this portfolio has %i GAOptims but only the last one will be migrated! If you need the others, then use F = loadobj(<filename>) and save what you need manually.')
+        portfolio.objectives = portfolio.gaopims[-1].objectives
+        portfolio.results = portfolio.gaopims[-1].resultpairs # WARNING, unlikely to work
+    for attr in ['gaoptims', 'outputstring']:
+        try: delattr(portfolio, attr)
+        except: pass
+    portfolio.version = '2.3.5'
+    return portfolio
+
+
+
 def migrateportfolio(portfolio=None, verbose=2):
     
-    def removegaoptim(portfolio):
-        if hasattr(portfolio, 'gaoptims'):
-        
-        portfolio.version = '2.3.5'
-        return portfolio
-    
+    # Rather than use the dict mapping, use a (series) of if statements
     if op.compareversions(portfolio.version, '2.3.5')<0:
         portfolio = removegaoptim(portfolio)
     
+    # Check to make sure it's the latest version
     if portfolio.version != op.version:
         errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
         raise op.OptimaException(errormsg)
-        
-        
-    
     
     return portfolio
 
