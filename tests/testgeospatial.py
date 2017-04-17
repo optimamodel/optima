@@ -80,7 +80,7 @@ if 'runGA' in tests:
     
     # Make projects
     P = defaultproject('simple')
-    projlist = makegeoprojects(project=P, filename=spreadsheetpath, dosave=False)
+    projlist = makegeoprojects(project=P, spreadsheetpath=spreadsheetpath, dosave=False)
     
     # Make portfolio and run
     F = Portfolio(projects=projlist, objectives=defaultobjectives())
