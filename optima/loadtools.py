@@ -2,6 +2,12 @@ import optima as op
 from numpy import nan, isnan, concatenate as cat, array
 
 
+##########################################################################################
+### PROJECT MIGRATIONS
+##########################################################################################
+
+
+
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     ''' 
     Function for adding a new parameter to a project -- used by several migrations.
@@ -613,44 +619,44 @@ def redotranstable(project, **kwargs):
 #    return None
 
 
-
-
-migrations = {
-'2.0':   versiontostr,
-'2.0.0': addscenuid,
-'2.0.1': addforcepopsize,
-'2.0.2': delimmediatecare,
-'2.0.3': addproppmtct,
-'2.0.4': redotransitions,
-'2.1':   makepropsopt,
-'2.1.1': addalleverincare,
-'2.1.2': removenumcircdata,
-'2.1.3': removepopcharacteristicsdata,
-'2.1.4': addaidsleavecare,
-'2.1.5': addaidslinktocare,
-'2.1.6': adddataend,
-'2.1.7': fixsettings,
-'2.1.8': addoptimscaling,
-'2.1.9': addpropsandcosttx,
-'2.1.10':redoparameters,
-'2.2':   redovlmon,
-'2.2.1': addprojectinfotoresults,
-'2.2.2': redoparameterattributes,
-'2.3':   removespreadsheet,
-'2.3.1': addagetopars,
-'2.3.2': redotranstable,
-'2.3.3': redotranstable, # Same migration, but need to rerun since transtable changed again
-#'2.2': redoprograms,
-}
-
-
-
+##########################################################################################
+### LOADING FUNCTIONS
+##########################################################################################
 
 
 def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
+    
+    migrations = {
+    '2.0':   versiontostr,
+    '2.0.0': addscenuid,
+    '2.0.1': addforcepopsize,
+    '2.0.2': delimmediatecare,
+    '2.0.3': addproppmtct,
+    '2.0.4': redotransitions,
+    '2.1':   makepropsopt,
+    '2.1.1': addalleverincare,
+    '2.1.2': removenumcircdata,
+    '2.1.3': removepopcharacteristicsdata,
+    '2.1.4': addaidsleavecare,
+    '2.1.5': addaidslinktocare,
+    '2.1.6': adddataend,
+    '2.1.7': fixsettings,
+    '2.1.8': addoptimscaling,
+    '2.1.9': addpropsandcosttx,
+    '2.1.10':redoparameters,
+    '2.2':   redovlmon,
+    '2.2.1': addprojectinfotoresults,
+    '2.2.2': redoparameterattributes,
+    '2.3':   removespreadsheet,
+    '2.3.1': addagetopars,
+    '2.3.2': redotranstable,
+    '2.3.3': redotranstable, # Same migration, but need to rerun since transtable changed again
+    #'2.2': redoprograms,
+    }
+
     while str(project.version) != str(op.version):
         if not str(project.version) in migrations:
             raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.version))
@@ -678,13 +684,6 @@ def migrate(project, verbose=2, die=False):
     return project
 
 
-
-
-
-
-
-
-
 def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
@@ -700,6 +699,10 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
 
 
 
+def migrateportfolio(portfolio=None, verbose=2):
+    
+    
+    return portfolio
 
 
 def loadportfolio(filename=None, verbose=2):

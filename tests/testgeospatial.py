@@ -61,7 +61,7 @@ if 'makespreadsheet' in tests:
     from os import remove
     spreadsheetpath = 'simple-ga-division-template.xlsx'
     P = defaultproject('simple')
-    makegeospreadsheet(project=P, spreadsheetpath=spreadsheetpath, copies=2, refyear=2015)
+    makegeospreadsheet(project=P, filename=spreadsheetpath, copies=2, refyear=2015)
     if not dosave: remove(spreadsheetpath)
     done(t)
    
@@ -80,7 +80,7 @@ if 'runGA' in tests:
     
     # Make projects
     P = defaultproject('simple')
-    projlist = makegeoprojects(project=P, spreadsheetpath=spreadsheetpath, dosave=False)
+    projlist = makegeoprojects(project=P, filename=spreadsheetpath, dosave=False)
     
     # Make portfolio and run
     F = Portfolio(projects=projlist, objectives=defaultobjectives())

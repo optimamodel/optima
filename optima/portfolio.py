@@ -601,29 +601,19 @@ def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None
 def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave=True, verbose=2):
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
     
-    ## 1. Get results and defaults
+    # 1. Get results and defaults
     if project is None or spreadsheetpath is None:
         errormsg = 'makegeoprojects requires a project and a spreadsheet path as inputs'
         raise OptimaException(errormsg)
     try:    results = project.parset().getresults()
     except: results = project.runsim()
     
-    ## 2. Load a spreadsheet file
+    # 2. Load a spreadsheet file
     workbook = open_workbook(spreadsheetpath)
     wspopsize = workbook.sheet_by_name('Population sizes')
     wsprev = workbook.sheet_by_name('Population prevalence')
     
-    ## 3. Get a destination folder
-    if dosave:
-        if destination is None: destination = '.'+os.sep # Use current folder
-        try:
-            if not os.path.exists(destination):
-                os.makedirs(destination)
-        except: 
-            errormsg = 'Was unable to make target directory "%s"' % destination
-            raise OptimaException(errormsg)
-    
-    ## 4. Read the spreadsheet
+    # 3. Read the spreadsheet
     poplist = []
     for colindex in range(1,wspopsize.ncols-3): # Skip first column and last 3
         poplist.append(wspopsize.cell_value(0, colindex))
@@ -704,7 +694,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
     printv('PLHIV ratio...', 4, verbose)
     printv(plhivratio, 4, verbose)                    # Proportions of PLHIV split between districts.
     
-    ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
+    # 4. Calibrate each project file according to the data entered for it in the spreadsheet
     projlist = []
     for c,districtname in enumerate(districtlist):
         newproject = dcp(project)
@@ -748,7 +738,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
         projlist.append(newproject)
     project.runsim(project.parsets[-1].name)
     
-    ## 6. Save each project file into the directory, or return the created projects
+    # 5. Save each project file into the directory, or return the created projects
     if dosave:
         filepaths = []
         for subproject in projlist:
