@@ -406,8 +406,16 @@
                   <br>
                   <div
                       class="error-hint"
-                      ng-show="vm.checkLowHighViolation(yearEntry.intercept_lower, yearEntry.intercept_upper)">
+                      ng-show="
+                        vm.checkLowHighViolation(yearEntry.intercept_lower, yearEntry.intercept_upper)">
                       Please ensure low < high
+                  </div>
+                  <div
+                      class="error-hint"
+                      ng-show="
+                        vm.checkLimitViolation(yearEntry.intercept_lower, vm.state.parameter.limits)
+                          || vm.checkLimitViolation(yearEntry.intercept_upper, vm.state.parameter.limits)">
+                      Please ensure values are within limits
                   </div>
                   <br>
                   <i ng-if="vm.state.parameter.coverage != 1">Value for maximum attainable coverage of each program acting in isolation:</i>

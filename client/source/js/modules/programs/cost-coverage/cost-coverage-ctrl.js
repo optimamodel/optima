@@ -254,6 +254,15 @@ define(['./../module', 'underscore'], function(module, _) {
         return result;
       };
 
+      vm.checkLimitViolation = function(val, limits) {
+        if (val < limits[0]) {
+          return true;
+        }
+        if (val > limits[1]) {
+          return true;
+        }
+        return false;
+      };
 
       vm.saveProgram = function() {
         revertCcoparsTable();
