@@ -625,7 +625,7 @@ class Project(object):
     #######################################################################################################
         
     def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
-               maxtime=None, verbose=2, stoppingfunc=None, method='asd', mc=3, die=False, **kwargs):
+               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         boc = BOC(name='BOC '+self.name)
         if objectives is None:
@@ -683,7 +683,7 @@ class Project(object):
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
             
             # Actually run
-            results = optim.optimize(maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, origbudget=owbudget, label=label, mc=mc, die=die, **kwargs)
+            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets['Optimal'])
             tmpoutcomes[key] = results.improvement[-1][-1]
