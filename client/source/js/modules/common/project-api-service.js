@@ -194,36 +194,14 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-    function deleteProject(projectId) {
-      var deferred = $q.defer();
-      util
-        .rpcRun(
-          'delete_projects', [[projectId]])
-        .then(
-          function(response) {
-            var n = projectApi.projects.length;
-            for (var i=0; i<n; i+=1) {
-              if (projectApi.projects[i].id == projectId) {
-                projectApi.projects.splice(i, 1);
-              }
-            }
-            clearProjectIdIfActive(projectId);
-            deferred.resolve(response);
-          },
-          function(response) {
-            deferred.reject(response);
-          });
-      return deferred.promise;
-    }
-
-    function deleteSelectedProjects(projectIds) {
+    function deleteProjects(projectIds) {
       var deferred = $q.defer();
       util
         .rpcRun(
           'delete_projects', [projectIds])
         .then(
           function(response) {
-            console.log('deleteSelectedProjects', projectIds);
+            console.log('deleteProjects', projectIds);
             _.each(projectIds, function(projectId) {
               clearProjectIdIfActive(projectId);
             });
@@ -253,7 +231,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       copyProject: copyProject,
       renameProject: renameProject,
       createProject: createProject,
-      deleteSelectedProjects: deleteSelectedProjects,
+      deleteProjects: deleteProjects,
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
       getActiveProject: function () {

@@ -38,24 +38,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.deleteSelected = function() {
-        const selectedProjectIds = _.filter(projectApi.projects, function(project) {
-          return project.selected;
-        }).map(function(project) {
-          return project.id;
-        });
-        projectApi
-          .deleteSelectedProjects(selectedProjectIds)
+        const projectIds =
+          _.filter(
+            projectApi.projects,
+            function(project) { return project.selected; })
+          .map(
+            function(project) { return project.id; });
+        projectApi.deleteProjects(projectIds)
       };
 
       $scope.downloadSelected = function() {
-        const selectedProjectsIds =
+        const projectsIds =
           _.filter(
             projectApi.projects,
             function(project) { return project.selected; })
           .map(
             function(project) { return project.id; });
         projectApi
-          .downloadSelectedProjects(selectedProjectsIds)
+          .downloadSelectedProjects(projectsIds)
           .success(function (response) {
             saveAs(new Blob([response], { type: "application/octet-stream", responseType: 'arraybuffer' }), 'portfolio.zip');
           });
