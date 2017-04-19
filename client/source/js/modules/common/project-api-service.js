@@ -240,24 +240,18 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           return getProjectAndMakeActive(projectId);
         }
       },
-      downloadSelectedProjects: function(projects) {
-        return $http.post(
-          '/api/project/portfolio',
-          {projects: projects},
-          {responseType: 'arraybuffer'});
+      downloadSelectedProjects: function (projectIds) {
+        return util.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },
       getAllProjectList: function () {
-        return $http.get('/api/project/all');
+        return util.rpcRun('load_project_summaries');
       },
       getPopulations: function () {
-        return $http.get('/api/project/populations');
+        return util.rpcRun('get_default_populations');
       },
       getDefaultPrograms: function (projectId) {
-        return $http.get('/api/project/' + projectId + '/defaults');
+        return util.rpcRun('load_project_program_summaries', [projectId]);
       },
-      getSpreadsheetUrl: function(id) {
-        return '/api/project/' + id + '/spreadsheet';
-      }
     });
 
     return projectApi;

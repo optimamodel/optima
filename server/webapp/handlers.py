@@ -233,14 +233,14 @@ class DefaultParameters(Resource):
 api.add_resource(DefaultParameters, '/api/project/<project_id>/parameters')
 
 
-class DefaultPopulations(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Returns default populations for project management')
-    def get(self):
-        return {'populations': parse.get_default_populations()}
-
-api.add_resource(DefaultPopulations, '/api/project/populations')
+# class DefaultPopulations(Resource):
+#     method_decorators = [report_exception_decorator, login_required]
+#
+#     @swagger.operation(summary='Returns default populations for project management')
+#     def get(self):
+#         return {'populations': parse.get_default_populations()}
+#
+# api.add_resource(DefaultPopulations, '/api/project/populations')
 
 
 class Portfolio(Resource): # WARNING, should maybe be called something different since actually a project method

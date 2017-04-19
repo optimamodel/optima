@@ -4,11 +4,13 @@ import sys
 import logging
 import matplotlib
 import redis
+import traceback
 
-from flask import Flask, redirect, abort, jsonify, request, json
+from flask import Flask, redirect, abort, jsonify, make_response, request, json, helpers
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 
 # Create Flask app that does everything
 app = Flask(__name__)
@@ -121,7 +123,6 @@ def run_remote_procedure():
     return result
 
 
-from flask import helpers
 @app.route('/api/download', methods=['POST'])
 @report_exception_decorator
 @login_required
@@ -139,9 +140,17 @@ def get_remote_file():
 
     args = json.get('args', [])
     kwargs = json.get('kwargs', {})
+
+    # BUG: exceptions in get_remote_file are caught and
+    # transformed into a json string with the stack trace
+    # however the client is unable to pick it up
+    # haven't found the bug yet, but it may have something
+    # to do the with the POST handler expecting responsearray
+
     full_filename = fn(*args, **kwargs)
+
     dirname, filename = os.path.split(full_filename)
-    print(">> Get remote file %s %s" % (dirname, filename))
+
     response = helpers.send_from_directory(
         dirname,
         filename,
@@ -149,6 +158,7 @@ def get_remote_file():
         attachment_filename=filename)
     response.status_code = 201
     response.headers["filename"] = filename
+
     return response
 
 

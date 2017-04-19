@@ -390,6 +390,10 @@ def load_project_summaries(user_id=None):
     return {'projects': map(load_project_summary_from_project_record, query.all())}
 
 
+def get_default_populations():
+    return parse.get_default_populations()
+
+
 def create_project_with_spreadsheet_download(user_id, project_summary):
     """
     Creates a project from project_summary and returns
@@ -494,6 +498,7 @@ def update_project_from_summary(project_summary, is_delete_data=False):
 
 
 def download_data_spreadsheet(project_id, is_blank=True):
+    print ">> download_data_spreadsheet init"
     project = load_project(project_id)
     project_summary = parse.get_project_summary_from_project(project)
     new_project_template = secure_filename(
@@ -665,12 +670,6 @@ def update_project_from_prj(project_id, prj_filename):
     project_record.save_obj(project)
     db.session.add(project_record)
     db.session.commit()
-
-
-# def update_project_from_data_spreadsheet(project_id, spreadsheet_fname):
-#     def modify(project):
-#         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
-#     update_project_with_fn(project_id, modify)
 
 
 def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
@@ -1182,7 +1181,7 @@ def load_parset_graphs(
         parset.modified = datetime.now(dateutil.tz.tzutc())
         parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
-        update_project(project)
+        save_project(project)
         result = None
 
     if result is None:

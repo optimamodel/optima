@@ -70,6 +70,7 @@ define([
               return $q.reject(rejection);
             } else {
               var message, errorText;
+              console.log('catching error', rejection);
               if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else {
