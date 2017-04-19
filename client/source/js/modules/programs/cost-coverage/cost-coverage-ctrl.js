@@ -238,6 +238,32 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.program.ccopars = ccopars;
       }
 
+      vm.checkLowHighValidationForAllCcopars = function() {
+        if (_.isUndefined(vm.state.ccoparsTable)) {
+          return false;
+        }
+        var result = false;
+        _.each(vm.state.ccoparsTable.rows, function(row) {
+          if (row[3] < row[2]) {
+            result = true;
+          }
+          if (row[5] < row[4]) {
+            result = true;
+          }
+        });
+        return result;
+      };
+
+      vm.checkLimitViolation = function(val, limits) {
+        if (val < limits[0]) {
+          return true;
+        }
+        if (val > limits[1]) {
+          return true;
+        }
+        return false;
+      };
+
       vm.saveProgram = function() {
         revertCcoparsTable();
         console.log('saving program', vm.state.program);
@@ -316,6 +342,8 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.setEstPopulationForCcopar();
       }
 
+      // OUTCOME FUNCTIONS
+
       function getFilteredOutcomes(outcomes) {
 
         function isProgramNotEmpty(program) {
@@ -345,6 +373,29 @@ define(['./../module', 'underscore'], function(module, _) {
 
         return filteredOutcomes;
       }
+
+      vm.checkLowHighViolation = function(low, high) {
+        return high < low;
+      };
+
+      vm.checkLowHighValidationForAllOutcomes = function() {
+        var result = false;
+        _.each(vm.state.targetedOutcomes, function(outcome) {
+          _.each(outcome.years, function(yearEntry) {
+            if (yearEntry.intercept_lower > yearEntry.intercept_upper) {
+              result = true;
+              return;
+            }
+            _.each(yearEntry.programs, function(program) {
+              if (program.intercept_lower > program.intercept_upper) {
+                result = true;
+                return;
+              }
+            });
+          });
+        });
+        return result;
+      };
 
       vm.saveProgsetOutcomes = function() {
         $http.put(

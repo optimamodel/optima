@@ -165,6 +165,12 @@
                           style="width: 50px"
                           class="txbox __inline"
                           required/>
+                      <div class="error-hint" ng-show="saturationForm.$invalid">
+                        Invalid values
+                      </div>
+                      <div class="error-hint" ng-show="vm.checkLowHighViolation(row[2], row[3])">
+                        Please ensure low < high
+                      </div>
                     </ng-form>
                   </td>
                   <td>
@@ -175,6 +181,7 @@
                           ng-model="row[4]"
                           min="0"
                           type="number"
+                          step="any"
                           style="width: 50px"
                           class="txbox __inline"
                           required/>
@@ -185,9 +192,16 @@
                           ng-model="row[5]"
                           min="0"
                           type="number"
+                          step="any"
                           style="width: 50px"
                           class="txbox __inline"
                           required/>
+                      <div class="error-hint" ng-show="unitForm.$invalid">
+                        Invalid values
+                      </div>
+                      <div class="error-hint" ng-show="vm.checkLowHighViolation(row[4], row[5])">
+                        Please ensure low < high
+                      </div>
                     </ng-form>
                   </td>
                   <td>
@@ -232,6 +246,9 @@
                           type="number"
                           style="width: 120px"
                           class="txbox __inline"/>
+                        <div class="error-hint" ng-show="spendingForm.$invalid">
+                          Invalid value
+                        </div>
                     </ng-form>
                   </td>
                   <td>
@@ -244,6 +261,9 @@
                           style="width: 120px"
                           type="number"
                           class="txbox __inline"/>
+                        <div class="error-hint" ng-show="coverageForm.$invalid">
+                          Invalid value
+                        </div>
                     </ng-form>
                   </td>
                   <td>
@@ -263,7 +283,7 @@
                 <button
                     ng-click="vm.saveProgram()"
                     class="btn __green"
-                    ng-disabled="bigForm.$invalid"
+                    ng-disabled="bigForm.$invalid || vm.checkLowHighValidationForAllCcopars()"
                     style="margin-left: 0em; margin-bottom: 3em">
                   Save & update
                 </button>
@@ -342,7 +362,10 @@
             <help ref="define-outcome-functions"/>
           </div>
 
-          <button class="btn __green __m" ng-click="vm.saveProgsetOutcomes()">
+          <button
+              class="btn __green __m"
+              ng-click="vm.saveProgsetOutcomes()"
+              ng-disabled="vm.checkLowHighValidationForAllOutcomes()">
             Save
           </button>
           <br>
@@ -381,6 +404,19 @@
                 <td>
                   in the absence of any programs targeting this parameter
                   <br>
+                  <div
+                      class="error-hint"
+                      ng-show="
+                        vm.checkLowHighViolation(yearEntry.intercept_lower, yearEntry.intercept_upper)">
+                      Please ensure low < high
+                  </div>
+                  <div
+                      class="error-hint"
+                      ng-show="
+                        vm.checkLimitViolation(yearEntry.intercept_lower, vm.state.parameter.limits)
+                          || vm.checkLimitViolation(yearEntry.intercept_upper, vm.state.parameter.limits)">
+                      Please ensure values are within limits
+                  </div>
                   <br>
                   <i ng-if="vm.state.parameter.coverage != 1">Value for maximum attainable coverage of each program acting in isolation:</i>
                 </td>
@@ -402,6 +438,11 @@
                   <ul>
                     <li>
                   {{vm.getProgramName(program.name)}}
+                    </li>
+                    <li
+                        class="error-hint"
+                        ng-show="vm.checkLowHighViolation(program.intercept_lower, program.intercept_upper)">
+                        Please ensure low < high
                     </li>
                   </ul>
                 </td>

@@ -61,7 +61,7 @@ if 'makespreadsheet' in tests:
     from os import remove
     spreadsheetpath = 'simple-ga-division-template.xlsx'
     P = defaultproject('simple')
-    makegeospreadsheet(project=P, spreadsheetpath=spreadsheetpath, copies=2, refyear=2015)
+    makegeospreadsheet(project=P, filename=spreadsheetpath, copies=2, refyear=2015)
     if not dosave: remove(spreadsheetpath)
     done(t)
    

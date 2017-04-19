@@ -161,7 +161,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
 
 
 def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
-             constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd', 
+             constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
              maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
     """
     Perform batch BOC calculation.
@@ -201,8 +201,6 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
                 comprises the BOC
         verbose - number indicating level of text output (higher is more text)
         stoppingfunc - appears to not be functional
-        method - optimization algorithm to use for optimization runs that
-                comprise the BOC
         maxload - how much of the CPU to use
         interval - the interval for the loadbalancer to use
         prerun - whether or not to precalculate the results to use for e.g.
@@ -224,7 +222,7 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         prjobjectives = project.optims[-1].objectives if objectives == 'latest' else objectives
         prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
         args = (project, i, outputqueue, budgetratios, name, parsetname, progsetname, prjobjectives, 
-                prjconstraints, maxiters, maxtime, verbose, stoppingfunc, method, maxload, interval, 
+                prjconstraints, maxiters, maxtime, verbose, stoppingfunc, maxload, interval, 
                 prerun, batch, mc, die, recalculate, strict)
         if batch:
             prc = Process(target=boc_task, args=args)
@@ -240,7 +238,7 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
 
 
 def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints, maxiters, 
-             maxtime, verbose, stoppingfunc, method, maxload, interval, prerun, batch, mc, die, recalculate, strict):
+             maxtime, verbose, stoppingfunc, maxload, interval, prerun, batch, mc, die, recalculate, strict):
     
     # Custom opening
     if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
@@ -265,7 +263,7 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
         project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
                        progsetname=progsetname, objectives=objectives, 
                        constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-                       verbose=verbose, stoppingfunc=stoppingfunc, method=method, mc=mc, die=die)
+                       verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die)
     
     # Standardized close
     print('...done.')

@@ -1357,7 +1357,6 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
     project.restorelinks()
 
     budgets = progset.getdefaultbudget()
-    progset.readytooptimize(verbose=4)
     if progset.readytooptimize():
         pars = progset.compareoutcomes(parset=parset, year=t)
     else:
@@ -1385,7 +1384,7 @@ def any_optimizable(project_id):
     
     optimizable = False
     for progset in project.progsets.values():
-        if progset.readytooptimize(verbose=4):
+        if progset.readytooptimize():
             optimizable = True
         
     print('>> any_optimizable for %s: %s' % (project.name, optimizable))
