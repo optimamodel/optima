@@ -2,6 +2,99 @@ import optima as op
 from numpy import nan, isnan, concatenate as cat, array
 
 
+##########################################################################################
+### MIGRATION UTILITIES
+##########################################################################################
+
+
+def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=False, die=False):
+    '''
+    Reads the current script file and adds Optima version info. Simply add the line
+    
+        optimaversion(__file__)
+    
+    to a script file, and on running it will automatically re-save it as e.g.
+    
+        optimaversion(__file__) # Version: 2.1.11 | Branch: optima-version-for-scripts | SHA: e2620b
+    
+    Note: you can also use e.g. op.optimaversion(__file__), as long as "optimaversion(__file__)" appears. 
+    If version, branch, or sha arguments are supplied, then it will raise an exception if they 
+    don't match, e.g.
+    
+        optimaversion(__file__, version='2.1.4')
+    
+    Version: 2017jan29
+    '''
+    
+    # Preliminaries
+    shalength = 6 # Don't use the whole thing, it's ugly and unnecessary
+    if filename is None: # Check to make sure a file name is given
+        errormsg = 'Please call this function like this: optimaversion(__file__)'
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    currversion = op.version # Get Optima version info
+    currbranch,currsha = op.gitinfo(die=die) # Get git info, dying on failure if requested
+    if version is not None and version!=currversion: # Optionally check that versions match
+        errormsg = 'Actual version does not match requested version (%s vs. %s)' % (currversion, version)
+        raise op.OptimaException(errormsg)
+    if branch is not None and branch!=currbranch: # Optionally check that versions match
+        errormsg = 'Actual branch does not match requested branch (%s vs. %s)' % (currbranch, branch)
+        raise op.OptimaException(errormsg)
+    if sha is not None:
+        validshalength = min(len(sha), shalength)
+        if sha[:validshalength+1]!=currsha[:validshalength+1]: # Optionally check that versions match
+            errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha[:validshalength+1], sha[:validshalength+1])
+            raise op.OptimaException(errormsg)
+    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha[:shalength+1]) # Create string to write
+    strtofind = 'optimaversion(' # String to look for -- note, must exactly match function call!
+
+    # Read script file
+    try: 
+        f = open(filename, 'r')
+    except:
+        errormsg = 'Could not open file "%s" for reading' % filename
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    if verbose: print('Reading file %s' % filename)
+    alllines = f.readlines() # Read all lines in the file
+    notfound = True # By default, fail
+    for l,line in enumerate(alllines): # Loop over each line
+        ind = line.find(strtofind) # Look for string to find
+        if ind>=0: # If found...
+            if verbose: print('Found function call at line %i' % l)
+            if line.count(')')!=1: # If it's not a usual function call, give up
+                errormsg = 'optimaversion got confused by this line with more or less than one ")": "%s"' % line
+                if die: raise op.OptimaException(errormsg)
+                else: print(errormsg); return None
+            functionend = line.find(')')+1 # Find the end of the function (inclusive)
+            alllines[l] = line[:functionend]+versionstring # Replace with version info
+            notfound = False # It's not a failure
+            break # Don't keep looking
+    if notfound: # Couldn't find it
+        errormsg = 'Could not find call to optimaversion() in %s' % filename
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    f.close()
+        
+    # Write script file
+    try: 
+        f = open(filename, 'w')
+    except:
+        errormsg = 'Could not open file "%s" for writing' % filename
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    if verbose: print('Writing file %s' % filename)
+    try: 
+        f.writelines(alllines) # Just write everything
+    except: 
+        errormsg = 'optimaversion() write failed on %s' % filename
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg); return None
+    f.close()
+    
+    return None
+
+
 def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     ''' 
     Function for adding a new parameter to a project -- used by several migrations.
@@ -23,7 +116,7 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
     return None
 
 
-def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False):
+def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False, **kwargs):
     ''' 
     Remove a parameter from a parset
     '''
@@ -48,12 +141,36 @@ def removeparameter(project=None, short=None, datashort=None, verbose=False, die
     return None
 
 
-def addwarning(project=None, message=None):
+def addwarning(project=None, message=None, **kwargs):
     ''' Add a warning to the project, which is printed when migrated or loaded '''
     if not hasattr(project, 'warnings') or type(project.warnings)!=str: # If no warnings attribute, create it
         project.warnings = ''
     project.warnings += '\n'*3+str(message) # # Add this warning
     return None
+
+
+def incrementversion(project=None, **kwargs):
+    ''' Ugly little function to increment the version number and do nothing else '''
+    
+    # Define the version increments
+    versionmapping = { 
+        '2.3.4': '2.3.5',
+    }
+    
+    # Do the super-simple incrementation
+    try:
+        project.version = versionmapping[project.version]
+    except:
+        errormsg = 'Cannot migrate since version %s is not defined; choices are: %s' % (project.version, versionmapping.keys())
+        raise op.OptimaException(errormsg)
+    
+    return project
+
+
+
+##########################################################################################
+### PROJECT MIGRATIONS
+##########################################################################################
 
 
 def versiontostr(project, **kwargs):
@@ -613,51 +730,48 @@ def redotranstable(project, **kwargs):
 #    return None
 
 
-
-
-migrations = {
-'2.0':   versiontostr,
-'2.0.0': addscenuid,
-'2.0.1': addforcepopsize,
-'2.0.2': delimmediatecare,
-'2.0.3': addproppmtct,
-'2.0.4': redotransitions,
-'2.1':   makepropsopt,
-'2.1.1': addalleverincare,
-'2.1.2': removenumcircdata,
-'2.1.3': removepopcharacteristicsdata,
-'2.1.4': addaidsleavecare,
-'2.1.5': addaidslinktocare,
-'2.1.6': adddataend,
-'2.1.7': fixsettings,
-'2.1.8': addoptimscaling,
-'2.1.9': addpropsandcosttx,
-'2.1.10':redoparameters,
-'2.2':   redovlmon,
-'2.2.1': addprojectinfotoresults,
-'2.2.2': redoparameterattributes,
-'2.3':   removespreadsheet,
-'2.3.1': addagetopars,
-'2.3.2': redotranstable,
-'2.3.3': redotranstable, # Same migration, but need to rerun since transtable changed again
-#'2.2': redoprograms,
-}
-
-
-
-
-
 def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
+    
+    migrations = {
+    '2.0':   versiontostr,
+    '2.0.0': addscenuid,
+    '2.0.1': addforcepopsize,
+    '2.0.2': delimmediatecare,
+    '2.0.3': addproppmtct,
+    '2.0.4': redotransitions,
+    '2.1':   makepropsopt,
+    '2.1.1': addalleverincare,
+    '2.1.2': removenumcircdata,
+    '2.1.3': removepopcharacteristicsdata,
+    '2.1.4': addaidsleavecare,
+    '2.1.5': addaidslinktocare,
+    '2.1.6': adddataend,
+    '2.1.7': fixsettings,
+    '2.1.8': addoptimscaling,
+    '2.1.9': addpropsandcosttx,
+    '2.1.10':redoparameters,
+    '2.2':   redovlmon,
+    '2.2.1': addprojectinfotoresults,
+    '2.2.2': redoparameterattributes,
+    '2.3':   removespreadsheet,
+    '2.3.1': addagetopars,
+    '2.3.2': redotranstable,
+    '2.3.3': redotranstable, # Same migration, but need to rerun since transtable changed again
+    '2.3.4': incrementversion,
+    #'2.2': redoprograms,
+    }
+
     while str(project.version) != str(op.version):
         if not str(project.version) in migrations:
-            raise op.OptimaException("We can't upgrade version %s to latest version (%s)" % (project.version, op.version))
+            errormsg = "No migration exists from version %s to the latest version (%s)" % (project.version, op.version)
+            raise op.OptimaException(errormsg)
 
         upgrader = migrations[str(project.version)]
 
-        op.printv("Migrating from %6s ->" % project.version, 2, verbose, newline=False)
+        op.printv('Migrating project "%s" from %6s ->' % (project.name, project.version), 2, verbose, newline=False)
         upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
         op.printv("%6s" % project.version, 2, verbose, indent=False)
         
@@ -678,13 +792,6 @@ def migrate(project, verbose=2, die=False):
     return project
 
 
-
-
-
-
-
-
-
 def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
@@ -702,111 +809,58 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
 
 
 
+##########################################################################################
+### PORTFOLIO MIGRATIONS
+##########################################################################################
+
+
+def removegaoptim(portfolio):
+    ''' First and perhaps only portfolio migration -- remove GAOptims class '''
+    if hasattr(portfolio, 'gaoptims') and len(portfolio.gaoptims): # If it has GAOptims, "migrate" these to the new structure
+        if len(portfolio.gaoptims)>1:
+            print('WARNING, this portfolio has %i GAOptims but only the last one will be migrated! If you need the others, then use F = loadobj(<filename>) and save what you need manually.')
+        portfolio.objectives = portfolio.gaoptims[-1].objectives
+        portfolio.results = portfolio.gaoptims[-1].resultpairs # WARNING, unlikely to work
+    for attr in ['gaoptims', 'outputstring']:
+        try: delattr(portfolio, attr)
+        except: pass
+    portfolio.version = '2.3.5'
+    return portfolio
+
+
+def migrateportfolio(portfolio=None, verbose=2):
+    
+    # Rather than use the dict mapping, use a (series) of if statements
+    if op.compareversions(portfolio.version, '2.3.5')<0:
+        op.printv('Migrating portfolio "%s" from %6s -> %6s' % (portfolio.name, portfolio.version, '2.3.5'), 2, verbose)
+        portfolio = removegaoptim(portfolio)
+    
+    # Check to make sure it's the latest version
+    if portfolio.version != op.version:
+        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
+        raise op.OptimaException(errormsg)
+    
+    return portfolio
+
+
 def loadportfolio(filename=None, verbose=2):
     ''' Load a saved portfolio, migrating constituent projects -- NB, portfolio itself is not migrated (no need yet), only the projects '''
     
     op.printv('Loading portfolio %s...' % filename, 2, verbose)
-    F = op.loadobj(filename, verbose=verbose) # Load portfolio
+    portfolio = op.loadobj(filename, verbose=verbose) # Load portfolio
+    portfolio = migrateportfolio(portfolio)
     
+    for i in range(len(portfolio.projects)): # Migrate projects one by one
+        op.printv('Loading project %s...' % portfolio.projects[i].name, 3, verbose)
+        portfolio.projects[i] = migrate(portfolio.projects[i], verbose=verbose)
     
-    for i in range(len(F.projects)): # Migrate projects one by one
-        op.printv('Loading project %s...' % F.projects[i].name, 3, verbose)
-        F.projects[i] = migrate(F.projects[i], verbose=verbose)
+    portfolio.filename = filename # Update filename
     
-    F.version = op.version # Update version number
-    F.filename = filename # Update filename
-    
-    return F
+    return portfolio
 
 
 
-def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=False, die=False):
-    '''
-    Reads the current script file and adds Optima version info. Simply add the line
-    
-    optimaversion(__file__)
-    
-    to a script file, and on running it will automatically re-save it as e.g.
-    
-    optimaversion(__file__) # Version: 2.1.11 | Branch: optima-version-for-scripts | SHA: e2620b9e849e0bd1c9115891df112e6744a26469
-    
-    Note: you can also use e.g. op.optimaversion(__file__), as long as "optimaversion(__file__)" appears.
-    
-    If version, branch, or sha arguments are supplied, then it will raise an exception if they don't match, e.g.
-    
-    optimaversion(__file__, version='2.1.4')
-    
-    Version: 2017jan29
-    '''
-    
-    # Preliminaries
-    shalength = 6 # Don't use the whole thing, it's ugly and unnecessary
-    if filename is None: # Check to make sure a file name is given
-        errormsg = 'Please call this function like this: optimaversion(__file__)'
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    currversion = op.version # Get Optima version info
-    currbranch,currsha = op.gitinfo(die=die) # Get git info, dying on failure if requested
-    if version is not None and version!=currversion: # Optionally check that versions match
-        errormsg = 'Actual version does not match requested version (%s vs. %s)' % (currversion, version)
-        raise op.OptimaException(errormsg)
-    if branch is not None and branch!=currbranch: # Optionally check that versions match
-        errormsg = 'Actual branch does not match requested branch (%s vs. %s)' % (currbranch, branch)
-        raise op.OptimaException(errormsg)
-    if sha is not None:
-        validshalength = min(len(sha), shalength)
-        if sha[:validshalength+1]!=currsha[:validshalength+1]: # Optionally check that versions match
-            errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha[:validshalength+1], sha[:validshalength+1])
-            raise op.OptimaException(errormsg)
-    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha[:shalength+1]) # Create string to write
-    strtofind = 'optimaversion(' # String to look for -- note, must exactly match function call!
 
-    # Read script file
-    try: 
-        f = open(filename, 'r')
-    except:
-        errormsg = 'Could not open file "%s" for reading' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    if verbose: print('Reading file %s' % filename)
-    alllines = f.readlines() # Read all lines in the file
-    notfound = True # By default, fail
-    for l,line in enumerate(alllines): # Loop over each line
-        ind = line.find(strtofind) # Look for string to find
-        if ind>=0: # If found...
-            if verbose: print('Found function call at line %i' % l)
-            if line.count(')')!=1: # If it's not a usual function call, give up
-                errormsg = 'optimaversion got confused by this line with more or less than one ")": "%s"' % line
-                if die: raise op.OptimaException(errormsg)
-                else: print(errormsg); return None
-            functionend = line.find(')')+1 # Find the end of the function (inclusive)
-            alllines[l] = line[:functionend]+versionstring # Replace with version info
-            notfound = False # It's not a failure
-            break # Don't keep looking
-    if notfound: # Couldn't find it
-        errormsg = 'Could not find call to optimaversion() in %s' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    f.close()
-        
-    
-    # Write script file
-    try: 
-        f = open(filename, 'w')
-    except:
-        errormsg = 'Could not open file "%s" for writing' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    if verbose: print('Writing file %s' % filename)
-    try: 
-        f.writelines(alllines) # Just write everything
-    except: 
-        errormsg = 'optimaversion() write failed on %s' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    f.close()
-    
-    return None
     
     
     

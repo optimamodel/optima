@@ -70,7 +70,7 @@ def loadpickle(fileobj, verbose=False):
         class EmptyClass(object): pass
         op._project.Spreadsheet = EmptyClass
         op._portfolio.GAOptim = EmptyClass
-        obj = pickle.loads(filestr) # Actually load it
+        obj = pickle.loads(filestr) # Actually load it with legacy classes
         del op._project.Spreadsheet
         del op._portfolio.GAOptim
     
