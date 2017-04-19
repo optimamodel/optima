@@ -238,8 +238,7 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.program.ccopars = ccopars;
       }
 
-      vm.checkLowHigh = function() {
-        console.log('checkLowHigh', vm.state.ccoparsTable);
+      vm.checkLowHighValidationForAllCcopars = function() {
         if (_.isUndefined(vm.state.ccoparsTable)) {
           return false;
         }
@@ -255,6 +254,15 @@ define(['./../module', 'underscore'], function(module, _) {
         return result;
       };
 
+      vm.checkLimitViolation = function(val, limits) {
+        if (val < limits[0]) {
+          return true;
+        }
+        if (val > limits[1]) {
+          return true;
+        }
+        return false;
+      };
 
       vm.saveProgram = function() {
         revertCcoparsTable();
@@ -365,6 +373,29 @@ define(['./../module', 'underscore'], function(module, _) {
 
         return filteredOutcomes;
       }
+
+      vm.checkLowHighViolation = function(low, high) {
+        return high < low;
+      };
+
+      vm.checkLowHighValidationForAllOutcomes = function() {
+        var result = false;
+        _.each(vm.state.targetedOutcomes, function(outcome) {
+          _.each(outcome.years, function(yearEntry) {
+            if (yearEntry.intercept_lower > yearEntry.intercept_upper) {
+              result = true;
+              return;
+            }
+            _.each(yearEntry.programs, function(program) {
+              if (program.intercept_lower > program.intercept_upper) {
+                result = true;
+                return;
+              }
+            });
+          });
+        });
+        return result;
+      };
 
       vm.saveProgsetOutcomes = function() {
         $http.put(
