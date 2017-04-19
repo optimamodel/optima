@@ -1085,6 +1085,8 @@ def copy_parset(project_id, parset_id, new_parset_name):
 
     update_project_with_fn(project_id, update_project_fn)
 
+    return load_parset_summaries(project_id)
+
 
 def delete_parset(project_id, parset_id):
 
@@ -1118,6 +1120,8 @@ def create_parset(project_id, new_parset_name):
 
     update_project_with_fn(project_id, update_project_fn)
 
+    return load_parset_summaries(project_id)
+
 
 def refresh_parset(project_id, parset_id):
 
@@ -1132,7 +1136,7 @@ def refresh_parset(project_id, parset_id):
 
 def load_parset_summaries(project_id):
     project = load_project(project_id)
-    return parse.get_parset_summaries(project)
+    return {"parsets": parse.get_parset_summaries(project)}
 
 
 def load_project_parameters(project_id):

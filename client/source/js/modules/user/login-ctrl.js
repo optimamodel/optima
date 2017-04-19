@@ -25,7 +25,7 @@ define(['./module', 'sha224/sha224'], function (module, SHA224) {
           // success
           function(user) {
             projectApi.clearProjectForUserId(user.id);
-            $window.location = '/';
+            $window.location = './';
           },
           // error
           function (error) {

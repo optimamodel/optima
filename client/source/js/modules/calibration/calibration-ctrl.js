@@ -48,10 +48,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.state.endYear = $scope.years[defaultindex];
 
           // Fetching list of parsets for open project
-          $http
-            .get('/api/project/' + $scope.project.id + '/parsets')
-            .success(function(response) {
-              var parsets = response.parsets;
+          util
+            .rpcRun(
+              'load_parset_summaries', [$scope.project.id])
+            .then(function(response) {
+              var parsets = response.data.parsets;
               if (parsets) {
                 $scope.parsets = parsets;
                 $scope.state.parset = getMostRecentItem(parsets, 'updated');
@@ -98,51 +99,56 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
-      $http
-        .post(
-          '/api/project/' + projectApi.project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/calibration',
-          {
-            which: getSelectors(),
-          })
-        .success(function(response) {
-          loadParametersAndGraphs(response);
-          toastr.success('Loaded graphs');
-          console.log('getCalibrationGraphs', response.graphs);
-          $scope.statusMessage = '';
-          $scope.state.isRunnable = true;
-        })
-        .error(function() {
-          $scope.state.isRunnable = false;
-          toastr.error('Error in loading graphs');
-        });
+      util
+        .rpcRun(
+          'load_parset_graphs',
+          [projectApi.project.id, $scope.state.parset.id,
+          "calibration", getSelectors()])
+        .then(
+          function(response) {
+            loadParametersAndGraphs(response.data);
+            toastr.success('Loaded graphs');
+            console.log('getCalibrationGraphs', response.graphs);
+            $scope.statusMessage = '';
+            $scope.state.isRunnable = true;
+          },
+          function(response) {
+            $scope.state.isRunnable = false;
+            toastr.error('Error in loading graphs');
+          });
     };
 
     $scope.saveAndUpdateGraphs = function() {
-      // if ($scope.calibrateForm.$invalid) {
-      //   console.log('saveAndUpdateGraphs is invalid')
-      //   return;
-      // }
       if (!$scope.parameters) {
         return;
       }
       console.log('saveAndUpdateGraphs', $scope.parameters);
-      $http
-        .post(
-          '/api/project/' + projectApi.project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/calibration',
+      util
+        .rpcRun(
+          'load_parset_graphs',
+          [
+            projectApi.project.id,
+            $scope.state.parset.id,
+            "calibration",
+            getSelectors(),
+            $scope.parameters
+          ],
           {
-            parameters: $scope.parameters,
-            which: getSelectors(),
             startYear: $scope.state.startYear,
             endYear: $scope.state.endYear
           })
-        .success(function(response) {
-          toastr.success('Updated parameters and loaded graphs');
-          loadParametersAndGraphs(response);
-        });
+        .then(
+          function(response) {
+            loadParametersAndGraphs(response.data);
+            toastr.success('Loaded graphs');
+            console.log('getCalibrationGraphs', response.graphs);
+            $scope.statusMessage = '';
+            $scope.state.isRunnable = true;
+          },
+          function(response) {
+            $scope.state.isRunnable = false;
+            toastr.error('Error in loading graphs');
+          });
     };
 
     $scope.changeParameter = function(parameter) {
@@ -151,18 +157,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.addParameterSet = function() {
       function add(name) {
-        $http
-          .post(
-            '/api/project/' + projectApi.project.id + '/parsets',
-            {name: name})
-          .success(function(response) {
-            $scope.parsets = response;
-            $scope.state.parset = response[response.length - 1];
+        util
+          .rpcRun(
+            'create_parset', [projectApi.project.id, name])
+          .then(function(response) {
+            $scope.parsets = response.data.parsets;
+            $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
             toastr.success('Created parset');
             $scope.setActiveParset();
           });
       }
-
       modalService.rename(
         add, 'Add parameter set', 'Enter name', '',
         'Name already exists',
@@ -174,23 +178,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError(
           [{message: 'No parameter set selected.'}]);
       } else {
-        function copy(name) {
-          $http
-            .post(
-              '/api/project/' + projectApi.project.id + '/parsets',
-              {
-                name: name,
-                parset_id: $scope.state.parset.id
-              })
-            .success(function(response) {
-              $scope.parsets = response;
-              $scope.state.parset = response[response.length - 1];
-              toastr.success('Copied parset');
-            });
-        }
         var names = _.pluck($scope.parsets, 'name');
         var name = $scope.state.parset.name;
-        copy(modalService.getUniqueName(name, names));
+        var newName = modalService.getUniqueName(name, names);
+        util
+          .rpcRun(
+            'copy_parset',
+            [
+              projectApi.project.id,
+              $scope.state.parset.id,
+              newName])
+          .then(function(response) {
+            $scope.parsets = response.data.parsets;
+            $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
+            toastr.success('Copied parset');
+          });
       }
     };
 
@@ -208,14 +210,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       function rename(name) {
-        $http
-          .put(
-            '/api/project/' + projectApi.project.id
-            + '/parsets/' + $scope.state.parset.id,
-            {name: name})
-          .success(function() {
+        util
+          .rpcRun(
+            'rename_parset',
+            [
+              projectApi.project.id,
+              $scope.state.parset.id,
+              name])
+          .then(function(response) {
             $scope.state.parset.name = name;
-            toastr.success('Copied parset');
+            toastr.success('Renamed parset');
           });
       }
 
@@ -241,11 +245,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       function remove() {
-        $http
-          .delete(
-            '/api/project/' + projectApi.project.id
-            + '/parsets/' + $scope.state.parset.id)
-          .success(function() {
+        util
+          .rpcRun(
+            'delete_parset',
+            [projectApi.project.id, $scope.state.parset.id])
+          .then(function(response) {
             $scope.parsets = _.filter(
               $scope.parsets, function(parset) {
                 return parset.id !== $scope.state.parset.id;
@@ -293,13 +297,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.refreshParset = function() {
       modalService.confirm(
         function () {
-          $http
-            .post(
-              '/api/project/' + projectApi.project.id
-              + '/refreshparset/' + $scope.state.parset.id)
-            .success(function(response) {
-              toastr.success('refreshed parameter set')
-              loadParametersAndGraphs(response);
+          util
+            .rpcRun(
+              'refresh_parset', [projectApi.project.id, $scope.state.parset.id])
+            .then(function(response) {
+              toastr.success('Parset uploaded');
+              $scope.getCalibrationGraphs();
             });
         },
         function () { },
