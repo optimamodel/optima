@@ -773,6 +773,75 @@ def resolve_project(project):
     return is_change
 
 
+def save_project(project):
+    project_record = load_project_record(project.uid)
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def get_server_filename(basename):
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    return os.path.join(dirname, basename)
+
+
+def download_project_object(project_id, obj_type, obj_id):
+    """
+    Args:
+        project_id: id of project
+        obj_type: "parset", "progset", "scenario", "optimization" 
+        obj_id: id of object
+
+    Returns: 
+        server filename
+    """
+    project = load_and_resolve_project(project_id)
+    if obj_type == "parset":
+        ext = "par"
+        obj = parse.get_parset_from_project(project, obj_id)
+    elif obj_type == "progset":
+        ext = "prg"
+        obj = parse.get_progset_from_project(project, obj_id)
+    elif obj_type == "scenario":
+        ext = "scn"
+        obj = parse.get_scenario_from_project(project, obj_id)
+    elif obj_type == "optimization":
+        ext = "opt"
+        obj = parse.get_optimization_from_project(project, obj_id)
+
+    basename = "%s-%s.%s" % (project.name, obj.name, ext)
+    filename = get_server_filename(basename)
+    op.saveobj(filename, obj)
+    return filename
+
+
+def upload_project_object(filename, project_id, obj_type):
+    """
+    Args:
+        project_id: id of project
+        obj_type: "parset", "progset", "scenario", "optimization" 
+        obj_id: id of object
+
+    Returns: 
+        server filename
+    """
+    project = load_and_resolve_project(project_id)
+    obj = op.loadobj(filename)
+    obj.uid = op.uuid()
+    if obj_type == "parset":
+        project.addparset(parset=obj, overwrite=True)
+    elif obj_type == "progset":
+        project.addprogset(progset=obj, overwrite=True)
+    elif obj_type == "scenario":
+        project.addscen(scen=obj, overwrite=True)
+    elif obj_type == "optimization":
+        project.addoptim(optim=obj, overwrite=True)
+    save_project(project)
+    return { 'name': obj.name }
+
+
 
 #############################################################################################
 ### SPREADSHEETS
@@ -1183,23 +1252,6 @@ def save_progset(project_id, progset_id, progset_summary):
     parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     project.restorelinks()
     project_record.save_obj(project)
-    return parse.get_progset_summary(project, progset_summary["name"])
-
-
-def upload_progset(project_id, progset_id, progset_summary):
-    """
-    Returns progset summary
-    """
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-    
-    old_progset = parse.get_progset_from_project(project, progset_id)
-    print(">> upload_progset '%s' into '%s'" % (progset_summary['name'], old_progset.name))
-    progset_summary['id'] = progset_id
-    progset_summary['name'] = old_progset.name
-    parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
-    project_record.save_obj(project)
-    project.restorelinks()
     return parse.get_progset_summary(project, progset_summary["name"])
 
 

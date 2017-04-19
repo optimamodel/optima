@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function (
-      $scope, $http, $modal, modalService, toastr, projectApi, $upload, $state) {
+      $scope, $http, $modal, modalService, toastr, projectApi, $upload, $state, util) {
 
     var project;
     var defaultPrograms;
@@ -117,29 +117,34 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadProgramSet = function() {
-      var data = JSON.stringify(angular.copy($scope.state.activeProgramSet), null, 2);
-      var blob = new Blob([data], { type: 'application/octet-stream' });
-      saveAs(blob, ($scope.state.activeProgramSet.name + '.progset.json'));
+      util
+        .rpcDownload(
+          'download_project_object',
+          [projectApi.project.id, 'progset', $scope.state.activeProgramSet.id])
+        .then(function(response) {
+          toastr.success('Progset downloaded');
+        });
     };
 
     $scope.uploadProgramSet = function() {
-      angular
-        .element('<input type=\'file\'>')
-        .change(
-          function(event) {
-            $upload.upload({
-              url: '/api/project/' + project.id
-                    + '/progset/' + $scope.state.activeProgramSet.id
-                    + '/data',
-              file: event.target.files[0],
-            }).success(function(programSet) {
-              function isSameId(p) { return p.id === programSet.id; }
-              var i = _.findIndex($scope.programSetList, isSameId);
-              $scope.programSetList[i] = programSet;
-              $scope.state.activeProgramSet = $scope.programSetList[i];
+      util
+        .rpcUpload(
+          'upload_project_object', [projectApi.project.id, 'progset'], {}, '.prg')
+        .then(function(response) {
+          toastr.success('Progset uploaded');
+          var name = response.data.name;
+          $http
+            .get('/api/project/' + project.id + '/progsets')
+            .then(function(response) {
+              // Load program sets; set first as active
+              var data = response.data;
+              if (data.progsets) {
+                $scope.programSetList = data.progsets;
+                console.log("uploadProgramSet", $scope.programSetList);
+                $scope.state.activeProgramSet = _.findWhere(data.progsets, {name: name});
+              }
             });
-          })
-        .click();
+        });
     };
 
     function deleteProgramSetFromPage() {

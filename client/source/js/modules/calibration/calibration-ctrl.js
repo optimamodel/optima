@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function (
-      $scope, $http, modalService, $upload,
+      $scope, $http, modalService, $upload, util,
       $modal, $timeout, toastr, projectApi, globalPoller) {
 
     function initialize() {
@@ -226,6 +226,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         _.without(_.pluck($scope.parsets, 'name'), $scope.state.parset.name));
     };
 
+
     $scope.deleteParameterSet = function() {
       if (!$scope.state.parset) {
         modalService.informError(
@@ -271,36 +272,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadParameterSet = function() {
-      $http
-        .get(
-          '/api/project/' + projectApi.project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/data',
-          {
-            headers: {'Content-type': 'application/octet-stream'},
-            responseType: 'blob'
-          })
-        .success(function(response) {
-          var blob = new Blob(
-            [response], {type: 'application/octet-stream'});
-          saveAs(blob, ($scope.state.parset.name + '.par.json'));
+      util
+        .rpcDownload(
+          'download_project_object',
+          [projectApi.project.id, 'parset', $scope.state.parset.id])
+        .then(function(response) {
+          toastr.success('Parset downloaded');
         });
     };
 
     $scope.uploadParameterSet = function() {
-      angular
-        .element('<input type=\'file\'>')
-        .change(function(event) {
-          $upload.upload({
-            url: '/api/project/' + projectApi.project.id
-            + '/parsets/' + $scope.state.parset.id
-            + '/data',
-            file: event.target.files[0]
-          }).success(function(response) {
-            loadParametersAndGraphs(response);
-            $scope.setActiveParset()
-          });
-        }).click();
+      console.log('uploadParameterSet');
+      util
+        .rpcUpload(
+          'upload_project_object', [projectApi.project.id, 'parset'], {}, '.par')
+        .then(function(response) {
+          toastr.success('Parset uploaded');
+          var name = response.data.name;
+          $http
+            .get('/api/project/' + $scope.project.id + '/parsets')
+            .success(function(response) {
+              var parsets = response.parsets;
+              if (parsets) {
+                $scope.parsets = parsets;
+                $scope.state.parset = _.findWhere($scope.parsets, {name: name});
+                $scope.setActiveParset();
+              }
+            });
+        });
     };
 
     $scope.refreshParset = function() {

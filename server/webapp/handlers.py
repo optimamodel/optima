@@ -346,39 +346,6 @@ api.add_resource(UploadPortfolio, '/api/portfolio/upload')
 
 
 
-
-# WARNING, at the moment the upload is halfway in between upload new portfolio and update existing portfolio
-#class PortfolioFromData(Resource):
-#    method_decorators = [report_exception_decorator, login_required]
-#
-#    @swagger.operation(summary='Upload project with .prj/.xls')
-#    def post(self):
-#        """
-#        file-upload
-#        request-form:
-#            name: name of project
-#            xls: true
-#        """
-#        project_name = request.form.get('name')
-#        is_xls = request.form.get('xls', False)
-#        uploaded_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-#        if is_xls:
-#            project_id = dataio.create_project_from_spreadsheet(
-#                uploaded_fname, project_name, current_user.id)
-#        else:
-#            project_id = dataio.create_project_from_prj(
-#                uploaded_fname, project_name, current_user.id)
-#        response = {
-#            'file': os.path.basename(uploaded_fname),
-#            'name': project_name,
-#            'id': project_id
-#        }
-#        return response, 201
-#
-#api.add_resource(PortfolioFromData, '/api/portfolio/data')
-
-
-
 class DeletePortfolioProject(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
@@ -586,30 +553,6 @@ class ParsetAutofit(Resource):
 api.add_resource(ParsetAutofit, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
 
 
-class ParsetUploadDownload(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary="Return a JSON file of the parameters")
-    def get(self, project_id, parset_id):
-        parameters = dataio.load_parameters(project_id, parset_id)
-        response = make_response(json.dumps(parameters, indent=2))
-        response.headers["Content-Disposition"] = "attachment; filename=parset.json"
-        return response
-
-    @swagger.operation(summary="Update from JSON file of the parameters")
-    def post(self, project_id, parset_id):
-        """
-        file-upload
-        """
-        par_json = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        parameters = json.load(open(par_json))
-        dataio.save_parameters(project_id, parset_id, parameters)
-        return dataio.load_parset_summaries(project_id)
-
-api.add_resource(ParsetUploadDownload, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
-
-
-
 
 #############################################################################################
 ### RESULTS
@@ -692,21 +635,6 @@ class ProgsetRename(Resource):
         return dataio.rename_progset(project_id, progset_id, new_name)
 
 api.add_resource(ProgsetRename, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/rename')
-
-
-class ProgsetUploadDownload(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary="Update from JSON file of the parameters")
-    def post(self, project_id, progset_id):
-        """
-        file-upload
-        """
-        json_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        progset_summary = json.load(open(json_fname))
-        return dataio.upload_progset(project_id, progset_id, progset_summary)
-
-api.add_resource(ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
 
 
 class ProgsetParameters(Resource):
@@ -886,21 +814,6 @@ class Optimizations(Resource):
         return dataio.save_optimization_summaries(project_id, optimization_summaries)
 
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
-
-
-class OptimizationUpload(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary="Uploads json of optimization summary")
-    def post(self, project_id, optimization_id):
-        """
-        data-json: optimization_summary
-        """
-        optim_json = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        optim_summary = json.load(open(optim_json))
-        return dataio.upload_optimization_summary(project_id, optimization_id, optim_summary)
-
-api.add_resource(OptimizationUpload, '/api/project/<uuid:project_id>/optimization/<uuid:optimization_id>/upload')
 
 
 class OptimizationCalculation(Resource):

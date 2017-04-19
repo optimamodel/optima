@@ -1124,6 +1124,15 @@ def revert_program_list(program_list):
     return result
 
 
+def get_scenario_from_project(project, scen_id):
+    if not isinstance(scen_id, UUID):
+        scen_id = UUID(scen_id)
+    for scen in project.scens.values():
+        if scen.uid == scen_id:
+            return scen
+    raise ValueError("Scenario does not exist " + str(scen_id))
+
+
 def get_scenario_summary(project, scenario):
     """
     Returns dictionary for scenario:
