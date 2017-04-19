@@ -1222,7 +1222,7 @@ def load_target_popsizes(project_id, parset_id, progset_id, program_id):
 
 def load_project_program_summaries(project_id):
     project = load_project(project_id, raise_exception=True)
-    return parse.get_default_program_summaries(project)
+    return { 'programs': parse.get_default_program_summaries(project) }
 
 
 def load_progset_summary(project_id, progset_id):

@@ -46,7 +46,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         })
         .then(function(response) {
           // Load a default set of inactive programs for new
-          defaultPrograms = response.data;
+          defaultPrograms = response.data.programs;
           console.log("ProgramSetController.init defaultPrograms", defaultPrograms);
           return $http.get('/api/project/' + project.id + '/parameters')
         })
