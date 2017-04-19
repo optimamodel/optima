@@ -8,7 +8,7 @@ var postcss = require('gulp-postcss');
 var replace = require('gulp-replace');
 var rjs = require('gulp-requirejs');
 var sass = require('gulp-sass');
-var spawn = require('child_process').spawn;
+var spawnSync = require('child_process').spawnSync;
 var uglify = require('gulp-uglify');
 var plumber = require('gulp-plumber');
 var fs = require('fs');
@@ -20,7 +20,7 @@ var handleError = function (err) {
 
 // Bump version
 gulp.task('bump-version', function () {
-  spawn('git', ['rev-parse', '--abbrev-ref', 'HEAD']).stdout.on('data', function (data) {
+  spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD']).stdout.on('data', function (data) {
 
     // Get current branch name
     var branch = data.toString();
@@ -53,23 +53,15 @@ gulp.task('bump-version', function () {
 
 // Write version.js
 gulp.task('write-version-js', function() {
-  spawn('git', ['rev-parse', '--short', 'HEAD']).stdout.on('data', function (data) {
-
-    var version = data.toString().trim();
-
-    spawn('git', ['show', '-s', '--format=%ci', 'HEAD']).stdout.on('data', function (data2) {
-
-      var date = data2.toString().split(' ')[0].trim();
-
-      var versionStr = version + " from " + date;
-      fs.writeFileSync(
-        'source/js/version.js',
-        "define([], function () { return '" + versionStr + "'; });");
-
-      console.log('Updated version.js to ' + versionStr);
-    });
-
-  });
+  var data = spawnSync('git', ['rev-parse', '--short', 'HEAD']).output;
+  var version = data.toString().split(',')[1].trim();
+  var data2 = spawnSync('git', ['show', '-s', '--format=%ci', 'HEAD']).output;
+  var date = data2.toString().split(' ')[0].split(',')[1].trim();
+  var versionStr = version + " from " + date;
+  fs.writeFileSync(
+    'source/js/version.js',
+    "define([], function () { return '" + versionStr + "'; });");
+  console.log('Updated version.js to ' + versionStr);
 });
 
 // Copy assets, and vendor js files to the build directory
