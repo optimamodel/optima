@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function (
-      $scope, $state, $modal, $timeout, $http, userManager, modalService, projectApi) {
+      $scope, $state, $modal, $timeout, userManager, modalService, projectApi) {
 
     function initialize() {
       $scope.projects = projectApi.projects;

@@ -95,7 +95,7 @@ class ProjectsAll(Resource):
               userId: !!python/object:uuid.UUID {int: 296644019381267506816166667285382118442}
               version: 2.1.7
         """
-        return {'projects': dataio.load_project_summaries()}
+        return dataio.load_project_summaries()
 
 api.add_resource(ProjectsAll, '/api/project/all')
 
@@ -105,7 +105,7 @@ class Projects(Resource):
 
     @swagger.operation(summary="Returns list project summaries for current user")
     def get(self):
-        return {'projects': dataio.load_project_summaries(current_user.id)}
+        return dataio.load_project_summaries(current_user.id)
 
     @swagger.operation(summary="Create new project")
     def post(self):
@@ -138,6 +138,7 @@ api.add_resource(Projects, '/api/project')
 class Project(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
+    # deprecated
     @swagger.operation(summary='Returns a project summary')
     def get(self, project_id):
         return dataio.load_project_summary(project_id)
@@ -436,7 +437,7 @@ class SpawnRegion(Resource):
         """
         project_id = request.form.get('projectId')
         spreadsheet_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        project_summaries = dataio.load_project_summaries(current_user.id)
+        project_summaries = dataio.load_project_summaries(current_user.id)['projects']
         project_names = [p['name'] for p in project_summaries]
         prj_names = dataio.make_region_projects(project_id, spreadsheet_fname, project_names)
         return prj_names

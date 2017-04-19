@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller(
     'ProjectOpenController',
-    function($scope, $http, util, modalService, userManager, projectApi, $state, $upload, $modal, toastr) {
+    function($scope, util, modalService, userManager, projectApi, $state, $upload, $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
@@ -77,19 +77,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadSpreadsheet = function (name, id) {
-        $http
-          .post(
-            '/api/download',
-            {
-              'name': 'download_data_spreadsheet',
-              'args': [id],
-              'kwargs': {'is_blank': false}
-            },
-            {responseType: 'blob'})
-          .success(function (response) {
-            var blob = new Blob([response]);
-            saveAs(blob, (name + '.xlsx'));
-          });
+        util.rpcDownload(
+          'download_data_spreadsheet', [id], {'is_blank': false})
+        .then(function (response) {
+          toastr.success('Spreadsheet downloaded');
+        });
       };
 
       $scope.uploadProject = function() {
@@ -108,22 +100,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
-      $scope.uploadSpreadsheet = function (name, id) {
-        angular
-          .element('<input type="file">')
-          .change(function (event) {
-            $upload
-              .upload({
-                url: '/api/project/' + id + '/spreadsheet',
-                file: event.target.files[0]
-              })
-              .success(function (response) {
-                toastr.success('Spreadsheet uploaded for project');
-                $state.reload();
-              });
-
-          })
-          .click();
+      $scope.uploadSpreadsheet = function(projectName, projectId) {
+        util
+          .rpcUpload(
+            'update_project_from_uploaded_spreadsheet', [projectId])
+          .then(function(response) {
+            toastr.success('Uploaded spreadsheet for project');
+          });
       };
 
       $scope.editProjectName = function(project) {
@@ -160,26 +143,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .then(function() {
             toastr.success('Project downloaded');
           });
-      };
-
-      $scope.remove = function ($event, name, id, index) {
-        if ($event) { $event.preventDefault(); }
-        var message = 'Are you sure you want to permanently remove project "' + name + '"?';
-        modalService.confirm(
-          function() {
-            projectApi
-              .deleteProject(id)
-              .then(function(response) {
-                toastr.success('Deleted project');
-                $state.reload();
-              });
-          },
-          function (){  },
-          'Yes, remove this project',
-          'No',
-          message,
-          'Remove project'
-        );
       };
 
       initialize();

@@ -113,7 +113,12 @@ def run_remote_procedure():
 
     args = json.get('args', [])
     kwargs = json.get('kwargs', {})
-    return jsonify(fn(*args, **kwargs))
+    result = fn(*args, **kwargs)
+    if result is None:
+        result = ''
+    else:
+        result = jsonify(result)
+    return result
 
 
 from flask import helpers

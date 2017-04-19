@@ -341,15 +341,11 @@ def load_project_name(project_id):
     return load_project(project_id).name
 
 
-def update_project(project, db_session=None):
-    if db_session is None:
-        db_session = db.session
+def save_project(project):
     project_record = load_project_record(project.uid)
     project_record.save_obj(project)
-    project.modified = datetime.now(dateutil.tz.tzutc())
-    project_record.updated = project.modified
-    db_session.add(project_record)
-    db_session.commit()
+    db.session.add(project_record)
+    db.session.commit()
 
 
 def update_project_with_fn(project_id, update_project_fn, db_session=None):
@@ -391,7 +387,7 @@ def load_project_summaries(user_id=None):
         query = ProjectDb.query
     else:
         query = ProjectDb.query.filter_by(user_id=current_user.id)
-    return map(load_project_summary_from_project_record, query.all())
+    return {'projects': map(load_project_summary_from_project_record, query.all())}
 
 
 def create_project_with_spreadsheet_download(user_id, project_summary):
@@ -431,6 +427,47 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     return project.uid, upload_dir_user(TEMPLATEDIR), new_project_template
 
 
+def create_project(user_id, project_summary):
+    """
+    Creates a project from project_summary and returns
+    - project_id
+    - directory_of_template_spreadsheet
+    - template_spreadsheet_filename)
+    """
+    project_entry = ProjectDb(user_id=user_id)
+    db.session.add(project_entry)
+    db.session.flush()
+
+    project = op.Project(name=project_summary["name"])
+    project.created = datetime.now(dateutil.tz.tzutc())
+    project.modified = datetime.now(dateutil.tz.tzutc())
+    project.uid = project_entry.id
+
+    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
+    project.data["pops"] = data_pops
+    project.data["npops"] = len(data_pops)
+
+    project_entry.save_obj(project)
+    db.session.commit()
+
+    return {'projectId': str(project.uid)}
+
+
+def download_template(project_summary):
+    new_project_template = secure_filename(
+        "{}.xlsx".format(project_summary['name']))
+    path = templatepath(new_project_template)
+    op.makespreadsheet(
+        path,
+        pops=project_summary['populations'],
+        datastart=project_summary['startYear'],
+        dataend=project_summary['endYear'])
+
+    print("> create_project_with_spreadsheet_download %s" % new_project_template)
+
+    return path
+
+
 def delete_projects(project_ids):
     for project_id in project_ids:
         record = load_project_record(project_id, raise_exception=True)
@@ -438,12 +475,12 @@ def delete_projects(project_ids):
     db.session.commit()
 
 
-def update_project_from_summary(project_id, project_summary, is_delete_data):
+def update_project_from_summary(project_summary, is_delete_data=False):
     """
     Updates a project from project summary and returns an instance of that
     project
     """
-    project_entry = load_project_record(project_id)
+    project_entry = load_project_record(project_summary['id'])
     project = project_entry.load()
     project.restorelinks()
 
@@ -454,8 +491,6 @@ def update_project_from_summary(project_id, project_summary, is_delete_data):
     project_entry.save_obj(project)
     db.session.add(project_entry)
     db.session.commit()
-
-    return project
 
 
 def download_data_spreadsheet(project_id, is_blank=True):
@@ -473,29 +508,6 @@ def download_data_spreadsheet(project_id, is_blank=True):
     else:
         op.makespreadsheet(path, data=project.data)
     return path
-
-
-def update_project_followed_by_template_data_spreadsheet(
-        project_id, project_summary, is_delete_data):
-    """
-    Returns (dirname, basename) of template data spreadsheet on the server
-    """
-    project = update_project_from_summary(project_id, project_summary, is_delete_data)
-    project.restorelinks()
-
-    secure_project_name = secure_filename(project.name)
-    new_project_template = secure_project_name
-    path = templatepath(secure_project_name)
-    op.makespreadsheet(
-        path,
-        pops=project_summary['populations'],
-        datastart=project_summary["startYear"],
-        dataend=project_summary["endYear"])
-
-    (dirname, basename) = (
-        upload_dir_user(TEMPLATEDIR), new_project_template)
-
-    return dirname, basename
 
 
 def save_project_as_new(project, user_id):
@@ -655,7 +667,13 @@ def update_project_from_prj(project_id, prj_filename):
     db.session.commit()
 
 
-def update_project_from_data_spreadsheet(project_id, spreadsheet_fname):
+# def update_project_from_data_spreadsheet(project_id, spreadsheet_fname):
+#     def modify(project):
+#         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
+#     update_project_with_fn(project_id, modify)
+
+
+def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
     update_project_with_fn(project_id, modify)
@@ -804,13 +822,6 @@ def download_project_object(project_id, obj_type, obj_id):
     filename = os.path.join(dirname, basename)
     op.saveobj(filename, obj)
     return filename
-
-
-def save_project(project):
-    project_record = load_project_record(project.uid)
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
 
 
 def upload_project_object(filename, project_id, obj_type):
