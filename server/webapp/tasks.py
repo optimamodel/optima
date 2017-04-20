@@ -155,7 +155,7 @@ def check_calculation_status(pyobject_id, work_type):
     """
     Returns current calculation state of a work_log.
     """
-    result = {
+    calc_state = {
         'status': 'unknown',
         'error_text': None,
         'start_time': None,
@@ -168,10 +168,13 @@ def check_calculation_status(pyobject_id, work_type):
         .first()
     if work_log_record:
         print ">> check_calculation_status: existing job of '%s' with same project" % work_type
-        result = parse_work_log_record(work_log_record)
-    print ">> check_calculation_status", pyobject_id, work_type, result['status']
+        calc_state = parse_work_log_record(work_log_record)
+    print ">> check_calculation_status", pyobject_id, work_type, calc_state['status']
     close_db_session(db_session)
-    return result
+    if calc_state['status'] == 'error':
+        raise Exception(calc_state['error_text'])
+    else:
+        return calc_state
 
 
 

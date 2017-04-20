@@ -10,7 +10,8 @@ define(['angular' ], function (angular) {
 
   return angular.module('app.common.global-poller', [])
 
-    .factory('globalPoller', ['$http', '$timeout', function($http, $timeout) {
+    .factory('globalPoller', ['$http', '$timeout', 'util',
+      function($http, $timeout, util) {
 
       var polls = {};
 
@@ -53,6 +54,40 @@ define(['angular' ], function (angular) {
         }
       }
 
+      function startPollForRpc(pyobjectId, taskId, callback) {
+        var poll = getPoll(taskId);
+        poll.callback = callback;
+
+        if (!poll.isRunning) {
+          console.log('Launch polling for', poll.id);
+          poll.isRunning = true;
+
+          function pollWithTimeout() {
+            var poll = getPoll(taskId);
+            util
+              .rpcAsyncRun(
+                'check_calculation_status', [pyobjectId, taskId])
+              .then(
+                function(response) {
+                  var status = response.data.status;
+                  if (status === 'started') {
+                    poll.timer = $timeout(pollWithTimeout, 1000);
+                  } else {
+                    stopPoll(taskId);
+                  }
+                  poll.callback(response);
+                },
+                function(response) {
+                  stopPoll(taskId);
+                  poll.callback(response);
+                });
+          }
+
+          pollWithTimeout();
+        }
+      }
+
+
       function stopPoll(id) {
         var poll = getPoll(id);
         if (poll.isRunning) {
@@ -79,6 +114,7 @@ define(['angular' ], function (angular) {
 
       return {
         startPoll: startPoll,
+        startPollForRpc: startPollForRpc,
         stopPolls: stopPolls,
         killJob: killJob
       };

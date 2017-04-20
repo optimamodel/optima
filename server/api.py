@@ -123,6 +123,32 @@ def run_remote_procedure():
     return result
 
 
+@app.route('/api/task', methods=['POST'])
+@report_exception_decorator
+@login_required
+def run_remote_async_task():
+    """
+    url-args:
+        'procedure': string name of function in dataio
+        'args': list of arguments for the function
+    """
+    json = get_post_data_json()
+    import server.webapp.tasks as tasks
+
+    fn_name = json['name']
+    print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
+    fn = getattr(tasks, fn_name)
+
+    args = json.get('args', [])
+    kwargs = json.get('kwargs', {})
+    result = fn(*args, **kwargs)
+    if result is None:
+        result = ''
+    else:
+        result = jsonify(result)
+    return result
+
+
 @app.route('/api/download', methods=['POST'])
 @report_exception_decorator
 @login_required

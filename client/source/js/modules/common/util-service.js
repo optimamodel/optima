@@ -26,6 +26,12 @@ define(['angular' ], function (angular) {
           '/api/procedure', { name: name, args: args, kwargs: kwargs });
       }
 
+      function rpcAsyncRun(name, args, kwargs) {
+        consoleLogCommand("asyncRun", name, args, kwargs)
+        return $http.post(
+          '/api/task', { name: name, args: args, kwargs: kwargs });
+      }
+
       function rpcDownload(name, args, kwargs) {
         consoleLogCommand("download", name, args, kwargs)
         var deferred = $q.defer();
@@ -97,6 +103,7 @@ define(['angular' ], function (angular) {
 
       return {
         rpcRun: rpcRun,
+        rpcAsyncRun: rpcAsyncRun,
         rpcDownload: rpcDownload,
         rpcUpload: rpcUpload,
         getUniqueName: getUniqueName

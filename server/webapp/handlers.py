@@ -567,14 +567,14 @@ api.add_resource(ParsetRefresh, '/api/project/<uuid:project_id>/refreshparset/<u
 class ParsetAutofit(Resource):
     method_decorators = [report_exception_decorator, login_required]
 
-    @swagger.operation(summary='Starts autofit task and returns calc_status')
-    def post(self, project_id, parset_id):
-        """
-        data-json:
-            maxtime: int - number of seconds to run
-        """
-        maxtime = get_post_data_json().get('maxtime')
-        return server.webapp.tasks.launch_autofit(project_id, parset_id, maxtime)
+    # @swagger.operation(summary='Starts autofit task and returns calc_status')
+    # def post(self, project_id, parset_id):
+    #     """
+    #     data-json:
+    #         maxtime: int - number of seconds to run
+    #     """
+    #     maxtime = get_post_data_json().get('maxtime')
+    #     return server.webapp.tasks.launch_autofit(project_id, parset_id, maxtime)
 
     @swagger.operation(summary='Returns the calc status for the current job')
     def get(self, project_id, parset_id):

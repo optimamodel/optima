@@ -321,17 +321,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.setActiveParset = function() {
       if ($scope.state.parset.id) {
-
         globalPoller.stopPolls();
-
         $scope.state.isRunnable = false;
-        $http
-          .get(
-            '/api/project/' + projectApi.project.id
-              + '/parsets/' + $scope.state.parset.id
-              + '/automatic_calibration')
-          .success(function(response) {
-            if (response.status === 'started') {
+        var taskId = 'autofit-' + $scope.state.parset.id;
+        util
+          .rpcAsyncRun(
+            'check_calculation_status', [projectApi.project.id, taskId])
+          .then(function(response) {
+            var status = response.data.status;
+            if (status === 'started') {
               initPollAutoCalibration();
             } else {
               $scope.statusMessage = 'Checking for pre-calculated figures...';
@@ -344,41 +342,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.startAutoCalibration = function() {
-      var data = {};
-      if ($scope.state.maxtime) {
-        data.maxtime = Number($scope.state.maxtime);
-      }
-      $http
-        .post(
-          '/api/project/' + projectApi.project.id
-            + '/parsets/' + $scope.state.parset.id
-            + '/automatic_calibration',
-          data)
-        .success(function(response) {
-          if (response.status === 'started') {
+      util
+        .rpcAsyncRun(
+          'launch_autofit',
+          [projectApi.project.id, $scope.state.parset.id, $scope.state.maxtime])
+        .then(function(response) {
+          var status = response.data.status;
+          if (status === 'started') {
             $scope.statusMessage = 'Autofit started.';
             $scope.secondsRun = 0;
             initPollAutoCalibration();
-          } else if (response.status === 'blocked') {
+          } else if (status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
           }
-        })
+        });
     };
 
     function initPollAutoCalibration() {
-      globalPoller.startPoll(
-        $scope.state.parset.id,
-        '/api/project/' + projectApi.project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/automatic_calibration',
+      var taskId = 'autofit-' + $scope.state.parset.id;
+      globalPoller.startPollForRpc(
+        projectApi.project.id,
+        taskId,
         function (response) {
-          if (response.status === 'completed') {
+          var status = response.data.status;
+          if (status === 'completed') {
             $scope.statusMessage = '';
             toastr.success('Autofit completed');
             $scope.getCalibrationGraphs();
-          } else if (response.status === 'started') {
-            var start = new Date(response.start_time);
-            var now = new Date(response.current_time);
+          } else if (status === 'started') {
+            var start = new Date(response.data.start_time);
+            var now = new Date(response.data.current_time);
             var diff = now.getTime() - start.getTime();
             var seconds = parseInt(diff / 1000);
             $scope.statusMessage = "Autofit running for " + seconds + " s";
