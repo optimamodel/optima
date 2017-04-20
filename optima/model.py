@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None):
