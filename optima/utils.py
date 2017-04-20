@@ -1014,7 +1014,16 @@ def gitinfo(die=False):
 
 
 def compareversions(version1=None, version2=None):
-    ''' Function to compare versions, expecting both arguments to be a string of the format 1.2.3, but numeric works too '''
+    '''
+    Function to compare versions, expecting both arguments to be a string of the 
+    format 1.2.3, but numeric works too.
+    
+    Usage:
+        compareversions('1.2.3', '2.3.4') # returns -1
+        compareversions(2, '2.0.0.0') # returns 0
+        compareversions('3.1', '2.99') # returns 1
+    
+    '''
     if version1 is None or version2 is None: 
         raise Exception('Must supply both versions as strings')
     versions = [version1, version2]

@@ -63,11 +63,16 @@ define(['angular' ], function (angular) {
         return deferred.promise;
       }
 
-      function rpcUpload(name, args, kwargs) {
-        consoleLogCommand("upload", name, args, kwargs)
+      function rpcUpload(name, args, kwargs, fileType) {
+        consoleLogCommand("upload", name, args, kwargs, fileType);
+        var tag = '<input type="file" ';
+        if (fileType) {
+          tag += 'accept="' + fileType + '" '
+        }
+        tag += ">";
         var deferred = $q.defer();
         angular
-          .element('<input type="file">')
+          .element(tag)
           .change(function(event) {
             $upload
               .upload({

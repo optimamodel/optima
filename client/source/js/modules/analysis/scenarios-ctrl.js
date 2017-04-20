@@ -88,7 +88,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.uploadScenario = function(scenario) {
       util
         .rpcUpload(
-          'upload_project_object', [projectService.project.id, 'scenario'])
+          'upload_project_object', [projectApi.project.id, 'scenario'], {}, '.scn')
         .then(function(response) {
           toastr.success('Scenario uploaded');
           $state.reload()

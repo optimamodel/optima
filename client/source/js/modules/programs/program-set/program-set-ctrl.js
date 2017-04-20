@@ -129,9 +129,21 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.uploadProgramSet = function() {
       util
         .rpcUpload(
-          'upload_project_object', [projectService.project.id, 'progset'])
+          'upload_project_object', [projectApi.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
           toastr.success('Progset uploaded');
+          var name = response.data.name;
+          $http
+            .get('/api/project/' + project.id + '/progsets')
+            .then(function(response) {
+              // Load program sets; set first as active
+              var data = response.data;
+              if (data.progsets) {
+                $scope.programSetList = data.progsets;
+                console.log("uploadProgramSet", $scope.programSetList);
+                $scope.state.activeProgramSet = _.findWhere(data.progsets, {name: name});
+              }
+            });
         });
     };
 

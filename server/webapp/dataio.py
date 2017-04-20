@@ -790,6 +790,20 @@ def resolve_project(project):
     return is_change
 
 
+def save_project(project):
+    project_record = load_project_record(project.uid)
+    project_record.save_obj(project)
+    db.session.add(project_record)
+    db.session.commit()
+
+
+def get_server_filename(basename):
+    dirname = upload_dir_user(TEMPLATEDIR)
+    if not dirname:
+        dirname = TEMPLATEDIR
+    return os.path.join(dirname, basename)
+
+
 def download_project_object(project_id, obj_type, obj_id):
     """
     Args:
@@ -815,10 +829,7 @@ def download_project_object(project_id, obj_type, obj_id):
         obj = parse.get_optimization_from_project(project, obj_id)
 
     basename = "%s-%s.%s" % (project.name, obj.name, ext)
-    dirname = upload_dir_user(TEMPLATEDIR)
-    if not dirname:
-        dirname = TEMPLATEDIR
-    filename = os.path.join(dirname, basename)
+    filename = get_server_filename(basename)
     op.saveobj(filename, obj)
     return filename
 
@@ -835,16 +846,17 @@ def upload_project_object(filename, project_id, obj_type):
     """
     project = load_and_resolve_project(project_id)
     obj = op.loadobj(filename)
+    obj.uid = op.uuid()
     if obj_type == "parset":
-        project.addparset(obj, overwrite=True)
+        project.addparset(parset=obj, overwrite=True)
     elif obj_type == "progset":
-        project.addprogset(obj, overwrite=True)
+        project.addprogset(progset=obj, overwrite=True)
     elif obj_type == "scenario":
-        project.addscen(obj, overwrite=True)
+        project.addscen(scen=obj, overwrite=True)
     elif obj_type == "optimization":
-        project.addoptim(obj, overwrite=True)
+        project.addoptim(optim=obj, overwrite=True)
     save_project(project)
-    return {}
+    return { 'name': obj.name }
 
 
 
@@ -1264,23 +1276,6 @@ def save_progset(project_id, progset_id, progset_summary):
     return parse.get_progset_summary(project, progset_summary["name"])
 
 
-def upload_progset(project_id, progset_id, progset_summary):
-    """
-    Returns progset summary
-    """
-    project_record = load_project_record(project_id)
-    project = project_record.load()
-    
-    old_progset = parse.get_progset_from_project(project, progset_id)
-    print(">> upload_progset '%s' into '%s'" % (progset_summary['name'], old_progset.name))
-    progset_summary['id'] = progset_id
-    progset_summary['name'] = old_progset.name
-    parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
-    project_record.save_obj(project)
-    project.restorelinks()
-    return parse.get_progset_summary(project, progset_summary["name"])
-
-
 def rename_progset(project_id, progset_id, new_name):
     def update_project_fn(project):
         print(">> rename_progset", progset_id, new_name)
@@ -1383,7 +1378,6 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
     project.restorelinks()
 
     budgets = progset.getdefaultbudget()
-    progset.readytooptimize(verbose=4)
     if progset.readytooptimize():
         pars = progset.compareoutcomes(parset=parset, year=t)
     else:
@@ -1411,7 +1405,7 @@ def any_optimizable(project_id):
     
     optimizable = False
     for progset in project.progsets.values():
-        if progset.readytooptimize(verbose=4):
+        if progset.readytooptimize():
             optimizable = True
         
     print('>> any_optimizable for %s: %s' % (project.name, optimizable))

@@ -286,11 +286,27 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.uploadParameterSet = function() {
+      console.log('uploadParameterSet');
       util
         .rpcUpload(
+<<<<<<< HEAD
           'upload_project_object', [projectService.project.id, 'parset'])
+=======
+          'upload_project_object', [projectApi.project.id, 'parset'], {}, '.par')
+>>>>>>> e5648e49ba06a6aaf2ce71fd461d20188cbec8ab
         .then(function(response) {
           toastr.success('Parset uploaded');
+          var name = response.data.name;
+          $http
+            .get('/api/project/' + $scope.project.id + '/parsets')
+            .success(function(response) {
+              var parsets = response.parsets;
+              if (parsets) {
+                $scope.parsets = parsets;
+                $scope.state.parset = _.findWhere($scope.parsets, {name: name});
+                $scope.setActiveParset();
+              }
+            });
         });
     };
 
