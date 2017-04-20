@@ -700,15 +700,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 mtctpmtct = thisreceivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
                 print('hiiiiiiiiiiiiiiiii')
                 print t, p1, p2, thiseligbirths, peopledx, alleligbirthrate[t], (alleligbirthrate[t]*peopledx+eps), numpmtct[t], numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thisreceivepmtct
-            else: # Proportion on PMTCT is specified, ignore number
-                if isinf(proppmtct[t]): # If the prop value is infinity, we use last timestep's value
-                    if t==0: calcprop=0.
-                    else:
-                        calcpmtctprop = raw_receivepmtct[:,t-1].sum()/raw_hivbirths[:,t-1].sum()
-                else: calcpmtctprop = proppmtct[t]                
-                mtctdx = (thiseligbirths * (1-calcpmtctprop)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = (thiseligbirths * calcpmtctprop) * pmtcteff[t] # MTCT from those receiving PMTCT
-                thisreceivepmtct = thiseligbirths * calcpmtctprop
+            else: # Proportion on PMTCT is specified, ignore number              
+                mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
+                thisreceivepmtct = thiseligbirths * proppmtct[t]
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
             raw_receivepmtct[p1, t] += thisreceivepmtct/dt 
