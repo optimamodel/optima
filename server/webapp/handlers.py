@@ -228,7 +228,7 @@ class DefaultParameters(Resource):
 
     @swagger.operation(summary="Returns default programs for program-set modal")
     def get(self, project_id):
-        return {'parameters': dataio.load_project_parameters(project_id)}
+        return dataio.load_project_parameters(project_id)
 
 api.add_resource(DefaultParameters, '/api/project/<project_id>/parameters')
 
@@ -681,33 +681,33 @@ class Progset(Resource):
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>')
 
 
-class ProgsetRename(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary='Update progset with the given id.')
-    def put(self, project_id, progset_id):
-        """
-        data-json: progset_summary
-        """
-        new_name = get_post_data_json()['newName']
-        return dataio.rename_progset(project_id, progset_id, new_name)
-
-api.add_resource(ProgsetRename, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/rename')
-
-
-class ProgsetUploadDownload(Resource):
-    method_decorators = [report_exception_decorator, login_required]
-
-    @swagger.operation(summary="Update from JSON file of the parameters")
-    def post(self, project_id, progset_id):
-        """
-        file-upload
-        """
-        json_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
-        progset_summary = json.load(open(json_fname))
-        return dataio.upload_progset(project_id, progset_id, progset_summary)
-
-api.add_resource(ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
+# class ProgsetRename(Resource):
+#     method_decorators = [report_exception_decorator, login_required]
+#
+#     @swagger.operation(summary='Update progset with the given id.')
+#     def put(self, project_id, progset_id):
+#         """
+#         data-json: progset_summary
+#         """
+#         new_name = get_post_data_json()['newName']
+#         return dataio.rename_progset(project_id, progset_id, new_name)
+#
+# api.add_resource(ProgsetRename, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/rename')
+#
+#
+# class ProgsetUploadDownload(Resource):
+#     method_decorators = [report_exception_decorator, login_required]
+#
+#     @swagger.operation(summary="Update from JSON file of the parameters")
+#     def post(self, project_id, progset_id):
+#         """
+#         file-upload
+#         """
+#         json_fname = get_upload_file(current_app.config['UPLOAD_FOLDER'])
+#         progset_summary = json.load(open(json_fname))
+#         return dataio.upload_progset(project_id, progset_id, progset_summary)
+#
+# api.add_resource(ProgsetUploadDownload, '/api/project/<uuid:project_id>/progset/<uuid:progset_id>/data')
 
 
 class ProgsetParameters(Resource):

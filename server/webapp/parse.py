@@ -1035,7 +1035,11 @@ def set_program_summary_on_progset(progset, summary):
 
 def set_progset_summary_on_progset(progset, progset_summary):
     progset.inactive_programs = op.odict()
-    print(">> set_progset_summary_on_progset n progset" % len(progset_summary['programs']))
+    if 'programs' in progset_summary:
+        print(">> set_progset_summary_on_progset %d progset" % len(progset_summary['programs']))
+    else:
+        print(">> set_progset_summary_on_progset empty progset")
+        progset_summary['programs'] = []
     updated_programs = []
     for program_summary in progset_summary['programs']:
         program = create_or_extract_program_from_progset(progset, program_summary)

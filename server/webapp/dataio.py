@@ -1140,7 +1140,7 @@ def load_parset_summaries(project_id):
 
 
 def load_project_parameters(project_id):
-    return parse.get_parameters_for_edit_program(load_project(project_id))
+    return {'parameters': parse.get_parameters_for_edit_program(load_project(project_id)) }
 
 
 def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
