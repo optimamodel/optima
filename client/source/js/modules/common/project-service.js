@@ -4,7 +4,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
   var module = angular.module('app.common.project-service', []);
 
   module.service('projectService',
-    ['$http', '$q', 'userManager', 'util', function ($http, $q, userManager, util) {
+    ['$http', '$q', 'userManager', 'utilService', function ($http, $q, userManager, utilService) {
 
     var projectService = {
       projects: [],
@@ -54,7 +54,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function getProjectAndMakeActive(projectId) {
       var deferred = $q.defer();
-      util
+      utilService
         .rpcRun(
           'load_project_summary', [projectId])
         .then(
@@ -80,7 +80,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function getProjectList() {
       var deferred = $q.defer();
-      util
+      utilService
         .rpcRun(
           'load_project_summaries', [userManager.user.id])
         .then(
@@ -102,12 +102,12 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function createProject(project) {
       var deferred = $q.defer();
-      util
+      utilService
         .rpcRun('create_project', [userManager.user.id, project])
         .then(
           function(response) {
             getProjectAndMakeActive(response.data.projectId);
-            util
+            utilService
               .rpcDownload('download_template', [project])
               .then(
                 function(response) { deferred.resolve(response); },
@@ -122,7 +122,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     function uploadProject() {
       var deferred = $q.defer();
       var otherNames = _.pluck(projectService.projects, 'name');
-      util
+      utilService
         .rpcUpload(
           'create_project_from_prj',
           [userManager.user.id, otherNames])
@@ -142,7 +142,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     function uploadProjectFromSpreadsheet() {
       var deferred = $q.defer();
       var otherNames = _.pluck(projectService.projects, 'name');
-      util
+      utilService
         .rpcUpload(
           'create_project_from_spreadsheet',
           [userManager.user.id, otherNames])
@@ -161,7 +161,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function copyProject(projectId, newName) {
       var deferred = $q.defer();
-      util
+      utilService
         .rpcRun(
           'copy_project', [projectId, newName])
         .then(
@@ -180,7 +180,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function renameProject(id, project) {
       var deferred = $q.defer();
-      util
+      utilService
         .rpcRun(
           'update_project_from_summary', [project])
         .then(
@@ -196,7 +196,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function deleteProjects(projectIds) {
       var deferred = $q.defer();
-      util
+      utilService
         .rpcRun(
           'delete_projects', [projectIds])
         .then(
@@ -241,16 +241,16 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         }
       },
       downloadSelectedProjects: function (projectIds) {
-        return util.rpcDownload('load_zip_of_prj_files', [projectIds]);
+        return utilService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },
       getAllProjectList: function () {
-        return util.rpcRun('load_project_summaries');
+        return utilService.rpcRun('load_project_summaries');
       },
       getPopulations: function () {
-        return util.rpcRun('get_default_populations');
+        return utilService.rpcRun('get_default_populations');
       },
       getDefaultPrograms: function (projectId) {
-        return util.rpcRun('load_project_program_summaries', [projectId]);
+        return utilService.rpcRun('load_project_program_summaries', [projectId]);
       },
     });
 

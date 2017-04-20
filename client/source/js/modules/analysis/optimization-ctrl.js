@@ -5,7 +5,7 @@ define(
 
   module.controller('AnalysisOptimizationController', function (
       $scope, $http, $upload, $modal, toastr, modalService,
-      projectService, $timeout, pollerService, util, $state) {
+      projectService, $timeout, pollerService, utilService, $state) {
 
     function initialize() {
 
@@ -218,7 +218,7 @@ define(
     };
 
     $scope.downloadOptimization = function(optimization) {
-      util
+      utilService
         .rpcDownload(
           'download_project_object',
           [projectService.project.id, 'optimization', optimization.id])
@@ -229,7 +229,7 @@ define(
     };
 
     $scope.uploadOptimization = function(optimization) {
-      util
+      utilService
         .rpcUpload(
           'upload_project_object', [projectApi.project.id, 'optimization'], {}, '.opt')
         .then(function(response) {

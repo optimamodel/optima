@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, $state, projectService, modalService, toastr, util) {
+      $scope, $http, $modal, $state, projectService, modalService, toastr, utilService) {
 
     function initialize() {
       $scope.$watch('projectService.project.id', function() {
@@ -75,7 +75,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadScenario = function(scenario) {
-      util
+      utilService
         .rpcDownload(
           'download_project_object',
           [projectService.project.id, 'scenario', scenario.id])
@@ -86,7 +86,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.uploadScenario = function(scenario) {
-      util
+      utilService
         .rpcUpload(
           'upload_project_object', [projectApi.project.id, 'scenario'], {}, '.scn')
         .then(function(response) {

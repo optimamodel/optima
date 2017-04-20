@@ -38,7 +38,7 @@ define([
         'ui.router',
         'tooltip.module',
         'rzModule',
-        'app.util',
+        'app.util-service',
         'app.feedback',
         'app.help',
         'app.user',

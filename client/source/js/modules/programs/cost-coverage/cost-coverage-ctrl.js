@@ -4,7 +4,7 @@ define(['./../module', 'underscore'], function(module, _) {
 
   module.controller(
     'ModelCostCoverageController',
-    function($scope, toastr, $http, $state, projectService, pollerService) {
+    function($scope, toastr, $state, projectService, pollerService, utilService) {
 
       var vm = this;
 
@@ -49,16 +49,19 @@ define(['./../module', 'underscore'], function(module, _) {
           .then(function(response) {
             vm.project = response.data;
             console.log('reloadActiveProject init vm.project', vm.project);
-            return $http.get('/api/project/' + vm.project.id + '/progsets')
-          })
-          .then(function(response) {
+
             // Fetch progsets
-            vm.progsets = response.data.progsets;
-            vm.state.progset = vm.progsets[0];
-            return $http.get('/api/project/' + vm.project.id + '/parsets')
+            return utilService.rpcRun('load_progset_summaries', [vm.project.id]);
           })
           .then(function(response) {
+            vm.progsets = response.data.progsets;
+            console.log('reloadActiveProject init vm.progsets', vm.progsets);
+            vm.state.progset = vm.progsets[0];
+
             // Fetch parsets
+            return utilService.rpcRun('load_parset_summaries', [vm.project.id]);
+          })
+          .then(function(response) {
             vm.parsets = response.data.parsets;
             console.log('reloadActiveProject vm.parsets', vm.parsets);
             vm.state.parset = vm.parsets[0];
@@ -87,11 +90,6 @@ define(['./../module', 'underscore'], function(module, _) {
           });
       }
 
-      function runServerProcedure(procName, args, kwargs) {
-        return $http.post(
-          '/api/procedure', { name: procName, args: args, kwargs: kwargs });
-      }
-
       $scope.onResize = function() {
         function setAllFiguresToWidth($element) {
           $element.find('svg.mpld3-figure').each(function () {
@@ -116,37 +114,32 @@ define(['./../module', 'underscore'], function(module, _) {
       function changeParset() {
         console.log('changeParset', vm.state.parset);
         if (vm.state.progset && vm.state.parset) {
-          $http
-            .get(
-              '/api/project/' + vm.project.id
-                + '/progsets/' + vm.state.progset.id
-                + '/parameters/' + vm.state.parset.id)
-            .success(function(parameters) {
-              vm.parameters = parameters;
-              console.log('changeParset parameters', vm.parameters);
-              vm.state.parameter = vm.parameters[0];
-              vm.changeTargetParameter();
-            });
+          utilService.rpcRun(
+            'load_parameters_from_progset_parset',
+            [vm.project.id, vm.state.progset.id, vm.state.parset.id])
+          .then(function(response) {
+            vm.parameters = response.data.parameters;
+            console.log('changeParset parameters', vm.parameters);
+            vm.state.parameter = vm.parameters[0];
+            vm.changeTargetParameter();
+          });
         }
       }
 
       vm.changeProgram = function() {
-        $http
-          .get(
-            '/api/project/' + vm.project.id
-              + '/progsets/' + vm.state.progset.id
-              + '/program/' + vm.state.program.id
-              + '/parset/' + vm.state.parset.id
-              + '/popsizes')
-          .success(function(response) {
-            vm.state.popsizes = response;
+        utilService.rpcRun(
+          'load_target_popsizes',
+          [vm.project.id, vm.state.parset.id, vm.state.progset.id, vm.state.program.id])
+        .then(function(response) {
+            vm.state.popsizes = response.data;
+            console.log('changeProgram popsizes', vm.state.popsizes);
             buildCostFunctionTables();
             vm.updateCostCovGraph();
-          });
+        });
       };
 
       function loadReconcileData() {
-        runServerProcedure(
+        utilService.rpcRun(
           'load_reconcile_summary',
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
@@ -181,7 +174,7 @@ define(['./../module', 'underscore'], function(module, _) {
         console.log('changeProgsetAndParset program', vm.state.program);
         vm.state.popsizes = {};
 
-        runServerProcedure(
+        utilService.rpcRun(
           'load_reconcile_summary',
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
@@ -189,13 +182,12 @@ define(['./../module', 'underscore'], function(module, _) {
           console.log('changeProgsetAndParset reoncile', response.data);
 
           // Fetch outcomes for this progset
-          return $http.get(
-            '/api/project/' + vm.project.id
-            + '/progsets/' + vm.state.progset.id
-            + '/effects')
+          return utilService.rpcRun(
+            'load_progset_outcome_summaries', [vm.project.id, vm.state.progset.id]);
         })
         .then(function(response) {
-          vm.outcomes = response.data;
+          console.log('changeProgsetAndParset outcomes', response);
+          vm.outcomes = response.data.outcomes;
           console.log('changeProgsetAndParset outcomes', vm.outcomes);
           changeParset();
           vm.changeProgram();
@@ -209,20 +201,18 @@ define(['./../module', 'underscore'], function(module, _) {
           vm.chartData = null;
           return;
         }
-        $http
-          .get(
-            '/api/project/' + vm.project.id
-              + '/progsets/' + vm.state.progset.id
-              + '/programs/' + vm.state.program.id
-              + '/costcoverage/graph?t=' + years.join(',')
-              + '&parset_id=' + vm.state.parset.id)
-          .success(function(data) {
-            vm.state.chartData = data;
-            console.log('updateCostCovGraph', data);
-          })
-          .error(function() {
-            console.log('Failed to load graph for', vm.state.program.short);
-          });
+        utilService
+          .rpcRun(
+            'load_costcov_graph',
+            [vm.project.id, vm.state.progset.id, vm.state.program.id,
+            vm.state.parset.id, years])
+          .then(
+            function(response) {
+              vm.state.chartData = response.data;
+            },
+            function() {
+              console.log('Failed to load graph for', vm.state.program.short);
+            });
       };
 
       function revertCcoparsTable() {
@@ -266,18 +256,16 @@ define(['./../module', 'underscore'], function(module, _) {
 
       vm.saveProgram = function() {
         revertCcoparsTable();
-        console.log('saving program', vm.state.program);
-        $http
-          .post(
-            '/api/project/' + vm.project.id
-              + '/progsets/' + vm.state.program.progset_id
-              + '/program',
-            {'program': vm.state.program})
-          .success(function() {
+        console.log('saveProgram', vm.state.program);
+        utilService
+          .rpcRun(
+            'save_program',
+            [vm.project.id, vm.state.program.progset_id, vm.state.program])
+          .then(function(response) {
             toastr.success('Cost data were saved');
             vm.updateCostCovGraph();
             loadReconcileData();
-          });
+          })
       };
 
       vm.addCcoparYear = function() {
@@ -398,17 +386,17 @@ define(['./../module', 'underscore'], function(module, _) {
       };
 
       vm.saveProgsetOutcomes = function() {
-        $http.put(
-          '/api/project/' + vm.project.id
-            + '/progsets/' + vm.state.progset.id
-            + '/effects',
-          getFilteredOutcomes(vm.outcomes))
-        .success(function(response) {
-          toastr.success('Outcomes were saved');
-          vm.outcomes = response;
-          vm.changeTargetParameter();
-          loadReconcileData();
-        });
+        utilService
+          .rpcRun(
+            'save_outcome_summaries',
+            [vm.project.id, vm.state.progset.id, getFilteredOutcomes(vm.outcomes)])
+          .then(function(response) {
+            toastr.success('Outcomes were saved');
+            vm.outcomes = response.data.outcomes;
+            console.log('vm.saveProgsetoutcomes', vm.outcomes);
+            vm.changeTargetParameter();
+            loadReconcileData();
+          });
       };
 
       vm.selectTab = function(tab) {
@@ -458,7 +446,7 @@ define(['./../module', 'underscore'], function(module, _) {
         });
 
         _.each(missingPops, function(pop) {
-          outcomes.push({
+          vm.outcomes.push({
             name: vm.state.parameter.short,
             pop: pop,
             interact: "random",
@@ -561,7 +549,7 @@ define(['./../module', 'underscore'], function(module, _) {
       // RECONCILE FUNCTIONS
 
       vm.updateSummary = function() {
-        runServerProcedure(
+        utilService.rpcRun(
           'load_reconcile_summary',
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
@@ -578,29 +566,38 @@ define(['./../module', 'underscore'], function(module, _) {
       vm.selectSummary = function() {
         var workType = makeWorkType(
           vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
-        $http
-          .get('/api/task/' + vm.project.id + '/type/' + workType)
+        utilService
+          .rpcAsyncRun(
+            'check_task', [vm.project.id, workType])
           .then(function(response) {
-            console.log('selectSummary', response.data);
             if (response.data.status === 'started') {
               initReconcilePoll();
             }
           });
+        // $http
+        //   .get('/api/task/' + vm.project.id + '/type/' + workType)
+        //   .then(function(response) {
+        //     console.log('selectSummary', response.data);
+        //     if (response.data.status === 'started') {
+        //       initReconcilePoll();
+        //     }
+        //   });
       };
 
       function initReconcilePoll() {
         var workType = makeWorkType(
           vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
-        pollerService.startPoll(
+        pollerService.startPollForRpc(
+          vm.project.id,
           workType,
-          '/api/task/' + vm.project.id + '/type/' + workType,
           function (response) {
-            if (response.status === 'completed') {
+            var calcState = response.data;
+            if (calcState.status === 'completed') {
               vm.state.statusMessage = '';
               toastr.success('Reconcile completed');
-            } else if (response.status === 'started') {
-              var start = new Date(response.start_time);
-              var now = new Date(response.current_time);
+            } else if (calcState.status === 'started') {
+              var start = new Date(calcState.start_time);
+              var now = new Date(calcState.current_time);
               var diff = now.getTime() - start.getTime();
               var seconds = parseInt(diff / 1000);
               vm.state.statusMessage = "Reconcile running for " + seconds + " s";
@@ -612,13 +609,13 @@ define(['./../module', 'underscore'], function(module, _) {
       }
 
       vm.reconcilePrograms = function() {
-        runServerProcedure(
-            'launch_reconcile_calc',
-            [vm.project.id, vm.state.progset.id, vm.state.parset.id, Number(vm.state.year), Number(vm.state.maxtime)])
-          .success(function(data) {
-            initReconcilePoll();
-            toastr.success('Reconcile started...');
-          });
+        utilService.rpcRun(
+          'launch_reconcile_calc',
+          [vm.project.id, vm.state.progset.id, vm.state.parset.id, Number(vm.state.year), Number(vm.state.maxtime)])
+        .success(function(data) {
+          initReconcilePoll();
+          toastr.success('Reconcile started...');
+        });
       };
 
 

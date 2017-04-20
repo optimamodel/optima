@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function (
-      $scope, modalService, util, $modal, $timeout, toastr,
+      $scope, modalService, utilService, $modal, $timeout, toastr,
       projectService, pollerService) {
 
     function initialize() {
@@ -48,7 +48,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.state.endYear = $scope.years[defaultindex];
 
           // Fetching list of parsets for open project
-          util
+          utilService
             .rpcRun(
               'load_parset_summaries', [$scope.project.id])
             .then(function(response) {
@@ -99,7 +99,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
-      util
+      utilService
         .rpcRun(
           'load_parset_graphs',
           [projectService.project.id, $scope.state.parset.id,
@@ -123,7 +123,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return;
       }
       console.log('saveAndUpdateGraphs', $scope.parameters);
-      util
+      utilService
         .rpcRun(
           'load_parset_graphs',
           [
@@ -157,7 +157,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.addParameterSet = function() {
       function add(name) {
-        util
+        utilService
           .rpcRun(
             'create_parset', [projectService.project.id, name])
           .then(function(response) {
@@ -181,7 +181,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var names = _.pluck($scope.parsets, 'name');
         var name = $scope.state.parset.name;
         var newName = modalService.getUniqueName(name, names);
-        util
+        utilService
           .rpcRun(
             'copy_parset',
             [
@@ -210,7 +210,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       function rename(name) {
-        util
+        utilService
           .rpcRun(
             'rename_parset',
             [
@@ -245,7 +245,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       function remove() {
-        util
+        utilService
           .rpcRun(
             'delete_parset',
             [projectService.project.id, $scope.state.parset.id])
@@ -276,7 +276,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadParameterSet = function() {
-      util
+      utilService
         .rpcDownload(
           'download_project_object',
           [projectService.project.id, 'parset', $scope.state.parset.id])
@@ -287,7 +287,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.uploadParameterSet = function() {
       console.log('uploadParameterSet');
-      util
+      utilService
         .rpcUpload(
           'upload_project_object', [projectApi.project.id, 'parset'], {}, '.par')
         .then(function(response) {
@@ -309,7 +309,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.refreshParset = function() {
       modalService.confirm(
         function () {
-          util
+          utilService
             .rpcRun(
               'refresh_parset', [projectService.project.id, $scope.state.parset.id])
             .then(function(response) {
@@ -336,7 +336,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         pollerService.stopPolls();
         $scope.state.isRunnable = false;
         var taskId = 'autofit-' + $scope.state.parset.id;
-        util
+        utilService
           .rpcAsyncRun(
             'check_calculation_status', [projectService.project.id, taskId])
           .then(function(response) {
@@ -354,7 +354,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.startAutoCalibration = function() {
-      util
+      utilService
         .rpcAsyncRun(
           'launch_autofit',
           [projectService.project.id, $scope.state.parset.id, $scope.state.maxtime])

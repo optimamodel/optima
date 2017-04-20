@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AdminManageProjectsController', function (
-    $scope, $http, projects, users, util, userManager, modalService, projectService, $state, toastr) {
+    $scope, $http, projects, users, utilService, userManager, modalService, projectService, $state, toastr) {
 
     $scope.users = _.map(
       users.data.users,
@@ -56,7 +56,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       projectService
         .copyProject(
           projectId,
-          util.getUniqueName(name, getProjectNames()))
+          utilService.getUniqueName(name, getProjectNames()))
         .then(function() {
           toastr.success('Copied project');
           $state.reload();
@@ -64,7 +64,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadSpreadsheet = function (name, id) {
-      util.rpcDownload(
+      utilService.rpcDownload(
         'download_data_spreadsheet', [id], {'is_blank': false})
       .then(function (response) {
         toastr.success('Spreadsheet downloaded');
@@ -72,7 +72,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadProject = function (name, id) {
-      util
+      utilService
         .rpcDownload(
           'download_project', [id])
         .then(function() {
@@ -81,7 +81,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.deleteProject = function (id) {
-      util
+      utilService
         .rpcRun(
           'delete_projects', [[id]])
         .then(function() {

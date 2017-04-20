@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller(
     'ProjectOpenController',
-    function($scope, util, modalService, userManager, projectService, $state, $upload, $modal, toastr) {
+    function($scope, utilService, modalService, userManager, projectService, $state, $upload, $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
@@ -69,7 +69,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         projectService
           .copyProject(
             projectId,
-            util.getUniqueName(name, getProjectNames()))
+            utilService.getUniqueName(name, getProjectNames()))
           .then(function() {
             toastr.success('Copied project');
             $state.reload();
@@ -77,7 +77,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadSpreadsheet = function (name, id) {
-        util.rpcDownload(
+        utilService.rpcDownload(
           'download_data_spreadsheet', [id], {'is_blank': false})
         .then(function (response) {
           toastr.success('Spreadsheet downloaded');
@@ -101,7 +101,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.uploadSpreadsheet = function(projectName, projectId) {
-        util
+        utilService
           .rpcUpload(
             'update_project_from_uploaded_spreadsheet', [projectId])
           .then(function(response) {
@@ -128,7 +128,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadProject = function (name, id) {
-        util
+        utilService
           .rpcDownload(
             'download_project', [id])
           .then(function() {
@@ -137,7 +137,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.downloadPrjWithResults = function (name, id) {
-        util
+        utilService
           .rpcDownload(
             'download_project_with_result', [id])
           .then(function() {

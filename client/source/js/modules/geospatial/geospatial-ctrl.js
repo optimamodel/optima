@@ -5,7 +5,7 @@ define(
 
     module.controller(
       'PortfolioController',
-      function($scope, $http, modalService, userManager, util,
+      function($scope, $http, modalService, userManager, utilService,
                $state, toastr, pollerService, $modal, $upload) {
 
         function initialize() {
@@ -95,7 +95,7 @@ define(
 
         $scope.renamePortfolio = function() {
           modalService.rename(function(newName) {
-            util
+            utilService
               .rpcRun(
                 'rename_portfolio', [$scope.state.portfolio.id, newName])
               .then(function(response) {

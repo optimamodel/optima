@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function (
-      $scope, $modal, modalService, toastr, projectService, $upload, $state, util) {
+      $scope, $modal, modalService, toastr, projectService, $upload, $state, utilService) {
 
     var project;
     var defaultPrograms;
@@ -32,7 +32,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           }
 
           // Load program sets; set first as active
-          return util.rpcRun('load_progset_summaries', [project.id])
+          return utilService.rpcRun('load_progset_summaries', [project.id])
         })
         .then(function(response) {
           var data = response.data;
@@ -53,7 +53,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           console.log("ProgramSetController.init defaultPrograms", defaultPrograms);
 
           // Load parameters that can be used to set custom programs
-          return util.rpcRun('load_project_parameters', [project.id]);
+          return utilService.rpcRun('load_project_parameters', [project.id]);
         })
         .then(function(response) {
           parameters = response.data.parameters;
@@ -96,7 +96,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         function rename(name) {
-          util
+          utilService
             .rpcRun(
               'rename_progset', [project.id, $scope.state.activeProgramSet.id, name])
             .then(function(response) {
@@ -117,7 +117,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadProgramSet = function() {
-      util
+      utilService
         .rpcDownload(
           'download_project_object',
           [projectService.project.id, 'progset', $scope.state.activeProgramSet.id])
@@ -127,7 +127,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.uploadProgramSet = function() {
-      util
+      utilService
         .rpcUpload(
           'upload_project_object', [projectApi.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
@@ -178,7 +178,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       modalService.confirm(
         function () {
-          util
+          utilService
             .rpcRun(
               'delete_progset', [project.id, $scope.state.activeProgramSet.id])
             .then(
@@ -198,7 +198,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         function copy(name) {
-          util
+          utilService
             .rpcRun(
               'copy_progset', [project.id, $scope.state.activeProgramSet.id, name])
             .then(function(response) {
@@ -230,7 +230,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         successMessage = 'Changes saved';
       }
       if (programSet.id) {
-        util
+        utilService
           .rpcRun(
             'save_progset', [project.id, programSet.id, programSet])
           .then(function(response) {
@@ -238,7 +238,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             toastr.success(successMessage);
           });
       } else {
-        util
+        utilService
           .rpcRun(
             'create_progset', [project.id, programSet])
           .then(function(response) {
