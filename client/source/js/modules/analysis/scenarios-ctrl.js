@@ -4,11 +4,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, $state, projectApi, modalService, toastr, util) {
+      $scope, $http, $modal, $state, projectService, modalService, toastr, util) {
 
     function initialize() {
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectApi.project.id)) {
+      $scope.$watch('projectService.project.id', function() {
+        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectService.project.id)) {
           reloadActiveProject();
         }
       });
@@ -16,7 +16,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function reloadActiveProject() {
-      projectApi
+      projectService
         .getActiveProject()
         .then(function(response) {
           $scope.project = response.data;
@@ -78,7 +78,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       util
         .rpcDownload(
           'download_project_object',
-          [projectApi.project.id, 'scenario', scenario.id])
+          [projectService.project.id, 'scenario', scenario.id])
         .then(function(response) {
           toastr.success('Scenario downloaded');
         });
@@ -88,7 +88,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.uploadScenario = function(scenario) {
       util
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'scenario'])
+          'upload_project_object', [projectService.project.id, 'scenario'])
         .then(function(response) {
           toastr.success('Scenario uploaded');
           $state.reload()

@@ -77,7 +77,7 @@ In the `source/js` folder:
     - `chart` directives, services and libraries to render graphs
     - `common` utility functions and directives
       - `active-project` stores/extracts active project from local storage
-      - `project-api-service` sores/extracts projects from webserver
+      - `project-service` sores/extracts projects from webserver
       - `resources-user` sores/extracts users from webserver
       - `user-manager` stores/extracts current user
     - `geospatial` the geospatial analysis

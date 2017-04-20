@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AdminManageProjectsController', function (
-    $scope, $http, projects, users, util, userManager, modalService, projectApi, $state, toastr) {
+    $scope, $http, projects, users, util, userManager, modalService, projectService, $state, toastr) {
 
     $scope.users = _.map(
       users.data.users,
@@ -22,23 +22,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     );
 
-    $scope.projectApi = projectApi;
+    $scope.projectService = projectService;
 
     console.log('$scope.users', $scope.users);
 
     function getProjectNames() {
-      return _.pluck(projectApi.projects, 'name');
+      return _.pluck(projectService.projects, 'name');
     }
 
     $scope.open = function (name, id) {
-      projectApi.setActiveProjectId(id);
+      projectService.setActiveProjectId(id);
     };
 
     $scope.editProjectName = function(project) {
       modalService.rename(
         function(name) {
           project.name = name;
-          projectApi
+          projectService
             .renameProject(project.id, project)
             .then(function () {
               toastr.success('Renamed project');
@@ -53,7 +53,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.copy = function(name, projectId) {
-      projectApi
+      projectService
         .copyProject(
           projectId,
           util.getUniqueName(name, getProjectNames()))

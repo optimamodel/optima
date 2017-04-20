@@ -5,7 +5,7 @@ define(
 
   module.controller('AnalysisOptimizationController', function (
       $scope, $http, $upload, $modal, toastr, modalService,
-      projectApi, $timeout, globalPoller, util, $state) {
+      projectService, $timeout, pollerService, util, $state) {
 
     function initialize() {
 
@@ -26,8 +26,8 @@ define(
 
       $scope.anyOptimizable = false;
 
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined($scope.state.project) && ($scope.state.project.id !== projectApi.project.id)) {
+      $scope.$watch('projectService.project.id', function() {
+        if (!_.isUndefined($scope.state.project) && ($scope.state.project.id !== projectService.project.id)) {
           reloadActiveProject();
         }
       });
@@ -36,7 +36,7 @@ define(
     }
 
     function reloadActiveProject() {
-      projectApi
+      projectService
         .getActiveProject()
         .then(function(response) {
           var project = response.data;
@@ -120,7 +120,7 @@ define(
     };
 
     function selectOptimization() {
-      globalPoller.stopPolls();
+      pollerService.stopPolls();
 
       $scope.state.isRunnable = false;
       var optimization = $scope.state.optimization;
@@ -221,7 +221,7 @@ define(
       util
         .rpcDownload(
           'download_project_object',
-          [projectApi.project.id, 'optimization', optimization.id])
+          [projectService.project.id, 'optimization', optimization.id])
         .then(function(response) {
           toastr.success('Optimization downloaded');
         });
@@ -231,7 +231,7 @@ define(
     $scope.uploadOptimization = function(optimization) {
       util
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'optimization'])
+          'upload_project_object', [projectService.project.id, 'optimization'])
         .then(function(response) {
           toastr.success('Optimization uploaded');
           $state.reload()
@@ -262,7 +262,7 @@ define(
     };
 
     function initPollOptimizations() {
-      globalPoller.startPoll(
+      pollerService.startPoll(
         $scope.state.optimization.id,
         '/api/project/' + $scope.state.project.id
           + '/optimizations/' + $scope.state.optimization.id

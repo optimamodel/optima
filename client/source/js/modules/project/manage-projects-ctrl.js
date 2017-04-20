@@ -4,16 +4,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller(
     'ProjectOpenController',
-    function($scope, util, modalService, userManager, projectApi, $state, $upload, $modal, toastr) {
+    function($scope, util, modalService, userManager, projectService, $state, $upload, $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
-        $scope.projectApi = projectApi;
+        $scope.projectService = projectService;
       }
 
       function getProjectNames() {
-        return _.pluck(projectApi.projects, 'name');
+        return _.pluck(projectService.projects, 'name');
       }
 
       $scope.filterByName = function(project) {
@@ -32,7 +32,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.selectAll = function() {
-        _.forEach(projectApi.projects, function(project) {
+        _.forEach(projectService.projects, function(project) {
           project.selected = $scope.allSelected;
         });
       };
@@ -40,21 +40,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.deleteSelected = function() {
         const projectIds =
           _.filter(
-            projectApi.projects,
+            projectService.projects,
             function(project) { return project.selected; })
           .map(
             function(project) { return project.id; });
-        projectApi.deleteProjects(projectIds)
+        projectService.deleteProjects(projectIds)
       };
 
       $scope.downloadSelected = function() {
         const projectsIds =
           _.filter(
-            projectApi.projects,
+            projectService.projects,
             function(project) { return project.selected; })
           .map(
             function(project) { return project.id; });
-        projectApi
+        projectService
           .downloadSelectedProjects(projectsIds)
           .success(function (response) {
             saveAs(new Blob([response], { type: "application/octet-stream", responseType: 'arraybuffer' }), 'portfolio.zip');
@@ -62,11 +62,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.open = function (name, id) {
-        projectApi.setActiveProjectId(id);
+        projectService.setActiveProjectId(id);
       };
 
       $scope.copy = function(name, projectId) {
-        projectApi
+        projectService
           .copyProject(
             projectId,
             util.getUniqueName(name, getProjectNames()))
@@ -85,7 +85,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.uploadProject = function() {
-        projectApi
+        projectService
           .uploadProject()
           .then(function() {
             toastr.success('Project uploaded');
@@ -93,7 +93,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.uploadProjectFromSpreadsheet = function() {
-        projectApi
+        projectService
           .uploadProjectFromSpreadsheet()
           .then(function() {
             toastr.success('Project uploaded from spreadsheet');
@@ -113,7 +113,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.rename(
           function(name) {
             project.name = name;
-            projectApi
+            projectService
               .renameProject(project.id, project)
               .then(function () {
                 toastr.success('Renamed project');

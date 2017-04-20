@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function (
-      $scope, $http, $modal, modalService, toastr, projectApi, $upload, $state, util) {
+      $scope, $http, $modal, modalService, toastr, projectService, $upload, $state, util) {
 
     var project;
     var defaultPrograms;
@@ -10,10 +10,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initialize() {
       $scope.state = {};
-      $scope.projectApi = projectApi;
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined(project) && (project.id !== projectApi.project.id)) {
-          console.log('ProgramSetController project-change', projectApi.project.name);
+      $scope.projectService = projectService;
+      $scope.$watch('projectService.project.id', function() {
+        if (!_.isUndefined(project) && (project.id !== projectService.project.id)) {
+          console.log('ProgramSetController project-change', projectService.project.name);
           reloadActiveProject();
         }
       });
@@ -21,7 +21,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function reloadActiveProject() {
-      projectApi
+      projectService
         .getActiveProject()
         .then(function(response) {
           project = response.data;
@@ -30,7 +30,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           if ($scope.isMissingData) {
             return;
           }
-          return $http.get('/api/project/' + project.id + '/progsets');
+          return util.rpcRun('load_progset_summaries', [project.id])
+          // return $http.get('/api/project/' + project.id + '/progsets');
         })
         .then(function(response) {
           // Load program sets; set first as active
@@ -42,7 +43,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
               $scope.state.activeProgramSet = data.progsets[0];
             }
           }
-          return projectApi.getDefaultPrograms(project.id)
+          return projectService.getDefaultPrograms(project.id)
         })
         .then(function(response) {
           // Load a default set of inactive programs for new
@@ -120,7 +121,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       util
         .rpcDownload(
           'download_project_object',
-          [projectApi.project.id, 'progset', $scope.state.activeProgramSet.id])
+          [projectService.project.id, 'progset', $scope.state.activeProgramSet.id])
         .then(function(response) {
           toastr.success('Progset downloaded');
         });
@@ -129,7 +130,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.uploadProgramSet = function() {
       util
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'progset'])
+          'upload_project_object', [projectService.project.id, 'progset'])
         .then(function(response) {
           toastr.success('Progset uploaded');
         });

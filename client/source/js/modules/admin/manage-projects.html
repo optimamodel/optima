@@ -24,7 +24,7 @@
       <tbody>
       <tr
           ng-repeat="project in user.projects | orderBy: 'name'"
-          ng-class="{highlighted: projectApi.project.id === project.id}">
+          ng-class="{highlighted: projectService.project.id === project.id}">
         <td>
           {{ ::project.name }}
         </td>

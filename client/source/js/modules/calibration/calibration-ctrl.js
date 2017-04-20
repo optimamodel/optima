@@ -3,8 +3,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function (
-      $scope, $http, modalService, $upload, util,
-      $modal, $timeout, toastr, projectApi, globalPoller) {
+      $scope, modalService, util, $modal, $timeout, toastr,
+      projectService, pollerService) {
 
     function initialize() {
       $scope.parsets = [];
@@ -19,16 +19,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       reloadActiveProject();
 
-      $scope.projectApi = projectApi;
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectApi.project.id)) {
+      $scope.projectService = projectService;
+      $scope.$watch('projectService.project.id', function() {
+        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectService.project.id)) {
           reloadActiveProject();
         }
       });
     }
 
     function reloadActiveProject() {
-      projectApi
+      projectService
         .getActiveProject()
         .then(function(response) {
           $scope.project = response.data;
@@ -102,7 +102,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       util
         .rpcRun(
           'load_parset_graphs',
-          [projectApi.project.id, $scope.state.parset.id,
+          [projectService.project.id, $scope.state.parset.id,
           "calibration", getSelectors()])
         .then(
           function(response) {
@@ -127,7 +127,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .rpcRun(
           'load_parset_graphs',
           [
-            projectApi.project.id,
+            projectService.project.id,
             $scope.state.parset.id,
             "calibration",
             getSelectors(),
@@ -159,7 +159,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       function add(name) {
         util
           .rpcRun(
-            'create_parset', [projectApi.project.id, name])
+            'create_parset', [projectService.project.id, name])
           .then(function(response) {
             $scope.parsets = response.data.parsets;
             $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
@@ -185,7 +185,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .rpcRun(
             'copy_parset',
             [
-              projectApi.project.id,
+              projectService.project.id,
               $scope.state.parset.id,
               newName])
           .then(function(response) {
@@ -214,7 +214,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .rpcRun(
             'rename_parset',
             [
-              projectApi.project.id,
+              projectService.project.id,
               $scope.state.parset.id,
               name])
           .then(function(response) {
@@ -248,7 +248,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         util
           .rpcRun(
             'delete_parset',
-            [projectApi.project.id, $scope.state.parset.id])
+            [projectService.project.id, $scope.state.parset.id])
           .then(function(response) {
             $scope.parsets = _.filter(
               $scope.parsets, function(parset) {
@@ -279,7 +279,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       util
         .rpcDownload(
           'download_project_object',
-          [projectApi.project.id, 'parset', $scope.state.parset.id])
+          [projectService.project.id, 'parset', $scope.state.parset.id])
         .then(function(response) {
           toastr.success('Parset downloaded');
         });
@@ -288,7 +288,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.uploadParameterSet = function() {
       util
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'parset'])
+          'upload_project_object', [projectService.project.id, 'parset'])
         .then(function(response) {
           toastr.success('Parset uploaded');
         });
@@ -299,7 +299,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         function () {
           util
             .rpcRun(
-              'refresh_parset', [projectApi.project.id, $scope.state.parset.id])
+              'refresh_parset', [projectService.project.id, $scope.state.parset.id])
             .then(function(response) {
               toastr.success('Parset uploaded');
               $scope.getCalibrationGraphs();
@@ -321,12 +321,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.setActiveParset = function() {
       if ($scope.state.parset.id) {
-        globalPoller.stopPolls();
+        pollerService.stopPolls();
         $scope.state.isRunnable = false;
         var taskId = 'autofit-' + $scope.state.parset.id;
         util
           .rpcAsyncRun(
-            'check_calculation_status', [projectApi.project.id, taskId])
+            'check_calculation_status', [projectService.project.id, taskId])
           .then(function(response) {
             var status = response.data.status;
             if (status === 'started') {
@@ -345,7 +345,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       util
         .rpcAsyncRun(
           'launch_autofit',
-          [projectApi.project.id, $scope.state.parset.id, $scope.state.maxtime])
+          [projectService.project.id, $scope.state.parset.id, $scope.state.maxtime])
         .then(function(response) {
           var status = response.data.status;
           if (status === 'started') {
@@ -360,8 +360,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initPollAutoCalibration() {
       var taskId = 'autofit-' + $scope.state.parset.id;
-      globalPoller.startPollForRpc(
-        projectApi.project.id,
+      pollerService.startPollForRpc(
+        projectService.project.id,
         taskId,
         function (response) {
           var status = response.data.status;

@@ -5,7 +5,7 @@ define(['angular'], function (angular) {
   return angular
     .module('app.ui.menu', ['app.user-manager'])
     .directive('menu', function(
-      $state, userManager, projectApi, modalService, $http) {
+      $state, userManager, projectService, modalService, $http) {
 
       return {
         restrict: 'A',
@@ -25,7 +25,7 @@ define(['angular'], function (angular) {
           };
 
           $scope.goIfProjectActive = function(stateName) {
-            if(projectApi.isActiveProjectSet()){
+            if(projectService.isActiveProjectSet()){
               console.log('current state', $state.current.name, '->', stateName);
               $state.go(stateName);
             } else {

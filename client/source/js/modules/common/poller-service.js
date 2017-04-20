@@ -2,15 +2,15 @@ define(['angular' ], function (angular) {
   'use strict';
 
   /**
-   * GlobalPoller provide generic services to run polling tasks
+   * pollerService provide generic services to run polling tasks
    * on a URL. It expects a return JSON data structure
    * { 'status': 'started' } to continue polling, otherwise it
    * sends the response to `callback`
    */
 
-  return angular.module('app.common.global-poller', [])
+  return angular.module('app.common.poller-service', [])
 
-    .factory('globalPoller', ['$http', '$timeout', 'util',
+    .factory('pollerService', ['$http', '$timeout', 'util',
       function($http, $timeout, util) {
 
       var polls = {};

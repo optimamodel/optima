@@ -67,7 +67,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr ng-repeat="project in projectApi.projects | orderBy:sortType:sortReverse | filter:filterByName" ng-class="{highlighted: projectApi.project.id === project.id}">
+      <tr ng-repeat="project in projectService.projects | orderBy:sortType:sortReverse | filter:filterByName" ng-class="{highlighted: projectService.project.id === project.id}">
         <td>
           <input type="checkbox" ng-model="project.selected"/>
         </td>

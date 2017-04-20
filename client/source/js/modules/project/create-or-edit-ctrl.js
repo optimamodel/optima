@@ -2,14 +2,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function (
-      $scope, $state, $modal, $timeout, userManager, modalService, projectApi) {
+      $scope, $state, $modal, $timeout, userManager, modalService, projectService) {
 
     function initialize() {
-      $scope.projects = projectApi.projects;
+      $scope.projects = projectService.projects;
       $scope.project = {name: ''};
 
       $scope.submitButtonText = "Create project & download data entry spreadsheet";
-      projectApi
+      projectService
         .getPopulations()
         .then(function(response) {
           $scope.populations = response.data.populations;
@@ -143,7 +143,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function createProject(isUpdate, isDeleteData, isSpreadsheet) {
       var project = angular.copy($scope.project);
       project.populations = getSelectedPopulations();
-      projectApi
+      projectService
         .createProject(project)
         .then(function() {
           $state.go('home');

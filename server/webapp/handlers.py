@@ -135,43 +135,43 @@ def get_upload_file(dirname):
 # api.add_resource(Projects, '/api/project')
 #
 #
-# class Project(Resource):
-#     method_decorators = [report_exception_decorator, login_required]
-#
-#     # deprecated
-#     @swagger.operation(summary='Returns a project summary')
-#     def get(self, project_id):
-#         return dataio.load_project_summary(project_id)
-#
-#     @swagger.operation(summary='Update a project & download spreadsheet')
-#     def put(self, project_id):
-#         """
-#         data-json: project_summary
-#         """
-#         args = get_post_data_json()
-#         project_summary = args['project']
-#         is_spreadsheet = args['isSpreadsheet']
-#         is_delete_data = args['isDeleteData']
-#         if is_spreadsheet:
-#             dirname, basename = dataio.update_project_followed_by_template_data_spreadsheet(
-#                 project_id, project_summary, is_delete_data)
-#             response = helpers.send_from_directory(
-#                 dirname,
-#                 basename,
-#                 as_attachment=True,
-#                 attachment_filename=basename)
-#             response.headers['X-project-id'] = project_id
-#             return response
-#         else:
-#             dataio.update_project_from_summary(project_id, project_summary, is_delete_data)
-#             return '', 202
-#
-#     @swagger.operation(summary='Delete project')
-#     def delete(self, project_id):
-#         dataio.delete_projects([project_id])
-#         return '', 204
-#
-# api.add_resource(Project, '/api/project/<uuid:project_id>')
+class Project(Resource):
+    method_decorators = [report_exception_decorator, login_required]
+
+    # deprecated
+    @swagger.operation(summary='Returns a project summary')
+    def get(self, project_id):
+        return dataio.load_project_summary(project_id)
+
+    @swagger.operation(summary='Update a project & download spreadsheet')
+    def put(self, project_id):
+        """
+        data-json: project_summary
+        """
+        args = get_post_data_json()
+        project_summary = args['project']
+        is_spreadsheet = args['isSpreadsheet']
+        is_delete_data = args['isDeleteData']
+        if is_spreadsheet:
+            dirname, basename = dataio.update_project_followed_by_template_data_spreadsheet(
+                project_id, project_summary, is_delete_data)
+            response = helpers.send_from_directory(
+                dirname,
+                basename,
+                as_attachment=True,
+                attachment_filename=basename)
+            response.headers['X-project-id'] = project_id
+            return response
+        else:
+            dataio.update_project_from_summary(project_id, project_summary, is_delete_data)
+            return '', 202
+
+    @swagger.operation(summary='Delete project')
+    def delete(self, project_id):
+        dataio.delete_projects([project_id])
+        return '', 204
+
+api.add_resource(Project, '/api/project/<uuid:project_id>')
 #
 #
 # class ProjectData(Resource):

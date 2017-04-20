@@ -6,7 +6,7 @@ define(
     module.controller(
       'PortfolioController',
       function($scope, $http, modalService, userManager, util,
-               $state, toastr, globalPoller, $modal, $upload) {
+               $state, toastr, pollerService, $modal, $upload) {
 
         function initialize() {
 
@@ -160,7 +160,7 @@ define(
 
         function reloadPortfolio() {
           $scope.bocStatusMessage = {};
-          globalPoller.stopPolls();
+          pollerService.stopPolls();
           $http
             .get('/api/portfolio')
             .success(loadPortfolios);
@@ -218,7 +218,7 @@ define(
         };
 
         function initProjectBocPoll(projectId) {
-          globalPoller.startPoll(
+          pollerService.startPoll(
             projectId,
             getCheckProjectBocUrl(projectId),
             function(response) {
@@ -241,7 +241,7 @@ define(
         }
 
         function initFullGaPoll() {
-          globalPoller.startPoll(
+          pollerService.startPoll(
             $scope.state.portfolio.id,
             getCheckFullGaUrl(),
             function(response) {

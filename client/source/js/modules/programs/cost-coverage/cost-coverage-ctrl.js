@@ -4,7 +4,7 @@ define(['./../module', 'underscore'], function(module, _) {
 
   module.controller(
     'ModelCostCoverageController',
-    function($scope, toastr, $http, $state, projectApi, globalPoller) {
+    function($scope, toastr, $http, $state, projectService, pollerService) {
 
       var vm = this;
 
@@ -32,10 +32,10 @@ define(['./../module', 'underscore'], function(module, _) {
         vm.state.year = new Date().getFullYear();
         vm.state.maxtime = 10
 
-        $scope.projectApi = projectApi;
-        $scope.$watch('projectApi.project.id', function() {
-          if (!_.isUndefined(vm.project) && (vm.project.id !== projectApi.project.id)) {
-            console.log('ModelCostCoverageController project-change', projectApi.project.name);
+        $scope.projectService = projectService;
+        $scope.$watch('projectService.project.id', function() {
+          if (!_.isUndefined(vm.project) && (vm.project.id !== projectService.project.id)) {
+            console.log('ModelCostCoverageController project-change', projectService.project.name);
             reloadActiveProject();
           }
         });
@@ -44,7 +44,7 @@ define(['./../module', 'underscore'], function(module, _) {
       }
 
       function reloadActiveProject() {
-        projectApi
+        projectService
           .getActiveProject()
           .then(function(response) {
             vm.project = response.data;
@@ -540,7 +540,7 @@ define(['./../module', 'underscore'], function(module, _) {
       function initReconcilePoll() {
         var workType = makeWorkType(
           vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
-        globalPoller.startPoll(
+        pollerService.startPoll(
           workType,
           '/api/task/' + vm.project.id + '/type/' + workType,
           function (response) {
