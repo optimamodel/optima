@@ -388,13 +388,13 @@ def launch_optimization(project_id, optimization_id, maxtime, start=None, end=No
     return calc_state
 
 
-def check_optimization(project_id, optimization_id):
-    work_type = 'optim-' + str(optimization_id)
-    calc_state = check_calculation_status(project_id, work_type)
-    if calc_state['status'] == 'error':
-        clear_work_log(project_id, work_type)
-        raise Exception(calc_state['error_text'])
-    return calc_state
+# def check_optimization(project_id, optimization_id):
+#     work_type = 'optim-' + str(optimization_id)
+#     calc_state = check_calculation_status(project_id, work_type)
+#     if calc_state['status'] == 'error':
+#         clear_work_log(project_id, work_type)
+#         raise Exception(calc_state['error_text'])
+#     return calc_state
 
 
 @celery_instance.task(bind=True)
