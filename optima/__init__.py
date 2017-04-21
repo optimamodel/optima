@@ -31,15 +31,15 @@ Now, the legal part:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2017apr01 by cliffk
+Version: 2017apr20 by cliffk
 """
 
 
 # Specify the version, for the purposes of figuring out which version was used to create a project
-from .version import version
+from .version import version, versiondate
 
 # Print the license
-optimalicense = 'Optima HIV %s -- (c) 2017 by the Optima Consortium' % version
+optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versiondate)
 print(optimalicense)
 
 # Create an empty list to stored failed imports
@@ -163,6 +163,7 @@ import plotting as _plotting; del plotting
 # Load the code to load projects and portfolios (before defining them, oddly!)
 from .loadtools import migrate, loadproj, loadportfolio, optimaversion
 import loadtools as _loadtools; del loadtools
+changelog = _loadtools.setmigrations('changelog')
 
 # Load batch functions (has to load projects, so has to come after migration)
 from .batchtools import batchautofit, batchBOC, reoptimizeprojects
