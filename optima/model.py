@@ -688,10 +688,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
         numhivpospregwomen = 0
+        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- WARNING, KLUDGY -- at the moment, hard-coded to 1 year
         for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
-            numhivpospregwomen += birthrates[t]*people[allplhiv, p1, t].sum()
-        if isnan(proppmtct[t]): calcproppmtct = numpmtct[t]/numhivpospregwomen # Proportion on PMTCT is not specified: use number
+            numhivpospregwomen += birthrates[t]*people[alldx, p1, t].sum()*timestepsonpmtct # Divide by dt to get number of women
+        if isnan(proppmtct[t]): calcproppmtct = numpmtct[t]/(eps+numhivpospregwomen) # Proportion on PMTCT is not specified: use number
         else:                   calcproppmtct = proppmtct[t] # Else, just use the proportion specified
+        calcproppmtct = min(calcproppmtct, 1.)
         
         # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
@@ -707,16 +709,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             thisreceivepmtct = thiseligbirths * calcproppmtct
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
-            raw_receivepmtct[p1, t] += thisreceivepmtct/dt # WARNING, this assumes women are on PMTCT for exactly one year...
+            raw_receivepmtct[p1, t] += thisreceivepmtct*timestepsonpmtct
             raw_mtct[p2, t] += popmtct/dt
             raw_mtctfrom[p1, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
-            
-            print('hiiiiiiiiiiiiiiiii')
-            varlist = ['t', 'p1', 'p2', 'thiseligbirths', 'peopledx', 'alleligbirthrate[t]', '(alleligbirthrate[t]*peopledx+eps)', 'numpmtct[t]', 'numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps)', 'thisreceivepmtct', 'raw_receivepmtct[p1, t]', 'raw_mtctfrom[p1, t]', 'raw_births[p2, t]', 'raw_hivbirths[p1, t]']
-            for var in varlist:
-                print('%20s: %s' % (var, eval(var)))
             
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
