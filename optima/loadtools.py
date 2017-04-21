@@ -784,7 +784,7 @@ def migrate(project, verbose=2, die=False):
     Migrate an Optima Project by inspecting the version and working its way up.
     """
     
-    migrations, changelog = setmigrations()
+    migrations = setmigrations()
 
     while str(project.version) != str(op.version):
         currentversion = str(project.version)
