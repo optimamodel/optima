@@ -739,31 +739,31 @@ def redotranstable(project, **kwargs):
 def setmigrations(which='migrations'):
     migrations = {
         '2.0':   ('2.0.0', versiontostr, 'Converted version number to string'),
-        '2.0.0': ('2.0.1', addscenuid, 'Add UID to scenarios'),
-        '2.0.1': ('2.0.2', addforcepopsize, 'Add option for forcing population size to match'),
-        '2.0.2': ('2.0.3', delimmediatecare, 'Remove immediate care parameter'),
-        '2.0.3': ('2.0.4', addproppmtct, 'Add new parameter -- proportion on PMTCT'),
+        '2.0.0': ('2.0.1', addscenuid, 'Added UID to scenarios'),
+        '2.0.1': ('2.0.2', addforcepopsize, 'Added option for forcing population size to match'),
+        '2.0.2': ('2.0.3', delimmediatecare, 'Removed immediate care parameter'),
+        '2.0.3': ('2.0.4', addproppmtct, 'Added new parameter -- proportion on PMTCT'),
         '2.0.4': ('2.1',   redotransitions, 'Major update to how transitions in health states are handled'),
-        '2.1':   ('2.1.1', makepropsopt, 'Remove data on proportion parameters'),
-        '2.1.1': ('2.1.2', addalleverincare, 'Include new setting to store everyone in care'),
+        '2.1':   ('2.1.1', makepropsopt, 'Removed data on proportion parameters'),
+        '2.1.1': ('2.1.2', addalleverincare, 'Included new setting to store everyone in care'),
         '2.1.2': ('2.1.3', removenumcircdata, "Don't store data on number circumcised"),
         '2.1.3': ('2.1.4', removepopcharacteristicsdata, "Don't store sex worker and injecting characteristics"),
-        '2.1.4': ('2.1.5', addaidsleavecare, 'Add new parameter -- AIDS leave care percentage'),
-        '2.1.5': ('2.1.6', addaidslinktocare, 'Add new parameter -- AIDS link to care duration'),
-        '2.1.6': ('2.1.7', adddataend, 'Separate dataend from end'),
-        '2.1.7': ('2.1.8', fixsettings, 'Add new attributes to settings'),
-        '2.1.8': ('2.1.9', addoptimscaling, 'Add a budget scaling parameter to optimizations'),
-        '2.1.9': ('2.1.10',addpropsandcosttx, 'Add treatment cost parameter'),
-        '2.1.10':('2.2',   redoparameters, 'Update the way parameters are handled'),
-        '2.2':   ('2.2.1', redovlmon, 'Update the VL monitoring parameter'),
-        '2.2.1': ('2.2.2', addprojectinfotoresults, 'Store information about the proect in the results'),
-        '2.2.2': ('2.3',   redoparameterattributes, 'Update parameter attributes'),
+        '2.1.4': ('2.1.5', addaidsleavecare, 'Added new parameter -- AIDS leave care percentage'),
+        '2.1.5': ('2.1.6', addaidslinktocare, 'Added new parameter -- AIDS link to care duration'),
+        '2.1.6': ('2.1.7', adddataend, 'Separated dataend from end'),
+        '2.1.7': ('2.1.8', fixsettings, 'Added new attributes to settings'),
+        '2.1.8': ('2.1.9', addoptimscaling, 'Added a budget scaling parameter to optimizations'),
+        '2.1.9': ('2.1.10',addpropsandcosttx, 'Added treatment cost parameter'),
+        '2.1.10':('2.2',   redoparameters, 'Updated the way parameters are handled'),
+        '2.2':   ('2.2.1', redovlmon, 'Updated the VL monitoring parameter'),
+        '2.2.1': ('2.2.2', addprojectinfotoresults, 'Stored information about the proect in the results'),
+        '2.2.2': ('2.3',   redoparameterattributes, 'Updated parameter attributes'),
         '2.3':   ('2.3.1', removespreadsheet, "Don't store the spreadsheet with the project, to save space"),
-        '2.3.1': ('2.3.2', addagetopars, 'Ensure that age is stored in parsets'),
+        '2.3.1': ('2.3.2', addagetopars, 'Ensured that age is stored in parsets'),
         '2.3.2': ('2.3.3', redotranstable, 'Split transition table into two tables to speed processing'),
-        '2.3.3': ('2.3.4', redotranstable, 'Add aditional fixes to the transition table'),
-        '2.3.4': ('2.3.5', None, 'Add migrations to portfolios'),
-        '2.3.5': ('2.3.6', None, 'Fix PMTCT calculations'),
+        '2.3.3': ('2.3.4', redotranstable, 'Added aditional fixes to the transition table'),
+        '2.3.4': ('2.3.5', None, 'Added migrations to portfolios'),
+        '2.3.5': ('2.3.6', None, 'Fixed PMTCT calculations'),
         #'2.2': redoprograms,
         }
     migrations = op.odict(migrations) # Convert to odict
@@ -771,7 +771,8 @@ def setmigrations(which='migrations'):
     
     # Define changelog
     changelog = op.odict()
-    for key,val in migrations.items(): changelog.append(key, val[2])
+    for ver,func,msg in migrations.values():
+        changelog.append(ver,msg)
     
     # Return the migrations structure, unless the changelog is specifically requested
     if which=='changelog': return changelog
