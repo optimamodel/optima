@@ -5,7 +5,7 @@ define(['angular' ], function (angular) {
    * utility services until split off into own modules
    */
 
-  return angular.module('app.util-service', [])
+  return angular.module('app.common.util-service', [])
 
     .factory('utilService',
       ['$http', '$q', '$timeout', '$upload', function($http, $q, $timeout, $upload) {

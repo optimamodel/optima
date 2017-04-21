@@ -1409,7 +1409,7 @@ def any_optimizable(project_id):
             optimizable = True
         
     print('>> any_optimizable for %s: %s' % (project.name, optimizable))
-    return optimizable
+    return {'anyOptimizable': optimizable}
 
 
 #############################################################################################
