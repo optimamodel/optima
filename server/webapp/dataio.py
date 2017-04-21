@@ -1613,7 +1613,7 @@ def load_portfolio_summaries(db_session=None):
 
     summaries = map(parse.get_portfolio_summary, portfolios)
 
-    return summaries
+    return {'portfolios': summaries}
 
 
 def save_portfolio(portfolio, db_session=None):

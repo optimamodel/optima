@@ -27,6 +27,7 @@ define(
             tempateProject: null
           };
 
+          $scope.portfolios = [];
           reloadPortfolio();
         }
 
@@ -45,20 +46,38 @@ define(
             }
             $scope.chooseNewPortfolio();
           }
-          ;
           console.log('loadPortfolios portfolio', $scope.state.portfolio)
+        }
+
+        function getCheckFullGaUrl() {
+          return "/api/task/" + $scope.state.portfolio.id
+            + "/type/portfolio";
+        }
+
+        function getCheckProjectBocUrl(projectId) {
+          return "/api/task/" + projectId
+            + "/type/boc";
         }
 
         $scope.chooseNewPortfolio = function() {
           $scope.state.objectives = $scope.state.portfolio.objectives;
-          $http
-            .get(getCheckFullGaUrl())
-            .success(function(response) {
-              console.log('chooseNewPortfolio ga status:', response.status);
-              if (response.status === 'started') {
+          utilService
+            .rpcAsyncRun(
+              'check_task', [$scope.state.portfolio.id, 'portfolio'])
+            .then(function(response) {
+              console.log('chooseNewPortfolio ga status:', response.data.status);
+              if (response.data.status === 'started') {
                 initFullGaPoll();
               }
             });
+          // $http
+          //   .get(getCheckFullGaUrl())
+          //   .success(function(response) {
+          //     console.log('chooseNewPortfolio ga status:', response.status);
+          //     if (response.status === 'started') {
+          //       initFullGaPoll();
+          //     }
+          //   });
           _.each($scope.state.portfolio.projects, function(project) {
             $scope.bocStatusMessage[project.id] = project.boc;
             $http
@@ -75,13 +94,14 @@ define(
         $scope.createPortfolio = function() {
           modalService.rename(
             function(name) {
-              $http
-                .post(
-                  '/api/portfolio', {name: name})
-                .success(function(response) {
-                  console.log('created portfolio', response);
-                  $scope.portfolios.push(response);
-                  $scope.state.portfolio = response;
+              utilService
+                .rpcRun(
+                  'create_portfolio', [name])
+                .then(function(response) {
+                  var data = response.data;
+                  console.log('createPortfolio', data);
+                  $scope.portfolios.push(data);
+                  $scope.state.portfolio = data;
                   loadPortfolios($scope.portfolios);
                   toastr.success('Created portfolio');
                 });
@@ -115,74 +135,53 @@ define(
         };
 
         $scope.downloadPortfolio = function() {
-          $http
-            .post(
-              '/api/download',
-              {name: 'download_portfolio', args: [$scope.state.portfolio.id]},
-              {responseType: 'blob'})
+          utilService
+            .rpcDownload(
+              'download_portfolio', [$scope.state.portfolio.id])
             .then(function(response) {
-              var blob = new Blob([response.data], { type:'application/octet-stream' });
-              saveAs(blob, (response.headers('filename')));
+              toastr.success('Downloaded portfolio');
             });
 
         };
 
         $scope.uploadPortfolio = function() {
-          angular
-            .element('<input type="file">')
-            .change(function(event) {
-              var file = event.target.files[0];
-              $upload
-                .upload({
-                  url: '/api/portfolio/upload',
-                  fields: {name: file.name},
-                  file: file
-                })
-                .success(function(response) {
-                  console.log('uploadPortfolio', response);
-                  $scope.portfolios.push(response.portfolio);
-                  loadPortfolios($scope.portfolios);
-                  $scope.state.portfolio = response.portfolio;
-                  toastr.success('Uploaded portfolio');
-                });
-            })
-            .click();
+          utilService
+            .rpcUpload('update_portfolio_from_prt')
+            .then(function(response) {
+              console.log('uploadPortfolio response.data', response.data);
+              $scope.portfolios.push(response.data);
+              $scope.state.portfolio = response.data;
+              loadPortfolios($scope.portfolios);
+              toastr.success('Uploaded portfolio');
+            });
         };
 
         $scope.deletePortfolio = function() {
-          $http
-            .delete('/api/portfolio/' + $scope.state.portfolio.id)
-            .success(function(portfolios) {
+          utilService
+            .rpcRun('delete_portfolio', [$scope.state.portfolio.id])
+            .then(function(response) {
+              console.log('deletePortfolio', response);
               toastr.success('Deleted portfolio');
-              loadPortfolios(portfolios);
+              loadPortfolios(response.data.portfolios);
             });
         };
 
         function reloadPortfolio() {
           $scope.bocStatusMessage = {};
           pollerService.stopPolls();
-          $http
-            .get('/api/portfolio')
-            .success(loadPortfolios);
-        }
-
-        function getCheckFullGaUrl() {
-          return "/api/task/" + $scope.state.portfolio.id
-            + "/type/portfolio";
-        }
-
-        function getCheckProjectBocUrl(projectId) {
-          return "/api/task/" + projectId
-            + "/type/boc";
+          utilService
+            .rpcRun('load_portfolio_summaries')
+            .then(function(response) {
+              loadPortfolios(response.data.portfolios);
+            });
         }
 
         $scope.calculateAllBocCurves = function() {
           console.log('calculateAllBocCurves', $scope.state.portfolio);
-          $http
-            .post(
-              "/api/portfolio/" + $scope.state.portfolio.id + "/calculate",
-              {maxtime: $scope.state.bocMaxtime})
-            .success(function() {
+          utilService
+            .rpcAsyncRun(
+              'launch_boc', [$scope.state.portfolio.id, $scope.state.bocMaxtime])
+            .then(function(response) {
               _.each($scope.state.portfolio.projects, function(project) {
                 initProjectBocPoll(project.id);
               });
@@ -190,27 +189,28 @@ define(
         };
 
         $scope.deleteProject = function(projectId) {
-          $http
-            .delete(
-              '/api/portfolio/' + $scope.state.portfolio.id
-              + '/project/' + projectId)
-            .success(function(portfolios) {
+          utilService
+            .rpcRun(
+              'delete_portfolio_project',
+              [$scope.state.portfolio.id, projectId])
+            .then(function(response) {
               toastr.success('Deleted project in portfolio');
-              loadPortfolios(portfolios);
+              loadPortfolios(response.data.portfolios);
             });
         };
 
         $scope.runFullGa = function() {
-          $http
-            .get(getCheckFullGaUrl())
-            .success(function(response) {
-              console.log('start job response', response);
-              if (response.status != 'started') {
-                $http
-                  .post(
-                    "/api/portfolio/" + $scope.state.portfolio.id + "/minimize",
-                    {maxtime: $scope.state.maxtime})
-                  .success(function() {
+          utilService
+            .rpcAsyncRun(
+              'check_task', [$scope.state.portfolio.id, 'portfolio'])
+            .then(function(response) {
+              if (response.data.status != 'started') {
+                console.log('runFullGa');
+                utilService
+                  .rpcAsyncRun(
+                    'launch_miminize_portfolio',
+                    [$scope.state.portfolio.id, $scope.state.maxtime])
+                  .then(function(response) {
                     initFullGaPoll();
                   });
               }
@@ -218,26 +218,48 @@ define(
         };
 
         function initProjectBocPoll(projectId) {
-          pollerService.startPoll(
-            projectId,
-            getCheckProjectBocUrl(projectId),
-            function(response) {
-              if (response.status === 'completed') {
-                $scope.bocStatusMessage[projectId] = "calculated";
-                reloadPortfolio();
-                toastr.success('Budget-objective curves calculated');
-              } else if (response.status === 'started') {
-                var start = new Date(response.start_time);
-                var now = new Date(response.current_time);
-                var diff = now.getTime() - start.getTime();
-                var seconds = parseInt(diff / 1000);
-                $scope.bocStatusMessage[projectId] = "running for " + seconds + " s";
-              } else {
-                $scope.bocStatusMessage[projectId] = 'failed';
-                $scope.state.portfolio.isRunnable = true;
+          pollerService
+            .startPollForRpc(
+              projectId,
+              'boc',
+              function(response) {
+                var calcState = response.data;
+                if (calcState.status === 'completed') {
+                  $scope.bocStatusMessage[projectId] = "calculated";
+                  reloadPortfolio();
+                  toastr.success('Budget-objective curves calculated');
+                } else if (calcState.status === 'started') {
+                  var start = new Date(calcState.start_time);
+                  var now = new Date(calcState.current_time);
+                  var diff = now.getTime() - start.getTime();
+                  var seconds = parseInt(diff / 1000);
+                  $scope.bocStatusMessage[projectId] = "running for " + seconds + " s";
+                } else {
+                  $scope.bocStatusMessage[projectId] = 'failed';
+                  $scope.state.portfolio.isRunnable = true;
+                }
               }
-            }
-          );
+            );
+          // pollerService.startPoll(
+          //   projectId,
+          //   getCheckProjectBocUrl(projectId),
+          //   function(response) {
+          //     if (response.status === 'completed') {
+          //       $scope.bocStatusMessage[projectId] = "calculated";
+          //       reloadPortfolio();
+          //       toastr.success('Budget-objective curves calculated');
+          //     } else if (response.status === 'started') {
+          //       var start = new Date(response.start_time);
+          //       var now = new Date(response.current_time);
+          //       var diff = now.getTime() - start.getTime();
+          //       var seconds = parseInt(diff / 1000);
+          //       $scope.bocStatusMessage[projectId] = "running for " + seconds + " s";
+          //     } else {
+          //       $scope.bocStatusMessage[projectId] = 'failed';
+          //       $scope.state.portfolio.isRunnable = true;
+          //     }
+          //   }
+          // );
         }
 
         function initFullGaPoll() {

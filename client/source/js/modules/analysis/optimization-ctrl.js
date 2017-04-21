@@ -3,10 +3,11 @@ define(
 
     'use strict';
 
-    module.controller('AnalysisOptimizationController', function($scope, $http, $upload, $modal, toastr, modalService,
-                                                                 projectService, $timeout, pollerService, utilService, $state) {
+    module.controller('AnalysisOptimizationController',
+      function($scope, $modal, toastr, modalService, projectService, $timeout,
+               pollerService, utilService, $state) {
 
-      function initialize() {
+        function initialize() {
 
         $scope.state = {
           project: undefined,
