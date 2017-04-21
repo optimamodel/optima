@@ -39,7 +39,7 @@ Version: 2017apr20 by cliffk
 from .version import version, versiondate
 
 # Print the license
-optimalicense = 'Optima HIV %s -- (c) %s by the Optima Consortium' % (version, versiondate)
+optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versiondate)
 print(optimalicense)
 
 # Create an empty list to stored failed imports
