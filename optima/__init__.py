@@ -31,7 +31,7 @@ Now, the legal part:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2017apr01 by cliffk
+Version: 2017apr20 by cliffk
 """
 
 
@@ -163,6 +163,7 @@ import plotting as _plotting; del plotting
 # Load the code to load projects and portfolios (before defining them, oddly!)
 from .loadtools import migrate, loadproj, loadportfolio, optimaversion
 import loadtools as _loadtools; del loadtools
+changelog = _loadtools.setmigrations('changelog')
 
 # Load batch functions (has to load projects, so has to come after migration)
 from .batchtools import batchautofit, batchBOC, reoptimizeprojects

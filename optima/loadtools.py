@@ -730,49 +730,72 @@ def redotranstable(project, **kwargs):
 #    return None
 
 
+
+##########################################################################################
+### CORE MIGRATION FUNCTIONS
+##########################################################################################
+
+# Define the migrations -- format is 'current_version': ('new_version', function, 'string description of change')
+def setmigrations(which='migrations'):
+    migrations = {
+        '2.0':   ('2.0.0', versiontostr, 'Converted version number to string'),
+        '2.0.0': ('2.0.1', addscenuid, 'Add UID to scenarios'),
+        '2.0.1': ('2.0.2', addforcepopsize, 'Add option for forcing population size to match'),
+        '2.0.2': ('2.0.3', delimmediatecare, 'Remove immediate care parameter'),
+        '2.0.3': ('2.0.4', addproppmtct, 'Add new parameter -- proportion on PMTCT'),
+        '2.0.4': ('2.1',   redotransitions, 'Major update to how transitions in health states are handled'),
+        '2.1':   ('2.1.1', makepropsopt, 'Remove data on proportion parameters'),
+        '2.1.1': ('2.1.2', addalleverincare, 'Include new setting to store everyone in care'),
+        '2.1.2': ('2.1.3', removenumcircdata, "Don't store data on number circumcised"),
+        '2.1.3': ('2.1.4', removepopcharacteristicsdata, "Don't store sex worker and injecting characteristics"),
+        '2.1.4': ('2.1.5', addaidsleavecare, 'Add new parameter -- AIDS leave care percentage'),
+        '2.1.5': ('2.1.6', addaidslinktocare, 'Add new parameter -- AIDS link to care duration'),
+        '2.1.6': ('2.1.7', adddataend, 'Separate dataend from end'),
+        '2.1.7': ('2.1.8', fixsettings, 'Add new attributes to settings'),
+        '2.1.8': ('2.1.9', addoptimscaling, 'Add a budget scaling parameter to optimizations'),
+        '2.1.9': ('2.1.10',addpropsandcosttx, 'Add treatment cost parameter'),
+        '2.1.10':('2.2',   redoparameters, 'Update the way parameters are handled'),
+        '2.2':   ('2.2.1', redovlmon, 'Update the VL monitoring parameter'),
+        '2.2.1': ('2.2.2', addprojectinfotoresults, 'Store information about the proect in the results'),
+        '2.2.2': ('2.3',   redoparameterattributes, 'Update parameter attributes'),
+        '2.3':   ('2.3.1', removespreadsheet, "Don't store the spreadsheet with the project, to save space"),
+        '2.3.1': ('2.3.2', addagetopars, 'Ensure that age is stored in parsets'),
+        '2.3.2': ('2.3.3', redotranstable, 'Split transition table into two tables to speed processing'),
+        '2.3.3': ('2.3.4', redotranstable, 'Add aditional fixes to the transition table'),
+        '2.3.4': ('2.3.5', None, 'Add migrations to portfolios'),
+        '2.3.5': ('2.3.6', None, 'Fix PMTCT calculations'),
+        #'2.2': redoprograms,
+        }
+    migrations = op.odict(migrations) # Convert to odict
+    migrations.sort() # Make sure it's ordered
+    
+    # Define changelog
+    changelog = op.odict()
+    for key,val in migrations.items(): changelog.append(key, val[2])
+    
+    # Return the migrations structure, unless the changelog is specifically requested
+    if which=='changelog': return changelog
+    else:                  return migrations
+
+
 def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
     
-    migrations = {
-    '2.0':   versiontostr,
-    '2.0.0': addscenuid,
-    '2.0.1': addforcepopsize,
-    '2.0.2': delimmediatecare,
-    '2.0.3': addproppmtct,
-    '2.0.4': redotransitions,
-    '2.1':   makepropsopt,
-    '2.1.1': addalleverincare,
-    '2.1.2': removenumcircdata,
-    '2.1.3': removepopcharacteristicsdata,
-    '2.1.4': addaidsleavecare,
-    '2.1.5': addaidslinktocare,
-    '2.1.6': adddataend,
-    '2.1.7': fixsettings,
-    '2.1.8': addoptimscaling,
-    '2.1.9': addpropsandcosttx,
-    '2.1.10':redoparameters,
-    '2.2':   redovlmon,
-    '2.2.1': addprojectinfotoresults,
-    '2.2.2': redoparameterattributes,
-    '2.3':   removespreadsheet,
-    '2.3.1': addagetopars,
-    '2.3.2': redotranstable,
-    '2.3.3': redotranstable, # Same migration, but need to rerun since transtable changed again
-    '2.3.4': incrementversion,
-    #'2.2': redoprograms,
-    }
+    migrations, changelog = setmigrations()
 
     while str(project.version) != str(op.version):
-        if not str(project.version) in migrations:
-            errormsg = "No migration exists from version %s to the latest version (%s)" % (project.version, op.version)
+        currentversion = str(project.version)
+        if not currentversion in migrations:
+            errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
             raise op.OptimaException(errormsg)
 
-        upgrader = migrations[str(project.version)]
+        upgrader = migrations[currentversion][1] # [0] is the new version, [1] is the function
 
-        op.printv('Migrating project "%s" from %6s ->' % (project.name, project.version), 2, verbose, newline=False)
-        upgrader(project, verbose=verbose, die=die) # Actually easier to debug if don't catch exception
+        op.printv('Migrating project "%s" from %6s ->' % (project.name, currentversion), 2, verbose, newline=False)
+        if upgrader is not None: upgrader(project, verbose=verbose, die=die)
+        project.version = migrations[currentversion][0]
         op.printv("%6s" % project.version, 2, verbose, indent=False)
         
         # Update project info

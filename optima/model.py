@@ -686,6 +686,14 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ### Calculate births
         ##############################################################################################################
 
+        # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
+        numhivpospregwomen = 0
+        for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
+            numhivpospregwomen += birthrates[t]*people[allplhiv, p1, t].sum()
+        if isnan(proppmtct[t]): calcproppmtct = numpmtct[t]/numhivpospregwomen # Proportion on PMTCT is not specified: use number
+        else:                   calcproppmtct = proppmtct[t] # Else, just use the proportion specified
+        
+        # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
             thisbirthrate = birthrates[t]
             peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
@@ -694,23 +702,21 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
             thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
 
-            if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
-                thisreceivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                mtctdx = (thiseligbirths - thisreceivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = thisreceivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
-                print('hiiiiiiiiiiiiiiiii')
-                print t, p1, p2, thiseligbirths, peopledx, alleligbirthrate[t], (alleligbirthrate[t]*peopledx+eps), numpmtct[t], numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thisreceivepmtct
-            else: # Proportion on PMTCT is specified, ignore number              
-                mtctdx = (thiseligbirths * (1-proppmtct[t])) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = (thiseligbirths * proppmtct[t]) * pmtcteff[t] # MTCT from those receiving PMTCT
-                thisreceivepmtct = thiseligbirths * proppmtct[t]
+            mtctdx = (thiseligbirths * (1-calcproppmtct)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+            mtctpmtct = (thiseligbirths * calcproppmtct) * pmtcteff[t] # MTCT from those receiving PMTCT
+            thisreceivepmtct = thiseligbirths * calcproppmtct
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
-            raw_receivepmtct[p1, t] += thisreceivepmtct/dt 
+            raw_receivepmtct[p1, t] += thisreceivepmtct/dt # WARNING, this assumes women are on PMTCT for exactly one year...
             raw_mtct[p2, t] += popmtct/dt
             raw_mtctfrom[p1, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
+            
+            print('hiiiiiiiiiiiiiiiii')
+            varlist = ['t', 'p1', 'p2', 'thiseligbirths', 'peopledx', 'alleligbirthrate[t]', '(alleligbirthrate[t]*peopledx+eps)', 'numpmtct[t]', 'numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps)', 'thisreceivepmtct', 'raw_receivepmtct[p1, t]', 'raw_mtctfrom[p1, t]', 'raw_births[p2, t]', 'raw_hivbirths[p1, t]']
+            for var in varlist:
+                print('%20s: %s' % (var, eval(var)))
             
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation

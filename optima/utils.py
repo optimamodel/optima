@@ -1380,7 +1380,7 @@ class odict(OrderedDict):
         return None
     
     
-    def sort(self, sortby=None, copy=False):
+    def sort(self, sortby=None, reverse=False, copy=False):
         '''
         Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
         If copy is True, then returns a copy (like sorted())
@@ -1405,6 +1405,7 @@ class odict(OrderedDict):
                 else: allkeys = [y for (x,y) in sorted(zip(sortby,self.keys()))]
             else: raise Exception('Cannot figure out how to sort by "%s"' % sortby)
         tmpdict = odict()
+        if reverse: allkeys.reverse() # If requested, reverse order
         if copy:
             for key in allkeys: tmpdict[key] = self[key]
             return tmpdict
@@ -1413,9 +1414,9 @@ class odict(OrderedDict):
             for key in allkeys: self.__setitem__(key, tmpdict.pop(key))
             return None
     
-    def sorted(self, sortby=None):
+    def sorted(self, sortby=None, reverse=False):
         ''' Shortcut for making a copy of the sorted odict '''
-        return self.sort(sortby=sortby, copy=True)
+        return self.sort(sortby=sortby, copy=True, reverse=reverse)
 
 
 
