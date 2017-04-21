@@ -36,10 +36,10 @@ Version: 2017apr20 by cliffk
 
 
 # Specify the version, for the purposes of figuring out which version was used to create a project
-from .version import version
+from .version import version, versiondate
 
 # Print the license
-optimalicense = 'Optima HIV %s -- (c) 2017 by the Optima Consortium' % version
+optimalicense = 'Optima HIV %s -- (c) %s by the Optima Consortium' % (version, versiondate)
 print(optimalicense)
 
 # Create an empty list to stored failed imports

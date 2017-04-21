@@ -149,36 +149,11 @@ def addwarning(project=None, message=None, **kwargs):
     return None
 
 
-def incrementversion(project=None, **kwargs):
-    ''' Ugly little function to increment the version number and do nothing else '''
-    
-    # Define the version increments
-    versionmapping = { 
-        '2.3.4': '2.3.5',
-    }
-    
-    # Do the super-simple incrementation
-    try:
-        project.version = versionmapping[project.version]
-    except:
-        errormsg = 'Cannot migrate since version %s is not defined; choices are: %s' % (project.version, versionmapping.keys())
-        raise op.OptimaException(errormsg)
-    
-    return project
-
 
 
 ##########################################################################################
 ### PROJECT MIGRATIONS
 ##########################################################################################
-
-
-def versiontostr(project, **kwargs):
-    """
-    Convert Optima version number from number to string.
-    """
-    project.version = "2.0.0"
-    return None
     
 
 def addscenuid(project, **kwargs):
@@ -188,7 +163,6 @@ def addscenuid(project, **kwargs):
     for scen in project.scens.values():
         if not hasattr(scen, 'uid'):
             scen.uid = op.uuid()
-    project.version = "2.0.1"
     return None
 
 
@@ -198,7 +172,6 @@ def addforcepopsize(project, **kwargs):
     """
     if not hasattr(project.settings, 'forcepopsize'):
         project.settings.forcepopsize = True
-    project.version = "2.0.2"
     return None
 
 
@@ -207,7 +180,6 @@ def delimmediatecare(project, **kwargs):
     Migration between Optima 2.0.2 and 2.0.3 -- WARNING, will this work for scenarios etc.?
     """
     removeparameter(project, short='immediatecare', datashort='immediatecare')
-    project.version = "2.0.3"
     return None
 
 
@@ -216,7 +188,6 @@ def addproppmtct(project, **kwargs):
     Migration between Optima 2.0.3 and 2.0.4.
     """
     addparameter(project=project, copyfrom='proptx', short='proppmtct', name='Pregnant women and mothers on PMTCT')
-    project.version = "2.0.4"
     return None
 
 
@@ -334,7 +305,6 @@ def redotransitions(project, dorun=False, **kwargs):
         # Rerun calibrations to update results appropriately
         if dorun: project.runsim(ps.name)
 
-    project.version = "2.1"
     return None
 
 
@@ -350,7 +320,6 @@ def makepropsopt(project, **kwargs):
                 project.data[fullkey] = project.data.pop(key)
             else:
                 raise op.OptimaException('Key %s not found, but key %s not found either' % (fullkey, key))
-    project.version = "2.1.1"
     return None
 
 
@@ -360,7 +329,6 @@ def addalleverincare(project, **kwargs):
     """
     ps = project.settings
     ps.allevercare    = cat([ps.care, ps.usvl, ps.svl, ps.lost]) # All people EVER in care
-    project.version = "2.1.2"
     return None
 
 
@@ -369,7 +337,6 @@ def removenumcircdata(project, **kwargs):
     Migration between Optima 2.1.2 and 2.1.3.
     """
     project.data.pop('numcirc',None)        
-    project.version = "2.1.3"
     return None
 
 
@@ -379,7 +346,6 @@ def removepopcharacteristicsdata(project, **kwargs):
     """
     project.data['pops'].pop('sexworker',None)        
     project.data['pops'].pop('injects',None)        
-    project.version = "2.1.4"
     return None
 
 def addaidsleavecare(project, **kwargs):
@@ -395,7 +361,6 @@ def addaidsleavecare(project, **kwargs):
     kwargs['t'] = op.odict([('tot',array([2000.]))])
     kwargs['y'] = op.odict([('tot',array([0.01]))])
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
-    project.version = "2.1.5"
     return None
 
 
@@ -414,8 +379,6 @@ def addaidslinktocare(project, **kwargs):
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     if not hasattr(project.settings, 'dxnotincare'):
         project.settings.dxnotincare = cat([project.settings.dx,project.settings.lost])
-
-    project.version = "2.1.6"
     return None
 
 
@@ -427,8 +390,6 @@ def adddataend(project, **kwargs):
         if hasattr(project, 'data'):
             project.settings.dataend = project.data['years'][-1]
         else: project.settings.dataend = project.settings.end
-
-    project.version = "2.1.7"
     return None
 
 
@@ -450,8 +411,7 @@ def fixsettings(project, resetversion=True, **kwargs):
     # Replace with original settings
     for settingkey,settingval in oldsettings.items(): 
         setattr(project.settings, settingkey, settingval) 
-    
-    if resetversion: project.version = "2.1.8" # So this function can be called in other places
+
     return None
 
 
@@ -463,8 +423,6 @@ def addoptimscaling(project, **kwargs):
     for optim in project.optims.values():
         if 'budgetscale' not in optim.objectives.keys():
             optim.objectives['budgetscale'] = [1.]
-
-    project.version = "2.1.9"
     return None
 
 
@@ -523,7 +481,6 @@ def addpropsandcosttx(project, **kwargs):
     kwargs['datashort'] = 'fixpropsupp'
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     
-    project.version = "2.1.10"
     return None
 
 
@@ -602,7 +559,6 @@ def redoparameters(project, die=True, **kwargs):
         
         ps.pars = newpars # Keep the new version
     
-    project.version = "2.2"
     return None
 
 
@@ -643,8 +599,6 @@ def redovlmon(project, **kwargs):
     kwargs['prior'] = {'dist':'uniform', 'pars':(requiredvldata[1], requiredvldata[2])}
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
-    project.version = "2.2.1"
-
     return None
         
 
@@ -658,8 +612,6 @@ def addprojectinfotoresults(project, verbose=2, **kwargs):
             
     for result in project.results.values():
         result.projectinfo = project.getinfo()
-    
-    project.version = '2.2.2'
     
     return None
 
@@ -684,15 +636,12 @@ def redoparameterattributes(project, **kwargs):
     kwargs['prior'] = {'dist':'uniform', 'pars':project.settings.transnorm*array([ 0.9,  1.1])}
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     
-    project.version = '2.3'
-    
     return None
 
 
 def removespreadsheet(project, **kwargs):
     ''' Remove the binary spreadsheet (it's big, and unnecessary now that you can write data) '''
     delattr(project, 'spreadsheet')
-    project.version = '2.3.1'
     return None
 
 
@@ -700,7 +649,6 @@ def addagetopars(project, **kwargs):
     ''' Make sure age is part of the pars object '''
     for ps in project.parsets.values():
         ps.pars['age'] = array(project.data['pops']['age'])
-    project.version = '2.3.2'
     return None
 
 
@@ -717,7 +665,7 @@ def redotranstable(project, **kwargs):
     
     # Even though fixed by fixsettings above, just make it explicit that we're adding this as well
     project.settings.infmoney = 1e10
-    project.version = '2.3.4'
+    
     return None
 
 
@@ -735,35 +683,44 @@ def redotranstable(project, **kwargs):
 ### CORE MIGRATION FUNCTIONS
 ##########################################################################################
 
-# Define the migrations -- format is 'current_version': ('new_version', function, 'string description of change')
 def setmigrations(which='migrations'):
+    '''
+    Define the migrations -- format is 
+        'current_version': ('new_version', function, 'date', 'string description of change')
+    
+    If "which" is anything other than "changelog", then return the list of migrations.
+    Otherwise, return the changelog (just the new version and message).
+    
+    Version: 2017apr20
+    '''
+
     migrations = {
-        '2.0':   ('2.0.0', versiontostr, 'Converted version number to string'),
-        '2.0.0': ('2.0.1', addscenuid, 'Added UID to scenarios'),
-        '2.0.1': ('2.0.2', addforcepopsize, 'Added option for forcing population size to match'),
-        '2.0.2': ('2.0.3', delimmediatecare, 'Removed immediate care parameter'),
-        '2.0.3': ('2.0.4', addproppmtct, 'Added new parameter -- proportion on PMTCT'),
-        '2.0.4': ('2.1',   redotransitions, 'Major update to how transitions in health states are handled'),
-        '2.1':   ('2.1.1', makepropsopt, 'Removed data on proportion parameters'),
-        '2.1.1': ('2.1.2', addalleverincare, 'Included new setting to store everyone in care'),
-        '2.1.2': ('2.1.3', removenumcircdata, "Don't store data on number circumcised"),
-        '2.1.3': ('2.1.4', removepopcharacteristicsdata, "Don't store sex worker and injecting characteristics"),
-        '2.1.4': ('2.1.5', addaidsleavecare, 'Added new parameter -- AIDS leave care percentage'),
-        '2.1.5': ('2.1.6', addaidslinktocare, 'Added new parameter -- AIDS link to care duration'),
-        '2.1.6': ('2.1.7', adddataend, 'Separated dataend from end'),
-        '2.1.7': ('2.1.8', fixsettings, 'Added new attributes to settings'),
-        '2.1.8': ('2.1.9', addoptimscaling, 'Added a budget scaling parameter to optimizations'),
-        '2.1.9': ('2.1.10',addpropsandcosttx, 'Added treatment cost parameter'),
-        '2.1.10':('2.2',   redoparameters, 'Updated the way parameters are handled'),
-        '2.2':   ('2.2.1', redovlmon, 'Updated the VL monitoring parameter'),
-        '2.2.1': ('2.2.2', addprojectinfotoresults, 'Stored information about the proect in the results'),
-        '2.2.2': ('2.3',   redoparameterattributes, 'Updated parameter attributes'),
-        '2.3':   ('2.3.1', removespreadsheet, "Don't store the spreadsheet with the project, to save space"),
-        '2.3.1': ('2.3.2', addagetopars, 'Ensured that age is stored in parsets'),
-        '2.3.2': ('2.3.3', redotranstable, 'Split transition table into two tables to speed processing'),
-        '2.3.3': ('2.3.4', redotranstable, 'Added aditional fixes to the transition table'),
-        '2.3.4': ('2.3.5', None, 'Added migrations to portfolios'),
-        '2.3.5': ('2.3.6', None, 'Fixed PMTCT calculations'),
+        '2.0':   ('2.0.0', '2016-07-19', None, 'Converted version number to string'),
+        '2.0.0': ('2.0.1', '2016-07-20', addscenuid, 'Added UID to scenarios'),
+        '2.0.1': ('2.0.2', '2016-07-29', addforcepopsize, 'Added option for forcing population size to match'),
+        '2.0.2': ('2.0.3', '2016-08-25', delimmediatecare, 'Removed immediate care parameter'),
+        '2.0.3': ('2.0.4', '2016-08-31', addproppmtct, 'Added new parameter -- proportion on PMTCT'),
+        '2.0.4': ('2.1',   '2016-09-12', redotransitions, 'Major update to how transitions in health states are handled'),
+        '2.1':   ('2.1.1', '2016-10-02', makepropsopt, 'Removed data on proportion parameters'),
+        '2.1.1': ('2.1.2', '2016-10-05', addalleverincare, 'Included new setting to store everyone in care'),
+        '2.1.2': ('2.1.3', '2016-10-18', removenumcircdata, "Don't store data on number circumcised"),
+        '2.1.3': ('2.1.4', '2016-10-18', removepopcharacteristicsdata, "Don't store sex worker and injecting characteristics"),
+        '2.1.4': ('2.1.5', '2016-11-01', addaidsleavecare, 'Added new parameter -- AIDS leave care percentage'),
+        '2.1.5': ('2.1.6', '2016-11-01', addaidslinktocare, 'Added new parameter -- AIDS link to care duration'),
+        '2.1.6': ('2.1.7', '2016-11-03', adddataend, 'Separated dataend from end'),
+        '2.1.7': ('2.1.8', '2016-11-07', fixsettings, 'Added new attributes to settings'),
+        '2.1.8': ('2.1.9', '2016-12-22', addoptimscaling, 'Added a budget scaling parameter to optimizations'),
+        '2.1.9': ('2.1.10','2016-12-28', addpropsandcosttx, 'Added treatment cost parameter'),
+        '2.1.10':('2.2',   '2017-01-13', redoparameters, 'Updated the way parameters are handled'),
+        '2.2':   ('2.2.1', '2017-02-01', redovlmon, 'Updated the VL monitoring parameter'),
+        '2.2.1': ('2.2.2', '2017-02-01', addprojectinfotoresults, 'Stored information about the proect in the results'),
+        '2.2.2': ('2.3',   '2017-02-09', redoparameterattributes, 'Updated parameter attributes'),
+        '2.3':   ('2.3.1', '2017-02-15', removespreadsheet, "Don't store the spreadsheet with the project, to save space"),
+        '2.3.1': ('2.3.2', '2017-03-01', addagetopars, 'Ensured that age is stored in parsets'),
+        '2.3.2': ('2.3.3', '2017-03-02', redotranstable, 'Split transition table into two tables to speed processing'),
+        '2.3.3': ('2.3.4', '2017-03-30', redotranstable, 'Added aditional fixes to the transition table'),
+        '2.3.4': ('2.3.5', '2017-04-18', None, 'Added migrations for portfolios'),
+        '2.3.5': ('2.3.6', '2017-04-21', None, 'Fixed PMTCT calculations'),
         #'2.2': redoprograms,
         }
     migrations = op.odict(migrations) # Convert to odict
@@ -771,8 +728,8 @@ def setmigrations(which='migrations'):
     
     # Define changelog
     changelog = op.odict()
-    for ver,func,msg in migrations.values():
-        changelog.append(ver,msg)
+    for ver,date,migrator,msg in migrations.values():
+        changelog.append(ver,date+' | '+msg)
     
     # Return the migrations structure, unless the changelog is specifically requested
     if which=='changelog': return changelog
@@ -784,19 +741,19 @@ def migrate(project, verbose=2, die=False):
     Migrate an Optima Project by inspecting the version and working its way up.
     """
     
-    migrations = setmigrations()
+    migrations = setmigrations() # Get the migrations to run
 
     while str(project.version) != str(op.version):
         currentversion = str(project.version)
+        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
+        
         if not currentversion in migrations:
             errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
             raise op.OptimaException(errormsg)
 
-        upgrader = migrations[currentversion][1] # [0] is the new version, [1] is the function
-
-        op.printv('Migrating project "%s" from %6s ->' % (project.name, currentversion), 2, verbose, newline=False)
-        if upgrader is not None: upgrader(project, verbose=verbose, die=die)
-        project.version = migrations[currentversion][0]
+        op.printv('Migrating "%s" from %6s ->' % (project.name, currentversion), 2, verbose, newline=False)
+        if migrator is not None: migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
+        project.version = newversion # Update the version info
         op.printv("%6s" % project.version, 2, verbose, indent=False)
         
         # Update project info
