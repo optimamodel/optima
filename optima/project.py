@@ -533,7 +533,7 @@ class Project(object):
     def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, **kwargs):
         ''' Function to perform automatic fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot)
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot, **kwargs)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
         keyname = self.addresult(result=results)
