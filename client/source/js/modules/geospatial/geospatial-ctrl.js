@@ -49,16 +49,6 @@ define(
           console.log('loadPortfolios portfolio', $scope.state.portfolio)
         }
 
-        function getCheckFullGaUrl() {
-          return "/api/task/" + $scope.state.portfolio.id
-            + "/type/portfolio";
-        }
-
-        function getCheckProjectBocUrl(projectId) {
-          return "/api/task/" + projectId
-            + "/type/boc";
-        }
-
         $scope.chooseNewPortfolio = function() {
           $scope.state.objectives = $scope.state.portfolio.objectives;
           utilService
@@ -74,7 +64,7 @@ define(
             $scope.bocStatusMessage[project.id] = project.boc;
             utilService
               .rpcAsyncRun(
-                'check_task', [$scope.state.portfolio.id, 'boc'])
+                'check_task', [project.id, 'boc'])
               .then(function(response) {
                 console.log('chooseNewPortfolio project', project.id, 'status:', response.data.status);
                 if (response.data.status === 'started') {
@@ -211,6 +201,7 @@ define(
         };
 
         function initProjectBocPoll(projectId) {
+          console.log('initProjectBocPoll', projectId);
           pollerService
             .startPollForRpc(
               projectId,

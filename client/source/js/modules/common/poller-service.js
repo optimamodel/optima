@@ -23,7 +23,8 @@ define(['angular' ], function (angular) {
       }
 
       function startPollForRpc(pyobjectId, taskId, callback) {
-        var poll = getPoll(taskId);
+        var pollId = pyobjectId + ":" + taskId;
+        var poll = getPoll(pollId);
         poll.callback = callback;
 
         if (!poll.isRunning) {
@@ -31,7 +32,7 @@ define(['angular' ], function (angular) {
           poll.isRunning = true;
 
           function pollWithTimeout() {
-            var poll = getPoll(taskId);
+            var poll = getPoll(pollId);
             utilService
               .rpcAsyncRun(
                 'check_calculation_status', [pyobjectId, taskId])
