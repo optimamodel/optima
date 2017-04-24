@@ -57,7 +57,7 @@ def main(server, username, password, overwrite, savelocation):
     except:
         pass
 
-    users = session.get(server + "/api/user").json()["users"]
+    users = session.get(server + "/api/user").json()["users"]['users']
     f = open(os.path.join(savelocation, 'users.json'), "w")
     json.dump(users, f, indent=2)
     username_by_id = {}
@@ -65,7 +65,9 @@ def main(server, username, password, overwrite, savelocation):
         username_by_id[user["id"]] = user["username"]
 
     click.echo("Downloading projects...")
-    projects = session.get(server + "/api/project/all").json()["projects"]
+    url = server + '/api/procedure'
+    payload = {'name': 'load_project_summaries'}
+    projects = session.post(url, data=json.dumps(payload)).json()["projects"]
 
     for project in projects:
         username = username_by_id[project["userId"]]
@@ -87,10 +89,7 @@ def main(server, username, password, overwrite, savelocation):
                 continue
 
         url = server + '/api/download'
-        payload = {
-            'name': 'download_project_with_result',
-            'args': [project["id"]]
-        }
+        payload = {'name': 'download_project_with_result', 'args': [project["id"]]}
         response = session.post(url, data=json.dumps(payload))
         with open(fname, 'wb') as f:
             f.write(response.content)

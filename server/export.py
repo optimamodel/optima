@@ -2,6 +2,7 @@ import click
 import requests
 import sys
 import os.path
+import json
 
 from hashlib import sha224
 
@@ -47,7 +48,13 @@ def main(server, username, password, overwrite, savelocation):
         sys.exit(1)
     click.echo("Logged in as %s on old server" % (old_login.json()["displayName"],))
 
-    old_projects = old_session.get(server + "/api/project").json()["projects"]
+    # old_projects = old_session.get(server + "/api/project").json()["projects"]
+    url = server + '/api/procedure'
+    payload = {
+        'name': 'load_project_summaries',
+        'args': [old_login.json()['id']]
+    }
+    old_projects = old_session.post(url, data=json.dumps(payload)).json()["projects"]
     click.echo("Downloading projects...")
 
     if not savelocation:
@@ -61,20 +68,23 @@ def main(server, username, password, overwrite, savelocation):
         pass
 
     for project in old_projects:
-        click.echo("Downloading project '%s'" % (project["name"],))
-        url = server + "/api/project/" + project["id"] + "/data"
+        # username = username_by_id[project["userId"]]
+        #
+        # click.echo("Downloading user '%s' project '%s'" % (username, project["name"],))
 
-        if os.path.isfile(project_path +  "/" + project["name"] + ".prj"):
+        fname = os.path.join(project_path, project["name"] + ".prj")
+        if os.path.isfile(fname):
             if overwrite:
                 click.echo("Downloaded already, overwriting...")
             else:
                 click.echo("Downloaded already, skipping (set --overwrite=True if you want to overwrite)")
                 continue
 
-        download = old_session.get(url)
-
-        with open(project_path + "/" + project["name"] + ".prj", 'wb') as f:
-            f.write(download.content)
+        url = server + '/api/download'
+        payload = {'name': 'download_project_with_result', 'args': [project["id"]]}
+        response = old_session.post(url, data=json.dumps(payload))
+        with open(fname, 'wb') as f:
+            f.write(response.content)
 
 
     click.echo("All downloaded! In folder %s" % (project_path,))
