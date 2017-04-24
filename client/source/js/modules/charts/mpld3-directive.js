@@ -1,6 +1,6 @@
 define(
   ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs'],
-  function (module, _, $, mpld3, saveAs) {
+  function (module, _, $, mpld3, saveAs, utilService) {
 
   'use strict';
 
@@ -126,7 +126,7 @@ define(
     $svg.attr('height', height);
   }
 
-  module.directive('mpld3Chart', function ($http, modalService) {
+  module.directive('mpld3Chart', function (modalService) {
 
     return {
       scope: { chart: '=mpld3Chart' },
@@ -196,15 +196,9 @@ define(
           var graphIndex = attrs.graphIndex;
           var graphSelectorsString = attrs.graphSelectors; // graphSelectors gets converted to a string, so convert back: e.g. '["a","b"]' -> 'a, b' -> 'a','b'
           var graphSelectors = graphSelectorsString.split('"').join('').slice(1,-1).split(','); // http://stackoverflow.com/questions/19156148/i-want-to-remove-double-quotes-from-a-string
-          $http
-            .post(
-              '/api/download',
-              { name: 'download_figures', args: [resultId, graphSelectors, filetype, Number(graphIndex)]},
-              {responseType: 'blob'})
-            .then(function(response) {
-              var blob = new Blob([response.data], { type:'application/'+filetype });
-              saveAs(blob, (response.headers('filename')));
-            });
+          utilService
+            .rpcDownload(
+              'download_figures', [resultId, graphSelectors, filetype, parseInt(graphIndex)]);
         };
 
         scope.$watch(
@@ -291,7 +285,7 @@ define(
     };
   });
 
-  module.directive('optimaGraphs', function ($http, toastr, RzSliderOptions) {
+  module.directive('optimaGraphs', function (toastr, utilService, RzSliderOptions) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/charts/optima-graphs.html',
@@ -340,15 +334,8 @@ define(
           var which = scope.getSelectors();
           var index = null;
           var filetype = 'singlepdf';
-          $http
-            .post(
-              '/api/download',
-              { name: 'download_figures', args: [resultId, which, filetype, index]},
-              {responseType: 'blob'})
-            .then(function(response) {
-              var blob = new Blob([response.data], { type:'application/pdf' });
-              saveAs(blob, (response.headers('filename')));
-            });
+          utilService
+            .rpcDownload('download_figures', [resultId, which, filetype, index]);
         };
 
         scope.exportAllData = function(name) { /* Adding function(name) brings up save dialog box */
@@ -357,15 +344,8 @@ define(
             return;
           }
           console.log('resultId', resultId);
-          $http
-            .post(
-              '/api/download',
-              {name: 'download_result_data', args: [resultId]},
-              {responseType: 'blob'})
-            .then(function(response) {
-              var blob = new Blob([response.data], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-              saveAs(blob, (response.headers('filename')));
-            });
+          utilService
+            .rpcDownload('download_result_data', [resultId]);
         };
 
         scope.updateGraphs = function() {
@@ -379,12 +359,11 @@ define(
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
-          $http
-            .post(
-              '/api/results/' + resultId,
-              { which: which, zoom: zoom})
-            .success(function (response) {
-              scope.graphs = response.graphs;
+          utilService
+            .rpcRun('load_result_mpld3_graphs',
+              [resultId, which, zoom])
+            .then(function(response) {
+              scope.graphs = response.data.graphs;
               toastr.success('Graphs updated');
             });
         };
@@ -400,12 +379,11 @@ define(
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
-          $http
-            .post(
-              '/api/results/' + resultId,
-              { which: which })
-            .success(function (response) {
-              scope.graphs = response.graphs;
+          utilService
+            .rpcRun('load_result_mpld3_graphs',
+              [resultId, which])
+            .then(function(response) {
+              scope.graphs = response.data.graphs;
               toastr.success('Graphs updated');
             });
         };
@@ -420,12 +398,11 @@ define(
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
-          $http
-            .post(
-              '/api/results/' + resultId,
-              { which: which })
-            .success(function (response) {
-              scope.graphs = response.graphs;
+          utilService
+            .rpcRun('load_result_mpld3_graphs',
+              [resultId, which])
+            .then(function(response) {
+              scope.graphs = response.data.graphs;
               toastr.success('Graphs updated');
             });
         };

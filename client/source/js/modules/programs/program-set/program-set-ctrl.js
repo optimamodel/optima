@@ -129,14 +129,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.uploadProgramSet = function() {
       utilService
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'progset'], {}, '.prg')
+          'upload_project_object', [projectService.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
           toastr.success('Progset uploaded');
           var name = response.data.name;
-          $http
-            .get('/api/project/' + project.id + '/progsets')
+
+          utilService
+            .rpcRun('load_progset_summaries', [projectService.project.id])
             .then(function(response) {
-              // Load program sets; set first as active
               var data = response.data;
               if (data.progsets) {
                 $scope.programSetList = data.progsets;

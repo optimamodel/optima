@@ -105,50 +105,9 @@ def setup_work_log(pyobject_id, work_type, pyobject):
     return calc_state
 
 
-def delete_task(pyobject_id, work_type):
-    print "> delete_task ", pyobject_id, work_type
-    work_log_record = db.session.query(dbmodels.WorkLogDb).filter_by(
-        project_id=pyobject_id, work_type=work_type).first()
-    if not work_log_record:
-        return "Job not found"
-
-    task_id = work_log_record.task_id
-    if not task_id:
-        return "No celery task found for job"
-
-    task_id = str(task_id)
-    celery_instance.control.revoke(str(task_id))
-    work_log = db.session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
-    work_log.status = 'cancelled'
-    work_log.cleanup()
-    db.session.add(work_log)
-    db.session.commit()
-
-    return "Deleted job"
-
-
 def start_or_report_project_calculation(project_id, work_type):
     project = dataio.load_project(project_id)
     return setup_work_log(project_id, work_type, project)
-
-
-def shut_down_calculation(project_id, work_type):
-    """
-    Deletes all associated work_log_record's associated with these
-    parameters so that the celery tasks with these parameters can
-    be restarted in the future. Mainly to delete work_log_record
-    that have started but found to fail somewhere else
-
-    Args:
-        project_id: uuid of project that will be extracted and pickled for async calc
-        work_type: "autofit" or "optimization"
-    """
-    db_session = init_db_session()
-    work_log_records = db_session.query(dbmodels.WorkLogDb).filter_by(
-        project_id=project_id, work_type=work_type)
-    work_log_records.delete()
-    db_session.commit()
-    close_db_session(db_session)
 
 
 def check_calculation_status(pyobject_id, work_type):
@@ -386,15 +345,6 @@ def launch_optimization(project_id, optimization_id, maxtime, start=None, end=No
         return calc_state, 208
     run_optimization.delay(project_id, optimization_id, maxtime, start, end)
     return calc_state
-
-
-# def check_optimization(project_id, optimization_id):
-#     work_type = 'optim-' + str(optimization_id)
-#     calc_state = check_calculation_status(project_id, work_type)
-#     if calc_state['status'] == 'error':
-#         clear_work_log(project_id, work_type)
-#         raise Exception(calc_state['error_text'])
-#     return calc_state
 
 
 @celery_instance.task(bind=True)

@@ -120,7 +120,7 @@ def parse_user_record(user_record):
 
 
 def get_user_summaries():
-    return [parse_user_record(q) for q in UserDb.query.all()]
+    return {'users': [parse_user_record(q) for q in UserDb.query.all()]}
 
 
 def nullable_email(email_str):
@@ -604,11 +604,11 @@ def get_unique_name(name, other_names=None):
     return unique_name
 
 
-def create_project_from_prj(prj_filename, user_id, other_names):
+def create_project_from_prj_file(prj_filename, user_id, other_names):
     """
     Returns the project id of the new project.
     """
-    print(">> create_project_from_prj '%s'" % prj_filename)
+    print(">> create_project_from_prj_file '%s'" % prj_filename)
     project = op.loadproj(prj_filename)
     project.name = get_unique_name(project.name, other_names)
     resolve_project(project)
@@ -1483,7 +1483,7 @@ def load_scenario_summaries(project_id):
 
 def load_startval_for_parameter(project_id, parset_id, par_short, pop, year):
     project = load_project(project_id)
-    return parse.get_startval_for_parameter(project, parset_id, par_short, pop, year)
+    return {'startVal': parse.get_startval_for_parameter(project, parset_id, par_short, pop, year)}
 
 
 
@@ -1758,13 +1758,16 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     project = project_record.load()
     project.restorelinks()
     xlsx_fname = op.makegeospreadsheet(project=project, folder=dirname, copies=n_region, refyear=year)
-    return os.path.split(xlsx_fname)
+    return xlsx_fname
 
 
-def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
+def make_region_projects(spreadsheet_fname, project_id):
     """
     Return (dirname, basename) of the region template spreadsheet on the server
     """
+
+    project_summaries = load_project_summaries(current_user.id)['projects']
+    existing_prj_names = [p['name'] for p in project_summaries]
 
     print("> make_region_projects from %s %s" % (project_id, spreadsheet_fname))
     project_record = load_project_record(project_id)
@@ -1780,10 +1783,11 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
         while prj_name in existing_prj_names:
             prj_name = prj_name + ' (%d)' % i
             i += 1
-        create_project_from_prj(None, prj_name, current_user.id, project=project)
+        project.name = prj_name
+        save_project_as_new(project, current_user.id)
         prj_names.append(prj_name)
 
-    return prj_names
+    return { 'prjNames': prj_names }
 
 
 

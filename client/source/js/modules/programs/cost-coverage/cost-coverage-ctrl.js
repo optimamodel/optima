@@ -574,14 +574,6 @@ define(['./../module', 'underscore'], function(module, _) {
               initReconcilePoll();
             }
           });
-        // $http
-        //   .get('/api/task/' + vm.project.id + '/type/' + workType)
-        //   .then(function(response) {
-        //     console.log('selectSummary', response.data);
-        //     if (response.data.status === 'started') {
-        //       initReconcilePoll();
-        //     }
-        //   });
       };
 
       function initReconcilePoll() {

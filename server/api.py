@@ -4,13 +4,12 @@ import sys
 import logging
 import matplotlib
 import redis
-import traceback
 
-from flask import Flask, redirect, abort, jsonify, make_response, request, json, helpers
+from flask import Flask, redirect, abort, jsonify, request, json, helpers
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from werkzeug.utils import secure_filename
-from werkzeug.exceptions import HTTPException
+
 
 # Create Flask app that does everything
 app = Flask(__name__)
@@ -104,7 +103,7 @@ app.register_blueprint(api_blueprint, url_prefix='')
 def run_remote_procedure():
     """
     url-args:
-        'procedure': string name of function in dataio
+        'name': string name of function in dataio
         'args': list of arguments for the function
     """
     json = get_post_data_json()
@@ -129,7 +128,7 @@ def run_remote_procedure():
 def run_remote_async_task():
     """
     url-args:
-        'procedure': string name of function in dataio
+        'name': string name of function in dataio
         'args': list of arguments for the function
     """
     json = get_post_data_json()
@@ -155,7 +154,7 @@ def run_remote_async_task():
 def get_remote_file():
     """
     url-args:
-        'procedure': string name of function in dataio
+        'name': string name of function in dataio
         'args': list of arguments for the function
     """
     json = get_post_data_json()
@@ -192,10 +191,9 @@ def get_remote_file():
 @report_exception_decorator
 def receive_uploaded_file():
     """
-    file-upload
-    request-form:
-        name: name of project
-        xls: true
+    url-args:
+        'name': string name of function in dataio
+        'args': list of arguments for the function
     """
     file = request.files['file']
     filename = secure_filename(file.filename)

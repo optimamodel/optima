@@ -124,7 +124,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       var otherNames = _.pluck(projectService.projects, 'name');
       utilService
         .rpcUpload(
-          'create_project_from_prj',
+          'create_project_from_prj_file',
           [userManager.user.id, otherNames])
         .then(
           function(response) {
@@ -223,6 +223,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     getProjectList();
 
     _.assign(projectService, {
+      getProjectList: getProjectList,
       setActiveProjectId: setActiveProjectId,
       loadActiveProject: loadActiveProject,
       clearProjectIdIfActive: clearProjectIdIfActive,

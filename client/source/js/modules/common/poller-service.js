@@ -10,8 +10,7 @@ define(['angular' ], function (angular) {
 
   return angular.module('app.common.poller-service', [])
 
-    .factory('pollerService', ['$http', '$timeout', 'utilService',
-      function($http, $timeout, utilService) {
+    .factory('pollerService', ['$timeout', 'utilService', function($timeout, utilService) {
 
       var polls = {};
 
@@ -21,37 +20,6 @@ define(['angular' ], function (angular) {
           polls[id] = {isRunning: false, id: id};
         }
         return polls[id];
-      }
-
-      function startPoll(id, url, callback) {
-        var poll = getPoll(id);
-        poll.url = url;
-        poll.callback = callback;
-
-        if (!poll.isRunning) {
-          console.log('Launch polling for', poll.id);
-          poll.isRunning = true;
-
-          function pollWithTimeout() {
-            var poll = getPoll(id);
-            $http
-              .get(poll.url)
-              .success(function(response) {
-                if (response.status === 'started') {
-                  poll.timer = $timeout(pollWithTimeout, 1000);
-                } else {
-                  stopPoll(id);
-                }
-                poll.callback(response);
-              })
-              .error(function(response) {
-                stopPoll(id);
-                poll.callback(response);
-              });
-          }
-
-          pollWithTimeout();
-        }
       }
 
       function startPollForRpc(pyobjectId, taskId, callback) {
@@ -87,7 +55,6 @@ define(['angular' ], function (angular) {
         }
       }
 
-
       function stopPoll(id) {
         var poll = getPoll(id);
         if (poll.isRunning) {
@@ -107,16 +74,9 @@ define(['angular' ], function (angular) {
         });
       }
 
-      function killJob(projectId, workType) {
-        $http
-          .delete('/api/task/' + projectId + '/type/' + workType);
-      }
-
       return {
-        startPoll: startPoll,
         startPollForRpc: startPollForRpc,
         stopPolls: stopPolls,
-        killJob: killJob
       };
 
     }]);

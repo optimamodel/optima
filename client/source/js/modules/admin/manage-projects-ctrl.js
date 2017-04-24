@@ -2,25 +2,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AdminManageProjectsController', function (
-    $scope, $http, projects, users, utilService, userManager, modalService, projectService, $state, toastr) {
+    $scope, utilService, userManager, modalService, projectService, $state, toastr) {
 
-    $scope.users = _.map(
-      users.data.users,
-      function(user) {
-        var userProjects = _.filter(
-          projects.data.projects,
-          function(p) { return p.userId == user.id; });
-        _.each(userProjects, function(project) {
-          project.creationTime = Date.parse(project.creationTime);
-          project.updatedTime = Date.parse(project.updatedTime);
-          project.dataUploadTime = Date.parse(project.dataUploadTime);
-        });
-        return {
-          data: user,
-          projects: userProjects
-        };
-      }
-    );
+    projectService
+      .getAllProjectList()
+      .then(function(response) {
+        $scope.projects = response.data.projects;
+
+        return utilService.rpcRun('get_user_summaries');
+      })
+      .then(function(response) {
+        $scope.users = _.map(
+          response.data.users,
+          function(user) {
+
+            var userProjects = _.filter(
+              $scope.projects, function(p) { return p.userId == user.id; });
+
+            _.each(userProjects, function(project) {
+              project.creationTime = Date.parse(project.creationTime);
+              project.updatedTime = Date.parse(project.updatedTime);
+              project.dataUploadTime = Date.parse(project.dataUploadTime);
+            });
+
+            return {
+              data: user,
+              projects: userProjects
+            };
+          }
+        );
+      });
 
     $scope.projectService = projectService;
 
