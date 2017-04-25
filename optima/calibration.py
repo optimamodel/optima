@@ -8,7 +8,7 @@ from optima import OptimaException, Link, Par, dcp, runmodel, asd, printv, findi
 from numpy import zeros, array, mean
 
 
-def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False):
+def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, **kwargs):
     ''' 
     Function to automatically fit parameters. Parameters:
         fitwhat = which parameters to vary to improve the fit; these are defined in parameters.py under the 'auto' attribute; default is 'force' (FOI metaparameters only)
@@ -260,7 +260,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Perform fit
     parvec = convert(pars, parlist)
     args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
-    parvecnew, fval, details = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
+    parvecnew, fval, details = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, maxtime=maxtime, maxiters=maxiters, verbose=verbose, **kwargs)
     
     # Save
     pars = convert(pars, parlist, parvecnew)        
