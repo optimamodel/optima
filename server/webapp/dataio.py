@@ -34,7 +34,7 @@ from .dbconn import db
 from . import parse
 from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
     UserAlreadyExists, UserDoesNotExist, InvalidCredentials
-from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, PyObjectDb
+from .dbmodels import UserDb, ProjectDb, ResultsDb, PyObjectDb
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 
 
@@ -865,19 +865,6 @@ def upload_project_object(filename, project_id, obj_type):
 #############################################################################################
 ### SPREADSHEETS
 #############################################################################################
-
-def load_data_spreadsheet_binary(project_id):
-    """
-    Returns (full_filename, binary_string) of the previously downloaded spreadhseet
-    """
-    data_record = ProjectDataDb.query.get(project_id)
-    if data_record is not None:
-        binary = data_record.meta
-        if len(binary.meta) > 0:
-            project = load_project(project_id)
-            server_fname = secure_filename('{}.xlsx'.format(project.name))
-            return server_fname, binary
-    return None, None
 
 
 def load_template_data_spreadsheet(project_id):
