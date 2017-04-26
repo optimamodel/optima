@@ -51,8 +51,7 @@ def main(server, username, password, overwrite, savelocation):
     # old_projects = old_session.get(server + "/api/project").json()["projects"]
     url = server + '/api/procedure'
     payload = {
-        'name': 'load_project_summaries',
-        'args': [old_login.json()['id']]
+        'name': 'load_current_user_project_summaries'
     }
     old_projects = old_session.post(url, data=json.dumps(payload)).json()["projects"]
     click.echo("Downloading projects...")

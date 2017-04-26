@@ -82,7 +82,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       var deferred = $q.defer();
       utilService
         .rpcRun(
-          'load_project_summaries', [userManager.user.id])
+          'load_current_user_project_summaries')
         .then(
           function(response) {
             clearList(projectService.projects);
@@ -245,7 +245,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         return utilService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },
       getAllProjectList: function () {
-        return utilService.rpcRun('load_project_summaries');
+        return utilService.rpcRun('load_all_project_summaries');
       },
       getPopulations: function () {
         return utilService.rpcRun('get_default_populations');
