@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, isinf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None):
@@ -686,6 +686,16 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ### Calculate births
         ##############################################################################################################
 
+        # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
+        numhivpospregwomen = 0
+        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- WARNING, KLUDGY -- at the moment, hard-coded to 1 year
+        for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
+            numhivpospregwomen += birthrates[t]*people[alldx, p1, t].sum()*timestepsonpmtct # Divide by dt to get number of women
+        if isnan(proppmtct[t]): calcproppmtct = numpmtct[t]/(eps+numhivpospregwomen) # Proportion on PMTCT is not specified: use number
+        else:                   calcproppmtct = proppmtct[t] # Else, just use the proportion specified
+        calcproppmtct = min(calcproppmtct, 1.)
+        
+        # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
             thisbirthrate = birthrates[t]
             peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
@@ -694,22 +704,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
             thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
 
-            if isnan(proppmtct[t]): # Proportion on PMTCT is not specified: use number
-                thisreceivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                mtctdx = (thiseligbirths - thisreceivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = thisreceivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
-            else: # Proportion on PMTCT is specified, ignore number
-                if isinf(proppmtct[t]): # If the prop value is infinity, we use last timestep's value
-                    if t==0: calcprop=0.
-                    else:
-                        calcpmtctprop = raw_receivepmtct[:,t-1].sum()/raw_hivbirths[:,t-1].sum()
-                else: calcpmtctprop = proppmtct[t]                
-                mtctdx = (thiseligbirths * (1-calcpmtctprop)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = (thiseligbirths * calcpmtctprop) * pmtcteff[t] # MTCT from those receiving PMTCT
-                thisreceivepmtct = thiseligbirths * calcpmtctprop
+            mtctdx = (thiseligbirths * (1-calcproppmtct)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+            mtctpmtct = (thiseligbirths * calcproppmtct) * pmtcteff[t] # MTCT from those receiving PMTCT
+            thisreceivepmtct = thiseligbirths * calcproppmtct
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
-            raw_receivepmtct[p1, t] += thisreceivepmtct/dt 
+            raw_receivepmtct[p1, t] += thisreceivepmtct*timestepsonpmtct
             raw_mtct[p2, t] += popmtct/dt
             raw_mtctfrom[p1, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
