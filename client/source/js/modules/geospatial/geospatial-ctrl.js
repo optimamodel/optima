@@ -265,7 +265,7 @@ define(
           $scope.isSelectNewProject = true;
           utilService
             .rpcRun(
-              'load_project_summaries', [userManager.user.id])
+              'load_current_user_project_summaries', [userManager.user.id])
             .then(function(response) {
               var selectedIds = _.pluck($scope.state.portfolio.projects, "id");
               $scope.projects = [];

@@ -382,16 +382,18 @@ def load_project_summary(project_id):
     return load_project_summary_from_project_record(project_entry)
 
 
-def load_project_summaries(user_id=None):
-    if user_id is None:
-        query = ProjectDb.query
-    else:
-        query = ProjectDb.query.filter_by(user_id=current_user.id)
+def load_current_user_project_summaries():
+    query = ProjectDb.query.filter_by(user_id=current_user.id)
+    return {'projects': map(load_project_summary_from_project_record, query.all())}
+
+
+def load_all_project_summaries():
+    query = ProjectDb.query
     return {'projects': map(load_project_summary_from_project_record, query.all())}
 
 
 def get_default_populations():
-    return parse.get_default_populations()
+    return {'populations': parse.get_default_populations()}
 
 
 def create_project_with_spreadsheet_download(user_id, project_summary):
@@ -595,7 +597,7 @@ def copy_project(project_id, new_project_name):
 
 def get_unique_name(name, other_names=None):
     if other_names is None:
-        other_names = [p['name'] for p in load_project_summaries()]
+        other_names = [p['name'] for p in load_current_user_project_summaries()]
     i = 0
     unique_name = name
     while unique_name in other_names:
@@ -1766,7 +1768,7 @@ def make_region_projects(spreadsheet_fname, project_id):
     Return (dirname, basename) of the region template spreadsheet on the server
     """
 
-    project_summaries = load_project_summaries(current_user.id)['projects']
+    project_summaries = load_current_user_project_summaries()['projects']
     existing_prj_names = [p['name'] for p in project_summaries]
 
     print("> make_region_projects from %s %s" % (project_id, spreadsheet_fname))

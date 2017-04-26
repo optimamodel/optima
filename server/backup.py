@@ -66,7 +66,7 @@ def main(server, username, password, overwrite, savelocation):
 
     click.echo("Downloading projects...")
     url = server + '/api/procedure'
-    payload = {'name': 'load_project_summaries'}
+    payload = {'name': 'load_all_project_summaries'}
     projects = session.post(url, data=json.dumps(payload)).json()["projects"]
 
     for project in projects:
