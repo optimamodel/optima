@@ -250,12 +250,13 @@ def launch_autofit(project_id, parset_id, maxtime):
 @celery_instance.task(bind=True)
 def run_optimization(self, project_id, optimization_id, maxtime, start=None, end=None):
 
+    work_type = 'optim-' + str(optimization_id)
     status = 'started'
     error_text = ""
 
     db_session = init_db_session()
     work_log = db_session.query(dbmodels.WorkLogDb).filter_by(
-        project_id=project_id, work_type='optim-' + str(optimization_id)).first()
+        project_id=project_id, work_type=work_type).first()
 
     if work_log:
         work_log_id = work_log.id
@@ -339,8 +340,8 @@ def run_optimization(self, project_id, optimization_id, maxtime, start=None, end
 
 
 def launch_optimization(project_id, optimization_id, maxtime, start=None, end=None):
-    calc_state = start_or_report_project_calculation(
-        project_id, 'optim-' + str(optimization_id))
+    work_type = 'optim-' + str(optimization_id)
+    calc_state = start_or_report_project_calculation(project_id, work_type)
     if calc_state['status'] != 'started':
         return calc_state, 208
     run_optimization.delay(project_id, optimization_id, maxtime, start, end)

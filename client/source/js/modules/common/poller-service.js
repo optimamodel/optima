@@ -27,8 +27,10 @@ define(['angular' ], function (angular) {
         var poll = getPoll(pollId);
         poll.callback = callback;
 
+        console.log('startPollForRpc checking', poll.id);
+
         if (!poll.isRunning) {
-          console.log('Launch polling for', poll.id);
+          console.log('startPollForRpc launch', poll.id);
           poll.isRunning = true;
 
           function pollWithTimeout() {
@@ -42,12 +44,12 @@ define(['angular' ], function (angular) {
                   if (status === 'started') {
                     poll.timer = $timeout(pollWithTimeout, 1000);
                   } else {
-                    stopPoll(taskId);
+                    stopPoll(pollId);
                   }
                   poll.callback(response);
                 },
                 function(response) {
-                  stopPoll(taskId);
+                  stopPoll(pollId);
                   poll.callback(response);
                 });
           }

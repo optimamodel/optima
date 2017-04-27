@@ -283,7 +283,7 @@ define(['angular', 'ui.router'], function (angular) {
           [$scope.state.project.id, optimization.id, parseInt($scope.state.maxtime)])
         .then(function(response) {
           $scope.task_id = response.data.task_id;
-          if (response.status === 'started') {
+          if (response.data.status === 'started') {
             $scope.statusMessage = 'Optimization started.';
             initPollOptimizations();
           } else if (response.data.status === 'blocked') {
