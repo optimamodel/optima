@@ -2,7 +2,7 @@ define(['angular', 'underscore'], function (angular, _) {
 
   'use strict';
 
-  var module = angular.module('app.program.modal', []);
+  var module = angular.module('app.program-modal', []);
 
   module.controller('ProgramModalController', function (
     $scope, $modalInstance, program, populations, programList, modalService,

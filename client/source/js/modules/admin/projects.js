@@ -1,8 +1,19 @@
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+define(['angular', 'ui.router'], function(angular) {
+
   'use strict';
 
-  module.controller('AdminManageProjectsController', function (
-    $scope, utilService, userManager, modalService, projectService, $state, toastr) {
+  var module = angular.module('app.adminprojects', ['ui.router']);
+
+  module.config(function($stateProvider) {
+    $stateProvider
+      .state('adminprojects', {
+        url: '/manage-projects',
+        templateUrl: 'js/modules/admin/manage-projects.html',
+        controller: 'AdminManageProjectsController',
+      });
+  });
+
+  module.controller('AdminManageProjectsController', function($scope, utilService, userManager, modalService, projectService, $state, toastr) {
 
     projectService
       .getAllProjectList()
@@ -17,7 +28,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           function(user) {
 
             var userProjects = _.filter(
-              $scope.projects, function(p) { return p.userId == user.id; });
+              $scope.projects, function(p) {
+                return p.userId == user.id;
+              });
 
             _.each(userProjects, function(project) {
               project.creationTime = Date.parse(project.creationTime);
@@ -41,7 +54,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return _.pluck(projectService.projects, 'name');
     }
 
-    $scope.open = function (name, id) {
+    $scope.open = function(name, id) {
       projectService.setActiveProjectId(id);
     };
 
@@ -51,7 +64,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           project.name = name;
           projectService
             .renameProject(project.id, project)
-            .then(function () {
+            .then(function() {
               toastr.success('Renamed project');
               $state.reload();
             });
@@ -74,15 +87,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
-    $scope.downloadSpreadsheet = function (name, id) {
+    $scope.downloadSpreadsheet = function(name, id) {
       utilService.rpcDownload(
         'download_data_spreadsheet', [id], {'is_blank': false})
-      .then(function (response) {
-        toastr.success('Spreadsheet downloaded');
-      });
+        .then(function(response) {
+          toastr.success('Spreadsheet downloaded');
+        });
     };
 
-    $scope.downloadProject = function (name, id) {
+    $scope.downloadProject = function(name, id) {
       utilService
         .rpcDownload(
           'download_project', [id])
@@ -91,7 +104,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
-    $scope.deleteProject = function (id) {
+    $scope.deleteProject = function(id) {
       utilService
         .rpcRun(
           'delete_projects', [[id]])
@@ -101,4 +114,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
   });
+
+  return module;
+
 });

@@ -9,7 +9,7 @@ define(['angular', 'underscore'], function (angular, _) {
   module.config(function ($stateProvider) {
       $stateProvider
         .state('calibration', {
-          url: '/manual',
+          url: '/calibration',
           templateUrl: 'js/modules/calibration/calibration.html',
           controller: 'ModelCalibrationController',
         })

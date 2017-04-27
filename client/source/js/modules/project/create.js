@@ -1,5 +1,22 @@
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+define(['angular', 'ui.router', './create-population-modal-ctrl'], function (angular) {
+
+
   'use strict';
+
+
+  var module = angular.module(
+    'app.create-project', ['ui.router', 'app.population-modal']);
+
+
+  module.config(function($stateProvider) {
+    $stateProvider
+      .state('createproject', {
+        url: '/createproject',
+        templateUrl: 'js/modules/project/create-or-edit.html',
+        controller: 'ProjectCreateOrEditController'
+      });
+  });
+
 
   module.controller('ProjectCreateOrEditController', function (
       $scope, $state, $modal, $timeout, userManager, modalService, projectService) {
@@ -188,5 +205,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     initialize();
 
   });
+
+  return module;
 
 });

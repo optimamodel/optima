@@ -1,8 +1,10 @@
 define(
-  ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs'],
-  function (module, _, $, mpld3, saveAs, utilService) {
+  ['angular', 'underscore', 'jquery', 'mpld3', 'saveAs'],
+  function (angular, _, $, mpld3, saveAs, utilService) {
 
   'use strict';
+
+  var module = angular.module('app.charts', []);
 
   var moduleAllCharts, moduleScrollTop;
 
@@ -495,5 +497,7 @@ define(
       }
     };
   });
+
+  return module;
 
 });

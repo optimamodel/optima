@@ -7,7 +7,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
   module.config(function ($stateProvider) {
     $stateProvider
       .state('costfunctions', {
-        url: '/define-cost-coverage-outcome',
+        url: '/costfunctions',
         controller: 'ModelCostCoverageController as vm',
         templateUrl: 'js/modules/cost/cost-coverage.html',
         bindToController: true,

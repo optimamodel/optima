@@ -1,15 +1,10 @@
-define(
-  [
-    'angular',
-    'ui.router',
-    './program-modal-ctrl'],
-  function (angular) {
+define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
 
   'use strict';
 
   var module = angular.module(
     'app.programs',
-    ['ui.router', 'app.program.modal']);
+    ['ui.router', 'app.program-modal']);
 
 
   module.config(function($stateProvider) {

@@ -1,8 +1,226 @@
-define([
-  './login-ctrl',
-  './register-ctrl',
-  './edit-ctrl',
-  './help-ctrl',
-  './feedback-ctrl',
-  './saved-login-form-directive'
-], function () {});
+define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224, version) {
+
+
+  'use strict';
+
+  var module = angular.module('app.user', []);
+
+  /**
+   * Directive-based hack for automatically filled forms of sign in
+   */
+  module.directive('savedLoginForm', function ($timeout) {
+    return {
+      require: 'ngModel',
+      link: function (scope, elem, attr, ngModel) {
+        var origVal = elem.val();
+        $timeout(function () {
+          var newVal = elem.val();
+          if (ngModel.$pristine && origVal !== newVal) {
+            ngModel.$setViewValue(newVal);
+          }
+        }, 500);
+      }
+    };
+  });
+
+  
+  module.config(function ($stateProvider) {
+      $stateProvider
+        .state('login', {
+          url: '/login',
+          onEnter: function ($state, userManager) {
+            if (userManager.isLoggedIn) {
+              $state.go('home');
+            }
+          },
+          templateUrl: 'js/modules/user/login.html' ,
+          controller: 'LoginController'
+        })
+        .state('register', {
+          url: '/register',
+          onEnter: function ($state, userManager) {
+            if (userManager.isLoggedIn) {
+              $state.go('home');
+            }
+          },
+          templateUrl: 'js/modules/user/register.html' ,
+          controller: 'RegisterController'
+        })
+        .state('edit', {
+          url: '/edit',
+          templateUrl: 'js/modules/user/edit.html' ,
+          controller: 'EditController'
+        })
+        .state('feedback', {
+          url: '/feedback',
+          templateUrl: 'js/modules/user/feedback.html'
+        })
+        .state('help', {
+          url: '/help',
+          templateUrl: 'js/modules/user/help.html',
+          controller: function ($scope) {
+            $scope.version = version;
+          }
+        });
+    });
+
+
+
+  module.controller(
+    'EditController',
+    function ($scope, $window, userApi, userManager, $timeout) {
+
+    $scope.error = false;
+
+    const user = userManager.user;
+    $scope.username = user.username;
+    $scope.displayName = user.displayName;
+    $scope.email = user.email;
+    $scope.password = '';
+
+    $scope.update = function () {
+      $scope.$broadcast('form-input-check-validity');
+
+      if ($scope.EditForm.$invalid) {
+        return;
+      }
+
+      $scope.error = false;
+
+      var hashed_password = SHA224($scope.password).toString();
+
+      userApi.update({
+          username: $scope.username,
+          password: hashed_password,
+          displayName: $scope.displayName,
+          email: $scope.email,
+          id: user.id
+        },
+        // success
+        function (response) {
+          if (response.id) {
+            $scope.success = 'User details successfully updated (reload page to see changes).';
+            $timeout(function() {
+              $scope.success = '';
+            }, 5000);
+          }
+        },
+        // error
+        function (error) {
+          $scope.error = error.data.reason;
+          $timeout(function() {
+            $scope.error = '';
+          }, 5000);
+          switch(error.status){
+            case 409: // conflict: will be sent if the email already exists
+              // show css error tick to email field
+              $scope.EditForm.email.$invalid = true;
+              $scope.EditForm.email.$valid = false;
+              $scope.$broadcast('form-input-check-validity');
+              break;
+            case 400:
+              break;
+            default:
+              $scope.error = 'Server feels bad. Please try again in a bit';
+          }
+        }
+      );
+    };
+
+  });
+
+
+  module.controller(
+    'LoginController',
+    function ($scope, $window, userApi, projectService) {
+
+    $scope.error = '';
+
+    $scope.login = function () {
+      $scope.$broadcast('form-input-check-validity');
+
+      if ($scope.LogInForm.$invalid) {
+        return;
+      }
+
+      $scope.error = '';
+      var hashed_password = SHA224($scope.password).toString();
+
+      userApi
+        .login(
+          {
+            username: $scope.username,
+            password: hashed_password
+          },
+          // success
+          function(user) {
+            projectService.clearProjectForUserId(user.id);
+            $window.location = './';
+          },
+          // error
+          function (error) {
+            if (error.status === 401) {
+              $scope.error = 'Wrong username or password. Please check credentials and try again';
+            } else {
+              $scope.error = 'Server feels bad. Please try again in a bit';
+            }
+          }
+        );
+    };
+
+  });
+
+  module.controller(
+    'RegisterController',
+    function ($scope, $window, userApi) {
+
+    $scope.error = false;
+
+    $scope.register = function () {
+      $scope.$broadcast('form-input-check-validity');
+
+      if ($scope.RegisterForm.$invalid) {
+        return;
+      }
+
+      $scope.error = false;
+
+      var hashed_password = SHA224($scope.password).toString();
+
+      userApi.create({
+        username: $scope.username,
+        password: hashed_password,
+        displayName: $scope.displayName,
+        email: $scope.email
+      },
+        // success
+        function (response) {
+          if (response.username) {
+            // success
+            $window.location = './#/login';
+          }
+        },
+        // error
+        function (error) {
+          $scope.error = error.data.reason;
+          switch(error.status){
+            case 409: // conflict: will be sent if the email already exists
+              // show css error tick to email field
+              $scope.RegisterForm.email.$invalid = true;
+              $scope.RegisterForm.email.$valid = false;
+              $scope.$broadcast('form-input-check-validity');
+              break;
+            case 400:
+              break;
+            default:
+              $scope.error = 'Server feels bad. Please try again in a bit';
+          }
+        }
+      );
+    };
+
+  });
+
+  return module;
+
+});

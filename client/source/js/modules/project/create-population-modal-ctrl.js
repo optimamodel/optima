@@ -1,6 +1,9 @@
-define(['./module', 'angular'], function (module, angular) {
+define(['angular'], function (angular) {
 
   'use strict';
+
+  var module = angular.module('app.population-modal', []);
+
 
   module.controller('ProjectCreatePopulationModalController', function (
       $scope, $modalInstance, population, populations, modalService) {

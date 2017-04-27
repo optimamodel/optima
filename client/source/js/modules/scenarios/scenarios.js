@@ -7,7 +7,12 @@ define([
 
   'use strict';
 
-  var module = angular.module('app.scenarios', ['ui.router']);
+  var module = angular.module(
+    'app.scenarios',
+    [
+      'ui.router',
+      'app.program-scenarios-modal',
+      'app.parameter-scenarios-modal']);
 
 
   module.config(function ($stateProvider) {
