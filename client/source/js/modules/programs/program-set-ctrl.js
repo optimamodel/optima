@@ -1,5 +1,8 @@
-define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
+define(['angular', 'underscore'], function (angular, _) {
+
   'use strict';
+
+  var module = angular.module('app.programs.ctrl', []);
 
   module.controller('ProgramSetController', function (
       $scope, $modal, modalService, toastr, projectService, $upload, $state, utilService) {
@@ -254,7 +257,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     function openProgramModal(program, openProject, programList, parameters, categories) {
       return $modal.open({
-        templateUrl: 'js/modules/programs/program-set/program-modal.html',
+        templateUrl: 'js/modules/programs/program-modal.html',
         controller: 'ProgramModalController',
         size: 'lg',
         resolve: {

@@ -6,7 +6,7 @@
   </div>
 
   <div class="error-hint" ng-show="vm.hasNoProgram">
-    No programs selected, you need to <a ui-sref="programs.manageProgramSet">select some programs</a> for this project.
+    No programs selected, you need to <a ui-sref="programs">select some programs</a> for this project.
   </div>
 
   <div ng-if="!vm.isMissingData && !vm.hasNoProgram">
@@ -43,7 +43,7 @@
     <div ng-if="vm.programs.length == 0">
       <br>
       <br>
-      No programs selected, you need to <a ui-sref="programs.manageProgramSet">select some programs</a> for this project.
+      No programs selected, you need to <a ui-sref="programs">select some programs</a> for this project.
     </div>
 
     <div ng-if="vm.programs.length > 0">

@@ -1,7 +1,7 @@
-define(['angular', 'underscore'], function(angular, _) {
+define(['angular', 'underscore', 'toastr'], function(angular, _) {
 
 
-  var module = angular.module('app.costfunctions', ['ui.router']);
+  var module = angular.module('app.costfunctions', ['ui.router', 'toastr']);
 
 
   module.config(function ($stateProvider) {
