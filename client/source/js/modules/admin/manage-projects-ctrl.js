@@ -2,114 +2,103 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AdminManageProjectsController', function (
-    $scope, $http, projects, users, activeProject,
-    userManager, modalService, projectApi, $state, toastr) {
+    $scope, utilService, userManager, modalService, projectService, $state, toastr) {
 
-    $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
-    $scope.users = _.map(
-      users.data.users,
-      function(user) {
-        var userProjects = _.filter(
-          projects.data.projects,
-          function(p) { return p.userId == user.id; });
-        _.each(userProjects, function(project) {
-          project.creationTime = Date.parse(project.creationTime);
-          project.updatedTime = Date.parse(project.updatedTime);
-          project.dataUploadTime = Date.parse(project.dataUploadTime);
-        });
-        return {
-          data: user,
-          projects: userProjects
-        };
-      }
-    );
+    projectService
+      .getAllProjectList()
+      .then(function(response) {
+        $scope.projects = response.data.projects;
+
+        return utilService.rpcRun('get_user_summaries');
+      })
+      .then(function(response) {
+        $scope.users = _.map(
+          response.data.users,
+          function(user) {
+
+            var userProjects = _.filter(
+              $scope.projects, function(p) { return p.userId == user.id; });
+
+            _.each(userProjects, function(project) {
+              project.creationTime = Date.parse(project.creationTime);
+              project.updatedTime = Date.parse(project.updatedTime);
+              project.dataUploadTime = Date.parse(project.dataUploadTime);
+            });
+
+            return {
+              data: user,
+              projects: userProjects
+            };
+          }
+        );
+      });
+
+    $scope.projectService = projectService;
 
     console.log('$scope.users', $scope.users);
 
-    /**
-     * Regenerates workbook for the given project `name`
-     * Alerts the user if it cannot do it.
-     *
-     */
-    $scope.workbook = function (name, id) {
-      // read that this is the universal method which should work everywhere in
-      // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open(projectApi.getSpreadsheetUrl(id), '_blank', '');
-    };
+    function getProjectNames() {
+      return _.pluck(projectService.projects, 'name');
+    }
 
-    /**
-     * Opens to edit an existing project using `name` in /project/create screen
-     *
-     * Alerts the user if it cannot do it.
-     */
-    $scope.edit = function (name, id) {
-      activeProject.setActiveProjectId(id);
-      $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
-      $state.go('project.edit');
-    };
-
-    /**
-     * Opens an existing project using `name`
-     *
-     * Alerts the user if it cannot do it.
-     */
     $scope.open = function (name, id) {
-      activeProject.setActiveProjectId(id);
-      $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
+      projectService.setActiveProjectId(id);
     };
 
-    /**
-     * Opens a modal window to ask the user for confirmation to remove the project and
-     * removes the project if the user confirms.
-     * Closes it without further action otherwise.
-     */
-    $scope.remove = function ($event, user, name, id, index) {
-      if ($event) {
-        $event.preventDefault();
-      }
-      var message = 'Are you sure you want to permanently remove project "' + name + '"?';
-      modalService.confirm(
-        function () {
-          removeNoQuestionsAsked(user, name, id, index);
-          toastr.success('Deleted project');
+    $scope.editProjectName = function(project) {
+      modalService.rename(
+        function(name) {
+          project.name = name;
+          projectService
+            .renameProject(project.id, project)
+            .then(function () {
+              toastr.success('Renamed project');
+              $state.reload();
+            });
         },
-        function () {
-        },
-        'Yes, remove this project',
-        'No',
-        message,
-        'Remove project'
-      );
+        'Edit project name',
+        "Enter project name",
+        project.name,
+        "Name already exists",
+        _.without(getProjectNames(), project.name));
     };
 
-    /**
-     * Gets the data for the given project `name` as <name>.prj  file
-     */
-    $scope.getData = function (name, id) {
-      projectApi.downloadProjectFile(id).success(function (response) {
-        var blob = new Blob([response], { type: 'application/json' });
-        saveAs(blob, (name + '.prj'));
+    $scope.copy = function(name, projectId) {
+      projectService
+        .copyProject(
+          projectId,
+          utilService.getUniqueName(name, getProjectNames()))
+        .then(function() {
+          toastr.success('Copied project');
+          $state.reload();
+        });
+    };
+
+    $scope.downloadSpreadsheet = function (name, id) {
+      utilService.rpcDownload(
+        'download_data_spreadsheet', [id], {'is_blank': false})
+      .then(function (response) {
+        toastr.success('Spreadsheet downloaded');
       });
     };
 
-    /**
-     * Removes the project
-     *
-     * If the removed project is the active one it will reset it alerts the user
-     * in case of failure.
-     */
-    var removeNoQuestionsAsked = function (user, name, id, index) {
-      projectApi.deleteProject(id)
-        .success(function (response) {
-          user.projects = _(user.projects).filter(function (item) {
-            return item.id != id;
-          });
-          $scope.projects = _($scope.projects).filter(function (item) {
-            return item.id != id;
-          });
-
-          activeProject.clearProjectIdIfActive(id);
+    $scope.downloadProject = function (name, id) {
+      utilService
+        .rpcDownload(
+          'download_project', [id])
+        .then(function() {
+          toastr.success('Project downloaded');
         });
     };
+
+    $scope.deleteProject = function (id) {
+      utilService
+        .rpcRun(
+          'delete_projects', [[id]])
+        .then(function() {
+          toastr.success('Project deleted');
+        });
+    };
+
   });
 });

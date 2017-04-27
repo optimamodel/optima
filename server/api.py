@@ -5,10 +5,11 @@ import logging
 import matplotlib
 import redis
 
-from flask import Flask, redirect, abort, jsonify, request, json
+from flask import Flask, redirect, abort, jsonify, request, json, helpers
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from werkzeug.utils import secure_filename
+
 
 # Create Flask app that does everything
 app = Flask(__name__)
@@ -102,7 +103,7 @@ app.register_blueprint(api_blueprint, url_prefix='')
 def run_remote_procedure():
     """
     url-args:
-        'procedure': string name of function in dataio
+        'name': string name of function in dataio
         'args': list of arguments for the function
     """
     json = get_post_data_json()
@@ -113,17 +114,47 @@ def run_remote_procedure():
 
     args = json.get('args', [])
     kwargs = json.get('kwargs', {})
-    return jsonify(fn(*args, **kwargs))
+    result = fn(*args, **kwargs)
+    if result is None:
+        result = ''
+    else:
+        result = jsonify(result)
+    return result
 
 
-from flask import helpers
+@app.route('/api/task', methods=['POST'])
+@report_exception_decorator
+@login_required
+def run_remote_async_task():
+    """
+    url-args:
+        'name': string name of function in dataio
+        'args': list of arguments for the function
+    """
+    json = get_post_data_json()
+    import server.webapp.tasks as tasks
+
+    fn_name = json['name']
+    print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
+    fn = getattr(tasks, fn_name)
+
+    args = json.get('args', [])
+    kwargs = json.get('kwargs', {})
+    result = fn(*args, **kwargs)
+    if result is None:
+        result = ''
+    else:
+        result = jsonify(result)
+    return result
+
+
 @app.route('/api/download', methods=['POST'])
 @report_exception_decorator
 @login_required
 def get_remote_file():
     """
     url-args:
-        'procedure': string name of function in dataio
+        'name': string name of function in dataio
         'args': list of arguments for the function
     """
     json = get_post_data_json()
@@ -134,9 +165,17 @@ def get_remote_file():
 
     args = json.get('args', [])
     kwargs = json.get('kwargs', {})
+
+    # BUG: exceptions in get_remote_file are caught and
+    # transformed into a json string with the stack trace
+    # however the client is unable to pick it up
+    # haven't found the bug yet, but it may have something
+    # to do the with the POST handler expecting responsearray
+
     full_filename = fn(*args, **kwargs)
+
     dirname, filename = os.path.split(full_filename)
-    print(">> Get remote file %s %s" % (dirname, filename))
+
     response = helpers.send_from_directory(
         dirname,
         filename,
@@ -144,6 +183,7 @@ def get_remote_file():
         attachment_filename=filename)
     response.status_code = 201
     response.headers["filename"] = filename
+
     return response
 
 
@@ -151,10 +191,9 @@ def get_remote_file():
 @report_exception_decorator
 def receive_uploaded_file():
     """
-    file-upload
-    request-form:
-        name: name of project
-        xls: true
+    url-args:
+        'name': string name of function in dataio
+        'args': list of arguments for the function
     """
     file = request.files['file']
     filename = secure_filename(file.filename)

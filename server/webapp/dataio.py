@@ -34,7 +34,7 @@ from .dbconn import db
 from . import parse
 from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
     UserAlreadyExists, UserDoesNotExist, InvalidCredentials
-from .dbmodels import UserDb, ProjectDb, ResultsDb, ProjectDataDb, PyObjectDb
+from .dbmodels import UserDb, ProjectDb, ResultsDb, PyObjectDb
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 
 
@@ -120,7 +120,7 @@ def parse_user_record(user_record):
 
 
 def get_user_summaries():
-    return [parse_user_record(q) for q in UserDb.query.all()]
+    return {'users': [parse_user_record(q) for q in UserDb.query.all()]}
 
 
 def nullable_email(email_str):
@@ -341,15 +341,11 @@ def load_project_name(project_id):
     return load_project(project_id).name
 
 
-def update_project(project, db_session=None):
-    if db_session is None:
-        db_session = db.session
+def save_project(project):
     project_record = load_project_record(project.uid)
     project_record.save_obj(project)
-    project.modified = datetime.now(dateutil.tz.tzutc())
-    project_record.updated = project.modified
-    db_session.add(project_record)
-    db_session.commit()
+    db.session.add(project_record)
+    db.session.commit()
 
 
 def update_project_with_fn(project_id, update_project_fn, db_session=None):
@@ -386,12 +382,18 @@ def load_project_summary(project_id):
     return load_project_summary_from_project_record(project_entry)
 
 
-def load_project_summaries(user_id=None):
-    if user_id is None:
-        query = ProjectDb.query
-    else:
-        query = ProjectDb.query.filter_by(user_id=current_user.id)
-    return map(load_project_summary_from_project_record, query.all())
+def load_current_user_project_summaries():
+    query = ProjectDb.query.filter_by(user_id=current_user.id)
+    return {'projects': map(load_project_summary_from_project_record, query.all())}
+
+
+def load_all_project_summaries():
+    query = ProjectDb.query
+    return {'projects': map(load_project_summary_from_project_record, query.all())}
+
+
+def get_default_populations():
+    return {'populations': parse.get_default_populations()}
 
 
 def create_project_with_spreadsheet_download(user_id, project_summary):
@@ -431,6 +433,47 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     return project.uid, upload_dir_user(TEMPLATEDIR), new_project_template
 
 
+def create_project(user_id, project_summary):
+    """
+    Creates a project from project_summary and returns
+    - project_id
+    - directory_of_template_spreadsheet
+    - template_spreadsheet_filename)
+    """
+    project_entry = ProjectDb(user_id=user_id)
+    db.session.add(project_entry)
+    db.session.flush()
+
+    project = op.Project(name=project_summary["name"])
+    project.created = datetime.now(dateutil.tz.tzutc())
+    project.modified = datetime.now(dateutil.tz.tzutc())
+    project.uid = project_entry.id
+
+    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
+    project.data["pops"] = data_pops
+    project.data["npops"] = len(data_pops)
+
+    project_entry.save_obj(project)
+    db.session.commit()
+
+    return {'projectId': str(project.uid)}
+
+
+def download_template(project_summary):
+    new_project_template = secure_filename(
+        "{}.xlsx".format(project_summary['name']))
+    path = templatepath(new_project_template)
+    op.makespreadsheet(
+        path,
+        pops=project_summary['populations'],
+        datastart=project_summary['startYear'],
+        dataend=project_summary['endYear'])
+
+    print("> create_project_with_spreadsheet_download %s" % new_project_template)
+
+    return path
+
+
 def delete_projects(project_ids):
     for project_id in project_ids:
         record = load_project_record(project_id, raise_exception=True)
@@ -438,12 +481,12 @@ def delete_projects(project_ids):
     db.session.commit()
 
 
-def update_project_from_summary(project_id, project_summary, is_delete_data):
+def update_project_from_summary(project_summary, is_delete_data=False):
     """
     Updates a project from project summary and returns an instance of that
     project
     """
-    project_entry = load_project_record(project_id)
+    project_entry = load_project_record(project_summary['id'])
     project = project_entry.load()
     project.restorelinks()
 
@@ -455,10 +498,9 @@ def update_project_from_summary(project_id, project_summary, is_delete_data):
     db.session.add(project_entry)
     db.session.commit()
 
-    return project
-
 
 def download_data_spreadsheet(project_id, is_blank=True):
+    print ">> download_data_spreadsheet init"
     project = load_project(project_id)
     project_summary = parse.get_project_summary_from_project(project)
     new_project_template = secure_filename(
@@ -473,29 +515,6 @@ def download_data_spreadsheet(project_id, is_blank=True):
     else:
         op.makespreadsheet(path, data=project.data)
     return path
-
-
-def update_project_followed_by_template_data_spreadsheet(
-        project_id, project_summary, is_delete_data):
-    """
-    Returns (dirname, basename) of template data spreadsheet on the server
-    """
-    project = update_project_from_summary(project_id, project_summary, is_delete_data)
-    project.restorelinks()
-
-    secure_project_name = secure_filename(project.name)
-    new_project_template = secure_project_name
-    path = templatepath(secure_project_name)
-    op.makespreadsheet(
-        path,
-        pops=project_summary['populations'],
-        datastart=project_summary["startYear"],
-        dataend=project_summary["endYear"])
-
-    (dirname, basename) = (
-        upload_dir_user(TEMPLATEDIR), new_project_template)
-
-    return dirname, basename
 
 
 def save_project_as_new(project, user_id):
@@ -578,7 +597,7 @@ def copy_project(project_id, new_project_name):
 
 def get_unique_name(name, other_names=None):
     if other_names is None:
-        other_names = [p['name'] for p in load_project_summaries()]
+        other_names = [p['name'] for p in load_current_user_project_summaries()]
     i = 0
     unique_name = name
     while unique_name in other_names:
@@ -587,11 +606,11 @@ def get_unique_name(name, other_names=None):
     return unique_name
 
 
-def create_project_from_prj(prj_filename, user_id, other_names):
+def create_project_from_prj_file(prj_filename, user_id, other_names):
     """
     Returns the project id of the new project.
     """
-    print(">> create_project_from_prj '%s'" % prj_filename)
+    print(">> create_project_from_prj_file '%s'" % prj_filename)
     project = op.loadproj(prj_filename)
     project.name = get_unique_name(project.name, other_names)
     resolve_project(project)
@@ -655,7 +674,7 @@ def update_project_from_prj(project_id, prj_filename):
     db.session.commit()
 
 
-def update_project_from_data_spreadsheet(project_id, spreadsheet_fname):
+def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
     update_project_with_fn(project_id, modify)
@@ -846,19 +865,6 @@ def upload_project_object(filename, project_id, obj_type):
 #############################################################################################
 ### SPREADSHEETS
 #############################################################################################
-
-def load_data_spreadsheet_binary(project_id):
-    """
-    Returns (full_filename, binary_string) of the previously downloaded spreadhseet
-    """
-    data_record = ProjectDataDb.query.get(project_id)
-    if data_record is not None:
-        binary = data_record.meta
-        if len(binary.meta) > 0:
-            project = load_project(project_id)
-            server_fname = secure_filename('{}.xlsx'.format(project.name))
-            return server_fname, binary
-    return None, None
 
 
 def load_template_data_spreadsheet(project_id):
@@ -1080,6 +1086,8 @@ def copy_parset(project_id, parset_id, new_parset_name):
 
     update_project_with_fn(project_id, update_project_fn)
 
+    return load_parset_summaries(project_id)
+
 
 def delete_parset(project_id, parset_id):
 
@@ -1113,6 +1121,8 @@ def create_parset(project_id, new_parset_name):
 
     update_project_with_fn(project_id, update_project_fn)
 
+    return load_parset_summaries(project_id)
+
 
 def refresh_parset(project_id, parset_id):
 
@@ -1127,11 +1137,11 @@ def refresh_parset(project_id, parset_id):
 
 def load_parset_summaries(project_id):
     project = load_project(project_id)
-    return parse.get_parset_summaries(project)
+    return {"parsets": parse.get_parset_summaries(project)}
 
 
 def load_project_parameters(project_id):
-    return parse.get_parameters_for_edit_program(load_project(project_id))
+    return {'parameters': parse.get_parameters_for_edit_program(load_project(project_id)) }
 
 
 def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
@@ -1176,7 +1186,7 @@ def load_parset_graphs(
         parset.modified = datetime.now(dateutil.tz.tzutc())
         parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
-        update_project(project)
+        save_project(project)
         result = None
 
     if result is None:
@@ -1217,7 +1227,7 @@ def load_target_popsizes(project_id, parset_id, progset_id, program_id):
 
 def load_project_program_summaries(project_id):
     project = load_project(project_id, raise_exception=True)
-    return parse.get_default_program_summaries(project)
+    return { 'programs': parse.get_default_program_summaries(project) }
 
 
 def load_progset_summary(project_id, progset_id):
@@ -1388,7 +1398,7 @@ def any_optimizable(project_id):
             optimizable = True
         
     print('>> any_optimizable for %s: %s' % (project.name, optimizable))
-    return optimizable
+    return {'anyOptimizable': optimizable}
 
 
 #############################################################################################
@@ -1462,7 +1472,7 @@ def load_scenario_summaries(project_id):
 
 def load_startval_for_parameter(project_id, parset_id, par_short, pop, year):
     project = load_project(project_id)
-    return parse.get_startval_for_parameter(project, parset_id, par_short, pop, year)
+    return {'startVal': parse.get_startval_for_parameter(project, parset_id, par_short, pop, year)}
 
 
 
@@ -1592,7 +1602,7 @@ def load_portfolio_summaries(db_session=None):
 
     summaries = map(parse.get_portfolio_summary, portfolios)
 
-    return summaries
+    return {'portfolios': summaries}
 
 
 def save_portfolio(portfolio, db_session=None):
@@ -1737,13 +1747,16 @@ def make_region_template_spreadsheet(project_id, n_region, year):
     project = project_record.load()
     project.restorelinks()
     xlsx_fname = op.makegeospreadsheet(project=project, folder=dirname, copies=n_region, refyear=year)
-    return os.path.split(xlsx_fname)
+    return xlsx_fname
 
 
-def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
+def make_region_projects(spreadsheet_fname, project_id):
     """
     Return (dirname, basename) of the region template spreadsheet on the server
     """
+
+    project_summaries = load_current_user_project_summaries()['projects']
+    existing_prj_names = [p['name'] for p in project_summaries]
 
     print("> make_region_projects from %s %s" % (project_id, spreadsheet_fname))
     project_record = load_project_record(project_id)
@@ -1759,10 +1772,11 @@ def make_region_projects(project_id, spreadsheet_fname, existing_prj_names=[]):
         while prj_name in existing_prj_names:
             prj_name = prj_name + ' (%d)' % i
             i += 1
-        create_project_from_prj(None, prj_name, current_user.id, project=project)
+        project.name = prj_name
+        save_project_as_new(project, current_user.id)
         prj_names.append(prj_name)
 
-    return prj_names
+    return { 'prjNames': prj_names }
 
 
 

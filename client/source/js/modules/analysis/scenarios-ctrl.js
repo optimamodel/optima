@@ -4,11 +4,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisScenariosController', function (
-      $scope, $http, $modal, $state, projectApi, modalService, toastr, util) {
+      $scope, $modal, $state, projectService, modalService, toastr, utilService) {
 
     function initialize() {
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectApi.project.id)) {
+      $scope.$watch('projectService.project.id', function() {
+        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectService.project.id)) {
           reloadActiveProject();
         }
       });
@@ -16,7 +16,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function reloadActiveProject() {
-      projectApi
+      projectService
         .getActiveProject()
         .then(function(response) {
           $scope.project = response.data;
@@ -26,21 +26,25 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           };
           $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
           $scope.isMissingData = !$scope.project.hasParset;
-          return $http.get('/api/project/'+$scope.project.id+'/parsets')
+
+          return utilService.rpcRun('load_parset_summaries', [$scope.project.id]);
         })
         .then(function(parsetResponse) {
           $scope.parsets = parsetResponse.data.parsets;
-          return $http.get('/api/project/' + $scope.project.id + '/progsets');
+
+          return utilService.rpcRun('load_progset_summaries', [$scope.project.id]);
         })
         .then(function(progsetsResponse) {
           $scope.progsets = progsetsResponse.data.progsets;
+
           $scope.anyOptimizable = false;
-          return $http.get('/api/project/' + $scope.project.id + '/optimizable')
+          return utilService.rpcRun('any_optimizable', [$scope.project.id]);
         })
         .then(function (response) {
-          $scope.anyOptimizable = response.data;
+          $scope.anyOptimizable = response.data.anyOptimizable;
           console.log('anyoptimizable', $scope.anyOptimizable);
-          return $http.get('/api/project/'+$scope.project.id+'/scenarios');
+
+          return utilService.rpcRun('load_scenario_summaries', [$scope.project.id]);
         })
         .then(function(scenariosResponse) {
           console.log("scenarios response", scenariosResponse.data);
@@ -62,23 +66,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.saveScenarios = function(scenarios, successMsg) {
       delete $scope.state.graphs;
       console.log("saving scenarios", scenarios);
-      $http
-        .put(
-          '/api/project/' + $scope.project.id + '/scenarios',
-          {'scenarios': scenarios })
-        .success(function (response) {
-          loadScenarios(response.scenarios);
-          if (successMsg) {
-            toastr.success(successMsg)
-          }
-        });
+      utilService.rpcRun(
+        'save_scenario_summaries', [$scope.project.id, scenarios])
+      .then(function (response) {
+        loadScenarios(response.data.scenarios);
+        if (successMsg) {
+          toastr.success(successMsg)
+        }
+      });
     };
 
     $scope.downloadScenario = function(scenario) {
-      util
+      utilService
         .rpcDownload(
           'download_project_object',
-          [projectApi.project.id, 'scenario', scenario.id])
+          [projectService.project.id, 'scenario', scenario.id])
         .then(function(response) {
           toastr.success('Scenario downloaded');
         });
@@ -86,7 +88,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.uploadScenario = function(scenario) {
-      util
+      utilService
         .rpcUpload(
           'upload_project_object', [projectApi.project.id, 'scenario'], {}, '.scn')
         .then(function(response) {
@@ -117,17 +119,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         isRun = false;
       }
       delete $scope.graphs;
-      $http
-        .post(
-          '/api/project/' + $scope.project.id + '/scenarios/results',
+      utilService
+        .rpcRun(
+          'make_scenarios_graphs',
+          [$scope.project.id],
           {
             which: getSelectors(),
-            isRun: isRun,
-            start: $scope.state.start,
-            end: $scope.state.end
+            is_run: isRun,
+            startYear: $scope.state.start,
+            endYear: $scope.state.end
           })
-        .success(function (data) {
-          $scope.state.graphs = data.graphs;
+        .then(function(response) {
+          $scope.state.graphs = response.data.graphs;
           toastr.success('Loaded graphs');
         });
     };

@@ -2,15 +2,15 @@ define(['angular' ], function (angular) {
   'use strict';
 
   /**
-   * GlobalPoller provide generic services to run polling tasks
+   * pollerService provide generic services to run polling tasks
    * on a URL. It expects a return JSON data structure
    * { 'status': 'started' } to continue polling, otherwise it
    * sends the response to `callback`
    */
 
-  return angular.module('app.common.global-poller', [])
+  return angular.module('app.common.poller-service', [])
 
-    .factory('globalPoller', ['$http', '$timeout', function($http, $timeout) {
+    .factory('pollerService', ['$timeout', 'utilService', function($timeout, utilService) {
 
       var polls = {};
 
@@ -22,31 +22,36 @@ define(['angular' ], function (angular) {
         return polls[id];
       }
 
-      function startPoll(id, url, callback) {
-        var poll = getPoll(id);
-        poll.url = url;
+      function startPollForRpc(pyobjectId, taskId, callback) {
+        var pollId = pyobjectId + ":" + taskId;
+        var poll = getPoll(pollId);
         poll.callback = callback;
 
+        console.log('startPollForRpc checking', poll.id);
+
         if (!poll.isRunning) {
-          console.log('Launch polling for', poll.id);
+          console.log('startPollForRpc launch', poll.id);
           poll.isRunning = true;
 
           function pollWithTimeout() {
-            var poll = getPoll(id);
-            $http
-              .get(poll.url)
-              .success(function(response) {
-                if (response.status === 'started') {
-                  poll.timer = $timeout(pollWithTimeout, 1000);
-                } else {
-                  stopPoll(id);
-                }
-                poll.callback(response);
-              })
-              .error(function(response) {
-                stopPoll(id);
-                poll.callback(response);
-              });
+            var poll = getPoll(pollId);
+            utilService
+              .rpcAsyncRun(
+                'check_calculation_status', [pyobjectId, taskId])
+              .then(
+                function(response) {
+                  var status = response.data.status;
+                  if (status === 'started') {
+                    poll.timer = $timeout(pollWithTimeout, 1000);
+                  } else {
+                    stopPoll(pollId);
+                  }
+                  poll.callback(response);
+                },
+                function(response) {
+                  stopPoll(pollId);
+                  poll.callback(response);
+                });
           }
 
           pollWithTimeout();
@@ -72,15 +77,9 @@ define(['angular' ], function (angular) {
         });
       }
 
-      function killJob(projectId, workType) {
-        $http
-          .delete('/api/task/' + projectId + '/type/' + workType);
-      }
-
       return {
-        startPoll: startPoll,
+        startPollForRpc: startPollForRpc,
         stopPolls: stopPolls,
-        killJob: killJob
       };
 
     }]);

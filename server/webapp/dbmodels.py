@@ -124,7 +124,7 @@ class ProjectDb(db.Model):
         for work_log in work_logs:
             work_log.cleanup()
         work_logs.delete(synchronize_session)
-        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
+        # db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.flush()
 
@@ -132,23 +132,9 @@ class ProjectDb(db.Model):
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
         self.delete_dependent_objects(synchronize_session=synchronize_session)
-        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
+        # db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.flush()
-
-
-class ProjectDataDb(db.Model):  # pylint: disable=R0903
-
-    __tablename__ = 'project_data'
-
-    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
-    meta = deferred(db.Column(db.LargeBinary))
-    updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
-
-    def __init__(self, project_id, meta, updated=None):
-        self.id = project_id
-        self.meta = meta
-        self.updated = updated
 
 
 class ResultsDb(db.Model):

@@ -24,7 +24,7 @@
       <tbody>
       <tr
           ng-repeat="project in user.projects | orderBy: 'name'"
-          ng-class="{highlighted: activeProjectId === project.id}">
+          ng-class="{highlighted: projectService.project.id === project.id}">
         <td>
           {{ ::project.name }}
         </td>
@@ -44,17 +44,20 @@
           <button class="btn" ng-click="open(project.name, project.id)">Open</button>
         </td>
         <td>
-          <button class="btn" ng-click="edit(project.name, project.id)">Edit</button>
+          <button class="btn" ng-click="editProjectName(project)">Rename</button>
         </td>
         <td>
-          <button class="btn" ng-click="getData(project.name, project.id)">Download</button>
+          <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
         </td>
         <td>
-          <button class="btn" ng-click="workbook(project.name, project.id)">Download template data spreadsheet
+          <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download spreadsheet</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="downloadProject(project.name, project.id)">Download project
           </button>
         </td>
         <td>
-          <button class="btn" ng-click="remove($event, user, project.name, project.id, $index)">Delete</button>
+          <button class="btn" ng-click="deleteProject(project.id)">Delete</button>
         </td>
       </tr>
       </tbody>

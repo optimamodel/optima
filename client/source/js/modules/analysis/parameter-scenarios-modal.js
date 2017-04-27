@@ -4,8 +4,8 @@ define(['angular'], function (module) {
 
   return angular.module('app.parameter-scenarios-modal', [])
     .controller('ParameterScenariosModalController', function (
-        $scope, $modalInstance, $http, project, scenarios, scenario, parsets,
-        progsets, parsByParsetId, years) {
+        $scope, $modalInstance, project, scenarios, scenario, parsets,
+        progsets, parsByParsetId, utilService, years) {
 
       function initialize() {
         $scope.parsets = parsets;
@@ -77,20 +77,19 @@ define(['angular'], function (module) {
       }
 
       function loadStartVal(scenPar) {
-        var payload = {
-          projectId: project.id,
-          parsetId: $scope.scenario.parset_id,
-          parShort: scenPar.name,
-          pop: scenPar.for,
-          year: scenPar.startyear
-        };
-        console.log('loadStartVal', payload);
-        $http
-          .post(
-            '/api/startval', payload)
-          .success(function(data) {
-            console.log('loadStartVal', data);
-            scenPar.startval = data;
+        utilService
+          .rpcRun(
+            'load_startval_for_parameter',
+            [
+              project.id,
+              $scope.scenario.parset_id,
+              scenPar.name,
+              scenPar.for,
+              scenPar.startyear
+            ])
+          .then(function(response) {
+            console.log('loadStartVal', response.data.startVal);
+            scenPar.startval = response.data.startVal;
           });
       }
 

@@ -5,7 +5,7 @@ define(['angular'], function (angular) {
   return angular
     .module('app.ui.menu', ['app.user-manager'])
     .directive('menu', function(
-      $state, userManager, projectApi, modalService, $http) {
+      $state, userManager, projectService, utilService, modalService) {
 
       return {
         restrict: 'A',
@@ -25,7 +25,7 @@ define(['angular'], function (angular) {
           };
 
           $scope.goIfProjectActive = function(stateName) {
-            if(projectApi.isActiveProjectSet()){
+            if(projectService.isActiveProjectSet()){
               console.log('current state', $state.current.name, '->', stateName);
               $state.go(stateName);
             } else {
@@ -39,9 +39,11 @@ define(['angular'], function (angular) {
           };
 
           $scope.logout = function() {
-            $http
-              .get('/api/user/logout')
-              .success(function() { window.location.reload(); });
+            utilService
+              .rpcRun('do_logout_current_user')
+              .then(function() {
+                 window.location.reload();
+              })
           };
 
         }]

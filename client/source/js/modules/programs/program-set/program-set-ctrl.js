@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function (
-      $scope, $http, $modal, modalService, toastr, projectApi, $upload, $state, util) {
+      $scope, $modal, modalService, toastr, projectService, $upload, $state, utilService) {
 
     var project;
     var defaultPrograms;
@@ -10,10 +10,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     function initialize() {
       $scope.state = {};
-      $scope.projectApi = projectApi;
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined(project) && (project.id !== projectApi.project.id)) {
-          console.log('ProgramSetController project-change', projectApi.project.name);
+      $scope.projectService = projectService;
+      $scope.$watch('projectService.project.id', function() {
+        if (!_.isUndefined(project) && (project.id !== projectService.project.id)) {
+          console.log('ProgramSetController project-change', projectService.project.name);
           reloadActiveProject();
         }
       });
@@ -21,7 +21,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function reloadActiveProject() {
-      projectApi
+      projectService
         .getActiveProject()
         .then(function(response) {
           project = response.data;
@@ -30,28 +30,32 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           if ($scope.isMissingData) {
             return;
           }
-          return $http.get('/api/project/' + project.id + '/progsets');
+
+          // Load program sets; set first as active
+          return utilService.rpcRun('load_progset_summaries', [project.id])
         })
         .then(function(response) {
-          // Load program sets; set first as active
           var data = response.data;
           if (data.progsets) {
             $scope.programSetList = data.progsets;
             console.log("ProgramSetController.init progsets", $scope.programSetList);
+            // Set first as active
             if (data.progsets && data.progsets.length > 0) {
               $scope.state.activeProgramSet = data.progsets[0];
             }
           }
-          return projectApi.getDefaultPrograms(project.id)
-        })
-        .then(function(response) {
+
           // Load a default set of inactive programs for new
-          defaultPrograms = response.data;
-          console.log("ProgramSetController.init defaultPrograms", defaultPrograms);
-          return $http.get('/api/project/' + project.id + '/parameters')
+          return projectService.getDefaultPrograms(project.id)
         })
         .then(function(response) {
+          defaultPrograms = response.data.programs;
+          console.log("ProgramSetController.init defaultPrograms", defaultPrograms);
+
           // Load parameters that can be used to set custom programs
+          return utilService.rpcRun('load_project_parameters', [project.id]);
+        })
+        .then(function(response) {
           parameters = response.data.parameters;
           console.log("ProgramSetController.init parameters", parameters);
         });
@@ -92,16 +96,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         function rename(name) {
-        // Load parameters that can be used to set custom programs
-        $http
-          .put(
-            '/api/project/' + project.id
-              + '/progset/' + $scope.state.activeProgramSet.id
-              + '/rename',
-            { newName: name })
-          .success(function(response) {
-            $scope.state.activeProgramSet.name = name;
-          });
+          utilService
+            .rpcRun(
+              'rename_progset', [project.id, $scope.state.activeProgramSet.id, name])
+            .then(function(response) {
+              $scope.state.activeProgramSet.name = name;
+            });
         }
         var name = $scope.state.activeProgramSet.name;
         var otherNames = _.pluck($scope.programSetList, 'name');
@@ -117,26 +117,26 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadProgramSet = function() {
-      util
+      utilService
         .rpcDownload(
           'download_project_object',
-          [projectApi.project.id, 'progset', $scope.state.activeProgramSet.id])
+          [projectService.project.id, 'progset', $scope.state.activeProgramSet.id])
         .then(function(response) {
           toastr.success('Progset downloaded');
         });
     };
 
     $scope.uploadProgramSet = function() {
-      util
+      utilService
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'progset'], {}, '.prg')
+          'upload_project_object', [projectService.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
           toastr.success('Progset uploaded');
           var name = response.data.name;
-          $http
-            .get('/api/project/' + project.id + '/progsets')
+
+          utilService
+            .rpcRun('load_progset_summaries', [projectService.project.id])
             .then(function(response) {
-              // Load program sets; set first as active
               var data = response.data;
               if (data.progsets) {
                 $scope.programSetList = data.progsets;
@@ -178,10 +178,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       modalService.confirm(
         function () {
-          $http
-            .delete(
-              '/api/project/' + project.id +  '/progset' + '/' + $scope.state.activeProgramSet.id)
-            .success(
+          utilService
+            .rpcRun(
+              'delete_progset', [project.id, $scope.state.activeProgramSet.id])
+            .then(
               deleteProgramSetFromPage);
         },
         function () {},
@@ -198,13 +198,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         function copy(name) {
-          $http
-            .post(
-              '/api/project/' + project.id
-              + '/progset/' + $scope.state.activeProgramSet.id,
-              {name: name})
-            .success(function(response) {
-              $scope.programSetList = response.progsets;
+          utilService
+            .rpcRun(
+              'copy_progset', [project.id, $scope.state.activeProgramSet.id, name])
+            .then(function(response) {
+              $scope.programSetList = response.data.progsets;
               console.log("loaded program sets", $scope.programSetList);
               $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
             });
@@ -215,10 +213,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    $scope.saveActiveProgramSet = function(msg) {
-      if (!msg) {
-        msg = 'Changes saved';
-      }
+    $scope.saveActiveProgramSet = function(successMessage) {
       var programSet = $scope.state.activeProgramSet;
       console.log('saveActiveProgramSet', programSet);
       if (!programSet || !programSet.name) {
@@ -228,23 +223,29 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           'Please create a new program set before trying to save it.',
           'Cannot proceed'
         );
+        return;
+      }
+
+      if (!successMessage) {
+        successMessage = 'Changes saved';
+      }
+      if (programSet.id) {
+        utilService
+          .rpcRun(
+            'save_progset', [project.id, programSet.id, programSet])
+          .then(function(response) {
+            $scope.state.activeProgramSet.id = response.data.id;
+            toastr.success(successMessage);
+          });
       } else {
-        var method, url;
-        if (programSet.id) {
-          method = 'PUT';
-          url = '/api/project/' + project.id + '/progset/' + programSet.id;
-        } else {
-          method = 'POST';
-          url = '/api/project/' + project.id + '/progsets';
-        }
-        $http(
-          {url: url, method: method, data: programSet})
-        .success(function (response) {
-          if(response.id) {
-            $scope.state.activeProgramSet.id = response.id;
-          }
-          toastr.success(msg);
-        });
+        utilService
+          .rpcRun(
+            'create_progset', [project.id, programSet])
+          .then(function(response) {
+            console.log('saveActiveProgramSet create', response);
+            _.assign($scope.state.activeProgramSet, response.data);
+            toastr.success(successMessage);
+          });
       }
     };
 

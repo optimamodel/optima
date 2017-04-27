@@ -5,9 +5,9 @@ define(['angular' ], function (angular) {
    * utility services until split off into own modules
    */
 
-  return angular.module('app.util', [])
+  return angular.module('app.common.util-service', [])
 
-    .factory('util',
+    .factory('utilService',
       ['$http', '$q', '$timeout', '$upload', function($http, $q, $timeout, $upload) {
 
       function consoleLogCommand(type, name, args, kwargs) {
@@ -24,6 +24,12 @@ define(['angular' ], function (angular) {
         consoleLogCommand("run", name, args, kwargs)
         return $http.post(
           '/api/procedure', { name: name, args: args, kwargs: kwargs });
+      }
+
+      function rpcAsyncRun(name, args, kwargs) {
+        consoleLogCommand("asyncRun", name, args, kwargs)
+        return $http.post(
+          '/api/task', { name: name, args: args, kwargs: kwargs });
       }
 
       function rpcDownload(name, args, kwargs) {
@@ -102,6 +108,7 @@ define(['angular' ], function (angular) {
 
       return {
         rpcRun: rpcRun,
+        rpcAsyncRun: rpcAsyncRun,
         rpcDownload: rpcDownload,
         rpcUpload: rpcUpload,
         getUniqueName: getUniqueName

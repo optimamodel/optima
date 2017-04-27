@@ -3,8 +3,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function (
-      $scope, $http, modalService, $upload, util,
-      $modal, $timeout, toastr, projectApi, globalPoller) {
+      $scope, modalService, utilService, $modal, $timeout, toastr,
+      projectService, pollerService) {
 
     function initialize() {
       $scope.parsets = [];
@@ -19,16 +19,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       reloadActiveProject();
 
-      $scope.projectApi = projectApi;
-      $scope.$watch('projectApi.project.id', function() {
-        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectApi.project.id)) {
+      $scope.projectService = projectService;
+      $scope.$watch('projectService.project.id', function() {
+        if (!_.isUndefined($scope.project) && ($scope.project.id !== projectService.project.id)) {
           reloadActiveProject();
         }
       });
     }
 
     function reloadActiveProject() {
-      projectApi
+      projectService
         .getActiveProject()
         .then(function(response) {
           $scope.project = response.data;
@@ -48,10 +48,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.state.endYear = $scope.years[defaultindex];
 
           // Fetching list of parsets for open project
-          $http
-            .get('/api/project/' + $scope.project.id + '/parsets')
-            .success(function(response) {
-              var parsets = response.parsets;
+          utilService
+            .rpcRun(
+              'load_parset_summaries', [$scope.project.id])
+            .then(function(response) {
+              var parsets = response.data.parsets;
               if (parsets) {
                 $scope.parsets = parsets;
                 $scope.state.parset = getMostRecentItem(parsets, 'updated');
@@ -98,51 +99,56 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
-      $http
-        .post(
-          '/api/project/' + projectApi.project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/calibration',
-          {
-            which: getSelectors(),
-          })
-        .success(function(response) {
-          loadParametersAndGraphs(response);
-          toastr.success('Loaded graphs');
-          console.log('getCalibrationGraphs', response.graphs);
-          $scope.statusMessage = '';
-          $scope.state.isRunnable = true;
-        })
-        .error(function() {
-          $scope.state.isRunnable = false;
-          toastr.error('Error in loading graphs');
-        });
+      utilService
+        .rpcRun(
+          'load_parset_graphs',
+          [projectService.project.id, $scope.state.parset.id,
+          "calibration", getSelectors()])
+        .then(
+          function(response) {
+            loadParametersAndGraphs(response.data);
+            toastr.success('Loaded graphs');
+            console.log('getCalibrationGraphs', response.graphs);
+            $scope.statusMessage = '';
+            $scope.state.isRunnable = true;
+          },
+          function(response) {
+            $scope.state.isRunnable = false;
+            toastr.error('Error in loading graphs');
+          });
     };
 
     $scope.saveAndUpdateGraphs = function() {
-      // if ($scope.calibrateForm.$invalid) {
-      //   console.log('saveAndUpdateGraphs is invalid')
-      //   return;
-      // }
       if (!$scope.parameters) {
         return;
       }
       console.log('saveAndUpdateGraphs', $scope.parameters);
-      $http
-        .post(
-          '/api/project/' + projectApi.project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/calibration',
+      utilService
+        .rpcRun(
+          'load_parset_graphs',
+          [
+            projectService.project.id,
+            $scope.state.parset.id,
+            "calibration",
+            getSelectors(),
+            $scope.parameters
+          ],
           {
-            parameters: $scope.parameters,
-            which: getSelectors(),
             startYear: $scope.state.startYear,
             endYear: $scope.state.endYear
           })
-        .success(function(response) {
-          toastr.success('Updated parameters and loaded graphs');
-          loadParametersAndGraphs(response);
-        });
+        .then(
+          function(response) {
+            loadParametersAndGraphs(response.data);
+            toastr.success('Loaded graphs');
+            console.log('getCalibrationGraphs', response.graphs);
+            $scope.statusMessage = '';
+            $scope.state.isRunnable = true;
+          },
+          function(response) {
+            $scope.state.isRunnable = false;
+            toastr.error('Error in loading graphs');
+          });
     };
 
     $scope.changeParameter = function(parameter) {
@@ -151,18 +157,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.addParameterSet = function() {
       function add(name) {
-        $http
-          .post(
-            '/api/project/' + projectApi.project.id + '/parsets',
-            {name: name})
-          .success(function(response) {
-            $scope.parsets = response;
-            $scope.state.parset = response[response.length - 1];
+        utilService
+          .rpcRun(
+            'create_parset', [projectService.project.id, name])
+          .then(function(response) {
+            $scope.parsets = response.data.parsets;
+            $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
             toastr.success('Created parset');
             $scope.setActiveParset();
           });
       }
-
       modalService.rename(
         add, 'Add parameter set', 'Enter name', '',
         'Name already exists',
@@ -174,23 +178,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError(
           [{message: 'No parameter set selected.'}]);
       } else {
-        function copy(name) {
-          $http
-            .post(
-              '/api/project/' + projectApi.project.id + '/parsets',
-              {
-                name: name,
-                parset_id: $scope.state.parset.id
-              })
-            .success(function(response) {
-              $scope.parsets = response;
-              $scope.state.parset = response[response.length - 1];
-              toastr.success('Copied parset');
-            });
-        }
         var names = _.pluck($scope.parsets, 'name');
         var name = $scope.state.parset.name;
-        copy(modalService.getUniqueName(name, names));
+        var newName = modalService.getUniqueName(name, names);
+        utilService
+          .rpcRun(
+            'copy_parset',
+            [
+              projectService.project.id,
+              $scope.state.parset.id,
+              newName])
+          .then(function(response) {
+            $scope.parsets = response.data.parsets;
+            $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
+            toastr.success('Copied parset');
+          });
       }
     };
 
@@ -208,14 +210,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       function rename(name) {
-        $http
-          .put(
-            '/api/project/' + projectApi.project.id
-            + '/parsets/' + $scope.state.parset.id,
-            {name: name})
-          .success(function() {
+        utilService
+          .rpcRun(
+            'rename_parset',
+            [
+              projectService.project.id,
+              $scope.state.parset.id,
+              name])
+          .then(function(response) {
             $scope.state.parset.name = name;
-            toastr.success('Copied parset');
+            toastr.success('Renamed parset');
           });
       }
 
@@ -241,11 +245,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       function remove() {
-        $http
-          .delete(
-            '/api/project/' + projectApi.project.id
-            + '/parsets/' + $scope.state.parset.id)
-          .success(function() {
+        utilService
+          .rpcRun(
+            'delete_parset',
+            [projectService.project.id, $scope.state.parset.id])
+          .then(function(response) {
             $scope.parsets = _.filter(
               $scope.parsets, function(parset) {
                 return parset.id !== $scope.state.parset.id;
@@ -272,10 +276,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.downloadParameterSet = function() {
-      util
+      utilService
         .rpcDownload(
           'download_project_object',
-          [projectApi.project.id, 'parset', $scope.state.parset.id])
+          [projectService.project.id, 'parset', $scope.state.parset.id])
         .then(function(response) {
           toastr.success('Parset downloaded');
         });
@@ -283,16 +287,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.uploadParameterSet = function() {
       console.log('uploadParameterSet');
-      util
+      utilService
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'parset'], {}, '.par')
+          'upload_project_object', [$scope.project.id, 'parset'], {}, '.par')
         .then(function(response) {
           toastr.success('Parset uploaded');
           var name = response.data.name;
-          $http
-            .get('/api/project/' + $scope.project.id + '/parsets')
-            .success(function(response) {
-              var parsets = response.parsets;
+
+          utilService
+            .rpcRun('load_parset_summaries', [$scope.project.id])
+            .then(function(response) {
+              var parsets = response.data.parsets;
               if (parsets) {
                 $scope.parsets = parsets;
                 $scope.state.parset = _.findWhere($scope.parsets, {name: name});
@@ -305,13 +310,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.refreshParset = function() {
       modalService.confirm(
         function () {
-          $http
-            .post(
-              '/api/project/' + projectApi.project.id
-              + '/refreshparset/' + $scope.state.parset.id)
-            .success(function(response) {
-              toastr.success('refreshed parameter set')
-              loadParametersAndGraphs(response);
+          utilService
+            .rpcRun(
+              'refresh_parset', [projectService.project.id, $scope.state.parset.id])
+            .then(function(response) {
+              toastr.success('Parset uploaded');
+              $scope.getCalibrationGraphs();
             });
         },
         function () { },
@@ -330,17 +334,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.setActiveParset = function() {
       if ($scope.state.parset.id) {
-
-        globalPoller.stopPolls();
-
+        pollerService.stopPolls();
         $scope.state.isRunnable = false;
-        $http
-          .get(
-            '/api/project/' + projectApi.project.id
-              + '/parsets/' + $scope.state.parset.id
-              + '/automatic_calibration')
-          .success(function(response) {
-            if (response.status === 'started') {
+        var taskId = 'autofit-' + $scope.state.parset.id;
+        utilService
+          .rpcAsyncRun(
+            'check_calculation_status', [projectService.project.id, taskId])
+          .then(function(response) {
+            var status = response.data.status;
+            if (status === 'started') {
               initPollAutoCalibration();
             } else {
               $scope.statusMessage = 'Checking for pre-calculated figures...';
@@ -353,41 +355,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.startAutoCalibration = function() {
-      var data = {};
-      if ($scope.state.maxtime) {
-        data.maxtime = Number($scope.state.maxtime);
-      }
-      $http
-        .post(
-          '/api/project/' + projectApi.project.id
-            + '/parsets/' + $scope.state.parset.id
-            + '/automatic_calibration',
-          data)
-        .success(function(response) {
-          if (response.status === 'started') {
+      utilService
+        .rpcAsyncRun(
+          'launch_autofit',
+          [projectService.project.id, $scope.state.parset.id, $scope.state.maxtime])
+        .then(function(response) {
+          var status = response.data.status;
+          if (status === 'started') {
             $scope.statusMessage = 'Autofit started.';
             $scope.secondsRun = 0;
             initPollAutoCalibration();
-          } else if (response.status === 'blocked') {
+          } else if (status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
           }
-        })
+        });
     };
 
     function initPollAutoCalibration() {
-      globalPoller.startPoll(
-        $scope.state.parset.id,
-        '/api/project/' + projectApi.project.id
-          + '/parsets/' + $scope.state.parset.id
-          + '/automatic_calibration',
+      var taskId = 'autofit-' + $scope.state.parset.id;
+      pollerService.startPollForRpc(
+        projectService.project.id,
+        taskId,
         function (response) {
-          if (response.status === 'completed') {
+          var status = response.data.status;
+          if (status === 'completed') {
             $scope.statusMessage = '';
             toastr.success('Autofit completed');
             $scope.getCalibrationGraphs();
-          } else if (response.status === 'started') {
-            var start = new Date(response.start_time);
-            var now = new Date(response.current_time);
+          } else if (status === 'started') {
+            var start = new Date(response.data.start_time);
+            var now = new Date(response.data.current_time);
             var diff = now.getTime() - start.getTime();
             var seconds = parseInt(diff / 1000);
             $scope.statusMessage = "Autofit running for " + seconds + " s";
