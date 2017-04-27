@@ -1,8 +1,25 @@
-
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+define([
+  'angular',
+  'ui.router',
+  './parameter-scenarios-modal',
+  './program-scenarios-modal'
+], function (angular) {
 
   'use strict';
 
+  var module = angular.module('app.scenarios', ['ui.router']);
+
+
+  module.config(function ($stateProvider) {
+      $stateProvider
+        .state('scenarios', {
+          url: '/scenarios',
+          templateUrl: 'js/modules/scenarios/scenarios.html' ,
+          controller: 'AnalysisScenariosController'
+        });
+    });
+
+  
   module.controller('AnalysisScenariosController', function (
       $scope, $modal, $state, projectService, modalService, toastr, utilService) {
 
@@ -153,10 +170,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var templateUrl, controller;
       var scenario_type = scenario.scenario_type;
       if ((scenario_type === "budget" ) || (scenario_type === 'coverage')) {
-        templateUrl = 'js/modules/analysis/program-scenarios-modal.html';
+        templateUrl = 'js/modules/scenarios/program-scenarios-modal.html';
         controller = 'ProgramScenariosModalController';
       } else  {
-        templateUrl = 'js/modules/analysis/parameter-scenarios-modal.html';
+        templateUrl = 'js/modules/scenarios/parameter-scenarios-modal.html';
         controller = 'ParameterScenariosModalController';
       }
       return $modal.open({
@@ -239,4 +256,5 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   });
 
+  return module;
 });
