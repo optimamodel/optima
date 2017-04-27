@@ -262,13 +262,13 @@ define(
             'launch_optimization',
             [$scope.state.project.id, optimization.id, parseInt($scope.state.maxtime)])
           .then(function(response) {
-            $scope.task_id = response.data.task_id;
-            if (response.status === 'started') {
+            console.log('startOptimization', response);
+            if (response.data.status === 'blocked') {
+              $scope.statusMessage = 'Another calculation on this project is already running.'
+            } else {
               $scope.statusMessage = 'Optimization started.';
               initPollOptimizations();
-            } else if (response.data.status === 'blocked') {
-              $scope.statusMessage = 'Another calculation on this project is already running.'
-            }
+            };
           });
       };
 
@@ -284,7 +284,6 @@ define(
                 toastr.success('Optimization completed');
                 getOptimizationGraphs();
               } else if (calcState.status === 'started') {
-                $scope.task_id = calcState.task_id;
                 var start = new Date(calcState.start_time);
                 var now = new Date(calcState.current_time);
                 var diff = now.getTime() - start.getTime();
