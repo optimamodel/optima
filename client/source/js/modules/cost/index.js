@@ -1,6 +1,19 @@
-define(['./../module', 'underscore'], function(module, _) {
+define(['angular', 'underscore'], function(angular, _) {
 
-  'use strict';
+
+  var module = angular.module('app.costfunctions', ['ui.router']);
+
+
+  module.config(function ($stateProvider) {
+    $stateProvider
+      .state('costfunctions', {
+        url: '/define-cost-coverage-outcome',
+        controller: 'ModelCostCoverageController as vm',
+        templateUrl: 'js/modules/cost/cost-coverage.html',
+        bindToController: true,
+      });
+  });
+
 
   module.controller(
     'ModelCostCoverageController',
@@ -614,6 +627,8 @@ define(['./../module', 'underscore'], function(module, _) {
       initialize();
 
     });
+
+  return module;
 
 });
 

@@ -21,11 +21,11 @@ define([
           templateUrl: 'js/modules/programs/program-set/program-set.html',
           controller: 'ProgramSetController',
         })
-        .state('programs.define-cost-coverage-outcome', {
-          url: '/define-cost-coverage-outcome',
-          controller: 'ModelCostCoverageController as vm',
-          templateUrl: 'js/modules/programs/cost-coverage/cost-coverage.html',
-          bindToController: true,
-        });
+        // .state('costfunctions', {
+        //   url: '/define-cost-coverage-outcome',
+        //   controller: 'ModelCostCoverageController as vm',
+        //   templateUrl: 'js/modules/programs/cost-coverage/cost-coverage.html',
+        //   bindToController: true,
+        // });
     });
 });

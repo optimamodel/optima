@@ -17,7 +17,7 @@ define(['angular', 'ui.router'], function (angular) {
       .state('optimization', {
         url: '/optimization',
         templateUrl: 'js/modules/optimization/optimization.html',
-        controller: 'AnalysisOptimizationController',
+        controller: 'AnalysisOptimizationController'
       });
   });
 
@@ -525,5 +525,7 @@ define(['angular', 'ui.router'], function (angular) {
     initialize();
 
   });
+
+  return module;
 
 });
