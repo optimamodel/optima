@@ -11,14 +11,14 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
     $stateProvider
       .state('programs', {
         url: '/programs',
-        templateUrl: 'js/modules/programs/program-set.html',
+        templateUrl: 'js/modules/programs/programs.html',
         controller: 'ProgramSetController'
       });
   });
 
 
   module.controller('ProgramSetController', function (
-      $scope, $modal, modalService, toastr, projectService, $upload, $state, utilService) {
+      $scope, $modal, modalService, toastr, projectService, $upload, $state, rpcService) {
 
     var project;
     var defaultPrograms;
@@ -48,7 +48,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
           }
 
           // Load program sets; set first as active
-          return utilService.rpcRun('load_progset_summaries', [project.id])
+          return rpcService.rpcRun('load_progset_summaries', [project.id])
         })
         .then(function(response) {
           var data = response.data;
@@ -69,7 +69,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
           console.log("ProgramSetController.init defaultPrograms", defaultPrograms);
 
           // Load parameters that can be used to set custom programs
-          return utilService.rpcRun('load_project_parameters', [project.id]);
+          return rpcService.rpcRun('load_project_parameters', [project.id]);
         })
         .then(function(response) {
           parameters = response.data.parameters;
@@ -112,7 +112,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         function rename(name) {
-          utilService
+          rpcService
             .rpcRun(
               'rename_progset', [project.id, $scope.state.activeProgramSet.id, name])
             .then(function(response) {
@@ -133,7 +133,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
     };
 
     $scope.downloadProgramSet = function() {
-      utilService
+      rpcService
         .rpcDownload(
           'download_project_object',
           [projectService.project.id, 'progset', $scope.state.activeProgramSet.id])
@@ -143,14 +143,14 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
     };
 
     $scope.uploadProgramSet = function() {
-      utilService
+      rpcService
         .rpcUpload(
           'upload_project_object', [projectService.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
           toastr.success('Progset uploaded');
           var name = response.data.name;
 
-          utilService
+          rpcService
             .rpcRun('load_progset_summaries', [projectService.project.id])
             .then(function(response) {
               var data = response.data;
@@ -194,7 +194,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
 
       modalService.confirm(
         function () {
-          utilService
+          rpcService
             .rpcRun(
               'delete_progset', [project.id, $scope.state.activeProgramSet.id])
             .then(
@@ -214,7 +214,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         function copy(name) {
-          utilService
+          rpcService
             .rpcRun(
               'copy_progset', [project.id, $scope.state.activeProgramSet.id, name])
             .then(function(response) {
@@ -225,7 +225,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
         };
         var names = _.pluck($scope.programSetList, 'name');
         var name = $scope.state.activeProgramSet.name;
-        copy(modalService.getUniqueName(name, names));
+        copy(rpcService.getUniqueName(name, names));
       }
     };
 
@@ -246,7 +246,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
         successMessage = 'Changes saved';
       }
       if (programSet.id) {
-        utilService
+        rpcService
           .rpcRun(
             'save_progset', [project.id, programSet.id, programSet])
           .then(function(response) {
@@ -254,7 +254,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
             toastr.success(successMessage);
           });
       } else {
-        utilService
+        rpcService
           .rpcRun(
             'create_progset', [project.id, programSet])
           .then(function(response) {

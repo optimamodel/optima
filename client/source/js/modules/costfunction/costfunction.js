@@ -1,15 +1,15 @@
 define(['angular', 'underscore', 'toastr'], function(angular, _) {
 
 
-  var module = angular.module('app.costfunctions', ['ui.router', 'toastr']);
+  var module = angular.module('app.cost-functions', ['ui.router', 'toastr']);
 
 
   module.config(function ($stateProvider) {
     $stateProvider
-      .state('costfunctions', {
-        url: '/costfunctions',
+      .state('costfunction', {
+        url: '/cost-function',
         controller: 'ModelCostCoverageController as vm',
-        templateUrl: 'js/modules/cost/cost-coverage.html',
+        templateUrl: 'js/modules/costfunction/cost-function.html',
         bindToController: true,
       });
   });
@@ -17,7 +17,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
 
   module.controller(
     'ModelCostCoverageController',
-    function($scope, toastr, $state, projectService, pollerService, utilService) {
+    function($scope, toastr, $state, projectService, pollerService, rpcService) {
 
       var vm = this;
 
@@ -64,7 +64,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
             console.log('reloadActiveProject init vm.project', vm.project);
 
             // Fetch progsets
-            return utilService.rpcRun('load_progset_summaries', [vm.project.id]);
+            return rpcService.rpcRun('load_progset_summaries', [vm.project.id]);
           })
           .then(function(response) {
             vm.progsets = response.data.progsets;
@@ -72,7 +72,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
             vm.state.progset = vm.progsets[0];
 
             // Fetch parsets
-            return utilService.rpcRun('load_parset_summaries', [vm.project.id]);
+            return rpcService.rpcRun('load_parset_summaries', [vm.project.id]);
           })
           .then(function(response) {
             vm.parsets = response.data.parsets;
@@ -127,7 +127,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       function changeParset() {
         console.log('changeParset', vm.state.parset);
         if (vm.state.progset && vm.state.parset) {
-          utilService.rpcRun(
+          rpcService.rpcRun(
             'load_parameters_from_progset_parset',
             [vm.project.id, vm.state.progset.id, vm.state.parset.id])
           .then(function(response) {
@@ -140,7 +140,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       }
 
       vm.changeProgram = function() {
-        utilService.rpcRun(
+        rpcService.rpcRun(
           'load_target_popsizes',
           [vm.project.id, vm.state.parset.id, vm.state.progset.id, vm.state.program.id])
         .then(function(response) {
@@ -152,7 +152,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       };
 
       function loadReconcileData() {
-        utilService.rpcRun(
+        rpcService.rpcRun(
           'load_reconcile_summary',
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
@@ -187,7 +187,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
         console.log('changeProgsetAndParset program', vm.state.program);
         vm.state.popsizes = {};
 
-        utilService.rpcRun(
+        rpcService.rpcRun(
           'load_reconcile_summary',
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
@@ -195,7 +195,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           console.log('changeProgsetAndParset reoncile', response.data);
 
           // Fetch outcomes for this progset
-          return utilService.rpcRun(
+          return rpcService.rpcRun(
             'load_progset_outcome_summaries', [vm.project.id, vm.state.progset.id]);
         })
         .then(function(response) {
@@ -214,7 +214,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           vm.chartData = null;
           return;
         }
-        utilService
+        rpcService
           .rpcRun(
             'load_costcov_graph',
             [vm.project.id, vm.state.progset.id, vm.state.program.id,
@@ -270,7 +270,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       vm.saveProgram = function() {
         revertCcoparsTable();
         console.log('saveProgram', vm.state.program);
-        utilService
+        rpcService
           .rpcRun(
             'save_program',
             [vm.project.id, vm.state.program.progset_id, vm.state.program])
@@ -399,7 +399,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       };
 
       vm.saveProgsetOutcomes = function() {
-        utilService
+        rpcService
           .rpcRun(
             'save_outcome_summaries',
             [vm.project.id, vm.state.progset.id, getFilteredOutcomes(vm.outcomes)])
@@ -562,7 +562,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       // RECONCILE FUNCTIONS
 
       vm.updateSummary = function() {
-        utilService.rpcRun(
+        rpcService.rpcRun(
           'load_reconcile_summary',
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
@@ -579,7 +579,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       vm.selectSummary = function() {
         var workType = makeWorkType(
           vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
-        utilService
+        rpcService
           .rpcAsyncRun(
             'check_task', [vm.project.id, workType])
           .then(function(response) {
@@ -614,7 +614,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       }
 
       vm.reconcilePrograms = function() {
-        utilService.rpcRun(
+        rpcService.rpcRun(
           'launch_reconcile_calc',
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, Number(vm.state.year), Number(vm.state.maxtime)])
         .success(function(data) {

@@ -1,7 +1,7 @@
 define(['angular' ], function (angular) {
   'use strict';
 
-  var module = angular.module('app.common.icon-directive', []);
+  var module = angular.module('app.icon-directive', []);
 
   // <help ref="section-marker">
 

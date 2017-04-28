@@ -1,10 +1,10 @@
 define(['angular', '../common/local-storage-polyfill'], function (angular) {
   'use strict';
 
-  var module = angular.module('app.common.project-service', []);
+  var module = angular.module('app.project-service', []);
 
   module.service('projectService',
-    ['$http', '$q', 'userManager', 'utilService', function ($http, $q, userManager, utilService) {
+    ['$http', '$q', 'userManager', 'rpcService', function ($http, $q, userManager, rpcService) {
 
     var projectService = {
       projects: [],
@@ -54,7 +54,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function getProjectAndMakeActive(projectId) {
       var deferred = $q.defer();
-      utilService
+      rpcService
         .rpcRun(
           'load_project_summary', [projectId])
         .then(
@@ -80,7 +80,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function getProjectList() {
       var deferred = $q.defer();
-      utilService
+      rpcService
         .rpcRun(
           'load_current_user_project_summaries')
         .then(
@@ -102,12 +102,12 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function createProject(project) {
       var deferred = $q.defer();
-      utilService
+      rpcService
         .rpcRun('create_project', [userManager.user.id, project])
         .then(
           function(response) {
             getProjectAndMakeActive(response.data.projectId);
-            utilService
+            rpcService
               .rpcDownload('download_template', [project])
               .then(
                 function(response) { deferred.resolve(response); },
@@ -122,7 +122,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     function uploadProject() {
       var deferred = $q.defer();
       var otherNames = _.pluck(projectService.projects, 'name');
-      utilService
+      rpcService
         .rpcUpload(
           'create_project_from_prj_file',
           [userManager.user.id, otherNames])
@@ -142,7 +142,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     function uploadProjectFromSpreadsheet() {
       var deferred = $q.defer();
       var otherNames = _.pluck(projectService.projects, 'name');
-      utilService
+      rpcService
         .rpcUpload(
           'create_project_from_spreadsheet',
           [userManager.user.id, otherNames])
@@ -161,7 +161,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function copyProject(projectId, newName) {
       var deferred = $q.defer();
-      utilService
+      rpcService
         .rpcRun(
           'copy_project', [projectId, newName])
         .then(
@@ -180,7 +180,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function renameProject(id, project) {
       var deferred = $q.defer();
-      utilService
+      rpcService
         .rpcRun(
           'update_project_from_summary', [project])
         .then(
@@ -196,7 +196,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     function deleteProjects(projectIds) {
       var deferred = $q.defer();
-      utilService
+      rpcService
         .rpcRun(
           'delete_projects', [projectIds])
         .then(
@@ -242,16 +242,16 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         }
       },
       downloadSelectedProjects: function (projectIds) {
-        return utilService.rpcDownload('load_zip_of_prj_files', [projectIds]);
+        return rpcService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },
       getAllProjectList: function () {
-        return utilService.rpcRun('load_all_project_summaries');
+        return rpcService.rpcRun('load_all_project_summaries');
       },
       getPopulations: function () {
-        return utilService.rpcRun('get_default_populations');
+        return rpcService.rpcRun('get_default_populations');
       },
       getDefaultPrograms: function (projectId) {
-        return utilService.rpcRun('load_project_program_summaries', [projectId]);
+        return rpcService.rpcRun('load_project_program_summaries', [projectId]);
       },
     });
 

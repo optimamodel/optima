@@ -26,7 +26,7 @@ define([
 
   
   module.controller('AnalysisScenariosController', function (
-      $scope, $modal, $state, projectService, modalService, toastr, utilService) {
+      $scope, $modal, $state, projectService, modalService, toastr, rpcService) {
 
     function initialize() {
       $scope.$watch('projectService.project.id', function() {
@@ -49,24 +49,24 @@ define([
           $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
           $scope.isMissingData = !$scope.project.hasParset;
 
-          return utilService.rpcRun('load_parset_summaries', [$scope.project.id]);
+          return rpcService.rpcRun('load_parset_summaries', [$scope.project.id]);
         })
         .then(function(parsetResponse) {
           $scope.parsets = parsetResponse.data.parsets;
 
-          return utilService.rpcRun('load_progset_summaries', [$scope.project.id]);
+          return rpcService.rpcRun('load_progset_summaries', [$scope.project.id]);
         })
         .then(function(progsetsResponse) {
           $scope.progsets = progsetsResponse.data.progsets;
 
           $scope.anyOptimizable = false;
-          return utilService.rpcRun('any_optimizable', [$scope.project.id]);
+          return rpcService.rpcRun('any_optimizable', [$scope.project.id]);
         })
         .then(function (response) {
           $scope.anyOptimizable = response.data.anyOptimizable;
           console.log('anyoptimizable', $scope.anyOptimizable);
 
-          return utilService.rpcRun('load_scenario_summaries', [$scope.project.id]);
+          return rpcService.rpcRun('load_scenario_summaries', [$scope.project.id]);
         })
         .then(function(scenariosResponse) {
           console.log("scenarios response", scenariosResponse.data);
@@ -88,7 +88,7 @@ define([
     $scope.saveScenarios = function(scenarios, successMsg) {
       delete $scope.state.graphs;
       console.log("saving scenarios", scenarios);
-      utilService.rpcRun(
+      rpcService.rpcRun(
         'save_scenario_summaries', [$scope.project.id, scenarios])
       .then(function (response) {
         loadScenarios(response.data.scenarios);
@@ -99,7 +99,7 @@ define([
     };
 
     $scope.downloadScenario = function(scenario) {
-      utilService
+      rpcService
         .rpcDownload(
           'download_project_object',
           [projectService.project.id, 'scenario', scenario.id])
@@ -110,7 +110,7 @@ define([
     };
 
     $scope.uploadScenario = function(scenario) {
-      utilService
+      rpcService
         .rpcUpload(
           'upload_project_object', [projectApi.project.id, 'scenario'], {}, '.scn')
         .then(function(response) {
@@ -141,7 +141,7 @@ define([
         isRun = false;
       }
       delete $scope.graphs;
-      utilService
+      rpcService
         .rpcRun(
           'make_scenarios_graphs',
           [$scope.project.id],
@@ -242,7 +242,7 @@ define([
 
         var newScenario = deepCopyJson(scenario);
         var otherNames = _.pluck($scope.scenarios, 'name');
-        newScenario.name = modalService.getUniqueName(
+        newScenario.name = rpcService.getUniqueName(
           scenario.name, otherNames);
         newScenario.id = null;
         newScenarios.push(newScenario);

@@ -25,7 +25,7 @@ define(['angular', 'ui.router'], function (angular) {
 
   module.controller('AnalysisOptimizationController',
     function($scope, $modal, toastr, modalService, projectService, $timeout,
-             pollerService, utilService, $state) {
+             pollerService, rpcService, $state) {
 
       function initialize() {
 
@@ -67,7 +67,7 @@ define(['angular', 'ui.router'], function (angular) {
           $scope.isMissingData = !project.hasParset;
 
           $scope.anyOptimizable = false;
-          return utilService.rpcRun(
+          return rpcService.rpcRun(
             'any_optimizable', [$scope.state.project.id]);
         })
         .then(function(response) {
@@ -75,18 +75,19 @@ define(['angular', 'ui.router'], function (angular) {
 
           if (!$scope.isMissingData && $scope.anyOptimizable) {
 
-            utilService
+            rpcService
               .rpcRun(
                 'load_progset_summaries', [$scope.state.project.id])
               .then(function(response) {
                 $scope.state.progsets = response.data.progsets;
 
-                return utilService.rpcRun('load_scenario_summaries', [$scope.state.project.id]);
+                return rpcService.rpcRun('load_parset_summaries', [$scope.state.project.id]);
               })
               .then(function(response) {
+                console.log('reloadActiveProject parsets', response);
                 $scope.state.parsets = response.data.parsets;
 
-                return utilService.rpcRun('load_optimization_summaries', [$scope.state.project.id]);
+                return rpcService.rpcRun('load_optimization_summaries', [$scope.state.project.id]);
               })
               .then(function(response) {
                 console.log('reloadActiveProject optims', response.data);
@@ -158,7 +159,7 @@ define(['angular', 'ui.router'], function (angular) {
       // not a new optimization
       if (optimization.id) {
         console.log('selectOptimization check task')
-        utilService
+        rpcService
           .rpcAsyncRun(
             'check_task',
             [$scope.state.project.id, 'optim-' + optimization.id])
@@ -193,7 +194,7 @@ define(['angular', 'ui.router'], function (angular) {
     }
 
     function saveOptimizations() {
-      utilService
+      rpcService
         .rpcRun(
           'save_optimization_summaries',
           [$scope.state.project.id, $scope.state.optimizations])
@@ -219,7 +220,7 @@ define(['angular', 'ui.router'], function (angular) {
 
       var names = _.pluck($scope.state.optimizations, 'name');
       var name = $scope.state.optimization.name;
-      copy(modalService.getUniqueName(name, names));
+      copy(rpcService.getUniqueName(name, names));
     };
 
     $scope.deleteOptimization = function(deleteOptimization) {
@@ -246,7 +247,7 @@ define(['angular', 'ui.router'], function (angular) {
     };
 
     $scope.downloadOptimization = function(optimization) {
-      utilService
+      rpcService
         .rpcDownload(
           'download_project_object',
           [projectService.project.id, 'optimization', optimization.id])
@@ -257,13 +258,13 @@ define(['angular', 'ui.router'], function (angular) {
     };
 
     $scope.uploadOptimization = function(optimization) {
-      utilService
+      rpcService
         .rpcUpload(
           'upload_project_object', [projectService.project.id, 'optimization'], {}, '.opt')
         .then(function(response) {
           toastr.success('Optimization uploaded');
           var name = response.data.name;
-          utilService
+          rpcService
             .rpcRun(
               'load_optimization_summaries', [$scope.state.project.id])
             .then(function(response) {
@@ -277,7 +278,7 @@ define(['angular', 'ui.router'], function (angular) {
 
     $scope.startOptimization = function(optimization) {
       $scope.state.isRunnable = false;
-      utilService
+      rpcService
         .rpcAsyncRun(
           'launch_optimization',
           [$scope.state.project.id, optimization.id, parseInt($scope.state.maxtime)])
@@ -344,7 +345,7 @@ define(['angular', 'ui.router'], function (angular) {
       if (!$scope.state.optimization.id) {
         return;
       }
-      utilService
+      rpcService
         .rpcRun(
           'load_optimization_graphs',
           [$scope.state.project.id, $scope.state.optimization.id, getSelectors()])
@@ -509,7 +510,7 @@ define(['angular', 'ui.router'], function (angular) {
     $scope.addOptimization = function(which) {
       var otherNames = _.pluck($scope.state.optimizations, 'name');
       var newOptimization = {
-        name: modalService.getUniqueName('Optimization', otherNames),
+        name: rpcService.getUniqueName('Optimization', otherNames),
         which: which,
         constraints: {},
       };

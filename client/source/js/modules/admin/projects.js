@@ -2,25 +2,25 @@ define(['angular', 'ui.router'], function(angular) {
 
   'use strict';
 
-  var module = angular.module('app.adminprojects', ['ui.router']);
+  var module = angular.module('app.admin-projects', ['ui.router']);
 
   module.config(function($stateProvider) {
     $stateProvider
       .state('adminprojects', {
-        url: '/manage-projects',
-        templateUrl: 'js/modules/admin/manage-projects.html',
+        url: '/admin-projects',
+        templateUrl: 'js/modules/admin/projects.html',
         controller: 'AdminManageProjectsController',
       });
   });
 
-  module.controller('AdminManageProjectsController', function($scope, utilService, userManager, modalService, projectService, $state, toastr) {
+  module.controller('AdminManageProjectsController', function($scope, rpcService, userManager, modalService, projectService, $state, toastr) {
 
     projectService
       .getAllProjectList()
       .then(function(response) {
         $scope.projects = response.data.projects;
 
-        return utilService.rpcRun('get_user_summaries');
+        return rpcService.rpcRun('get_user_summaries');
       })
       .then(function(response) {
         $scope.users = _.map(
@@ -80,7 +80,7 @@ define(['angular', 'ui.router'], function(angular) {
       projectService
         .copyProject(
           projectId,
-          utilService.getUniqueName(name, getProjectNames()))
+          rpcService.getUniqueName(name, getProjectNames()))
         .then(function() {
           toastr.success('Copied project');
           $state.reload();
@@ -88,7 +88,7 @@ define(['angular', 'ui.router'], function(angular) {
     };
 
     $scope.downloadSpreadsheet = function(name, id) {
-      utilService.rpcDownload(
+      rpcService.rpcDownload(
         'download_data_spreadsheet', [id], {'is_blank': false})
         .then(function(response) {
           toastr.success('Spreadsheet downloaded');
@@ -96,7 +96,7 @@ define(['angular', 'ui.router'], function(angular) {
     };
 
     $scope.downloadProject = function(name, id) {
-      utilService
+      rpcService
         .rpcDownload(
           'download_project', [id])
         .then(function() {
@@ -105,7 +105,7 @@ define(['angular', 'ui.router'], function(angular) {
     };
 
     $scope.deleteProject = function(id) {
-      utilService
+      rpcService
         .rpcRun(
           'delete_projects', [[id]])
         .then(function() {

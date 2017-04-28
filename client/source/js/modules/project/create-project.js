@@ -1,4 +1,4 @@
-define(['angular', 'ui.router', './create-population-modal-ctrl'], function (angular) {
+define(['angular', 'ui.router', './population-modal-ctrl'], function (angular) {
 
 
   'use strict';
@@ -11,8 +11,8 @@ define(['angular', 'ui.router', './create-population-modal-ctrl'], function (ang
   module.config(function($stateProvider) {
     $stateProvider
       .state('createproject', {
-        url: '/createproject',
-        templateUrl: 'js/modules/project/create-or-edit.html',
+        url: '/create-project',
+        templateUrl: 'js/modules/project/create-project.html',
         controller: 'ProjectCreateOrEditController'
       });
   });
@@ -81,7 +81,7 @@ define(['angular', 'ui.router', './create-population-modal-ctrl'], function (ang
 
     function openPopulationModal(population) {
       return $modal.open({
-        templateUrl: 'js/modules/project/create-population-modal.html',
+        templateUrl: 'js/modules/project/population-modal.html',
         controller: 'ProjectCreatePopulationModalController',
         resolve: {
           populations: function(){ return $scope.populations; },

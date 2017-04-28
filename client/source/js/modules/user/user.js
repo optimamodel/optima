@@ -170,6 +170,7 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
 
   });
 
+  
   module.controller(
     'RegisterController',
     function ($scope, $window, userApi) {

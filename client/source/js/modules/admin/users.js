@@ -2,20 +2,20 @@ define(['angular', 'ui.router',], function(angular) {
 
   'use strict';
 
-  var module = angular.module('app.adminusers', ['ui.router']);
+  var module = angular.module('app.admin-users', ['ui.router']);
 
   module.config(function($stateProvider) {
     $stateProvider
       .state('adminusers', {
         url: '/admin-users',
-        templateUrl: 'js/modules/admin/manage-users.html',
+        templateUrl: 'js/modules/admin/users.html',
         controller: 'AdminManageUsersController',
       })
   });
 
-  module.controller('AdminManageUsersController', function($scope, userManager, modalService, utilService, toastr) {
+  module.controller('AdminManageUsersController', function($scope, userManager, modalService, rpcService, toastr) {
 
-    utilService
+    rpcService
       .rpcRun(
         'get_user_summaries')
       .then(function(response) {
@@ -25,7 +25,7 @@ define(['angular', 'ui.router',], function(angular) {
     $scope.deleteUser = function(user) {
       modalService.confirm(
         function() {
-          utilService
+          rpcService
             .rpcRun('delete_user', [user.id])
             .then(function(response) {
               toastr.success('User deleted!');

@@ -3,9 +3,9 @@ define(['angular'], function (angular) {
   'use strict';
 
   return angular
-    .module('app.ui.menu', ['app.user-manager'])
+    .module('app.menu', ['app.user-manager'])
     .directive('menu', function(
-      $state, userManager, projectService, utilService, modalService) {
+      $state, userManager, projectService, rpcService, modalService) {
 
       return {
         restrict: 'A',
@@ -39,7 +39,7 @@ define(['angular'], function (angular) {
           };
 
           $scope.logout = function() {
-            utilService
+            rpcService
               .rpcRun('do_logout_current_user')
               .then(function() {
                  window.location.reload();

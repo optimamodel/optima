@@ -16,7 +16,7 @@ define(['angular', 'ui.router'], function (angular) {
 
   module.controller(
     'ProjectOpenController',
-    function($scope, utilService, modalService, userManager, projectService, $state, $upload, $modal, toastr) {
+    function($scope, rpcService, modalService, userManager, projectService, $state, $upload, $modal, toastr) {
 
       function initialize() {
         $scope.sortType = 'name'; // set the default sort type
@@ -81,7 +81,7 @@ define(['angular', 'ui.router'], function (angular) {
         projectService
           .copyProject(
             projectId,
-            utilService.getUniqueName(name, getProjectNames()))
+            rpcService.getUniqueName(name, getProjectNames()))
           .then(function() {
             toastr.success('Copied project');
             $state.reload();
@@ -89,7 +89,7 @@ define(['angular', 'ui.router'], function (angular) {
       };
 
       $scope.downloadSpreadsheet = function (name, id) {
-        utilService.rpcDownload(
+        rpcService.rpcDownload(
           'download_data_spreadsheet', [id], {'is_blank': false})
         .then(function (response) {
           toastr.success('Spreadsheet downloaded');
@@ -113,7 +113,7 @@ define(['angular', 'ui.router'], function (angular) {
       };
 
       $scope.uploadSpreadsheet = function(projectName, projectId) {
-        utilService
+        rpcService
           .rpcUpload(
             'update_project_from_uploaded_spreadsheet', [projectId])
           .then(function(response) {
@@ -140,7 +140,7 @@ define(['angular', 'ui.router'], function (angular) {
       };
 
       $scope.downloadProject = function (name, id) {
-        utilService
+        rpcService
           .rpcDownload(
             'download_project', [id])
           .then(function() {
@@ -149,7 +149,7 @@ define(['angular', 'ui.router'], function (angular) {
       };
 
       $scope.downloadPrjWithResults = function (name, id) {
-        utilService
+        rpcService
           .rpcDownload(
             'download_project_with_result', [id])
           .then(function() {

@@ -5,9 +5,9 @@ define(['angular' ], function (angular) {
    * utility services until split off into own modules
    */
 
-  return angular.module('app.common.util-service', [])
+  return angular.module('app.rpc-service', [])
 
-    .factory('utilService',
+    .factory('rpcService',
       ['$http', '$q', '$timeout', '$upload', function($http, $q, $timeout, $upload) {
 
       function consoleLogCommand(type, name, args, kwargs) {

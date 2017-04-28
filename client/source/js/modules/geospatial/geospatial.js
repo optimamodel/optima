@@ -19,7 +19,7 @@ define(['angular', 'underscore'], function( angular, _) {
 
   module.controller(
     'PortfolioController',
-    function($scope, modalService, userManager, utilService,
+    function($scope, modalService, userManager, rpcService,
              $state, toastr, projectService, pollerService) {
 
       function initialize() {
@@ -65,7 +65,7 @@ define(['angular', 'underscore'], function( angular, _) {
 
       $scope.chooseNewPortfolio = function() {
         $scope.state.objectives = $scope.state.portfolio.objectives;
-        utilService
+        rpcService
           .rpcAsyncRun(
             'check_task', [$scope.state.portfolio.id, 'portfolio'])
           .then(function(response) {
@@ -76,7 +76,7 @@ define(['angular', 'underscore'], function( angular, _) {
           });
         _.each($scope.state.portfolio.projects, function(project) {
           $scope.bocStatusMessage[project.id] = project.boc;
-          utilService
+          rpcService
             .rpcAsyncRun(
               'check_task', [project.id, 'boc'])
             .then(function(response) {
@@ -91,7 +91,7 @@ define(['angular', 'underscore'], function( angular, _) {
       $scope.createPortfolio = function() {
         modalService.rename(
           function(name) {
-            utilService
+            rpcService
               .rpcRun(
                 'create_portfolio', [name])
               .then(function(response) {
@@ -112,7 +112,7 @@ define(['angular', 'underscore'], function( angular, _) {
 
       $scope.renamePortfolio = function() {
         modalService.rename(function(newName) {
-          utilService
+          rpcService
             .rpcRun(
               'rename_portfolio', [$scope.state.portfolio.id, newName])
             .then(function(response) {
@@ -132,7 +132,7 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.downloadPortfolio = function() {
-        utilService
+        rpcService
           .rpcDownload(
             'download_portfolio', [$scope.state.portfolio.id])
           .then(function(response) {
@@ -142,7 +142,7 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.uploadPortfolio = function() {
-        utilService
+        rpcService
           .rpcUpload('update_portfolio_from_prt')
           .then(function(response) {
             console.log('uploadPortfolio response.data', response.data);
@@ -154,7 +154,7 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.deletePortfolio = function() {
-        utilService
+        rpcService
           .rpcRun('delete_portfolio', [$scope.state.portfolio.id])
           .then(function(response) {
             console.log('deletePortfolio', response);
@@ -166,7 +166,7 @@ define(['angular', 'underscore'], function( angular, _) {
       function reloadPortfolio() {
         $scope.bocStatusMessage = {};
         pollerService.stopPolls();
-        utilService
+        rpcService
           .rpcRun('load_portfolio_summaries')
           .then(function(response) {
             loadPortfolios(response.data.portfolios);
@@ -175,7 +175,7 @@ define(['angular', 'underscore'], function( angular, _) {
 
       $scope.calculateAllBocCurves = function() {
         console.log('calculateAllBocCurves', $scope.state.portfolio);
-        utilService
+        rpcService
           .rpcAsyncRun(
             'launch_boc', [$scope.state.portfolio.id, $scope.state.bocMaxtime])
           .then(function(response) {
@@ -186,7 +186,7 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.deleteProject = function(projectId) {
-        utilService
+        rpcService
           .rpcRun(
             'delete_portfolio_project',
             [$scope.state.portfolio.id, projectId])
@@ -197,13 +197,13 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.runFullGa = function() {
-        utilService
+        rpcService
           .rpcAsyncRun(
             'check_task', [$scope.state.portfolio.id, 'portfolio'])
           .then(function(response) {
             if (response.data.status != 'started') {
               console.log('runFullGa');
-              utilService
+              rpcService
                 .rpcAsyncRun(
                   'launch_miminize_portfolio',
                   [$scope.state.portfolio.id, $scope.state.maxtime])
@@ -265,7 +265,7 @@ define(['angular', 'underscore'], function( angular, _) {
       }
 
       $scope.savePortfolio = function() {
-        utilService
+        rpcService
           .rpcRun(
             'save_portfolio_by_summary',
             [$scope.state.portfolio.id, $scope.state.portfolio])
@@ -277,7 +277,7 @@ define(['angular', 'underscore'], function( angular, _) {
 
       $scope.addProject = function() {
         $scope.isSelectNewProject = true;
-        utilService
+        rpcService
           .rpcRun('load_current_user_project_summaries')
           .then(function(response) {
             var selectedIds = _.pluck($scope.state.portfolio.projects, "id");
@@ -361,7 +361,7 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.generateTemplateSpreadsheet = function() {
-        utilService
+        rpcService
           .rpcDownload(
               'make_region_template_spreadsheet',
               [
@@ -373,7 +373,7 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.spawnRegionsFromSpreadsheet = function() {
-        utilService
+        rpcService
           .rpcUpload(
             'make_region_projects', [$scope.state.templateProject.id])
           .then(function(response) {
@@ -400,7 +400,7 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.exportResults = function() {
-        utilService
+        rpcService
           .rpcDownload(
             'export_portfolio', [$scope.state.portfolio.id]);
       };

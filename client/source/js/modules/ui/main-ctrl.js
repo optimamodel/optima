@@ -5,8 +5,7 @@ define(
     'use strict';
 
     var module = angular.module(
-      'app.ui.main',
-      ['app.common.project-service', 'app.user-manager']);
+      'app.main', ['app.project-service', 'app.user-manager']);
 
     module.controller(
       'MainCtrl',

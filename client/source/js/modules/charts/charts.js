@@ -1,6 +1,6 @@
 define(
   ['angular', 'underscore', 'jquery', 'mpld3', 'saveAs'],
-  function (angular, _, $, mpld3, saveAs, utilService) {
+  function (angular, _, $, mpld3, saveAs, rpcService) {
 
   'use strict';
 
@@ -198,7 +198,7 @@ define(
           var graphIndex = attrs.graphIndex;
           var graphSelectorsString = attrs.graphSelectors; // graphSelectors gets converted to a string, so convert back: e.g. '["a","b"]' -> 'a, b' -> 'a','b'
           var graphSelectors = graphSelectorsString.split('"').join('').slice(1,-1).split(','); // http://stackoverflow.com/questions/19156148/i-want-to-remove-double-quotes-from-a-string
-          utilService
+          rpcService
             .rpcDownload(
               'download_figures', [resultId, graphSelectors, filetype, parseInt(graphIndex)]);
         };
@@ -287,7 +287,7 @@ define(
     };
   });
 
-  module.directive('optimaGraphs', function (toastr, utilService, RzSliderOptions) {
+  module.directive('optimaGraphs', function (toastr, rpcService, RzSliderOptions) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/charts/optima-graphs.html',
@@ -336,7 +336,7 @@ define(
           var which = scope.getSelectors();
           var index = null;
           var filetype = 'singlepdf';
-          utilService
+          rpcService
             .rpcDownload('download_figures', [resultId, which, filetype, index]);
         };
 
@@ -346,7 +346,7 @@ define(
             return;
           }
           console.log('resultId', resultId);
-          utilService
+          rpcService
             .rpcDownload('download_result_data', [resultId]);
         };
 
@@ -361,7 +361,7 @@ define(
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
-          utilService
+          rpcService
             .rpcRun('load_result_mpld3_graphs',
               [resultId, which, zoom])
             .then(function(response) {
@@ -381,7 +381,7 @@ define(
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
-          utilService
+          rpcService
             .rpcRun('load_result_mpld3_graphs',
               [resultId, which])
             .then(function(response) {
@@ -400,7 +400,7 @@ define(
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
-          utilService
+          rpcService
             .rpcRun('load_result_mpld3_graphs',
               [resultId, which])
             .then(function(response) {

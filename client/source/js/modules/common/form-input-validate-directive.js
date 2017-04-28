@@ -1,7 +1,7 @@
 define(['angular'], function (angular) {
   'use strict';
 
-  return angular.module('app.common.form-input-validate', [])
+  return angular.module('app.form-input-validate', [])
 
     .directive('formInputValidate', function () {
 

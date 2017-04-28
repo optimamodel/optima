@@ -5,7 +5,7 @@ define(['angular'], function (module) {
   return angular.module('app.parameter-scenarios-modal', [])
     .controller('ParameterScenariosModalController', function (
         $scope, $modalInstance, project, scenarios, scenario, parsets,
-        progsets, parsByParsetId, utilService, years) {
+        progsets, parsByParsetId, rpcService, years) {
 
       function initialize() {
         $scope.parsets = parsets;
@@ -77,7 +77,7 @@ define(['angular'], function (module) {
       }
 
       function loadStartVal(scenPar) {
-        utilService
+        rpcService
           .rpcRun(
             'load_startval_for_parameter',
             [
