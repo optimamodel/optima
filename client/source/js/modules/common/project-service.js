@@ -8,6 +8,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
       var projectService = {
         projects: [],
+        optimaliteprojects: [],
         project: {},
       };
 
