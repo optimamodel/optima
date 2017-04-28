@@ -6,15 +6,15 @@
   </h2>
 
   <div style="padding-top:1em">
-    Choose a preloaded template project:
+    Choose a complete template project:
   </div>
 
   <select
     class="txbox"
     style="width: auto"
-    ng-model="projectService.project.id"
-    ng-options="p.id as p.name for p in projectService.optimaliteprojects"
-    ng-change="copy(projectService.project.id, projectService.project.id)">
+    ng-model="projectService.project"
+    ng-options="p as p.name for p in projectService.optimaliteprojects"
+    ng-change="copyOptimaLiteProject(projectService.project)">
   </select>
 
   <br>
