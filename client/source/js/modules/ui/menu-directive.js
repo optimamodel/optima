@@ -13,8 +13,22 @@ define(['angular'], function (angular) {
         templateUrl: 'js/modules/ui/menu.html',
         controller: ['$scope', function($scope) {
 
+          $scope.checkProgramsDefined = function() {
+            projectService
+              .getActiveProject()
+              .then(function(response) {
+                $scope.project = response.data;
+                if (!$scope.project) {
+                  $scope.programsDefined = false;
+                } else {
+                  $scope.programsDefined = $scope.project.hasParset;
+                }
+              })
+          };
+
           $scope.state = $state.current;
           $scope.isAdmin = userManager.isAdmin;
+          $scope.checkProgramsDefined();
 
           $scope.getState = function() {
             return $state.current.name;
@@ -37,6 +51,8 @@ define(['angular'], function (angular) {
               );
             }
           };
+
+
 
           $scope.logout = function() {
             utilService
