@@ -578,7 +578,7 @@ def copy_project(project_id, new_project_name):
     """
     project_record = load_project_record(
         project_id, raise_exception=True)
-    user_id = project_record.user_id
+    user_id = current_user.id # Save as the current user always
 
     project = project_record.load()
     project.restorelinks()
