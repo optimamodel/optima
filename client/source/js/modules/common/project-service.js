@@ -107,12 +107,12 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
             'get_optimalite_projects')
           .then(
             function(response) {
-              clearList(projectService.projects);
+              clearList(projectService.optimaliteprojects);
               _.each(response.data.projects, function(project) {
                 project.creationTime = Date.parse(project.creationTime);
                 project.updatedTime = Date.parse(project.updatedTime);
                 project.dataUploadTime = Date.parse(project.dataUploadTime);
-                projectService.projects.push(project);
+                projectService.optimaliteprojects.push(project);
               });
               deferred.resolve(response);
             },
@@ -243,6 +243,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       }
 
       getProjectList();
+      getOptimaLiteProjectList();
 
       _.assign(projectService, {
         getProjectList: getProjectList,
