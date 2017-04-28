@@ -295,8 +295,8 @@ def verify_admin_request_decorator(api_call):
 ### OPTIMA LITE
 #############################################################################################
 
-def get_optimalite_user(name='lite'):
-    ''' Get the Optima Lite user ID, from its name -- default is 'lite' '''
+def get_optimalite_user(name='_OptimaLite'):
+    ''' Get the Optima Lite user ID, from its name -- default is '_OptimaLite' '''
     user = UserDb.query.filter_by(username=name).first()
     print 'hiiiiiiiiiiiiiiiii'
     print user.id
