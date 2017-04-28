@@ -18,7 +18,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
       function setActiveProjectId(projectId) {
         projectService.project.id = projectId;
-        var projectStr = JSON.stringify(projectServfice.project);
+        var projectStr = JSON.stringify(projectService.project);
         localStorage[makeUserKey(userManager.user.id)] = projectStr;
       }
 
