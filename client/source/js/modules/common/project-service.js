@@ -79,14 +79,34 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         return deferred.promise;
       }
 
-      function checkProgramsDefined(project) {
-        console.log('hiiiii');
-        var programsDefined = false;
+      function checkCalibration(project) {
+        console.log('hiiiii1');
+        var calibrationOK = false;
         if (project) {
-          programsDefined = project.hasParset;
+          calibrationOK = project.hasParset;
         }
-        console.log(programsDefined);
-        return programsDefined;
+        console.log(calibrationOK);
+        return calibrationOK;
+      }
+
+      function checkPrograms(project) {
+        console.log('hiiiii2');
+        var programsOK = false;
+        if (project) {
+          programsOK = project.nProgram > 0;
+        }
+        console.log(programsOK);
+        return programsOK;
+      }
+
+      function checkCostFuncs(project) {
+        console.log('hiiiii3');
+        var costFuncsOK = false;
+        if (project) {
+          costFuncsOK = project.nProgram > 0;
+        }
+        console.log(costFuncsOK);
+        return costFuncsOK;
       }
 
       function getProjectList() {
