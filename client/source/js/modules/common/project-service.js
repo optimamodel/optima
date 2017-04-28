@@ -80,10 +80,12 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       }
 
       function checkProgramsDefined(project) {
+        console.log('hiiiii');
         var programsDefined = false;
         if (project) {
           programsDefined = project.hasParset;
         }
+        console.log(programsDefined);
         return programsDefined;
       }
 

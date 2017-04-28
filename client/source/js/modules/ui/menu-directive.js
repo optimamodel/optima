@@ -16,6 +16,8 @@ define(['angular'], function (angular) {
           $scope.state = $state.current;
           $scope.isAdmin = userManager.isAdmin;
           $scope.programsDefined = projectService.project.programsDefined;
+          console.log('hiiiiiiiiii');
+          console.log($scope.programsDefined);
 
           $scope.getState = function() {
             return $state.current.name;
