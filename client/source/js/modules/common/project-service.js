@@ -201,6 +201,25 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         return deferred.promise;
       }
 
+      function copyOptimaLiteProject(projectId, newName) {
+        var deferred = $q.defer();
+        utilService
+          .rpcRun(
+            'copy_optimalite_project', [projectId, newName])
+          .then(
+            function(response) {
+              console.log('copyOptimaLiteProject', response);
+              getProjectAndMakeActive(response.data.projectId)
+                .then(
+                  function(response) { deferred.resolve(response); },
+                  function(response) { deferred.reject(response); });
+            },
+            function(response) {
+              deferred.reject(response);
+            });
+        return deferred.promise;
+      }
+
       function renameProject(id, project) {
         var deferred = $q.defer();
         utilService

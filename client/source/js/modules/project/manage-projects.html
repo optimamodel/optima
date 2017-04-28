@@ -14,10 +14,10 @@
     style="width: auto"
     ng-model="projectService.project.id"
     ng-options="p.id as p.name for p in projectService.optimaliteprojects"
-    ng-change="copyOptimaLiteProject(projectService.project.id)">
+    ng-change="copy(projectService.project.id, projectService.project.id)">
   </select>
 
-  <br><br>
+  <br>
 
   <div style="padding-top:1em">
     Or create/upload a project:
