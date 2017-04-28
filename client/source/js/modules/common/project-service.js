@@ -103,11 +103,14 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         console.log('hiiiii3');
         var costFuncsOK = false;
         if (project) {
-          costFuncsOK = project.nProgram > 0;
+          utilService.rpcRun(
+            'any_optimizable', [project.id])
+            .then(function(response) {
+              costFuncsOK = response.data.anyOptimizable;
+            });
+          console.log(costFuncsOK);
+          return costFuncsOK;
         }
-        console.log(costFuncsOK);
-        return costFuncsOK;
-      }
 
       function getProjectList() {
         var deferred = $q.defer();
@@ -121,7 +124,9 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
                 project.creationTime = Date.parse(project.creationTime);
                 project.updatedTime = Date.parse(project.updatedTime);
                 project.dataUploadTime = Date.parse(project.dataUploadTime);
-                project.programsDefined = checkProgramsDefined(project);
+                project.calibrationOK = checkCalibration(project);
+                project.programsOK = checkPrograms(project);
+                project.costFuncsOK = checkCostFuncs(project);
                 projectService.projects.push(project);
               });
               deferred.resolve(response);
