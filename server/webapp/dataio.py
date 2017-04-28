@@ -291,6 +291,28 @@ def verify_admin_request_decorator(api_call):
     return _verify_admin_request
 
 
+#############################################################################################
+### OPTIMA LITE
+#############################################################################################
+
+def get_optimalite_user(name='lite'):
+    ''' Get the Optima Lite user ID, from its name -- default is 'lite' '''
+    user = UserDb.query.filter_by(username=name).first()
+    print 'hiiiiiiiiiiiiiiiii'
+    print user
+    return user
+
+
+def get_optimalite_projects():
+    ''' Return the projects associated with the Optima Lite user '''
+    user_id = get_optimalite_user()
+    query = ProjectDb.query.filter_by(user_id=user_id)
+    output = {'projects': map(load_project_summary_from_project_record, query.all())}
+    print 'hiiiiiiiiiiiiiiiiiii2'
+    print output
+    return output
+    
+
 
 
 #############################################################################################
