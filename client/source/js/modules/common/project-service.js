@@ -79,6 +79,14 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         return deferred.promise;
       }
 
+      function checkProgramsDefined(project) {
+        var programsDefined = false;
+        if (project) {
+          programsDefined = project.hasParset;
+        }
+        return programsDefined;
+      }
+
       function getProjectList() {
         var deferred = $q.defer();
         utilService
@@ -91,6 +99,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
                 project.creationTime = Date.parse(project.creationTime);
                 project.updatedTime = Date.parse(project.updatedTime);
                 project.dataUploadTime = Date.parse(project.dataUploadTime);
+                project.programsDefined = checkProgramsDefined(project);
                 projectService.projects.push(project);
               });
               deferred.resolve(response);
