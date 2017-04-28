@@ -83,7 +83,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             project.id,
             utilService.getUniqueName(project.name, getProjectNames()))
           .then(function() {
-            toastr.success('Predefined project loaded; please proceed directly to scenarios or optimizations');
+            toastr.success('Complete project loaded from database. Please proceed directly to analysis (scenarios and/or optimizations)');
             $state.reload();
           });
       };
