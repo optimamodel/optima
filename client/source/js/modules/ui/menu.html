@@ -52,7 +52,13 @@
       ng-click="goIfProjectActive('programs.define-cost-coverage-outcome')"
       ng-class="{'menu-active': isState('cost-coverage')}"
       class="menu-item">
-    Cost functions
+    <div ng-if="!anyOptimizable">
+      Cost functions <i class="fa fa-times" aria-hidden="true"></i>
+    </div>
+    <div ng-if="anyOptimizable">
+      Cost functions <i class="fa fa-check" aria-hidden="true"></i>
+    </div>
+
   </div>
 
   <div
