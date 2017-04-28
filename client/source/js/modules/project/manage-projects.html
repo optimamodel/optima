@@ -5,8 +5,22 @@
     <help ref="create-projects"/>
   </h2>
 
-  <div style="padding-top:1em" ng-hide="projects.length">
-    To begin, please create or upload a project:
+  <div style="padding-top:1em">
+    Choose a preloaded template project:
+  </div>
+
+  <select
+    class="txbox"
+    style="width: auto"
+    ng-model="projectService.project.id"
+    ng-options="p.id as p.name for p in projects"
+    ng-change="changeProject(projectService.project.id)">
+  </select>
+
+  <br><br>
+
+  <div style="padding-top:1em">
+    Or create/upload a project:
   </div>
 
   <a class="btn" ui-sref="project.create">Create new project</a> &nbsp; &nbsp;
