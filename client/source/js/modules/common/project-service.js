@@ -105,12 +105,13 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         if (project) {
           utilService.rpcRun(
             'any_optimizable', [project.id])
-            .then(function(response) {
-              costFuncsOK = response.data.anyOptimizable;
+            .then(function (response) {
+              costFuncsOK = Boolean(response.data.anyOptimizable);
             });
-          console.log(costFuncsOK);
-          return costFuncsOK;
         }
+        console.log(costFuncsOK);
+        return costFuncsOK;
+      }
 
       function getProjectList() {
         var deferred = $q.defer();
