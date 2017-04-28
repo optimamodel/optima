@@ -792,13 +792,6 @@ def resolve_project(project):
     return is_change
 
 
-def save_project(project):
-    project_record = load_project_record(project.uid)
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
-
-
 def get_server_filename(basename):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
