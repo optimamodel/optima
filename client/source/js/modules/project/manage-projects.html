@@ -13,25 +13,11 @@
     class="txbox"
     style="width: auto"
     ng-model="projectService.project.id"
-    ng-options="p.id as p.name for p in optimaliteprojects"
-    ng-change="changeProject(projectService.project.id)">
+    ng-options="p.id as p.name for p in projectService.optimaliteprojects"
+    ng-change="copyOptimaLiteProject(projectService.project.id)">
   </select>
 
   <br><br>
-
-  <div>
-    hi
-  </div>
-  <div ng-repeat="project in projectService.optimaliteprojects">
-    {{ project.name }}
-  </div>
-
-  <div>
-    and
-  </div>
-  <div ng-repeat="project in projectService.projects">
-    {{ project.name }}
-  </div>
 
   <div style="padding-top:1em">
     Or create/upload a project:
