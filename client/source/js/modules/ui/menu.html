@@ -38,37 +38,21 @@
       ng-click="goIfProjectActive('model.manual')"
       ng-class="{'menu-active': isState('model')}"
       class="menu-item">
-    <div ng-if="!calibrationOK">
-      Programs <i class="fa fa-times" aria-hidden="true"></i>
-    </div>
-    <div ng-if="calibrationOK">
-      Programs <i class="fa fa-check" aria-hidden="true"></i>
-    </div>
+    Calibration
   </div>
 
   <div
       ng-click="goIfProjectActive('programs.manageProgramSet')"
       ng-class="{'menu-active': isState('manageProgramSet')}"
       class="menu-item">
-    <div ng-if="!programsOK">
-      Programs <i class="fa fa-times" aria-hidden="true"></i>
-    </div>
-    <div ng-if="programsOK">
-      Programs <i class="fa fa-check" aria-hidden="true"></i>
-    </div>
+    Programs
   </div>
 
   <div
       ng-click="goIfProjectActive('programs.define-cost-coverage-outcome')"
       ng-class="{'menu-active': isState('cost-coverage')}"
       class="menu-item">
-    <div ng-if="!project.costFuncsOK">
-      Cost functions <i class="fa fa-times" aria-hidden="true"></i>
-    </div>
-    <div ng-if="project.costFuncsOK">
-      Cost functions <i class="fa fa-check" aria-hidden="true"></i>
-    </div>
-
+    Cost functions
   </div>
 
   <div

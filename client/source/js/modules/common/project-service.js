@@ -79,39 +79,39 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         return deferred.promise;
       }
 
-      function checkCalibration(project) {
-        console.log('hiiiii1');
-        var calibrationOK = false;
-        if (project) {
-          calibrationOK = project.hasParset;
-        }
-        console.log(calibrationOK);
-        return calibrationOK;
-      }
-
-      function checkPrograms(project) {
-        console.log('hiiiii2');
-        var programsOK = false;
-        if (project) {
-          programsOK = project.nProgram > 0;
-        }
-        console.log(programsOK);
-        return programsOK;
-      }
-
-      function checkCostFuncs(project) {
-        console.log('hiiiii3');
-        var costFuncsOK = false;
-        if (project) {
-          utilService.rpcRun(
-            'any_optimizable', [project.id])
-            .then(function (response) {
-              costFuncsOK = Boolean(response.data.anyOptimizable);
-            });
-        }
-        console.log(costFuncsOK);
-        return costFuncsOK;
-      }
+      //function checkCalibration(project) {
+      //  console.log('hiiiii1');
+      //  var calibrationOK = false;
+      //  if (project) {
+      //    calibrationOK = project.hasParset;
+      //  }
+      //  console.log(calibrationOK);
+      //  return calibrationOK;
+      //}
+      //
+      //function checkPrograms(project) {
+      //  console.log('hiiiii2');
+      //  var programsOK = false;
+      //  if (project) {
+      //    programsOK = project.nProgram > 0;
+      //  }
+      //  console.log(programsOK);
+      //  return programsOK;
+      //}
+      //
+      //function checkCostFuncs(project) {
+      //  console.log('hiiiii3');
+      //  var costFuncsOK = false;
+      //  if (project) {
+      //    utilService.rpcRun(
+      //      'any_optimizable', [project.id])
+      //      .then(function (response) {
+      //        costFuncsOK = Boolean(response.data.anyOptimizable);
+      //      });
+      //  }
+      //  console.log(costFuncsOK);
+      //  return costFuncsOK;
+      //}
 
       function getProjectList() {
         var deferred = $q.defer();
@@ -125,9 +125,9 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
                 project.creationTime = Date.parse(project.creationTime);
                 project.updatedTime = Date.parse(project.updatedTime);
                 project.dataUploadTime = Date.parse(project.dataUploadTime);
-                project.calibrationOK = checkCalibration(project);
-                project.programsOK = checkPrograms(project);
-                project.costFuncsOK = checkCostFuncs(project);
+                //project.calibrationOK = checkCalibration(project);
+                //project.programsOK = checkPrograms(project);
+                //project.costFuncsOK = checkCostFuncs(project);
                 projectService.projects.push(project);
               });
               deferred.resolve(response);
