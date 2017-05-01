@@ -379,7 +379,7 @@ define(['angular', 'underscore'], function( angular, _) {
           .then(function(response) {
             $scope.state.prjNames = response.data.prjNames;
             console.log('$scope.state.prjNames', $scope.state.prjNames);
-            _.each(prjNames, function(prjName) {
+            _.each($scope.state.prjNames, function(prjName) {
               toastr.success('Project created: ' + prjName);
             });
 
