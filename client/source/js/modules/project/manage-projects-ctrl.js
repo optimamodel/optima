@@ -76,6 +76,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
+      $scope.copyOptimaLiteProject = function(project) {
+        var name =
+        projectService
+          .copyProject(
+            project.id,
+            utilService.getUniqueName(project.name, getProjectNames()))
+          .then(function() {
+            toastr.success('Project "'+project.name+'" loaded from database. Please proceed directly to analysis (scenarios and/or optimizations)');
+            $state.reload();
+          });
+      };
+
       $scope.downloadSpreadsheet = function (name, id) {
         utilService.rpcDownload(
           'download_data_spreadsheet', [id], {'is_blank': false})
