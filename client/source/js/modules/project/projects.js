@@ -93,7 +93,7 @@ define(['angular', 'ui.router'], function (angular) {
         projectService
           .copyProject(
             project.id,
-            utilService.getUniqueName(project.name, getProjectNames()))
+            rpcService.getUniqueName(project.name, getProjectNames()))
           .then(function() {
             toastr.success('Project "'+project.name+'" loaded from database. Please proceed directly to analysis (scenarios and/or optimizations)');
             $state.reload();
