@@ -118,7 +118,6 @@ def run_task(task_id, fn_name, args):
     worklog.status = status
     worklog.error = error_text
     worklog.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
-    worklog.cleanup()
     db_session.add(worklog)
     db_session.commit()
     close_db_session(db_session)
