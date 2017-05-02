@@ -165,11 +165,11 @@ define(['angular', 'ui.router'], function (angular) {
 
       // not a new optimization
       if (optimization.id) {
-        console.log('selectOptimization check task')
+        console.log('selectOptimization check task');
         rpcService
           .rpcAsyncRun(
             'check_if_task_started',
-            [$scope.state.project.id, 'optim-' + optimization.id])
+            [makeTaskId()])
           .then(
             function(response) {
               if (response.data.status === 'started') {
@@ -285,11 +285,18 @@ define(['angular', 'ui.router'], function (angular) {
 
     $scope.startOptimization = function(optimization) {
       $scope.state.isRunnable = false;
-      var taskId = makeTaskId();
-      console.log('startOptimization', taskId);
+      console.log('startOptimization');
       rpcService
         .rpcAsyncRun(
-          'launch_task', [taskId])
+          'launch_task', [
+            makeTaskId(),
+            'optimize',
+            [
+              $scope.state.project.id,
+              $scope.state.optimization.id,
+              $scope.state.maxtime
+            ]
+          ])
         .then(function(response) {
           $scope.task_id = response.data.task_id;
           if (response.data.status === 'started') {

@@ -577,11 +577,9 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       }
 
       vm.selectSummary = function() {
-        var workType = makeWorkType(
-          vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
         rpcService
           .rpcAsyncRun(
-            'check_if_task_started', [vm.project.id, workType])
+            'check_if_task_started', [makeTaskId()])
           .then(function(response) {
             if (response.data.status === 'started') {
               initReconcilePoll();
@@ -589,12 +587,20 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           });
       };
 
+      function makeTaskId() {
+        return 'reconcile:'
+          + vm.project.id + ":"
+          + vm.state.progset.id + ":"
+          + vm.state.parset.id + ":"
+          + vm.state.year;
+      }
+
       function initReconcilePoll() {
         var workType = makeWorkType(
           vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
         pollerService.startPollForRpc(
           vm.project.id,
-          workType,
+          makeTaskId(),
           function (response) {
             var calcState = response.data;
             if (calcState.status === 'completed') {
@@ -614,9 +620,19 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       }
 
       vm.reconcilePrograms = function() {
-        rpcService.rpcRun(
-          'launch_reconcile_calc',
-          [vm.project.id, vm.state.progset.id, vm.state.parset.id, Number(vm.state.year), Number(vm.state.maxtime)])
+        rpcService.rpcAsyncRun(
+          'launch_task',
+          [
+            makeTaskId(),
+            'reconcile',
+            [
+              vm.project.id,
+              vm.state.progset.id,
+              vm.state.parset.id,
+              vm.state.year,
+              vm.state.maxtime
+            ]
+          ])
         .success(function(data) {
           initReconcilePoll();
           toastr.success('Reconcile started...');

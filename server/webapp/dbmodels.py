@@ -176,28 +176,9 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
     work_status = db.Enum('started', 'completed', 'cancelled', 'error', 'blocked', name='work_status')
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
-    work_type = db.Column(db.String(128), default=None)
     task_id = db.Column(db.String(128), default=None)
-    project_id = db.Column(UUID(True))
     start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     stop_time = db.Column(db.DateTime(timezone=True), default=None)
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
-
-    def __init__(self, project_id=None, work_type=None):
-        self.project_id = project_id
-        self.work_type = work_type
-
-    def load(self):
-        print(">> WorkLogDb.load working-" + self.id.hex)
-        return op.loadstr(redis.get("working-" + self.id.hex))
-
-    def save_obj(self, obj):
-        print(">> WorkLogDb.save working-" + self.id.hex)
-        redis.set("working-" + self.id.hex, op.dumpstr(obj))
-
-    def cleanup(self):
-        print(">> WorkLogDb.cleanup working-" + self.id.hex)
-        redis.delete("working-" + self.id.hex)
-
 

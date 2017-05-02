@@ -37,8 +37,7 @@ def parse_work_log_record(work_log):
         'error_text': work_log.error,
         'start_time': work_log.start_time,
         'stop_time': work_log.stop_time,
-        'project_id': work_log.project_id,
-        'work_type': work_log.work_type,
+        'task_id': work_log.task_id,
         'current_time': datetime.datetime.now(dateutil.tz.tzutc())
     }
 
@@ -58,59 +57,7 @@ def close_db_session(db_session):
     db_session.bind.dispose() # pylint: disable=E1101
 
 
-def setup_work_log(pyobject_id, work_type, pyobject):
-    """
-    Sets up a work_log for project_id calculation, returns a work_log_record dictionary
-    """
-
-    print "> setup_work_log '%s %s'" % (pyobject_id, work_type)
-
-    db_session = init_db_session()
-
-    # if any work_log exists for this project that has started,
-    # then this calculation is blocked from starting
-    is_ready_to_start = True
-    work_log_records = db_session.query(dbmodels.WorkLogDb).filter_by(
-        project_id=pyobject_id, work_type=work_type)
-    if work_log_records:
-        for work_log_record in work_log_records:
-            if work_log_record.status == 'started':
-                calc_state = parse_work_log_record(work_log_record)
-                calc_state["status"] = "blocked"
-                print ">> setup_work_log cancel job: already exists"
-                is_ready_to_start = False
-
-    if is_ready_to_start:
-        # clean up completed/error/cancelled records
-        if work_log_records.count():
-            print ">> setup_work_log cleanup %d oldlogs" %  work_log_records.count()
-            for work_log in work_log_records:
-                work_log.cleanup()
-            work_log_records.delete()
-
-        # create a work_log status is 'started by default'
-        print ">> setup_work_log new work log"
-        work_log_record = dbmodels.WorkLogDb(
-            project_id=pyobject_id, work_type=work_type)
-        work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
-        db_session.add(work_log_record)
-        db_session.flush()
-
-        work_log_record.save_obj(pyobject)
-        calc_state = parse_work_log_record(work_log_record)
-
-    db_session.commit()
-    close_db_session(db_session)
-
-    return calc_state
-
-
-def start_or_report_project_calculation(project_id, work_type):
-    project = dataio.load_project(project_id)
-    return setup_work_log(project_id, work_type, project)
-
-
-def check_task(pyobject_id, work_type):
+def check_task(task_id):
     """
     Returns current calculation state of a work_log.
     """
@@ -119,16 +66,16 @@ def check_task(pyobject_id, work_type):
         'error_text': None,
         'start_time': None,
         'stop_time': None,
-        'work_type': ''
+        'task_id': ''
     }
     db_session = init_db_session()
     work_log_record = db_session.query(dbmodels.WorkLogDb)\
-        .filter_by(project_id=pyobject_id, work_type=work_type)\
+        .filter_by(task_id=task_id)\
         .first()
     if work_log_record:
-        print ">> check_task: existing job of '%s' with same project" % work_type
+        print ">> check_task: existing job of '%s' with same project" % task_id
         calc_state = parse_work_log_record(work_log_record)
-    print ">> check_task", pyobject_id, work_type, calc_state['status']
+    print ">> check_task", task_id, calc_state['status']
     close_db_session(db_session)
     if calc_state['status'] == 'error':
         raise Exception(calc_state['error_text'])
@@ -136,38 +83,27 @@ def check_task(pyobject_id, work_type):
         return calc_state
 
 
-def check_if_task_started(pyobject_id, work_type):
-    calc_state = check_task(pyobject_id, work_type)
+def check_if_task_started(task_id):
+    calc_state = check_task(task_id)
     if calc_state['status'] == 'error':
-        clear_work_log(pyobject_id, work_type)
+        db_session = init_db_session()
+        worklogs = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id)
+        worklogs.delete()
+        db_session.commit()
         raise Exception(calc_state['error_text'])
     return calc_state
 
 
-def clear_work_log(project_id, work_type):
-    print ">> clear_work_log '%s'" % work_type
-    db_session = init_db_session()
-    work_logs = db_session.query(dbmodels.WorkLogDb).filter_by(project_id=project_id, work_type=work_type)
-    for work_log in work_logs:
-        work_log.cleanup()
-    work_logs.delete()
-    db_session.commit()
-    close_db_session(db_session)
-
-
 @celery_instance.task()
-def run_task(task_id):
-    tokens = task_id.split(":")
-    fn_name = tokens[0]
-    task_args = tokens[1:]
+def run_task(task_id, fn_name, args):
     if fn_name in globals():
         task_fn = globals()[fn_name]
     else:
         raise Exception("run_task error: couldn't find '%s'" % fn_name)
 
-    print '>> run_task %s(%s)' % (fn_name, ', '.join(task_args))
+    print '>> run_task %s %s' % (fn_name, args)
     try:
-        task_fn(*task_args)
+        task_fn(*args)
         print ">> run_task completed"
         error_text = ""
         status = 'completed'
@@ -178,7 +114,7 @@ def run_task(task_id):
         print(error_text)
 
     db_session = init_db_session()
-    worklog = db_session.query(dbmodels.WorkLogDb).filter_by(work_type=task_id).first()
+    worklog = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
     worklog.status = status
     worklog.error = error_text
     worklog.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
@@ -188,13 +124,49 @@ def run_task(task_id):
     close_db_session(db_session)
 
 
-def launch_task(task_id):
-    print ">> launch_task", task_id
-    calc_status = start_or_report_project_calculation(task_id.split(":")[1], task_id)
-    if calc_status['status'] != "blocked":
-        run_task.delay(task_id)
-    return calc_status
+def launch_task(task_id, fn_name, args):
+    print ">> launch_task", task_id, fn_name, args
 
+    db_session = init_db_session()
+    query = db_session.query(dbmodels.WorkLogDb)
+    work_log_records = query.filter_by(task_id=task_id)
+    if work_log_records:
+        # if any work_log exists for this project that has started,
+        # then this calculation is blocked from starting
+        is_ready_to_start = True
+        for work_log_record in work_log_records:
+            if work_log_record.status == 'started':
+                calc_state = parse_work_log_record(work_log_record)
+                calc_state["status"] = "blocked"
+                print ">> launch_task job already exists"
+                is_ready_to_start = False
+
+    if is_ready_to_start:
+        # clean up completed/error/cancelled records
+        if work_log_records.count():
+            print ">> launch_task cleanup %d logs" %  work_log_records.count()
+            work_log_records.delete()
+
+        # create a work_log status is 'started by default'
+        print ">> launch_task new work log"
+        work_log_record = dbmodels.WorkLogDb(task_id=task_id)
+        work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
+        db_session.add(work_log_record)
+        db_session.flush()
+
+        calc_state = parse_work_log_record(work_log_record)
+
+    db_session.commit()
+    close_db_session(db_session)
+
+    if calc_state['status'] != "blocked":
+        run_task.delay(task_id, fn_name, args)
+
+    return calc_state
+
+
+
+### PROJECT DEFINED TASKS
 
 def autofit(project_id, parset_id, maxtime):
 
@@ -211,7 +183,7 @@ def autofit(project_id, parset_id, maxtime):
     project.autofit(
         name=autofit_parset_name,
         orig=orig_parset_name,
-        maxtime=int(maxtime)
+        maxtime=maxtime
     )
 
     result = project.parsets[autofit_parset_name].getresults()
@@ -246,7 +218,7 @@ def autofit(project_id, parset_id, maxtime):
     print("> autofit finish")
 
 
-def optimize(project_id, optimization_id, maxtime, start=None, end=None):
+def optimize(project_id, optimization_id, maxtime):
 
     maxtime = int(maxtime)
 
@@ -298,217 +270,74 @@ def optimize(project_id, optimization_id, maxtime, start=None, end=None):
     print ">> optimize finish"
 
 
-@celery_instance.task(bind=True)
-def run_boc(self, portfolio_id, project_id, maxtime=2, objectives=None):
 
-    status = 'started'
-    error_text = ""
+def reconcile(project_id, progset_id, parset_id, year, maxtime):
+    year = int(year)
+    maxtime = int(maxtime)
 
     db_session = init_db_session()
-    kwargs = {'project_id': project_id, 'work_type':'boc'}
-    work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
-    if work_log:
-        work_log_id = work_log.id
-        work_log.task_id = self.request.id
-        print(">> Celery task_id = %s" % work_log.task_id)
-        try:
-            project = work_log.load()
-            db_session.add(work_log)
-            db_session.commit()
-        except Exception:
-            status = 'error'
-            error_text = traceback.format_exc()
-            print(">> Error in initialization")
-            print(error_text)
+    project = dataio.load_project(project_id, db_session=db_session, authenticate=False)
     close_db_session(db_session)
 
-    if work_log is None:
-        print(">> Error: couldn't find work log")
-        return
+    print(">> reconcile started")
+    progset = parse.get_progset_from_project(project, progset_id)
+    parset = parse.get_parset_from_project_by_id(project, parset_id)
+    progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
 
-    if status == 'started':
-        try:
-            print ">> Start BOC:"
-            project.genBOC(maxtime=maxtime, objectives=objectives, mc=0) # WARNING, might want to run with MC one day
-            status = 'completed'
-        except Exception:
-            status = 'error'
-            error_text = traceback.format_exc()
-            print(">> Error in calculation")
-            print(error_text)
-
-        if status == 'completed':
-            db_session = init_db_session()
-            portfolio = dataio.load_portfolio(portfolio_id, db_session)
-            project_id = str(project.uid)
-            portfolio.projects[project_id] = project
-            dataio.save_portfolio(portfolio, db_session)
-            close_db_session(db_session)
-
+    print(">> reconcile save project")
     db_session = init_db_session()
-    work_log_record = db_session.query(dbmodels.WorkLogDb).get(work_log_id)
-    work_log_record.status = status
-    work_log_record.error = error_text
-    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
-    work_log_record.cleanup()
+    project_record = dataio.load_project_record(project_id, db_session=db_session)
+    project_record.save_obj(project)
+    db_session.add(project_record)
     db_session.commit()
     close_db_session(db_session)
 
-    print ">> Finish optimization"
+    print ">> reconcile finish"
 
 
 
-def launch_boc(portfolio_id, maxtime=2):
+def boc(portfolio_id, project_id, maxtime=2, objectives=None):
+
+    maxtime = int(maxtime)
+
+    db_session = init_db_session()
     portfolio = dataio.load_portfolio(portfolio_id)
+    close_db_session(db_session)
+
     for project in portfolio.projects.values():
-        project_id = project.uid
-        setup_work_log(project_id, 'boc', project)
-        run_boc.delay(portfolio_id, project_id, maxtime=maxtime, objectives=portfolio.objectives)
+        if project_id == str(project.uid):
+            break
+    else:
+        raise Exception("Couldn't find project in portfolio")
 
-
-
-@celery_instance.task(bind=True)
-def run_miminize_portfolio(self, portfolio_id, maxtime):
-
-    status = 'started'
-    error_text = ""
+    project.genBOC(maxtime=maxtime, objectives=objectives, mc=0) # WARNING, might want to run with MC one day
 
     db_session = init_db_session()
-    kwargs = {'project_id': portfolio_id, 'work_type': 'portfolio'}
-    work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
-    if work_log:
-        work_log_id = work_log.id
-        work_log.task_id = self.request.id
-        print(">> Celery task_id = %s" % work_log.task_id)
-        try:
-            portfolio = work_log.load()
-            db_session.add(work_log)
-            db_session.commit()
-        except Exception:
-            status = 'error'
-            error_text = traceback.format_exc()
-            print(">> Error in initialization")
-            print(error_text)
+    project_id = str(project.uid)
+    portfolio.projects[project_id] = project
+    dataio.save_portfolio(portfolio, db_session)
     close_db_session(db_session)
 
-    if work_log is None:
-        print(">> Error: couldn't find work log")
-        return
+    print ">> boc finish"
 
-    if status == 'started':
-        try:
-            print(">> Start GA with maxtime=%s and budget=%s:" % (maxtime, portfolio.objectives['budget']))
-            portfolio.runGA(maxtime=maxtime, mc=0, batch=False)
-            status = 'completed'
-        except Exception:
-            status = 'error'
-            error_text = traceback.format_exc()
-            print(">> Error in calculation")
-            print(error_text)
 
-        if status == 'completed':
-            db_session = init_db_session()
-            dataio.save_portfolio(portfolio, db_session=db_session)
-            close_db_session(db_session)
+
+def ga_optimize(portfolio_id, maxtime):
+
+    maxtime = int(maxtime)
 
     db_session = init_db_session()
-    work_log_record = db_session.query(dbmodels.WorkLogDb).get(work_log_id)
-    work_log_record.status = status
-    work_log_record.error = error_text
-    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
-    work_log_record.cleanup()
-    db_session.commit()
-    close_db_session(db_session)
-
-    print ">> Finish optimization"
-
-
-
-def launch_miminize_portfolio(portfolio_id, maxtime=2):
     portfolio = dataio.load_portfolio(portfolio_id)
-    calc_state = setup_work_log(portfolio_id, 'portfolio', portfolio)
-    if calc_state['status'] != 'started':
-        return calc_state, 208
-    run_miminize_portfolio.delay(portfolio_id, maxtime)
-
-
-def make_reconcile_work_type(project_id, progset_id, parset_id, year):
-    return "reconcile:" + ":".join([project_id, progset_id, parset_id, str(year)])
-
-
-@celery_instance.task(bind=True)
-def run_reconcile(self, project_id, progset_id, parset_id, year, maxtime):
-
-    status = 'started'
-    error_text = ""
-    work_type = make_reconcile_work_type(project_id, progset_id, parset_id, year)
-    print ">> tasks.run_reconcile", work_type
-
-    db_session = init_db_session()
-    kwargs = {'project_id': project_id, 'work_type': work_type}
-    work_log = db_session.query(dbmodels.WorkLogDb).filter_by(**kwargs).first()
-    if work_log:
-        work_log_id = work_log.id
-        work_log.task_id = self.request.id
-        print(">> Celery task_id = %s" % work_log.task_id)
-        try:
-            project = work_log.load()
-            db_session.add(work_log)
-            db_session.commit()
-        except Exception:
-            status = 'error'
-            error_text = traceback.format_exc()
-            print(">> Error in initialization")
-            print(error_text)
     close_db_session(db_session)
 
-    if work_log is None:
-        print(">> Error: couldn't find work log")
-        return
-
-    if status == 'started':
-        try:
-            print(">> run_reconcile %s" % work_type, maxtime)
-            progset = parse.get_progset_from_project(project, progset_id)
-            parset = parse.get_parset_from_project_by_id(project, parset_id)
-            progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
-
-            status = 'completed'
-        except Exception:
-            status = 'error'
-            error_text = traceback.format_exc()
-            print(">> Error in calculation")
-            print(error_text)
-
-        if status == 'completed':
-            print(">> run_reconcile save project")
-            db_session = init_db_session()
-            project_record = dataio.load_project_record(project_id, db_session=db_session)
-            project_record.save_obj(project)
-            db_session.add(project_record)
-            db_session.commit()
-            close_db_session(db_session)
+    portfolio.runGA(maxtime=maxtime, mc=0, batch=False)
 
     db_session = init_db_session()
-    work_log_record = db_session.query(dbmodels.WorkLogDb).get(work_log_id)
-    work_log_record.status = status
-    work_log_record.error = error_text
-    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
-    work_log_record.cleanup()
-    db_session.commit()
+    dataio.save_portfolio(portfolio, db_session=db_session)
     close_db_session(db_session)
 
-    print ">> Finish optimization"
+    print ">> ga_optimize finish"
 
 
-
-def launch_reconcile(project_id, progset_id, parset_id, year, maxtime=2):
-    work_type = make_reconcile_work_type(project_id, progset_id, parset_id, year)
-    print ">> launch_reconcile", work_type
-    project = dataio.load_project(project_id)
-    calc_state = setup_work_log(project_id, work_type, project)
-    if calc_state['status'] == 'started':
-        run_reconcile.delay(project_id, progset_id, parset_id, year, maxtime)
-    return calc_state
 
 
