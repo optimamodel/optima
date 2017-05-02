@@ -275,18 +275,19 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           getProjectAndMakeActive(projectId)
             .then(
               function(response) {
-                projectService.calibrationOK = response.calibrationOK;
-                projectService.programsOK = response.programsOK;
-                projectService.costFuncsOK = response.costFuncsOK;
+                var project = response.data;
+                projectService.calibrationOK = project.calibrationOK;
+                projectService.programsOK = project.programsOK;
+                projectService.costFuncsOK = project.costFuncsOK;
                 console.log('well hello there');
                 console.log(projectService.calibrationOK);
                 console.log(projectService.programsOK);
                 console.log(projectService.costFuncsOK);
-                console.log(response.calibrationOK);
-                console.log(response.programsOK);
-                console.log(response.costFuncsOK);
+                console.log(project.calibrationOK);
+                console.log(project.programsOK);
+                console.log(project.costFuncsOK);
                 console.log('ok bye');
-                console.log(response);
+                console.log(project);
                 console.log('really bye');
                 deferred.resolve(response);
               },
