@@ -1,4 +1,4 @@
-define(['angular', 'ui.router', './population-modal-ctrl'], function (angular) {
+define(['angular', 'ui.router', './population-modal'], function (angular) {
 
 
   'use strict';

@@ -1,4 +1,4 @@
-define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
+define(['angular', 'ui.router', './program-modal'], function (angular) {
 
   'use strict';
 
