@@ -82,61 +82,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-      function checkCalibration() {
-        projectService
-          .getActiveProject()
-          .then(function(response) {
-            var project = response.data;
-            var calibrationOK = false;
-            console.log('hiiiii1');
-            if (project) {
-
-            }
-            console.log(calibrationOK);
-            return calibrationOK;
-          })
-      }
-
-      function checkPrograms() {
-        projectService
-          .getActiveProject()
-          .then(function(response) {
-            var project = response.data;
-            console.log('hiiiii2');
-            var programsOK = false;
-            if (project) {
-
-            }
-            console.log(programsOK);
-            return programsOK;
-          })
-      }
-
-      function checkCostFuncs() {
-        projectService
-          .getActiveProject()
-          .then(function(response) {
-            var project = response.data;
-            console.log('hiiiii2');
-            var programsOK = false;
-            if (project) {
-              programsOK = project.nProgram > 0;
-            }
-            console.log(programsOK);
-            return programsOK;
-          })
-      }
-
-      function checkCostFuncs(project) {
-        console.log('hiiiii3');
-        var costFuncsOK = false;
-        if (project) {
-
-        }
-        console.log(costFuncsOK);
-        return costFuncsOK;
-      }
-
     function getProjectList() {
       var deferred = $q.defer();
       rpcService
@@ -322,7 +267,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
       getProjectList();
       getOptimaLiteProjectList();
-      projectService.calibrationOK = checkCalibration();
 
       function getActiveProject() {
         var projectId = projectService.project.id;

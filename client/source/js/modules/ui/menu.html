@@ -38,7 +38,9 @@
       ng-click="goIfProjectActive('calibration')"
       ng-class="{'menu-active': isState('model')}"
       class="menu-item">
-    Calibration
+    Calibration hi
+    <i class="fa fa-caret-up" ng-if="projectService.calibrationsOK"></i>
+    <i class="fa fa-caret-down" ng-if="!projectService.calibrationsOK"></i>
   </div>
 
   <div
