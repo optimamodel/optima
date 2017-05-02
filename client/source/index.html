@@ -48,22 +48,50 @@
   </style>
 
   <!-- Load main scripts -- takes a long time! -->
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
-  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
   <script src="vendor/requirejs/require.js"></script>
   <script>
-    require(['require', './js/config'], function(require, config) {
-      $(".loading-screen").fadeOut("slow");
-      config.urlArgs = 'bust=v1.0.1';
-      window.require.config(config);
-      require(['./js/main.js']);
-    });
+    function loadScripts() {
+      require(['require', './js/config'], function(require, config) {
+        config.urlArgs = 'bust=v1.0.1';
+        window.require.config(config);
+        require(['./js/main.js']);
+      });
+    }
   </script>
 
+  <!--Loading script-->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
+  <script>
+    function closeAnimation() {
+      $(".loading-screen").fadeOut("slow");
+    }
+  </script>
 </head>
 
 
+
 <body ng-controller="MainCtrl">
+
+<script>
+  // Check the heftier functions from config.js and make sure they're all loaded -- you'd think this could be automated, no!?!?
+  function checkDefined() {
+    return (require.defined("angular") && require.defined("d3") && require.defined("mpld3") && require.defined("jquery") && require.defined("toastr"));
+  }
+  // Check in a loop, every 500 ms, to see if the required libraries have loaded
+  function checkLoaded() {
+    setTimeout(function() {
+      console.log('Scripts still loading...');
+      if (checkDefined()) {
+        closeAnimation();
+      } else {
+        checkLoaded();
+      }
+    }, 500);
+  }
+  loadScripts(); // Start loading the scripts
+  checkLoaded(); // Don't display the page until they're done
+</script>
 
 <!--Top header-->
 <div class="actionbar">
