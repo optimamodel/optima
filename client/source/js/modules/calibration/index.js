@@ -1,3 +1,0 @@
-define([
-  './calibration-ctrl',
-], function () {});

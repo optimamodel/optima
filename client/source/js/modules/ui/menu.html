@@ -15,12 +15,12 @@
         ng-if="showAdminMenu"
         class="menu-dropdown">
       <div
-          ui-sref="admin.manage-users"
+          ui-sref="adminusers"
           ng-click="updateMenuSelection('showAdminMenu')">
         Manage users
       </div>
       <div
-          ui-sref="admin.manage-projects"
+          ui-sref="adminprojects"
           ng-click="updateMenuSelection('showAdminMenu')">
         Manage user projects
       </div>
@@ -35,42 +35,42 @@
   </div>
 
   <div
-      ng-click="goIfProjectActive('model.manual')"
+      ng-click="goIfProjectActive('calibration')"
       ng-class="{'menu-active': isState('model')}"
       class="menu-item">
     Calibration
   </div>
 
   <div
-      ng-click="goIfProjectActive('programs.manageProgramSet')"
+      ng-click="goIfProjectActive('programs')"
       ng-class="{'menu-active': isState('manageProgramSet')}"
       class="menu-item">
     Programs
   </div>
 
   <div
-      ng-click="goIfProjectActive('programs.define-cost-coverage-outcome')"
+      ng-click="goIfProjectActive('costfunction')"
       ng-class="{'menu-active': isState('cost-coverage')}"
       class="menu-item">
     Cost functions
   </div>
 
   <div
-      ng-click="goIfProjectActive('analysis.scenarios')"
+      ng-click="goIfProjectActive('scenarios')"
       ng-class="{'menu-active': isState('scenarios')}"
       class="menu-item">
     Scenarios
   </div>
 
   <div
-      ng-click="goIfProjectActive('analysis.optimization')"
+      ng-click="goIfProjectActive('optimization')"
       ng-class="{'menu-active': isState('optimization')}"
       class="menu-item">
     Optimization
   </div>
 
   <div
-      ui-sref="portfolio.manage"
+      ui-sref="geospatial"
       class="menu-item"
       ng-class="{'menu-active': isState('portfolio')}">
     Geospatial

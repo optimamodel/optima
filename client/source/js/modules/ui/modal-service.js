@@ -6,7 +6,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
 
   'use strict';
 
-  var module = angular.module('app.ui.modal', ['ui.bootstrap']);
+  var module = angular.module('app.modal', ['ui.bootstrap']);
 
   module.factory('modalService', ['$modal', function($modal) {
 
@@ -224,16 +224,6 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         });
 
         return modalInstance;
-      },
-
-      getUniqueName: function(name, otherNames) {
-        var i = 0;
-        var uniqueName = name;
-        while (_.indexOf(otherNames, uniqueName) >= 0) {
-          i += 1;
-          uniqueName = name + ' (' + i + ')';
-        }
-        return uniqueName;
       }
 
     };

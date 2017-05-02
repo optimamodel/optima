@@ -1,3 +1,0 @@
-define([
-  './geospatial-ctrl',
-], function () {});

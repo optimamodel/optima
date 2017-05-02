@@ -8,9 +8,9 @@ define(['angular' ], function (angular) {
    * sends the response to `callback`
    */
 
-  return angular.module('app.common.poller-service', [])
+  return angular.module('app.poller-service', [])
 
-    .factory('pollerService', ['$timeout', 'utilService', function($timeout, utilService) {
+    .factory('pollerService', ['$timeout', 'rpcService', function($timeout, rpcService) {
 
       var polls = {};
 
@@ -35,7 +35,7 @@ define(['angular' ], function (angular) {
 
           function pollWithTimeout() {
             var poll = getPoll(pollId);
-            utilService
+            rpcService
               .rpcAsyncRun(
                 'check_calculation_status', [pyobjectId, taskId])
               .then(
