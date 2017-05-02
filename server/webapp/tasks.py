@@ -110,7 +110,7 @@ def start_or_report_project_calculation(project_id, work_type):
     return setup_work_log(project_id, work_type, project)
 
 
-def check_calculation_status(pyobject_id, work_type):
+def check_task(pyobject_id, work_type):
     """
     Returns current calculation state of a work_log.
     """
@@ -126,9 +126,9 @@ def check_calculation_status(pyobject_id, work_type):
         .filter_by(project_id=pyobject_id, work_type=work_type)\
         .first()
     if work_log_record:
-        print ">> check_calculation_status: existing job of '%s' with same project" % work_type
+        print ">> check_task: existing job of '%s' with same project" % work_type
         calc_state = parse_work_log_record(work_log_record)
-    print ">> check_calculation_status", pyobject_id, work_type, calc_state['status']
+    print ">> check_task", pyobject_id, work_type, calc_state['status']
     close_db_session(db_session)
     if calc_state['status'] == 'error':
         raise Exception(calc_state['error_text'])
@@ -136,9 +136,8 @@ def check_calculation_status(pyobject_id, work_type):
         return calc_state
 
 
-
-def check_task(pyobject_id, work_type):
-    calc_state = check_calculation_status(pyobject_id, work_type)
+def check_if_task_started(pyobject_id, work_type):
+    calc_state = check_task(pyobject_id, work_type)
     if calc_state['status'] == 'error':
         clear_work_log(pyobject_id, work_type)
         raise Exception(calc_state['error_text'])
@@ -154,6 +153,93 @@ def clear_work_log(project_id, work_type):
     work_logs.delete()
     db_session.commit()
     close_db_session(db_session)
+
+
+@celery_instance.task()
+def run_task(task_id):
+    tokens = task_id.split(":")
+    fn_name, project_id = tokens[:2]
+    task_args = tokens[1:]
+    task_fn = globals()[fn_name]
+    try:
+        print '> run_task function', fn_name, task_args
+        task_fn(*task_args)
+        print "> run_task completed"
+        error_text = ""
+        status = 'completed'
+    except Exception:
+        error_text = traceback.format_exc()
+        status = 'error'
+        print ">> run_task error"
+        print(error_text)
+
+    db_session = init_db_session()
+    worklog = db_session.query(dbmodels.WorkLogDb).filter_by(work_type=task_id).first()
+    worklog.status = status
+    worklog.error = error_text
+    worklog.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    worklog.cleanup()
+    db_session.add(worklog)
+    db_session.commit()
+    close_db_session(db_session)
+
+
+def launch_task(task_id):
+    print "> launch_task", task_id
+    calc_status = start_or_report_project_calculation(task_id.split(":")[1], task_id)
+    if calc_status['status'] != "blocked":
+        run_task.delay(task_id)
+    return calc_status
+
+
+def autofit(project_id, parset_id, maxtime):
+
+    db_session = init_db_session()
+    project = dataio.load_project(project_id, db_session=db_session, authenticate=False)
+    close_db_session(db_session)
+
+    orig_parset = parse.get_parset_from_project_by_id(project, parset_id)
+    orig_parset_name = orig_parset.name
+    print ">> autofit '%s' '%s'" % (project_id, orig_parset_name)
+    parset_id = orig_parset.uid
+    autofit_parset_name = "autofit-" + str(orig_parset_name)
+
+    project.autofit(
+        name=autofit_parset_name,
+        orig=orig_parset_name,
+        maxtime=int(maxtime)
+    )
+
+    result = project.parsets[autofit_parset_name].getresults()
+    result.uid = op.uuid()
+    result_name = 'parset-' + orig_parset_name
+    result.name = result_name
+
+    print(">> autofit parset '%s' -> '%s' " % (autofit_parset_name, orig_parset_name))
+    autofit_parset = project.parsets[autofit_parset_name]
+    autofit_parset.name = orig_parset.name
+    autofit_parset.uid = orig_parset.uid
+    del project.parsets[orig_parset_name]
+    project.parsets[orig_parset_name] = autofit_parset
+    del project.parsets[autofit_parset_name]
+
+    db_session = init_db_session()
+
+    # save project
+    project_record = dataio.load_project_record(project_id, db_session=db_session)
+    project_record.save_obj(project)
+    db_session.add(project_record)
+
+    # save result
+    dataio.delete_result_by_parset_id(project_id, parset_id, db_session=db_session)
+    result_record = dataio.update_or_create_result_record_by_id(
+        result, project_id, orig_parset.uid, 'calibration', db_session=db_session)
+    db_session.add(result_record)
+
+    db_session.commit()
+    close_db_session(db_session)
+
+    print("> autofit finish")
 
 
 @celery_instance.task()

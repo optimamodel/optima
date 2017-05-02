@@ -581,7 +581,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year);
         rpcService
           .rpcAsyncRun(
-            'check_task', [vm.project.id, workType])
+            'check_if_task_started', [vm.project.id, workType])
           .then(function(response) {
             if (response.data.status === 'started') {
               initReconcilePoll();

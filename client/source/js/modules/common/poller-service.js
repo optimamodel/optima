@@ -37,7 +37,7 @@ define(['angular' ], function (angular) {
             var poll = getPoll(pollId);
             rpcService
               .rpcAsyncRun(
-                'check_calculation_status', [pyobjectId, taskId])
+                'check_task', [pyobjectId, taskId])
               .then(
                 function(response) {
                   var status = response.data.status;

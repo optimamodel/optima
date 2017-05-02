@@ -161,7 +161,7 @@ define(['angular', 'ui.router'], function (angular) {
         console.log('selectOptimization check task')
         rpcService
           .rpcAsyncRun(
-            'check_task',
+            'check_if_task_started',
             [$scope.state.project.id, 'optim-' + optimization.id])
           .then(
             function(response) {

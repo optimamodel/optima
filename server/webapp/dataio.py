@@ -665,7 +665,6 @@ def load_zip_of_prj_files(project_ids):
     return dirname, zip_fname
 
 
-
 def resolve_project(project):
     """
     Returns boolean to whether any changes needed to be made to the project.
@@ -816,51 +815,6 @@ def upload_project_object(filename, project_id, obj_type):
         project.addoptim(optim=obj, overwrite=True)
     save_project(project)
     return { 'name': obj.name }
-
-
-
-#############################################################################################
-### SPREADSHEETS
-#############################################################################################
-
-
-def load_template_data_spreadsheet(project_id):
-    """
-    Returns (dirname, basename) of the the template data spreadsheet
-    """
-    project = load_project(project_id)
-    fname = secure_filename('{}.xlsx'.format(project.name))
-    server_fname = templatepath(fname)
-    op.makespreadsheet(
-        server_fname,
-        pops=parse.get_populations_from_project(project),
-        datastart=int(project.data["years"][0]),
-        dataend=int(project.data["years"][-1]))
-    return upload_dir_user(TEMPLATEDIR), fname
-
-
-def load_data_spreadsheet(project_id, is_template=True):
-    """
-    Returns (dirname, basename) of the the template data spreadsheet
-    """
-    project = load_project(project_id)
-    fname = secure_filename('{}.xlsx'.format(project.name))
-    server_fname = templatepath(fname)
-    data = None
-    datastart = project.settings.start
-    dataend = project.settings.dataend
-    if not is_template:
-        data = project.data
-        datastart = int(project.data["years"][0])
-        dataend = int(project.data["years"][-1])
-    op.makespreadsheet(
-        server_fname,
-        pops=parse.get_populations_from_project(project),
-        datastart=datastart,
-        dataend=dataend,
-        data=data)
-    return upload_dir_user(TEMPLATEDIR), fname
-
 
 
 
@@ -1148,8 +1102,9 @@ def load_parset_graphs(
     if result is None:
         result = project.runsim(name=parset.name, end=endYear) # When running, possibly modify the end year, but not the start
         result.which = which
-        update_or_create_result_record_by_id(
+        record = update_or_create_result_record_by_id(
             result, project_id, parset_id, calculation_type, db_session=db.session)
+        db.session.add(record)
         print(">> load_parset_graphs calc result for parset '%s'" % parset.name)
         db.session.commit()
 
@@ -1347,6 +1302,7 @@ def any_optimizable(project_id):
 ### SCENARIOS
 #############################################################################################
 
+
 def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, startYear=None, endYear=None):
     result = load_result(project_id, None, "scenarios", which)
 
@@ -1502,6 +1458,28 @@ def delete_portfolio(portfolio_id, db_session=None):
     return load_portfolio_summaries()
 
 
+def load_portfolio_record(portfolio_id, raise_exception=True, db_session=None, authenticate=False):
+    if not db_session:
+        db_session = db.session
+
+    if authenticate:
+        authenticate_current_user()
+
+    if authenticate is False or current_user.is_admin:
+        query = db_session.query(PyObjectDb).filter_by(id=portfolio_id)
+    else:
+        query = db_session.query(PyObjectDb).filter_by(
+            id=portfolio_id, user_id=current_user.id)
+
+    portfolio_record = query.first()
+
+    if portfolio_record is None:
+        if raise_exception:
+            raise ProjectDoesNotExist(id=portfolio_record)
+
+    return portfolio_record
+
+
 def load_portfolio(portfolio_id, db_session=None):
     if db_session is None:
         db_session = db.session
@@ -1511,22 +1489,6 @@ def load_portfolio(portfolio_id, db_session=None):
         print("> load_portfolio %s" % portfolio_id)
         return record.load()
     raise Exception("Portfolio %s not found" % portfolio_id)
-
-
-def load_portfolio_summaries(db_session=None):
-    if db_session is None:
-        db_session = db.session
-
-    print("> load_portfolio_summaries")
-    query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
-    portfolios = []
-    for record in query:
-        portfolio = record.load()
-        portfolios.append(portfolio)
-
-    summaries = map(parse.get_portfolio_summary, portfolios)
-
-    return {'portfolios': summaries}
 
 
 def save_portfolio(portfolio, db_session=None):
@@ -1546,6 +1508,22 @@ def save_portfolio(portfolio, db_session=None):
     record.save_obj(portfolio)
     db_session.add(record)
     db_session.commit()
+
+
+def load_portfolio_summaries(db_session=None):
+    if db_session is None:
+        db_session = db.session
+
+    print("> load_portfolio_summaries")
+    query = db_session.query(PyObjectDb).filter_by(user_id=current_user.id)
+    portfolios = []
+    for record in query:
+        portfolio = record.load()
+        portfolios.append(portfolio)
+
+    summaries = map(parse.get_portfolio_summary, portfolios)
+
+    return {'portfolios': summaries}
 
 
 def rename_portfolio(portfolio_id, newName, db_session=None):
@@ -1571,28 +1549,6 @@ def load_or_create_portfolio(portfolio_id, db_session=None):
         portfolio.uid = UUID(portfolio_id)
         portfolio.objectives = op.defaultobjectives()
     return portfolio
-
-
-def load_portfolio_record(portfolio_id, raise_exception=True, db_session=None, authenticate=False):
-    if not db_session:
-        db_session = db.session
-
-    if authenticate:
-        authenticate_current_user()
-
-    if authenticate is False or current_user.is_admin:
-        query = db_session.query(PyObjectDb).filter_by(id=portfolio_id)
-    else:
-        query = db_session.query(PyObjectDb).filter_by(
-            id=portfolio_id, user_id=current_user.id)
-
-    portfolio_record = query.first()
-
-    if portfolio_record is None:
-        if raise_exception:
-            raise ProjectDoesNotExist(id=portfolio_record)
-
-    return portfolio_record
 
 
 def download_portfolio(portfolio_id):

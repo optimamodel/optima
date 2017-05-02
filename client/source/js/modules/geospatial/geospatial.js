@@ -67,7 +67,7 @@ define(['angular', 'underscore'], function( angular, _) {
         $scope.state.objectives = $scope.state.portfolio.objectives;
         rpcService
           .rpcAsyncRun(
-            'check_task', [$scope.state.portfolio.id, 'portfolio'])
+            'check_if_task_started', [$scope.state.portfolio.id, 'portfolio'])
           .then(function(response) {
             console.log('chooseNewPortfolio ga status:', response.data.status);
             if (response.data.status === 'started') {
@@ -78,7 +78,7 @@ define(['angular', 'underscore'], function( angular, _) {
           $scope.bocStatusMessage[project.id] = project.boc;
           rpcService
             .rpcAsyncRun(
-              'check_task', [project.id, 'boc'])
+              'check_if_task_started', [project.id, 'boc'])
             .then(function(response) {
               console.log('chooseNewPortfolio project', project.id, 'status:', response.data.status);
               if (response.data.status === 'started') {
@@ -199,7 +199,7 @@ define(['angular', 'underscore'], function( angular, _) {
       $scope.runFullGa = function() {
         rpcService
           .rpcAsyncRun(
-            'check_task', [$scope.state.portfolio.id, 'portfolio'])
+            'check_if_task_started', [$scope.state.portfolio.id, 'portfolio'])
           .then(function(response) {
             if (response.data.status != 'started') {
               console.log('runFullGa');
