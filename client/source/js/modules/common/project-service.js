@@ -269,23 +269,31 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       getOptimaLiteProjectList();
 
       function getActiveProject() {
+        var deferred = $q.defer();
         var projectId = projectService.project.id;
         if (projectId) {
-          var project = getProjectAndMakeActive(projectId);
-          projectService.calibrationOK = project.calibrationOK;
-          projectService.programsOK = project.programsOK;
-          projectService.costFuncsOK = project.costFuncsOK;
-          console.log('well hello there');
-          console.log(projectService.calibrationOK);
-          console.log(projectService.programsOK);
-          console.log(projectService.costFuncsOK);
-          console.log(project.calibrationOK);
-          console.log(project.programsOK);
-          console.log(project.costFuncsOK);
-          console.log('ok bye');
-          console.log(project);
-          console.log('really bye');
-          return project
+          getProjectAndMakeActive(projectId)
+            .then(
+              function(response) {
+                projectService.calibrationOK = response.calibrationOK;
+                projectService.programsOK = response.programsOK;
+                projectService.costFuncsOK = response.costFuncsOK;
+                console.log('well hello there');
+                console.log(projectService.calibrationOK);
+                console.log(projectService.programsOK);
+                console.log(projectService.costFuncsOK);
+                console.log(response.calibrationOK);
+                console.log(response.programsOK);
+                console.log(response.costFuncsOK);
+                console.log('ok bye');
+                console.log(response);
+                console.log('really bye');
+                deferred.resolve(response);
+              },
+              function(response) {
+                deferred.reject(response);
+              });
+          return deferred.promise;
         }
       }
 
