@@ -274,11 +274,15 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           var project = getProjectAndMakeActive(projectId);
           projectService.calibrationOK = project.hasParset;
           projectService.programsOK = project.nProgram > 0;
-          rpcService.rpcRun(
-            'any_optimizable', [project.id])
-            .then(function (response) {
-              projectService.costFuncsOK = Boolean(response.data.anyOptimizable);
-            });
+          //rpcService.rpcRun(
+          //  'any_optimizable', [project.id])
+          //  .then(function (response) {
+          //    projectService.costFuncsOK = Boolean(response.data.anyOptimizable);
+          //  });
+          console.log('well hello there');
+          console.log(projectService.calibrationOK);
+          console.log(projectService.programsOK);
+          console.log('ok bye')
           return project
         }
       }

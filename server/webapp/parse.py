@@ -308,7 +308,10 @@ def get_project_summary_from_project(project):
         'hasParset': len(project.parsets) > 0,
         'isOptimizable': is_ready_to_optimize,
         'nProgram': n_program,
-        'hasEcon': "econ" in project.data
+        'hasEcon': "econ" in project.data,
+        'calibrationOK': len(project.parsets)>0,
+        'programsOK': n_program>0,
+        'costFuncsOK': sum([progset.readytooptimize() for progset in project.progsets.values()])>0,
     }
 
     return project_summary
