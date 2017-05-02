@@ -39,8 +39,8 @@
       ng-class="{'menu-active': isState('model')}"
       class="menu-item">
     Calibration hi
-    <i class="fa fa-caret-up" ng-if="projectService.calibrationsOK"></i>
-    <i class="fa fa-caret-down" ng-if="!projectService.calibrationsOK"></i>
+    <i class="fa fa-caret-up" ng-if="tttest()"></i>
+    <i class="fa fa-caret-down" ng-if="!tttest()"></i>
   </div>
 
   <div

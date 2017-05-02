@@ -298,6 +298,11 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         }
       }
 
+      function ttest() {
+        console.log('hi hi');
+        return (projectService.calibrationOK);
+      }
+
     _.assign(projectService, {
       getProjectList: getProjectList,
       getOptimaLiteProjectList: getOptimaLiteProjectList,
@@ -314,6 +319,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
       getActiveProject: getActiveProject,
+      ttest: ttest,
       downloadSelectedProjects: function (projectIds) {
         return rpcService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },
