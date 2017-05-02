@@ -38,6 +38,8 @@ define(['angular'], function (angular) {
             }
           };
 
+
+
           $scope.logout = function() {
             rpcService
               .rpcRun('do_logout_current_user')

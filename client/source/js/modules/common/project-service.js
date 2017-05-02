@@ -8,6 +8,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     var projectService = {
       projects: [],
+      optimaliteprojects: [],
       project: {},
     };
 
@@ -78,6 +79,40 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
+      //function checkCalibration(project) {
+      //  console.log('hiiiii1');
+      //  var calibrationOK = false;
+      //  if (project) {
+      //    calibrationOK = project.hasParset;
+      //  }
+      //  console.log(calibrationOK);
+      //  return calibrationOK;
+      //}
+      //
+      //function checkPrograms(project) {
+      //  console.log('hiiiii2');
+      //  var programsOK = false;
+      //  if (project) {
+      //    programsOK = project.nProgram > 0;
+      //  }
+      //  console.log(programsOK);
+      //  return programsOK;
+      //}
+      //
+      //function checkCostFuncs(project) {
+      //  console.log('hiiiii3');
+      //  var costFuncsOK = false;
+      //  if (project) {
+      //    utilService.rpcRun(
+      //      'any_optimizable', [project.id])
+      //      .then(function (response) {
+      //        costFuncsOK = Boolean(response.data.anyOptimizable);
+      //      });
+      //  }
+      //  console.log(costFuncsOK);
+      //  return costFuncsOK;
+      //}
+
     function getProjectList() {
       var deferred = $q.defer();
       rpcService
@@ -91,6 +126,28 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               project.updatedTime = Date.parse(project.updatedTime);
               project.dataUploadTime = Date.parse(project.dataUploadTime);
               projectService.projects.push(project);
+            });
+            deferred.resolve(response);
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
+    function getOptimaLiteProjectList() {
+      var deferred = $q.defer();
+      rpcService
+        .rpcRun(
+          'get_optimalite_projects')
+        .then(
+          function(response) {
+            clearList(projectService.optimaliteprojects);
+            _.each(response.data.projects, function(project) {
+              project.creationTime = Date.parse(project.creationTime);
+              project.updatedTime = Date.parse(project.updatedTime);
+              project.dataUploadTime = Date.parse(project.dataUploadTime);
+              projectService.optimaliteprojects.push(project);
             });
             deferred.resolve(response);
           },
@@ -178,6 +235,25 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
+    function copyOptimaLiteProject(projectId, newName) {
+      var deferred = $q.defer();
+      rpcService
+        .rpcRun(
+          'copy_optimalite_project', [projectId, newName])
+        .then(
+          function(response) {
+            console.log('copyProject', response);
+            getProjectAndMakeActive(response.data.projectId)
+              .then(
+                function(response) { deferred.resolve(response); },
+                function(response) { deferred.reject(response); });
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
     function renameProject(id, project) {
       var deferred = $q.defer();
       rpcService
@@ -221,15 +297,18 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     }
 
     getProjectList();
+    getOptimaLiteProjectList();
 
     _.assign(projectService, {
       getProjectList: getProjectList,
+      getOptimaLiteProjectList: getOptimaLiteProjectList,
       setActiveProjectId: setActiveProjectId,
       loadActiveProject: loadActiveProject,
       clearProjectIdIfActive: clearProjectIdIfActive,
       clearProjectForUserId: clearProjectForUserId,
       isActiveProjectSet: isActiveProjectSet,
       copyProject: copyProject,
+      copyOptimaLiteProject: copyOptimaLiteProject,
       renameProject: renameProject,
       createProject: createProject,
       deleteProjects: deleteProjects,

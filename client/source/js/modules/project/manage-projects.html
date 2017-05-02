@@ -5,8 +5,22 @@
     <help ref="create-projects"/>
   </h2>
 
-  <div style="padding-top:1em" ng-hide="projects.length">
-    To begin, please create or upload a project:
+  <div style="padding-top:1em">
+    Choose a complete project from our database:
+  </div>
+
+  <select
+    class="txbox"
+    style="width: auto"
+    ng-model="projectService.project"
+    ng-options="p as p.name for p in projectService.optimaliteprojects"
+    ng-change="copyOptimaLiteProject(projectService.project)">
+  </select>
+
+  <br>
+
+  <div style="padding-top:1em">
+    Or create/upload a new project:
   </div>
 
   <a class="btn" ui-sref="createproject">Create new project</a> &nbsp; &nbsp;

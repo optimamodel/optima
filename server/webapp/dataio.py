@@ -291,6 +291,26 @@ def verify_admin_request_decorator(api_call):
     return _verify_admin_request
 
 
+#############################################################################################
+### OPTIMA LITE
+#############################################################################################
+
+def get_optimalite_user(name='_OptimaLite'):
+    ''' Get the Optima Lite user ID, from its name -- default is '_OptimaLite' '''
+    user = UserDb.query.filter_by(username=name).first()
+    return user.id
+
+
+def get_optimalite_projects():
+    ''' Return the projects associated with the Optima Lite user '''
+    user_id = get_optimalite_user()
+    query = ProjectDb.query.filter_by(user_id=user_id)
+    projectlist = map(load_project_summary_from_project_record, query.all())
+    sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
+    output = {'projects': sortedprojectlist}
+    return output
+    
+
 
 
 #############################################################################################
@@ -556,7 +576,7 @@ def copy_project(project_id, new_project_name):
     """
     project_record = load_project_record(
         project_id, raise_exception=True)
-    user_id = project_record.user_id
+    user_id = current_user.id # Save as the current user always
 
     project = project_record.load()
     project.restorelinks()
@@ -790,13 +810,6 @@ def resolve_project(project):
     is_change = is_change or is_delete_result
 
     return is_change
-
-
-def save_project(project):
-    project_record = load_project_record(project.uid)
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
 
 
 def get_server_filename(basename):

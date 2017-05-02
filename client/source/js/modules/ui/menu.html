@@ -8,8 +8,8 @@
         class="menu-item"
         ng-class="{'menu-active': isState('admin')}">
       Admin
-      <i class="fa fa-angle-up" ng-if="showAdminMenu"></i>
-      <i class="fa fa-angle-down" ng-if="!showAdminMenu"></i>
+      <i class="fa fa-caret-up" ng-if="showAdminMenu"></i>
+      <i class="fa fa-caret-down" ng-if="!showAdminMenu"></i>
     </div>
     <div
         ng-if="showAdminMenu"
@@ -83,8 +83,8 @@
         class="menu-item"
         ng-class="{'menu-active': isState('help') || isState('edit') || isState('feedback')}">
       Account/help
-      <i class="fa fa-angle-up" ng-if="showAccountHelpMenu"></i>
-      <i class="fa fa-angle-down" ng-if="!showAccountHelpMenu"></i>
+      <i class="fa fa-caret-up" ng-if="showAccountHelpMenu"></i>
+      <i class="fa fa-caret-down" ng-if="!showAccountHelpMenu"></i>
     </div>
     <div
         ng-if="showAccountHelpMenu"

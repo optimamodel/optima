@@ -43,7 +43,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
         vm.parsets = [];
 
         vm.state.year = new Date().getFullYear();
-        vm.state.maxtime = 10
+        vm.state.maxtime = 10;
 
         $scope.projectService = projectService;
         $scope.$watch('projectService.project.id', function() {
