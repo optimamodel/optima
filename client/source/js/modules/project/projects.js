@@ -169,6 +169,10 @@ define(['angular', 'ui.router'], function (angular) {
           });
       };
 
+      $scope.openOptimaLiteProjectList = function() {
+        modalService.optimaLiteProjectList();
+      };
+
       initialize();
   });
 
