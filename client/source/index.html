@@ -81,7 +81,7 @@
   // Check in a loop, every 500 ms, to see if the required libraries have loaded
   function checkLoaded() {
     setTimeout(function() {
-      console.log('Scripts still loading...');
+      console.log('Loading scripts');
       if (checkDefined()) {
         closeAnimation();
       } else {
