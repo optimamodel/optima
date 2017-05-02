@@ -144,6 +144,13 @@ define(['angular', 'ui.router'], function (angular) {
       selectOptimization();
     };
 
+    function makeTaskId() {
+      return 'optimize:'
+          + $scope.state.project.id + ":"
+          + $scope.state.optimization.id + ":"
+          + $scope.state.maxtime;
+    }
+
     function selectOptimization() {
       pollerService.stopPolls();
 
@@ -278,10 +285,11 @@ define(['angular', 'ui.router'], function (angular) {
 
     $scope.startOptimization = function(optimization) {
       $scope.state.isRunnable = false;
+      var taskId = makeTaskId();
+      console.log('startOptimization', taskId);
       rpcService
         .rpcAsyncRun(
-          'launch_optimization',
-          [$scope.state.project.id, optimization.id, parseInt($scope.state.maxtime)])
+          'launch_task', [taskId])
         .then(function(response) {
           $scope.task_id = response.data.task_id;
           if (response.data.status === 'started') {
@@ -297,7 +305,7 @@ define(['angular', 'ui.router'], function (angular) {
       pollerService
         .startPollForRpc(
           $scope.state.project.id,
-          'optim-' + $scope.state.optimization.id,
+          makeTaskId(),
           function(response) {
             var calcState = response.data;
             if (calcState.status === 'completed') {

@@ -184,7 +184,7 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
 
-    def __init__(self, project_id, work_type=None):
+    def __init__(self, project_id=None, work_type=None):
         self.project_id = project_id
         self.work_type = work_type
 

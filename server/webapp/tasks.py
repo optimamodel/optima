@@ -158,13 +158,17 @@ def clear_work_log(project_id, work_type):
 @celery_instance.task()
 def run_task(task_id):
     tokens = task_id.split(":")
-    fn_name, project_id = tokens[:2]
+    fn_name = tokens[0]
     task_args = tokens[1:]
-    task_fn = globals()[fn_name]
+    if fn_name in globals():
+        task_fn = globals()[fn_name]
+    else:
+        raise Exception("run_task error: couldn't find '%s'" % fn_name)
+
+    print '>> run_task %s(%s)' % (fn_name, ', '.join(task_args))
     try:
-        print '> run_task function', fn_name, task_args
         task_fn(*task_args)
-        print "> run_task completed"
+        print ">> run_task completed"
         error_text = ""
         status = 'completed'
     except Exception:
@@ -185,7 +189,7 @@ def run_task(task_id):
 
 
 def launch_task(task_id):
-    print "> launch_task", task_id
+    print ">> launch_task", task_id
     calc_status = start_or_report_project_calculation(task_id.split(":")[1], task_id)
     if calc_status['status'] != "blocked":
         run_task.delay(task_id)
@@ -242,196 +246,56 @@ def autofit(project_id, parset_id, maxtime):
     print("> autofit finish")
 
 
-@celery_instance.task()
-def run_autofit(project_id, parset_id, maxtime=60):
-    import traceback
+def optimize(project_id, optimization_id, maxtime, start=None, end=None):
 
-    work_type = 'autofit-' + str(parset_id)
-    print("> Start autofit for project '%s' work_type='%s'" % (project_id, work_type))
+    maxtime = int(maxtime)
 
     db_session = init_db_session()
-    work_log = db_session.query(dbmodels.WorkLogDb).filter_by(
-        project_id=project_id, work_type=work_type).first()
+    project = dataio.load_project(project_id, db_session=db_session, authenticate=False)
     close_db_session(db_session)
 
-    if work_log is None:
-        print("> Error: couldn't find work log")
-        return
+    optim = parse.get_optimization_from_project(project, optimization_id)
+    print(">> optimize '%s' for maxtime = %f" % (optim.name, maxtime))
 
-    work_log_id = work_log.id
-
-    try:
-        project = work_log.load()
-        orig_parset = parse.get_parset_from_project_by_id(project, parset_id)
-        orig_parset_name = orig_parset.name
-        parset_id = orig_parset.uid
-        autofit_parset_name = "autofit-"+str(orig_parset_name)
-
-        project.autofit(
-            name=autofit_parset_name,
-            orig=orig_parset_name,
-            maxtime=maxtime
-        )
-
-        result = project.parsets[autofit_parset_name].getresults()
-        result.uid = op.uuid()
-        result_name = 'parset-' + orig_parset_name
-        result.name = result_name
-
-        autofit_parset = project.parsets[autofit_parset_name]
-        autofit_parset.name = orig_parset.name
-        autofit_parset.uid = orig_parset.uid
-        del project.parsets[orig_parset_name]
-        project.parsets[orig_parset_name] = autofit_parset
-        del project.parsets[autofit_parset_name]
-
-        error_text = ""
-        status = 'completed'
-    except Exception:
-        result = None
-        error_text = traceback.format_exc()
+    optim.projectref = op.Link(project)  # Need to restore project link
+    progset = project.progsets[optim.progsetname]
+    if not progset.readytooptimize():
         status = 'error'
-        print(">> Error in autofit")
-        print(error_text)
+        error_text = "Not ready to optimize\n"
+        costcov_errors = progset.hasallcostcovpars(detail=True)
+        if costcov_errors:
+            error_text += "Missing: cost-coverage parameters of:\n"
+            error_text += pprint.pformat(costcov_errors, indent=2)
+        covout_errors = progset.hasallcovoutpars(detail=True)
+        if covout_errors:
+            error_text += "Missing: coverage-outcome parameters of:\n"
+            error_text += pprint.pformat(covout_errors, indent=2)
+        raise Exception(error_text)
 
-    if result:
-        print(">> Save autofitted parset '%s' to '%s' " % (autofit_parset_name, orig_parset_name))
-        db_session = init_db_session()
-        project_record = dataio.load_project_record(project_id, db_session=db_session)
-        project_record.save_obj(project)
-        db_session.add(project_record)
-        dataio.delete_result_by_parset_id(project_id, parset_id, db_session=db_session)
-        result_record = dataio.update_or_create_result_record_by_id(
-            result, project_id, orig_parset.uid, 'calibration', db_session=db_session)
-        print(">> Save result '%s'" % result.name)
-        db_session.add(result_record)
-        db_session.commit()
-        close_db_session(db_session)
+    print(">> optimize start")
+    result = project.optimize(
+        name=optim.name,
+        parsetname=optim.parsetname,
+        progsetname=optim.progsetname,
+        objectives=optim.objectives,
+        constraints=optim.constraints,
+        maxtime=maxtime,
+        mc=0,  # Set this to zero for now while we decide how to handle uncertainties etc.
+    )
+
+    print(">> optimize budgets %s" % result.budgets)
+    result.uid = op.uuid()
 
     db_session = init_db_session()
-    work_log = db_session.query(dbmodels.WorkLogDb).get(work_log_id)
-    work_log.status = status
-    work_log.error = error_text
-    work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
-    work_log.cleanup()
-    db_session.add(work_log)
+    dataio.delete_result_by_name(project_id, result.name, db_session)
+    parset = project.parsets[optim.parsetname]
+    result_record = dataio.update_or_create_result_record_by_id(
+        result, project_id, parset.uid, 'optimization', db_session=db_session)
+    db_session.add(result_record)
     db_session.commit()
     close_db_session(db_session)
 
-    print("> Finish autofit")
-
-
-
-def launch_autofit(project_id, parset_id, maxtime):
-    work_type = 'autofit-' + str(parset_id)
-    calc_status = start_or_report_project_calculation(project_id, work_type)
-    if calc_status['status'] != "blocked":
-        print "> Starting autofit for %s s" % maxtime
-        run_autofit.delay(project_id, parset_id, maxtime)
-        calc_status['maxtime'] = maxtime
-    return calc_status
-
-
-
-@celery_instance.task(bind=True)
-def run_optimization(self, project_id, optimization_id, maxtime, start=None, end=None):
-
-    work_type = 'optim-' + str(optimization_id)
-    status = 'started'
-    error_text = ""
-
-    db_session = init_db_session()
-    work_log = db_session.query(dbmodels.WorkLogDb).filter_by(
-        project_id=project_id, work_type=work_type).first()
-
-    if work_log:
-        work_log_id = work_log.id
-
-        work_log.task_id = self.request.id
-        print(">> Celery task_id = %s" % work_log.task_id)
-        db_session.add(work_log)
-        db_session.commit()
-
-        try:
-            project = work_log.load()
-            optim = parse.get_optimization_from_project(project, optimization_id)
-            optim.projectref = op.Link(project) # Need to restore project link
-            progset = project.progsets[optim.progsetname]
-            if not progset.readytooptimize():
-                status = 'error'
-                error_text = "Not ready to optimize\n"
-                costcov_errors = progset.hasallcostcovpars(detail=True)
-                if costcov_errors:
-                    error_text += "Missing: cost-coverage parameters of:\n"
-                    error_text += pprint.pformat(costcov_errors, indent=2)
-                covout_errors = progset.hasallcovoutpars(detail=True)
-                if covout_errors:
-                    error_text += "Missing: coverage-outcome parameters of:\n"
-                    error_text += pprint.pformat(covout_errors, indent=2)
-        except Exception:
-            status = 'error'
-            error_text = traceback.format_exc()
-            print(">> Error in initialization")
-            print(error_text)
-
-    close_db_session(db_session)
-
-    if work_log is None:
-        print(">> Error: couldn't find work log")
-        return
-
-    if status == 'started':
-        result = None
-        try:
-            print(">> Start optimization '%s' for maxtime = %f" % (optim.name, maxtime))
-            result = project.optimize(
-                name=optim.name,
-                parsetname=optim.parsetname,
-                progsetname=optim.progsetname,
-                objectives=optim.objectives,
-                constraints=optim.constraints,
-                maxtime=maxtime,
-                mc=0, # Set this to zero for now while we decide how to handle uncertainties etc.
-            )
-            
-            print(">> %s" % result.budgets)
-            result.uid = op.uuid()
-            status = 'completed'
-        except Exception:
-            status = 'error'
-            error_text = traceback.format_exc()
-            print(">> Error in calculation")
-            print(error_text)
-
-        if result:
-            db_session = init_db_session()
-            dataio.delete_result_by_name(project_id, result.name, db_session)
-            parset = project.parsets[optim.parsetname]
-            result_record = dataio.update_or_create_result_record_by_id(
-                result, project_id, parset.uid, 'optimization', db_session=db_session)
-            db_session.add(result_record)
-            db_session.commit()
-            close_db_session(db_session)
-
-    db_session = init_db_session()
-    work_log_record = db_session.query(dbmodels.WorkLogDb).get(work_log_id)
-    work_log_record.status = status
-    work_log_record.error = error_text
-    work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
-    work_log_record.cleanup()
-    db_session.commit()
-    close_db_session(db_session)
-
-    print ">> Finish optimization"
-
-
-def launch_optimization(project_id, optimization_id, maxtime, start=None, end=None):
-    work_type = 'optim-' + str(optimization_id)
-    calc_state = start_or_report_project_calculation(project_id, work_type)
-    if calc_state['status'] != 'started':
-        return calc_state, 208
-    run_optimization.delay(project_id, optimization_id, maxtime, start, end)
-    return calc_state
+    print ">> optimize finish"
 
 
 @celery_instance.task(bind=True)
