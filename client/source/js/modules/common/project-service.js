@@ -77,16 +77,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
             projectService.calibrationOK = uploadedProject.calibrationOK;
             projectService.programsOK = uploadedProject.programsOK;
             projectService.costFuncsOK = uploadedProject.costFuncsOK;
-            console.log('2222well hello there');
-            console.log(projectService.calibrationOK);
-            console.log(projectService.programsOK);
-            console.log(projectService.costFuncsOK);
-            console.log(uploadedProject.calibrationOK);
-            console.log(uploadedProject.programsOK);
-            console.log(uploadedProject.costFuncsOK);
-            console.log('222ok bye');
-            console.log(uploadedProject);
-            console.log('222really bye');
             deferred.resolve(response);
           },
           function(response) {
@@ -304,7 +294,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
       getActiveProject: getActiveProject,
-      ttest: ttest,
       downloadSelectedProjects: function (projectIds) {
         return rpcService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },
