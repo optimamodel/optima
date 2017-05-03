@@ -74,6 +74,19 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               projectService.projects.push(uploadedProject);
             }
             setActiveProjectId(uploadedProject.id);
+            projectService.calibrationOK = uploadedProject.calibrationOK;
+            projectService.programsOK = uploadedProject.programsOK;
+            projectService.costFuncsOK = uploadedProject.costFuncsOK;
+            console.log('2222well hello there');
+            console.log(projectService.calibrationOK);
+            console.log(projectService.programsOK);
+            console.log(projectService.costFuncsOK);
+            console.log(uploadedProject.calibrationOK);
+            console.log(uploadedProject.programsOK);
+            console.log(uploadedProject.costFuncsOK);
+            console.log('222ok bye');
+            console.log(uploadedProject);
+            console.log('222really bye');
             deferred.resolve(response);
           },
           function(response) {
