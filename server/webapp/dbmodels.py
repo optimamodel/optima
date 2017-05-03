@@ -90,26 +90,12 @@ class ProjectDb(db.Model):
     def load(self):
         print(">> ProjectDb.load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        
         project = op.loadproj(redis_entry, fromdb=True)
-
-        if isinstance(project, op.Project):
-            for progset in project.progsets.values():
-                if not hasattr(progset, 'inactive_programs'):
-                    progset.inactive_programs = op.odict()
         return project
 
-    def save_obj(self, obj, is_skip_result=False):
+    def save_obj(self, obj):
         print(">> ProjectDb.save " + self.id.hex)
-        if isinstance(obj, op.Project):
-            # Copy the project, only save what we want...
-            new_project = op.dcp(obj)
-            new_project.spreadsheet = None
-            if is_skip_result:
-                new_project.results = op.odict()
-            redis.set(self.id.hex, op.dumpstr(new_project))
-        else:
-            redis.set(self.id.hex, op.dumpstr(obj))
+        redis.set(self.id.hex, op.dumpstr(obj))
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
@@ -170,11 +156,8 @@ class ResultsDb(db.Model):
 
 
 class WorkLogDb(db.Model):  # pylint: disable=R0903
-
     __tablename__ = "work_log"
-
     work_status = db.Enum('started', 'completed', 'cancelled', 'error', 'blocked', name='work_status')
-
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     task_id = db.Column(db.String(128), default=None)
     start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))

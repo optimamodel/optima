@@ -319,6 +319,31 @@ def load_project_record(project_id, raise_exception=True, db_session=None, authe
     return project_record
 
 
+def save_project(project, db_session=None, is_skip_result=False):
+    if not db_session:
+        db_session = db.session
+    project_record = load_project_record(project.uid, db_session=db_session)
+    new_project = op.dcp(project)
+    # Copy the project, only save what we want...
+    new_project.spreadsheet = None
+    if is_skip_result:
+        new_project.results = op.odict()
+    project_record.save_obj(new_project)
+    db_session.add(project_record)
+    db_session.commit()
+
+
+def load_project_from_record(project_record):
+    project = project_record.load()
+    project.restorelinks()
+    if resolve_project(project):
+        save_project(project)
+    for progset in project.progsets.values():
+        if not hasattr(progset, 'inactive_programs'):
+            progset.inactive_programs = op.odict()
+    return project
+
+
 def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
     if not db_session:
         db_session = db.session
@@ -332,20 +357,7 @@ def load_project(project_id, raise_exception=True, db_session=None, authenticate
             raise ProjectDoesNotExist(id=project_id)
         else:
             return None
-    project = project_record.load()
-    project.restorelinks()
-    if resolve_project(project):
-        print(">> load_project resolve project updated")
-        project_record.save_obj(project)
-    return project
-
-
-def save_project(project, db_session=None):
-    project_record = load_project_record(project.uid, db_session=db_session)
-    project_record.updated = project.modified
-    project_record.save_obj(project)
-    db.session.add(project_record)
-    db.session.commit()
+    return load_project_from_record(project_record)
 
 
 def update_project_with_fn(project_id, update_project_fn, db_session=None):
@@ -358,8 +370,7 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
 
 
 def load_project_summary_from_project_record(project_record):
-    project = project_record.load()
-    project.restorelinks()
+    project = load_project_from_record(project_record)
     project_summary = parse.get_project_summary_from_project(project)
     project_summary['userId'] = project_record.user_id
     return project_summary
@@ -404,8 +415,7 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     project.data["pops"] = data_pops
     project.data["npops"] = len(data_pops)
 
-    project_entry.save_obj(project)
-    db.session.commit()
+    save_project(project)
 
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
@@ -441,8 +451,7 @@ def create_project(user_id, project_summary):
     project.data["pops"] = data_pops
     project.data["npops"] = len(data_pops)
 
-    project_entry.save_obj(project)
-    db.session.commit()
+    save_project(project)
 
     return {'projectId': str(project.uid)}
 
@@ -522,13 +531,8 @@ def save_project_as_new(project, user_id):
 
     project.created = datetime.now(dateutil.tz.tzutc())
     project.modified = datetime.now(dateutil.tz.tzutc())
-    project_record.created = project.created
-    project_record.updated = project.modified
 
-    project_record.save_obj(project)
-    db.session.flush()
-
-    db.session.commit()
+    save_project(project)
 
 
 def copy_project(project_id, new_project_name):
@@ -538,8 +542,7 @@ def copy_project(project_id, new_project_name):
     project_record = load_project_record(
         project_id, raise_exception=True)
     user_id = project_record.user_id
-    project = project_record.load()
-    project.restorelinks()
+    project = load_project_from_record(project_record)
     project.name = new_project_name
     save_project_as_new(project, user_id)
 
