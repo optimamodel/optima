@@ -535,7 +535,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         bestfvalind = None
         for i in range(nchains):
             if block==0 and i==0: fvalarray[:,0] = outputlist[i].improvement[0][0] # Store the initial value
-            fvalarray[i,block*blockiters+1:(block+1)*blockiters+1] = outputlist[i].improvement[0][1:] # Improvement is an odict
+            leftbound = block * blockiters + 1
+            rightbound = block * blockiters + len(outputlist[i].improvement[0][1:]) + 1
+            fvalarray[i,leftbound:rightbound] = outputlist[i].improvement[0][1:] # Improvement is an odict
             thisbestval = outputlist[i].outcome
             if thisbestval<bestfvalval:
                 bestfvalval = thisbestval
