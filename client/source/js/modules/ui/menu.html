@@ -38,22 +38,21 @@
       ng-click="goIfProjectActive('calibration')"
       ng-class="{'menu-active': isState('model')}"
       class="menu-item">
-    Calibration
-    <i class="fa fa-check" ng-if="tttest()"></i>
+    Calibration <i class="fa fa-check" ng-if="checkCalibration()"></i>
   </div>
 
   <div
       ng-click="goIfProjectActive('programs')"
       ng-class="{'menu-active': isState('manageProgramSet')}"
       class="menu-item">
-    Programs
+    Programs <i class="fa fa-check" ng-if="checkPrograms()"></i>
   </div>
 
   <div
       ng-click="goIfProjectActive('costfunction')"
       ng-class="{'menu-active': isState('cost-coverage')}"
       class="menu-item">
-    Cost functions
+    Cost functions <i class="fa fa-check" ng-if="checkCostFuncs()"></i>
   </div>
 
   <div

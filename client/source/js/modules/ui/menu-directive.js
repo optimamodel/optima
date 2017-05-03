@@ -24,9 +24,16 @@ define(['angular'], function (angular) {
             return $scope.getState().indexOf(testName) !== -1;
           };
 
-          $scope.tttest = function() {
-            console.log('goksuf');
+          $scope.checkCalibration = function() {
             return projectService.calibrationOK;
+          };
+
+          $scope.checkPrograms = function() {
+            return projectService.programsOK;
+          };
+
+          $scope.checkCostFuncs = function() {
+            return projectService.costFuncsOK;
           };
 
           $scope.goIfProjectActive = function(stateName) {
