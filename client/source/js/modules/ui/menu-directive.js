@@ -26,7 +26,7 @@ define(['angular'], function (angular) {
 
           $scope.tttest = function() {
             console.log('goksuf');
-            return projectService.ttest();
+            return projectService.calibrationOK;
           };
 
           $scope.goIfProjectActive = function(stateName) {

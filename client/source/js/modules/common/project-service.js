@@ -288,11 +288,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         }
       }
 
-      function ttest() {
-        console.log('hi hi');
-        return (projectService.calibrationOK);
-      }
-
     _.assign(projectService, {
       getProjectList: getProjectList,
       getOptimaLiteProjectList: getOptimaLiteProjectList,
