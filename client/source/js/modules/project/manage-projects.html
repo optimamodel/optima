@@ -24,8 +24,8 @@
   </div>
 
   <a class="btn" ui-sref="createproject">Create new project</a> &nbsp; &nbsp;
-  <a class="btn" ng-click="uploadProject()">Upload project from .prj</a> &nbsp; &nbsp;
-  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from .xlsx</a> &nbsp; &nbsp;
+  <a class="btn" ng-click="uploadProject()">Upload project from file</a> &nbsp; &nbsp;
+  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from spreadsheet</a> &nbsp; &nbsp;
 
   <br>
   <br>
@@ -76,8 +76,8 @@
           <span ng-show="sortType != 'dataUploadTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
         <th>Actions</th>
-        <th>Data spreadsheet (.xlsx)</th>
-        <th>Project file (.prj)</th>
+        <th>Data spreadsheet</th>
+        <th>Project file</th>
       </tr>
       </thead>
       <tbody>
