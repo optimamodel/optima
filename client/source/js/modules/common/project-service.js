@@ -10,6 +10,9 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       projects: [],
       optimaliteprojects: [],
       project: {},
+      calibrationOK: false,
+      programsOK: false,
+      costFuncsOK: false
     };
 
     function makeUserKey(userId) {
@@ -71,6 +74,9 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               projectService.projects.push(uploadedProject);
             }
             setActiveProjectId(uploadedProject.id);
+            projectService.calibrationOK = uploadedProject.calibrationOK;
+            projectService.programsOK = uploadedProject.programsOK;
+            projectService.costFuncsOK = uploadedProject.costFuncsOK;
             deferred.resolve(response);
           },
           function(response) {
@@ -78,40 +84,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           });
       return deferred.promise;
     }
-
-      //function checkCalibration(project) {
-      //  console.log('hiiiii1');
-      //  var calibrationOK = false;
-      //  if (project) {
-      //    calibrationOK = project.hasParset;
-      //  }
-      //  console.log(calibrationOK);
-      //  return calibrationOK;
-      //}
-      //
-      //function checkPrograms(project) {
-      //  console.log('hiiiii2');
-      //  var programsOK = false;
-      //  if (project) {
-      //    programsOK = project.nProgram > 0;
-      //  }
-      //  console.log(programsOK);
-      //  return programsOK;
-      //}
-      //
-      //function checkCostFuncs(project) {
-      //  console.log('hiiiii3');
-      //  var costFuncsOK = false;
-      //  if (project) {
-      //    utilService.rpcRun(
-      //      'any_optimizable', [project.id])
-      //      .then(function (response) {
-      //        costFuncsOK = Boolean(response.data.anyOptimizable);
-      //      });
-      //  }
-      //  console.log(costFuncsOK);
-      //  return costFuncsOK;
-      //}
 
     function getProjectList() {
       var deferred = $q.defer();
@@ -296,8 +268,15 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-    getProjectList();
-    getOptimaLiteProjectList();
+      getProjectList();
+      getOptimaLiteProjectList();
+
+      function getActiveProject() {
+        var projectId = projectService.project.id;
+        if (projectId) {
+          return getProjectAndMakeActive(projectId)
+        }
+      }
 
     _.assign(projectService, {
       getProjectList: getProjectList,
@@ -314,12 +293,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       deleteProjects: deleteProjects,
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
-      getActiveProject: function () {
-        var projectId = projectService.project.id;
-        if (projectId) {
-          return getProjectAndMakeActive(projectId);
-        }
-      },
+      getActiveProject: getActiveProject,
       downloadSelectedProjects: function (projectIds) {
         return rpcService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },

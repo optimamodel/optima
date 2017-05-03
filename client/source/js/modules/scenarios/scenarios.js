@@ -47,7 +47,7 @@ define([
             end: $scope.project.endYear,
           };
           $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
-          $scope.isMissingData = !$scope.project.hasParset;
+          $scope.isMissingData = !$scope.project.calibrationOK;
 
           return rpcService.rpcRun('load_parset_summaries', [$scope.project.id]);
         })
@@ -58,14 +58,9 @@ define([
         })
         .then(function(progsetsResponse) {
           $scope.progsets = progsetsResponse.data.progsets;
-
-          $scope.anyOptimizable = false;
-          return rpcService.rpcRun('any_optimizable', [$scope.project.id]);
+          $scope.anyOptimizable = $scope.project.costFuncsOK;
         })
-        .then(function (response) {
-          $scope.anyOptimizable = response.data.anyOptimizable;
-          console.log('anyoptimizable', $scope.anyOptimizable);
-
+        .then(function () {
           return rpcService.rpcRun('load_scenario_summaries', [$scope.project.id]);
         })
         .then(function(scenariosResponse) {

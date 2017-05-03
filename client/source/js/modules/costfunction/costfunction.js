@@ -84,7 +84,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
               vm.project.startYear, vm.project.endYear + 1);
 
             // Stop here if spreadsheet has not been uploaded
-            vm.isMissingData = !vm.project.hasParset;
+            vm.isMissingData = !vm.project.calibrationOK;
             if (vm.isMissingData) {
               return;
             }
@@ -208,6 +208,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       };
 
       vm.updateCostCovGraph = function() {
+        projectService.getActiveProject();
         vm.chartData = {};
         var years = vm.state.program.ccopars.t;
         if (_.isUndefined(years) || years.length == 0) {
@@ -552,6 +553,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
         addIncompletePops();
         addMissingYear();
         addIncompletePrograms();
+        projectService.getActiveProject();
         vm.state.targetedOutcomes = _.filter(vm.outcomes, function(outcome) {
           return outcome.name == vm.state.parameter.short;
         });
