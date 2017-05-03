@@ -1399,20 +1399,6 @@ def launch_reconcile_calc(project_id, progset_id, parset_id, year, maxtime):
     return calc_status
 
 
-def any_optimizable(project_id):
-    ''' Loop over all progsets and see if any of them are ready to optimize '''
-    
-    project = load_and_resolve_project(project_id)
-    project.restorelinks()
-    
-    optimizable = False
-    for progset in project.progsets.values():
-        if progset.readytooptimize():
-            optimizable = True
-        
-    print('>> any_optimizable for %s: %s' % (project.name, optimizable))
-    return {'anyOptimizable': optimizable}
-
 
 #############################################################################################
 ### SCENARIOS

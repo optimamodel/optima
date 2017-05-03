@@ -284,8 +284,13 @@ def get_project_summary_from_project(project):
     end_year = project.settings.end
 
     calibrationOK = len(project.parsets)>0
-    programsOK = max([len(progset.programs) for progset in project.progsets.values()])>0
-    costFuncsOK = sum([progset.readytooptimize() for progset in project.progsets.values()])>0
+    progsets = project.progsets.values()
+    if len(progsets):
+        programsOK = max([len(progset.programs) for progset in progsets])>0
+        costFuncsOK = sum([progset.readytooptimize() for progset in project.progsets.values()])>0
+    else:
+        programsOK = False
+        costFuncsOK = False
 
     project_summary = {
         'id': project.uid,
