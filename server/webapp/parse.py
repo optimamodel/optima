@@ -283,17 +283,9 @@ def get_project_summary_from_project(project):
     start_year = project.settings.start
     end_year = project.settings.end
 
-    is_ready_to_optimize = True
-    n_program = 0
-    for progset in project.progsets.values():
-        n_program_in_progset = 0
-        n_program_in_progset = len(progset.programs)
-        if not is_progset_optimizable(progset):
-            is_ready_to_optimize = False
-        if n_program_in_progset > n_program:
-            n_program = n_program_in_progset
-    if len(project.progsets.values()) == 0:
-        is_ready_to_optimize = False
+    calibrationOK = len(project.parsets)>0
+    programsOK = max([len(progset.programs) for progset in project.progsets.values()])>0
+    costFuncsOK = sum([progset.readytooptimize() for progset in project.progsets.values()])>0
 
     project_summary = {
         'id': project.uid,
@@ -305,13 +297,9 @@ def get_project_summary_from_project(project):
         'creationTime': project.created,
         'updatedTime': project.modified,
         'dataUploadTime': project.spreadsheetdate,
-        'hasParset': len(project.parsets) > 0,
-        'isOptimizable': is_ready_to_optimize,
-        'nProgram': n_program,
-        'hasEcon': "econ" in project.data,
-        'calibrationOK': len(project.parsets)>0,
-        'programsOK': n_program>0,
-        'costFuncsOK': sum([progset.readytooptimize() for progset in project.progsets.values()])>0,
+        'calibrationOK': calibrationOK,
+        'programsOK': programsOK,
+        'costFuncsOK': costFuncsOK,
     }
 
     return project_summary

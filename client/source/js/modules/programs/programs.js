@@ -42,7 +42,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
         .then(function(response) {
           project = response.data;
           console.log('reloadActiveProject', project);
-          $scope.isMissingData = !project.hasParset;
+          $scope.isMissingData = !project.calibrationOK;
           if ($scope.isMissingData) {
             return;
           }

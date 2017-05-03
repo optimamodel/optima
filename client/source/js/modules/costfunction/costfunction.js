@@ -84,7 +84,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
               vm.project.startYear, vm.project.endYear + 1);
 
             // Stop here if spreadsheet has not been uploaded
-            vm.isMissingData = !vm.project.hasParset;
+            vm.isMissingData = !vm.project.calibrationOK;
             if (vm.isMissingData) {
               return;
             }
