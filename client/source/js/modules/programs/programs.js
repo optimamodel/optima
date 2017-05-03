@@ -252,6 +252,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
           .then(function(response) {
             $scope.state.activeProgramSet.id = response.data.id;
             toastr.success(successMessage);
+            projectService.getActiveProject();
           });
       } else {
         rpcService
@@ -261,6 +262,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             console.log('saveActiveProgramSet create', response);
             _.assign($scope.state.activeProgramSet, response.data);
             toastr.success(successMessage);
+            projectService.getActiveProject();
           });
       }
     };

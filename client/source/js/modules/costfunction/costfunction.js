@@ -553,6 +553,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
         addIncompletePops();
         addMissingYear();
         addIncompletePrograms();
+        projectService.getActiveProject();
         vm.state.targetedOutcomes = _.filter(vm.outcomes, function(outcome) {
           return outcome.name == vm.state.parameter.short;
         });
