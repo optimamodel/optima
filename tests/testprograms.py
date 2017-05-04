@@ -14,7 +14,8 @@ Version: 2016feb06
 
 ## Define tests to run here!!!
 tests = [
-#'loadprogramspreadsheet', # TEMPORARILY NON-FUNCTIONAL
+'makeprogramspreadsheet',
+'loadprogramspreadsheet',
 'demonstrateprogrammethods',
 'plotprogram',
 'compareoutcomes',
@@ -53,7 +54,20 @@ rtol = 1e-2
 ##############################################################################
 
 
+if 'makeprogramspreadsheet' in tests:
+    t = tic()
+    
+    print('Making programs spreadsheet ...')
+    from optima import defaultproject, makeprogramspreadsheet
+    from os import remove
 
+    P = defaultproject('best',addprogset=True,addcostcovdata=False,addcostcovpars=False,addcovoutpars=False)
+    R = P.progsets[0]
+    filename = 'tmpprogramspreadsheet.xlsx'
+    progs = [{'short':program.short, 'name':program.name, 'targetpops': program.targetpops} for program in R.programs.values()]
+    makeprogramspreadsheet(filename, pops=P.data['pops']['short'], progs=progs)
+    remove(filename)
+    done()
 
 
 
@@ -83,7 +97,7 @@ if 'demonstrateprogrammethods' in tests:
     HTC = progs['HTC']
 
     # 1. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
-    HTC.costcovfn.getccopar(2014)
+    HTC.getcostcovpar(2014)
 
     # 2. Get target population size
     HTC.gettargetpopsize(t=[2013,2015],parset=P.parsets['default'])
@@ -103,7 +117,7 @@ if 'demonstrateprogrammethods' in tests:
     b = HTC.getbudget(x=a,t=2016,parset=P.parsets['default'])
     assert_allclose(1e6,b,rtol=rtol)
     # NB, if you want to evaluate it for a particular population size, can also do...
-    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
+    HTC.evalcostcov(x=[1e6], popsize=[1e5], t=[2015])
 
     # 3. Get default budget and coverage
     defaultbudget = R.getdefaultbudget()
@@ -140,7 +154,7 @@ if 'demonstrateprogrammethods' in tests:
 
 ## Try program plotting
 if 'plotprogram' in tests:
-    P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
     progs = P.progs()
     HTC = progs['HTC']
@@ -162,7 +176,7 @@ if 'plotprogram' in tests:
 
 ## Project creation test
 if 'compareoutcomes' in tests:
-    P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
+    P = defaults.defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2016, doprint=True)
     done(t)
 
@@ -171,11 +185,11 @@ if 'compareoutcomes' in tests:
 # Reconciliation test
 if 'reconcilepars' in tests:
     import optima as op
-    P = op.defaultproject('best')
+    P = op.defaults.defaultproject('best')
     ps = P.parsets[0]
 
     before = op.dcp(P.progsets[0])
-    P.progsets[0].reconcile(parset=ps, year=2016, maxtime=3, uselimits=True)
+    P.progsets[0].reconcile(parset=ps, year=2016, uselimits=True)
     after = P.progsets[0]
     print('\n\nBEFORE:')
     before.compareoutcomes(parset=ps, year=2016, doprint=True)

@@ -1414,21 +1414,3 @@ def sanitycheck(simpars=None, showdiff=True, threshold=0.1, eps=1e-6):
         
     print(outstr)
     return outstr
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-                
