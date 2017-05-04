@@ -42,6 +42,8 @@ class Resultset(object):
         self.uid = uuid()
         self.created = today()
         self.name = name # May be blank if automatically generated, but can be overwritten
+        self.main = odict() # For storing main results
+        self.other = odict() # For storing other results -- not available in the interface
         
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
@@ -83,7 +85,6 @@ class Resultset(object):
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
-        self.main = odict() # For storing main results
         self.main['numinci']        = Result('New infections acquired')
         self.main['numdeath']       = Result('HIV-related deaths')
         self.main['numdaly']        = Result('HIV-related DALYs')
@@ -112,7 +113,6 @@ class Resultset(object):
         self.main['popsize']        = Result('Population size')
         self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
-        self.other = odict() # For storing other results -- not available in the interface
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
         
@@ -419,11 +419,13 @@ class Resultset(object):
         
         # Use either total (by default) or a given population
         if pop=='tot':
-            timeseries = self.main[what].tot[0]
+            try:    timeseries = self.main[what].tot[0] # Try main set of results first
+            except: timeseries = self.other[what].tot[0] # If that fails, try the other results
         else:
             if isinstance(pop,str): 
                 pop = self.popkeys.index(pop) # Convert string to number
-            timeseries = self.main[what].pops[0][pop,:]
+            try:    timeseries = self.main[what].pops[0][pop,:]
+            except: timeseries = self.other[what].pops[0][pop,:]
         
         # Get the index and return the result
         index = findnearest(self.tvec, year)
