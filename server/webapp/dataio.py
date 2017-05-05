@@ -323,24 +323,19 @@ def save_project(project, db_session=None, is_skip_result=False):
     if not db_session:
         db_session = db.session
     project_record = load_project_record(project.uid, db_session=db_session)
-    new_project = op.dcp(project)
-    # Copy the project, only save what we want...
-    new_project.spreadsheet = None
-    if is_skip_result:
-        new_project.results = op.odict()
-    project_record.save_obj(new_project)
+    project_record.save_obj(project)
     db_session.add(project_record)
     db_session.commit()
 
 
 def load_project_from_record(project_record):
     project = project_record.load()
-    project.restorelinks()
     if resolve_project(project):
         save_project(project)
     for progset in project.progsets.values():
         if not hasattr(progset, 'inactive_programs'):
             progset.inactive_programs = op.odict()
+    project.restorelinks()
     return project
 
 
@@ -743,17 +738,7 @@ def resolve_project(project):
             optim.constraints = op.defaultconstraints(project=project, progset=progset)
             is_change = True
 
-    results = db.session.query(ResultsDb).filter_by(project_id=project.uid)
-    parset_ids = [parset.uid for parset in project.parsets.values()]
-    is_delete_result = False
-    for result in results:
-        if result.parset_id is not None and result.parset_id not in parset_ids:
-            print(">> resolve_project delete result %s" % result.parset_id)
-            db.session.delete(result)
-            is_delete_result = True
-    db.session.commit()
-
-    is_change = is_change or is_delete_result
+    is_change = is_change
 
     return is_change
 
@@ -825,41 +810,22 @@ def upload_project_object(filename, project_id, obj_type):
 ### RESULTS
 #############################################################################################
 
-def load_result(
-        project_id, parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
-        which=None, name=None):
-    kwargs = {
-        'calculation_type': calculation_type
-    }
-    if parset_id is not None:
-        kwargs['parset_id'] = parset_id
-    if project_id is not None:
-        kwargs['project_id'] = project_id
-    print(">> load_result name", name, "kwargs", kwargs)
-    result_records = db.session.query(ResultsDb).filter_by(**kwargs)
-    if result_records.count() == 0:
-        print(">> load_result: none")
-        return None
-    if name:
-        for result_record in result_records:
-            result = result_record.load()
-            if result.name == name:
-                break
-        else:
-            result = None
-    else:
-        result_record = result_records.first()
+def load_result(project_id, which=None, name=None):
+
+    result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
+
+    for result_record in result_records:
         result = result_record.load()
-    if result:
-        print(">> load_result %s" % str(result.name))
-        if which:
-            result.which = which
-            print(">> load_result saving which", which)
-            result_record.save_obj(result)
-    else:
-        print(">> load_result: none")
-        db.session.delete(result_record)
-    return result
+        if result.name == name:
+            print(">> load_result loaded '%s'" % str(result.name))
+            if which:
+                result.which = which
+                print(">> load_result saving which", which)
+                result_record.save_obj(result)
+            return result
+
+    print(">> load_result: stored result is empty")
+    return None
 
 
 def load_result_by_id(result_id, which=None):
@@ -886,13 +852,13 @@ def update_or_create_result_record_by_id(
 
     result_record = db_session.query(ResultsDb).get(result.uid)
     if result_record is not None:
-        print(">> update_or_create_result_record_by_id update %s" % (result.name))
+        print(">> update_or_create_result_record_by_id update '%s'" % (result.name))
     else:
         result_record = ResultsDb(
             parset_id=parset_id,
             project_id=project_id,
             calculation_type=calculation_type)
-        print(">> update_or_create_result_record_by_id create %s" % (result.name))
+        print(">> update_or_create_result_record_by_id create '%s'" % (result.name))
 
     result_record.id = result.uid
     result_record.save_obj(result)
@@ -1087,7 +1053,9 @@ def load_parset_graphs(
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
 
-    result = load_result(project_id, parset_id, calculation_type, which)
+    result_name = "parset-" + parset.name
+    print(">> load_parset_graphs result-name '%s'" % result_name)
+    result = load_result(project_id, name=result_name, which=which)
     if result:
         if not which:
             if hasattr(result, 'which'):
@@ -1307,7 +1275,7 @@ def any_optimizable(project_id):
 
 
 def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, startYear=None, endYear=None):
-    result = load_result(project_id, None, "scenarios", which)
+    result = load_result(project_id, name="scenarios", which=which)
 
     if result is None:
         if not is_run:
@@ -1405,11 +1373,12 @@ def upload_optimization_summary(project_id, optimization_id, optimization_summar
     return {'optimizations': parse.get_optimization_summaries(project)}
 
 
-def load_optimization_graphs(project_id=None, optimization_id=None, which=None, zoom=None, startYear=None, endYear=None):
+def load_optimization_graphs(project_id=None, optim_name=None, which=None, zoom=None, startYear=None, endYear=None):
     project = load_project(project_id)
-    optimization = parse.get_optimization_from_project(project, optimization_id)
+    optimization = project.optims[optim_name]
     result_name = optimization.resultsref # Use result name stored in the optimization
-    result = load_result(project.uid, None, "optimization", which, result_name)
+    print(">> load_optimization_graphs results_name %s" % result_name)
+    result = load_result(project.uid, name=result_name, which=which)
     if not result:
         return {}
     else:

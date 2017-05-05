@@ -106,11 +106,6 @@ class ProjectDb(db.Model):
     def delete_dependent_objects(self, synchronize_session=False):
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
-        work_logs = db.session.query(WorkLogDb).filter_by(project_id=str_project_id)
-        for work_log in work_logs:
-            work_log.cleanup()
-        work_logs.delete(synchronize_session)
-        # db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.flush()
 

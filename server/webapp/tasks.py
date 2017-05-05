@@ -164,7 +164,6 @@ def launch_task(task_id, fn_name, args):
     return calc_state
 
 
-
 ### PROJECT DEFINED TASKS
 
 def autofit(project_id, parset_id, maxtime):
@@ -258,10 +257,12 @@ def optimize(project_id, optimization_id, maxtime):
     result.uid = op.uuid()
 
     db_session = init_db_session()
+    dataio.save_project(project, db_session=db_session)
     dataio.delete_result_by_name(project_id, result.name, db_session)
     parset = project.parsets[optim.parsetname]
     result_record = dataio.update_or_create_result_record_by_id(
         result, project_id, parset.uid, 'optimization', db_session=db_session)
+    print(">> optimize results '%s'" % result.name)
     db_session.add(result_record)
     db_session.commit()
     close_db_session(db_session)

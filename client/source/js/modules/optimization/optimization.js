@@ -363,7 +363,7 @@ define(['angular', 'ui.router'], function (angular) {
       rpcService
         .rpcRun(
           'load_optimization_graphs',
-          [$scope.state.project.id, $scope.state.optimization.id, getSelectors()])
+          [$scope.state.project.id, $scope.state.optimization.name, getSelectors()])
         .then(
           function(response) {
             if (response.data.graphs) {
@@ -373,7 +373,8 @@ define(['angular', 'ui.router'], function (angular) {
             $scope.state.isRunnable = true;
             $scope.statusMessage = '';
           },
-          function() {
+          function(response) {
+            console.log('getOptimizationGraphs error', response);
             $scope.state.isRunnable = true;
             toastr.error(response.data);
 
