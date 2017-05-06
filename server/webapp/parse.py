@@ -70,8 +70,14 @@ def normalize_obj(obj):
         A converted dict/list/value that should be JSON compatible
     """
 
-    if isinstance(obj, list) or isinstance(obj, np.ndarray) or isinstance(obj, tuple):
+    if isinstance(obj, list) or isinstance(obj, tuple):
         return [normalize_obj(p) for p in list(obj)]
+    
+    if isinstance(obj, np.ndarray):
+        if obj.shape: # Handle most cases, incluing e.g. array([5])
+            return [normalize_obj(p) for p in list(obj)]
+        else: # Handle the special case of e.g. array(5)
+            return [normalize_obj(p) for p in list(np.array([obj]))]
 
     if isinstance(obj, dict):
         return {str(k): normalize_obj(v) for k, v in obj.items()}
