@@ -1032,10 +1032,19 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
                                   facecolor=colors[yr],
                                   alpha=.1,
                                   lw=0)
-    ax.scatter(
-        costdata,
-        program.costcovdata['coverage'],
-        color='#666666')
+    
+    # Don't plot unless both are valid
+    coveragedata = program.costcovdata['coverage']
+    costdataplot = [0]
+    covdataplot = [0]
+    if costdata and coveragedata and len(costdata)==len(coveragedata): # Make sure they're the same length before we proceed
+        for thiscost,thiscov in zip(costdata,coveragedata):
+            if thiscost and thiscov:
+                costdataplot.append(thiscost)
+                covdataplot.append(thiscov)
+    
+    # Actually plot
+    ax.scatter(costdataplot, covdataplot, color='#666666')
     
     ax.set_xlim([0, xupperlim])
     ax.set_ylim(bottom=0)
