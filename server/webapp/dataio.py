@@ -318,7 +318,7 @@ def get_optimalite_projects():
 #############################################################################################
 
 def load_project_record(project_id, raise_exception=True, db_session=None, authenticate=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     if authenticate:
@@ -340,7 +340,7 @@ def load_project_record(project_id, raise_exception=True, db_session=None, authe
 
 
 def save_project(project, db_session=None, is_skip_result=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     project_record = load_project_record(project.uid, db_session=db_session)
     # Copy the project, only save what we want...
@@ -365,7 +365,7 @@ def load_project_from_record(project_record):
 
 
 def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     project_record = load_project_record(
         project_id,
@@ -381,7 +381,7 @@ def load_project(project_id, raise_exception=True, db_session=None, authenticate
 
 
 def update_project_with_fn(project_id, update_project_fn, db_session=None):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     project = load_project(project_id, db_session=db_session)
     update_project_fn(project)
@@ -869,7 +869,7 @@ def update_or_create_result_record_by_id(
         calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
         db_session=None):
 
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     result_record = db_session.query(ResultsDb).get(result.uid)
@@ -891,7 +891,7 @@ def update_or_create_result_record_by_id(
 
 def delete_result_by_parset_id(
         project_id, parset_id, calculation_type=None, db_session=None):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     if calculation_type is None:
         records = db_session.query(ResultsDb).filter_by(
@@ -908,7 +908,7 @@ def delete_result_by_parset_id(
 
 def delete_result_by_name(
         project_id, result_name, db_session=None):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     records = db_session.query(ResultsDb).filter_by(project_id=project_id)
@@ -1408,7 +1408,7 @@ def create_portfolio(name, db_session=None, portfolio=None):
     Returns the portfolio summary of the portfolio
     """
 
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     if portfolio is None:
         print("> create_portfolio %s with default objectives" % name)
@@ -1429,7 +1429,7 @@ def delete_portfolio(portfolio_id, db_session=None):
     """
     Returns all the portfolio summaries (excluding the deleted one)
     """
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     print("> delete_portfolio %s" % portfolio_id)
     record = db_session.query(PyObjectDb).get(portfolio_id)
@@ -1440,7 +1440,7 @@ def delete_portfolio(portfolio_id, db_session=None):
 
 
 def load_portfolio_record(portfolio_id, raise_exception=True, db_session=None, authenticate=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     if authenticate:
@@ -1462,7 +1462,7 @@ def load_portfolio_record(portfolio_id, raise_exception=True, db_session=None, a
 
 
 def load_portfolio(portfolio_id, db_session=None):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     kwargs = {'id': portfolio_id, 'type': "portfolio"}
     record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
@@ -1473,7 +1473,7 @@ def load_portfolio(portfolio_id, db_session=None):
 
 
 def save_portfolio(portfolio, db_session=None):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     portfolio_id = portfolio.uid
     kwargs = {'id': portfolio_id, 'type': "portfolio"}
@@ -1492,7 +1492,7 @@ def save_portfolio(portfolio, db_session=None):
 
 
 def load_portfolio_summaries(db_session=None):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     print("> load_portfolio_summaries")
@@ -1508,7 +1508,7 @@ def load_portfolio_summaries(db_session=None):
 
 
 def rename_portfolio(portfolio_id, newName, db_session=None):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     portfolio = load_portfolio(portfolio_id, db_session)
     portfolio.name = newName
@@ -1517,7 +1517,7 @@ def rename_portfolio(portfolio_id, newName, db_session=None):
 
 
 def load_or_create_portfolio(portfolio_id, db_session=None):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     kwargs = {'id': portfolio_id, 'type': "portfolio"}
     record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
