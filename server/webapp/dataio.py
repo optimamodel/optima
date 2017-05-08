@@ -323,6 +323,11 @@ def save_project(project, db_session=None, is_skip_result=False):
     if not db_session:
         db_session = db.session
     project_record = load_project_record(project.uid, db_session=db_session)
+    # Copy the project, only save what we want...
+    new_project = op.dcp(project)
+    new_project.spreadsheet = None
+    if is_skip_result:
+        new_project.results = op.odict()
     project_record.save_obj(project)
     db_session.add(project_record)
     db_session.commit()
@@ -811,9 +816,7 @@ def upload_project_object(filename, project_id, obj_type):
 #############################################################################################
 
 def load_result(project_id, which=None, name=None):
-
     result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
-
     for result_record in result_records:
         result = result_record.load()
         if result.name == name:
@@ -823,7 +826,6 @@ def load_result(project_id, which=None, name=None):
                 print(">> load_result saving which", which)
                 result_record.save_obj(result)
             return result
-
     print(">> load_result: stored result is empty")
     return None
 

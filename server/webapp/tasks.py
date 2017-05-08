@@ -7,11 +7,49 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 import optima as op
 
+
+__doc__ = """
+
+tasks.py
+
+this file has dual purpose:
+
+1. it is a point-of-entry for async calcuationns for api.py
+2. it is a stand-alone file for the celery server to receive file
+
+That is, the key function `run_task` is both the sender and receiver
+for celery-based async task.
+
+As sender, `run_task.delay` is run, and the function will receive
+the function. The key restriction of that the parameters to the
+function must be json-compatible data-types: strings, float/int,
+dicts and lists.
+
+The celery tasks interacts with the database defined in dbmodels.py,
+which is a mix of Postgres and Redis storage.
+
+A special table is used to track jobs in the celery server. This
+is `WorkLogDb`. A WorkLogDb entry is created whenever a job is
+put on the celery queue.
+
+- `parse_work_log_record` converts it into a JSON object that
+  can be consumed by the web-client
+- in any async function, access to the db has to be carefully
+  circumsribed. This is done through a paired call to
+  `init_db_session` and `close_db_session`
+
+"""
+
+
+# this sets up the connection to the flask app and database
+# that has already been setup
+
 # must import api first
 from ..api import app
 from . import dbmodels, parse, dataio
-
 db = SQLAlchemy(app)
+
+
 
 celery_instance = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
 celery_instance.conf.update(app.config)
@@ -257,7 +295,6 @@ def optimize(project_id, optimization_id, maxtime):
     result.uid = op.uuid()
 
     db_session = init_db_session()
-    dataio.save_project(project, db_session=db_session)
     dataio.delete_result_by_name(project_id, result.name, db_session)
     parset = project.parsets[optim.parsetname]
     result_record = dataio.update_or_create_result_record_by_id(
