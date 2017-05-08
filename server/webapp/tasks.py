@@ -1,5 +1,5 @@
 import traceback
-from pprint import pprint, pformat
+from pprint import pprint
 import datetime
 import dateutil.tz
 from celery import Celery
@@ -219,7 +219,7 @@ def autofit(project_id, parset_id, maxtime):
     project.autofit(
         name=autofit_parset_name,
         orig=orig_parset_name,
-        maxtime=maxtime
+        maxtime=float(maxtime)
     )
 
     result = project.parsets[autofit_parset_name].getresults()
@@ -256,8 +256,6 @@ def autofit(project_id, parset_id, maxtime):
 
 def optimize(project_id, optimization_id, maxtime):
 
-    maxtime = int(maxtime)
-
     db_session = init_db_session()
     project = dataio.load_project(project_id, db_session=db_session, authenticate=False)
     close_db_session(db_session)
@@ -268,7 +266,6 @@ def optimize(project_id, optimization_id, maxtime):
     optim.projectref = op.Link(project)  # Need to restore project link
     progset = project.progsets[optim.progsetname]
     if not progset.readytooptimize():
-        status = 'error'
         error_text = "Not ready to optimize\n"
         costcov_errors = progset.hasallcostcovpars(detail=True)
         if costcov_errors:
@@ -287,7 +284,7 @@ def optimize(project_id, optimization_id, maxtime):
         progsetname=optim.progsetname,
         objectives=optim.objectives,
         constraints=optim.constraints,
-        maxtime=maxtime,
+        maxtime=float(maxtime),
         mc=0,  # Set this to zero for now while we decide how to handle uncertainties etc.
     )
 
@@ -319,7 +316,7 @@ def reconcile(project_id, progset_id, parset_id, year, maxtime):
     print(">> reconcile started")
     progset = parse.get_progset_from_project(project, progset_id)
     parset = parse.get_parset_from_project_by_id(project, parset_id)
-    progset.reconcile(parset, year, uselimits=True, maxtime=maxtime)
+    progset.reconcile(parset, year, uselimits=True, maxtime=float(maxtime))
 
     print(">> reconcile save project")
     db_session = init_db_session()
@@ -335,8 +332,6 @@ def reconcile(project_id, progset_id, parset_id, year, maxtime):
 
 def boc(portfolio_id, project_id, maxtime=2, objectives=None):
 
-    maxtime = int(maxtime)
-
     db_session = init_db_session()
     portfolio = dataio.load_portfolio(portfolio_id)
     close_db_session(db_session)
@@ -347,7 +342,7 @@ def boc(portfolio_id, project_id, maxtime=2, objectives=None):
     else:
         raise Exception("Couldn't find project in portfolio")
 
-    project.genBOC(maxtime=maxtime, objectives=objectives, mc=0) # WARNING, might want to run with MC one day
+    project.genBOC(maxtime=float(maxtime), objectives=objectives, mc=0) # WARNING, might want to run with MC one day
 
     db_session = init_db_session()
     project_id = str(project.uid)
@@ -361,13 +356,11 @@ def boc(portfolio_id, project_id, maxtime=2, objectives=None):
 
 def ga_optimize(portfolio_id, maxtime):
 
-    maxtime = int(maxtime)
-
     db_session = init_db_session()
     portfolio = dataio.load_portfolio(portfolio_id)
     close_db_session(db_session)
 
-    portfolio.runGA(maxtime=maxtime, mc=0, batch=False)
+    portfolio.runGA(maxtime=float(maxtime), mc=0, batch=False)
 
     db_session = init_db_session()
     dataio.save_portfolio(portfolio, db_session=db_session)
