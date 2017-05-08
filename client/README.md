@@ -40,6 +40,7 @@ described in `gulpfile.js`. The different tasks that can be carried out are:
 - `gulp watch` listens to changes to stylesheets and scripts and reloads browser page during development.
 - `gulp bump-version` updates JSON files and `source/index.html` with tagged releases.
 - `gulp write-version-js` updates `source/js/version.js` to the latest git version and date
+- `gulp copy-assets-and-vendor-js` compiles a single-file version of the webclient in `build`
 - `gulp compile-sass` compiles the SASS files in `source/sass` to CSS files in `source/assets/css`.
 - `gulp compile-build-js-client-uglify` compiles a single-file version of the webclient in `build`
 
@@ -74,21 +75,60 @@ In the `source/js` folder:
     - `admin` handles administrator user and projects views
     - `analysis` scenario and optimization pages
     - `calibration` the calibration page
-    - `chart` directives, services and libraries to render graphs
+    - `charts` directives, services and libraries to render graphs
     - `common` utility functions and directives
-      - `active-project` stores/extracts active project from local storage
+      - `form-input-validate-directive` stores/extracts active project from local storage
+      - `icon-directive` stores/extracts active project from local storage
+      - `local-storage-polyfill` stores/extracts active project from local storage
+      - `poller-service` sores/extracts users from webserver
       - `project-service` sores/extracts projects from webserver
-      - `resources-user` sores/extracts users from webserver
-      - `user-manager` stores/extracts current user
+      - `rpc-service` sores/extracts users from webserver
+    - `costfunction` the geospatial analysis
     - `geospatial` the geospatial analysis
-    - `program` program set and cost functions page
+    - `optimization` the geospatial analysis
+    - `programs` program set and cost functions page
     - `project` project management (home), project edit/populations, and population modal dialog, and some services
+    - `scenarios` program set and cost functions page
     - `ui` menu items and common modal dialogs
     - `user` user manager and user-api services, login, register, and user-edit pages
 
 ## Modifying the webclient
 
 Note: changes are easier with a proper IDE like Webstorm.
+
+## Beginner's Guide to Angular
+
+The client is written in the Angular 1 framework, using the require.js
+module system.
+
+Here are some basic concepts.
+
+`require.js` is a method of loading modules to run some code, and
+to track loaded modules.
+
+The app uses `require.js` to load the angular framework. Within angular,
+there is also another module system that actually replicates much
+of `require.js`. Both module systems have to be understood, to fully
+implement module loading.
+
+As much as possible, angular module loading is done on a per file basis,
+so that there are no complex loading of an angular module from
+multiple files.
+
+In Angular, the key elements are:
+
+  - controllers - they are tied to DOM elements/tags, or page states
+  - states - define pages, w.r.t. to the pseudo-url (part after the #),
+    these work with `ui.router` and work through the $stateProvider
+    service
+  - directives - custom-defined tag elements in HTML
+  - services/factory - effectively modules within the angular 
+    module system. Defined services/factories provide code/data
+    that can be injected into any controller. The difference between
+    services and factories are subtle and has more to to do with the larger
+    ecosystem of how the javascript couples to other transpiling javascript
+    systems. Used here, the difference is largely irrelevant. The choice of service versus factory here is legacy.
+
 
 ### Layout/style changes
 
