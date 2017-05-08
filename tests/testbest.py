@@ -5,7 +5,7 @@ which is an outdated version of the same thing!
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, manualfit, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
+from optima import defaultproject, pygui, manualfit, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 from optima import tic, toc, blank, pd # analysis:ignore
 
 ## Options
@@ -48,7 +48,7 @@ T = tic()
 
 ## Make or load&migrate a project
 if 'standardrun' in tests:
-    P = defaults.defaultproject('best',dorun=False)
+    P = defaultproject('best',dorun=False)
     P.runsim(debug=True, start=2000, end=2040)
     if runsensitivity: P.sensitivity()
     if doplot: pygui(P)

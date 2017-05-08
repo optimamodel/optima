@@ -13,7 +13,7 @@ refresh = 1 # Creates defaultpeople.ppl rather than copares
 eps = 1e-3 # Don't expect a totally exact match
 filename = '2016nov21.npy'
 
-P = op.defaults.defaultproject('best')
+P = op.defaultproject('best')
 P.results = op.odict() # Clear
 P.runsim()
 
