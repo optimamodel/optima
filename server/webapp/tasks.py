@@ -290,8 +290,14 @@ def optimize(project_id, optimization_id, maxtime):
 
     print(">> optimize budgets %s" % result.budgets)
     result.uid = op.uuid()
-
+    
+    # save project
     db_session = init_db_session()
+    project_record = dataio.load_project_record(project_id, db_session=db_session)
+    project_record.save_obj(project)
+    db_session.add(project_record)
+
+    # save result
     dataio.delete_result_by_name(project_id, result.name, db_session)
     parset = project.parsets[optim.parsetname]
     result_record = dataio.update_or_create_result_record_by_id(
