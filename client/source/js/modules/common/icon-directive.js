@@ -16,6 +16,7 @@ define(['angular' ], function (angular) {
       "create-data-spreadsheet":"h.mjo0bfk4x6gq",
       "parameter-sets":"h.hrrksxxt32ey",
       "calibration-panel":"h.f3jzk6oecqd9",
+      "export-single-figure":"h.mxtp4gq0xbw",
       "program-sets":"h.3qlnrs1yi6px",
       "programs":"h.9zw6hj7anqs8",
       "define-cost-function":"h.qysepvi5gw7q",
