@@ -1465,9 +1465,6 @@ def load_portfolio(portfolio_id, db_session=None):
     if not db_session:
         db_session = db.session
     kwargs = {'id': portfolio_id, 'type': "portfolio"}
-    print('hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii')
-    print kwargs
-    print('ok')
     record = db_session.query(PyObjectDb).filter_by(**kwargs).first()
     if record:
         print("> load_portfolio %s" % portfolio_id)
