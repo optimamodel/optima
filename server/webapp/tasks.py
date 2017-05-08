@@ -261,7 +261,7 @@ def optimize(project_id, optimization_id, maxtime):
     close_db_session(db_session)
 
     optim = parse.get_optimization_from_project(project, optimization_id)
-    print(">> optimize '%s' for maxtime = %f" % (optim.name, maxtime))
+    print(">> optimize '%s' for maxtime = %s" % (optim.name, maxtime))
 
     optim.projectref = op.Link(project)  # Need to restore project link
     progset = project.progsets[optim.progsetname]
