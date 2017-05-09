@@ -90,26 +90,12 @@ class ProjectDb(db.Model):
     def load(self):
         print(">> ProjectDb.load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        
         project = op.loadproj(redis_entry, fromdb=True)
-
-        if isinstance(project, op.Project):
-            for progset in project.progsets.values():
-                if not hasattr(progset, 'inactive_programs'):
-                    progset.inactive_programs = op.odict()
         return project
 
-    def save_obj(self, obj, is_skip_result=False):
+    def save_obj(self, obj):
         print(">> ProjectDb.save " + self.id.hex)
-        if isinstance(obj, op.Project):
-            # Copy the project, only save what we want...
-            new_project = op.dcp(obj)
-            new_project.spreadsheet = None
-            if is_skip_result:
-                new_project.results = op.odict()
-            redis.set(self.id.hex, op.dumpstr(new_project))
-        else:
-            redis.set(self.id.hex, op.dumpstr(obj))
+        redis.set(self.id.hex, op.dumpstr(obj))
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
@@ -120,11 +106,6 @@ class ProjectDb(db.Model):
     def delete_dependent_objects(self, synchronize_session=False):
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
-        work_logs = db.session.query(WorkLogDb).filter_by(project_id=str_project_id)
-        for work_log in work_logs:
-            work_log.cleanup()
-        work_logs.delete(synchronize_session)
-        # db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.flush()
 
@@ -170,34 +151,12 @@ class ResultsDb(db.Model):
 
 
 class WorkLogDb(db.Model):  # pylint: disable=R0903
-
     __tablename__ = "work_log"
-
     work_status = db.Enum('started', 'completed', 'cancelled', 'error', 'blocked', name='work_status')
-
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
-    work_type = db.Column(db.String(128), default=None)
     task_id = db.Column(db.String(128), default=None)
-    project_id = db.Column(UUID(True))
     start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     stop_time = db.Column(db.DateTime(timezone=True), default=None)
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
-
-    def __init__(self, project_id, work_type=None):
-        self.project_id = project_id
-        self.work_type = work_type
-
-    def load(self):
-        print(">> WorkLogDb.load working-" + self.id.hex)
-        return op.loadstr(redis.get("working-" + self.id.hex))
-
-    def save_obj(self, obj):
-        print(">> WorkLogDb.save working-" + self.id.hex)
-        redis.set("working-" + self.id.hex, op.dumpstr(obj))
-
-    def cleanup(self):
-        print(">> WorkLogDb.cleanup working-" + self.id.hex)
-        redis.delete("working-" + self.id.hex)
-
 

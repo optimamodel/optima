@@ -23,7 +23,7 @@ define(['angular', 'underscore'], function (angular, _) {
     function initialize() {
       $scope.parsets = [];
       $scope.state = {
-        maxtime: '10',
+        maxtime: 10,
         isRunnable: false,
         parset: undefined,
         startYear: 1900,
@@ -350,10 +350,9 @@ define(['angular', 'underscore'], function (angular, _) {
       if ($scope.state.parset.id) {
         pollerService.stopPolls();
         $scope.state.isRunnable = false;
-        var taskId = 'autofit-' + $scope.state.parset.id;
         rpcService
           .rpcAsyncRun(
-            'check_calculation_status', [projectService.project.id, taskId])
+            'check_if_task_started', [makeTaskId()])
           .then(function(response) {
             var status = response.data.status;
             if (status === 'started') {
@@ -368,11 +367,25 @@ define(['angular', 'underscore'], function (angular, _) {
       }
     };
 
+    function makeTaskId() {
+      return "autofit:"
+        + projectService.project.id + ":"
+        + $scope.state.parset.id;
+    }
+
     $scope.startAutoCalibration = function() {
       rpcService
         .rpcAsyncRun(
-          'launch_autofit',
-          [projectService.project.id, $scope.state.parset.id, $scope.state.maxtime])
+          'launch_task',
+          [
+            makeTaskId(),
+            'autofit',
+            [
+              projectService.project.id,
+              $scope.state.parset.id,
+              $scope.state.maxtime
+            ]
+          ])
         .then(function(response) {
           var status = response.data.status;
           if (status === 'started') {
@@ -383,10 +396,26 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.statusMessage = 'Another calculation on this project is already running.'
           }
         });
+
+      // rpcService
+      //   .rpcAsyncRun(
+      //     'launch_autofit',
+      //     [projectService.project.id, $scope.state.parset.id, $scope.state.maxtime])
+      //   .then(function(response) {
+      //     var status = response.data.status;
+      //     if (status === 'started') {
+      //       $scope.statusMessage = 'Autofit started.';
+      //       $scope.secondsRun = 0;
+      //       initPollAutoCalibration();
+      //     } else if (status === 'blocked') {
+      //       $scope.statusMessage = 'Another calculation on this project is already running.'
+      //     }
+      //   });
     };
 
     function initPollAutoCalibration() {
-      var taskId = 'autofit-' + $scope.state.parset.id;
+      // var taskId = 'autofit-' + $scope.state.parset.id;
+      var taskId = makeTaskId();
       pollerService.startPollForRpc(
         projectService.project.id,
         taskId,
