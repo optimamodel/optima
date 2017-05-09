@@ -206,6 +206,13 @@ class Programset(object):
                 result = False
             else:
                 printv('%s unit cost is %s' % (key, unitcost), 4, verbose)
+            totalcost = prog.costcovdata.get('cost',None) 
+            if totalcost is None or totalcost==[]:
+                printv('WARNING: %s total cost is none' % key, 4, verbose)
+                details.append(prog.name)
+                result = False
+            else:
+                printv('%s total cost is %s' % (key, totalcost), 4, verbose)
         if detail: return list(set(details))
         else: return result
                 

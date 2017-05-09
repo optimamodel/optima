@@ -128,7 +128,7 @@ define(
     $svg.attr('height', height);
   }
 
-  module.directive('mpld3Chart', function (modalService) {
+  module.directive('mpld3Chart', function (modalService, rpcService) {
 
     return {
       scope: { chart: '=mpld3Chart' },

@@ -102,6 +102,29 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         return modalInstance;
       },
 
+      optimaLiteProjectList: function() {
+
+        var onModalKeyDown = function(event) {
+          if (event.keyCode == 79) {
+            return modalInstance.dismiss('O');
+          } // O of OK
+          if (event.keyCode == 13) {
+            return modalInstance.close('ENTER');
+          }
+        };
+
+        var modalInstance = $modal.open({
+          templateUrl: 'js/modules/ui/modal-optimalite.html',
+          controller: ['$scope', '$document', function($scope, $document) {
+            $document.on('keydown', onModalKeyDown); // observe
+            $scope.$on('$destroy', function() {
+              $document.off('keydown', onModalKeyDown);
+            });  // unobserve
+          }]
+        });
+        return modalInstance;
+      },
+
       /**
        * This function opens a modal that will ask user to enter a value.
        */

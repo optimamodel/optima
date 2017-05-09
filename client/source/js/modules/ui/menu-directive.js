@@ -24,6 +24,18 @@ define(['angular'], function (angular) {
             return $scope.getState().indexOf(testName) !== -1;
           };
 
+          $scope.checkCalibration = function() {
+            return projectService.calibrationOK;
+          };
+
+          $scope.checkPrograms = function() {
+            return projectService.programsOK;
+          };
+
+          $scope.checkCostFuncs = function() {
+            return projectService.costFuncsOK;
+          };
+
           $scope.goIfProjectActive = function(stateName) {
             if(projectService.isActiveProjectSet()){
               console.log('current state', $state.current.name, '->', stateName);
@@ -37,6 +49,8 @@ define(['angular'], function (angular) {
               );
             }
           };
+
+
 
           $scope.logout = function() {
             rpcService

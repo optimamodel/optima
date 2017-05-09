@@ -291,6 +291,26 @@ def verify_admin_request_decorator(api_call):
     return _verify_admin_request
 
 
+#############################################################################################
+### OPTIMA LITE
+#############################################################################################
+
+def get_optimalite_user(name='_OptimaLite'):
+    ''' Get the Optima Lite user ID, from its name -- default is '_OptimaLite' '''
+    user = UserDb.query.filter_by(username=name).first()
+    return user.id
+
+
+def get_optimalite_projects():
+    ''' Return the projects associated with the Optima Lite user '''
+    user_id = get_optimalite_user()
+    query = ProjectDb.query.filter_by(user_id=user_id)
+    projectlist = map(load_project_summary_from_project_record, query.all())
+    sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
+    output = {'projects': sortedprojectlist}
+    return output
+    
+
 
 
 #############################################################################################
@@ -298,7 +318,7 @@ def verify_admin_request_decorator(api_call):
 #############################################################################################
 
 def load_project_record(project_id, raise_exception=True, db_session=None, authenticate=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     if authenticate:
@@ -320,7 +340,7 @@ def load_project_record(project_id, raise_exception=True, db_session=None, authe
 
 
 def save_project(project, db_session=None, is_skip_result=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     project_record = load_project_record(project.uid, db_session=db_session)
     # Copy the project, only save what we want...
@@ -345,7 +365,7 @@ def load_project_from_record(project_record):
 
 
 def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     project_record = load_project_record(
         project_id,
@@ -541,7 +561,7 @@ def copy_project(project_id, new_project_name):
     """
     project_record = load_project_record(
         project_id, raise_exception=True)
-    user_id = project_record.user_id
+    user_id = current_user.id # Save as the current user always
     project = load_project_from_record(project_record)
     project.name = new_project_name
     save_project_as_new(project, user_id)
@@ -1257,19 +1277,6 @@ def launch_reconcile_calc(project_id, progset_id, parset_id, year, maxtime):
     return calc_status
 
 
-def any_optimizable(project_id):
-    ''' Loop over all progsets and see if any of them are ready to optimize '''
-    
-    project = load_project(project_id)
-
-    optimizable = False
-    for progset in project.progsets.values():
-        if progset.readytooptimize():
-            optimizable = True
-        
-    print('>> any_optimizable for %s: %s' % (project.name, optimizable))
-    return {'anyOptimizable': optimizable}
-
 
 #############################################################################################
 ### SCENARIOS
@@ -1433,7 +1440,7 @@ def delete_portfolio(portfolio_id, db_session=None):
 
 
 def load_portfolio_record(portfolio_id, raise_exception=True, db_session=None, authenticate=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     if authenticate:
