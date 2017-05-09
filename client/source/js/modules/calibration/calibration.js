@@ -49,7 +49,7 @@ define(['angular', 'underscore'], function (angular, _) {
           if (!$scope.project) {
             return;
           }
-          $scope.isMissingData = !$scope.project.hasParset;
+          $scope.isMissingData = !$scope.project.calibrationOK;
           if ($scope.isMissingData) {
             return;
           }

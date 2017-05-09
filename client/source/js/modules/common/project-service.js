@@ -8,7 +8,11 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     var projectService = {
       projects: [],
+      optimaliteprojects: [],
       project: {},
+      calibrationOK: false,
+      programsOK: false,
+      costFuncsOK: false
     };
 
     function makeUserKey(userId) {
@@ -70,6 +74,9 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               projectService.projects.push(uploadedProject);
             }
             setActiveProjectId(uploadedProject.id);
+            projectService.calibrationOK = uploadedProject.calibrationOK;
+            projectService.programsOK = uploadedProject.programsOK;
+            projectService.costFuncsOK = uploadedProject.costFuncsOK;
             deferred.resolve(response);
           },
           function(response) {
@@ -91,6 +98,28 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
               project.updatedTime = Date.parse(project.updatedTime);
               project.dataUploadTime = Date.parse(project.dataUploadTime);
               projectService.projects.push(project);
+            });
+            deferred.resolve(response);
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
+    function getOptimaLiteProjectList() {
+      var deferred = $q.defer();
+      rpcService
+        .rpcRun(
+          'get_optimalite_projects')
+        .then(
+          function(response) {
+            clearList(projectService.optimaliteprojects);
+            _.each(response.data.projects, function(project) {
+              project.creationTime = Date.parse(project.creationTime);
+              project.updatedTime = Date.parse(project.updatedTime);
+              project.dataUploadTime = Date.parse(project.dataUploadTime);
+              projectService.optimaliteprojects.push(project);
             });
             deferred.resolve(response);
           },
@@ -178,6 +207,25 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
+    function copyOptimaLiteProject(projectId, newName) {
+      var deferred = $q.defer();
+      rpcService
+        .rpcRun(
+          'copy_optimalite_project', [projectId, newName])
+        .then(
+          function(response) {
+            console.log('copyProject', response);
+            getProjectAndMakeActive(response.data.projectId)
+              .then(
+                function(response) { deferred.resolve(response); },
+                function(response) { deferred.reject(response); });
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
     function renameProject(id, project) {
       var deferred = $q.defer();
       rpcService
@@ -220,27 +268,32 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-    getProjectList();
+      getProjectList();
+      getOptimaLiteProjectList();
+
+      function getActiveProject() {
+        var projectId = projectService.project.id;
+        if (projectId) {
+          return getProjectAndMakeActive(projectId)
+        }
+      }
 
     _.assign(projectService, {
       getProjectList: getProjectList,
+      getOptimaLiteProjectList: getOptimaLiteProjectList,
       setActiveProjectId: setActiveProjectId,
       loadActiveProject: loadActiveProject,
       clearProjectIdIfActive: clearProjectIdIfActive,
       clearProjectForUserId: clearProjectForUserId,
       isActiveProjectSet: isActiveProjectSet,
       copyProject: copyProject,
+      copyOptimaLiteProject: copyOptimaLiteProject,
       renameProject: renameProject,
       createProject: createProject,
       deleteProjects: deleteProjects,
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
-      getActiveProject: function () {
-        var projectId = projectService.project.id;
-        if (projectId) {
-          return getProjectAndMakeActive(projectId);
-        }
-      },
+      getActiveProject: getActiveProject,
       downloadSelectedProjects: function (projectIds) {
         return rpcService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },

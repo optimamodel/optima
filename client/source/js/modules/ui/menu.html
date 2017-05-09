@@ -8,8 +8,8 @@
         class="menu-item"
         ng-class="{'menu-active': isState('admin')}">
       Admin
-      <i class="fa fa-angle-up" ng-if="showAdminMenu"></i>
-      <i class="fa fa-angle-down" ng-if="!showAdminMenu"></i>
+      <i class="fa fa-caret-up" ng-if="showAdminMenu"></i>
+      <i class="fa fa-caret-down" ng-if="!showAdminMenu"></i>
     </div>
     <div
         ng-if="showAdminMenu"
@@ -38,21 +38,21 @@
       ng-click="goIfProjectActive('calibration')"
       ng-class="{'menu-active': isState('model')}"
       class="menu-item">
-    Calibration
+    Calibration <i class="fa fa-check" ng-if="checkCalibration()"></i>
   </div>
 
   <div
       ng-click="goIfProjectActive('programs')"
       ng-class="{'menu-active': isState('manageProgramSet')}"
       class="menu-item">
-    Programs
+    Programs <i class="fa fa-check" ng-if="checkPrograms()"></i>
   </div>
 
   <div
       ng-click="goIfProjectActive('costfunction')"
       ng-class="{'menu-active': isState('cost-coverage')}"
       class="menu-item">
-    Cost functions
+    Cost functions <i class="fa fa-check" ng-if="checkCostFuncs()"></i>
   </div>
 
   <div
@@ -83,8 +83,8 @@
         class="menu-item"
         ng-class="{'menu-active': isState('help') || isState('edit') || isState('feedback')}">
       Account/help
-      <i class="fa fa-angle-up" ng-if="showAccountHelpMenu"></i>
-      <i class="fa fa-angle-down" ng-if="!showAccountHelpMenu"></i>
+      <i class="fa fa-caret-up" ng-if="showAccountHelpMenu"></i>
+      <i class="fa fa-caret-down" ng-if="!showAccountHelpMenu"></i>
     </div>
     <div
         ng-if="showAccountHelpMenu"

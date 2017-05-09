@@ -52,9 +52,9 @@ if 'plot' in tests and doplot:
     t = tic()
 
     print('Running plot test...')
-    from optima import defaults, plotresults
+    from optima import defaultproject, plotresults
     
-    P = defaults.defaultproject('concentrated')
+    P = defaultproject('concentrated')
     P.runsim() # Not necessary, but just in case results haven't been saved with the project
     plotresults(P.results[-1], toplot='cascade', figsize=(14,10))
 
@@ -68,9 +68,9 @@ if 'browser' in tests and doplot:
     t = tic()
 
     print('Running browser test...')
-    from optima import defaults, browser
+    from optima import defaultproject, browser
     
-    P = defaults.defaultproject('concentrated')
+    P = defaultproject('concentrated')
     P.runsim() # Not necessary, but just in case results haven't been saved with the project
     browser(P.results[-1], toplot='cascade')
 
@@ -86,9 +86,9 @@ if 'gui' in tests and doplot:
     t = tic()
 
     print('Running GUI test...')
-    from optima import defaults, pygui
+    from optima import defaultproject, pygui
     
-    P = defaults.defaultproject('concentrated')
+    P = defaultproject('concentrated')
     results = P.runsim() # Showing another way of running
     pygui(results)
 
