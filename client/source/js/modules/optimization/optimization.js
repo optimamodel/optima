@@ -140,6 +140,13 @@ define(['angular', 'ui.router'], function (angular) {
       selectOptimization();
     };
 
+    function makeTaskId() {
+      return 'optimize:'
+          + $scope.state.project.id + ":"
+          + $scope.state.optimization.id + ":"
+          + $scope.state.maxtime;
+    }
+
     function selectOptimization() {
       pollerService.stopPolls();
 
@@ -154,11 +161,11 @@ define(['angular', 'ui.router'], function (angular) {
 
       // not a new optimization
       if (optimization.id) {
-        console.log('selectOptimization check task')
+        console.log('selectOptimization check task');
         rpcService
           .rpcAsyncRun(
-            'check_task',
-            [$scope.state.project.id, 'optim-' + optimization.id])
+            'check_if_task_started',
+            [makeTaskId()])
           .then(
             function(response) {
               if (response.data.status === 'started') {
@@ -274,10 +281,18 @@ define(['angular', 'ui.router'], function (angular) {
 
     $scope.startOptimization = function(optimization) {
       $scope.state.isRunnable = false;
+      console.log('startOptimization');
       rpcService
         .rpcAsyncRun(
-          'launch_optimization',
-          [$scope.state.project.id, optimization.id, parseInt($scope.state.maxtime)])
+          'launch_task', [
+            makeTaskId(),
+            'optimize',
+            [
+              $scope.state.project.id,
+              $scope.state.optimization.id,
+              $scope.state.maxtime
+            ]
+          ])
         .then(function(response) {
           $scope.task_id = response.data.task_id;
           if (response.data.status === 'started') {
@@ -293,7 +308,7 @@ define(['angular', 'ui.router'], function (angular) {
       pollerService
         .startPollForRpc(
           $scope.state.project.id,
-          'optim-' + $scope.state.optimization.id,
+          makeTaskId(),
           function(response) {
             var calcState = response.data;
             if (calcState.status === 'completed') {
@@ -344,7 +359,7 @@ define(['angular', 'ui.router'], function (angular) {
       rpcService
         .rpcRun(
           'load_optimization_graphs',
-          [$scope.state.project.id, $scope.state.optimization.id, getSelectors()])
+          [$scope.state.project.id, $scope.state.optimization.name, getSelectors()])
         .then(
           function(response) {
             if (response.data.graphs) {
@@ -354,7 +369,8 @@ define(['angular', 'ui.router'], function (angular) {
             $scope.state.isRunnable = true;
             $scope.statusMessage = '';
           },
-          function() {
+          function(response) {
+            console.log('getOptimizationGraphs error', response);
             $scope.state.isRunnable = true;
             toastr.error(response.data);
 

@@ -1328,17 +1328,12 @@ def get_default_optimization_summaries(project):
 
 
 def get_optimization_from_project(project, optim_id):
-    if not isinstance(optim_id, UUID):
-        optim_id = UUID(optim_id)
-
-    optims = [
-        project.optims[key]
-        for key in project.optims
-        if project.optims[key].uid == optim_id
-    ]
-    if not optims:
-        raise ValueError("Optimisation does not exist", project_id=project.uid, id=optim_id)
-    return optims[0]
+    for optim in project.optims.values():
+        print(">> get_optimization_from_project optim %s" % optim.uid)
+    for optim in project.optims.values():
+        if str(optim.uid) == optim_id:
+            return optim
+    raise ValueError("Optimisation does not exist %s %s" % (project.uid, optim_id))
 
 
 def get_optimization_summaries(project):

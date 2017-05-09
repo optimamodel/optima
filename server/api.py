@@ -231,8 +231,6 @@ def init_db():
 
     work_logs = dbconn.db.session.query(WorkLogDb)
     print "> Deleting dangling work_logs", work_logs.count()
-    for work_log in work_logs:
-        work_log.cleanup()
     work_logs.delete()
 
     dbconn.db.session.commit()

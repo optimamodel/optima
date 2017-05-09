@@ -67,7 +67,7 @@ define(['angular', 'underscore'], function( angular, _) {
         $scope.state.objectives = $scope.state.portfolio.objectives;
         rpcService
           .rpcAsyncRun(
-            'check_task', [$scope.state.portfolio.id, 'portfolio'])
+            'check_if_task_started', ["ga_optimize:" + $scope.state.portfolio.id])
           .then(function(response) {
             console.log('chooseNewPortfolio ga status:', response.data.status);
             if (response.data.status === 'started') {
@@ -78,7 +78,8 @@ define(['angular', 'underscore'], function( angular, _) {
           $scope.bocStatusMessage[project.id] = project.boc;
           rpcService
             .rpcAsyncRun(
-              'check_task', [project.id, 'boc'])
+              'check_if_task_started',
+              ["boc:" + $scope.state.portfolio.id + ":" + project.id])
             .then(function(response) {
               console.log('chooseNewPortfolio project', project.id, 'status:', response.data.status);
               if (response.data.status === 'started') {
@@ -175,14 +176,24 @@ define(['angular', 'underscore'], function( angular, _) {
 
       $scope.calculateAllBocCurves = function() {
         console.log('calculateAllBocCurves', $scope.state.portfolio);
-        rpcService
-          .rpcAsyncRun(
-            'launch_boc', [$scope.state.portfolio.id, $scope.state.bocMaxtime])
-          .then(function(response) {
-            _.each($scope.state.portfolio.projects, function(project) {
+        _.each($scope.state.portfolio.projects, function(project) {
+          initProjectBocPoll(project.id);
+          var taskId = "boc:" + $scope.state.portfolio.id + ":" + project.id;
+          rpcService
+            .rpcAsyncRun(
+              'launch_task', [
+                taskId,
+                'boc',
+                [
+                  $scope.state.portfolio.id,
+                  project.id,
+                  $scope.state.bocMaxtime
+                ]
+              ])
+            .then(function(response) {
               initProjectBocPoll(project.id);
             });
-          });
+        });
       };
 
       $scope.deleteProject = function(projectId) {
@@ -197,16 +208,21 @@ define(['angular', 'underscore'], function( angular, _) {
       };
 
       $scope.runFullGa = function() {
+        var taskId = "ga_optimize:" + $scope.state.portfolio.id;
         rpcService
           .rpcAsyncRun(
-            'check_task', [$scope.state.portfolio.id, 'portfolio'])
+            'check_if_task_started', [taskId])
           .then(function(response) {
             if (response.data.status != 'started') {
               console.log('runFullGa');
               rpcService
                 .rpcAsyncRun(
-                  'launch_miminize_portfolio',
-                  [$scope.state.portfolio.id, $scope.state.maxtime])
+                  'launch_task',
+                  [
+                    taskId,
+                    'ga_optimize',
+                    [$scope.state.portfolio.id, $scope.state.maxtime]
+                  ])
                 .then(function(response) {
                   initFullGaPoll();
                 });
@@ -219,7 +235,7 @@ define(['angular', 'underscore'], function( angular, _) {
         pollerService
           .startPollForRpc(
             projectId,
-            'boc',
+            "boc:" + $scope.state.portfolio.id + ":" + projectId,
             function(response) {
               var calcState = response.data;
               if (calcState.status === 'completed') {
@@ -244,7 +260,7 @@ define(['angular', 'underscore'], function( angular, _) {
         pollerService
           .startPollForRpc(
             $scope.state.portfolio.id,
-            'portfolio',
+            "ga_optimize:" + $scope.state.portfolio.id,
             function(response) {
               var calcState = response.data;
               if (calcState.status === 'completed') {
@@ -379,11 +395,20 @@ define(['angular', 'underscore'], function( angular, _) {
           .then(function(response) {
             $scope.state.prjNames = response.data.prjNames;
             console.log('$scope.state.prjNames', $scope.state.prjNames);
-            _.each(prjNames, function(prjName) {
+            _.each($scope.state.prjNames, function(prjName) {
               toastr.success('Project created: ' + prjName);
             });
 
           });
+      };
+
+      $scope.checkProjectsMissing = function() {
+        if (_.isUndefined($scope.state.portfolio)) { // Check if a portfolio exists
+          return true;
+        }
+        if (!$scope.state.portfolio.projects.length) { // Check if there is at least one project
+          return true;
+        }
       };
 
       $scope.checkBocCurvesNotCalculated = function() {
