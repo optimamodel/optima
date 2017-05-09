@@ -681,10 +681,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             allbudgetvecs = odict()
             allbudgetvecs['Current'] = dcp(constrainedbudgetvec)
             if mc: # If MC, run multiple
-                bvzeros = zeros(noptimprogs)
-                allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
-                if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
-                    allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
+                #bvzeros = zeros(noptimprogs)
+                #allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
+                #if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
+                #    allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
                 for i in range(mc): # For the remainder, do randomizations
                     if randseed is not None:
                         scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
