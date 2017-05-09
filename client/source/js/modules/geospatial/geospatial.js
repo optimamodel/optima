@@ -402,6 +402,15 @@ define(['angular', 'underscore'], function( angular, _) {
           });
       };
 
+      $scope.checkProjectsMissing = function() {
+        if (_.isUndefined($scope.state.portfolio)) { // Check if a portfolio exists
+          return true;
+        }
+        if (!$scope.state.portfolio.projects.length) { // Check if there is at least one project
+          return true;
+        }
+      };
+
       $scope.checkBocCurvesNotCalculated = function() {
         if (_.isUndefined($scope.state.portfolio)) {
           return true;
