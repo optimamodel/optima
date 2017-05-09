@@ -107,7 +107,7 @@ define([
     $scope.uploadScenario = function(scenario) {
       rpcService
         .rpcUpload(
-          'upload_project_object', [projectApi.project.id, 'scenario'], {}, '.scn')
+          'upload_project_object', [projectService.project.id, 'scenario'], {}, '.scn')
         .then(function(response) {
           toastr.success('Scenario uploaded');
           $state.reload()

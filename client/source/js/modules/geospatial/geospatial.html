@@ -236,7 +236,8 @@
             style="
               margin-bottom: 1em"
             class="btn __green __m"
-            ng-click="calculateAllBocCurves()">
+            ng-click="calculateAllBocCurves()"
+            ng-disabled="checkProjectsMissing()">
           Run budget-objective curves
         </button>
 
@@ -259,7 +260,7 @@
         <button
             class="btn __green __m"
             ng-click="runFullGa()"
-            ng-disabled="checkBocCurvesNotCalculated()">
+            ng-disabled="checkProjectsMissing() || checkBocCurvesNotCalculated()">
           Run geospatial optimization
         </button>
 

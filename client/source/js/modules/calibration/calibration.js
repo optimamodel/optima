@@ -23,7 +23,7 @@ define(['angular', 'underscore'], function (angular, _) {
     function initialize() {
       $scope.parsets = [];
       $scope.state = {
-        maxtime: '10',
+        maxtime: 10,
         isRunnable: false,
         parset: undefined,
         startYear: 1900,

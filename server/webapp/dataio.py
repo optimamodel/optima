@@ -318,7 +318,7 @@ def get_optimalite_projects():
 #############################################################################################
 
 def load_project_record(project_id, raise_exception=True, db_session=None, authenticate=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     if authenticate:
@@ -340,7 +340,7 @@ def load_project_record(project_id, raise_exception=True, db_session=None, authe
 
 
 def save_project(project, db_session=None, is_skip_result=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     project_record = load_project_record(project.uid, db_session=db_session)
     # Copy the project, only save what we want...
@@ -365,7 +365,7 @@ def load_project_from_record(project_record):
 
 
 def load_project(project_id, raise_exception=True, db_session=None, authenticate=True):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
     project_record = load_project_record(
         project_id,
@@ -1440,7 +1440,7 @@ def delete_portfolio(portfolio_id, db_session=None):
 
 
 def load_portfolio_record(portfolio_id, raise_exception=True, db_session=None, authenticate=False):
-    if not db_session:
+    if db_session is None:
         db_session = db.session
 
     if authenticate:
