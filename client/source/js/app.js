@@ -74,11 +74,11 @@ define([
         'app.admin-projects',
         'app.admin-users',
         'app.project',
-        'app.optimization',
-        'app.scenarios',
         'app.calibration',
         'app.programs',
         'app.cost-functions',
+        'app.scenarios',
+        'app.optimization',
         'app.geospatial',
       ])
 

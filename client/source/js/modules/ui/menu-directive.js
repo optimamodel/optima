@@ -2,6 +2,13 @@ define(['angular'], function (angular) {
 
   'use strict';
 
+  /**
+   * Defines the controller for the menu, this provides a centralized
+   * to control access to different menu options. Also, as the menu
+   * is a directive, it is only rendered after being created, thus
+   * avoiding any flickering that would occur if the menu is defined
+   * in index.html
+   */
   return angular
     .module('app.menu', ['app.user-manager'])
     .directive('menu', function(

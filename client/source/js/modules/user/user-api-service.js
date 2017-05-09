@@ -1,4 +1,12 @@
 define(['angular', 'ng-resource'], function (angular) {
+
+  /**
+   * userApi is a legacy injectable module that provides
+   * an abstracted way to call the web-server for user
+   * related functions - verifying user logins and
+   * getting current user
+   */
+
   angular
     .module('app.user-api', ['ngResource'])
     .service('userApi', function ($resource) {
