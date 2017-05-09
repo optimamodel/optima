@@ -338,7 +338,7 @@ def boc(portfolio_id, project_id, maxtime=2, objectives=None):
     maxtime = int(maxtime)
 
     db_session = init_db_session()
-    portfolio = dataio.load_portfolio(portfolio_id)
+    portfolio = dataio.load_portfolio(portfolio_id, db_session)
     close_db_session(db_session)
 
     for project in portfolio.projects.values():
@@ -364,7 +364,7 @@ def ga_optimize(portfolio_id, maxtime):
     maxtime = int(maxtime)
 
     db_session = init_db_session()
-    portfolio = dataio.load_portfolio(portfolio_id)
+    portfolio = dataio.load_portfolio(portfolio_id, db_session)
     close_db_session(db_session)
 
     portfolio.runGA(maxtime=maxtime, mc=0, batch=False)
