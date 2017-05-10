@@ -91,17 +91,25 @@ For usage examples, see the scripts in the `tests` folder. In particular, `testb
 
 # 3. Database setup
 
+**NOTE: Steps from here onwards are only required for frontend development.**
+
 *For further details, see server/db/README.md*
 
 ## 3.1 Installing PostgreSQL
 
-On mac, install the `postgres` software with:
-
-    brew install postgres
+### Linux
 
 On Linux, use
 
     sudo apt-get install install postgres
+
+The database will start automatically (I think).
+
+### Mac
+
+On mac, install the `postgres` software with:
+
+    brew install postgres
 
 Then you create the default database store:
 
@@ -115,8 +123,12 @@ postgres -D /usr/local/var/postgresbrew
 
 If you want to, you can run the `postgres` daemon with the Mac system daemon manager `launchctl`, or via the ruby wrapper for `lunchy`.
 
+### Windows
 
-## 3.2 Setting up the optima database
+On Windows, download and install from e.g. https://www.enterprisedb.com/downloads/postgres-postgresql-downloads#windows.
+
+
+## 3.2 Setting up the Optima database
 
 For the development environment setup Optima needs to use a Postgres database created using:
 
