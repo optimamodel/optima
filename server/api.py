@@ -90,8 +90,9 @@ def root():
     return 'Optima API v.1.0.0'
 
 
-from .webapp.handlers import get_upload_file, api_blueprint, get_post_data_json, report_exception_decorator, login_required
+from .webapp.handlers import api_blueprint, get_post_data_json, report_exception_decorator, login_required
 from .webapp import dataio
+from .webapp.parse import normalize_obj
 
 
 app.register_blueprint(api_blueprint, url_prefix='')
@@ -118,7 +119,7 @@ def run_remote_procedure():
     if result is None:
         result = ''
     else:
-        result = jsonify(result)
+        result = jsonify(normalize_obj(result))
     return result
 
 
@@ -144,7 +145,7 @@ def run_remote_async_task():
     if result is None:
         result = ''
     else:
-        result = jsonify(result)
+        result = jsonify(normalize_obj(result))
     return result
 
 
@@ -216,7 +217,7 @@ def receive_uploaded_file():
     if result is None:
         return ''
     else:
-        return jsonify(result)
+        return jsonify(normalize_obj(result))
 
 
 def init_db():
