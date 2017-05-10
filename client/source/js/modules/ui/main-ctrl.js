@@ -7,6 +7,10 @@ define(
     var module = angular.module(
       'app.main', ['app.project-service', 'app.user-manager']);
 
+    /**
+     * This controller is for displaying the user/project
+     * in the top-right hand corner of every page
+     */
     module.controller(
       'MainCtrl',
       function($scope, $state, userManager, projectService) {

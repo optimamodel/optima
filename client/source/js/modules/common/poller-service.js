@@ -3,9 +3,19 @@ define(['angular' ], function (angular) {
 
   /**
    * pollerService provide generic services to run polling tasks
-   * on a URL. It expects a return JSON data structure
-   * { 'status': 'started' } to continue polling, otherwise it
-   * sends the response to `callback`
+   * on async celery tasks on the webserver.
+   *
+   * It interacts with the Postgres db on the WorkLogDb table.
+   * Every task is given a taskId, and the poller returns a
+   * calc_state dictionary, where the key property is `status`.
+   * A return value of { 'status': 'started' } is used to continue
+   * polling, otherwise it sends the response to `callback`
+   *
+   * A page may query multiple polls.
+   *
+   * When a new page is opened, it is useful to close all running
+   * polls from older pages.
+   *
    */
 
   return angular.module('app.poller-service', [])
