@@ -2,13 +2,7 @@ define(['angular', 'ui.router'], function (angular) {
   'use strict';
 
   
-  var module = angular.module(
-    'app.optimization',
-    [
-      'ui.router',
-      'app.parameter-scenarios-modal',
-      'app.program-scenarios-modal'
-    ]);
+  var module = angular.module('app.optimization', ['ui.router',]);
 
 
 
@@ -25,7 +19,7 @@ define(['angular', 'ui.router'], function (angular) {
 
   module.controller('AnalysisOptimizationController',
     function($scope, $modal, toastr, modalService, projectService, $timeout,
-             pollerService, rpcService, $state) {
+             pollerService, rpcService) {
 
       function initialize() {
 

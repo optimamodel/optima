@@ -36,9 +36,12 @@ define(['angular' ], function (angular) {
    *    Functions that need to account are accessed through rpcAsyncRun
    *    rather than rpcRun. There are a handful of such functions:
    *      - check_task
-   *      - check_task_if_running
-   *      - launch_task
-   *      
+   *      - check_if_task_started
+   *      - launch_task - this is a special function that in turns
+   *        launches all the async task in the tasks.py module
+   *        the parameter structure is:
+   *          [taskId, python_proc_name, [args]]
+   *
    */
 
   return angular.module('app.rpc-service', [])

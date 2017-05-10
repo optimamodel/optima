@@ -11,6 +11,8 @@ define([
     'app.scenarios',
     [
       'ui.router',
+
+      // import the controllers for the modals
       'app.program-scenarios-modal',
       'app.parameter-scenarios-modal']);
 
