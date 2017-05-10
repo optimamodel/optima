@@ -4,6 +4,19 @@ define(
 
   'use strict';
 
+  /**
+   * this module holds all the plotting related elements in one
+   * file:
+   *
+   * - hacks to work-around mpld3
+   * - the directive <mpld3-chart> to display mpld3 charts, with
+   *   downloading options
+   * - the directive <optima-graphs> that displays a set of
+   *   charts for a given result, with associated controls,
+   *   and downloading options
+   * - the controllers of these directives
+   */
+
   var module = angular.module('app.charts', []);
 
   var moduleAllCharts, moduleScrollTop;
