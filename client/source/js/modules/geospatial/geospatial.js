@@ -300,7 +300,7 @@ define(['angular', 'underscore'], function( angular, _) {
             $scope.projects = [];
             _.each(response.data.projects, function(project) {
               var isSelected = _.contains(selectedIds, project.id);
-              if (project.isOptimizable) {
+              if (project.costFuncsOK) {
                 $scope.projects.push({
                   'name': project.name,
                   'id': project.id,
@@ -349,7 +349,7 @@ define(['angular', 'underscore'], function( angular, _) {
             $scope.projects = [];
             _.each(response.data.projects, function(project) {
               var isSelected = _.contains(selectedIds, project.id);
-              if (project.isOptimizable) {
+              if (project.costFuncsOK) {
                 var project = angular.copy(project);
                 _.extend(project, {
                   'name': project.name,
@@ -400,6 +400,15 @@ define(['angular', 'underscore'], function( angular, _) {
             });
 
           });
+      };
+
+      $scope.checkProjectsMissing = function() {
+        if (_.isUndefined($scope.state.portfolio)) { // Check if a portfolio exists
+          return true;
+        }
+        if (!$scope.state.portfolio.projects.length) { // Check if there is at least one project
+          return true;
+        }
       };
 
       $scope.checkBocCurvesNotCalculated = function() {

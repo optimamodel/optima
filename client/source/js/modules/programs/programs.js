@@ -1,4 +1,4 @@
-define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
+define(['angular', 'ui.router', './program-modal'], function (angular) {
 
   'use strict';
 
@@ -42,7 +42,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
         .then(function(response) {
           project = response.data;
           console.log('reloadActiveProject', project);
-          $scope.isMissingData = !project.hasParset;
+          $scope.isMissingData = !project.calibrationOK;
           if ($scope.isMissingData) {
             return;
           }
@@ -138,7 +138,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
           'download_project_object',
           [projectService.project.id, 'progset', $scope.state.activeProgramSet.id])
         .then(function(response) {
-          toastr.success('Progset downloaded');
+          toastr.success('Program set downloaded');
         });
     };
 
@@ -147,7 +147,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
         .rpcUpload(
           'upload_project_object', [projectService.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
-          toastr.success('Progset uploaded');
+          toastr.success('Program set uploaded');
           var name = response.data.name;
 
           rpcService
@@ -252,6 +252,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
           .then(function(response) {
             $scope.state.activeProgramSet.id = response.data.id;
             toastr.success(successMessage);
+            projectService.getActiveProject();
           });
       } else {
         rpcService
@@ -261,6 +262,7 @@ define(['angular', 'ui.router', './program-modal-ctrl'], function (angular) {
             console.log('saveActiveProgramSet create', response);
             _.assign($scope.state.activeProgramSet, response.data);
             toastr.success(successMessage);
+            projectService.getActiveProject();
           });
       }
     };

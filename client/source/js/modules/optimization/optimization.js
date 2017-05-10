@@ -64,14 +64,10 @@ define(['angular', 'ui.router'], function (angular) {
           $scope.state.years = _.range(project.startYear, project.endYear + 1);
           $scope.state.start = project.startYear;
           $scope.state.end = project.endYear;
-          $scope.isMissingData = !project.hasParset;
-
-          $scope.anyOptimizable = false;
-          return rpcService.rpcRun(
-            'any_optimizable', [$scope.state.project.id]);
+          $scope.isMissingData = !project.calibrationOK;
+          $scope.anyOptimizable = project.costFuncsOK;
         })
         .then(function(response) {
-          $scope.anyOptimizable = response.data.anyOptimizable;
 
           if (!$scope.isMissingData && $scope.anyOptimizable) {
 

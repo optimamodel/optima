@@ -76,6 +76,7 @@ define(['angular', 'ui.router'], function (angular) {
 
       $scope.open = function (name, id) {
         projectService.setActiveProjectId(id);
+        projectService.getActiveProject();
       };
 
       $scope.copy = function(name, projectId) {
@@ -85,6 +86,18 @@ define(['angular', 'ui.router'], function (angular) {
             rpcService.getUniqueName(name, getProjectNames()))
           .then(function() {
             toastr.success('Copied project');
+            $state.reload();
+          });
+      };
+
+      $scope.copyOptimaLiteProject = function(project) {
+        var name =
+        projectService
+          .copyProject(
+            project.id,
+            rpcService.getUniqueName(project.name, getProjectNames()))
+          .then(function() {
+            toastr.success('Project "'+project.name+'" loaded from database. Please proceed directly to analysis (scenarios and/or optimizations)');
             $state.reload();
           });
       };
@@ -156,6 +169,10 @@ define(['angular', 'ui.router'], function (angular) {
           .then(function() {
             toastr.success('Project downloaded');
           });
+      };
+
+      $scope.openOptimaLiteProjectList = function() {
+        modalService.optimaLiteProjectList();
       };
 
       initialize();

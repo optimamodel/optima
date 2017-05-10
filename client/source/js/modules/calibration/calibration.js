@@ -23,7 +23,7 @@ define(['angular', 'underscore'], function (angular, _) {
     function initialize() {
       $scope.parsets = [];
       $scope.state = {
-        maxtime: '10',
+        maxtime: 10,
         isRunnable: false,
         parset: undefined,
         startYear: 1900,
@@ -49,7 +49,7 @@ define(['angular', 'underscore'], function (angular, _) {
           if (!$scope.project) {
             return;
           }
-          $scope.isMissingData = !$scope.project.hasParset;
+          $scope.isMissingData = !$scope.project.calibrationOK;
           if ($scope.isMissingData) {
             return;
           }
