@@ -546,11 +546,9 @@ def save_project_as_new(project, user_id):
             update_or_create_result_record_by_id(
                 result, project.uid, result.parset.uid, 'calibration')
     db.session.commit()
-
-    project.created = op.today()
     project.modified = op.today()
-
     save_project(project)
+    return None
 
 
 def copy_project(project_id, new_project_name):
