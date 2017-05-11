@@ -38,14 +38,6 @@ from .plot import make_mpld3_graph_dict, convert_to_mpld3
 
 TEMPLATEDIR = "/tmp"  # CK: hotfix to prevent ownership issues
 
-
-def utcnow():
-    ''' Get the current time in UTC -- put here to avoid weird import errors '''
-    from datetime import datetime
-    import dateutil
-    utctime = datetime.now(dateutil.tz.tzutc())
-    return utctime
-    
     
 def templatepath(filename):
     """
@@ -391,7 +383,7 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
         db_session = db.session
     project = load_project(project_id, db_session=db_session)
     update_project_fn(project)
-    project.modified = utcnow()
+    project.modified = op.today()
     save_project(project, db_session=db_session)
 
 
@@ -433,8 +425,8 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
-    project.created = utcnow()
-    project.modified = utcnow()
+    project.created = op.today()
+    project.modified = op.today()
     project.uid = project_entry.id
 
     data_pops = parse.revert_populations_to_pop(project_summary["populations"])
@@ -469,8 +461,8 @@ def create_project(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
-    project.created = utcnow()
-    project.modified = utcnow()
+    project.created = op.today()
+    project.modified = op.today()
     project.uid = project_entry.id
 
     data_pops = parse.revert_populations_to_pop(project_summary["populations"])
@@ -555,8 +547,8 @@ def save_project_as_new(project, user_id):
                 result, project.uid, result.parset.uid, 'calibration')
     db.session.commit()
 
-    project.created = utcnow()
-    project.modified = utcnow()
+    project.created = op.today()
+    project.modified = op.today()
 
     save_project(project)
 
@@ -1066,7 +1058,7 @@ def save_parameters(project_id, parset_id, parameters):
 
     def update_project_fn(project):
         parset = parse.get_parset_from_project(project, parset_id)
-        parset.modified = utcnow()
+        parset.modified = op.today()
         parse.set_parameters_on_parset(parameters, parset)
 
     delete_result_by_parset_id(project_id, parset_id)
@@ -1092,7 +1084,7 @@ def load_parset_graphs(
 
     if parameters is not None:
         print(">> load_parset_graphs updating parset '%s'" % parset.name)
-        parset.modified = utcnow()
+        parset.modified = op.today()
         parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
         save_project(project)

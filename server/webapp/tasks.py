@@ -89,7 +89,7 @@ def parse_work_log_record(work_log):
         'start_time': work_log.start_time,
         'stop_time': work_log.stop_time,
         'task_id': work_log.task_id,
-        'current_time': dataio.utcnow()
+        'current_time': op.today()
     }
 
 
@@ -168,7 +168,7 @@ def run_task(task_id, fn_name, args):
     worklog = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
     worklog.status = status
     worklog.error = error_text
-    worklog.stop_time = dataio.utcnow()
+    worklog.stop_time = op.today()
     db_session.add(worklog)
     db_session.commit()
     close_db_session(db_session)
@@ -200,7 +200,7 @@ def launch_task(task_id, fn_name, args):
         # create a work_log status is 'started by default'
         print ">> launch_task new work log"
         work_log_record = dbmodels.WorkLogDb(task_id=task_id)
-        work_log_record.start_time = dataio.utcnow()
+        work_log_record.start_time = op.today()
         db_session.add(work_log_record)
         db_session.flush()
 
