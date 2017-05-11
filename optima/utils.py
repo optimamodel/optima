@@ -1243,7 +1243,7 @@ class odict(OrderedDict):
         
         # Set primitives for display
         toolong = ' [...]' # String to display at end of line when maximum value character length is overrun.
-        dividerstr = '#'*60+'\n' # String to use as an inter-item divider.
+        dividerstr = '\n'+'#'*60+'\n' # String to use as an inter-item divider.
         indentstr = '    ' # Create string to use to indent.
         
         # Only if we are in the root call, indent by the number of indents.
