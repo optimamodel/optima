@@ -138,8 +138,15 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     if pretty: text = pformat(text)
     else:      text = str(text)
     
-    # Generate output
-    output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
+    # If there is no newline in the text, process the output normally.
+    if text.find('\n') == -1:
+        output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
+    # Otherwise, handle each line separately and splice together the output.
+    else:
+        textlines = text.split('\n')
+        output = ''
+        for textline in textlines:
+            output += fill(textline, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
     
     if n: output = output[n:] # Need to remove the fake prefix
     return output
@@ -1262,29 +1269,100 @@ class odict(OrderedDict):
                 raise Exception(errormsg)
     
     
-    def __repr__(self, maxlen=None, spaces=True, divider=False):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, 
+        dividerlinethresh=10, numindents=0):
         ''' Print a meaningful representation of the odict '''
-         # Maximum length of string to display
+        # String to display at end of line when maximum value character length 
+        # is overrun.
         toolong = ' [...]'
+        
+        # String to use as an inter-item divider.
         dividerstr = '#############################################################\n'
+        
+        # Create string to use to indent.
+        indentstr = '    ' * numindents
+        
+        # If we are empty, make the string just indicate it's an odict.
         if len(self.keys())==0: 
             output = 'odict()'
+            
+        # Otherwise...
         else: 
+            # Initialize the output to nothing.
             output = ''
-            hasspaces = 0
+            
+            # Start with an empty list which we'll save line counts in.
+            vallinecounts = []
+            
+            # For each element...
             for i in range(len(self)):
-                if divider and spaces and hasspaces: output += dividerstr
-                thiskey = str(self.keys()[i]) # Probably don't need to cast to str, but just to be sure
+                # Grab the value string.
                 thisval = str(self.values()[i].__repr__()) # __repr__() is slightly more accurate
-                if not(spaces):                    thisval = thisval.replace('\n','\\n') # Replace line breaks with characters
-                if maxlen and len(thisval)>maxlen: thisval = thisval[:maxlen-len(toolong)] + toolong # Trim long entries
-                if thisval.find('\n'): hasspaces = True
-                output += '#%i: "%s": %s\n' % (i, thiskey, thisval)
+                
+                # Count the number of lines in the value.
+                vallinecounts.append(thisval.count('\n') + 1)
+  
+            # Grab the maximum count of lines in the dict values.
+            maxvallinecounts = max(vallinecounts)                      
+            
+            # For each element...                                        
+            for i in range(len(self)):
+                # Add a divider line if we should.
+                if (divider or (maxvallinecounts > dividerlinethresh)) and \
+                    showmultilines and i != 0:
+                    newoutput = indent(prefix=indentstr, text=dividerstr, width=80)
+                    if newoutput[-1] == '\n':
+                        newoutput = newoutput[:-1]
+                    output += newoutput
+                    
+                # Grab a str representation of the current key.    
+                thiskeystr = str(self.keys()[i]) # Probably don't need to cast to str, but just to be sure
+                
+                # Grab the current value.
+                thisval = self.values()[i]
+                
+                # If it's another odict, make a call increasing the indent and 
+                # passing the same parameters we received.
+                if isinstance(thisval, odict):
+                    thisvalstr = str(thisval.__repr__(maxlen=maxlen, 
+                        showmultilines=showmultilines, divider=divider, 
+                        dividerlinethresh=dividerlinethresh, 
+                        numindents=(numindents+1))) # __repr__() is slightly more accurate
+                        
+                # Otherwise, do the normal __repr__() read.
+                else:
+                    thisvalstr = str(thisval.__repr__()) # __repr__() is slightly more accurate
+                    
+                # Trim the length of the entry if we need to.
+                if not showmultilines:                    
+                    thisvalstr = thisvalstr.replace('\n','\\n') # Replace line breaks with characters
+                if maxlen and len(thisvalstr) > maxlen: 
+                    thisvalstr = thisvalstr[:maxlen-len(toolong)] + toolong # Trim long entries
+                    
+                # Create the the text to add, apply the indent, and add to the 
+                # output.    
+                if vallinecounts[i] == 1 or not showmultilines:
+                    rawoutput = '#%i: "%s": %s\n' % (i, thiskeystr, thisvalstr)
+                else:
+                    rawoutput = '#%i: "%s": \n%s\n' % (i, thiskeystr, thisvalstr)
+                newoutput = indent(prefix=indentstr, text=rawoutput, width=80)
+                if newoutput[-1] == '\n':
+                    newoutput = newoutput[:-1]                
+                output += newoutput
+                    
+        # Trim off any terminal '\n'.
+        if output[-1] == '\n':
+            output = output[:-1]
+                
+        # Return the formatted string.
         return output
     
-    def disp(self, maxlen=55, spaces=False, divider=False):
+    def disp(self, maxlen=55, showmultilines=False, divider=False, 
+        dividerlinethresh=10, numindents=0):
         ''' Print out flexible representation, short by default'''
-        print(self.__repr__(maxlen=maxlen, spaces=spaces, divider=divider))
+        print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, 
+            divider=divider, dividerlinethresh=dividerlinethresh, 
+            numindents=numindents))
     
     def _repr_pretty_(self, p, cycle):
         ''' Function to fix __repr__ in IPython'''
