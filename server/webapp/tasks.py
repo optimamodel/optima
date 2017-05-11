@@ -11,6 +11,7 @@ import optima as op
 __doc__ = """
 
 tasks.py
+========
 
 this file has dual purpose:
 
@@ -32,11 +33,24 @@ A special table is used to track jobs in the celery server. This
 is `WorkLogDb`. A WorkLogDb entry is created whenever a job is
 put on the celery queue.
 
+- A worklog tracks
+    - a unique `task_id` that represents the job
+    - when the job was started
+    - the current time - this is done as time-zones are easily
+      lost, so it is better to issue the current-time and
+      start-time from the same source, and calculate the difference
+      when it is needed at the client
+
 - `parse_work_log_record` converts it into a JSON object that
   can be consumed by the web-client
+
 - in any async function, access to the db has to be carefully
   circumsribed. This is done through a paired call to
   `init_db_session` and `close_db_session`
+
+The function `run_task.delay` should not need to be run directly,
+and should be accessed through `launch_task`, which will
+set up the worklog before running the task
 
 """
 
@@ -203,6 +217,17 @@ def launch_task(task_id, fn_name, args):
 
 
 ### PROJECT DEFINED TASKS
+
+
+# To add tasks, simply create a new function here:
+#
+# - all parameters must be JOSN compatible: strings, numbers, lists or dicts
+# - access to database must be done through an db_session created
+#   by init_db_session
+# - db_session must be closed
+# - once registered, you can call these functions via
+#   the `rpcService.runAsyncTask('launch_task')` interface
+
 
 def autofit(project_id, parset_id, maxtime):
 

@@ -3,8 +3,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
   'use strict';
 
   var module = angular.module(
-    'app.programs',
-    ['ui.router', 'app.program-modal']);
+    'app.programs', ['ui.router', 'app.program-modal']);
 
 
   module.config(function($stateProvider) {
