@@ -1242,7 +1242,7 @@ class odict(OrderedDict):
         
         # Set primitives for display.
         toolong = ' [...]' # String to display at end of line when maximum value character length is overrun.
-        dividerstr = '\n'+'#'*60+'\n' # String to use as an inter-item divider.
+        dividerstr = '*'*40+'\n' # String to use as an inter-item divider.
         indentstr = '    ' # Create string to use to indent.
         
         # Only if we are in the root call, indent by the number of indents.
@@ -1269,7 +1269,7 @@ class odict(OrderedDict):
                     thisvalstr = str(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
                         dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1))
                 else: # Otherwise, do the normal __repr__() read.
-                    thisvalstr = str(thisval.__repr__())
+                    thisvalstr = thisval.__repr__()
 
                 # Add information to the lists to retrace afterwards.
                 keystrs.append(thiskeystr)
@@ -1283,7 +1283,7 @@ class odict(OrderedDict):
                 vallinecount = vallinecounts[i]
                 
                 if (divider or (maxvallinecounts>dividerthresh)) and \
-                    showmultilines and recurselevel == 0 and i!=0: # Add a divider line if we should.
+                    showmultilines and recurselevel==0 and i!=0: # Add a divider line if we should.
                     newoutput = indent(prefix=theprefix, text=dividerstr, width=80)
                     if newoutput[-1] == '\n':
                         newoutput = newoutput[:-1]
