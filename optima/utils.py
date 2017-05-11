@@ -104,8 +104,7 @@ def defaultrepr(obj, maxlen=300):
 
     return output
 
-
-
+    
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
     '''
     Small wrapper to make textwrap more user friendly.
@@ -137,9 +136,20 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     # Get text in the right format -- i.e. a string
     if pretty: text = pformat(text)
     else:      text = str(text)
-    
-    # Generate output
-    output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
+
+    # If there is no newline in the text, process the output normally.
+    if text.find('\n') == -1:
+        output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
+    # Otherwise, handle each line separately and splice together the output.
+    else:
+        textlines = text.split('\n')
+        output = ''
+        for i, textline in enumerate(textlines):
+            if i == 0:
+                theprefix = prefix
+            else:
+                theprefix = ' '*len(prefix)
+            output += fill(textline, initial_indent=theprefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
     
     if n: output = output[n:] # Need to remove the fake prefix
     return output
@@ -1233,6 +1243,102 @@ class odict(OrderedDict):
             OrderedDict.__setitem__(self, key, value)
         return None
     
+     
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0):
+        ''' Print a meaningful representation of the odict '''
+        
+        # Set primitives for display.
+        toolong = ' [...]' # String to display at end of line when maximum value character length is overrun.
+        dividerstr = '*'*40+'\n' # String to use as an inter-item divider.
+        indentstr = '    ' # Create string to use to indent.
+        
+        # Only if we are in the root call, indent by the number of indents.
+        if recurselevel == 0: 
+            theprefix = indentstr * numindents
+        else: # Otherwise (if we are in a recursive call), indent only 1 indent.
+            theprefix = indentstr 
+                            
+        # If the odict is empty, make the string just indicate it's an odict.
+        if len(self.keys())==0:
+            output = 'odict()'
+        else:                   
+            output = '' # Initialize the output to nothing.
+            keystrs = [] # Start with an empty list which we'll save key strings in.
+            valstrs = [] # Start with an empty list which we'll save value strings in.
+            vallinecounts = [] # Start with an empty list which we'll save line counts in.
+            for i in range(len(self)): # Loop over the dictionary values
+                thiskeystr = str(self.keys()[i]) # Grab a str representation of the current key.  
+                thisval = self.values()[i] # Grab the current value.
+                                
+                # If it's another odict, make a call increasing the recurselevel 
+                # and passing the same parameters we received.
+                if isinstance(thisval, odict):
+                    thisvalstr = str(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
+                        dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1))
+                else: # Otherwise, do the normal __repr__() read.
+                    thisvalstr = thisval.__repr__()
+
+                # Add information to the lists to retrace afterwards.
+                keystrs.append(thiskeystr)
+                valstrs.append(thisvalstr)
+                vallinecounts.append(thisvalstr.count('\n') + 1) # Count the number of lines in the value.
+            maxvallinecounts = max(vallinecounts)   # Grab the maximum count of lines in the dict values.                    
+            
+            for i in range(len(keystrs)): # Loop over the lists
+                keystr = keystrs[i]
+                valstr = valstrs[i]
+                vallinecount = vallinecounts[i]
+                
+                if (divider or (maxvallinecounts>dividerthresh)) and \
+                    showmultilines and recurselevel==0 and i!=0: # Add a divider line if we should.
+                    newoutput = indent(prefix=theprefix, text=dividerstr, width=80)
+                    if newoutput[-1] == '\n':
+                        newoutput = newoutput[:-1]
+                    output += newoutput        
+                            
+                # Trim the length of the entry if we need to.
+                if not showmultilines:                    
+                    valstr = valstr.replace('\n','\\n') # Replace line breaks with characters
+                
+                # Trim long entries
+                if maxlen and len(valstr) > maxlen: 
+                    valstr = valstr[:maxlen-len(toolong)] + toolong 
+                    
+                # Create the the text to add, apply the indent, and add to the output.    
+                if vallinecount == 1 or not showmultilines:
+                    rawoutput = '#%i: "%s": %s\n' % (i, keystr, valstr)
+                else:
+                    rawoutput = '#%i: "%s": \n%s\n' % (i, keystr, valstr)
+                    
+                # Perform the indentation.
+                newoutput = indent(prefix=theprefix, text=rawoutput, width=80)
+                
+                # Strip ot any terminal newline.
+                if newoutput[-1] == '\n':
+                    newoutput = newoutput[:-1] 
+                    
+                # Add the new output to the full output.              
+                output += newoutput                    
+                    
+        # Trim off any terminal '\n'.
+        if output[-1] == '\n':
+            output = output[:-1]
+                
+        # Return the formatted string.
+        return output
+    
+        
+    def _repr_pretty_(self, p, cycle):
+        ''' Function to fix __repr__ in IPython'''
+        print(self.__repr__())
+    
+    
+    def disp(self, maxlen=55, showmultilines=False, divider=False, dividerthresh=10, numindents=0):
+        ''' Print out flexible representation, short by default'''
+        print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, 
+            divider=divider, dividerthresh=dividerthresh, 
+            numindents=numindents, recurselevel=0))
+    
     
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
@@ -1269,42 +1375,15 @@ class odict(OrderedDict):
                 raise Exception(errormsg)
     
     
-    def __repr__(self, maxlen=None, spaces=True, divider=False):
-        ''' Print a meaningful representation of the odict '''
-         # Maximum length of string to display
-        toolong = ' [...]'
-        dividerstr = '#############################################################\n'
-        if len(self.keys())==0: 
-            output = 'odict()'
-        else: 
-            output = ''
-            hasspaces = 0
-            for i in range(len(self)):
-                if divider and spaces and hasspaces: output += dividerstr
-                thiskey = str(self.keys()[i]) # Probably don't need to cast to str, but just to be sure
-                thisval = str(self.values()[i].__repr__()) # __repr__() is slightly more accurate
-                if not(spaces):                    thisval = thisval.replace('\n','\\n') # Replace line breaks with characters
-                if maxlen and len(thisval)>maxlen: thisval = thisval[:maxlen-len(toolong)] + toolong # Trim long entries
-                if thisval.find('\n'): hasspaces = True
-                output += '#%i: "%s": %s\n' % (i, thiskey, thisval)
-        return output
-    
-    def disp(self, maxlen=55, spaces=False, divider=False):
-        ''' Print out flexible representation, short by default'''
-        print(self.__repr__(maxlen=maxlen, spaces=spaces, divider=divider))
-    
-    def _repr_pretty_(self, p, cycle):
-        ''' Function to fix __repr__ in IPython'''
-        print(self.__repr__())
-    
-    
     def index(self, value):
         ''' Return the index of a given key '''
         return self.keys().index(value)
     
+    
     def valind(self, value):
         ''' Return the index of a given value '''
         return self.items().index(value)
+    
     
     def append(self, key=None, value=None):
         ''' Support an append method, like a list '''
@@ -1318,6 +1397,7 @@ class odict(OrderedDict):
             keyname = key
         self.__setitem__(keyname, value)
         return None
+    
     
     def insert(self, pos=None, key=None, value=None):
         '''
