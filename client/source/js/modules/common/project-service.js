@@ -99,6 +99,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           function(response) {
             deferred.reject(response);
           });
+      getProjectList(); // Refresh the project list after we create a new project
       return deferred.promise;
     }
 
