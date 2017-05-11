@@ -104,8 +104,7 @@ def defaultrepr(obj, maxlen=300):
 
     return output
 
-
-
+    
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
     '''
     Small wrapper to make textwrap more user friendly.
@@ -137,7 +136,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     # Get text in the right format -- i.e. a string
     if pretty: text = pformat(text)
     else:      text = str(text)
-    
+
     # If there is no newline in the text, process the output normally.
     if text.find('\n') == -1:
         output = fill(text, initial_indent=prefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
@@ -1237,11 +1236,11 @@ class odict(OrderedDict):
             OrderedDict.__setitem__(self, key, value)
         return None
     
-    
+     
     def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0):
         ''' Print a meaningful representation of the odict '''
         
-        # Set primitives for display
+        # Set primitives for display.
         toolong = ' [...]' # String to display at end of line when maximum value character length is overrun.
         dividerstr = '\n'+'#'*60+'\n' # String to use as an inter-item divider.
         indentstr = '    ' # Create string to use to indent.
@@ -1252,53 +1251,57 @@ class odict(OrderedDict):
         else: # Otherwise (if we are in a recursive call), indent only 1 indent.
             theprefix = indentstr 
                             
-        # If we are empty, make the string just indicate it's an odict.
+        # If the odict is empty, make the string just indicate it's an odict.
         if len(self.keys())==0:
             output = 'odict()'
         else:                   
             output = '' # Initialize the output to nothing.
+            keystrs = [] # Start with an empty list which we'll save key strings in.
+            valstrs = [] # Start with an empty list which we'll save value strings in.
             vallinecounts = [] # Start with an empty list which we'll save line counts in.
             for i in range(len(self)): # Loop over the dictionary values
-                thisvalstr = str(self.values()[i].__repr__()) # Grab the value string.
-                vallinecounts.append(thisvalstr.count('\n') + 1) # Count the number of lines in the value.
-            maxvallinecounts = max(vallinecounts)   # Grab the maximum count of lines in the dict values.                    
-            
-            for i in range(len(self)): # Loop over them again
-                if (divider or (maxvallinecounts>dividerthresh)) and showmultilines and i!=0: # Add a divider line if we should.
-                    newoutput = indent(prefix=theprefix, text=dividerstr, width=80)
-                    if newoutput[-1] == '\n':
-                        newoutput = newoutput[:-1]
-                    output += newoutput
-                    
                 thiskeystr = str(self.keys()[i]) # Grab a str representation of the current key.  
                 thisval = self.values()[i] # Grab the current value.
-                
-                # If it's another odict, make a call increasing the indent and passing the same parameters we received.
+                                
+                # If it's another odict, make a call increasing the recurselevel 
+                # and passing the same parameters we received.
                 if isinstance(thisval, odict):
                     thisvalstr = str(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
                         dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1))
                 else: # Otherwise, do the normal __repr__() read.
                     thisvalstr = str(thisval.__repr__())
-                    
+
+                # Add information to the lists to retrace afterwards.
+                keystrs.append(thiskeystr)
+                valstrs.append(thisvalstr)
+                vallinecounts.append(thisvalstr.count('\n') + 1) # Count the number of lines in the value.
+            maxvallinecounts = max(vallinecounts)   # Grab the maximum count of lines in the dict values.                    
+            
+            for i in range(len(keystrs)): # Loop over the lists
+                keystr = keystrs[i]
+                valstr = valstrs[i]
+                vallinecount = vallinecounts[i]
+                
+                if (divider or (maxvallinecounts>dividerthresh)) and \
+                    showmultilines and recurselevel == 0 and i!=0: # Add a divider line if we should.
+                    newoutput = indent(prefix=theprefix, text=dividerstr, width=80)
+                    if newoutput[-1] == '\n':
+                        newoutput = newoutput[:-1]
+                    output += newoutput        
+                            
                 # Trim the length of the entry if we need to.
                 if not showmultilines:                    
-                    thisvalstr = thisvalstr.replace('\n','\\n') # Replace line breaks with characters
+                    valstr = valstr.replace('\n','\\n') # Replace line breaks with characters
                 
                 # Trim long entries
-                if maxlen and len(thisvalstr) > maxlen: 
-                    thisvalstr = thisvalstr[:maxlen-len(toolong)] + toolong 
+                if maxlen and len(valstr) > maxlen: 
+                    valstr = valstr[:maxlen-len(toolong)] + toolong 
                     
                 # Create the the text to add, apply the indent, and add to the output.    
-                if vallinecounts[i] == 1 or not showmultilines:
-                    rawoutput = '#%i: "%s": %s\n' % (i, thiskeystr, thisvalstr)
+                if vallinecount == 1 or not showmultilines:
+                    rawoutput = '#%i: "%s": %s\n' % (i, keystr, valstr)
                 else:
-                    rawoutput = '#%i: "%s": \n%s\n' % (i, thiskeystr, thisvalstr)
-                    
-                # Only if we are in the root call, indent by the number of indents.
-                if recurselevel == 0:
-                    theprefix = indentstr * numindents
-                else: # Otherwise (if we are in a recursive call), indent only 1 indent.
-                    theprefix = indentstr
+                    rawoutput = '#%i: "%s": \n%s\n' % (i, keystr, valstr)
                     
                 # Perform the indentation.
                 newoutput = indent(prefix=theprefix, text=rawoutput, width=80)
@@ -1317,7 +1320,7 @@ class odict(OrderedDict):
         # Return the formatted string.
         return output
     
-    
+        
     def _repr_pretty_(self, p, cycle):
         ''' Function to fix __repr__ in IPython'''
         print(self.__repr__())
