@@ -39,7 +39,8 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     Version: 1.3 (2016jan25) by cliffk
     '''
     
-    if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
+    if figargs is None: figargs = dict()
+    if 'figsize' not in figargs: figargs['figsize'] = (14,10) # Default figure size
     if fig is None:
         fig = figure(facecolor=(1,1,1), **figargs) # Create a figure based on supplied kwargs, if any
         maximizefigure()
@@ -50,6 +51,7 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     width,height = fig.get_size_inches()
     
     # Actually create plots
+    if 'figsize' in kwargs: kwargs.pop('figsize', None)
     plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height), **kwargs)
     reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
     nplots = len(plots)
