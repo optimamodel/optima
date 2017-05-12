@@ -369,17 +369,17 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 # e.g. single simulation, prev-tot: single line, single plot
                 if not ismultisim and istotal:
-                    ax.plot(results.tvec, factor*best[0], lw=lw, c=colors[0]) # Index is 0 since only one possibility
+                    ax.plot(results.tvec, factor*best[0], lw=lw, c=colors[0], zorder=linezorder) # Index is 0 since only one possibility
                 
                 # e.g. single simulation, prev-pop: single line, separate plot per population
                 if not ismultisim and isperpop: 
-                    ax.plot(results.tvec, factor*best[i], lw=lw, c=colors[0]) # Index is each individual population in a separate window
+                    ax.plot(results.tvec, factor*best[i], lw=lw, c=colors[0], zorder=linezorder) # Index is each individual population in a separate window
                 
                 # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
                 if not ismultisim and isstacked:
                     if ispercentage: # Multi-line plot
                         for l in range(nlinesperplot):
-                            ax.plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
+                            ax.plot(results.tvec, factor*best[l], lw=lw, c=colors[l], zorder=linezorder) # Index is each different population
                     else: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
                         origorder = arange(nlinesperplot)
@@ -389,7 +389,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                             ax.fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k], zorder=fillzorder)
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
-                            ax.plot((0, 0), (0, 0), color=colors[l], linewidth=10)
+                            ax.plot((0, 0), (0, 0), color=colors[l], linewidth=10, zorder=linezorder)
                 
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
