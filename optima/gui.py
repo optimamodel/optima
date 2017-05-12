@@ -44,6 +44,7 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     if fig is None:
         fig = figure(facecolor=(1,1,1), **figargs) # Create a figure based on supplied kwargs, if any
         maximizefigure()
+        pause(0.3)
     
     # Do plotting
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
