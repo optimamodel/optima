@@ -8,7 +8,7 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2017mar17
+Version: 2017may12
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
@@ -18,12 +18,12 @@ from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive
 import textwrap
-import os
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
+dataalpha = 0.8
 defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
 defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
@@ -412,9 +412,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 if not ismultisim and databest is not None and plotdata:
                     for y in range(len(results.datayears)):
                         ax.plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=1000) # Without zorder, renders behind the graph
+                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=1000, alpha=dataalpha) # Without zorder, renders behind the graph
                     if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
-                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=1001)
+                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=1001, alpha=dataalpha)
 
 
 
