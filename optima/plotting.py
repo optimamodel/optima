@@ -8,7 +8,7 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2017may12
+Version: 2017mar17
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
@@ -23,7 +23,9 @@ import textwrap
 epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
-dataalpha = 0.8
+fillzorder = 0 # The order in which to plot things -- fill at the back
+datazorder = 100 # Then data
+linezorder = 200 # Finally, lines
 defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
 defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
@@ -384,7 +386,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                         plotorder = nlinesperplot-1-origorder
                         if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
-                            ax.fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
+                            ax.fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k], zorder=fillzorder)
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             ax.plot((0, 0), (0, 0), color=colors[l], linewidth=10)
@@ -392,11 +394,11 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
+                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l][i], lw=lw, c=colors[nlinesperplot-1-l]) # Indices are different populations (i), then different e..g scenarios (l)
+                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l][i], lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -412,9 +414,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 if not ismultisim and databest is not None and plotdata:
                     for y in range(len(results.datayears)):
                         ax.plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=1000, alpha=dataalpha) # Without zorder, renders behind the graph
+                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=datazorder) # Without zorder, renders behind the graph
                     if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
-                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=1001, alpha=dataalpha)
+                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=datazorder+1)
 
 
 
