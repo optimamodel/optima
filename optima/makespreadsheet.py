@@ -17,7 +17,10 @@ default_datastart = settings.start
 default_dataend = settings.dataend
 
 def makespreadsheet(filename=None, pops=None, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
-    """ Generate the Optima spreadsheet """
+    """
+    Generate the Optima spreadsheet. pops can be supplied as a number of populations, 
+    or as a list of dictionaries with keys 'short', 'name', 'male', 'female', 'age_from', 'age_to'.
+    """
 
     # If population information isn't given...
     if pops is None:
@@ -39,7 +42,7 @@ def makespreadsheet(filename=None, pops=None, datastart=default_datastart, datae
         npops = pops
         pops = [] # Create real pops list
         for p in range(npops):
-            pops.append({'short_name':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
+            pops.append({'short':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
             
     # Ensure years are integers
     datastart, dataend = int(datastart), int(dataend)
@@ -473,7 +476,7 @@ class OptimaSpreadsheet:
         current_row = 3
         current_row = self.formats.writeline(self.current_sheet, current_row)
         current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
-        current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/indicator-guide')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
