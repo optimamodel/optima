@@ -737,7 +737,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 ## Plot cascade
 ##################################################################
-def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
+def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, 
                 useSIticks=True, plotdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, **kwargs):
     ''' 
@@ -769,10 +769,10 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
     cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
     # Handle colors
-    if colors is None: colors = gridcolors(len(cascadelist), reverse=True)
-    elif colors=='alpine': colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
-    elif type(colors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=colors)[1:-1] # Remove first and last element
-    else: raise OptimaException('Can''t figure out color %s' % colors)
+    if cascadecolors is None: colors = gridcolors(len(cascadelist), reverse=True)
+    elif cascadecolors=='alpine': colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
+    elif type(cascadecolors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=colors)[1:-1] # Remove first and last element
+    else: colors = cascadecolors
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0*results.tvec # Easy way of setting to 0...
