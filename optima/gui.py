@@ -13,12 +13,6 @@ from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sq
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 
-def maximizefigure():
-    from matplotlib import pyplot as plt
-    figmanager = plt.get_current_fig_manager()
-    figmanager.window.showMaximized()
-    return None
-
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs = [None]*18
 
@@ -40,11 +34,7 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     '''
     
     if figargs is None: figargs = dict()
-    if 'figsize' not in figargs: figargs['figsize'] = (14,10) # Default figure size
-    if fig is None:
-        fig = figure(facecolor=(1,1,1), **figargs) # Create a figure based on supplied kwargs, if any
-        maximizefigure()
-        pause(0.3)
+    if fig is None: fig = makenewfigure(**figargs)
     
     # Do plotting
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
@@ -312,7 +302,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
 
 
 
-def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -377,7 +367,7 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     if tvec is None:
         tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl, supply as argument if so
     bottom = 0*tvec
-    figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
+    makenewfigure(**kwargs)
     ax = subplot(111)
     ylabel('Number of people')
     title(plottitle)
@@ -568,6 +558,20 @@ def loadplot(filename=None):
 ### HELPER FUNCTIONS
 ##############################################################################
 
+def makenewfigure(**figargs):
+    ''' PyQt-specific function for maximizing the current figure '''
+    if 'facecolor' not in figargs: figargs['facecolor'] = (1,1,1)
+    fig = figure(**figargs) # Create a figure based on supplied kwargs, if any
+    try:
+        from matplotlib import pyplot as plt
+        figmanager = plt.get_current_fig_manager()
+        figmanager.window.showMaximized()
+        pause(0.05) # Give it time to update
+    except: # We can't all ble perfect
+        print('Unable to maximize figure')
+    return fig
+    
+
 def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     ''' Add a plot to an existing figure '''
     thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
@@ -614,8 +618,8 @@ def updateplots(event=None, tmpresults=None, **kwargs):
     if tmpresults is not None: results = tmpresults
     
     # If figure exists, get size, then close it
-    try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
-    except: width,height = 14,12 # No figure: use defaults
+    if plotfig is None: plotfig = makenewfigure()
+    width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
     
     # Get user selections
     ischecked = getchecked(check)
@@ -623,7 +627,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
     
     # Do plotting
     if sum(ischecked): # Don't do anything if no plots
-        plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
+        plotfig = makenewfigure(num='Optima results', figsize=(width, height), facecolor=(1,1,1))  # Create figure with correct number of plots
         for key in ['toplot','fig','figsize']: kwargs.pop(key, None) # Remove duplicated arguments if they exist
         plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **plotargs)
     
