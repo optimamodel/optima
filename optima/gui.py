@@ -13,15 +13,21 @@ from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sq
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 
-global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
-if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
+def maximizefigure():
+    from matplotlib import pyplot as plt
+    figmanager = plt.get_current_fig_manager()
+    figmanager.window.showMaximized()
+    return None
+
+global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs  # For manualfit GUI
+if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs = [None]*18
 
 ##############################################################################
 ### USER-VISIBLE FUNCTIONS
 ##############################################################################
 
 
-def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
+def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     ''' 
     Does the hard work for updateplots() for pygui()
     Keyword arguments if supplied are passed on to figure().
@@ -34,7 +40,9 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     '''
     
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
-    if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
+    if fig is None:
+        fig = figure(facecolor=(1,1,1), **figargs) # Create a figure based on supplied kwargs, if any
+        maximizefigure()
     
     # Do plotting
     wasinteractive = isinteractive() # You might think you can get rid of this...you can't!
@@ -42,7 +50,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     width,height = fig.get_size_inches()
     
     # Actually create plots
-    plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height))
+    plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height), **kwargs)
     reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
@@ -66,7 +74,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     show()
 
 
-def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
+def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kwargs):
     '''
     PYGUI
     
@@ -87,7 +95,8 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     Version: 1.3 (2017feb07)
     '''
     
-    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results
+    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results, plotargs
+    plotargs = kwargs # Reset global to match function input
     results = sanitizeresults(tmpresults)
     
     ## Define options for selection
@@ -120,7 +129,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
     figwidth = 7
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
-    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95), **kwargs) # Open control panel
+    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
     checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
     updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location
     clearaxes    = axes([0.4, 0.02, 0.2, 0.03]) # Create close button location
@@ -152,7 +161,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, **kwargs):
 
 
 
-def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=2, advanced=False, **kwargs):
+def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=2, advanced=False, figargs=None, **kwargs):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -172,7 +181,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     
     ## Random housekeeping
     global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
-    fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
+    fig = figure(**figargs); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     ion() # We really need this here!
     nsigfigs = 4
     
@@ -598,7 +607,7 @@ def clearselections(event=None):
     
 def updateplots(event=None, tmpresults=None, **kwargs):
     ''' Close current window if it exists and open a new one based on user selections '''
-    global plotfig, check, checkboxes, results
+    global plotfig, check, checkboxes, results, plotargs
     if tmpresults is not None: results = tmpresults
     
     # If figure exists, get size, then close it
@@ -613,7 +622,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
     if sum(ischecked): # Don't do anything if no plots
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
         for key in ['toplot','fig','figsize']: kwargs.pop(key, None) # Remove duplicated arguments if they exist
-        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **kwargs)
+        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **plotargs)
     
     return None
 
