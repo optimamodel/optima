@@ -121,8 +121,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
             printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
-    if not advanced: figwidth = 7
-    else:            figwidth = 14
+    figwidth = 7
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
@@ -139,15 +138,12 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     nboxes = len(check.rectangles)
     for b in range(nboxes):
         label = check.labels[b]
+        labeltext = label.get_text()
         labelpos = label.get_position()
         label.set_position((labelpos[0]*0.3,labelpos[1])) # Not sure why by default the check boxes are so far away
-        labeltext = label.get_text()
         if labeltext.endswith(perstr):    label.set_text('Per population') # Clear label
         elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
         else:                             label.set_weight('bold')
-        if advanced:
-            box = check.rectangles[b]
-            lines
     
     updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
     clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
