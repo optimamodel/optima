@@ -15,17 +15,7 @@ from matplotlib.widgets import CheckButtons, Button
 
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs, scrwid, scrhei  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs, scrwid, scrhei = [None]*20
-
-try:
-    from PyQt4 import QtGui
-    tmpfig = figure() # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
-    scrdpi = tmpfig.dpi
-    close(tmpfig)
-    screen_resolution = QtGui.QDesktopWidget().screenGeometry()
-    scrwidpx, scrheipx = screen_resolution.width(), screen_resolution.height()
-    scrwid, scrhei = scrwidpx/scrdpi, scrheipx/scrdpi
-except:
-    scrwid, scrhei = 24, 13.5
+scrwid, scrhei = 24, 12 # Specify these here...if too large, should shrink anyway
 
 
 ##############################################################################
@@ -131,7 +121,8 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
             printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
-    figwidth = 7
+    if not advanced: figwidth = 7
+    else:            figwidth = 14
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
@@ -148,12 +139,15 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     nboxes = len(check.rectangles)
     for b in range(nboxes):
         label = check.labels[b]
-        labeltext = label.get_text()
         labelpos = label.get_position()
         label.set_position((labelpos[0]*0.3,labelpos[1])) # Not sure why by default the check boxes are so far away
+        labeltext = label.get_text()
         if labeltext.endswith(perstr):    label.set_text('Per population') # Clear label
         elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
         else:                             label.set_weight('bold')
+        if advanced:
+            box = check.rectangles[b]
+            lines
     
     updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
     clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
