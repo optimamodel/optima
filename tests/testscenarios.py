@@ -54,7 +54,7 @@ if 'standardscen' in tests:
     pops = P.data['pops']['short']
     malelist = [i for i in range(len(pops)) if P.data['pops']['male'][i]]
     
-    caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
+    caspships = P.parsets['default'].pars['condcas'].y.keys()
     
     # Example of generating a dict to autofill parameter scenarios    
     thisdict = setparscenvalues(parset=P.parsets[0], parname='hivtest', forwhom='FSW',startyear=2016.)
@@ -392,7 +392,7 @@ if 'maxbudget' in tests:
     if doplot:
         from optima import pygui, plotpars
         pygui(P.results[-1], toplot='default')
-        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
 
 
 
@@ -408,7 +408,7 @@ if 'VMMC' in tests:
     pops = P.data['pops']['short']
 
     malelist = findinds(P.data['pops']['male'])
-    caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
+    caspships = P.parsets['default'].pars['condcas'].y.keys()
     
     ## Define scenarios
     scenlist = [
@@ -446,11 +446,11 @@ if 'VMMC' in tests:
     P.runscenarios()
      
     if doplot:
-        from optima import pygui, plotpeople, plotpars
+        from optima import pygui, plotpars
         ppl1 = P.results[-1].raw['Scale up VMMC program'][0]['people']
         ppl2 = P.results[-1].raw['Imagine that no-one gets circumcised'][0]['people']
         plotpeople(P, ppl1, start=0, end=None, pops=[-2], animate=False)
-        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
         
 
