@@ -292,6 +292,13 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         print('\n')
     return None
 
+def today():
+    ''' Get the current time, in UTC time '''
+    import datetime # today = datetime.today
+    import dateutil
+    now = datetime.datetime.now(dateutil.tz.tzutc())
+    return now
+
 
 def getdate(obj, which='modified', fmt='str'):
         ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''

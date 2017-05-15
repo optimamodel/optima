@@ -1,7 +1,5 @@
 import traceback
 from pprint import pprint
-import datetime
-import dateutil.tz
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -82,6 +80,7 @@ class ContextTask(TaskBase):
 celery_instance.Task = ContextTask
 
 
+
 def parse_work_log_record(work_log):
     return {
         'status': work_log.status,
@@ -90,7 +89,7 @@ def parse_work_log_record(work_log):
         'start_time': work_log.start_time,
         'stop_time': work_log.stop_time,
         'task_id': work_log.task_id,
-        'current_time': datetime.datetime.now(dateutil.tz.tzutc())
+        'current_time': op.today()
     }
 
 
@@ -169,7 +168,7 @@ def run_task(task_id, fn_name, args):
     worklog = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
     worklog.status = status
     worklog.error = error_text
-    worklog.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    worklog.stop_time = op.today()
     db_session.add(worklog)
     db_session.commit()
     close_db_session(db_session)
@@ -201,7 +200,7 @@ def launch_task(task_id, fn_name, args):
         # create a work_log status is 'started by default'
         print ">> launch_task new work log"
         work_log_record = dbmodels.WorkLogDb(task_id=task_id)
-        work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
+        work_log_record.start_time = op.today()
         db_session.add(work_log_record)
         db_session.flush()
 

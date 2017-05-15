@@ -92,13 +92,13 @@
           <button class="btn __green" ng-click="open(project.name, project.id)">Open</button>
         </td>
         <td>
-          {{ ::project.creationTime| date:'yyyy-MM-dd HH:mm'}}
+          {{ ::project.creationTime| date:'yyyy-MMM-dd hh:mm a'}}
         </td>
         <td>
-          {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm') : 'No modification'}}
+          {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MMM-dd hh:mm a') : 'No modification'}}
         </td>
         <td>
-          {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm') : 'No data uploaded'}}
+          {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MMM-dd hh:mm a') : 'No data uploaded'}}
         </td>
         <td style="white-space: nowrap">
           <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
