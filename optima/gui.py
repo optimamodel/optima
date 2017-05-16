@@ -18,6 +18,17 @@ if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fu
 scrwid, scrhei = 24, 12 # Specify these here...if too large, should shrink anyway
 
 
+def importpyqt():
+    ''' Try to import pyqt, either PyQt4 or PyQt5, but allow it to fail '''
+    try:    
+        from PyQt4 import QtGui as pyqt
+    except:
+        try:    from PyQt5 import QtWidgets as pyqt
+        except: pyqt = Exception('QtGui could not be imported')
+    return  pyqt
+    
+pyqt = importpyqt()
+
 ##############################################################################
 ### USER-VISIBLE FUNCTIONS
 ##############################################################################
@@ -649,17 +660,6 @@ Version: 2017mar22
 
 from optima import Project, Portfolio, loadproj, saveobj,  defaultobjectives, makegeospreadsheet, makegeoprojects
 from time import time
-
-def importpyqt():
-    ''' Allow this to fail '''
-    try:    
-        from PyQt4 import QtGui as pyqt
-    except:
-        try:    from PyQt5 import QtWidgets as pyqt
-        except: pyqt = Exception('QtGui could not be imported')
-    return  pyqt
-    
-pyqt = importpyqt()
 
 global geoguiwindow, globalportfolio, globalobjectives
 if 1:  geoguiwindow, globalportfolio, globalobjectives = [None]*3
