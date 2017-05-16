@@ -18,6 +18,17 @@ if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fu
 scrwid, scrhei = 24, 12 # Specify these here...if too large, should shrink anyway
 
 
+def importpyqt():
+    ''' Try to import pyqt, either PyQt4 or PyQt5, but allow it to fail '''
+    try:    
+        from PyQt4 import QtGui as pyqt
+    except:
+        try:    from PyQt5 import QtWidgets as pyqt
+        except: pyqt = Exception('QtGui could not be imported')
+    return  pyqt
+    
+pyqt = importpyqt()
+
 ##############################################################################
 ### USER-VISIBLE FUNCTIONS
 ##############################################################################
@@ -171,11 +182,9 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     Version: 1.2 (2017feb10)
     '''
     
-    # For edit boxes, we need this -- but import it here so only this function will fail
-    from PyQt4 import QtGui
-    
     ## Random housekeeping
     global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
+    if figargs is None: figargs = dict()
     fig = figure(**figargs); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     ion() # We really need this here!
     nsigfigs = 4
@@ -265,7 +274,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     buttonheight = panelheight-rowheight*1.5
     boxoffset = 300+leftmargin
     
-    panel = QtGui.QWidget() # Create panel widget
+    panel = pyqt.QWidget() # Create panel widget
     panel.setGeometry(100, 100, panelwidth, panelheight)
     spottaken = [] # Store list of existing entries, to avoid duplicates
     for i in range(nfull):
@@ -277,19 +286,19 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
             raise OptimaException(errormsg)
         else: spottaken.append(spot)
         
-        texts.append(QtGui.QLabel(parent=panel))
+        texts.append(pyqt.QLabel(parent=panel))
         texts[-1].setText(fulllabellist[i])
         texts[-1].move(leftmargin+colwidth*col, rowheight*row)
         
-        boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
+        boxes.append(pyqt.QLineEdit(parent = panel)) # Actually create the text edit box
         boxes[-1].move(boxoffset+colwidth*col, rowheight*row)
         printv('Setting up GUI checkboxes: %s' % [i, fulllabellist[i], boxoffset+colwidth*col, rowheight*row], 4, verbose)
         boxes[-1].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         boxes[-1].returnPressed.connect(manualupdate)
     
-    keepbutton  = QtGui.QPushButton('Keep', parent=panel)
-    resetbutton = QtGui.QPushButton('Reset', parent=panel)
-    closebutton = QtGui.QPushButton('Close', parent=panel)
+    keepbutton  = pyqt.QPushButton('Keep', parent=panel)
+    resetbutton = pyqt.QPushButton('Reset', parent=panel)
+    closebutton = pyqt.QPushButton('Close', parent=panel)
     
     keepbutton.move(1*panelwidth/4, buttonheight)
     resetbutton.move(2*panelwidth/4, buttonheight)
@@ -652,14 +661,6 @@ Version: 2017mar22
 from optima import Project, Portfolio, loadproj, saveobj,  defaultobjectives, makegeospreadsheet, makegeoprojects
 from time import time
 
-def importQtGui():
-    ''' Allow this to fail '''
-    try:    from PyQt4 import QtGui
-    except: QtGui = Exception('QtGui could not be imported')
-    return  QtGui
-    
-QtGui = importQtGui()
-
 global geoguiwindow, globalportfolio, globalobjectives
 if 1:  geoguiwindow, globalportfolio, globalobjectives = [None]*3
 
@@ -688,7 +689,7 @@ def warning(message, usegui=True):
     ''' usegui kwarg is so this can be used in a GUI and non-GUI context '''
     global geoguiwindow
     if usegui:
-        QtGui.QMessageBox.warning(geoguiwindow, 'Message', message)
+        pyqt.QMessageBox.warning(geoguiwindow, 'Message', message)
     else:
         print(message)
     
@@ -696,7 +697,7 @@ def warning(message, usegui=True):
     
 def gui_loadproj():
     ''' Helper function to load a project, since used more than once '''
-    filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+prjext)
+    filepath = pyqt.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+prjext)
     project = None
     if filepath:
         try: project = loadproj(filepath, verbose=0)
@@ -719,18 +720,18 @@ def gui_makesheet():
     try:    results = project.parsets[-1].getresults()
     except: results = project.runsim(name=project.parsets[-1].name)
     
-    copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
+    copies, ok = pyqt.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
     try: copies = int(copies)
     except: raise OptimaException('Input (number of project copies) cannot be converted into an integer.')
     
-    refyear, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'Select a reference year for which you have district data.')
+    refyear, ok = pyqt.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'Select a reference year for which you have district data.')
     try: refyear = int(refyear)
     except: raise OptimaException('Input (reference year) cannot be converted into an integer.')
     if not refyear in [int(x) for x in results.tvec]:
         raise OptimaException("Input not within range of years used by aggregate project's last stored calibration.")
 
     ## 2. Get destination filename
-    spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
+    spreadsheetpath = pyqt.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
     
     # 4. Generate and save spreadsheet
     try:
@@ -745,8 +746,8 @@ def gui_makesheet():
 def gui_makeproj():
     ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
     project = gui_loadproj()
-    spreadsheetpath = QtGui.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
-    destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
+    spreadsheetpath = pyqt.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+    destination = pyqt.QFileDialog.getExistingDirectory(caption='Choose output folder')
     makegeoprojects(project=project, spreadsheetpath=spreadsheetpath, destination=destination)
     warning('Created projects from spreadsheet')
     return None
@@ -765,7 +766,7 @@ def gui_create(filepaths=None, portfolio=None, doadd=False):
         projectslistbox.clear()
     if doadd and portfolio != None:
         globalportfolio = portfolio
-    filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+prjext)
+    filepaths = pyqt.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+prjext)
     if filepaths:
         if type(filepaths)==str: filepaths = [filepaths] # Convert to list
         for filepath in filepaths:
@@ -794,7 +795,7 @@ def gui_addproj():
 def gui_loadport():
     ''' Load an existing portfolio '''
     global globalportfolio, projectslistbox
-    filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+prtext)
+    filepath = pyqt.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+prtext)
     tmpport = None
     if filepath:
         try: tmpport = loadobj(filepath, verbose=0)
@@ -850,7 +851,7 @@ def gui_export():
     if type(globalportfolio)!=Portfolio: warning('Warning, must load portfolio first!')
     
     # 2. Create a new file dialog to save this spreadsheet
-    filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
+    filepath = pyqt.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
     
     # 3. Generate spreadsheet according to David's template to store these data
     if filepath:
@@ -868,7 +869,7 @@ def gui_export():
 def gui_saveport():
     ''' Save the current portfolio '''
     global globalportfolio
-    filepath = QtGui.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+prtext)
+    filepath = pyqt.QFileDialog.getSaveFileName(caption='Save portfolio file', filter='*'+prtext)
     saveobj(filepath, globalportfolio)
     return None
 
@@ -901,7 +902,7 @@ def geogui():
     
     ## Housekeeping
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
-    geoguiwindow = QtGui.QWidget() # Create panel widget
+    geoguiwindow = pyqt.QWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
     geoguiwindow.setWindowTitle('Optima geospatial analysis')
     
@@ -911,16 +912,16 @@ def geogui():
     
     ## Define buttons
     buttons = odict()
-    buttons['makesheet'] = QtGui.QPushButton('Make geospatial spreadsheet from project', parent=geoguiwindow)
-    buttons['makeproj']  = QtGui.QPushButton('Auto-generate projects from spreadsheet', parent=geoguiwindow)
-    buttons['create']    = QtGui.QPushButton('Create portfolio from projects', parent=geoguiwindow)
-    buttons['add']       = QtGui.QPushButton('Add projects to portfolio', parent=geoguiwindow)
-    buttons['loadport']  = QtGui.QPushButton('Load existing portfolio', parent=geoguiwindow)
-    buttons['rungeo']    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
-    buttons['plotgeo']   = QtGui.QPushButton('Plot geospatial results', parent=geoguiwindow)
-    buttons['export']    = QtGui.QPushButton('Export results', parent=geoguiwindow)
-    buttons['saveport']  = QtGui.QPushButton('Save portfolio', parent=geoguiwindow)
-    buttons['close']     = QtGui.QPushButton('Close', parent=geoguiwindow)
+    buttons['makesheet'] = pyqt.QPushButton('Make geospatial spreadsheet from project', parent=geoguiwindow)
+    buttons['makeproj']  = pyqt.QPushButton('Auto-generate projects from spreadsheet', parent=geoguiwindow)
+    buttons['create']    = pyqt.QPushButton('Create portfolio from projects', parent=geoguiwindow)
+    buttons['add']       = pyqt.QPushButton('Add projects to portfolio', parent=geoguiwindow)
+    buttons['loadport']  = pyqt.QPushButton('Load existing portfolio', parent=geoguiwindow)
+    buttons['rungeo']    = pyqt.QPushButton('Run geospatial analysis', parent=geoguiwindow)
+    buttons['plotgeo']   = pyqt.QPushButton('Plot geospatial results', parent=geoguiwindow)
+    buttons['export']    = pyqt.QPushButton('Export results', parent=geoguiwindow)
+    buttons['saveport']  = pyqt.QPushButton('Save portfolio', parent=geoguiwindow)
+    buttons['close']     = pyqt.QPushButton('Close', parent=geoguiwindow)
     
     ## Define button functions
     actions = odict()
@@ -967,12 +968,12 @@ def geogui():
         
     
     ## List of projects
-    projectslistlabel = QtGui.QLabel(parent=geoguiwindow)
+    projectslistlabel = pyqt.QLabel(parent=geoguiwindow)
     projectslistlabel.setText('Projects in this portfolio:')
-    projectslistbox = QtGui.QListWidget(parent=geoguiwindow)
+    projectslistbox = pyqt.QListWidget(parent=geoguiwindow)
     projectslistbox.verticalScrollBar()
     projectslistbox.currentItemChanged.connect(updateprojectinfo)
-    buttons['remove'] = QtGui.QPushButton('Remove selected project from portfolio', parent=geoguiwindow)
+    buttons['remove'] = pyqt.QPushButton('Remove selected project from portfolio', parent=geoguiwindow)
     buttons['remove'].clicked.connect(removeproject)
     projectslistlabel.move(330,20)
     projectslistbox.move(330, 40)
@@ -981,9 +982,9 @@ def geogui():
     
     
     ## Project info
-    projectsinfolabel = QtGui.QLabel(parent=geoguiwindow)
+    projectsinfolabel = pyqt.QLabel(parent=geoguiwindow)
     projectsinfolabel.setText('Information about the selected project:')
-    projectinfobox = QtGui.QTextEdit(parent=geoguiwindow)
+    projectinfobox = pyqt.QTextEdit(parent=geoguiwindow)
     projectinfobox.setReadOnly(True)
     projectinfobox.verticalScrollBar()
     projectsinfolabel.move(640,20)
@@ -1000,13 +1001,13 @@ def geogui():
     
     objectivetextobjs = odict()
     for k,key in enumerate(objectivetext.keys()):
-        objectivetextobjs[key] = QtGui.QLabel(parent=geoguiwindow)
+        objectivetextobjs[key] = pyqt.QLabel(parent=geoguiwindow)
         objectivetextobjs[key].setText(str(objectivetext[key]))
         objectivetextobjs[key].move(left+10, 235+k*30)
     
     objectiveinputs = odict()
     for k,key in enumerate(objectivetext.keys()):
-        objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
+        objectiveinputs[key] = pyqt.QLineEdit(parent=geoguiwindow)
         objectiveinputs[key].setText(str(globalobjectives[key]))
         objectiveinputs[key].move(left+120, 230+k*30)
     objectiveinputs['budget'].setText(str(globalobjectives['budget']/budgetfactor)) # So right units

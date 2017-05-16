@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 
 from setuptools import setup, find_packages
 
-with open("optima/_version.py", "r") as f:
+with open("optima/version.py", "r") as f:
     version_file = {}
     exec(f.read(), version_file)
-    version = version_file["__version__"]
+    version = version_file["version"]
 
 try:
     from pypandoc import convert
