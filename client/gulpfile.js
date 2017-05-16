@@ -18,46 +18,18 @@ var handleError = function (err) {
   process.exit(1);
 };
 
-// Bump version
-gulp.task('bump-version', function () {
-  spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD']).stdout.on('data', function (data) {
-
-    // Get current branch name
-    var branch = data.toString();
-
-    // Verify we're on a release branch
-    if (/^(release|hotfix)\/.*/.test(branch)) {
-      var newVersion = branch.split('/')[1].trim();
-
-      // Update client index.html
-      gulp.src('./source/index.html')
-        .pipe(replace(/(bust=v)(\d*\.?)*/g, '$1' + newVersion))
-        .pipe(gulp.dest('./source'));
-
-      var updateJson = function (file) {
-        gulp.src(file)
-          .pipe(replace(/("version" *: *")([^"]*)(",)/g, '$1' + newVersion + '$3'))
-          .pipe(gulp.dest('./'));
-      };
-
-      updateJson('./bower.json');
-      updateJson('./package.json');
-
-      console.log('Successfully bumped to ' + newVersion);
-    } else {
-      console.error('This task should be executed on a release branch!');
-    }
-
-  });
-});
-
 // Write version.js
 gulp.task('write-version-js', function() {
-  var data = spawnSync('git', ['rev-parse', '--short', 'HEAD']).output;
-  var version = data.toString().split(',')[1].trim();
-  var data2 = spawnSync('git', ['show', '-s', '--format=%ci', 'HEAD']).output;
-  var date = data2.toString().split(' ')[0].split(',')[1].trim();
-  var versionStr = version + " from " + date;
+  try {
+    var data = spawnSync('git', ['rev-parse', '--short', 'HEAD']).output;
+    var version = data.toString().split(',')[1].trim();
+    var data2 = spawnSync('git', ['show', '-s', '--format=%ci', 'HEAD']).output;
+    var date = data2.toString().split(' ')[0].split(',')[1].trim();
+    var versionStr = version + " from " + date;
+  }
+  catch(err) {
+    versionStr = 'Git version information not available';
+  }
   fs.writeFileSync(
     'source/js/version.js',
     "define([], function () { return '" + versionStr + "'; });");
