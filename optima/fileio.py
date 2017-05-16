@@ -63,6 +63,16 @@ def loadpickle(fileobj, verbose=False):
     # Load the file string
     filestr = fileobj.read()
     
+    print('hiiii')
+    import dateutil
+    import dateutil.tz
+    from dateutil import tz
+    op.tz = tz
+    op.dateutil = dateutil
+    import sys
+    sys.modules['tz'] = tz
+    print('okk')
+    
     try: # Try just loading it
         obj = pickle.loads(filestr) # Actually load it
     except: # If that fails, create legacy classes and try again
