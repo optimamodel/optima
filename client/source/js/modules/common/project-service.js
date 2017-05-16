@@ -3,6 +3,23 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
   var module = angular.module('app.project-service', []);
 
+  /**
+   * projectService - a module to fetch/manipulate projects with
+   * the web-server. It also provides a singleton reference
+   * to existing projects and the selected project, for access
+   * across all page sin the client.
+   *
+   * This wraps around rpc calls, as there is the global lists of
+   * projects, and active states needs to be maintained w.r.t.
+   * to the projects and active selected projects. As well, this
+   * is to maintain some legacy code within the code-base.
+   *
+   * Internally, all angular http calls are implemented as $q
+   * promises, and so the projectService is implemented as a $q
+   * promises library, by wrapping another promise around the
+   * the $http promises, so that it maintains the same interface.
+   */
+
   module.service('projectService',
     ['$http', '$q', 'userManager', 'rpcService', function ($http, $q, userManager, rpcService) {
 
@@ -82,6 +99,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           function(response) {
             deferred.reject(response);
           });
+      getProjectList(); // Refresh the project list after we create a new project
       return deferred.promise;
     }
 

@@ -24,7 +24,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     
     timestr = 'unlimited' if maxtime is None else str(maxtime)
     itersstr = 'unlimited' if maxiters is None else str(maxiters)
-    printv('Performing automatic fitting for %s time/%s iterations...' % (timestr,itersstr), 1, verbose)
+    printv('Performing automatic fitting for %s seconds/%s iterations...' % (timestr,itersstr), 1, verbose)
     
     # Validate input
     if project is None: raise OptimaException('autofit() requires a project in order to run')

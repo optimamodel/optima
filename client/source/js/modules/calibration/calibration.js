@@ -3,7 +3,7 @@ define(['angular', 'underscore'], function (angular, _) {
   'use strict';
 
 
-  var module = angular.module('app.model', ['ui.router']);
+  var module = angular.module('app.calibration', ['ui.router']);
 
 
   module.config(function ($stateProvider) {

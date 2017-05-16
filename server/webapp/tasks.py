@@ -1,7 +1,5 @@
 import traceback
 from pprint import pprint
-import datetime
-import dateutil.tz
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -11,6 +9,7 @@ import optima as op
 __doc__ = """
 
 tasks.py
+========
 
 this file has dual purpose:
 
@@ -32,11 +31,24 @@ A special table is used to track jobs in the celery server. This
 is `WorkLogDb`. A WorkLogDb entry is created whenever a job is
 put on the celery queue.
 
+- A worklog tracks
+    - a unique `task_id` that represents the job
+    - when the job was started
+    - the current time - this is done as time-zones are easily
+      lost, so it is better to issue the current-time and
+      start-time from the same source, and calculate the difference
+      when it is needed at the client
+
 - `parse_work_log_record` converts it into a JSON object that
   can be consumed by the web-client
+
 - in any async function, access to the db has to be carefully
   circumsribed. This is done through a paired call to
   `init_db_session` and `close_db_session`
+
+The function `run_task.delay` should not need to be run directly,
+and should be accessed through `launch_task`, which will
+set up the worklog before running the task
 
 """
 
@@ -68,6 +80,7 @@ class ContextTask(TaskBase):
 celery_instance.Task = ContextTask
 
 
+
 def parse_work_log_record(work_log):
     return {
         'status': work_log.status,
@@ -76,7 +89,7 @@ def parse_work_log_record(work_log):
         'start_time': work_log.start_time,
         'stop_time': work_log.stop_time,
         'task_id': work_log.task_id,
-        'current_time': datetime.datetime.now(dateutil.tz.tzutc())
+        'current_time': op.today()
     }
 
 
@@ -155,7 +168,7 @@ def run_task(task_id, fn_name, args):
     worklog = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
     worklog.status = status
     worklog.error = error_text
-    worklog.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    worklog.stop_time = op.today()
     db_session.add(worklog)
     db_session.commit()
     close_db_session(db_session)
@@ -187,7 +200,7 @@ def launch_task(task_id, fn_name, args):
         # create a work_log status is 'started by default'
         print ">> launch_task new work log"
         work_log_record = dbmodels.WorkLogDb(task_id=task_id)
-        work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
+        work_log_record.start_time = op.today()
         db_session.add(work_log_record)
         db_session.flush()
 
@@ -203,6 +216,17 @@ def launch_task(task_id, fn_name, args):
 
 
 ### PROJECT DEFINED TASKS
+
+
+# To add tasks, simply create a new function here:
+#
+# - all parameters must be JOSN compatible: strings, numbers, lists or dicts
+# - access to database must be done through an db_session created
+#   by init_db_session
+# - db_session must be closed
+# - once registered, you can call these functions via
+#   the `rpcService.runAsyncTask('launch_task')` interface
+
 
 def autofit(project_id, parset_id, maxtime):
 

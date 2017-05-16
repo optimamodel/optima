@@ -47,6 +47,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
+# attaches the function for the flask login user_loader
+# thus making the login_user user object: an SQLAlchemy record
+# for UserDb
 @login_manager.user_loader
 def load_user(userid):
     try:
@@ -56,6 +59,9 @@ def load_user(userid):
     return user
 
 
+# decorator for the user requrest so that
+# a secret url query can be used to by-pass the login
+# process - not really used but left in as legacy
 @login_manager.request_loader
 def load_user_from_request(request):  # pylint: disable=redefined-outer-name
 
@@ -75,27 +81,51 @@ def unauthorized_handler():
     abort(401)
 
 
-@app.route('/')
-def site():
-    """ site - needed to correctly redirect to it from blueprints """
-    return redirect('/')
-
-
 # NOTE: the twisted wgsi server is set up to
 # only allows url's with /api/* to be served
-
 @app.route('/api', methods=['GET'])
 def root():
     """ API root, nothing interesting here """
     return 'Optima API v.1.0.0'
 
 
-from .webapp.handlers import get_upload_file, api_blueprint, get_post_data_json, report_exception_decorator, login_required
+from .webapp.handlers import api_blueprint, get_post_data_json, report_exception_decorator, login_required
 from .webapp import dataio
+from .webapp.parse import normalize_obj
 
 
+# this is used only to load the user-related url handlers
 app.register_blueprint(api_blueprint, url_prefix='')
 
+
+# Using the RPC approach, functions in the web-client are
+# directly called using 
+#
+# - rpcService.rpcRun => run_remote_procedure
+# - rpcService.rpcAsyncRun => run_remote_async_task
+# - rpcService.rpcDownload => get_remote_file
+# - rpcService.rpcUpload => receive_uploaded_file
+#
+# All rpcService functions are called with the signature:
+#
+#    rpcFunc('python_function', [arg0, arg1, arg2...], 
+#         { kwarg0: val0, kwarg1: val1 ...})
+
+# rpcRun will return a JSON dictionary, the target function
+# will directly receive the args and kwargs, and return
+# a JSON dictionary
+
+# rpcRun will return a JSON dictionary, the target function
+# will be from the tasks.py module. the target function
+# will directly receive the args and kwargs, and return
+# a JSON dictionary
+
+# rpcDownload will receive and save a file on the client, the target function
+# will directly receive the args and kwargs
+
+# rpcUpload will send a file to the webserver, the target function
+# will receive the filename of the saved file as the first arg, and
+# the args from the function after, as well as kwargs
 
 @app.route('/api/procedure', methods=['POST'])
 @report_exception_decorator
@@ -105,6 +135,7 @@ def run_remote_procedure():
     url-args:
         'name': string name of function in dataio
         'args': list of arguments for the function
+        'kwargs': dictionary of named parameters for the function
     """
     json = get_post_data_json()
 
@@ -118,7 +149,7 @@ def run_remote_procedure():
     if result is None:
         result = ''
     else:
-        result = jsonify(result)
+        result = jsonify(normalize_obj(result))
     return result
 
 
@@ -130,6 +161,7 @@ def run_remote_async_task():
     url-args:
         'name': string name of function in dataio
         'args': list of arguments for the function
+        'kwargs': dictionary of named parameters for the function
     """
     json = get_post_data_json()
     import server.webapp.tasks as tasks
@@ -144,7 +176,7 @@ def run_remote_async_task():
     if result is None:
         result = ''
     else:
-        result = jsonify(result)
+        result = jsonify(normalize_obj(result))
     return result
 
 
@@ -156,6 +188,7 @@ def get_remote_file():
     url-args:
         'name': string name of function in dataio
         'args': list of arguments for the function
+        'kwargs': dictionary of named parameters for the function
     """
     json = get_post_data_json()
 
@@ -194,6 +227,7 @@ def receive_uploaded_file():
     url-args:
         'name': string name of function in dataio
         'args': list of arguments for the function
+        'kwargs': dictionary of named parameters for the function
     """
     file = request.files['file']
     filename = secure_filename(file.filename)
@@ -216,7 +250,7 @@ def receive_uploaded_file():
     if result is None:
         return ''
     else:
-        return jsonify(result)
+        return jsonify(normalize_obj(result))
 
 
 def init_db():
@@ -227,7 +261,6 @@ def init_db():
 
     # clear dangling tasks from the last session
     from server.webapp.dbmodels import WorkLogDb
-
     work_logs = dbconn.db.session.query(WorkLogDb)
     print "> Deleting dangling work_logs", work_logs.count()
     work_logs.delete()

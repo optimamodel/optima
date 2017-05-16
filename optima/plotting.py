@@ -18,12 +18,14 @@ from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive
 import textwrap
-import os
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiplottypes = ['total', 'stacked', 'population']
 realdatacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
+fillzorder = 0 # The order in which to plot things -- fill at the back
+datazorder = 100 # Then data
+linezorder = 200 # Finally, lines
 defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
 defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
@@ -220,7 +222,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
 
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, 
-            alpha=0.2, lw=2, dotsize=50, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
+            alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
             legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
@@ -367,36 +369,36 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 # e.g. single simulation, prev-tot: single line, single plot
                 if not ismultisim and istotal:
-                    ax.plot(results.tvec, factor*best[0], lw=lw, c=colors[0]) # Index is 0 since only one possibility
+                    ax.plot(results.tvec, factor*best[0], lw=lw, c=colors[0], zorder=linezorder) # Index is 0 since only one possibility
                 
                 # e.g. single simulation, prev-pop: single line, separate plot per population
                 if not ismultisim and isperpop: 
-                    ax.plot(results.tvec, factor*best[i], lw=lw, c=colors[0]) # Index is each individual population in a separate window
+                    ax.plot(results.tvec, factor*best[i], lw=lw, c=colors[0], zorder=linezorder) # Index is each individual population in a separate window
                 
                 # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
                 if not ismultisim and isstacked:
                     if ispercentage: # Multi-line plot
                         for l in range(nlinesperplot):
-                            ax.plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
+                            ax.plot(results.tvec, factor*best[l], lw=lw, c=colors[l], zorder=linezorder) # Index is each different population
                     else: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
                         origorder = arange(nlinesperplot)
                         plotorder = nlinesperplot-1-origorder
                         if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
-                            ax.fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k])
+                            ax.fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k], zorder=fillzorder)
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
-                            ax.plot((0, 0), (0, 0), color=colors[l], linewidth=10)
+                            ax.plot((0, 0), (0, 0), color=colors[l], linewidth=10, zorder=linezorder)
                 
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l]) # Index is each different e.g. scenario
+                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l][i], lw=lw, c=colors[nlinesperplot-1-l]) # Indices are different populations (i), then different e..g scenarios (l)
+                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l][i], lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -412,9 +414,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 if not ismultisim and databest is not None and plotdata:
                     for y in range(len(results.datayears)):
                         ax.plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=1000) # Without zorder, renders behind the graph
+                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=datazorder) # Without zorder, renders behind the graph
                     if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
-                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=1001)
+                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=datazorder+1)
 
 
 
@@ -735,7 +737,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 ## Plot cascade
 ##################################################################
-def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
+def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, 
                 useSIticks=True, plotdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, **kwargs):
     ''' 
@@ -767,10 +769,10 @@ def plotcascade(results=None, aspercentage=False, colors=None, figsize=globalfig
     cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
     # Handle colors
-    if colors is None: colors = gridcolors(len(cascadelist), reverse=True)
-    elif colors=='alpine': colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
-    elif type(colors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=colors)[1:-1] # Remove first and last element
-    else: raise OptimaException('Can''t figure out color %s' % colors)
+    if cascadecolors is None: colors = gridcolors(len(cascadelist), reverse=True)
+    elif cascadecolors=='alpine': colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
+    elif type(cascadecolors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=colors)[1:-1] # Remove first and last element
+    else: colors = cascadecolors
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0*results.tvec # Easy way of setting to 0...

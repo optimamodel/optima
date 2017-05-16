@@ -4,6 +4,20 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
   var module = angular.module('app.cost-functions', ['ui.router', 'toastr']);
 
 
+  /**
+   * The costfunction page is slightly different to the other pages
+   * in that it is a tabbed page.
+   *
+   * From legacy code, the vm approach (instead of $scope) was
+   * taken to pass the controller into the page. Originally,
+   * each tabbed page was
+   * on a different page, so that vm (=this) was used to specify
+   * the page controller as opposed to $scope for the individual
+   * tabs. Since then, all the tabbed panels have been merged
+   * back, and so vm is legacy.
+   */
+
+
   module.config(function ($stateProvider) {
     $stateProvider
       .state('costfunction', {
