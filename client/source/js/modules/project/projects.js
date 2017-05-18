@@ -4,6 +4,7 @@ define(['angular', 'ui.router'], function (angular) {
 
   var module = angular.module('app.project', ['ui.router']);
 
+
   module.config(function ($stateProvider) {
     $stateProvider
       .state('home', {

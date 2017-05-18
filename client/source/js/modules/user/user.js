@@ -7,6 +7,7 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
 
   /**
    * Directive-based hack for automatically filled forms of sign in
+   * <tag saved-login-form="ngModel">
    */
   module.directive('savedLoginForm', function ($timeout) {
     return {
@@ -23,6 +24,11 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
     };
   });
 
+  
+  /**
+   * Defines all the user-based pages, their states and their controllers
+   * login, register, edit, feedback, help
+   */
   
   module.config(function ($stateProvider) {
       $stateProvider
@@ -65,6 +71,9 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
     });
 
 
+  /**
+   * Controllers for edit/login/register pages
+   */
 
   module.controller(
     'EditController',

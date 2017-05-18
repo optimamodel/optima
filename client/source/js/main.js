@@ -20,6 +20,10 @@ define(['angular', './app'], function(angular) {
         angular.bootstrap(document, ['app']);
       }
 
+      // the only way to pass the user into the app
+      // before the app is initialized is via a global
+      // attached to the window context window.user
+      // after window.user, bootstrap is called
       userApi
         .getCurrent(function(user) { window.user = user; })
         .$promise.then(bootstrap, bootstrap);

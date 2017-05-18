@@ -70,8 +70,14 @@ def normalize_obj(obj):
         A converted dict/list/value that should be JSON compatible
     """
 
-    if isinstance(obj, list) or isinstance(obj, np.ndarray) or isinstance(obj, tuple):
+    if isinstance(obj, list) or isinstance(obj, tuple):
         return [normalize_obj(p) for p in list(obj)]
+    
+    if isinstance(obj, np.ndarray):
+        if obj.shape: # Handle most cases, incluing e.g. array([5])
+            return [normalize_obj(p) for p in list(obj)]
+        else: # Handle the special case of e.g. array(5)
+            return [normalize_obj(p) for p in list(np.array([obj]))]
 
     if isinstance(obj, dict):
         return {str(k): normalize_obj(v) for k, v in obj.items()}
@@ -1322,17 +1328,12 @@ def get_default_optimization_summaries(project):
 
 
 def get_optimization_from_project(project, optim_id):
-    if not isinstance(optim_id, UUID):
-        optim_id = UUID(optim_id)
-
-    optims = [
-        project.optims[key]
-        for key in project.optims
-        if project.optims[key].uid == optim_id
-    ]
-    if not optims:
-        raise ValueError("Optimisation does not exist", project_id=project.uid, id=optim_id)
-    return optims[0]
+    for optim in project.optims.values():
+        print(">> get_optimization_from_project optim %s" % optim.uid)
+    for optim in project.optims.values():
+        if str(optim.uid) == optim_id:
+            return optim
+    raise ValueError("Optimisation does not exist %s %s" % (project.uid, optim_id))
 
 
 def get_optimization_summaries(project):

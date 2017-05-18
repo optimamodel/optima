@@ -160,7 +160,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     else: popind = thispar.keys().index(pop)
                     
                     # Find or set new value 
-                    if scenpar.get('startval'):
+                    if scenpar.get('startval') is not None:
                         this_y = promotetoarray(scenpar['startval']) # Use supplied starting value if there is one
                     else:
                         if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
@@ -180,7 +180,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     thispar.y[popind] = append(thispar.y[popind], this_y) 
                     
                     # Add end year values if supplied
-                    if scenpar.get('endyear'): 
+                    if scenpar.get('endyear') is not None: 
                         thispar.t[popind] = append(thispar.t[popind], scenpar['endyear'])
                         thispar.y[popind] = append(thispar.y[popind], scenpar['endval'])
                     

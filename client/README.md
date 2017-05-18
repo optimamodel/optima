@@ -40,6 +40,7 @@ described in `gulpfile.js`. The different tasks that can be carried out are:
 - `gulp watch` listens to changes to stylesheets and scripts and reloads browser page during development.
 - `gulp bump-version` updates JSON files and `source/index.html` with tagged releases.
 - `gulp write-version-js` updates `source/js/version.js` to the latest git version and date
+- `gulp copy-assets-and-vendor-js` compiles a single-file version of the webclient in `build`
 - `gulp compile-sass` compiles the SASS files in `source/sass` to CSS files in `source/assets/css`.
 - `gulp compile-build-js-client-uglify` compiles a single-file version of the webclient in `build`
 
@@ -74,21 +75,60 @@ In the `source/js` folder:
     - `admin` handles administrator user and projects views
     - `analysis` scenario and optimization pages
     - `calibration` the calibration page
-    - `chart` directives, services and libraries to render graphs
+    - `charts` directives, services and libraries to render graphs
     - `common` utility functions and directives
-      - `active-project` stores/extracts active project from local storage
+      - `form-input-validate-directive` stores/extracts active project from local storage
+      - `icon-directive` stores/extracts active project from local storage
+      - `local-storage-polyfill` stores/extracts active project from local storage
+      - `poller-service` sores/extracts users from webserver
       - `project-service` sores/extracts projects from webserver
-      - `resources-user` sores/extracts users from webserver
-      - `user-manager` stores/extracts current user
+      - `rpc-service` sores/extracts users from webserver
+    - `costfunction` the geospatial analysis
     - `geospatial` the geospatial analysis
-    - `program` program set and cost functions page
+    - `optimization` the geospatial analysis
+    - `programs` program set and cost functions page
     - `project` project management (home), project edit/populations, and population modal dialog, and some services
+    - `scenarios` program set and cost functions page
     - `ui` menu items and common modal dialogs
     - `user` user manager and user-api services, login, register, and user-edit pages
 
 ## Modifying the webclient
 
 Note: changes are easier with a proper IDE like Webstorm.
+
+## Beginner's Guide to Angular
+
+The client is written in the Angular 1 framework, using the require.js
+module system. A good start is to read the [Angular 1 Style Guide](https://github.com/johnpapa/angular-styleguide/blob/master/a1/README.md)
+
+Here are some basic concepts.
+
+There are three ways of dealing with modules within the app, and all three must be understood to correctly interact app:
+
+1. `require.js` is a method of loading modules. This is what the `require` and `define` functions refer to. `define` is used to register modules within the `require.js` eco-system, and to list dependencies that `require.js` will handle.
+2. angular modules are defined, and recalled, by the angular `angular.module` function. Once the modules are loaded, all defined states/controllers/directives/services are now accessible to any controllers you define, and are accessed through parameter injection.
+3. angular services, which are defined by `module.service` or `module.factory` are injected modules. Once the module that define the services are loaded, any other angular object can access the services by including the service in the function parameter.
+
+As currently written, when an angular module is instantiated in a require.js module, the angular module is returned, thus the require.js module can also be used to directly access the angular module. This actually mixes up the two module systems, where, otherwise, the angular module should be accessible via the `angular.module` function calling convention.
+
+### modules
+
+For clarity, it's better not to chain module declaration and defining 
+states/controllers/directives/services together. Track the modules via a module variable. As much as possible, angular module loading is done on a per file basis,
+so that there are no complex loading of an angular module from
+multiple files.
+
+In Angular, the key elements are:
+
+  - states - define pages, w.r.t. to the pseudo-url (part after the #),
+    these work with `ui.router` and work through the $stateProvider
+    service
+  - controllers - they are tied to DOM elements/tags, or pages via states
+  - directives - custom-defined tag elements in HTML
+  - services/factory - effective modules for code/data
+    that can be injected into any controller. The difference between
+    services and factories are subtle (instantiated as an object, or via a function call) and has more to to do with how the javascript couples to other transpiling javascript systems. Here, the difference is largely irrelevant, where the choice of service versus factory is due to legacy code.
+
 
 ### Layout/style changes
 

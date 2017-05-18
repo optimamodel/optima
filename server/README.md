@@ -1,5 +1,7 @@
 # Introduction to the Optima webserver
 
+_ WARNING, much of this document is out-of-date! _
+
 - the main webserver is `api.py`, a `python` application, written in the `flask` framework.
  `api.py` defines the way URL requests are converted into HTTP responses to the
   webclient, you can see a list of available API calls at <http://sandbox.optimamodel.com/api/spec.html#!/spec>,

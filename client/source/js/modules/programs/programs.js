@@ -3,8 +3,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
   'use strict';
 
   var module = angular.module(
-    'app.programs',
-    ['ui.router', 'app.program-modal']);
+    'app.programs', ['ui.router', 'app.program-modal']);
 
 
   module.config(function($stateProvider) {
@@ -138,7 +137,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
           'download_project_object',
           [projectService.project.id, 'progset', $scope.state.activeProgramSet.id])
         .then(function(response) {
-          toastr.success('Progset downloaded');
+          toastr.success('Program set downloaded');
         });
     };
 
@@ -147,7 +146,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
         .rpcUpload(
           'upload_project_object', [projectService.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
-          toastr.success('Progset uploaded');
+          toastr.success('Program set uploaded');
           var name = response.data.name;
 
           rpcService

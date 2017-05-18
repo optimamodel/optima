@@ -4,6 +4,19 @@ define(
 
   'use strict';
 
+  /**
+   * this module holds all the plotting related elements in one
+   * file:
+   *
+   * - all the hacks to work-around mpld3 for optima graphs
+   * - the directive <mpld3-chart> to display mpld3 charts, with
+   *   downloading options
+   * - the directive <optima-graphs> that displays a set of
+   *   charts for a given result, with associated controls,
+   *   and downloading options
+   * - the controllers of these directives
+   */
+
   var module = angular.module('app.charts', []);
 
   var moduleAllCharts, moduleScrollTop;
@@ -78,6 +91,7 @@ define(
   function reformatMpld3FigsInElement($element, nLegend) {
 
     $element.find('svg.mpld3-figure').each(function () {
+      // Match the size of the figure to the wrapping svg element
       var $svgFigure = $(this);
       var width = $svgFigure.attr('width');
       var height = $svgFigure.attr('height');
@@ -89,6 +103,7 @@ define(
       $svgFigure.attr('height', height);
 
       $svgFigure.on('mouseover', function () {
+        // override the mouseover defaults
         var height = parseInt($svgFigure.attr('height'));
         $svgFigure.find('.mpld3-coordinates').each(function () {
           $(this).attr('top', height + 7);
@@ -101,6 +116,7 @@ define(
       addLineToLegendLabel($svgFigure, nLegend);
     });
 
+    // reformat y-ticks
     var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
     $labels.each(function () {
@@ -110,6 +126,7 @@ define(
       $label.text(newText);
     });
 
+    // reformat x-ticks
     var $xaxis = $element.find('.mpld3-xaxis');
     var $labels = $xaxis.find('g.tick > text');
     $labels.each(function () {
