@@ -722,7 +722,7 @@ def setmigrations(which='migrations'):
         '2.3.4': ('2.3.5', '2017-04-18', None, 'Added migrations for portfolios'),
         '2.3.5': ('2.3.6', '2017-04-21', None, 'Fixed PMTCT calculations'),
         '2.3.6': ('2.3.7', '2017-05-13', None, 'Changed plotting syntax'),
-        '2.3.7': ('2.3.8', '2017-05-13', None, 'Changed get and odict repr'),
+        '2.3.7': ('2.3.8', '2017-05-13', None, 'Changed get, odict repr, and makegeospreadsheet'),
         #'2.2': redoprograms,
         }
     migrations = op.odict(migrations) # Convert to odict
