@@ -965,7 +965,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     
     # Set up processes to start asynchronously
     if maxload is None: maxload = 0.5
-    if interval is None: interval = 10.0
+    if interval is None: interval = 5.0
     if maxtime is None: maxtime = 3600
     if label is None: label = ''
     else: label += ': '
