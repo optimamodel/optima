@@ -81,7 +81,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
-        printv('Now running scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
+        printv('Now running scenario %s (%i/%i)...' % (scen, scenno+1, nscens), 2, verbose)
         scenparset = scenparsets[scen]
         project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
 
