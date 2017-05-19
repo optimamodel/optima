@@ -1074,16 +1074,8 @@ class CCOF(object):
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
                 if overwrite:
-                    ind = self.ccopars['t'].index(int(ccopar['t']))
-                    oldccopar = odict()
-                    for ccopartype in ccopar.keys():
-                        if self.ccopars[ccopartype]:
-                            oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
-                            printv('\nModified CCO parameter "%s" from "%s" to "%s"' % (ccopartype, oldccopar[ccopartype], ccopar[ccopartype]), 4, verbose)
-                        else:
-                            printv('Added CCO parameter "%s" with value "%s"' % (ccopartype, ccopar[ccopartype]), 4, verbose)
-                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    
+                    self.rmccopar(ccopar['t'])
+                    self.addccopar(ccopar, overwrite=False, verbose=verbose)
                 else:
                     errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']
                     raise OptimaException(errormsg)
@@ -1095,7 +1087,8 @@ class CCOF(object):
             if int(t) in self.ccopars['t']:
                 ind = self.ccopars['t'].index(int(t))
                 for ccopartype in self.ccopars.keys():
-                    self.ccopars[ccopartype].pop(ind)
+                    try:    self.ccopars[ccopartype].pop(ind)
+                    except: pass
                 printv('\nRemoved CCO parameters in year "%s". \nCCO parameters are: %s' % (t, self.ccopars), 4, verbose)
             else:
                 errormsg = 'You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars)
