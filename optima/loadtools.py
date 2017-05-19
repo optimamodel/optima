@@ -693,7 +693,7 @@ def setmigrations(which='migrations'):
     If "which" is anything other than "changelog", then return the list of migrations.
     Otherwise, return the changelog (just the new version and message).
     
-    Version: 2017apr20
+    Version: 2017may19
     '''
 
     migrations = {
@@ -724,7 +724,7 @@ def setmigrations(which='migrations'):
         '2.3.4': ('2.3.5', '2017-04-18', None, 'Added migrations for portfolios'),
         '2.3.5': ('2.3.6', '2017-04-21', None, 'Fixed PMTCT calculations'),
         '2.3.6': ('2.3.7', '2017-05-13', None, 'Changed plotting syntax'),
-        '2.3.7': ('2.3.8', '2017-05-13', None, 'Changed get, odict repr, and makegeospreadsheet'),
+        '2.3.7': ('2.3.8', '2017-05-19', None, 'Changed get, odict repr, and makegeospreadsheet'),
         #'2.2': redoprograms,
         }
     migrations = op.odict(migrations) # Convert to odict
@@ -751,7 +751,7 @@ def migrate(project, verbose=2, die=False):
         currentversion = str(project.version)
         
         if not currentversion in migrations:
-            errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
+            errormsg = "No migration exists from version %s to the current version (%s)" % (currentversion, op.version)
             raise op.OptimaException(errormsg)
 
         newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
