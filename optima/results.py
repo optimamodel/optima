@@ -115,6 +115,7 @@ class Resultset(object):
 
         self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
+        self.other['otherdeath']   = Result('Non-HIV-related deaths)')
         
         if domake: self.make(raw, verbose=verbose)
     
@@ -318,11 +319,6 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round()
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        upperagelims = self.pars['age'][:,1] # All populations, but upper range
-        adultpops = findinds(upperagelims>=15)
-        childpops = findinds(upperagelims<15)
-        if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
         # Calculate DALYs
         yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
@@ -341,6 +337,19 @@ class Resultset(object):
             dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
         self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles).round()
         self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles).round()
+        
+        
+        # Other indicators
+        upperagelims = self.pars['age'][:,1] # All populations, but upper range
+        adultpops = findinds(upperagelims>=15)
+        childpops = findinds(upperagelims<15)
+        if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        
+        otherdeaths    = dcp(array([raw[i]['otherdeath']     for i in range(nraw)]))        
+        self.other['otherdeath'].pops = quantile(otherdeaths[:,:,indices], quantiles=quantiles).round()
+        self.other['otherdeath'].tot = quantile(otherdeaths[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
+
         
         return None # make()
         

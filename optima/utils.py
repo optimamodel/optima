@@ -1349,7 +1349,11 @@ class odict(OrderedDict):
         for key in self.keys():
             output += '('+key.__repr__()
             output += ', '
-            output += self.get(key).__repr__()
+            child = self.get(key)
+            if isinstance(child, odict):
+                output += child.export(doprint=False) # Handle nested odicts -- WARNING, can't doesn't work for e.g. lists of odicts!
+            else:
+                output += child.__repr__()
             output += '), '
         
         output += end
