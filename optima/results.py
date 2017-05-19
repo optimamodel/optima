@@ -412,6 +412,9 @@ class Resultset(object):
         
         P = demo(0)
         P.result().get('numinci')
+        
+        To get a sum, simply enter a pair of years, e.g.
+        P.result().get('numinci')
         '''
         # If year isn't specified, use now
         if year is None: 
@@ -428,8 +431,17 @@ class Resultset(object):
             except: timeseries = self.other[what].pops[0][pop,:]
         
         # Get the index and return the result
-        index = findnearest(self.tvec, year)
-        result = timeseries[index]
+        if checktype(year, 'number'):
+            index = findnearest(self.tvec, year)
+            result = timeseries[index]
+        elif checktype(year, 'arraylike'):
+            startind = findnearest(self.tvec, year[0])
+            finalind = findnearest(self.tvec, year[1])
+            result = timeseries[startind:finalind].sum()
+        else:
+            errormsg = 'Year argument must either be a number or pair of years'
+            raise OptimaException(errormsg)
+        
         return result
             
         
