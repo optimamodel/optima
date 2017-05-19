@@ -650,7 +650,7 @@ class Project(object):
             budgetratios = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
         
         # Calculate the number of iterations
-        noptims = 1+(mc!=0)*3+max(mc,0) # Calculate the number of optimizations per BOC point
+        noptims = 1 + (mc!=0) + max(abs(mc),0) # Calculate the number of optimizations per BOC point
         nbocpts = len(budgetratios)
         guessmaxiters = maxiters if maxiters is not None else 1000
         guessminiters = min(50, guessmaxiters)  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
