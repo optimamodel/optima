@@ -1340,6 +1340,26 @@ class odict(OrderedDict):
             numindents=numindents, recurselevel=0))
     
     
+    def export(self, doprint=True):
+        ''' Export the odict in a form that is valid Python code '''
+        start = 'odict(['
+        end = '])'
+        output = start
+        
+        for key in self.keys():
+            output += '('+key.__repr__()
+            output += ', '
+            output += self.get(key).__repr__()
+            output += '), '
+        
+        output += end
+        if doprint:
+            print(output)
+            return None
+        else:
+            return output
+    
+    
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, basestring):
