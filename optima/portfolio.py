@@ -469,10 +469,15 @@ class Portfolio(object):
    
 
 
-def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None, copies=None, refyear=None, verbose=2):
-    ''' Create a geospatial spreadsheet template based on a project file '''
-    ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
-    ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
+def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None, copies=None, refyear=None, verbose=2, names=None):
+    ''' 
+    Create a geospatial spreadsheet template based on a project file.
+    
+    Arguments:
+        names - Optional list of names of regions; overrides copies
+        copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation)
+        refyear - Any year that exists in the high-level project calibration for which low-level project data exists
+    '''
     
     # Load a project file and set defaults
     if project is None: raise OptimaException('No project loaded.')
@@ -484,7 +489,24 @@ def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None
     try:    results = project.parsets[parsetname].getresults()
     except: results = project.runsim(name=project.parsets[parsetname].name)
     
+    # Handle copies
+    if copies is None:
+        if names is not None: copies = len(names)
+        else:
+            errormsg = 'You must supply either a number of copies or a list of region names'
+            raise OptimaException(errormsg)
     copies = int(copies)
+    
+    # Handle names
+    if names is None:
+        names = []
+        for row in range(copies):
+            names.append('%s - region %i' % (project.name, row))
+    
+    # Handle reference year and other things
+    if copies!=len(names):
+        errormsg = 'Number of copies (%i) does not match number of named regions (%i)' % (copies, len(names))
+        raise OptimaException(errormsg)
     refyear = int(refyear)
     if not refyear in [int(x) for x in results.tvec]:
         errormsg = "Input not within range of years used by aggregate project's last stored calibration."
@@ -509,7 +531,7 @@ def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None
     row, col = 0, 0
     for row in range(copies+1):
         if row != 0:
-            wspopsize.write(row, col, '%s - region %i' % (project.name, row), bold)
+            wspopsize.write(row, col, names[row-1], bold)
             wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
         for popname in project.data['pops']['short']:
             col += 1

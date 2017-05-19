@@ -19,7 +19,7 @@ coveragepars=['numtx','numpmtct','numost','numcirc','numvlmon']
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='random', project=None):
+    def __init__(self, name='default', programs=None, default_interaction='additive', project=None):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()

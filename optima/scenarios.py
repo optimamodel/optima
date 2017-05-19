@@ -71,7 +71,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
     if project is None: raise OptimaException('First argument to runscenarios() must be a project')
     if len(project.scens)==0:  # Create scenario list if not existing
         baselinescen = baselinescenario(project.parsets[defaultparset], verbose=verbose)
-        project.addscenlist(baselinescen)
+        project.addscens(baselinescen)
     scenlist = [scen for scen in project.scens.values() if scen.active==True]
     nscens = len(scenlist)
     
@@ -81,7 +81,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
-        printv('Now running scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
+        printv('Now running scenario %s (%i/%i)...' % (scen, scenno+1, nscens), 2, verbose)
         scenparset = scenparsets[scen]
         project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
 
@@ -349,7 +349,7 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
 
     
     # Run the scenarios
-    project.addscenlist(scenlist)
+    project.addscens(scenlist)
     if dorun: project.runscenarios()
     if doplot: 
         from optima import pygui

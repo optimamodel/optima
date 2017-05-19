@@ -331,6 +331,16 @@ class Project(object):
     def renamescen(self,     orig='default', new='new', overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
+
+    def addscens(self, scenlist, overwrite=True): 
+        ''' Function to make it slightly easier to add scenarios all in one go '''
+        if overwrite: self.scens = odict() # Remove any existing scenarios
+        scenlist = promotetolist(scenlist) # Allow adding a single scenario
+        for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
+        self.modified = today()
+        return None
+
+
     def addresult(self, result=None, overwrite=True): 
         ''' Try adding result by name, but if no name, add by UID '''
         if result.name is None: keyname = str(result.uid)
@@ -363,14 +373,6 @@ class Project(object):
             if type(result)!=BOC: self.results.pop(key)
         self.modified = today()
         return None
-    
-    
-    def addscenlist(self, scenlist=None): 
-        ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
-        for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
-        self.modified = today()
-        return None
-    
     
     def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
@@ -544,7 +546,7 @@ class Project(object):
     
     def runscenarios(self, scenlist=None, verbose=2, debug=False, **kwargs):
         ''' Function to run scenarios '''
-        if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
+        if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
         multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
         self.addresult(result=multires)
         self.modified = today()

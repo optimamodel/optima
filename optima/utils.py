@@ -965,7 +965,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     
     # Set up processes to start asynchronously
     if maxload is None: maxload = 0.5
-    if interval is None: interval = 10.0
+    if interval is None: interval = 5.0
     if maxtime is None: maxtime = 3600
     if label is None: label = ''
     else: label += ': '
@@ -1338,6 +1338,26 @@ class odict(OrderedDict):
         print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, 
             divider=divider, dividerthresh=dividerthresh, 
             numindents=numindents, recurselevel=0))
+    
+    
+    def export(self, doprint=True):
+        ''' Export the odict in a form that is valid Python code '''
+        start = 'odict(['
+        end = '])'
+        output = start
+        
+        for key in self.keys():
+            output += '('+key.__repr__()
+            output += ', '
+            output += self.get(key).__repr__()
+            output += '), '
+        
+        output += end
+        if doprint:
+            print(output)
+            return None
+        else:
+            return output
     
     
     def pop(self, key, *args, **kwargs):

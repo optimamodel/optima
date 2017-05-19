@@ -57,6 +57,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         else: print(errormsg); return None
     if verbose: print('Reading file %s' % filename)
     alllines = f.readlines() # Read all lines in the file
+    origlines = op.dcp(alllines) # Keep a copy of the original version of the file
     notfound = True # By default, fail
     for l,line in enumerate(alllines): # Loop over each line
         ind = line.find(strtofind) # Look for string to find
@@ -76,21 +77,22 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         else: print(errormsg); return None
     f.close()
         
-    # Write script file
-    try: 
-        f = open(filename, 'w')
-    except:
-        errormsg = 'Could not open file "%s" for writing' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    if verbose: print('Writing file %s' % filename)
-    try: 
-        f.writelines(alllines) # Just write everything
-    except: 
-        errormsg = 'optimaversion() write failed on %s' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    f.close()
+    # Write script file, but only if something changed
+    if alllines!=origlines:
+        try: 
+            f = open(filename, 'w')
+        except:
+            errormsg = 'Could not open file "%s" for writing' % filename
+            if die: raise op.OptimaException(errormsg)
+            else: print(errormsg); return None
+        if verbose: print('Writing file %s' % filename)
+        try: 
+            f.writelines(alllines) # Just write everything, but only if something's changed
+        except: 
+            errormsg = 'optimaversion() write failed on %s' % filename
+            if die: raise op.OptimaException(errormsg)
+            else: print(errormsg); return None
+        f.close()
     
     return None
 
@@ -722,6 +724,7 @@ def setmigrations(which='migrations'):
         '2.3.4': ('2.3.5', '2017-04-18', None, 'Added migrations for portfolios'),
         '2.3.5': ('2.3.6', '2017-04-21', None, 'Fixed PMTCT calculations'),
         '2.3.6': ('2.3.7', '2017-05-13', None, 'Changed plotting syntax'),
+        '2.3.7': ('2.3.8', '2017-05-13', None, 'Changed get, odict repr, and makegeospreadsheet'),
         #'2.2': redoprograms,
         }
     migrations = op.odict(migrations) # Convert to odict
@@ -746,11 +749,12 @@ def migrate(project, verbose=2, die=False):
 
     while str(project.version) != str(op.version):
         currentversion = str(project.version)
-        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
         
         if not currentversion in migrations:
             errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
             raise op.OptimaException(errormsg)
+
+        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
 
         op.printv('Migrating "%s" from %6s ->' % (project.name, currentversion), 2, verbose, newline=False)
         if migrator is not None: migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader

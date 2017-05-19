@@ -293,7 +293,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
-    if which is None: which = objectives['which']
+    if which is None: 
+        if objectives is not None: which = objectives['which']
+        else:                      which = 'outcomes'
     if parsetname is None: parsetname = -1
     if progsetname is None: progsetname = -1
     if parset is None: parset  = project.parsets[parsetname] 
@@ -339,14 +341,17 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     if which=='outcomes':
         # Calculate outcome
         outcome = 0 # Preallocate objective value
+        rawoutcomes = odict()
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            rawoutcomes[key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
 
         # Output results
         if outputresults:
             results.outcome = outcome
+            results.rawoutcomes = rawoutcomes
             results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
             results.budget = constrainedbudget # Convert to budget
             output = results
@@ -375,6 +380,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
             results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
             results.budget = constrainedbudget # Convert to budget
             results.targetsmet = targetsmet
+            results.target = target
+            results.rawoutcomes = final
             output = results
         else:
             summary = 'Baseline: %0.0f %0.0f | Target: %0.0f %0.0f | Final: %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
@@ -405,7 +412,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
         die = whether or not to check things in detail
         origbudget = the budget to start from (if not supplied, use default
         randseed = optionally reset the seed
-        mc = how many Monte Carlo iterations to run for (if -1, run other starting points but not MC)
+        mc = how many Monte Carlo seeds to run for (if negative, randomize the start location as well)
         label = a string to append to error messages to make it clear where things went wrong
 
     Version: 1.4 (2017apr01)
@@ -495,7 +502,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     if nblocks is None:    nblocks = 10
     if blockiters is None: blockiters = 10
     if mc is None:         mc = 0
-    if mc>0:
+    if abs(mc)>0:
         errormsg = 'Monte Carlo optimization with multithread optimization has not been implemented'
         raise OptimaException(errormsg)
     totaliters = blockiters*nblocks
@@ -684,19 +691,22 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             allbudgetvecs = odict()
             allbudgetvecs['Current'] = dcp(constrainedbudgetvec)
             if mc: # If MC, run multiple
-                bvzeros = zeros(noptimprogs)
-                allbudgetvecs['Uniform'] = bvzeros + constrainedbudgetvec.mean() # Make it uniform
                 if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
                     allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
-                for i in range(mc): # For the remainder, do randomizations
+                for i in range(abs(mc)): # For the remainder, do randomizations
                     if randseed is not None:
                         scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
                         mcrand = i*(2**6-1)
                         thisseed = randseed + scalefactorrand + mcrand
                         seed(int(thisseed))
-                    randbudget = random(noptimprogs)
-                    allbudgetvecs['Random %s' % (i+1)] = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
-            
+                    if mc<0: 
+                        randbudget = random(noptimprogs)
+                        randbudget = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
+                        allbudgetvecs['Random %s' % (i+1)] = randbudget
+                    else:
+                        current = dcp(constrainedbudgetvec)
+                        allbudgetvecs['Current %s' % (i+1)] = current
+                    
             # Actually run the optimizations
             bestfval = inf # Value of outcome
             asdresults = odict()
