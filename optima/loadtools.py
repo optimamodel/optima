@@ -57,6 +57,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         else: print(errormsg); return None
     if verbose: print('Reading file %s' % filename)
     alllines = f.readlines() # Read all lines in the file
+    origlines = op.dcp(alllines) # Keep a copy of the original version of the file
     notfound = True # By default, fail
     for l,line in enumerate(alllines): # Loop over each line
         ind = line.find(strtofind) # Look for string to find
@@ -76,21 +77,22 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         else: print(errormsg); return None
     f.close()
         
-    # Write script file
-    try: 
-        f = open(filename, 'w')
-    except:
-        errormsg = 'Could not open file "%s" for writing' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    if verbose: print('Writing file %s' % filename)
-    try: 
-        f.writelines(alllines) # Just write everything
-    except: 
-        errormsg = 'optimaversion() write failed on %s' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    f.close()
+    # Write script file, but only if something changed
+    if alllines!=origlines:
+        try: 
+            f = open(filename, 'w')
+        except:
+            errormsg = 'Could not open file "%s" for writing' % filename
+            if die: raise op.OptimaException(errormsg)
+            else: print(errormsg); return None
+        if verbose: print('Writing file %s' % filename)
+        try: 
+            f.writelines(alllines) # Just write everything, but only if something's changed
+        except: 
+            errormsg = 'optimaversion() write failed on %s' % filename
+            if die: raise op.OptimaException(errormsg)
+            else: print(errormsg); return None
+        f.close()
     
     return None
 

@@ -293,7 +293,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
-    if which is None: which = objectives['which']
+    if which is None: 
+        if objectives is not None: which = objectives['which']
+        else:                      which = 'outcomes'
     if parsetname is None: parsetname = -1
     if progsetname is None: progsetname = -1
     if parset is None: parset  = project.parsets[parsetname] 
@@ -339,14 +341,17 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     if which=='outcomes':
         # Calculate outcome
         outcome = 0 # Preallocate objective value
+        rawoutcomes = odict()
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            rawoutcomes[key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
 
         # Output results
         if outputresults:
             results.outcome = outcome
+            results.rawoutcomes = rawoutcomes
             results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
             results.budget = constrainedbudget # Convert to budget
             output = results
@@ -375,6 +380,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
             results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
             results.budget = constrainedbudget # Convert to budget
             results.targetsmet = targetsmet
+            results.target = target
+            results.rawoutcomes = final
             output = results
         else:
             summary = 'Baseline: %0.0f %0.0f | Target: %0.0f %0.0f | Final: %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
