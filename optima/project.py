@@ -652,9 +652,9 @@ class Project(object):
         # Calculate the number of iterations
         noptims = 1+(mc!=0)*3+max(mc,0) # Calculate the number of optimizations per BOC point
         nbocpts = len(budgetratios)
-        guessstalliters = 50  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
         guessmaxiters = maxiters if maxiters is not None else 1000
-        estminiters = noptims*nbocpts*guessstalliters
+        guessminiters = min(50, guessmaxiters)  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
+        estminiters = noptims*nbocpts*guessminiters
         estmaxiters = noptims*nbocpts*guessmaxiters
         printv('Generating BOC for %s for %0.0f-%0.0f with weights deaths=%0.1f, infections=%0.1f (est. %i-%i iterations)' % (self.name, objectives['start'], objectives['end'], objectives['deathweight'], objectives['inciweight'], estminiters, estmaxiters), 1, verbose)
         
