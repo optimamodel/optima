@@ -747,11 +747,12 @@ def migrate(project, verbose=2, die=False):
 
     while str(project.version) != str(op.version):
         currentversion = str(project.version)
-        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
         
         if not currentversion in migrations:
             errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
             raise op.OptimaException(errormsg)
+
+        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
 
         op.printv('Migrating "%s" from %6s ->' % (project.name, currentversion), 2, verbose, newline=False)
         if migrator is not None: migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
