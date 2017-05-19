@@ -420,15 +420,24 @@ class Resultset(object):
         if year is None: 
             year = self.projectref().settings.now
         
+        # Figure out which dictionary to use
+        if   what in self.main.keys():   resultobj = self.main[what]
+        elif what in self.other.keys():  resultobj = self.other[what]
+        else:
+            errormsg = 'Key %s not found; must be one of:\n%s' % (what, self.main.keys()+self.other.keys())
+            raise OptimaException(errormsg)
+            
         # Use either total (by default) or a given population
         if pop=='tot':
-            try:    timeseries = self.main[what].tot[0] # Try main set of results first
-            except: timeseries = self.other[what].tot[0] # If that fails, try the other results
+            timeseries = resultobj.tot[0]
         else:
             if isinstance(pop,str): 
-                pop = self.popkeys.index(pop) # Convert string to number
-            try:    timeseries = self.main[what].pops[0][pop,:]
-            except: timeseries = self.other[what].pops[0][pop,:]
+                try:
+                    pop = self.popkeys.index(pop) # Convert string to number
+                except:
+                    errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
+                    raise OptimaException(errormsg)
+            timeseries = resultobj.pops[0][pop,:]
         
         # Get the index and return the result
         if checktype(year, 'number'):
