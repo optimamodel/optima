@@ -43,10 +43,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
   
     Example:
         from asd import asd
-        from numpy import norm
-        x, fval, exitflag, output = asd(norm, [1, 2, 3])
+        from numpy.linalg import norm
+        x, fval, details = asd(norm, [1, 2, 3])
     
-    Version: 2017mar08 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2017may17 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
     from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
@@ -99,6 +99,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Initialization
     if all(stepsizes==0): stepsizes += stepsize # Handle the case where all step sizes are 0
     if any(stepsizes==0): stepsizes[stepsizes==0] = mean(stepsizes[stepsizes!=0]) # Replace step sizes of zeros with the mean of non-zero entries
+    if args is None: args = {} # Reset if no function arguments supplied
     fval = function(x, **args) # Calculate initial value of the objective function
     fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
     xorig = deepcopy(x) # Keep the original x, just in case
