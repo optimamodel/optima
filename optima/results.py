@@ -620,7 +620,7 @@ class Multiresultset(Resultset):
             P = op.demo(0)
             P.defaultscenarios(doplot=False)
             resultsdiff = P.result().diff()
-            resultsdiff.get('numplhiv', key='No budget')
+            resultsdiff.get('numplhiv', key='No budget', year='all')
         
         Use the "base" kwarg (which can be a key or an index) to set the baseline:
             resultsdiff = P.result().diff(base='No budget')
