@@ -553,12 +553,18 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     orig = thisplot.get_position() # get the original position 
     widthfactor = 0.9/ncols**(1/4.)
     heightfactor = 0.9/nrows**(1/4.)
+    pix2inch = thisfig.dpi_scale_trans.inverted()
+    bbox = thisplot.get_window_extent().transformed(pix2inch)
+    print('comsdoifudiu')
+    print(bbox.width, bbox.height)
+    print(pix2inch)
+    print(orig.width, orig.height)
     pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
     thisplot.set_position(pos2) # set a new position
     thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
     thisplot.pchanged()
     thisplot.stale = True
-    return None
+    return (bbox.width, bbox.height)
     
 
 def showplots(plots=None):
@@ -573,7 +579,11 @@ def showplots(plots=None):
         thisplot = plots[p].axes[0]
         bbox = thisplot.get_window_extent().transformed(pix2inch)
         fig = figure(facecolor=(1,1,1), figsize=(bbox.width, bbox.height))
-        addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=1, ncols=1, n=p+1)
+        print('idfudifdu')
+        print(bbox.width, bbox.height)
+        print(pix2inch)
+        width, height = addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=1, ncols=1, n=p+1)
+        fig.set_size_inches(w=width, h=height, forward=True)
     return None
 
 
