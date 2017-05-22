@@ -36,6 +36,7 @@ globalticksize = 10
 globallegendsize = 10
 globalfigsize = (8,4)
 globalposition = [0.1,0.06,0.6,0.8]
+interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for interactive plots
 
 
 
@@ -45,6 +46,14 @@ def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, **kwargs):
     else:            fig = Figure(facecolor=facecolor, figsize=figsize, **kwargs)
     return fig
 
+
+def setposition(ax=None, position=None, interactive=False):
+    if position is None:
+        if interactive: position = interactiveposition
+        else:           position = globalposition
+    ax.set_position(position)
+    return position
+    
 
 
 def getplotselections(results, advanced=False):
@@ -229,7 +238,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, interactive=None, **kwargs):
+            legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, interactive=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -238,7 +247,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
         
         NOTE: do not call this function directly; instead, call via plotresults().
 
-        Version: 2016jan21
+        Version: 2017may22
         '''
         
         # Figure out what kind of result it is
@@ -362,7 +371,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 epiplots[pk] = makefigure(figsize=figsize, interactive=interactive) # If it's anything other than HIV prevalence by population, create a single plot
                 ax = epiplots[pk].add_subplot(111)
-                ax.set_position(position)
+                setposition(ax, position, interactive)
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
@@ -470,7 +479,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, position=globalposition, interactive=False, **kwargs):
+def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, position=None, interactive=False, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -493,7 +502,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     sigfigs = 2 # Number of significant figures
     fig = makefigure(figsize=figsize, interactive=interactive)
     ax = fig.add_subplot(111)
-    ax.set_position(position)
+    setposition(ax, position, interactive)
     colors = gridcolors(ncurves)
     
     # Plot model estimates with uncertainty
@@ -537,7 +546,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
 ##################################################################
     
     
-def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=globalposition,
+def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
                usepie=False, verbose=2, interactive=False, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
@@ -579,7 +588,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         for i in range(nallocs):
             fig = makefigure(figsize=figsize, interactive=interactive)
             ax = fig.add_subplot(111)
-            ax.set_position(position)
+            setposition(ax, position, interactive)
             
             # Make a pie
             ydata = budgets[i][:]
@@ -602,7 +611,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             position = dcp(position)
             position[0] = 0.25 # More room on left side for y-tick labels
             position[2] = 0.5 # Make narrower
-        ax.set_position(position)
+        setposition(ax, position, interactive)
         
         # Need to build up piece by piece since need to loop over budgets and then budgets
         for b,budget in enumerate(budgets.values()):
@@ -648,7 +657,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 ##################################################################
     
     
-def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=globalposition, verbose=2, interactive=False, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None, verbose=2, interactive=False, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -684,7 +693,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         colors = gridcolors(nprogs)
         nbudgetyears = len(budgetyearstoplot[plt])
         ax.append(fig.add_subplot(111))
-        ax[-1].set_position(position)
+        setposition(ax[-1], position, interactive)
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
@@ -744,7 +753,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ## Plot cascade
 ##################################################################
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
-                labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, 
+                labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, 
                 useSIticks=True, plotdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, **kwargs):
     ''' 
     Plot the treatment cascade.
@@ -786,7 +795,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         ## Do the plotting
         fig = makefigure(facecolor=(1,1,1), figsize=figsize, interactive=interactive)
         ax = fig.add_subplot(111)
-        ax.set_position(position)
+        setposition(ax, position, interactive)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
                 thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
