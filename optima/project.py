@@ -454,29 +454,30 @@ class Project(object):
         return None
 
 
-    def pars(self, key=-1):
+    def pars(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars '''
-        return self.parsets[key].pars
+        try:    return self.parsets[key].pars
+        except: return printv('Warning, parameters dictionary not found!', 1, verbose)
     
-    def progs(self, key=-1):
-        ''' Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs '''
-        return self.progsets[key].programs
-    
-    def parset(self, key=-1):
+    def parset(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1] '''
-        return self.parsets[key]
+        try:    return self.parsets[key]
+        except: return printv('Warning, parameter set not found!', 1, verbose)
     
-    def programs(self, key=-1):
+    def programs(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active set of programs '''
-        return self.progsets[key].programs
+        try:    return self.progsets[key].programs
+        except: return printv('Warning, programs not found!', 1, verbose)
 
-    def progset(self, key=-1):
+    def progset(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active program set, i.e. self.progsets[-1]'''
-        return self.progsets[key]
+        try:    return self.progsets[key]
+        except: return printv('Warning, program set not found!', 1, verbose)
     
-    def result(self, key=-1):
+    def result(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active results, i.e. self.results[-1]'''
-        return self.results[key]
+        try:    return self.results[key]
+        except: return printv('Warning, results set not found!', 1, verbose)
 
 
     #######################################################################################################
