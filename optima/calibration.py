@@ -54,7 +54,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     pars = convert(pars, parlist, parvecnew)        
     parset.pars = pars
     parset.improvement.append(fval) # Store improvement history
-    parset.autofitsettings = odict([('fitwhat', fitwhat), ('fitto', fitwhat), ('maxtime', maxtime), ('maxiters', maxiters), ('randseed', randseed)])
+    parset.autofitsettings = odict([('fitwhat', fitwhat), ('fitto', fitto), ('maxtime', maxtime), ('maxiters', maxiters), ('randseed', randseed)])
     
     return parset
 
