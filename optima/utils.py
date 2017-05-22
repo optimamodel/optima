@@ -1478,10 +1478,9 @@ class odict(OrderedDict):
         if isinstance(oldkey, Number): 
             index = oldkey
             keystr = self.keys()[index]
-        elif isinstance(oldkey, basestring): 
+        else: # Forge ahead for strings and anything else!
             index = self.keys().index(oldkey)
             keystr = oldkey
-        else: raise Exception('Key type not recognized: must be int or str')
         self.__setitem__(newkey, self.pop(keystr))
         if index<nkeys-1:
             for i in range(index+1, nkeys):
