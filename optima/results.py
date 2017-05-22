@@ -41,7 +41,7 @@ class Resultset(object):
         # Basic info
         self.uid = uuid()
         self.created = today()
-        self.name = name # May be blank if automatically generated, but can be overwritten
+        self.name = name if name else 'default' # May be blank if automatically generated, but can be overwritten
         self.main = odict() # For storing main results
         self.other = odict() # For storing other results -- not available in the interface
         
@@ -536,7 +536,7 @@ class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
     def __init__(self, resultsetlist=None, name=None):
         # Basic info
-        self.name = name
+        self.name = name if name else 'default'
         self.uid = uuid()
         self.created = today()
         self.nresultsets = len(resultsetlist)

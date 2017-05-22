@@ -626,6 +626,7 @@ class Project(object):
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return multires
     
     
