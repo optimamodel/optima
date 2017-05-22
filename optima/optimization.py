@@ -717,8 +717,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
-                args['randseed'] = allseeds[k]
-                budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+                budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
