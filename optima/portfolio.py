@@ -139,7 +139,7 @@ class Portfolio(object):
         return None
         
     
-    def runGA(self, grandtotal=None, objectives=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True, strict=True):
+    def runGA(self, grandtotal=None, objectives=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True, strict=True, randseed=None):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -167,7 +167,7 @@ class Portfolio(object):
         # If any BOCs failed, recalculate the ones that did     
         boclist, bocsvalid = gatherBOCs() # If die==True, this will crash if a BOC isn't found; otherwise, return False
         if not bocsvalid:
-            self.genBOCs(objectives=objectives, maxiters=maxiters, maxtime=maxtime, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, die=die, recalculate=False)
+            self.genBOCs(objectives=objectives, maxiters=maxiters, maxtime=maxtime, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, die=die, randseed=randseed, recalculate=False)
             boclist, bocsvalid = gatherBOCs() # Seems odd to repeat this here...
         
         # Get the grand total
@@ -274,7 +274,7 @@ class Portfolio(object):
         
         # Reoptimize projects
         if reoptimize: 
-            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
+            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, randseed=randseed)
             self.results = resultpairs
         # Tidy up
         if doprint and self.results: self.makeoutput(doprint=True, verbose=verbose)
