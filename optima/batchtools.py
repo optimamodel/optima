@@ -112,6 +112,9 @@ def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqu
         for project in projects.values():
             project.save(filename=project.filename)
     
+    # Print any warnings, if they exist
+    for project in projects: project.getwarnings() 
+    
     return projects
 
 
@@ -310,10 +313,13 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
             resultpairs[resultpair['key']] = resultpair
         for prc in processes:
             prc.join()
+        
+    # Print any warnings, if they exist
+    for resultpair in resultpairs: resultpair.projectref().getwarnings() 
     
     printv('Reoptimization complete', 2, verbose)
     
-    return resultpairs      
+    return resultpairs
         
 
 def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed):
