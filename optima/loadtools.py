@@ -143,13 +143,6 @@ def removeparameter(project=None, short=None, datashort=None, verbose=False, die
     return None
 
 
-def addwarning(project=None, message=None, **kwargs):
-    ''' Add a warning to the project, which is printed when migrated or loaded '''
-    if not hasattr(project, 'warnings') or type(project.warnings)!=str: # If no warnings attribute, create it
-        project.warnings = ''
-    project.warnings += '\n'*3+str(message) # # Add this warning
-    return None
-
 
 
 
@@ -223,7 +216,7 @@ def redotransitions(project, dorun=False, **kwargs):
         for key,progset in project.progsets.items():
             if oldpar in progset.covout.keys():
                 msg = 'Project includes a program in program set "%s" that affects "%s", but this parameter has been removed' % (key, oldpar)
-                addwarning(project, msg)
+                project.addwarning(msg)
 
     # Add new constants
     project.data['const']['deathsvl']       = [0.23,    0.15,   0.3]
@@ -581,7 +574,7 @@ def redovlmon(project, **kwargs):
     for key,progset in project.progsets.items():
         if 'freqvlmon' in progset.covout.keys():
             msg = 'Project includes a program in programset "%s" that affects "freqvlmon", but this parameter has been removed' % key
-            addwarning(project, msg)
+            project.addwarning(msg)
     
     short = 'numvlmon'
     copyfrom = 'numtx'

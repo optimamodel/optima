@@ -107,6 +107,14 @@ class Project(object):
         info['parsetkeys'] = self.parsets.keys()
         info['progsetkeys'] = self.parsets.keys()
         return info
+    
+    
+    def addwarning(self, message=None, **kwargs):
+        ''' Add a warning to the project, which is printed when migrated or loaded '''
+        if not hasattr(self, 'warnings') or type(self.warnings)!=str: # If no warnings attribute, create it
+            self.warnings = ''
+        self.warnings += '\n'*3+str(message) # # Add this warning
+        return None
 
 
     def getwarnings(self, doprint=True):

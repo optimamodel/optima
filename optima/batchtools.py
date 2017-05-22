@@ -149,7 +149,10 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
     printv('Running autofitting on %s...' % project.name, 2, verbose)
     
     # The meat
-    project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed)
+    try:
+        project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed)
+    except Exception as E:
+        project.addwarning('WARNING, batchautofit() failed: %s' % E.__repr__())
     
     # Standardized close
     print('...done.')
