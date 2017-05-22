@@ -566,6 +566,17 @@ def showplots(plots=None):
     And actually show them. WARNING, there are a lot of issues with this function! First, it has no
     idea how big the figure actually is, this has to be set manually. I guess that's the main thing.
     Note that this is only applicable if non-interactive plots have been created.
+    
+    Example:
+        import optima as op
+        P = op.demo(0)
+        plot = plotcascade(results=P.result(), interactive=False)
+        op.showplots(plot)
+    
+    This function is purely remedial; a much better way of doing this is:
+        op.plotcascade(results=P.result(), interactive=True)
+
+    Version: 2017may22
     '''
     ion()
     reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered

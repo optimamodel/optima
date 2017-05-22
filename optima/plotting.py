@@ -784,9 +784,9 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
     # Handle colors
-    if cascadecolors is None: colors = gridcolors(len(cascadelist), reverse=True)
-    elif cascadecolors=='alpine': colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
-    elif type(cascadecolors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=colors)[1:-1] # Remove first and last element
+    if cascadecolors is None:      colors = gridcolors(len(cascadelist), reverse=True)
+    elif cascadecolors=='alpine':  colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
+    elif type(cascadecolors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=cascadecolors)[1:-1] # Remove first and last element
     else: colors = cascadecolors
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
