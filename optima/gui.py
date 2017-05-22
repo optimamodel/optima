@@ -565,8 +565,8 @@ def showplots(plots=None):
     '''
     And actually show them. WARNING, there are a lot of issues with this function! First, it has no
     idea how big the figure actually is, this has to be set manually. I guess that's the main thing.
+    Note that this is only applicable if non-interactive plots have been created.
     '''
-    
     ion()
     reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
     nplots = len(plots)

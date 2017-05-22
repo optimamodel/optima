@@ -8,7 +8,7 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2017mar17
+Version: 2017may22
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
@@ -41,8 +41,8 @@ globalposition = [0.1,0.06,0.6,0.8]
 
 def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, **kwargs):
     ''' Decide whether to make an interactive figure() or a non-interactive Figure()'''
-    if interactive:  fig = figure(facecolor=facecolor, figsize=figsize, interactive=interactive, **kwargs)
-    else:            fig = Figure(facecolor=facecolor, figsize=figsize, interactive=interactive, **kwargs)
+    if interactive:  fig = figure(facecolor=facecolor, figsize=figsize, **kwargs)
+    else:            fig = Figure(facecolor=facecolor, figsize=figsize, **kwargs)
     return fig
 
 
