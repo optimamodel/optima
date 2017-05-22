@@ -680,7 +680,9 @@ class Project(object):
             key, ratio = budgetdict.items()[0] # Use first budget in the stack
             counts[key] += 1
             budget = ratio*sum(defaultbudget[:])
-            printv('Running budget %i/%i ($%0.0f)' % (sum(counts[:]), len(budgetdict)+sum(counts[:])-1, budget), 2, verbose)
+            thiscount = sum(counts[:])
+            totalcount = len(budgetdict)+sum(counts[:])-1
+            printv('Running budget %i/%i ($%0.0f)' % (thiscount, totalcount, budget), 2, verbose)
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             
@@ -690,7 +692,7 @@ class Project(object):
                 owbudget = tmpallocs[closest]
             else:
                 owbudget = None
-            label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
+            label = self.name+' $%sm (%i/%i)' % (sigfig(budget/1e6, sigfigs=3), thiscount, totalcount)
             
             # Actually run
             results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
