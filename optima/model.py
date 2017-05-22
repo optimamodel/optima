@@ -487,10 +487,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
-                            people[errstate,errpop,t] = 0.0 # Reset
                             errormsg = label + 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t])
-                            if die: raise OptimaException(errormsg)
-                            else:   printv(errormsg, 1, verbose=verbose)
+                            if die: 
+                                raise OptimaException(errormsg)
+                            else:   
+                                people[errstate,errpop,t] = 0.0 # Reset
+                                printv(errormsg, 1, verbose=verbose)
                                 
                 
 
@@ -569,6 +571,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Probability of getting infected is one minus forceinffull times any scaling factors
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
+        infections_to = minimum(infections_to, 1.0-eps-background[:,t].max()) # Make sure it never exceeds the limit
 
         # Add these transition probabilities to the main array
         si = susreg[0] # susreg is a single element, but needs an index since can't index a list with an array

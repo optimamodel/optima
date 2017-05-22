@@ -170,7 +170,8 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
     
     eps = project.settings.eps # 'eps' is also kludgy -- specify absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
     pars = convert(pars, parlist, parvec)
-    results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0, label=project.name+'-autofit')
+    print('TEMPPP')
+    results = runmodel(debug=True, pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0, label=project.name+'-autofit')
     
     ## Loop over all results
     allmismatches = []
