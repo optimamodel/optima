@@ -522,7 +522,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         for thread in range(nchains):
             blockrand = (block+1)*(2**6-1) # Pseudorandom seeds
             threadrand = (thread+1)*(2**10-1) 
-            if randseed is None: thisseed = (blockrand+threadrand)*int((time()-floor(time()))*1e4) # Get a random number based on both the time and the thread
+            randtime = int((time()-floor(time()))*1e4)
+            if randseed is None: thisseed = (blockrand+threadrand)*randtime # Get a random number based on both the time and the thread
             else:                thisseed = randseed + blockrand+threadrand
             args = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue)
             prc = Process(target=optimize, args=args)
@@ -690,15 +691,17 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         if totalbudget: # Budget is nonzero, run
             allbudgetvecs = odict()
             allbudgetvecs['Current'] = dcp(constrainedbudgetvec)
+            if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
+            allseeds = [randseed] # Start with current random seed
             if mc: # If MC, run multiple
                 if extremeoutcomes[bestprogram] < extremeoutcomes['Current']:
                     allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
                 for i in range(abs(mc)): # For the remainder, do randomizations
-                    if randseed is not None:
-                        scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
-                        mcrand = i*(2**6-1)
-                        thisseed = randseed + scalefactorrand + mcrand
-                        seed(int(thisseed))
+                    scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
+                    mcrand = i*(2**6-1)
+                    thisseed = int(randseed + scalefactorrand + mcrand)
+                    seed(thisseed)
+                    allseeds.append(thisseed)
                     if mc<0: 
                         randbudget = random(noptimprogs)
                         randbudget = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
@@ -714,6 +717,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
+                args['randseed'] = allseeds[k]
                 budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
