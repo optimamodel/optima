@@ -81,7 +81,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
-        printv('Now running scenario %s (%i/%i)...' % (scen, scenno+1, nscens), 2, verbose)
+        printv('Running scenario "%s" (%i/%i)...' % (scen, scenno+1, nscens), 2, verbose)
         scenparset = scenparsets[scen]
         project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
 
@@ -95,7 +95,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
         result = runmodel(pars=scenparset.pars, parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, label=project.name+'-scenarios', **kwargs)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
-        printv('... completed scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
+        printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
     
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
