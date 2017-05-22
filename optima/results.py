@@ -113,10 +113,15 @@ class Resultset(object):
         self.main['popsize']        = Result('Population size')
         self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
-        self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
-        self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
-        self.other['otherdeath']   = Result('Non-HIV-related deaths)')
+        self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
+        self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
+        self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
+        self.other['numbirths']     = Result('Total births)')
         
+        # Add all health states
+        for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
+            self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
+            
         if domake: self.make(raw, verbose=verbose)
     
     
@@ -207,15 +212,17 @@ class Resultset(object):
             self.tvec = tvec[indices] # Subsample time vector too
         self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
         nraw = len(raw) # Number of raw results sets
-        allpeople    = dcp(array([raw[i]['people']    for i in range(nraw)]))
-        allinci      = dcp(array([raw[i]['inci']      for i in range(nraw)]))
-        allincibypop = dcp(array([raw[i]['incibypop'] for i in range(nraw)]))
-        alldeaths    = dcp(array([raw[i]['death']     for i in range(nraw)]))
-        alldiag      = dcp(array([raw[i]['diag']      for i in range(nraw)]))
-        allmtct      = dcp(array([raw[i]['mtct']      for i in range(nraw)]))
-        allhivbirths = dcp(array([raw[i]['hivbirths'] for i in range(nraw)]))
-        allpmtct     = dcp(array([raw[i]['pmtct']     for i in range(nraw)]))
-        allcosttreat = dcp(array([raw[i]['costtreat'] for i in range(nraw)]))
+        allpeople    = dcp(array([raw[i]['people']     for i in range(nraw)]))
+        allinci      = dcp(array([raw[i]['inci']       for i in range(nraw)]))
+        allincibypop = dcp(array([raw[i]['incibypop']  for i in range(nraw)]))
+        alldeaths    = dcp(array([raw[i]['death']      for i in range(nraw)]))
+        otherdeaths  = dcp(array([raw[i]['otherdeath'] for i in range(nraw)])) 
+        alldiag      = dcp(array([raw[i]['diag']       for i in range(nraw)]))
+        allmtct      = dcp(array([raw[i]['mtct']       for i in range(nraw)]))
+        allhivbirths = dcp(array([raw[i]['hivbirths']  for i in range(nraw)]))
+        allbirths    = dcp(array([raw[i]['births']     for i in range(nraw)]))
+        allpmtct     = dcp(array([raw[i]['pmtct']      for i in range(nraw)]))
+        allcosttreat = dcp(array([raw[i]['costtreat']  for i in range(nraw)]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -346,9 +353,17 @@ class Resultset(object):
         if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
-        otherdeaths    = dcp(array([raw[i]['otherdeath']     for i in range(nraw)]))        
-        self.other['otherdeath'].pops = quantile(otherdeaths[:,:,indices], quantiles=quantiles).round()
-        self.other['otherdeath'].tot = quantile(otherdeaths[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
+        self.other['numotherdeath'].pops = quantile(otherdeaths[:,:,indices], quantiles=quantiles).round()
+        self.other['numotherdeath'].tot = quantile(otherdeaths[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
+        
+        self.other['numbirths'].pops = quantile(allbirths[:,:,indices], quantiles=quantiles).round()
+        self.other['numbirths'].tot = quantile(allbirths[:,:,indices].sum(axis=1), quantiles=quantiles).round()
+        
+        # Add in each health state
+        for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
+            healthinds = getattr(self.settings, healthkey)
+            self.other['only'+healthkey].pops = quantile(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+            self.other['only'+healthkey].tot =  quantile(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
 
         
         return None # make()
