@@ -16,7 +16,7 @@ from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linsp
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
-from pylab import gcf, get_fignums, close, ion, ioff, isinteractive
+from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure
 import textwrap
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -38,6 +38,12 @@ globalfigsize = (8,4)
 globalposition = [0.1,0.06,0.6,0.8]
 
 
+
+def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, **kwargs):
+    ''' Decide whether to make an interactive figure() or a non-interactive Figure()'''
+    if interactive:  fig = figure(facecolor=facecolor, figsize=figsize, interactive=interactive, **kwargs)
+    else:            fig = Figure(facecolor=facecolor, figsize=figsize, interactive=interactive, **kwargs)
+    return fig
 
 
 
@@ -223,7 +229,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, **kwargs):
+            legendsize=globallegendsize, position=globalposition, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, interactive=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -354,7 +360,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
             
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
-                epiplots[pk] = Figure(facecolor=(1,1,1), figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
+                epiplots[pk] = makefigure(figsize=figsize, interactive=interactive) # If it's anything other than HIV prevalence by population, create a single plot
                 ax = epiplots[pk].add_subplot(111)
                 ax.set_position(position)
     
@@ -464,7 +470,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, position=globalposition, **kwargs):
+def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, position=globalposition, interactive=False, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -485,7 +491,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     # Set up figure and do plot
     sigfigs = 2 # Number of significant figures
-    fig = Figure(facecolor=(1,1,1), figsize=figsize)
+    fig = makefigure(figsize=figsize, interactive=interactive)
     ax = fig.add_subplot(111)
     ax.set_position(position)
     colors = gridcolors(ncurves)
@@ -532,7 +538,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     
 def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=globalposition,
-               usepie=False, verbose=2, **kwargs):
+               usepie=False, verbose=2, interactive=False, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -571,7 +577,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     # Make pie plots
     if usepie:
         for i in range(nallocs):
-            fig = Figure(facecolor=(1,1,1), figsize=figsize)
+            fig = makefigure(figsize=figsize, interactive=interactive)
             ax = fig.add_subplot(111)
             ax.set_position(position)
             
@@ -590,7 +596,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
       
     # Make bar plots
     else:
-        fig = Figure(facecolor=(1,1,1), figsize=figsize)
+        fig = makefigure(figsize=figsize, interactive=interactive)
         ax = fig.add_subplot(111)
         if position == globalposition: # If defaults, reset
             position = dcp(position)
@@ -642,7 +648,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 ##################################################################
     
     
-def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=globalposition, verbose=2, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=globalposition, verbose=2, interactive=False, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -671,7 +677,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     
     for plt in range(nallocs):
         
-        fig = Figure(facecolor=(1,1,1), figsize=figsize)
+        fig = makefigure(figsize=figsize, interactive=interactive)
         
         nprogs = nprogslist[plt]
         proglabels = progkeylists[plt]
@@ -739,7 +745,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=globalposition, 
-                useSIticks=True, plotdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, **kwargs):
+                useSIticks=True, plotdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -778,7 +784,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         bottom = 0*results.tvec # Easy way of setting to 0...
         
         ## Do the plotting
-        fig = Figure(facecolor=(1,1,1), figsize=figsize)
+        fig = makefigure(facecolor=(1,1,1), figsize=figsize, interactive=interactive)
         ax = fig.add_subplot(111)
         ax.set_position(position)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
@@ -831,7 +837,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
 
 
 
-def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False):
+def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False, interactive=False):
     ''' Plot allocations in bar charts -- not part of weboptima '''
     
     if budgets is None:
@@ -853,7 +859,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         colors = gridcolors(nprogs)
             
     
-    fig = Figure(facecolor=(1,1,1), figsize=(10,10))
+    fig = makefigure(figsize=(10,10), interactive=interactive)
     fig.subplots_adjust(left=0.10) # Less space on left
     fig.subplots_adjust(right=0.98) # Less space on right
     fig.subplots_adjust(top=0.95) # Less space on bottom
@@ -894,7 +900,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
 ## Plot things by CD4
 ##################################################################
 def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, ind=0, **kwargs):
+                ticksize=globalticksize, legendsize=globallegendsize, ind=0, interactive=False, **kwargs):
     ''' 
     Plot deaths or people by CD4
     NOTE: do not call this function directly; instead, call via plotresults().
@@ -915,7 +921,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = Figure(figsize=figsize)
+    fig = makefigure(figsize=figsize, interactive=interactive)
     ax = []
     
     titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
