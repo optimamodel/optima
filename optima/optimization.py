@@ -749,6 +749,9 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     except:
         multires.outcome = None
         multires.budget = None
+    
+    # Store optimization settings
+    multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
 
     return multires
 
@@ -913,5 +916,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     optim.resultsref = multires.name # Store the reference for this result
+    
+    # Store optimization settings
+    multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('randseed',randseed)])
 
     return multires

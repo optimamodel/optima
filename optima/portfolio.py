@@ -120,22 +120,21 @@ class Portfolio(object):
     
     def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None):
         '''
         Just like genBOC, but run on each of the projects in the portfolio. See batchBOC() for explanation
         of kwargs.
         
-        Version: 2017mar17
+        Version: 2017may22
         '''
         
         # If objectives not supplied, use the ones from the portfolio
         if objectives is None: objectives = self.objectives
         
-        
         # All we need to do is run batchBOC on the portfolio's odict of projects
         self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
              constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict)
+             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict, randseed=randseed)
              
         return None
         

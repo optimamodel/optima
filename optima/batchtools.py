@@ -119,7 +119,7 @@ def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqu
 ### The meat of the matter -- batch functions and their tasks
 ####################################################################################################
 
-def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5, batch=True):
+def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5, batch=True, randseed=None):
     ''' Perform batch autofitting '''
     
     # Praeludium
@@ -127,7 +127,7 @@ def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='pre
     outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
 
     for i,project in enumerate(projects.values()):
-        args = (project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch)
+        args = (project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch, randseed)
         if batch:
             prc = Process(target=autofit_task, args=args)
             prc.start()
@@ -141,7 +141,7 @@ def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='pre
     return projects
 
 
-def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch):
+def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch, randseed):
     """Kick off the autofit task for a given project file."""
     
     # Standard opening
@@ -149,7 +149,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
     printv('Running autofitting on %s...' % project.name, 2, verbose)
     
     # The meat
-    project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
+    project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed)
     
     # Standardized close
     print('...done.')
@@ -162,7 +162,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
 
 def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None):
     """
     Perform batch BOC calculation.
 
@@ -210,6 +210,7 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         die - whether to crash or give a warning if something goes wrong
         recalculate - whether to calculate BOCs for projects that already have BOCs
         strict - whether to recalculate BOCs for projects that have non-matching BOCs
+        randseed - the random seed to use for the calculations
         
     """
     
@@ -223,7 +224,7 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
         args = (project, i, outputqueue, budgetratios, name, parsetname, progsetname, prjobjectives, 
                 prjconstraints, maxiters, maxtime, verbose, stoppingfunc, maxload, interval, 
-                prerun, batch, mc, die, recalculate, strict)
+                prerun, batch, mc, die, recalculate, strict, randseed)
         if batch:
             prc = Process(target=boc_task, args=args)
             prc.start()
@@ -238,7 +239,7 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
 
 
 def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints, maxiters, 
-             maxtime, verbose, stoppingfunc, maxload, interval, prerun, batch, mc, die, recalculate, strict):
+             maxtime, verbose, stoppingfunc, maxload, interval, prerun, batch, mc, die, recalculate, strict, randseed):
     
     # Custom opening
     if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
@@ -260,10 +261,11 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
     if not recalculate: # If we're not recalculating BOCs, check to see if this project already has one
         boc = project.getBOC(objectives=objectives, strict=strict, verbose=verbose)
     if recalculate or boc is None: # Only run if requested or if a BOC can't be found -- otherwise, skip and return immediately
+        if randseed is not None: randseed += (ind+1)*(2**9-1) # Just perturb it so we don't get repeats
         project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
                        progsetname=progsetname, objectives=objectives, 
                        constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-                       verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die)
+                       verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die, randseed=randseed)
     
     # Standardized close
     print('...done.')
@@ -275,7 +277,7 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
 
 
 
-def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2):
+def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2, randseed=None):
     ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
     
     printv('Reoptimizing portfolio projects...', 2, verbose)
@@ -286,7 +288,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
     else:
         outputqueue = None
     for pind,project in enumerate(projects.values()):
-        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose)
+        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed)
         if batch:
             prc = Process(target=reoptimizeprojects_task, args=args)
             prc.start()
@@ -306,7 +308,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
     return resultpairs      
         
 
-def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose):
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed):
     """Batch function for final re-optimization step of geospatial analysis."""
     if batch: loadbalancer(index=pind, maxload=maxload, interval=interval, label=project.name)
     
@@ -334,7 +336,8 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     optimargs = {'label':project.name,
                  'maxtime': maxtime,
                  'maxiters': maxiters,
-                 'mc':mc}
+                 'mc':mc,
+                 'randseed':randseed}
 
     # Run the analyses
     resultpair = odict()

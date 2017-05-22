@@ -532,10 +532,10 @@ class Project(object):
         return results
 
 
-    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, **kwargs):
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, randseed=None, **kwargs):
         ''' Function to perform automatic fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot, **kwargs)
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot, randseed=randseed, **kwargs)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
         keyname = self.addresult(result=results)
@@ -627,7 +627,7 @@ class Project(object):
     #######################################################################################################
         
     def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
-               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, **kwargs):
+               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         boc = BOC(name='BOC '+self.name)
         if objectives is None:
@@ -685,10 +685,10 @@ class Project(object):
             label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
             
             # Actually run
-            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, **kwargs)
+            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets['Optimal'])
-            tmpoutcomes[key] = results.improvement[-1][-1]
+            tmpoutcomes[key] = results.improvement[-1][-1]'mc','mc'
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
             tmpy[key] = tmpoutcomes[-1]
             boc.budgets[key] = tmpallocs[-1]
@@ -715,6 +715,7 @@ class Project(object):
             boc.parsetname = parsetname
             boc.progsetname = progsetname
             boc.defaultbudget = dcp(defaultbudget)
+            boc.bocsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
             self.addresult(result=boc)
             self.modified = today()
         else:
