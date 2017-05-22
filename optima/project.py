@@ -688,7 +688,7 @@ class Project(object):
             results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets['Optimal'])
-            tmpoutcomes[key] = results.improvement[-1][-1]'mc','mc'
+            tmpoutcomes[key] = results.improvement[-1][-1]
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
             tmpy[key] = tmpoutcomes[-1]
             boc.budgets[key] = tmpallocs[-1]
