@@ -152,7 +152,8 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
     try:
         project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed)
     except Exception as E:
-        project.addwarning('WARNING, batchautofit() failed: %s' % E.__repr__())
+        project.addwarning('Exception: batchautofit() failed for %s: %s' % (project.name, E.__repr__()))
+        project.getwarnings()
     
     # Standardized close
     print('...done.')
@@ -265,10 +266,14 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
         boc = project.getBOC(objectives=objectives, strict=strict, verbose=verbose)
     if recalculate or boc is None: # Only run if requested or if a BOC can't be found -- otherwise, skip and return immediately
         if randseed is not None: randseed += (ind+1)*(2**9-1) # Just perturb it so we don't get repeats
-        project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
-                       progsetname=progsetname, objectives=objectives, 
-                       constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-                       verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die, randseed=randseed)
+        try:
+            project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
+                           progsetname=progsetname, objectives=objectives, 
+                           constraints=constraints, maxiters=maxiters, maxtime=maxtime,
+                           verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die, randseed=randseed)
+        except Exception as E:
+            project.addwarning('Exception: batchBOC() failed for %s: %s' % (project.name, E.__repr__()))
+            project.getwarnings()
     
     # Standardized close
     print('...done.')
@@ -353,16 +358,20 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     resultpair['init'] = outcomecalc(**outcalcargs)
     
     # Optimal spending -- reoptimize
-    if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
-    else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)
-    sharedargs['origbudget'] = closestbudget
-    sharedargs['objectives']['budget'] = totalbudget
-    optimargs.update(sharedargs)
-    if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
-    else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
-    resultpair['init'].name = project.name+' GA initial'
-    resultpair['opt'].name = project.name+' GA optimal'
-    resultpair['key'] = project.name # Store the project name to avoid mix-ups
+    try:
+        if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
+        else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)
+        sharedargs['origbudget'] = closestbudget
+        sharedargs['objectives']['budget'] = totalbudget
+        optimargs.update(sharedargs)
+        if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
+        else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
+        resultpair['init'].name = project.name+' GA initial'
+        resultpair['opt'].name = project.name+' GA optimal'
+        resultpair['key'] = project.name # Store the project name to avoid mix-ups
+    except Exception as E:
+        project.addwarning('Exception: reoptimizeprojects() failed for %s: %s' % (project.name, E.__repr__()))
+        project.getwarnings()
     
     if batch: 
         outputqueue.put(resultpair)
