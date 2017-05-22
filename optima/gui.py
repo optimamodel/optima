@@ -8,7 +8,7 @@ Version: 2017may13
 '''
 
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots, addplot
+from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
 from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -29,10 +29,10 @@ def importpyqt():
     
 pyqt = importpyqt()
 
+
 ##############################################################################
 ### USER-VISIBLE FUNCTIONS
 ##############################################################################
-
 
 def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     ''' 
@@ -544,6 +544,37 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     plotparsnextbut.on_clicked(updaten)
     plotparslider.on_changed(update)
     return allplotdata
+
+
+def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
+    ''' Add a plot to an existing figure, and return original size '''
+    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+    orig = thisplot.get_position() # get the original position 
+    widthfactor = 0.9/ncols**(1/4.)
+    heightfactor = 0.9/nrows**(1/4.)
+    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
+    thisplot.set_position(pos2) # set a new position
+    thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
+    thisplot.pchanged()
+    thisplot.stale = True
+    return None
+    
+
+def showplots(plots=None):
+    ''' And actually show them '''
+    ion()
+    reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
+    nplots = len(plots)
+    for p in range(nplots): 
+        tmpfig = figure()
+        pix2inch = tmpfig.dpi_scale_trans.inverted()
+        close(tmpfig)
+        thisplot = plots[p].axes[0]
+        bbox = thisplot.get_window_extent().transformed(pix2inch)
+        fig = figure(facecolor=(1,1,1), figsize=(bbox.width, bbox.height))
+        addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=1, ncols=1, n=p+1)
+    return None
 
 
 def loadplot(filename=None):

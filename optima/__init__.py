@@ -152,7 +152,7 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 import optimization as _optimization; del optimization
 
 # Plotting functions
-from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, saveplots, reanimateplots, sanitizeresults, addplot, showplots
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, saveplots, reanimateplots, sanitizeresults
 import plotting as _plotting; del plotting
 
 #####################################################################################################################
@@ -187,7 +187,7 @@ import defaults as _defaults; del defaults
 
 # Load high level GUI module
 try: 
-    from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, loadplot, geogui
+    from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, addplot, showplots, loadplot, geogui
     import gui as _gui; del gui
 except Exception as E: _failed.append('gui: %s' % E.__repr__())
 
