@@ -604,6 +604,7 @@ class Project(object):
         '''
         
         # Check inputs
+        if name is None: name = 'default'
         if optim is None:
             if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
@@ -626,7 +627,6 @@ class Project(object):
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return multires
     
     
