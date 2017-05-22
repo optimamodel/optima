@@ -113,7 +113,7 @@ def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqu
             project.save(filename=project.filename)
     
     # Print any warnings, if they exist
-    for project in projects: project.getwarnings() 
+    for project in projects.values(): project.getwarnings() 
     
     return projects
 
@@ -315,7 +315,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
             prc.join()
         
     # Print any warnings, if they exist
-    for resultpair in resultpairs: resultpair.projectref().getwarnings() 
+    for resultpair in resultpairs.values(): resultpair.projectref().getwarnings() 
     
     printv('Reoptimization complete', 2, verbose)
     
