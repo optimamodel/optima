@@ -16,7 +16,7 @@ from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linsp
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
-from pylab import gcf, get_fignums, close, ion, ioff, isinteractive
+from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure
 import textwrap
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -1137,6 +1137,20 @@ def saveplots(results=None, toplot=None, filetype=None, filename=None, folder=No
     return filenames
 
 
+def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
+    ''' Add a plot to an existing figure '''
+    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+    orig = thisplot.get_position() # get the original position 
+    widthfactor = 0.9/ncols**(1/4.)
+    heightfactor = 0.9/nrows**(1/4.)
+    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
+    thisplot.set_position(pos2) # set a new position
+    thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
+    thisplot.pchanged()
+    thisplot.stale = True
+    return None
+
 
 def reanimateplots(plots=None):
     ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
@@ -1144,6 +1158,19 @@ def reanimateplots(plots=None):
     else: fignum = 1
     plots = promotetoodict(plots) # Convert to an odict
     for plt in plots.values(): nfmgf(fignum, plt) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
+    return None
+
+
+def showplots(plots=None):
+    ''' And actually show them '''
+    ion()
+    reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
+    nplots = len(plots)
+    for p in range(nplots): 
+        fig = figure()
+        naxes = len(plots[p].axes)
+        if naxes==1: # Usual situation: just plot the normal axis
+            addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=1, ncols=1, n=p+1)
     return None
 
 

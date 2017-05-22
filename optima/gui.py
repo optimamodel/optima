@@ -8,7 +8,7 @@ Version: 2017may13
 '''
 
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
+from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots, addplot
 from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -579,21 +579,6 @@ def makenewfigure(**figargs):
 
     return fig
     
-
-def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
-    ''' Add a plot to an existing figure '''
-    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
-    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
-    orig = thisplot.get_position() # get the original position 
-    widthfactor = 0.9/ncols**(1/4.)
-    heightfactor = 0.9/nrows**(1/4.)
-    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
-    thisplot.set_position(pos2) # set a new position
-    thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
-    thisplot.pchanged()
-    thisplot.stale = True
-    return None
-
 
 def closegui(event=None):
     ''' Close all GUI windows '''
