@@ -805,8 +805,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             ax.scatter(results.datayears, thisdata, c=(0,0,0), s=dotsize, lw=0)
         
         ## Configure plot -- WARNING, copied from plotepi()
-        ax.get_xaxis().tick_bottom()
-        ax.get_yaxis().tick_left()
+        boxoff(ax)
         ax.title.set_fontsize(titlesize)
         ax.xaxis.label.set_fontsize(labelsize)
         ax.yaxis.label.set_fontsize(labelsize)
