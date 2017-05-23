@@ -187,7 +187,7 @@ if 'standardscen' in tests:
         ]
     
     # Store these in the project
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
 
     # Run the scenarios
     P.runscenarios() 
