@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017may22
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -441,10 +441,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 ################################################################################################################
                 
                 # General configuration
-                ax.spines["top"].set_visible(False)
-                ax.spines["right"].set_visible(False)
-                ax.get_xaxis().tick_bottom()
-                ax.get_yaxis().tick_left()
+                boxoff(ax)
                 ax.title.set_fontsize(titlesize)
                 ax.xaxis.label.set_fontsize(labelsize)
                 ax.yaxis.label.set_fontsize(labelsize)
@@ -516,10 +513,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
         maxiters = maximum(maxiters, len(improvement[i]))
     
     # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.get_xaxis().tick_bottom()
-    ax.get_yaxis().tick_left()
+    boxoff(ax)
     ax.title.set_fontsize(titlesize)
     ax.xaxis.label.set_fontsize(labelsize)
     for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
@@ -953,10 +947,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
             ax[-1].plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
         
         ## Configure plot -- WARNING, copied from plotepi()
-        ax[-1].spines["top"].set_visible(False)
-        ax[-1].spines["right"].set_visible(False)
-        ax[-1].get_xaxis().tick_bottom()
-        ax[-1].get_yaxis().tick_left()
+        boxoff(ax[-1])
         ax[-1].title.set_fontsize(titlesize)
         ax[-1].xaxis.label.set_fontsize(labelsize)
         for item in ax[-1].get_xticklabels() + ax[-1].get_yticklabels(): item.set_fontsize(ticksize)

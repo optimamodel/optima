@@ -55,7 +55,7 @@ from uuid import uuid4 as uuid
 from copy import deepcopy as dcp
 
 # Utilities
-from .utils import blank, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr, odict, percentcomplete, perturb, printarr, printdata as pd, printv, promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj
+from .utils import blank, boxoff, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr, odict, percentcomplete, perturb, printarr, printdata as pd, printv, promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj
 import utils as _utils; del utils
 
 # Optimization algorithm

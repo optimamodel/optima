@@ -1059,6 +1059,26 @@ def compareversions(version1=None, version2=None):
 
 
 
+def boxoff(ax=None, removeticks=True, flipticks=True):
+    '''
+    I don't know why there isn't already a Matplotlib command for this.
+    
+    Removes the top and right borders of a plot. Also optionally removs
+    the tick marks, and flips the remaining ones outside.
+
+    Version: 2017may22    
+    '''
+    from pylab import gca
+    if ax is None: ax = gca()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    if removeticks:
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
+    if flipticks:
+        ax.tick_params(direction='out', pad=5)
+    return ax
+
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
 ##############################################################################
