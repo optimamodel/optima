@@ -58,9 +58,18 @@ def setposition(ax=None, position=None, interactive=False):
 
 def setylim(data=None, ax=None):
     '''
-    A small script to determine how the y limits should be set. If
-    ax is None, then just looks at datamin and data and recalculates
-    datamin. If ax is not None, then resets the y limits.    
+    A small script to determine how the y limits should be set. Looks
+    at all data (a list of arrays) and computes the lower limit to
+    use, e.g.
+    
+        setylim([array([-3,4]), array([6,4,6])], ax)
+    
+    will keep Matplotlib's lower limit, since at least one data value
+    is below 0.
+    
+    Note, if you just want to set the lower limit, you can do that 
+    with this function via:
+        setylim(0, ax)
     '''
     # Get current limits
     currlower, currupper = ax.get_ylim()
@@ -68,6 +77,7 @@ def setylim(data=None, ax=None):
     # Calculate the lower limit based on all the data
     lowerlim = 0
     upperlim = 0
+    data = promotetolist(data) # Make sure it'siterable
     for ydata in data:
         lowerlim = min(lowerlim, promotetoarray(ydata).min())
         upperlim = max(upperlim, promotetoarray(ydata).max())
@@ -568,13 +578,11 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
     
     # Configure plot
-    currentylims = ax.get_ylim()
     ax.set_xlabel('Iteration')
-    
     abschange = sigfig(mean(absimprove), sigfigs)
     relchange = sigfig(mean(relimprove), sigfigs)
     ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
-    ax.set_ylim((min(0,currentylims[0]),currentylims[1]))
+    setylim(0, ax=ax)
     ax.set_xlim((0, maxiters))
     
     return fig
@@ -875,7 +883,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         else:            ax.set_ylabel('Number of PLHIV')
                 
         if aspercentage: ax.set_ylim((0,100))
-        else:            ax.set_ylim((0,ax.get_ylim()[1]))
+        else:            setylim(0, ax)
         ax.set_xlim((results.tvec[startind], results.tvec[endind]))
         
         if useSIticks: SIticks(fig)
@@ -943,7 +951,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
         elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
         ax[-1].set_title(labels[plt])
-        ymax = max(ymin, ax[-1].get_ylim()[0])
+        ymin = min(ymin, ax[-1].get_ylim()[0])
         ymax = max(ymax, ax[-1].get_ylim()[1])
     for a in ax:
         a.set_ylim([ymin,ymax])
@@ -988,6 +996,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0.*results.tvec # Easy way of setting to 0...
         thisdata = 0.*results.tvec # Initialise
+        allydata = []
         
         ## Do the plotting
         ax.append(fig.add_subplot(nsims,1,plt+1))
@@ -997,6 +1006,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
             ax[-1].fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
             ax[-1].plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
+            allydata.append(thisdata)
         
         ## Configure plot -- WARNING, copied from plotepi()
         boxoff(ax[-1])
@@ -1009,7 +1019,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
                           'frameon':False}
         if ismultisim: ax[-1].set_title(titlemap[whattoplot]+'- %s' % titles[plt])
         else: ax[-1].set_title(titlemap[whattoplot])
-        ax[-1].set_ylim((min(0,ax[-1].get_ylim()[0]), ax[-1].get_ylim()[1]))
+        setylim(allydata, ax[-1])
         ax[-1].set_xlim((results.tvec[0], results.tvec[-1]))
         ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
         
@@ -1097,8 +1107,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         program.costcovdata['coverage'],
         color='#666666')
     
+    setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
     ax.set_xlim([0, xupperlim])
-    ax.set_ylim(bottom=0)
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.set_xlabel(ydata['xlabel'], fontsize=11)
     ax.set_ylabel(ydata['ylabel'], fontsize=11)
