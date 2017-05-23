@@ -472,9 +472,13 @@ def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None
     Create a geospatial spreadsheet template based on a project file.
     
     Arguments:
-        names - Optional list of names of regions; overrides copies
-        copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation)
-        refyear - Any year that exists in the high-level project calibration for which low-level project data exists
+        project    -- base project to use
+        filename   -- output filename
+        folder     -- folder to use if not specified in filename
+        parsetname -- parset to take projections from
+        copies     -- optional argument specifying the number of regions
+        refyear    -- the reference year for the projections for population size and prevalence estimates
+        names      -- Optional list of names of regions; if supplied, len(names) overrides copies
     '''
     
     # Load a project file and set defaults
