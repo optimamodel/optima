@@ -333,10 +333,10 @@ class Project(object):
     def rmoptim(self,    name=None): self.remove(what='optim',    name=name)
 
 
-    def copyparset(self,  new=None, orig=None, overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def copyprogset(self, new=None, orig=None, overwrite=True): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def copyscen(self,    new=None, orig=None, overwrite=True): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def copyoptim(self,   new=None, orig=None, overwrite=True): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def copyparset(self,  orig=None, new=None, overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def copyprogset(self, orig=None, new=None, overwrite=True): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def copyscen(self,    orig=None, new=None, overwrite=True): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def copyoptim(self,   orig=None, new=None, overwrite=True): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
     def renameparset(self,  orig=None, new=None, overwrite=True): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
     def renameprogset(self, orig=None, new=None, overwrite=True): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)

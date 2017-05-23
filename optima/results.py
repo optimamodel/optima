@@ -155,22 +155,29 @@ class Resultset(object):
     def _combine(self, R2, operation='add'):
         ''' Method to handle __add__ and __sub__ since they're almost identical '''
         
+        if operation not in ['add', 'sub']:
+            errormsg = 'Operation must be either "add" or "sub", not "%s"' % operation
+            raise OptimaException(errormsg)
+        
         R = self._checkresultset(R2)
-        popsize1 = R.main['popsize']
-        popsize2 = R.main['popsize']
+        popsize1 = dcp(R.main['popsize'])
+        popsize2 = dcp(R2.main['popsize'])
+        if   operation=='add': R.name += ' + ' + R2.name
+        elif operation=='sub': R.name += ' - ' + R2.name
+            
         
         # Collect all results objects, making use of the fact that they're mutable
-        resultsobjs = [] # One entry of these is e.g. R.main['prev']
-        resultsobjs1 = []
-        resultsobjs2 = []
+        resultsobjs = odict() # One entry of these is e.g. R.main['prev']
+        resultsobjs1 = odict()
+        resultsobjs2 = odict()
         for typekey in R.main.keys():
-            resultsobjs.append(R.main[typekey])
-            resultsobjs1.append(dcp(R.main[typekey]))
-            resultsobjs2.append(dcp(R2.main[typekey]))
+            resultsobjs[typekey]  = R.main[typekey]
+            resultsobjs1[typekey] = dcp(R.main[typekey])
+            resultsobjs2[typekey] = dcp(R2.main[typekey])
         for typekey in R.other.keys():
-            resultsobjs.append(R.other[typekey])
-            resultsobjs1.append(dcp(R.other[typekey]))
-            resultsobjs2.append(dcp(R2.other[typekey]))
+            resultsobjs[typekey]  = R.other[typekey]
+            resultsobjs1[typekey] = dcp(R.other[typekey])
+            resultsobjs2[typekey] = dcp(R2.other[typekey])
         typekeys = R.main.keys()+R.other.keys()
         
         
@@ -178,23 +185,18 @@ class Resultset(object):
         for typekey in typekeys:
             res1 = resultsobjs1[typekey]
             res2 = resultsobjs2[typekey]
-            
-            # It's a number, can just sum the arrays
-            if res1.ispercentage:
-                for attr in ['pops', 'tot']:
-                    if   operation=='add': this = getattr(res1, attr) + getattr(res2, attr)
-                    elif operation=='sub': this = getattr(res1, attr) - getattr(res2, attr)
-                    setattr(resultsobjs[typekey], attr, this)
-            
-            # It's a percentage, average by population size
-            else: 
+            if res1.ispercentage: # It's a percentage, average by population size
                 resultsobjs[typekey].tot  = 0*res1.tot  # Reset
                 resultsobjs[typekey].pops = 0*res1.pops # Reset
                 for t in range(shape(res1.tot)[-1]):
                     resultsobjs[typekey].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] + res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
                     for p in range(len(R.popkeys)):
                         resultsobjs[typekey].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] + res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])
-
+            else: # It's a number, can just sum the arrays
+                for attr in ['pops', 'tot']:
+                    if   operation=='add': this = getattr(res1, attr) + getattr(res2, attr)
+                    elif operation=='sub': this = getattr(res1, attr) - getattr(res2, attr)
+                    setattr(resultsobjs[typekey], attr, this)
         return R
     
     
@@ -611,7 +613,7 @@ class Multiresultset(Resultset):
         return output
     
     
-    def diff(self, base=0):
+    def diff(self, base=None):
         '''
         Calculate the difference between the first (usually default) set of results in a multiresultset and others.
         
@@ -627,8 +629,11 @@ class Multiresultset(Resultset):
             resultsdiff.get('numplhiv', key='Current conditions')
         '''
         
+        if base is None: base = 0
+        
         resultsdiff = dcp(self)
         resultsdiff.projectref = Link(self.projectref()) # Restore link
+        resultsdiff.name += ' difference' # Update the name
         
         # Collect all results objects
         resultsobjs = []

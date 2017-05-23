@@ -456,7 +456,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                     plottitle  = results.popkeys[i] # Add extra information to plot if by population
                     ax.set_ylabel(plotylabel)
                 ax.set_title(plottitle)
-                ax.set_ylim((0,currentylims[1]))
+                ax.set_ylim((min(0,currentylims[0]),currentylims[1]))
                 ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:
                     if isstacked: 
@@ -525,7 +525,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     abschange = sigfig(mean(absimprove), sigfigs)
     relchange = sigfig(mean(relimprove), sigfigs)
     ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
-    ax.set_ylim((0,currentylims[1]))
+    ax.set_ylim((min(0,currentylims[0]),currentylims[1]))
     ax.set_xlim((0, maxiters))
     
     return fig
@@ -675,6 +675,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         nprogslist.append(len(progkeylist))
     
     ax = []
+    ymin = 0
     ymax = 0
     coverageplots = odict()
     
@@ -718,7 +719,8 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         if nallocs>1: thistitle = 'Coverage - %s' % alloclabels[plt]
         else:         thistitle = 'Program coverage'
         ax[-1].set_title(thistitle)
-        ymax = maximum(ymax, ax[-1].get_ylim()[1])
+        ymin = min(ymin, ax[-1].get_ylim()[0])
+        ymax = max(ymax, ax[-1].get_ylim()[1])
         
         # Set up legend
         labels = dcp(proglabels)
@@ -729,7 +731,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         SIticks(fig)
         coverageplots[thistitle] = fig
     
-    for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
+    for thisax in ax: thisax.set_ylim(ymin,ymax) # So they all have the same scale
     
     return coverageplots
 
@@ -871,6 +873,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
     
     ax = []
     xbardata = arange(nprogs)+0.5
+    ymin = 0
     ymax = 0
     nplt = len(budgets)
     for plt in range(nplt):
@@ -891,9 +894,10 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
         elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
         ax[-1].set_title(labels[plt])
-        ymax = maximum(ymax, ax[-1].get_ylim()[1])
+        ymax = max(ymin, ax[-1].get_ylim()[0])
+        ymax = max(ymax, ax[-1].get_ylim()[1])
     for a in ax:
-        a.set_ylim([0,ymax])
+        a.set_ylim([ymin,ymax])
     
     return fig
     
@@ -956,7 +960,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
                           'frameon':False}
         if ismultisim: ax[-1].set_title(titlemap[whattoplot]+'- %s' % titles[plt])
         else: ax[-1].set_title(titlemap[whattoplot])
-        ax[-1].set_ylim((0,ax[-1].get_ylim()[1]))
+        ax[-1].set_ylim((min(0,ax[-1].get_ylim()[0]), ax[-1].get_ylim()[1]))
         ax[-1].set_xlim((results.tvec[0], results.tvec[-1]))
         ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
         
