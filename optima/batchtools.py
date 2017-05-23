@@ -293,7 +293,7 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
 
 
 def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2, randseed=None):
-    ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
+    ''' Runs final optimisations for initbudgets and optbudgets so as to summarize GA optimization '''
     
     printv('Reoptimizing portfolio projects...', 2, verbose)
     starttime = tic()
@@ -320,7 +320,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
             prc.join()
         
     # Print any warnings, if they exist
-    for resultpair in resultpairs.values(): resultpair.projectref().getwarnings() 
+    for project in projects.values(): project.getwarnings() 
     
     printv('Reoptimization complete', 2, verbose)
     toc(starttime, label='reoptimizeprojects')
