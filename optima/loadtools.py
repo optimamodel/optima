@@ -292,8 +292,8 @@ def redotransitions(project, dorun=False, **kwargs):
             
             # Convert rates to durations
             for transitkey in ['agetransit','risktransit']:
-                for p1 in range(pd[transitkey].shape[0]):
-                    for p2 in range(pd[transitkey].shape[1]):
+                for p1 in range(array(pd[transitkey]).shape[0]):
+                    for p2 in range(array(pd[transitkey]).shape[1]):
                         thistrans = pd[transitkey][p1,p2]
                         if thistrans>0 and thistrans<1.0: pd[transitkey][p1,p2] = 1./thistrans # Invert if nonzero and also if it's a small rate (otherwise, assume it somehow got converted already)
             
@@ -744,20 +744,32 @@ def migrate(project, verbose=2, die=False):
     
     migrations = setmigrations() # Get the migrations to run
 
-    while str(project.version) != str(op.version):
+    proceed = True
+    while proceed and str(project.version) != str(op.version):
         currentversion = str(project.version)
         newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
         
         if not currentversion in migrations:
             errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
-            raise op.OptimaException(errormsg)
+            if die: raise op.OptimaException(errormsg)
+            else:   op.printv(errormsg, 1, verbose)
+            proceed = False
 
-        op.printv('Migrating "%s" from %6s ->' % (project.name, currentversion), 2, verbose, newline=False)
-        if migrator is not None: migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
-        project.version = newversion # Update the version info
-        op.printv("%6s" % project.version, 2, verbose, indent=False)
+        op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose, newline=False)
+        if migrator is not None: 
+            try: 
+                migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
+            except Exception as E:
+                errormsg = 'Migrating "%s" from %6s -> %6s failed:' % (project.name, currentversion, newversion)
+                errormsg += E.__repr__()
+                if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
+                project.failedmigrations.append(errormsg)
+                if die: raise op.OptimaException(errormsg)
+                else:   op.printv(errormsg, 1, verbose)
+                proceed = False
         
         # Update project info
+        project.version = newversion # Update the version info
         project.modified = op.today()
     
     # Restore links just in case
