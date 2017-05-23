@@ -31,7 +31,7 @@ Now, the legal part:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2017apr20 by cliffk
+Version: 2017may23 by cliffk
 """
 
 
@@ -54,8 +54,13 @@ _failed = []
 from uuid import uuid4 as uuid
 from copy import deepcopy as dcp
 
-# Utilities
-from .utils import blank, boxoff, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable, Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr, odict, percentcomplete, perturb, printarr, printdata as pd, printv, promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio, sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj
+# Utilities -- import alphabetically
+from .utils import blank, boxoff, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr
+from .utils import drprint, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable
+from .utils import Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr
+from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printv
+from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio
+from .utils import sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj
 import utils as _utils; del utils
 
 # Optimization algorithm
@@ -122,7 +127,8 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 import results as _results; del results
 
 # Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
-from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset, makepars, makesimpars, applylimits, comparepars, comparesimpars, sanitycheck # Parameter and Parameterset classes
+from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset # Parameter and Parameterset classes
+from .parameters import makepars, makesimpars, applylimits, comparepars, comparesimpars, sanitycheck
 import parameters as _parameters; del parameters
 
 # Create a blank spreadsheet

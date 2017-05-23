@@ -69,7 +69,8 @@ def objatt(obj, strlen = 18, ncol = 3):
 def objmeth(obj, strlen = 18, ncol = 3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
-    return createcollist(oldkeys, 'Methods', strlen = 18, ncol = 3)
+    output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
+    return output
 
 
 def objrepr(obj, showid=True, showmeth=True, showatt=True):
@@ -88,8 +89,9 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def defaultrepr(obj, maxlen=300):
+def defaultrepr(obj, maxlen=None):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
+    if maxlen is None: maxlen = 300
     keys = sorted(obj.__dict__.keys()) # Get the attribute keys
     maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
     if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
@@ -103,6 +105,12 @@ def defaultrepr(obj, maxlen=300):
     output += '============================================================\n'
 
     return output
+
+
+def drprint(obj, maxlen=None):
+    ''' Shortcut for printing the default repr for an object '''
+    print(defaultrepr(obj, maxlen=maxlen))
+    return None
 
     
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
