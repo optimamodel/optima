@@ -755,12 +755,12 @@ def migrate(project, verbose=2, die=False):
             else:   op.printv(errormsg, 1, verbose)
             proceed = False
 
-        op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose, newline=False)
+        op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose)
         if migrator is not None: 
             try: 
                 migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
             except Exception as E:
-                errormsg = 'Migrating "%s" from %6s -> %6s failed:' % (project.name, currentversion, newversion)
+                errormsg = 'Migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
                 errormsg += E.__repr__()
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
