@@ -4,7 +4,6 @@ from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argm
 from xlsxwriter import Workbook
 from xlsxwriter.utility import xl_rowcol_to_cell as rc
 from xlrd import open_workbook
-import os
 import re
 
 #######################################################################################################
