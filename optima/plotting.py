@@ -1036,7 +1036,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     # Put plotting imports here so fails at the last possible moment
     year = promotetoarray(year)
     colors = gridcolors(len(year))
-    ydata = odict()
+    plotdata = odict()
     
     # Get caption & scatter data 
     caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
@@ -1060,11 +1060,11 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
     except:
         y_l,y_m,y_u = None,None,None
-    ydata['ylinedata_l'] = y_l
-    ydata['ylinedata_m'] = y_m
-    ydata['ylinedata_u'] = y_u
-    ydata['xlabel'] = 'Spending'
-    ydata['ylabel'] = 'Number covered'
+    plotdata['ylinedata_l'] = y_l
+    plotdata['ylinedata_m'] = y_m
+    plotdata['ylinedata_u'] = y_u
+    plotdata['xlabel'] = 'Spending'
+    plotdata['ylabel'] = 'Number covered'
 
     # Flag to indicate whether we will adjust by population or not
     if plotoptions and plotoptions.get('perperson'):
@@ -1075,9 +1075,9 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
             if costdata: xupperlim = 1.5*max(costdata) 
             else: xupperlim = 1e3
-        ydata['xlinedata'] = linspace(0,xupperlim,npts)
+        plotdata['xlinedata'] = linspace(0,xupperlim,npts)
     else:
-        ydata['xlinedata'] = xlinedata
+        plotdata['xlinedata'] = xlinedata
         
     fig = existingFigure if existingFigure else Figure()
     fig.hold(True)
@@ -1089,16 +1089,16 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     if y_m is not None:
         for yr in range(y_m.shape[0]):
             ax.plot(
-                ydata['xlinedata'],
-                ydata['ylinedata_m'][yr],
+                plotdata['xlinedata'],
+                plotdata['ylinedata_m'][yr],
                 linestyle='-',
                 linewidth=2,
                 color=colors[yr],
                 label=year[yr])
             if plotbounds:
-                ax.fill_between(ydata['xlinedata'],
-                                  ydata['ylinedata_l'][yr],
-                                  ydata['ylinedata_u'][yr],
+                ax.fill_between(plotdata['xlinedata'],
+                                  plotdata['ylinedata_l'][yr],
+                                  plotdata['ylinedata_u'][yr],
                                   facecolor=colors[yr],
                                   alpha=.1,
                                   lw=0)
@@ -1110,8 +1110,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
     ax.set_xlim([0, xupperlim])
     ax.tick_params(axis='both', which='major', labelsize=11)
-    ax.set_xlabel(ydata['xlabel'], fontsize=11)
-    ax.set_ylabel(ydata['ylabel'], fontsize=11)
+    ax.set_xlabel(plotdata['xlabel'], fontsize=11)
+    ax.set_ylabel(plotdata['ylabel'], fontsize=11)
     ax.get_xaxis().set_major_locator(ticker.MaxNLocator(nbins=3))
     ax.set_title(program.short)
     ax.get_xaxis().get_major_formatter().set_scientific(False)
