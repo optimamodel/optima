@@ -48,12 +48,37 @@ def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, **kwargs):
 
 
 def setposition(ax=None, position=None, interactive=False):
+    ''' A small helper function to decide how to position the axes '''
     if position is None:
         if interactive: position = interactiveposition
         else:           position = globalposition
     ax.set_position(position)
     return position
     
+
+def setylim(data=None, ax=None):
+    '''
+    A small script to determine how the y limits should be set. If
+    ax is None, then just looks at datamin and data and recalculates
+    datamin. If ax is not None, then resets the y limits.    
+    '''
+    # Get current limits
+    currlower, currupper = ax.get_ylim()
+    
+    # Calculate the lower limit based on all the data
+    lowerlim = 0
+    upperlim = 0
+    for ydata in data:
+        lowerlim = min(lowerlim, promotetoarray(ydata).min())
+        upperlim = max(upperlim, promotetoarray(ydata).max())
+    
+    # Set the new y limits
+    if lowerlim<0: lowerlim = currlower # If and only if the data lower limit is negative, use the plotting lower limit
+    upperlim = max(upperlim, currupper) # Shouldn't be an issue, but just in case...
+    
+    # Specify the new limits and return
+    ax.set_ylim((lowerlim, upperlim))
+    return lowerlim,upperlim
 
 
 def getplotselections(results, advanced=False):
@@ -236,7 +261,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
 
 
 
-def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, verbose=2, figsize=globalfigsize, 
+def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
             legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, interactive=None, **kwargs):
         '''
@@ -372,6 +397,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 epiplots[pk] = makefigure(figsize=figsize, interactive=interactive) # If it's anything other than HIV prevalence by population, create a single plot
                 ax = epiplots[pk].add_subplot(111)
                 setposition(ax, position, interactive)
+                allydata = [] # Keep track of the lowest value in the data
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
@@ -382,26 +408,38 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 # Plot model estimates with uncertainty -- different for each of the different possibilities
                 ################################################################################################################
                 
+                xdata = results.tvec # Pull this out here for clarity
+                
                 # e.g. single simulation, prev-tot: single line, single plot
                 if not ismultisim and istotal:
-                    ax.plot(results.tvec, factor*best[0], lw=lw, c=colors[0], zorder=linezorder) # Index is 0 since only one possibility
+                    ydata = factor*best[0]
+                    allydata.append(ydata)
+                    ax.plot(xdata, ydata, lw=lw, c=colors[0], zorder=linezorder) # Index is 0 since only one possibility
                 
                 # e.g. single simulation, prev-pop: single line, separate plot per population
                 if not ismultisim and isperpop: 
-                    ax.plot(results.tvec, factor*best[i], lw=lw, c=colors[0], zorder=linezorder) # Index is each individual population in a separate window
+                    ydata = factor*best[i]
+                    allydata.append(ydata)
+                    ax.plot(xdata, ydata, lw=lw, c=colors[0], zorder=linezorder) # Index is each individual population in a separate window
                 
                 # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
                 if not ismultisim and isstacked:
                     if ispercentage: # Multi-line plot
                         for l in range(nlinesperplot):
-                            ax.plot(results.tvec, factor*best[l], lw=lw, c=colors[l], zorder=linezorder) # Index is each different population
+                            ydata = factor*best[l]
+                            allydata.append(ydata)
+                            ax.plot(xdata, ydata, lw=lw, c=colors[l], zorder=linezorder) # Index is each different population
                     else: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
                         origorder = arange(nlinesperplot)
                         plotorder = nlinesperplot-1-origorder
                         if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
-                            ax.fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k], zorder=fillzorder)
+                            ylower = factor*bottom
+                            yupper = factor*(bottom+best[k])
+                            allydata.append(ylower)
+                            allydata.append(yupper)
+                            ax.fill_between(xdata, ylower, yupper, facecolor=colors[k], alpha=1, lw=0, label=results.popkeys[k], zorder=fillzorder)
                             bottom += best[k]
                         for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
                             ax.plot((0, 0), (0, 0), color=colors[l], linewidth=10, zorder=linezorder)
@@ -409,11 +447,15 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l], lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Index is each different e.g. scenario
+                        ydata = factor*best[nlinesperplot-1-l]
+                        allydata.append(ydata)
+                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        ax.plot(results.tvec, factor*best[nlinesperplot-1-l][i], lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Indices are different populations (i), then different e..g scenarios (l)
+                        ydata = factor*best[nlinesperplot-1-l][i]
+                        allydata.append(ydata)
+                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -423,15 +465,23 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 
                 # Plot uncertainty, but not for stacked plots
                 if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
-                    ax.fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[0], alpha=alpha, lw=0)
+                    ylower = factor*lower[i]
+                    yupper = factor*upper[i]
+                    allydata.append(ylower)
+                    allydata.append(yupper)
+                    ax.fill_between(xdata, ylower, yupper, facecolor=colors[0], alpha=alpha, lw=0)
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
-                if not ismultisim and databest is not None and plotdata:
+                if not ismultisim and databest is not None and showdata:
                     for y in range(len(results.datayears)):
-                        ax.plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
+                        ydata = factor*array([datalow[i][y], datahigh[i][y]])
+                        allydata.append(ydata)
+                        ax.plot(results.datayears[y]*array([1,1]), ydata, c=datacolor, lw=1)
                     ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=datazorder) # Without zorder, renders behind the graph
                     if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
-                        ax.scatter(results.datayears, factor*databest[i], c=estimatecolor, s=dotsize*0.6, lw=0, zorder=datazorder+1)
+                        ydata = factor*databest[i]
+                        allydata.append(ydata)
+                        ax.scatter(results.datayears, ydata, c=estimatecolor, s=dotsize*0.6, lw=0, zorder=datazorder+1)
 
 
 
@@ -448,7 +498,6 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                 for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
     
                 # Configure plot specifics
-                currentylims = ax.get_ylim()
                 legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1,1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'borderaxespad':2}
                 plottitle = results.main[datatype].name
                 if isperpop:  
@@ -456,7 +505,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, plotdata=True, ver
                     plottitle  = results.popkeys[i] # Add extra information to plot if by population
                     ax.set_ylabel(plotylabel)
                 ax.set_title(plottitle)
-                ax.set_ylim((min(0,currentylims[0]),currentylims[1]))
+                setylim(allydata, ax=ax)
                 ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:
                     if isstacked: 
@@ -750,7 +799,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, 
-                useSIticks=True, plotdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, **kwargs):
+                useSIticks=True, showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -802,7 +851,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             ax.fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
             ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
-        if plotdata and not aspercentage: # Don't try to plot if it's a percentage
+        if showdata and not aspercentage: # Don't try to plot if it's a percentage
             thisdata = results.main['numtreat'].datatot[0]
             ax.scatter(results.datayears, thisdata, c=(0,0,0), s=dotsize, lw=0)
         
@@ -977,7 +1026,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     # Put plotting imports here so fails at the last possible moment
     year = promotetoarray(year)
     colors = gridcolors(len(year))
-    plotdata = odict()
+    ydata = odict()
     
     # Get caption & scatter data 
     caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
@@ -1001,11 +1050,11 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
     except:
         y_l,y_m,y_u = None,None,None
-    plotdata['ylinedata_l'] = y_l
-    plotdata['ylinedata_m'] = y_m
-    plotdata['ylinedata_u'] = y_u
-    plotdata['xlabel'] = 'Spending'
-    plotdata['ylabel'] = 'Number covered'
+    ydata['ylinedata_l'] = y_l
+    ydata['ylinedata_m'] = y_m
+    ydata['ylinedata_u'] = y_u
+    ydata['xlabel'] = 'Spending'
+    ydata['ylabel'] = 'Number covered'
 
     # Flag to indicate whether we will adjust by population or not
     if plotoptions and plotoptions.get('perperson'):
@@ -1016,9 +1065,9 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
             if costdata: xupperlim = 1.5*max(costdata) 
             else: xupperlim = 1e3
-        plotdata['xlinedata'] = linspace(0,xupperlim,npts)
+        ydata['xlinedata'] = linspace(0,xupperlim,npts)
     else:
-        plotdata['xlinedata'] = xlinedata
+        ydata['xlinedata'] = xlinedata
         
     fig = existingFigure if existingFigure else Figure()
     fig.hold(True)
@@ -1030,16 +1079,16 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     if y_m is not None:
         for yr in range(y_m.shape[0]):
             ax.plot(
-                plotdata['xlinedata'],
-                plotdata['ylinedata_m'][yr],
+                ydata['xlinedata'],
+                ydata['ylinedata_m'][yr],
                 linestyle='-',
                 linewidth=2,
                 color=colors[yr],
                 label=year[yr])
             if plotbounds:
-                ax.fill_between(plotdata['xlinedata'],
-                                  plotdata['ylinedata_l'][yr],
-                                  plotdata['ylinedata_u'][yr],
+                ax.fill_between(ydata['xlinedata'],
+                                  ydata['ylinedata_l'][yr],
+                                  ydata['ylinedata_u'][yr],
                                   facecolor=colors[yr],
                                   alpha=.1,
                                   lw=0)
@@ -1051,8 +1100,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     ax.set_xlim([0, xupperlim])
     ax.set_ylim(bottom=0)
     ax.tick_params(axis='both', which='major', labelsize=11)
-    ax.set_xlabel(plotdata['xlabel'], fontsize=11)
-    ax.set_ylabel(plotdata['ylabel'], fontsize=11)
+    ax.set_xlabel(ydata['xlabel'], fontsize=11)
+    ax.set_ylabel(ydata['ylabel'], fontsize=11)
     ax.get_xaxis().set_major_locator(ticker.MaxNLocator(nbins=3))
     ax.set_title(program.short)
     ax.get_xaxis().get_major_formatter().set_scientific(False)

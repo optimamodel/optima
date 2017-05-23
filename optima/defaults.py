@@ -604,9 +604,7 @@ def demo(doplot=True, **kwargs):
     ''' Do a simple demo of Optima -- similar to simple.py '''
     P = defaultproject(**kwargs)
     if doplot: 
-        try: 
-            import optima as op # Only used for demo.py, don't worry if can't be imported
-            op.pygui(P)
-        except:
-            print('Unable to plot: pygui could not be imported')
+        try:    import optima as op # Only used for demo.py, don't worry if can't be imported
+        except: print('pygui could not be imported: unable to plot')
+        op.pygui(P)
     return P
