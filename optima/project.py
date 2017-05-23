@@ -288,8 +288,10 @@ class Project(object):
         return None
 
 
-    def copy(self, what=None, orig='default', new='copy', overwrite=True):
+    def copy(self, what=None, orig=None, new=None, overwrite=True):
         ''' Copy an entry in a structure list '''
+        if orig is None: orig = -1
+        if new  is None: new = 'new'
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
@@ -303,8 +305,10 @@ class Project(object):
         return None
 
 
-    def rename(self, what=None, orig='default', new='new', overwrite=True):
+    def rename(self, what=None, orig=None, new=None, overwrite=True):
         ''' Rename an entry in a structure list '''
+        if orig is None: orig = -1
+        if new  is None: new = 'new'
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist.rename(oldkey=orig, newkey=new)
@@ -329,15 +333,15 @@ class Project(object):
     def rmoptim(self,    name=None): self.remove(what='optim',    name=name)
 
 
-    def copyparset(self,   orig='default', new='new', overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def copyprogset(self,  orig='default', new='new', overwrite=True): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def copyscen(self,     orig='default', new='new', overwrite=True): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def copyoptim(self,    orig='default', new='new', overwrite=True): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def copyparset(self,  new=None, orig=None, overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def copyprogset(self, new=None, orig=None, overwrite=True): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def copyscen(self,    new=None, orig=None, overwrite=True): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def copyoptim(self,   new=None, orig=None, overwrite=True): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def renameparset(self,   orig='default', new='new', overwrite=True): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def renameprogset(self,  orig='default', new='new', overwrite=True): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def renamescen(self,     orig='default', new='new', overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def renameoptim(self,    orig='default', new='new', overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def renameparset(self,  orig=None, new=None, overwrite=True): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def renameprogset(self, orig=None, new=None, overwrite=True): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def renamescen(self,    orig=None, new=None, overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def renameoptim(self,   orig=None, new=None, overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
 
     def addscens(self, scenlist, overwrite=True): 
