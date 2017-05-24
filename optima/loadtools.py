@@ -749,7 +749,7 @@ def migrate(project, verbose=2, die=False):
         
         # Check that the migration exists
         if not currentversion in migrations:
-            errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
+            errormsg = "Migrating %s: no migration exists from version %s to the latest version (%s)" % (project.name, currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
@@ -792,10 +792,14 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
     if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
 
-    if domigrate: P = migrate(origP, verbose=verbose, die=die)
-    else:         P = origP # Don't migrate -- WARNING, dangerous!
-    
-    if not fromdb: P.filename = filename # Update filename if not being loaded from a database
+    if domigrate: 
+        try: 
+            P = migrate(origP, verbose=verbose, die=die)
+            if not fromdb: P.filename = filename # Update filename if not being loaded from a database
+        except Exception as E:
+            if die: raise E
+            else:   P = origP # Fail: return unmigrated version
+    else: P = origP # Don't migrate
     
     return P
 
