@@ -744,8 +744,7 @@ def migrate(project, verbose=2, die=False):
     
     migrations = setmigrations() # Get the migrations to run
 
-    proceed = True
-    while proceed and str(project.version) != str(op.version):
+    while str(project.version) != str(op.version):
         currentversion = str(project.version)
         newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
         
@@ -753,7 +752,7 @@ def migrate(project, verbose=2, die=False):
             errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
-            proceed = False
+            return project # Abort, if haven't died already
 
         op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose)
         if migrator is not None: 
@@ -766,11 +765,10 @@ def migrate(project, verbose=2, die=False):
                 project.failedmigrations.append(errormsg)
                 if die: raise op.OptimaException(errormsg)
                 else:   op.printv(errormsg, 1, verbose)
-                proceed = False
+                return project # Abort, if haven't died already
         
         # Update project info
         project.version = newversion # Update the version info
-        project.modified = op.today()
     
     # Restore links just in case
     project.restorelinks()
