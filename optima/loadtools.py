@@ -746,14 +746,16 @@ def migrate(project, verbose=2, die=False):
 
     while str(project.version) != str(op.version):
         currentversion = str(project.version)
-        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
         
+        # Check that the migration exists
         if not currentversion in migrations:
             errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
 
+        # Do the migration
+        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
         op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose)
         if migrator is not None: 
             try: 
