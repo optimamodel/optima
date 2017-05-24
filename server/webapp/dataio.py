@@ -221,8 +221,7 @@ def do_login_user(args):
 
 def delete_user(user_id):
     user = UserDb.query.get(user_id)
-
-    if user is None:
+    if user is None: 
         raise UserDoesNotExist(user_id)
 
     user_email = user.email
@@ -240,11 +239,29 @@ def delete_user(user_id):
     db.session.commit()
 
     print(">> delete_user user:{} {} {}".format(user_id, user_name, user_email))
+    return None
+
+
+def grant_admin(user_id):
+    ''' Grant the specified user admin rights '''
+    args = {'is_admin':True}
+    update_user(user_id, args)
+    print('Admin rights added to user %s' % user_id)
+    return None
+
+
+def revoke_admin(user_id):
+    ''' Grant the specified user admin rights '''
+    args = {'is_admin':False}
+    update_user(user_id, args)
+    print('Admin rights revoked from user %s' % user_id)
+    return None
 
 
 def do_logout_current_user():
     logout_user()
     session.clear()
+    return None
 
 
 def report_exception_decorator(api_call):

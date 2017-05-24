@@ -40,6 +40,44 @@ define(['angular', 'ui.router',], function(angular) {
         'Are you sure you want to delete this user? Note that all of his projects will be deleted too!', 'Warning!'
       );
     };
+
+    $scope.grantAdmin = function(user) {
+      modalService.confirm(
+        function() {
+          rpcService
+            .rpcRun('grant_admin', [user.id])
+            .then(function(response) {
+              toastr.success('Admin rights granted!');
+              $scope.users = _($scope.users).filter(function(u) {
+                return u.id != user.id;
+              });
+            });
+        },
+        undefined,
+        'Make admin',
+        'Cancel',
+        'Are you sure you want to make this user an admin? With great power comes great responsibility!', 'Warning!'
+      );
+    };
+
+    $scope.revokeAdmin = function(user) {
+      modalService.confirm(
+        function() {
+          rpcService
+            .rpcRun('revoke_admin', [user.id])
+            .then(function(response) {
+              toastr.success('Admin rights revoked!');
+              $scope.users = _($scope.users).filter(function(u) {
+                return u.id != user.id;
+              });
+            });
+        },
+        undefined,
+        'Remove admin',
+        'Cancel',
+        'Are you sure you want to remove admin rights for this user? Were their crimes that serious?', 'Warning!'
+      );
+    };
   });
 
   return module;
