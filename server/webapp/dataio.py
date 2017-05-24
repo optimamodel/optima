@@ -423,8 +423,6 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
-    project.created = op.today()
-    project.modified = op.today()
     project.uid = project_entry.id
 
     data_pops = parse.revert_populations_to_pop(project_summary["populations"])
@@ -459,8 +457,6 @@ def create_project(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
-    project.created = op.today()
-    project.modified = op.today()
     project.uid = project_entry.id
 
     data_pops = parse.revert_populations_to_pop(project_summary["populations"])
@@ -525,26 +521,16 @@ def save_project_as_new(project, user_id):
     db.session.add(project_record)
     db.session.flush()
 
-    project.uid = project_record.id
-
-    for attr in ['parsets','progsets','scens','optims','results']:
-        for obj in getattr(project,attr).values():
-            obj.uid = op.uuid()
-
     print(">> save_project_as_new '%s'" % project.name)
+    project.uid = project_record.id
+    
     for result in project.results.values():
         name = result.name
-        if 'scenarios' in name:
-            update_or_create_result_record_by_id(
-                result, project.uid, None, 'scenarios')
-        if 'optim' in name:
-            update_or_create_result_record_by_id(
-                result, project.uid, None, 'optimization')
-        if 'parset' in name:
-            update_or_create_result_record_by_id(
-                result, project.uid, result.parset.uid, 'calibration')
+        result.uid = op.uuid() # Reset UID since stored separately in DB
+        if 'scenarios' in name: update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
+        if 'optim' in name:     update_or_create_result_record_by_id(result, project.uid, None, 'optimization')
+        if 'parset' in name:    update_or_create_result_record_by_id(result, project.uid, result.parset.uid, 'calibration')
     db.session.commit()
-    project.modified = op.today()
     save_project(project)
     return None
 

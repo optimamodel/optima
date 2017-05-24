@@ -286,32 +286,49 @@ def is_progset_optimizable(progset):
 
 
 def get_project_summary_from_project(project):
-    start_year = project.settings.start
-    end_year = project.settings.end
-
-    calibrationOK = len(project.parsets)>0
-    progsets = project.progsets.values()
-    if len(progsets):
-        programsOK = max([len(progset.programs) for progset in progsets])>0
-        costFuncsOK = sum([progset.readytooptimize() for progset in project.progsets.values()])>0
-    else:
-        programsOK = False
-        costFuncsOK = False
-
-    project_summary = {
-        'id': project.uid,
-        'name': project.name,
-        'startYear': start_year,
-        'endYear': end_year,
-        'version': project.version,
-        'populations': get_populations_from_project(project),
-        'creationTime': project.created,
-        'updatedTime': project.modified,
-        'dataUploadTime': project.spreadsheetdate,
-        'calibrationOK': calibrationOK,
-        'programsOK': programsOK,
-        'costFuncsOK': costFuncsOK,
-    }
+    
+    try:
+        start_year = project.settings.start
+        end_year = project.settings.end
+    
+        calibrationOK = len(project.parsets)>0
+        progsets = project.progsets.values()
+        if len(progsets):
+            programsOK = max([len(progset.programs) for progset in progsets])>0
+            costFuncsOK = sum([progset.readytooptimize() for progset in project.progsets.values()])>0
+        else:
+            programsOK = False
+            costFuncsOK = False
+    
+        project_summary = {
+            'id':            project.uid,
+            'name':          project.name,
+            'startYear':     start_year,
+            'endYear':       end_year,
+            'version':       project.version,
+            'populations':   get_populations_from_project(project),
+            'creationTime':  project.created,
+            'updatedTime':   project.modified,
+            'dataUploadTime':project.spreadsheetdate,
+            'calibrationOK': calibrationOK,
+            'programsOK':    programsOK,
+            'costFuncsOK':   costFuncsOK,
+        }
+    except:
+        project_summary = {
+            'id':            '000000',
+            'name':          'Load failed',
+            'startYear':     0,
+            'endYear':       0,
+            'version':       '0.0',
+            'populations':   [],
+            'creationTime':  '0000-00-00 00:00:00',
+            'updatedTime':   '0000-00-00 00:00:00',
+            'dataUploadTime':'0000-00-00 00:00:00',
+            'calibrationOK': False,
+            'programsOK':    False,
+            'costFuncsOK':   False,
+        }
 
     return project_summary
 
