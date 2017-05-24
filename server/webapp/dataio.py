@@ -521,28 +521,32 @@ def download_data_spreadsheet(project_id, is_blank=True):
 
 
 def save_project_as_new(project, user_id):
+    print(">> save_project_as_new '%s'" % project.name)
     project_record = ProjectDb(user_id)
     db.session.add(project_record)
     db.session.flush()
-
-    project.uid = project_record.id
-
-    for attr in ['parsets','progsets','scens','optims','results']:
-        for obj in getattr(project,attr).values():
-            obj.uid = op.uuid()
-
-    print(">> save_project_as_new '%s'" % project.name)
-    for result in project.results.values():
-        name = result.name
-        if 'scenarios' in name:
-            update_or_create_result_record_by_id(
-                result, project.uid, None, 'scenarios')
-        if 'optim' in name:
-            update_or_create_result_record_by_id(
-                result, project.uid, None, 'optimization')
-        if 'parset' in name:
-            update_or_create_result_record_by_id(
-                result, project.uid, result.parset.uid, 'calibration')
+    
+    try:
+        project.uid = project_record.id
+        for attr in ['parsets','progsets','scens','optims','results']:
+            for obj in getattr(project,attr).values():
+                obj.uid = op.uuid()
+    
+        
+        for result in project.results.values():
+            name = result.name
+            if 'scenarios' in name:
+                update_or_create_result_record_by_id(
+                    result, project.uid, None, 'scenarios')
+            if 'optim' in name:
+                update_or_create_result_record_by_id(
+                    result, project.uid, None, 'optimization')
+            if 'parset' in name:
+                update_or_create_result_record_by_id(
+                    result, project.uid, result.parset.uid, 'calibration')
+    except Exception as E:
+        errormsg = 'WARNING, saving new project failed:\n%s' % E.__repr__() 
+        raise Exception(errormsg)
     db.session.commit()
     project.modified = op.today()
     save_project(project)
@@ -961,7 +965,7 @@ def download_figures(result_id=None, which=None, filetype=None, index=None):
     filenames = op.saveplots(result, toplot=which, folder=dirname, filename=None, filetype=filetype, index=index)
     if len(filenames)>1:
         errormsg = 'Webapp only supports saving one figure at a time; you are trying to save %s' % len(filenames)
-        raise op.OptimaException(errormsg)
+        raise Exception(errormsg)
     else:
         server_filename = filenames[0]
     print(">> download_figures", server_filename)
