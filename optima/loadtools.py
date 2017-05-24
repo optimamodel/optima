@@ -749,7 +749,7 @@ def migrate(project, verbose=2, die=False):
         
         # Check that the migration exists
         if not currentversion in migrations:
-            errormsg = "Migrating %s: no migration exists from version %s to the latest version (%s)" % (project.name, currentversion, op.version)
+            errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the latest version (%s)" % (project.name, currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
@@ -761,7 +761,7 @@ def migrate(project, verbose=2, die=False):
             try: 
                 migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
             except Exception as E:
-                errormsg = 'Migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
+                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
                 errormsg += E.__repr__()
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
@@ -778,7 +778,7 @@ def migrate(project, verbose=2, die=False):
     # If any warnings were generated during the migration, print them now
     warnings = project.getwarnings()
     if warnings and die: 
-        errormsg = 'Please resolve warnings in projects before continuing'
+        errormsg = 'WARNING, Please resolve warnings in projects before continuing'
         if die: raise op.OptimaException(errormsg)
         else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
     
