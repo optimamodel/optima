@@ -179,7 +179,7 @@ def backup():
     try:
         
         defaultfolder = 'optima_backups'
-        
+        dbg = []
         
         # Create the backups folder
         backupsfolder = safemkdir(os.path.expanduser("~"), defaultfolder)
@@ -201,8 +201,10 @@ def backup():
             last = folderlist[-2]
             lastabs = safemkdir(backupsfolder,last)
             assert os.path.isdir(lastabs), 'Previous folder is not right either, giving up'
-        print('Last folder found is %s' % lastabs)
-        print('Current folder is %s' % currabs)
+        msg = 'Last folder found is %s' % lastabs; print(msg); dbg.append(msg)
+        msg = 'Current folder is %s' % currabs; print(msg); dbg.append(msg)
+        
+        
         
         # Actually download projects
         try:    username = sys.argv[1]
@@ -212,32 +214,32 @@ def backup():
         try:    server = sys.argv[3]
         except: server = None
         print('Downloading projects into the current folder: username=%s, server=%s' % (username, server))
-    #    downloadprojects(username=username, password=password, savelocation=currabs, server=server)
+        downloadprojects(username=username, password=password, savelocation=currabs, server=server)
         
         # Create symlinks
         subfolders = os.listdir(currabs)
         for subfolder in subfolders:
             lastsub = os.path.join(lastabs,subfolder)
             currsub = os.path.join(currabs,subfolder)
-            print('  Working on subfolder %s...' % currsub)
+            msg = '  Working on subfolder %s...' % currsub; print(msg); dbg.append(msg)
             if os.path.isdir(currsub):
                 currprojs = os.listdir(currsub)
                 for currproj in currprojs:
-                    print('    Working on project %s...' % currproj)
+                    msg = '    Working on project %s...' % currproj; print(msg); dbg.append(msg)
                     lastprojabs = os.path.abspath(os.path.join(lastsub, currproj))
                     currprojabs = os.path.abspath(os.path.join(currsub, currproj))
                     if os.path.exists(lastprojabs):
                         if filecmp.cmp(lastprojabs,currprojabs):
-                            print('      Symlinking %s' % currprojabs)
+                            msg = '      Symlinking %s' % currprojabs; print(msg); dbg.append(msg)
                             os.remove(currprojabs)
                             os.symlink(lastprojabs, currprojabs)
                         else:
-                            print('      -->%s and %s do not match' % (lastprojabs,currprojabs))
+                            msg = '      -->%s and %s do not match' % (lastprojabs,currprojabs); print(msg); dbg.append(msg)
                     else:
-                        print('    -->Path %s does not exist' % lastprojabs)
+                        msg = '    -->Path %s does not exist' % lastprojabs; print(msg); dbg.append(msg)
         try:
             with open(logfilename,'w') as f:
-                f.write('Backup succeeded')
+                f.writelines(dbg)
         except:
             print('Backup worked, but writing to log file failed')
     
