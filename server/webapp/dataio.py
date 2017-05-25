@@ -266,7 +266,7 @@ def revoke_admin(user_id):
 def reset_password(user_id):
     ''' Reset the user's password to "optima" '''
     defaultpassword = 'optima'
-    args = {'password':hashed_password(defaultpassword)}
+    args = {'password':defaultpassword}
     update_user(user_id, args)
     print('Password for user %s reset to "%s"' % (user_id,defaultpassword))
     return None
