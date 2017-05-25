@@ -28,6 +28,7 @@ from werkzeug.utils import secure_filename
 from validate_email import validate_email
 
 import optima as op
+from pylab import argsort
 
 from .dbconn import db
 from . import parse
@@ -120,7 +121,12 @@ def parse_user_record(user_record):
 
 
 def get_user_summaries():
-    return {'users': [parse_user_record(q) for q in UserDb.query.all()]}
+    raw_users = [parse_user_record(q) for q in UserDb.query.all()]
+    user_names = [user['username'] for user in raw_users]
+    sort_order = argsort(user_names)
+    sorted_users = [raw_users[o] for o in sort_order]
+    users_dict = {'users': sorted_users}
+    return users_dict
 
 
 def nullable_email(email_str):
