@@ -20,6 +20,7 @@ from functools import wraps
 import os
 from zipfile import ZipFile
 from uuid import uuid4, UUID
+from hashlib import sha224
 
 from flask import current_app, abort, request, session, make_response, jsonify
 from flask_login import current_user, login_user, logout_user
@@ -266,7 +267,10 @@ def revoke_admin(user_id):
 def reset_password(user_id):
     ''' Reset the user's password to "optima" '''
     defaultpassword = 'optima'
-    args = {'password':defaultpassword}
+    hashed_password = sha224()
+    hashed_password.update(defaultpassword)
+    password = hashed_password.hexdigest()
+    args = {'password':password}
     update_user(user_id, args)
     print('Password for user %s reset to "%s"' % (user_id,defaultpassword))
     return None
