@@ -7,7 +7,7 @@ from pylab import argsort
 try:    import optima as op
 except: pass
 
-def downloadprojects(password='zzz', savelocation='optimaprojects', server='http://hiv.optimamodel.com', username='admin', overwrite=False):
+def downloadprojects(password='zzz', savelocation='optimaprojects', server='localhost:8080', username='admin', overwrite=False):
     '''
     A utility for downloading all projects from an Optima 2.0+ server for an admin account.
 
