@@ -7,7 +7,7 @@ from pylab import argsort
 try:    import optima as op
 except: pass
 
-def downloadprojects(password='zzz', savelocation='optimaprojects', server='localhost:8080', username='admin', overwrite=False):
+def downloadprojects(password=None, savelocation=None, server=None, username=None, overwrite=False):
     '''
     A utility for downloading all projects from an Optima 2.0+ server for an admin account.
 
@@ -17,6 +17,12 @@ def downloadprojects(password='zzz', savelocation='optimaprojects', server='loca
 
     Version: 2017may23
     '''
+    
+    # Define defaults
+    if username is None:     username     = 'admin'
+    if password is None:     password     = 'zzz'
+    if savelocation is None: savelocation = 'optimaprojects'
+    if server is None:       server       = 'http://localhost:8080'
     
     # Try timing, but don't try too hard
     try:    T = op.tic()
