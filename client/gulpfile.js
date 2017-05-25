@@ -12,6 +12,8 @@ var spawnSync = require('child_process').spawnSync;
 var uglify = require('gulp-uglify');
 var plumber = require('gulp-plumber');
 var fs = require('fs');
+var version = require('gulp-version-number');
+var cachebust = require('gulp-cache-bust');
 
 var handleError = function (err) {
   console.log(err.name, ' in ', err.plugin, ': ', err.message);
@@ -135,6 +137,128 @@ gulp.task('watch', [], function () {
       'source/js/**/*'])
     .on(
       'change', livereload.changed);
+});
+
+// My (George's) first gulp task!
+gulp.task('mytask', function () {
+    gulp.src(['source/index.html'])
+        .pipe(version({
+
+            /**
+             * Global version value
+             * default: %MDS%
+             */
+            'value' : '%MDS%',
+
+            /**
+             * MODE: REPLACE
+             * eg:
+             *    'keyword'
+             *    /regexp/ig
+             *    ['keyword']
+             *    [/regexp/ig, '%MD5%']]
+             */
+            'replaces' : [
+
+                /**
+                 * {String|Regexp} Replace Keyword/Rules to global value (config.value)
+                 */
+                '#{VERSION_REPlACE}#',
+
+                /**
+                 * {Array}
+                 * Replace keyword to custom value
+                 * if just have keyword, the value will use the global value (config.value).
+                 */
+                [/#{VERSION_REPlACE}#/g, '%TS%']
+            ],
+
+
+            /**
+             * MODE: APPEND
+             * Can coexist and replace, after execution to replace
+             */
+            'append' : {
+
+                /**
+                 * Parameter
+                 */
+                'key' : '_v',
+
+                /**
+                 * Whether to overwrite the existing parameters
+                 * default: 0 (don't overwrite)
+                 * If the parameter already exists, as a "custom", covering not executed.
+                 * If you need to cover, please set to 1
+                 */
+                'cover' : 0,
+
+                /**
+                 * Appended to the position (specify type)
+                 * {String|Array|Object}
+                 * If you set to 'all', will apply to all type, rules will use the global setting.
+                 * If an array or object, will use your custom rules.
+                 * others will passing.
+                 *
+                 * eg:
+                 *     'js'
+                 *     ['js']
+                 *     {type:'js'}
+                 *     ['css', '%DATE%']
+                 */
+                'to' : [
+
+                    /**
+                     * {String} Specify type, the value is the global value
+                     */
+                    'css',
+
+                    /**
+                     * {Array}
+                     * Specify type, keyword and cover rules will use the global
+                     * setting, If you need more details, please use the object
+                     * configure.
+                     *
+                     * argument 0 necessary, otherwise passing.
+                     * argument 1 optional, the value will use the global value
+                     */
+                    ['image', '%TS%'],
+
+                    /**
+                     * {Object}
+                     * Use detailed custom rules to replace, missing items will
+                     * be taken in setting the global completion
+
+                     * type is necessary, otherwise passing.
+                     */
+                    {
+                        'type' : 'js',
+                        'key' : '_v',
+                        'value' : '%DATE%',
+                        'cover' : 1
+                    }
+                ]
+            },
+
+            /**
+             * Output to config file
+             */
+            'output' : {
+                'file' : 'version.json'
+            }
+        }))
+        .pipe(gulp.dest('mybuild/'))
+    console.log('Ran gulp-version-number');
+});
+
+// My (George's) second gulp task
+gulp.task('mytask2', function () {
+    gulp.src(['source/index.html'])
+        .pipe(cachebust({
+            type: 'timestamp'
+        }))
+        .pipe(gulp.dest('mybuild/'))
+    console.log('Ran gulp-cache-bust');
 });
 
 // Defaults -- WARNING, do version.js separately
