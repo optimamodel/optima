@@ -119,7 +119,7 @@ def downloadprojects(username=None, password=None, savelocation=None, server=Non
             safemkdir(dirname)
     
             fname = os.path.join(dirname, projectname+'.prj')
-            while os.path.isfile(fname):
+            if os.path.exists(fname):
                 if overwrite:  print('    Downloaded already, overwriting...')
                 else:          fname += '.new' # Just keep appending till the cows come home
             try:
