@@ -32,7 +32,7 @@ define(['angular', 'ui.router',], function(angular) {
           rpcService
             .rpcRun('grant_admin', [user.id])
             .then(function(response) {
-              toastr.success('Admin rights granted! Please refresh page.');
+              toastr.success('Admin rights granted!');
               $scope.refresh();
             });
         },
@@ -49,7 +49,7 @@ define(['angular', 'ui.router',], function(angular) {
           rpcService
             .rpcRun('revoke_admin', [user.id])
             .then(function(response) {
-              toastr.success('Admin rights revoked! Please refresh page.');
+              toastr.success('Admin rights revoked!');
               $scope.refresh();
             });
         },
