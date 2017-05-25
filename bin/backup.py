@@ -1,5 +1,17 @@
 '''
 This script downloads projects and does a backup.
+
+To use, type
+
+    crontab -e
+
+and add a line like
+
+    0 4 * * * /software/anaconda/bin/python /home/optima/bin/backup.py admin zzz "http://hiv.optimamodel.com"
+
+This will run the backup script at 4am every morning (local time).
+
+Note that crontab skips bashrc settings and only gets the pythonpath from site.py.
 '''
 
 # Import essential packages
