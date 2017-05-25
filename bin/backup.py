@@ -239,7 +239,7 @@ def backup():
                         msg = '    -->Path %s does not exist' % lastprojabs; print(msg); dbg.append(msg)
         try:
             with open(logfilename,'w') as f:
-                f.writelines(dbg)
+                f.write('\n'.join(dbg))
         except:
             print('Backup worked, but writing to log file failed')
     

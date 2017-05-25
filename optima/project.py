@@ -336,7 +336,6 @@ class Project(object):
         if result.name is None: keyname = str(result.uid)
         else: keyname = result.name
         self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=overwrite) # Use UID for key but keep name
-        self.modified = today()
         return keyname # Can be useful to know what ended up being chosen
     
     def rmresult(self, name=-1):
@@ -353,7 +352,6 @@ class Project(object):
             validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(self.results))]
             errormsg = 'Could not remove result "%s": choices are:\n%s' % (name, '\n'.join(validchoices))
             raise OptimaException(errormsg)
-        self.modified = today()
         return None
     
     
@@ -361,7 +359,6 @@ class Project(object):
         ''' Remove all results except for BOCs '''
         for key,result in self.results.items():
             if type(result)!=BOC: self.results.pop(key)
-        self.modified = today()
         return None
     
     
