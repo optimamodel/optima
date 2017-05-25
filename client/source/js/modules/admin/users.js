@@ -15,12 +15,16 @@ define(['angular', 'ui.router',], function(angular) {
 
   module.controller('AdminManageUsersController', function($scope, userManager, modalService, rpcService, toastr) {
 
-    rpcService
-      .rpcRun(
-        'get_user_summaries')
-      .then(function(response) {
-        $scope.users = response.data.users;
-      });
+    $scope.refresh = function () {
+      rpcService
+        .rpcRun(
+          'get_user_summaries')
+        .then(function (response) {
+          $scope.users = response.data.users;
+        });
+    };
+
+    $scope.refresh();
 
     $scope.grantAdmin = function(user) {
       modalService.confirm(
@@ -29,9 +33,7 @@ define(['angular', 'ui.router',], function(angular) {
             .rpcRun('grant_admin', [user.id])
             .then(function(response) {
               toastr.success('Admin rights granted!');
-              $scope.users = _($scope.users).filter(function(u) {
-                return u.id != user.id;
-              });
+              $scope.refresh();
             });
         },
         undefined,
@@ -48,9 +50,7 @@ define(['angular', 'ui.router',], function(angular) {
             .rpcRun('revoke_admin', [user.id])
             .then(function(response) {
               toastr.success('Admin rights revoked!');
-              $scope.users = _($scope.users).filter(function(u) {
-                return u.id != user.id;
-              });
+              $scope.refresh();
             });
         },
         undefined,
@@ -67,9 +67,6 @@ define(['angular', 'ui.router',], function(angular) {
             .rpcRun('reset_password', [user.id])
             .then(function(response) {
               toastr.success('Password reset!');
-              $scope.users = _($scope.users).filter(function(u) {
-                return u.id != user.id;
-              });
             });
         },
         undefined,
@@ -86,9 +83,7 @@ define(['angular', 'ui.router',], function(angular) {
             .rpcRun('delete_user', [user.id])
             .then(function(response) {
               toastr.success('User deleted!');
-              $scope.users = _($scope.users).filter(function(u) {
-                return u.id != user.id;
-              });
+              $scope.refresh();
             });
         },
         undefined,
