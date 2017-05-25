@@ -1,28 +1,42 @@
-import requests
-import sys
-import os
-import json
-from hashlib import sha224
-from pylab import argsort
+'''
+This script downloads projects and does a backup.
+'''
+
+# Import essential packages
+try:
+    import requests
+    import sys
+    import os
+    import json
+    from hashlib import sha224
+    from pylab import argsort, rand
+    import datetime
+    import filecmp
+except Exception as E:
+    with open('/tmp/optima_backup_error.log','w') as f:
+        errormsg = 'Essential import for Optima backup failed: %s' % E.__repr__()
+        f.write(errormsg)
+
+# Non-essential imports
 try:    import optima as op
 except: pass
-import datetime
 
 
 def safemkdir(*args):
     ''' Skip exceptions and handle join() '''
-    try:    os.makedirs(os.path.join(*args))
+    fullpath = os.path.abspath(os.path.join(*args))
+    try:    os.makedirs(fullpath)
     except: pass
-    return None
+    return fullpath
     
 
-def downloadprojects(password=None, savelocation=None, server=None, username=None, overwrite=False):
+def downloadprojects(username=None, password=None, savelocation=None, server=None, overwrite=False):
     '''
     A utility for downloading all projects from an Optima 2.0+ server for an admin account.
 
     Here's how to use it with the defaults for 'admin' at hiv.optimamodel.com, saving to folder optimaprojects:
 
-         python downloadprojects.py <password> <savelocation>
+         python downloadprojects.py <username> <password> <savelocation>
 
     Version: 2017may23
     '''
@@ -33,7 +47,7 @@ def downloadprojects(password=None, savelocation=None, server=None, username=Non
     if savelocation is None: savelocation = 'optimaprojects'
     if server is None:       server       = 'http://localhost:8080'
     
-    # Try timing, but don't try too hard
+    # Try timing
     try:    T = op.tic()
     except: pass
     
@@ -137,40 +151,104 @@ def downloadprojects(password=None, savelocation=None, server=None, username=Non
         print('The following projects FAILED MISERABLY:')
         for fail in failed: print(fail)
     else:
-        print('No projects failed downloading.')
+        print('All projects successfully downloaded.')
     
     print('Done, at last.')
-    
     try:    op.toc(T)
-    except: print('Unable to calculate elapsed time, but it was probably a while.')
+    except: print('Could not import Optima so elapsed time is not available')
+    return None
 
 
 
 
 def backup():
-    backupsfolder = 'backups'
+    '''
+    Script for actually doing backups. Usage is usually via cron, but can do manually too. Just run
     
-    # Figure out last folder and current folder
-    try:    
-        mostrecent = sorted(os.listdir(backupsfolder))[-1]
-    except:
-        mostrecent = '0000-00-00'
-        safemkdir(backupsfolder,mostrecent)
-        try:    os.makedirs(os.path.join())
-        except: pass
-
-    now = datetime.datetime.now()
-    current = '%4i-%02i-%02i' % (now.year, now.month, now.day)
-    safemkdir(backupsfolder,current)
+        python backup.py <username> <admin_password> <server>
     
+    Default is
     
-    # Download projects
-
-    try:    password = sys.argv[1]
-    except: password = None
-    try:    savelocation = sys.argv[2]
-    except: savelocation = None
-    downloadprojects(password=password, savelocation=savelocation)
+        python backup.py admin zzz "http://localhost:8080"
+    
+    Version: 2017may23
+    '''
+    
+    print('Starting backup...')
+    
+    try:
+        
+        defaultfolder = 'optima_backups'
+        
+        
+        # Create the backups folder
+        backupsfolder = safemkdir(os.path.expanduser("~"), defaultfolder)
+        logfilename = os.path.join('/tmp','optimabackupdebug%0.0f.log'%(1e6*rand()))
+        
+        # Figure out last folder and current folder
+        folderlist = sorted(os.listdir(backupsfolder)) # WARNING, assumes everything in here is a folder
+        try:    last = folderlist[-1]
+        except: last = '0000-00-00'
+        lastabs = safemkdir(backupsfolder,last)
+        now = datetime.datetime.now()
+        current = '%4i-%02i-%02i' % (now.year, now.month, now.day)
+        currabs = safemkdir(backupsfolder,current)
+        
+        
+        # Check things
+        assert os.path.isdir(lastabs), '%s is not a folder, please move it!'
+        if lastabs==currabs: # Make sure they're not the same
+            last = folderlist[-2]
+            lastabs = safemkdir(backupsfolder,last)
+            assert os.path.isdir(lastabs), 'Previous folder is not right either, giving up'
+        print('Last folder found is %s' % lastabs)
+        print('Current folder is %s' % currabs)
+        
+        # Actually download projects
+        try:    username = sys.argv[1]
+        except: username = None
+        try:    password = sys.argv[2]
+        except: password = None
+        try:    server = sys.argv[3]
+        except: server = None
+        print('Downloading projects into the current folder: username=%s, server=%s' % (username, server))
+    #    downloadprojects(username=username, password=password, savelocation=currabs, server=server)
+        
+        # Create symlinks
+        subfolders = os.listdir(currabs)
+        for subfolder in subfolders:
+            lastsub = os.path.join(lastabs,subfolder)
+            currsub = os.path.join(currabs,subfolder)
+            print('  Working on subfolder %s...' % currsub)
+            if os.path.isdir(currsub):
+                currprojs = os.listdir(currsub)
+                for currproj in currprojs:
+                    print('    Working on project %s...' % currproj)
+                    lastprojabs = os.path.abspath(os.path.join(lastsub, currproj))
+                    currprojabs = os.path.abspath(os.path.join(currsub, currproj))
+                    if os.path.exists(lastprojabs):
+                        if filecmp.cmp(lastprojabs,currprojabs):
+                            print('      Symlinking %s' % currprojabs)
+                            os.remove(currprojabs)
+                            os.symlink(lastprojabs, currprojabs)
+                        else:
+                            print('      -->%s and %s do not match' % (lastprojabs,currprojabs))
+                    else:
+                        print('    -->Path %s does not exist' % lastprojabs)
+        try:
+            with open(logfilename,'w') as f:
+                f.write('Backup succeeded')
+        except:
+            print('Backup worked, but writing to log file failed')
+    
+    except Exception as E:
+        try:
+            errormsg = 'Optima backup script failed: %s' % E.__repr__()
+            print(errormsg)
+            with open(logfilename,'w') as f:
+                f.write(errormsg)
+        except:
+            print('Everything failed horribly')
     
     return None
 
