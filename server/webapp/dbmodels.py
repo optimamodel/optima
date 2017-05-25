@@ -2,11 +2,8 @@ import os
 from flask_restful_swagger import swagger
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import deferred
 from sqlalchemy.dialects.postgresql import JSON
-
 import optima as op
-
 from .dbconn import db, redis
 
 

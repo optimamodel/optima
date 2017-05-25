@@ -20,6 +20,7 @@ from functools import wraps
 import os
 from zipfile import ZipFile
 from uuid import uuid4, UUID
+from hashlib import sha224
 
 from flask import current_app, abort, request, session, make_response, jsonify
 from flask_login import current_user, login_user, logout_user
@@ -108,13 +109,14 @@ def authenticate_current_user(raise_exception=True):
 
 
 def parse_user_record(user_record):
-    return {
+    user_record_dict = {
         'id': user_record.id,
         'displayName': user_record.name,
         'username': user_record.username,
         'email': user_record.email,
         'is_admin': user_record.is_admin,
     }
+    return user_record_dict
 
 
 def get_user_summaries():
@@ -157,8 +159,12 @@ def create_user(args):
     user = UserDb(**args)
     db.session.add(user)
     db.session.commit()
+    
+    user_record_dict = parse_user_record(user)
+    
+    print('New user created: %s' % user_record_dict)
 
-    return parse_user_record(user)
+    return user_record_dict
 
 
 def update_user(user_id, args):
@@ -221,8 +227,7 @@ def do_login_user(args):
 
 def delete_user(user_id):
     user = UserDb.query.get(user_id)
-
-    if user is None:
+    if user is None: 
         raise UserDoesNotExist(user_id)
 
     user_email = user.email
@@ -240,11 +245,41 @@ def delete_user(user_id):
     db.session.commit()
 
     print(">> delete_user user:{} {} {}".format(user_id, user_name, user_email))
+    return None
+
+
+def grant_admin(user_id):
+    ''' Grant the specified user admin rights '''
+    args = {'is_admin':True}
+    update_user(user_id, args)
+    print('Admin rights added to user %s' % user_id)
+    return None
+
+
+def revoke_admin(user_id):
+    ''' Grant the specified user admin rights '''
+    args = {'is_admin':False}
+    update_user(user_id, args)
+    print('Admin rights revoked from user %s' % user_id)
+    return None
+
+
+def reset_password(user_id):
+    ''' Reset the user's password to "optima" '''
+    defaultpassword = 'optima'
+    hashed_password = sha224()
+    hashed_password.update(defaultpassword)
+    password = hashed_password.hexdigest()
+    args = {'password':password}
+    update_user(user_id, args)
+    print('Password for user %s reset to "%s"' % (user_id,defaultpassword))
+    return None
 
 
 def do_logout_current_user():
     logout_user()
     session.clear()
+    return None
 
 
 def report_exception_decorator(api_call):
