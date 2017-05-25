@@ -17,10 +17,10 @@ class UserDb(db.Model):
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
     password = db.Column(db.String(200))
-    is_admin = db.Column(db.Boolean, server_default=text('FALSE'))
+    is_admin = db.Column(db.Boolean, server_default=text('TRUE'))
     projects = db.relationship('ProjectDb', backref='user', lazy='dynamic')
 
-    def __init__(self, name, email, password, username, is_admin=False):
+    def __init__(self, name, email, password, username, is_admin=True):
         self.name = name
         self.email = email
         self.password = password
