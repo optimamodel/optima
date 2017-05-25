@@ -108,13 +108,14 @@ def authenticate_current_user(raise_exception=True):
 
 
 def parse_user_record(user_record):
-    return {
+    user_record_dict = {
         'id': user_record.id,
         'displayName': user_record.name,
         'username': user_record.username,
         'email': user_record.email,
         'is_admin': user_record.is_admin,
     }
+    return user_record_dict
 
 
 def get_user_summaries():
@@ -157,8 +158,12 @@ def create_user(args):
     user = UserDb(**args)
     db.session.add(user)
     db.session.commit()
+    
+    user_record_dict = parse_user_record(user)
+    
+    print('New user created: %s' % user_record_dict)
 
-    return parse_user_record(user)
+    return user_record_dict
 
 
 def update_user(user_id, args):
