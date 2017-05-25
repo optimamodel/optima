@@ -14,9 +14,10 @@
         <td>{{ ::user.displayName }}</td>
         <td>{{ ::user.email }}</td>
         <td>{{ ::user.is_admin }}</td>
-        <td><button ng-click="grantAdmin(user)"  type="button" class="btn __red">Grant admin</button></td>
-        <td><button ng-click="revokeAdmin(user)" type="button" class="btn __red">Revoke admin</button></td>
-        <td><button ng-click="deleteUser(user)"  type="button" class="btn __red">Delete user</button></td>
+        <td><button ng-click="grantAdmin(user)"    type="button" class="btn __red">Grant admin</button></td>
+        <td><button ng-click="revokeAdmin(user)"   type="button" class="btn __red">Revoke admin</button></td>
+        <td><button ng-click="resetPassword(user)" type="button" class="btn __red">Reset password</button></td>
+        <td><button ng-click="deleteUser(user)"    type="button" class="btn __red">Delete user</button></td>
       </tr>
     </table>
   </div>

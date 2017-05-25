@@ -263,6 +263,15 @@ def revoke_admin(user_id):
     return None
 
 
+def reset_password(user_id):
+    ''' Reset the user's password to "optima" '''
+    defaultpassword = 'optima'
+    args = {'password':hashed_password(defaultpassword)}
+    update_user(user_id, args)
+    print('Password for user %s reset to "%s"' % (user_id,defaultpassword))
+    return None
+
+
 def do_logout_current_user():
     logout_user()
     session.clear()

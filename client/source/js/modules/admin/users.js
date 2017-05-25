@@ -22,25 +22,6 @@ define(['angular', 'ui.router',], function(angular) {
         $scope.users = response.data.users;
       });
 
-    $scope.deleteUser = function(user) {
-      modalService.confirm(
-        function() {
-          rpcService
-            .rpcRun('delete_user', [user.id])
-            .then(function(response) {
-              toastr.success('User deleted!');
-              $scope.users = _($scope.users).filter(function(u) {
-                return u.id != user.id;
-              });
-            });
-        },
-        undefined,
-        'Delete it',
-        'Cancel',
-        'Are you sure you want to delete this user? Note that all of his projects will be deleted too!', 'Warning!'
-      );
-    };
-
     $scope.grantAdmin = function(user) {
       modalService.confirm(
         function() {
@@ -54,7 +35,7 @@ define(['angular', 'ui.router',], function(angular) {
             });
         },
         undefined,
-        'Make admin',
+        'Yes: sudo make me a sandwich',
         'Cancel',
         'Are you sure you want to make this user an admin? With great power comes great responsibility!', 'Warning!'
       );
@@ -73,9 +54,47 @@ define(['angular', 'ui.router',], function(angular) {
             });
         },
         undefined,
-        'Remove admin',
+        'Yes, revoke admin',
         'Cancel',
-        'Are you sure you want to remove admin rights for this user? Were their crimes that serious?', 'Warning!'
+        'Are you sure you want to revoke admin rights for this user? Were their crimes that serious?', 'Warning!'
+      );
+    };
+
+    $scope.resetPassword = function(user) {
+      modalService.confirm(
+        function() {
+          rpcService
+            .rpcRun('reset_password', [user.id])
+            .then(function(response) {
+              toastr.success('Password reset!');
+              $scope.users = _($scope.users).filter(function(u) {
+                return u.id != user.id;
+              });
+            });
+        },
+        undefined,
+        'Yes, reset password',
+        'Cancel',
+        'Are you sure you want to reset the password to default for this user?', 'Warning!'
+      );
+    };
+
+    $scope.deleteUser = function(user) {
+      modalService.confirm(
+        function() {
+          rpcService
+            .rpcRun('delete_user', [user.id])
+            .then(function(response) {
+              toastr.success('User deleted!');
+              $scope.users = _($scope.users).filter(function(u) {
+                return u.id != user.id;
+              });
+            });
+        },
+        undefined,
+        'Delete it',
+        'Cancel',
+        'Are you sure you want to delete this user? Note that all of her projects will be deleted too!', 'Warning!'
       );
     };
   });
