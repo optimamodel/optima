@@ -750,33 +750,33 @@ def migrate(project, verbose=2, die=False):
     
     migrations = setmigrations() # Get the migrations to run
 
-    proceed = True
-    while proceed and str(project.version) != str(op.version):
+    while str(project.version) != str(op.version):
         currentversion = str(project.version)
         
+        # Check that the migration exists
         if not currentversion in migrations:
-            errormsg = "No migration exists from version %s to the latest version (%s)" % (currentversion, op.version)
+            errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the latest version (%s)" % (project.name, currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
-            proceed = False
-        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
+            return project # Abort, if haven't died already
 
+        # Do the migration
+        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
         op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose)
         if migrator is not None: 
             try: 
                 migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
             except Exception as E:
-                errormsg = 'Migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
+                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
                 errormsg += E.__repr__()
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
                 if die: raise op.OptimaException(errormsg)
                 else:   op.printv(errormsg, 1, verbose)
-                proceed = False
+                return project # Abort, if haven't died already
         
         # Update project info
         project.version = newversion # Update the version info
-        project.modified = op.today()
     
     # Restore links just in case
     project.restorelinks()
@@ -784,7 +784,7 @@ def migrate(project, verbose=2, die=False):
     # If any warnings were generated during the migration, print them now
     warnings = project.getwarnings()
     if warnings and die: 
-        errormsg = 'Please resolve warnings in projects before continuing'
+        errormsg = 'WARNING, Please resolve warnings in projects before continuing'
         if die: raise op.OptimaException(errormsg)
         else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
     
@@ -798,10 +798,14 @@ def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
     if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
 
-    if domigrate: P = migrate(origP, verbose=verbose, die=die)
-    else:         P = origP # Don't migrate -- WARNING, dangerous!
-    
-    if not fromdb: P.filename = filename # Update filename if not being loaded from a database
+    if domigrate: 
+        try: 
+            P = migrate(origP, verbose=verbose, die=die)
+            if not fromdb: P.filename = filename # Update filename if not being loaded from a database
+        except Exception as E:
+            if die: raise E
+            else:   P = origP # Fail: return unmigrated version
+    else: P = origP # Don't migrate
     
     return P
 

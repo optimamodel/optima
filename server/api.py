@@ -5,7 +5,7 @@ import logging
 import matplotlib
 import redis
 
-from flask import Flask, redirect, abort, jsonify, request, json, helpers
+from flask import Flask, abort, jsonify, request, json, helpers
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from werkzeug.utils import secure_filename
