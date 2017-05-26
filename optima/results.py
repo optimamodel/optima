@@ -41,7 +41,9 @@ class Resultset(object):
         # Basic info
         self.uid = uuid()
         self.created = today()
-        self.name = name # May be blank if automatically generated, but can be overwritten
+        self.name = name if name else 'default' # May be blank if automatically generated, but can be overwritten
+        self.main = odict() # For storing main results
+        self.other = odict() # For storing other results -- not available in the interface
         
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
@@ -83,7 +85,6 @@ class Resultset(object):
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
-        self.main = odict() # For storing main results
         self.main['numinci']        = Result('New infections acquired')
         self.main['numdeath']       = Result('HIV-related deaths')
         self.main['numdaly']        = Result('HIV-related DALYs')
@@ -112,10 +113,15 @@ class Resultset(object):
         self.main['popsize']        = Result('Population size')
         self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
-        self.other = odict() # For storing other results -- not available in the interface
-        self.other['adultprev']    = Result('Adult HIV prevalence (%)', ispercentage=True)
-        self.other['childprev']    = Result('Child HIV prevalence (%)', ispercentage=True)
+        self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
+        self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
+        self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
+        self.other['numbirths']     = Result('Total births)')
         
+        # Add all health states
+        for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
+            self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
+            
         if domake: self.make(raw, verbose=verbose)
     
     
@@ -128,49 +134,84 @@ class Resultset(object):
         output += '              Name: %s\n'    % self.name
         output += '============================================================\n'
         return output
-        
     
-    def __add__(self, R2):
-        ''' Define how to add two Resultsets '''
+    
+    def _checkresultset(self, R2):
+        ''' A small method to make sure two resultsets are compatible, and return a copy of the first one. '''
         if type(R2)!=Resultset: raise OptimaException('Can only add results sets with other results sets')
         for attr in ['tvec','popkeys']:
             if any(array(getattr(self,attr))!=array(getattr(R2,attr))):
                 raise OptimaException('Cannot add Resultsets that have dissimilar "%s"' % attr)
-        R1 = dcp(self) # Keep the properties of this first one
+        
+        # Keep the properties of this first one
+        R1 = dcp(self) 
         R1.name += ' + ' + R2.name
         R1.uid = uuid()
         R1.created = today()
-        keys = R1.main.keys()
-        main1 = dcp(R1.main)
-        main2 = dcp(R2.main)
-        popsize1 = main1['popsize']
-        popsize2 = main2['popsize']
-        R1.main = odict()
-        for key in keys:
-            res1 = main1[key]
-            res2 = main2[key]
-            R1.main[key] = Result(name=res1.name, ispercentage=res1.ispercentage)
-            
-            # It's a number, can just sum the arrays
-            if res1.ispercentage:
-                for attr in ['pops', 'tot']:
-                    this = getattr(res1, attr) + getattr(res2, attr)
-                    setattr(R1.main[key], attr, this)
-            
-            # It's a percentage, average by population size
-            else: 
-                R1.main[key].tot  = 0*res1.tot  # Reset
-                R1.main[key].pops = 0*res1.pops # Reset
-                for t in range(shape(res1.tot)[-1]):
-                    R1.main[key].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] + res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
-                    for p in range(len(R1.popkeys)):
-                        R1.main[key].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] + res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])
+        
         return R1
+    
+    
+    def _combine(self, R2, operation='add'):
+        ''' Method to handle __add__ and __sub__ since they're almost identical '''
+        
+        if operation not in ['add', 'sub']:
+            errormsg = 'Operation must be either "add" or "sub", not "%s"' % operation
+            raise OptimaException(errormsg)
+        
+        R = self._checkresultset(R2)
+        popsize1 = dcp(R.main['popsize'])
+        popsize2 = dcp(R2.main['popsize'])
+        if   operation=='add': R.name += ' + ' + R2.name
+        elif operation=='sub': R.name += ' - ' + R2.name
+            
+        
+        # Collect all results objects, making use of the fact that they're mutable
+        resultsobjs = odict() # One entry of these is e.g. R.main['prev']
+        resultsobjs1 = odict()
+        resultsobjs2 = odict()
+        for typekey in R.main.keys():
+            resultsobjs[typekey]  = R.main[typekey]
+            resultsobjs1[typekey] = dcp(R.main[typekey])
+            resultsobjs2[typekey] = dcp(R2.main[typekey])
+        for typekey in R.other.keys():
+            resultsobjs[typekey]  = R.other[typekey]
+            resultsobjs1[typekey] = dcp(R.other[typekey])
+            resultsobjs2[typekey] = dcp(R2.other[typekey])
+        typekeys = R.main.keys()+R.other.keys()
+        
+        
+        # Handle results
+        for typekey in typekeys:
+            res1 = resultsobjs1[typekey]
+            res2 = resultsobjs2[typekey]
+            if res1.ispercentage: # It's a percentage, average by population size
+                resultsobjs[typekey].tot  = 0*res1.tot  # Reset
+                resultsobjs[typekey].pops = 0*res1.pops # Reset
+                for t in range(shape(res1.tot)[-1]):
+                    resultsobjs[typekey].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] + res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
+                    for p in range(len(R.popkeys)):
+                        resultsobjs[typekey].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] + res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])
+            else: # It's a number, can just sum the arrays
+                for attr in ['pops', 'tot']:
+                    if   operation=='add': this = getattr(res1, attr) + getattr(res2, attr)
+                    elif operation=='sub': this = getattr(res1, attr) - getattr(res2, attr)
+                    setattr(resultsobjs[typekey], attr, this)
+        return R
+    
+    
+    def __add__(self, R2):
+        ''' Define how to add two Resultsets '''
+        R = self._combine(R2, operation='add')
+        return R
+        
+        
+    def __sub__(self, R2):
+        ''' Define how to subtract two Resultsets '''
+        R = self._combine(R2, operation='sub')
+        return R
             
             
-    
-    
-    
     def make(self, raw, quantiles=None, annual=True, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         # WARNING: Should use indexes retrieved from project settings!
@@ -206,15 +247,17 @@ class Resultset(object):
             self.tvec = tvec[indices] # Subsample time vector too
         self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
         nraw = len(raw) # Number of raw results sets
-        allpeople    = dcp(array([raw[i]['people']    for i in range(nraw)]))
-        allinci      = dcp(array([raw[i]['inci']      for i in range(nraw)]))
-        allincibypop = dcp(array([raw[i]['incibypop'] for i in range(nraw)]))
-        alldeaths    = dcp(array([raw[i]['death']     for i in range(nraw)]))
-        alldiag      = dcp(array([raw[i]['diag']      for i in range(nraw)]))
-        allmtct      = dcp(array([raw[i]['mtct']      for i in range(nraw)]))
-        allhivbirths = dcp(array([raw[i]['hivbirths'] for i in range(nraw)]))
-        allpmtct     = dcp(array([raw[i]['pmtct']     for i in range(nraw)]))
-        allcosttreat = dcp(array([raw[i]['costtreat'] for i in range(nraw)]))
+        allpeople    = dcp(array([raw[i]['people']     for i in range(nraw)]))
+        allinci      = dcp(array([raw[i]['inci']       for i in range(nraw)]))
+        allincibypop = dcp(array([raw[i]['incibypop']  for i in range(nraw)]))
+        alldeaths    = dcp(array([raw[i]['death']      for i in range(nraw)]))
+        otherdeaths  = dcp(array([raw[i]['otherdeath'] for i in range(nraw)])) 
+        alldiag      = dcp(array([raw[i]['diag']       for i in range(nraw)]))
+        allmtct      = dcp(array([raw[i]['mtct']       for i in range(nraw)]))
+        allhivbirths = dcp(array([raw[i]['hivbirths']  for i in range(nraw)]))
+        allbirths    = dcp(array([raw[i]['births']     for i in range(nraw)]))
+        allpmtct     = dcp(array([raw[i]['pmtct']      for i in range(nraw)]))
+        allcosttreat = dcp(array([raw[i]['costtreat']  for i in range(nraw)]))
         allplhiv = self.settings.allplhiv
         allaids = self.settings.allaids
         alldx = self.settings.alldx
@@ -318,11 +361,6 @@ class Resultset(object):
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round()
         if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
-        upperagelims = self.pars['age'][:,1] # All populations, but upper range
-        adultpops = findinds(upperagelims>=15)
-        childpops = findinds(upperagelims<15)
-        if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
         # Calculate DALYs
         yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
@@ -341,6 +379,31 @@ class Resultset(object):
             dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
         self.main['numdaly'].pops = quantile(dalypops[:,:,indices], quantiles=quantiles).round()
         self.main['numdaly'].tot  = quantile(dalytot[:,indices], quantiles=quantiles).round()
+        
+        
+        # Other indicators
+        upperagelims = self.pars['age'][:,1] # All populations, but upper range
+        adultpops = findinds(upperagelims>=15)
+        childpops = findinds(upperagelims<15)
+        if len(adultpops): self.other['adultprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        else:              self.other['adultprev'].tot = self.main['prev'].tot # In case it's not available, use population average
+        if len(childpops): self.other['childprev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        else:              self.other['childprev'].tot = self.main['prev'].tot
+        self.other['adultprev'].pops = self.main['prev'].pops # This is silly, but avoids errors from a lack of consistency of these results not having pop attributes
+        self.other['childprev'].pops = self.main['prev'].pops
+        
+        self.other['numotherdeath'].pops = quantile(otherdeaths[:,:,indices], quantiles=quantiles).round()
+        self.other['numotherdeath'].tot = quantile(otherdeaths[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
+        
+        self.other['numbirths'].pops = quantile(allbirths[:,:,indices], quantiles=quantiles).round()
+        self.other['numbirths'].tot = quantile(allbirths[:,:,indices].sum(axis=1), quantiles=quantiles).round()
+        
+        # Add in each health state
+        for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
+            healthinds = getattr(self.settings, healthkey)
+            self.other['only'+healthkey].pops = quantile(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+            self.other['only'+healthkey].tot =  quantile(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
+
         
         return None # make()
         
@@ -405,29 +468,64 @@ class Resultset(object):
             return outputstr
         
     
-    def get(self, what=None, year=None, pop='tot'):
+    def get(self, what=None, year=None, key=0, pop='tot', dosum=False):
         '''
         A small function to make it easier to access results. For example, to 
         get the number of deaths in the current year, just do
         
         P = demo(0)
         P.result().get('numinci')
+        
+        To get multiple years, simply enter a pair of years, or 'all', e.g.
+        P.result().get('numinci', [2015,2030])
+        P.result().get('numinci', 'all')
+        
+        To return a sum, set dosum=True:
+        P.result().get('numinci', [2015,2030], dosum=True)
+        
+        The "key" kwarg is mostly used for multiresultsets to choose which simulation result to get.
+        For non-multiresultsets, [0,1,2] will choose [best, low, high].
         '''
         # If year isn't specified, use now
         if year is None: 
             year = self.projectref().settings.now
         
+        # Figure out which dictionary to use
+        if   what in self.main.keys():   resultobj = self.main[what]
+        elif what in self.other.keys():  resultobj = self.other[what]
+        else:
+            errormsg = 'Key %s not found; must be one of:\n%s' % (what, self.main.keys()+self.other.keys())
+            raise OptimaException(errormsg)
+            
         # Use either total (by default) or a given population
         if pop=='tot':
-            timeseries = self.main[what].tot[0]
+            timeseries = resultobj.tot[key]
         else:
             if isinstance(pop,str): 
-                pop = self.popkeys.index(pop) # Convert string to number
-            timeseries = self.main[what].pops[0][pop,:]
+                try:
+                    pop = self.popkeys.index(pop) # Convert string to number
+                except:
+                    errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
+                    raise OptimaException(errormsg)
+            timeseries = resultobj.pops[key][pop,:]
         
         # Get the index and return the result
-        index = findnearest(self.tvec, year)
-        result = timeseries[index]
+        if checktype(year, 'number'):
+            index = findnearest(self.tvec, year)
+            result = timeseries[index]
+        elif checktype(year, 'arraylike'):
+            startind = findnearest(self.tvec, year[0])
+            finalind = findnearest(self.tvec, year[1])
+            result = timeseries[startind:finalind+1]
+        elif year=='all':
+            result = timeseries[:]
+        else:
+            errormsg = 'Year argument must be a number, pair of years, or "all", not "%s"' % year
+            raise OptimaException(errormsg)
+        
+        if dosum:
+            result = sum(result)
+        
         return result
             
         
@@ -440,10 +538,11 @@ class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
     def __init__(self, resultsetlist=None, name=None):
         # Basic info
-        self.name = name
+        self.name = name if name else 'default'
         self.uid = uuid()
         self.created = today()
         self.nresultsets = len(resultsetlist)
+        self.resultsetnames = [result.name for result in resultsetlist] # Pull the names of the constituent resultsets
         self.keys = []
         self.budgets = odict()
         self.coverages = odict()
@@ -459,11 +558,14 @@ class Multiresultset(Resultset):
         for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr+'dict', odict()) # Store a copy for each resultset, e.g. 'parsetdict'
 
-        # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
-        self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
-        for key in self.main.keys():
-            for at in ['pops', 'tot']:
+        # Main and other results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
+        self.main  = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
+        self.other = dcp(resultsetlist[0].other) 
+        for at in ['pops', 'tot']:
+            for key in self.main.keys():
                 setattr(self.main[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
+            for key in self.other.keys():
+                setattr(self.other[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
 
         for i,rset in enumerate(resultsetlist):
             key = rset.name if rset.name is not None else str(i)
@@ -480,12 +582,14 @@ class Multiresultset(Resultset):
                 getattr(self, attr+'dict')[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
                 setattr(self, attr, getattr(rset, attr)) # And then also just store the last value, because most of the time they'll match anyway
             
-            # Now, the real deal: fix self.main
+            # Now, the real deal: fix self.main and self.other
             best = 0 # Key for best data -- discard uncertainty
-            for key2 in self.main.keys():
-                for at in ['pops', 'tot']:
+            for at in ['pops', 'tot']:
+                for key2 in self.main.keys():
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
-            
+                for key2 in self.other.keys():
+                    getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+
             # Finally, process the budget and budgetyears
             if len(rset.budget): # If it has a budget, overwrite coverage information by calculating from budget
                 self.budgets[key]      = rset.budget
@@ -507,6 +611,46 @@ class Multiresultset(Resultset):
         output += '============================================================\n'
         output += objrepr(self)
         return output
+    
+    
+    def diff(self, base=None):
+        '''
+        Calculate the difference between the first (usually default) set of results in a multiresultset and others.
+        
+        Use this method to calculate the impact of scenarios, e.g.
+            import optima as op
+            P = op.demo(0)
+            P.defaultscenarios(doplot=False)
+            resultsdiff = P.result().diff()
+            resultsdiff.get('numplhiv', key='No budget', year='all')
+        
+        Use the "base" kwarg (which can be a key or an index) to set the baseline:
+            resultsdiff = P.result().diff(base='No budget')
+            resultsdiff.get('numplhiv', key='Current conditions')
+        '''
+        
+        if base is None: base = 0
+        
+        resultsdiff = dcp(self)
+        resultsdiff.projectref = Link(self.projectref()) # Restore link
+        resultsdiff.name += ' difference' # Update the name
+        
+        # Collect all results objects
+        resultsobjs = []
+        for typekey in resultsdiff.main.keys():
+            resultsobjs.append(resultsdiff.main[typekey])
+        for typekey in resultsdiff.other.keys():
+            resultsobjs.append(resultsdiff.other[typekey])
+        
+        # Calculate the differences
+        for resultsobj in resultsobjs:
+            basetot = dcp(resultsobj.tot[base]) # Need to dcp since mutable
+            basepop = dcp(resultsobj.pops[base])
+            for simkey in resultsdiff.resultsetnames:
+                resultsobj.tot[simkey]  -= basetot
+                resultsobj.pops[simkey] -= basepop
+        
+        return resultsdiff
     
     
     def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):

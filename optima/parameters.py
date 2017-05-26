@@ -1137,6 +1137,10 @@ def makepars(data=None, verbose=2, die=True):
         pars['inhomo'].y[key] = 0.0
         pars['inhomo'].prior[key].pars = array([0.0, 0.3]) # Arbitrary
     
+    # Impose limits on force and transnorm so their values don't get too extreme (note, force.m functions identically to transnorm.y, but use the latter)
+    for foipar in ['force','transnorm']:
+        pars[foipar].limits = (0.05, 50) # Arbitrary
+    
     
     # Handle acts
     tmpacts = odict()

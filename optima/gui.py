@@ -29,10 +29,10 @@ def importpyqt():
     
 pyqt = importpyqt()
 
+
 ##############################################################################
 ### USER-VISIBLE FUNCTIONS
 ##############################################################################
-
 
 def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     ''' 
@@ -546,6 +546,49 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     return allplotdata
 
 
+def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
+    ''' Add a plot to an existing figure, and return original size '''
+    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+    orig = thisplot.get_position() # get the original position 
+    widthfactor = 0.9/ncols**(1/4.)
+    heightfactor = 0.9/nrows**(1/4.)
+    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
+    thisplot.set_position(pos2) # set a new position
+    thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
+    thisplot.pchanged()
+    thisplot.stale = True
+    return None
+    
+
+def showplots(plots=None):
+    '''
+    And actually show them. WARNING, there are a lot of issues with this function! First, it has no
+    idea how big the figure actually is, this has to be set manually. I guess that's the main thing.
+    Note that this is only applicable if non-interactive plots have been created.
+    
+    Example:
+        import optima as op
+        P = op.demo(0)
+        plot = plotcascade(results=P.result(), interactive=False)
+        op.showplots(plot)
+    
+    This function is purely remedial; a much better way of doing this is:
+        op.plotcascade(results=P.result(), interactive=True)
+
+    Version: 2017may22
+    '''
+    ion()
+    reanimateplots(plots) # Reconnect the plots to the matplotlib backend so they can be rendered
+    nplots = len(plots)
+    figs = []
+    for p in range(nplots): 
+        figs.append(figure(facecolor=(1,1,1)))
+        addplot(figs[p], plots[p].axes[0], name=plots.keys()[p], nrows=1, ncols=1, n=p+1)
+    if nplots>1: return figs
+    else:        return figs[0] # Don't return a list if a single figure
+
+
 def loadplot(filename=None):
     '''
     Load a plot from a file and reanimate it.
@@ -579,21 +622,6 @@ def makenewfigure(**figargs):
 
     return fig
     
-
-def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
-    ''' Add a plot to an existing figure '''
-    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
-    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
-    orig = thisplot.get_position() # get the original position 
-    widthfactor = 0.9/ncols**(1/4.)
-    heightfactor = 0.9/nrows**(1/4.)
-    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
-    thisplot.set_position(pos2) # set a new position
-    thisplot.figure = thisfig # WARNING, none of these things actually help with the problem that the axes don't resize with the figure, but they don't hurt...
-    thisplot.pchanged()
-    thisplot.stale = True
-    return None
-
 
 def closegui(event=None):
     ''' Close all GUI windows '''

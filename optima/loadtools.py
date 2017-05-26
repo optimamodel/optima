@@ -3,6 +3,71 @@ from numpy import nan, isnan, concatenate as cat, array
 
 
 ##########################################################################################
+### MIGRATION DEFINITIONS
+##########################################################################################
+
+def setmigrations(which='migrations'):
+    '''
+    Define the migrations -- format is 
+        'current_version': ('new_version', function, 'date', 'string description of change')
+    
+    If "which" is anything other than "changelog", then return the list of migrations.
+    Otherwise, return the changelog (just the new version and message).
+    
+    Version: 2017may23
+    '''
+
+    migrations = {
+        # Orig    New       Date         Migration        Description
+        '2.0':   ('2.0.0', '2016-07-19', None,              'Converted version number to string'),
+        '2.0.0': ('2.0.1', '2016-07-20', addscenuid,        'Added UID to scenarios'),
+        '2.0.1': ('2.0.2', '2016-07-29', addforcepopsize,   'Added option for forcing population size to match'),
+        '2.0.2': ('2.0.3', '2016-08-25', delimmediatecare,  'Removed immediate care parameter'),
+        '2.0.3': ('2.0.4', '2016-08-31', addproppmtct,      'Added new parameter -- proportion on PMTCT'),
+        '2.0.4': ('2.1',   '2016-09-12', redotransitions,   'Major update to how transitions in health states are handled'),
+        '2.1':   ('2.1.1', '2016-10-02', makepropsopt,      'Removed data on proportion parameters'),
+        '2.1.1': ('2.1.2', '2016-10-05', addalleverincare,  'Included new setting to store everyone in care'),
+        '2.1.2': ('2.1.3', '2016-10-18', removenumcircdata, "Don't store data on number circumcised"),
+        '2.1.3': ('2.1.4', '2016-10-18', removepopchardata, "Don't store sex worker and injecting characteristics"),
+        '2.1.4': ('2.1.5', '2016-11-01', addaidsleavecare,  'Added new parameter -- AIDS leave care percentage'),
+        '2.1.5': ('2.1.6', '2016-11-01', addaidslinktocare, 'Added new parameter -- AIDS link to care duration'),
+        '2.1.6': ('2.1.7', '2016-11-03', adddataend,        'Separated dataend from end'),
+        '2.1.7': ('2.1.8', '2016-11-07', fixsettings,       'Added new attributes to settings'),
+        '2.1.8': ('2.1.9', '2016-12-22', addoptimscaling,   'Added a budget scaling parameter to optimizations'),
+        '2.1.9': ('2.1.10','2016-12-28', addpropsandcosttx, 'Added treatment cost parameter'),
+        '2.1.10':('2.2',   '2017-01-13', redoparameters,    'Updated the way parameters are handled'),
+        '2.2':   ('2.2.1', '2017-02-01', redovlmon,         'Updated the VL monitoring parameter'),
+        '2.2.1': ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the proect in the results'),
+        '2.2.2': ('2.3',   '2017-02-09', redoparamattr,     'Updated parameter attributes'),
+        '2.3':   ('2.3.1', '2017-02-15', removespreadsheet, "Don't store the spreadsheet with the project, to save space"),
+        '2.3.1': ('2.3.2', '2017-03-01', addagetopars,      'Ensured that age is stored in parsets'),
+        '2.3.2': ('2.3.3', '2017-03-02', redotranstable,    'Split transition table into two tables to speed processing'),
+        '2.3.3': ('2.3.4', '2017-03-30', redotranstable,    'Added aditional fixes to the transition table'),
+        '2.3.4': ('2.3.5', '2017-04-18', None,              'Added migrations for portfolios'),
+        '2.3.5': ('2.3.6', '2017-04-21', None,              'Fixed PMTCT calculations'),
+        '2.3.6': ('2.3.7', '2017-05-13', None,              'Changed plotting syntax'),
+        '2.3.7': ('2.3.8', '2017-05-23', None,              'Many minor changes to plotting, parameters, etc.'),
+        #'2.2': redoprograms,
+        }
+    
+    migrations = op.odict(migrations) # Convert to odict
+    migrations.sort() # Make sure it's ordered
+    
+    # Define changelog
+    changelog = op.odict()
+    for ver,date,migrator,msg in migrations.values():
+        changelog.append(ver,date+' | '+msg)
+    
+    # Return the migrations structure, unless the changelog is specifically requested
+    if which=='changelog': return changelog
+    else:                  return migrations
+
+
+
+
+
+
+##########################################################################################
 ### MIGRATION UTILITIES
 ##########################################################################################
 
@@ -57,6 +122,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         else: print(errormsg); return None
     if verbose: print('Reading file %s' % filename)
     alllines = f.readlines() # Read all lines in the file
+    origlines = op.dcp(alllines) # Keep a copy of the original version of the file
     notfound = True # By default, fail
     for l,line in enumerate(alllines): # Loop over each line
         ind = line.find(strtofind) # Look for string to find
@@ -76,21 +142,22 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         else: print(errormsg); return None
     f.close()
         
-    # Write script file
-    try: 
-        f = open(filename, 'w')
-    except:
-        errormsg = 'Could not open file "%s" for writing' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    if verbose: print('Writing file %s' % filename)
-    try: 
-        f.writelines(alllines) # Just write everything
-    except: 
-        errormsg = 'optimaversion() write failed on %s' % filename
-        if die: raise op.OptimaException(errormsg)
-        else: print(errormsg); return None
-    f.close()
+    # Write script file, but only if something changed
+    if alllines!=origlines:
+        try: 
+            f = open(filename, 'w')
+        except:
+            errormsg = 'Could not open file "%s" for writing' % filename
+            if die: raise op.OptimaException(errormsg)
+            else: print(errormsg); return None
+        if verbose: print('Writing file %s' % filename)
+        try: 
+            f.writelines(alllines) # Just write everything, but only if something's changed
+        except: 
+            errormsg = 'optimaversion() write failed on %s' % filename
+            if die: raise op.OptimaException(errormsg)
+            else: print(errormsg); return None
+        f.close()
     
     return None
 
@@ -140,13 +207,6 @@ def removeparameter(project=None, short=None, datashort=None, verbose=False, die
             if die: raise
     return None
 
-
-def addwarning(project=None, message=None, **kwargs):
-    ''' Add a warning to the project, which is printed when migrated or loaded '''
-    if not hasattr(project, 'warnings') or type(project.warnings)!=str: # If no warnings attribute, create it
-        project.warnings = ''
-    project.warnings += '\n'*3+str(message) # # Add this warning
-    return None
 
 
 
@@ -221,7 +281,7 @@ def redotransitions(project, dorun=False, **kwargs):
         for key,progset in project.progsets.items():
             if oldpar in progset.covout.keys():
                 msg = 'Project includes a program in program set "%s" that affects "%s", but this parameter has been removed' % (key, oldpar)
-                addwarning(project, msg)
+                project.addwarning(msg)
 
     # Add new constants
     project.data['const']['deathsvl']       = [0.23,    0.15,   0.3]
@@ -340,7 +400,7 @@ def removenumcircdata(project, **kwargs):
     return None
 
 
-def removepopcharacteristicsdata(project, **kwargs):
+def removepopchardata(project, **kwargs):
     """
     Migration between Optima 2.1.3 and 2.1.4.
     """
@@ -579,7 +639,7 @@ def redovlmon(project, **kwargs):
     for key,progset in project.progsets.items():
         if 'freqvlmon' in progset.covout.keys():
             msg = 'Project includes a program in programset "%s" that affects "freqvlmon", but this parameter has been removed' % key
-            addwarning(project, msg)
+            project.addwarning(msg)
     
     short = 'numvlmon'
     copyfrom = 'numtx'
@@ -602,7 +662,7 @@ def redovlmon(project, **kwargs):
     return None
         
 
-def addprojectinfotoresults(project, verbose=2, **kwargs):
+def addprojectinfo(project, verbose=2, **kwargs):
     ''' Add project info to resultsets so they can be loaded '''
     
     for item in project.parsets.values()+project.progsets.values()+project.optims.values()+project.results.values():
@@ -616,7 +676,7 @@ def addprojectinfotoresults(project, verbose=2, **kwargs):
     return None
 
 
-def redoparameterattributes(project, **kwargs):
+def redoparamattr(project, **kwargs):
     ''' Change the names of the parameter attributes, and change transnorm from being a setting to being a parameter '''
     
     # Change parameter attributes
@@ -682,60 +742,6 @@ def redotranstable(project, **kwargs):
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
 ##########################################################################################
-
-def setmigrations(which='migrations'):
-    '''
-    Define the migrations -- format is 
-        'current_version': ('new_version', function, 'date', 'string description of change')
-    
-    If "which" is anything other than "changelog", then return the list of migrations.
-    Otherwise, return the changelog (just the new version and message).
-    
-    Version: 2017apr20
-    '''
-
-    migrations = {
-        '2.0':   ('2.0.0', '2016-07-19', None, 'Converted version number to string'),
-        '2.0.0': ('2.0.1', '2016-07-20', addscenuid, 'Added UID to scenarios'),
-        '2.0.1': ('2.0.2', '2016-07-29', addforcepopsize, 'Added option for forcing population size to match'),
-        '2.0.2': ('2.0.3', '2016-08-25', delimmediatecare, 'Removed immediate care parameter'),
-        '2.0.3': ('2.0.4', '2016-08-31', addproppmtct, 'Added new parameter -- proportion on PMTCT'),
-        '2.0.4': ('2.1',   '2016-09-12', redotransitions, 'Major update to how transitions in health states are handled'),
-        '2.1':   ('2.1.1', '2016-10-02', makepropsopt, 'Removed data on proportion parameters'),
-        '2.1.1': ('2.1.2', '2016-10-05', addalleverincare, 'Included new setting to store everyone in care'),
-        '2.1.2': ('2.1.3', '2016-10-18', removenumcircdata, "Don't store data on number circumcised"),
-        '2.1.3': ('2.1.4', '2016-10-18', removepopcharacteristicsdata, "Don't store sex worker and injecting characteristics"),
-        '2.1.4': ('2.1.5', '2016-11-01', addaidsleavecare, 'Added new parameter -- AIDS leave care percentage'),
-        '2.1.5': ('2.1.6', '2016-11-01', addaidslinktocare, 'Added new parameter -- AIDS link to care duration'),
-        '2.1.6': ('2.1.7', '2016-11-03', adddataend, 'Separated dataend from end'),
-        '2.1.7': ('2.1.8', '2016-11-07', fixsettings, 'Added new attributes to settings'),
-        '2.1.8': ('2.1.9', '2016-12-22', addoptimscaling, 'Added a budget scaling parameter to optimizations'),
-        '2.1.9': ('2.1.10','2016-12-28', addpropsandcosttx, 'Added treatment cost parameter'),
-        '2.1.10':('2.2',   '2017-01-13', redoparameters, 'Updated the way parameters are handled'),
-        '2.2':   ('2.2.1', '2017-02-01', redovlmon, 'Updated the VL monitoring parameter'),
-        '2.2.1': ('2.2.2', '2017-02-01', addprojectinfotoresults, 'Stored information about the proect in the results'),
-        '2.2.2': ('2.3',   '2017-02-09', redoparameterattributes, 'Updated parameter attributes'),
-        '2.3':   ('2.3.1', '2017-02-15', removespreadsheet, "Don't store the spreadsheet with the project, to save space"),
-        '2.3.1': ('2.3.2', '2017-03-01', addagetopars, 'Ensured that age is stored in parsets'),
-        '2.3.2': ('2.3.3', '2017-03-02', redotranstable, 'Split transition table into two tables to speed processing'),
-        '2.3.3': ('2.3.4', '2017-03-30', redotranstable, 'Added aditional fixes to the transition table'),
-        '2.3.4': ('2.3.5', '2017-04-18', None, 'Added migrations for portfolios'),
-        '2.3.5': ('2.3.6', '2017-04-21', None, 'Fixed PMTCT calculations'),
-        '2.3.6': ('2.3.7', '2017-05-13', None, 'Changed plotting syntax'),
-        #'2.2': redoprograms,
-        }
-    migrations = op.odict(migrations) # Convert to odict
-    migrations.sort() # Make sure it's ordered
-    
-    # Define changelog
-    changelog = op.odict()
-    for ver,date,migrator,msg in migrations.values():
-        changelog.append(ver,date+' | '+msg)
-    
-    # Return the migrations structure, unless the changelog is specifically requested
-    if which=='changelog': return changelog
-    else:                  return migrations
-
 
 def migrate(project, verbose=2, die=False):
     """

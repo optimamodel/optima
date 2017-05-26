@@ -209,6 +209,32 @@
     }
   }
 
+  &.__black {
+    background: #000;
+    border-color: #000;
+    color: #FFF;
+
+    &:hover:not(:disabled) {
+      background: #555555;
+      border-color: #555555;
+      color: #FFF;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #999999;
+      border-color: #999999;
+      color: #FFF;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: lighten(#bbbbbb, 5%);
+      border-color: #bbbbbb;
+      color: #FFF;
+    }
+  }
+
   // ### Misc.
 
   &.__block {

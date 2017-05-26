@@ -195,16 +195,14 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         except: 
             errormsg = label + 'Cannot divide by the number of PWID (numost=%f, numpwid=5f' % (numost, numpwid)
             if die: raise OptimaException(errormsg)
-            else: 
-                printv(errormsg, 1, verbose)
-                ostprev = zeros(npts) # Reset to zero
+            else:   printv(errormsg, 1, verbose)
+            ostprev = zeros(npts) # Reset to zero
     else: # No one injects
         if numost.sum(): 
             errormsg = label + 'You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject'
             if die: raise OptimaException(errormsg)
-            else: 
-                printv(errormsg, 1, verbose)
-                ostprev = zeros(npts)
+            else:   printv(errormsg, 1, verbose)
+            ostprev = zeros(npts)
         else: # No one on OST
             ostprev = zeros(npts)
     
@@ -328,10 +326,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     if initpeople is not None:
         initpeople = squeeze(initpeople)
         if debug and initpeople.shape != (nstates, npops):
-            initpeople = None
             errormsg = label + 'Wrong shape of init distribution: should be (%i, %i) but is %s' % (nstates, npops, initpeople.shape)
             if die: raise OptimaException(errormsg)
             else:   printv(errormsg, 1, verbose)
+            initpeople = None
                 
                 
     
@@ -346,10 +344,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         else:                fractotal = zeros(npops) # If there's no one infected, reset to 0
         treatment = initnumtx * fractotal # Number of people on 1st-line treatment
         if debug and any(treatment>allinfected): # More people on treatment than ever infected
-            treatment = maximum(allinfected, treatment)
             errormsg = label + 'More people on treatment (%f) than infected (%f)!' % (treatment, allinfected)
             if die: raise OptimaException(errormsg)
             else:   printv(errormsg, 1, verbose)
+            treatment = maximum(allinfected, treatment)
                 
         treatment = initnumtx * fractotal # Number of people on 1st-line treatment
         nevertreated = allinfected - treatment
@@ -394,10 +392,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         initpeople[lost, :]        = initlost
 
     if debug and not(initpeople.all()>=0): # If not every element is a real number >0, throw an error
-        initpeople[initpeople<0] = 0.0
         errormsg = label + 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
         if die: raise OptimaException(errormsg)
         else:   printv(errormsg, 1, verbose)
+        initpeople[initpeople<0] = 0.0
             
             
             
@@ -422,10 +420,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             elif simpars['cond'+act].get((key[1],key[0])) is not None:
                 condkey = simpars['cond'+act][(key[1],key[0])]
             else:
-                condkey = 0.0
                 errormsg = label + 'Cannot find condom use between "%s" and "%s", assuming there is none.' % (key[0], key[1]) # NB, this might not be the most reasonable assumption
                 if die: raise OptimaException(errormsg)
                 else:   printv(errormsg, 1, verbose)
+                condkey = 0.0
                     
                     
                 
@@ -445,10 +443,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             # Error checking
             for key in ['wholeacts', 'fracacts', 'cond']:
                 if debug and not(all(this[key]>=0)):
-                    this[key][this[key]<0] = 0.0 # Reset values
                     errormsg = label + 'Invalid sexual behavior parameter "%s": values are:\n%s' % (key, this[key])
                     if die: raise OptimaException(errormsg)
                     else:   printv(errormsg, 1, verbose)
+                    this[key][this[key]<0] = 0.0 # Reset values
                         
     # Injection
     for key in simpars['actsinj']:
@@ -487,10 +485,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
-                            people[errstate,errpop,t] = 0.0 # Reset
                             errormsg = label + 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t])
                             if die: raise OptimaException(errormsg)
                             else:   printv(errormsg, 1, verbose=verbose)
+                            people[errstate,errpop,t] = 0.0 # Reset
                                 
                 
 
@@ -521,10 +519,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 
         effallprev = einsum('i,ij->ij',alltrans,people[:,:,t]) / allpeople[:,t]                            
         if debug and not((effallprev[:,:]>=0).all()): 
-            effallprev = minimum(effallprev,eps)
             errormsg = label + 'HIV prevalence invalid at time %s' % (t)
             if die: raise OptimaException(errormsg)
             else:   printv(errormsg, 1, verbose)
+            effallprev = minimum(effallprev,eps)
                 
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         thisprev = people[allplhiv,:,t].sum(axis=0) / allpeople[:,t] 
@@ -569,6 +567,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Probability of getting infected is one minus forceinffull times any scaling factors
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
+        infections_to = minimum(infections_to, 1.0-eps-background[:,t].max()) # Make sure it never exceeds the limit
 
         # Add these transition probabilities to the main array
         si = susreg[0] # susreg is a single element, but needs an index since can't index a list with an array
@@ -742,10 +741,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for p1,p2,thisagetransprob in agetransitlist:
                 peopleleaving = people[:, p1, t+1] * thisagetransprob
                 if debug and (peopleleaving > people[:, p1, t+1]).any():
-                    peopleleaving = minimum(peopleleaving, people[:, p1, t]) # Ensure positive  
                     errormsg = label + 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
                     if die: raise OptimaException(errormsg)
                     else:   printv(errormsg, 1, verbose)
+                    peopleleaving = minimum(peopleleaving, people[:, p1, t]) # Ensure positive  
                         
                                            
                 people[:, p1, t+1] -= peopleleaving # Take away from pop1...
@@ -902,7 +901,7 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     Version: 2016jan23 by cliffk    
     '''
     if settings is None:
-        try: settings = project.settings 
+        try:    settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
     if label is None:
         try: label = project.name
