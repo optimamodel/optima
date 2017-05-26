@@ -395,6 +395,30 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     return None
 
 
+def printtologfile(message=None, filename=None):
+    '''
+    Append a message string to a file specified by a filename name/path.  This 
+    is especially useful for capturing information from spawned processes not 
+    so handily captured through print statements.
+    Warning: If you pass a file in, existing or not, it will try to append
+    text to it!
+    '''
+    
+    # Set defaults
+    if message is None:  
+        return None # Return immediately if nothing to append
+    if filename is None: 
+        filename = '/tmp/logfile' # Some generic filename that should work on *nix systems
+    
+    # Try writing to file
+    try:
+        with open(filename, 'a') as f:
+            f.write('\n'+message+'\n') # Add a newline to the message.
+    except: # Fail gracefully
+        print('WARNING, could not write to logfile %s' % filename)
+    
+    return None
+    
 ##############################################################################
 ### TYPE FUNCTIONS
 ##############################################################################
@@ -796,26 +820,51 @@ def vec2obj(orig=None, newvec=None, inds=None):
 def tic():
     '''
     A little pair of functions to calculate a time difference, sort of like Matlab:
-    t = tic()
-    toc(t)
+    tic() [but you can also use the form t = tic()]
+    toc() [but you can also use the form toc(t) where to is the output of tic()]
     '''
+    global tictime  # The saved time is stored in this global.    
     from time import time
-    return time()
+    tictime = time()  # Store the present time in the global.
+    return tictime    # Return the same stored number.
 
 
 
-def toc(start=0, label='', sigfigs=3):
+def toc(start=None, label=None, sigfigs=None, filename=None, output=False):
     '''
     A little pair of functions to calculate a time difference, sort of like Matlab:
-    t = tic()
-    toc(t)
-    '''
+    tic() [but you can also use the form t = tic()]
+    toc() [but you can also use the form toc(t) where to is the output of tic()]
+    '''   
     from time import time
+    
+    # Set defaults
+    if label   is None: label = ''
+    if sigfigs is None: sigfigs = 3
+    
+    # If no start value is passed in, try to grab the global tictime.
+    if start is None:
+        try:    start = tictime
+        except: start = 0 # This doesn't exist, so just leave start at 0.
+            
+    # Get the elapsed time in seconds.
     elapsed = time() - start
+    
+    # Create the message giving the elapsed time.
     if label=='': base = 'Elapsed time: '
-    else: base = 'Elapsed time for %s: ' % label
-    print(base + '%s s' % sigfig(elapsed, sigfigs=sigfigs))
-    return None
+    else:         base = 'Elapsed time for %s: ' % label
+    logmessage = base + '%s s' % sigfig(elapsed, sigfigs=sigfigs)
+    
+    # If we passed in a filename, append the message to that file.
+    if filename is not None:
+        printtologfile(logmessage, filename)
+        
+    # Otherwise, print the message.
+    else:
+        print(logmessage)
+        
+    if output: return elapsed
+    else:      return None
     
 
 

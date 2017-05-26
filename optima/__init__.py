@@ -31,7 +31,7 @@ Now, the legal part:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2017may23 by cliffk
+Version: 2017may27
 """
 
 
@@ -58,7 +58,7 @@ from copy import deepcopy as dcp
 from .utils import blank, boxoff, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr
 from .utils import drprint, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable
 from .utils import Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr
-from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printv
+from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printv, printtologfile
 from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio
 from .utils import sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj
 import utils as _utils; del utils
