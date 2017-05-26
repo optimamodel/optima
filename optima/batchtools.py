@@ -9,7 +9,7 @@ http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
 Version: 2017mar17
 """
 
-from optima import loadproj, loadbalancer, printv, getfilelist, dcp, odict, outcomecalc
+from optima import loadproj, loadbalancer, printv, getfilelist, dcp, odict, outcomecalc, tic, toc
 from numpy import empty, inf
 try: from multiprocessing import Process, Queue
 except: Process, Queue = None, None # OK to skip these if batch is False
@@ -112,6 +112,9 @@ def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqu
         for project in projects.values():
             project.save(filename=project.filename)
     
+    # Print any warnings, if they exist
+    for project in projects.values(): project.getwarnings() 
+    
     return projects
 
 
@@ -119,15 +122,16 @@ def tidyup(projects=None, batch=None, fromfolder=None, outputlist=None, outputqu
 ### The meat of the matter -- batch functions and their tasks
 ####################################################################################################
 
-def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5, batch=True):
+def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, verbose=2, maxload=0.5, batch=True, randseed=None):
     ''' Perform batch autofitting '''
     
     # Praeludium
+    starttime = tic()
     projects, nprojects, fromfolder = getprojects(projects, folder, verbose) # If no projects supplied, load them from the folder
     outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
 
     for i,project in enumerate(projects.values()):
-        args = (project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch)
+        args = (project, i, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch, randseed)
         if batch:
             prc = Process(target=autofit_task, args=args)
             prc.start()
@@ -137,11 +141,12 @@ def batchautofit(folder=None, projects=None, name=None, fitwhat=None, fitto='pre
     
     # Encore
     projects = tidyup(projects=projects, batch=batch, fromfolder=fromfolder, outputlist=outputlist, outputqueue=outputqueue, processes=processes)
+    toc(starttime, 'batchautofit')
     
     return projects
 
 
-def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch):
+def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxiters, verbose, maxload, batch, randseed):
     """Kick off the autofit task for a given project file."""
     
     # Standard opening
@@ -149,7 +154,11 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
     printv('Running autofitting on %s...' % project.name, 2, verbose)
     
     # The meat
-    project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose)
+    try:
+        project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed)
+    except Exception as E:
+        project.addwarning('Exception: batchautofit() failed for %s: %s' % (project.name, E.__repr__()))
+        project.getwarnings()
     
     # Standardized close
     print('...done.')
@@ -162,7 +171,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
 
 def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None):
     """
     Perform batch BOC calculation.
 
@@ -210,10 +219,12 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         die - whether to crash or give a warning if something goes wrong
         recalculate - whether to calculate BOCs for projects that already have BOCs
         strict - whether to recalculate BOCs for projects that have non-matching BOCs
+        randseed - the random seed to use for the calculations
         
     """
     
     # Praeludium
+    starttime = tic()
     projects, nprojects, fromfolder = getprojects(projects, folder, verbose) # If no projects supplied, load them from the folder
     outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
     
@@ -223,7 +234,7 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
         prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
         args = (project, i, outputqueue, budgetratios, name, parsetname, progsetname, prjobjectives, 
                 prjconstraints, maxiters, maxtime, verbose, stoppingfunc, maxload, interval, 
-                prerun, batch, mc, die, recalculate, strict)
+                prerun, batch, mc, die, recalculate, strict, randseed)
         if batch:
             prc = Process(target=boc_task, args=args)
             prc.start()
@@ -233,12 +244,13 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
     
     # Encore
     projects = tidyup(projects=projects, batch=batch, fromfolder=fromfolder, outputlist=outputlist, outputqueue=outputqueue, processes=processes)
+    toc(starttime, label='batchBOC')
     
     return projects
 
 
 def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints, maxiters, 
-             maxtime, verbose, stoppingfunc, maxload, interval, prerun, batch, mc, die, recalculate, strict):
+             maxtime, verbose, stoppingfunc, maxload, interval, prerun, batch, mc, die, recalculate, strict, randseed):
     
     # Custom opening
     if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
@@ -260,10 +272,15 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
     if not recalculate: # If we're not recalculating BOCs, check to see if this project already has one
         boc = project.getBOC(objectives=objectives, strict=strict, verbose=verbose)
     if recalculate or boc is None: # Only run if requested or if a BOC can't be found -- otherwise, skip and return immediately
-        project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
-                       progsetname=progsetname, objectives=objectives, 
-                       constraints=constraints, maxiters=maxiters, maxtime=maxtime,
-                       verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die)
+        if randseed is not None: randseed += (ind+1)*(2**9-1) # Just perturb it so we don't get repeats
+        try:
+            project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
+                           progsetname=progsetname, objectives=objectives, 
+                           constraints=constraints, maxiters=maxiters, maxtime=maxtime,
+                           verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die, randseed=randseed)
+        except Exception as E:
+            project.addwarning('Exception: batchBOC() failed for %s: %s' % (project.name, E.__repr__()))
+            project.getwarnings()
     
     # Standardized close
     print('...done.')
@@ -275,10 +292,11 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
 
 
 
-def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2):
-    ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
+def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2, randseed=None):
+    ''' Runs final optimisations for initbudgets and optbudgets so as to summarize GA optimization '''
     
     printv('Reoptimizing portfolio projects...', 2, verbose)
+    starttime = tic()
     resultpairs = odict()
     if batch:
         outputqueue = Queue()
@@ -286,7 +304,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
     else:
         outputqueue = None
     for pind,project in enumerate(projects.values()):
-        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose)
+        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed)
         if batch:
             prc = Process(target=reoptimizeprojects_task, args=args)
             prc.start()
@@ -300,13 +318,17 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
             resultpairs[resultpair['key']] = resultpair
         for prc in processes:
             prc.join()
+        
+    # Print any warnings, if they exist
+    for project in projects.values(): project.getwarnings() 
     
     printv('Reoptimization complete', 2, verbose)
+    toc(starttime, label='reoptimizeprojects')
     
-    return resultpairs      
+    return resultpairs
         
 
-def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose):
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed):
     """Batch function for final re-optimization step of geospatial analysis."""
     if batch: loadbalancer(index=pind, maxload=maxload, interval=interval, label=project.name)
     
@@ -334,7 +356,8 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     optimargs = {'label':project.name,
                  'maxtime': maxtime,
                  'maxiters': maxiters,
-                 'mc':mc}
+                 'mc':mc,
+                 'randseed':randseed}
 
     # Run the analyses
     resultpair = odict()
@@ -347,16 +370,20 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     resultpair['init'] = outcomecalc(**outcalcargs)
     
     # Optimal spending -- reoptimize
-    if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
-    else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)
-    sharedargs['origbudget'] = closestbudget
-    sharedargs['objectives']['budget'] = totalbudget
-    optimargs.update(sharedargs)
-    if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
-    else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
-    resultpair['init'].name = project.name+' GA initial'
-    resultpair['opt'].name = project.name+' GA optimal'
-    resultpair['key'] = project.name # Store the project name to avoid mix-ups
+    try:
+        if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
+        else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)
+        sharedargs['origbudget'] = closestbudget
+        sharedargs['objectives']['budget'] = totalbudget
+        optimargs.update(sharedargs)
+        if totalbudget: resultpair['opt'] = project.optimize(**optimargs)
+        else:           resultpair['opt'] = outcomecalc(**outcalcargs) # Just calculate the outcome
+        resultpair['init'].name = project.name+' GA initial'
+        resultpair['opt'].name = project.name+' GA optimal'
+        resultpair['key'] = project.name # Store the project name to avoid mix-ups
+    except Exception as E:
+        project.addwarning('Exception: reoptimizeprojects() failed for %s: %s' % (project.name, E.__repr__()))
+        project.getwarnings()
     
     if batch: 
         outputqueue.put(resultpair)

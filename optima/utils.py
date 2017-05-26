@@ -26,8 +26,8 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     if thisverbose>4 or verbose>4: print('Warning, verbosity should be from 0-4 (this message: %i; current: %i)' % (thisverbose, verbose))
     if verbose>=thisverbose: # Only print if sufficiently verbose
         indents = '  '*thisverbose*bool(indent) # Create automatic indenting
-        if newline: print(indents+str(string)) # Actually print
-        else: print(indents+str(string)), # Actually print
+        if newline: print(indents+flexstr(string)) # Actually print
+        else: print(indents+flexstr(string)), # Actually print
     return None
 
 
@@ -69,7 +69,8 @@ def objatt(obj, strlen = 18, ncol = 3):
 def objmeth(obj, strlen = 18, ncol = 3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
-    return createcollist(oldkeys, 'Methods', strlen = 18, ncol = 3)
+    output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
+    return output
 
 
 def objrepr(obj, showid=True, showmeth=True, showatt=True):
@@ -88,21 +89,28 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def defaultrepr(obj, maxlen=300):
+def defaultrepr(obj, maxlen=None):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
+    if maxlen is None: maxlen = 300
     keys = sorted(obj.__dict__.keys()) # Get the attribute keys
     maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
     if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
     output  = objrepr(obj, showatt=False) # Get the methods
     for key in keys: # Loop over each attribute
-        thisattr = str(getattr(obj, key)) # Get the string representation of the attribute
+        thisattr = flexstr(getattr(obj, key)) # Get the string representation of the attribute
         if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]' # Shorten it
         prefix = formatstr%key + ': ' # The format key
         output += indent(prefix, thisattr)
     output += '============================================================\n'
 
     return output
+
+
+def drprint(obj, maxlen=None):
+    ''' Shortcut for printing the default repr for an object '''
+    print(defaultrepr(obj, maxlen=maxlen))
+    return None
 
     
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
@@ -135,7 +143,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     
     # Get text in the right format -- i.e. a string
     if pretty: text = pformat(text)
-    else:      text = str(text)
+    else:      text = flexstr(text)
 
     # If there is no newline in the text, process the output normally.
     if text.find('\n') == -1:
@@ -189,7 +197,7 @@ def sigfig(X, sigfigs=5, SI=False):
             if x==0:
                 output.append('0')
             elif sigfigs is None:
-                output.append(str(x)+suffix)
+                output.append(flexstr(x)+suffix)
             else:
                 magnitude = floor(log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
@@ -201,7 +209,7 @@ def sigfig(X, sigfigs=5, SI=False):
                 string += suffix
                 output.append(string)
         except:
-            output.append(str(x))
+            output.append(flexstr(x))
     if islist:
         return tuple(output)
     else:
@@ -258,12 +266,12 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         if datatype==dict: string = ('dict with %i keys' % len(data.keys()))
         elif datatype==list: string = ('list of length %i' % len(data))
         elif datatype==tuple: string = ('tuple of length %i' % len(data))
-        elif datatype==ndarray: string = ('array of shape %s' % str(shape(data)))
+        elif datatype==ndarray: string = ('array of shape %s' % flexstr(shape(data)))
         elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
         elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
         else: string = datatype.__name__
         if showcontents and maxlen>0:
-            datastring = ' | '+str(data)
+            datastring = ' | '+flexstr(data)
             if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
         else: datastring=''
         return string+datastring
@@ -391,6 +399,12 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
 ### TYPE FUNCTIONS
 ##############################################################################
 
+def flexstr(arg):
+    ''' Try converting to a regular string, but try unicode if it fails '''
+    try:    output = str(arg)
+    except: output = unicode(arg)
+    return  output
+
 
 def isiterable(obj):
     '''
@@ -478,7 +492,7 @@ def promotetoarray(x):
         else: 
             return array([x]) # e.g. array(3)
     else: # e.g. 'foo'
-        raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
+        raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % flexstr(x))
 
 
 def promotetolist(obj=None, objtype=None):
@@ -965,7 +979,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     
     # Set up processes to start asynchronously
     if maxload is None: maxload = 0.5
-    if interval is None: interval = 10.0
+    if interval is None: interval = 5.0
     if maxtime is None: maxtime = 3600
     if label is None: label = ''
     else: label += ': '
@@ -1018,8 +1032,8 @@ def gitinfo(die=False):
         try: # Try using git-python instead -- most users probably won't have
             import git
             repo = git.Repo(path=rootdir, search_parent_directories=True)
-            gitbranch = str(repo.active_branch.name) # Just make sure it's a string
-            gitversion = str(repo.head.object.hexsha) # Unicode by default
+            gitbranch = flexstr(repo.active_branch.name) # Just make sure it's a string
+            gitversion = flexstr(repo.head.object.hexsha) # Unicode by default
         except: # Failure? Give up
             gitbranch = 'Git branch information not retrivable'
             gitversion = 'Git version information not retrivable'
@@ -1045,7 +1059,7 @@ def compareversions(version1=None, version2=None):
         raise Exception('Must supply both versions as strings')
     versions = [version1, version2]
     for i in range(2):
-        versions[i] = array(str(versions[i]).split('.'), dtype=float) # Convert to array of numbers
+        versions[i] = array(flexstr(versions[i]).split('.'), dtype=float) # Convert to array of numbers
     maxlen = max(len(versions[0]), len(versions[1]))
     versionsarr = zeros((2,maxlen))
     for i in range(2):
@@ -1058,6 +1072,26 @@ def compareversions(version1=None, version2=None):
         raise Exception('Failed to compare %s and %s' % (version1, version2))
 
 
+
+def boxoff(ax=None, removeticks=True, flipticks=True):
+    '''
+    I don't know why there isn't already a Matplotlib command for this.
+    
+    Removes the top and right borders of a plot. Also optionally removs
+    the tick marks, and flips the remaining ones outside.
+
+    Version: 2017may22    
+    '''
+    from pylab import gca
+    if ax is None: ax = gca()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    if removeticks:
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
+    if flipticks:
+        ax.tick_params(direction='out', pad=5)
+    return ax
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
@@ -1179,7 +1213,7 @@ class odict(OrderedDict):
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
                     errormsg = E.__repr__()+'\n'
-                    errormsg += 'odict key "%s" not found; available keys are:\n%s' % (str(key), '\n'.join([str(k) for k in self.keys()]))
+                    errormsg += 'odict key "%s" not found; available keys are:\n%s' % (flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
@@ -1267,13 +1301,13 @@ class odict(OrderedDict):
             valstrs = [] # Start with an empty list which we'll save value strings in.
             vallinecounts = [] # Start with an empty list which we'll save line counts in.
             for i in range(len(self)): # Loop over the dictionary values
-                thiskeystr = str(self.keys()[i]) # Grab a str representation of the current key.  
+                thiskeystr = flexstr(self.keys()[i]) # Grab a str representation of the current key.  
                 thisval = self.values()[i] # Grab the current value.
                                 
                 # If it's another odict, make a call increasing the recurselevel 
                 # and passing the same parameters we received.
                 if isinstance(thisval, odict):
-                    thisvalstr = str(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
+                    thisvalstr = flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
                         dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1))
                 else: # Otherwise, do the normal __repr__() read.
                     thisvalstr = thisval.__repr__()
@@ -1340,6 +1374,30 @@ class odict(OrderedDict):
             numindents=numindents, recurselevel=0))
     
     
+    def export(self, doprint=True):
+        ''' Export the odict in a form that is valid Python code '''
+        start = 'odict(['
+        end = '])'
+        output = start
+        
+        for key in self.keys():
+            output += '('+key.__repr__()
+            output += ', '
+            child = self.get(key)
+            if isinstance(child, odict):
+                output += child.export(doprint=False) # Handle nested odicts -- WARNING, can't doesn't work for e.g. lists of odicts!
+            else:
+                output += child.__repr__()
+            output += '), '
+        
+        output += end
+        if doprint:
+            print(output)
+            return None
+        else:
+            return output
+    
+    
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, basestring):
@@ -1369,8 +1427,8 @@ class odict(OrderedDict):
                 return OrderedDict.pop(self, key, *args, **kwargs)
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
-                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
-                        '\n'.join([str(k) for k in self.keys()]))
+                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (flexstr(key), 
+                        '\n'.join([flexstr(k) for k in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
     
@@ -1392,7 +1450,7 @@ class odict(OrderedDict):
             value = key
             needkey = True
         if key is None or needkey:
-            keyname = 'key'+str(len(self))  # Define the key just to be the current index
+            keyname = 'key'+flexstr(len(self))  # Define the key just to be the current index
         else:
             keyname = key
         self.__setitem__(keyname, value)
@@ -1415,7 +1473,7 @@ class odict(OrderedDict):
         realpos, realkey, realvalue = pos, key, value
         if key is None and value is None: # Assume it's called like odict.insert(666)
             realvalue = pos
-            realkey = 'key'+str(len(self))
+            realkey = 'key'+flexstr(len(self))
             realpos = 0
         elif value is None: # Assume it's called like odict.insert('devil', 666)
             realvalue = key
@@ -1454,10 +1512,9 @@ class odict(OrderedDict):
         if isinstance(oldkey, Number): 
             index = oldkey
             keystr = self.keys()[index]
-        elif isinstance(oldkey, basestring): 
+        else: # Forge ahead for strings and anything else!
             index = self.keys().index(oldkey)
             keystr = oldkey
-        else: raise Exception('Key type not recognized: must be int or str')
         self.__setitem__(newkey, self.pop(keystr))
         if index<nkeys-1:
             for i in range(index+1, nkeys):
@@ -1569,7 +1626,7 @@ class dataframe(object):
                 maxlen = len(col) # Start with length of column name
                 if nrows:
                     for val in self.data[c,:]:
-                        output = str(val)
+                        output = flexstr(val)
                         maxlen = max(maxlen, len(output))
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
@@ -1586,7 +1643,7 @@ class dataframe(object):
             output += '\n'
             
             for ind in range(nrows): # WARNING, KLUDGY
-                output += indformat % str(ind)
+                output += indformat % flexstr(ind)
                 for col in self.cols: # Print out data
                     output += outputformats[col] % outputlist[col][ind]
                 output += '\n'

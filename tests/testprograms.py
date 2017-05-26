@@ -79,7 +79,7 @@ if 'demonstrateprogrammethods' in tests:
     from optima import defaultproject
     P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
-    progs = P.progs()
+    progs = P.programs()
     HTC = progs['HTC']
 
     # 1. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
@@ -142,7 +142,7 @@ if 'demonstrateprogrammethods' in tests:
 if 'plotprogram' in tests:
     P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
-    progs = P.progs()
+    progs = P.programs()
     HTC = progs['HTC']
     caption = 'Spending data includes all HTC spending. Global Fund spending on HTC in 2012 was $40,245. '\
                   'In the reporting period, a total of 676 MARPs received HTC services, which makes a cumulative '\

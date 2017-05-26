@@ -107,6 +107,14 @@ class Project(object):
         info['parsetkeys'] = self.parsets.keys()
         info['progsetkeys'] = self.parsets.keys()
         return info
+    
+    
+    def addwarning(self, message=None, **kwargs):
+        ''' Add a warning to the project, which is printed when migrated or loaded '''
+        if not hasattr(self, 'warnings') or type(self.warnings)!=str: # If no warnings attribute, create it
+            self.warnings = ''
+        self.warnings += '\n'*3+str(message) # # Add this warning
+        return None
 
 
     def getwarnings(self, doprint=True):
@@ -280,8 +288,10 @@ class Project(object):
         return None
 
 
-    def copy(self, what=None, orig='default', new='copy', overwrite=True):
+    def copy(self, what=None, orig=None, new=None, overwrite=True):
         ''' Copy an entry in a structure list '''
+        if orig is None: orig = -1
+        if new  is None: new = 'new'
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
@@ -295,8 +305,10 @@ class Project(object):
         return None
 
 
-    def rename(self, what=None, orig='default', new='new', overwrite=True):
+    def rename(self, what=None, orig=None, new=None, overwrite=True):
         ''' Rename an entry in a structure list '''
+        if orig is None: orig = -1
+        if new  is None: new = 'new'
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist.rename(oldkey=orig, newkey=new)
@@ -321,15 +333,25 @@ class Project(object):
     def rmoptim(self,    name=None): self.remove(what='optim',    name=name)
 
 
-    def copyparset(self,   orig='default', new='new', overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def copyprogset(self,  orig='default', new='new', overwrite=True): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def copyscen(self,     orig='default', new='new', overwrite=True): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def copyoptim(self,    orig='default', new='new', overwrite=True): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def copyparset(self,  orig=None, new=None, overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def copyprogset(self, orig=None, new=None, overwrite=True): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def copyscen(self,    orig=None, new=None, overwrite=True): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def copyoptim(self,   orig=None, new=None, overwrite=True): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def renameparset(self,   orig='default', new='new', overwrite=True): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def renameprogset(self,  orig='default', new='new', overwrite=True): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def renamescen(self,     orig='default', new='new', overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def renameoptim(self,    orig='default', new='new', overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def renameparset(self,  orig=None, new=None, overwrite=True): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def renameprogset(self, orig=None, new=None, overwrite=True): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def renamescen(self,    orig=None, new=None, overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def renameoptim(self,   orig=None, new=None, overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
+
+
+    def addscens(self, scenlist, overwrite=True): 
+        ''' Function to make it slightly easier to add scenarios all in one go '''
+        if overwrite: self.scens = odict() # Remove any existing scenarios
+        scenlist = promotetolist(scenlist) # Allow adding a single scenario
+        for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
+        self.modified = today()
+        return None
+
 
     def addresult(self, result=None, overwrite=True): 
         ''' Try adding result by name, but if no name, add by UID '''
@@ -360,14 +382,6 @@ class Project(object):
         for key,result in self.results.items():
             if type(result)!=BOC: self.results.pop(key)
         return None
-    
-    
-    def addscenlist(self, scenlist=None): 
-        ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
-        for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
-        self.modified = today()
-        return None
-    
     
     def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
@@ -441,29 +455,30 @@ class Project(object):
         return None
 
 
-    def pars(self, key=-1):
+    def pars(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars '''
-        return self.parsets[key].pars
+        try:    return self.parsets[key].pars
+        except: return printv('Warning, parameters dictionary not found!', 1, verbose) # Returns None
     
-    def progs(self, key=-1):
-        ''' Shortcut for getting the latest active set of programs, i.e. self.progsets[-1].programs '''
-        return self.progsets[key].programs
-    
-    def parset(self, key=-1):
+    def parset(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1] '''
-        return self.parsets[key]
+        try:    return self.parsets[key]
+        except: return printv('Warning, parameter set not found!', 1, verbose) # Returns None
     
-    def programs(self, key=-1):
+    def programs(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active set of programs '''
-        return self.progsets[key].programs
+        try:    return self.progsets[key].programs
+        except: return printv('Warning, programs not found!', 1, verbose) # Returns None
 
-    def progset(self, key=-1):
+    def progset(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active program set, i.e. self.progsets[-1]'''
-        return self.progsets[key]
+        try:    return self.progsets[key]
+        except: return printv('Warning, program set not found!', 1, verbose) # Returns None
     
-    def result(self, key=-1):
+    def result(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active results, i.e. self.results[-1]'''
-        return self.results[key]
+        try:    return self.results[key]
+        except: return printv('Warning, results set not found!', 1, verbose) # Returns None
 
 
     #######################################################################################################
@@ -527,10 +542,10 @@ class Project(object):
         return results
 
 
-    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, **kwargs):
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, randseed=None, **kwargs):
         ''' Function to perform automatic fitting '''
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot, **kwargs)
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, verbose=verbose, doplot=doplot, randseed=randseed, **kwargs)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
         keyname = self.addresult(result=results)
@@ -541,7 +556,7 @@ class Project(object):
     
     def runscenarios(self, scenlist=None, verbose=2, debug=False, **kwargs):
         ''' Function to run scenarios '''
-        if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
+        if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
         multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
         self.addresult(result=multires)
         self.modified = today()
@@ -590,6 +605,7 @@ class Project(object):
         '''
         
         # Check inputs
+        if name is None: name = 'default'
         if optim is None:
             if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
@@ -622,7 +638,7 @@ class Project(object):
     #######################################################################################################
         
     def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
-               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, **kwargs):
+               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         boc = BOC(name='BOC '+self.name)
         if objectives is None:
@@ -645,11 +661,11 @@ class Project(object):
             budgetratios = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
         
         # Calculate the number of iterations
-        noptims = 1+(mc!=0)*3+max(mc,0) # Calculate the number of optimizations per BOC point
+        noptims = 1 + (mc!=0) + max(abs(mc),0) # Calculate the number of optimizations per BOC point
         nbocpts = len(budgetratios)
-        guessstalliters = 50  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
         guessmaxiters = maxiters if maxiters is not None else 1000
-        estminiters = noptims*nbocpts*guessstalliters
+        guessminiters = min(50, guessmaxiters)  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
+        estminiters = noptims*nbocpts*guessminiters
         estmaxiters = noptims*nbocpts*guessmaxiters
         printv('Generating BOC for %s for %0.0f-%0.0f with weights deaths=%0.1f, infections=%0.1f (est. %i-%i iterations)' % (self.name, objectives['start'], objectives['end'], objectives['deathweight'], objectives['inciweight'], estminiters, estmaxiters), 1, verbose)
         
@@ -667,7 +683,9 @@ class Project(object):
             key, ratio = budgetdict.items()[0] # Use first budget in the stack
             counts[key] += 1
             budget = ratio*sum(defaultbudget[:])
-            printv('Running budget %i/%i ($%0.0f)' % (sum(counts[:]), len(budgetdict)+sum(counts[:])-1, budget), 2, verbose)
+            thiscount = sum(counts[:])
+            totalcount = len(budgetdict)+sum(counts[:])-1
+            printv('Running budget %i/%i ($%0.0f)' % (thiscount, totalcount, budget), 2, verbose)
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             
@@ -677,10 +695,10 @@ class Project(object):
                 owbudget = tmpallocs[closest]
             else:
                 owbudget = None
-            label = self.name+' $%sm' % sigfig(budget/1e6, sigfigs=3)
+            label = self.name+' $%sm (%i/%i)' % (sigfig(budget/1e6, sigfigs=3), thiscount, totalcount)
             
             # Actually run
-            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, **kwargs)
+            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets['Optimal'])
             tmpoutcomes[key] = results.improvement[-1][-1]
@@ -710,6 +728,7 @@ class Project(object):
             boc.parsetname = parsetname
             boc.progsetname = progsetname
             boc.defaultbudget = dcp(defaultbudget)
+            boc.bocsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
             self.addresult(result=boc)
             self.modified = today()
         else:

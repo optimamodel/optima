@@ -4,7 +4,6 @@ from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argm
 from xlsxwriter import Workbook
 from xlsxwriter.utility import xl_rowcol_to_cell as rc
 from xlrd import open_workbook
-import os
 import re
 
 #######################################################################################################
@@ -120,27 +119,26 @@ class Portfolio(object):
     
     def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True):
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None):
         '''
         Just like genBOC, but run on each of the projects in the portfolio. See batchBOC() for explanation
         of kwargs.
         
-        Version: 2017mar17
+        Version: 2017may22
         '''
         
         # If objectives not supplied, use the ones from the portfolio
         if objectives is None: objectives = self.objectives
         
-        
         # All we need to do is run batchBOC on the portfolio's odict of projects
         self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
              constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict)
+             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict, randseed=randseed)
              
         return None
         
     
-    def runGA(self, grandtotal=None, objectives=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True, strict=True):
+    def runGA(self, grandtotal=None, objectives=None, npts=None, maxiters=None, maxtime=None, reoptimize=True, mc=None, batch=True, maxload=None, interval=None, doprint=True, export=False, outfile=None, verbose=2, die=True, strict=True, randseed=None):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         
         GAstart = tic()
@@ -168,7 +166,7 @@ class Portfolio(object):
         # If any BOCs failed, recalculate the ones that did     
         boclist, bocsvalid = gatherBOCs() # If die==True, this will crash if a BOC isn't found; otherwise, return False
         if not bocsvalid:
-            self.genBOCs(objectives=objectives, maxiters=maxiters, maxtime=maxtime, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, die=die, recalculate=False)
+            self.genBOCs(objectives=objectives, maxiters=maxiters, maxtime=maxtime, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, die=die, randseed=randseed, recalculate=False)
             boclist, bocsvalid = gatherBOCs() # Seems odd to repeat this here...
         
         # Get the grand total
@@ -275,7 +273,7 @@ class Portfolio(object):
         
         # Reoptimize projects
         if reoptimize: 
-            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose)
+            resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, randseed=randseed)
             self.results = resultpairs
         # Tidy up
         if doprint and self.results: self.makeoutput(doprint=True, verbose=verbose)
@@ -469,10 +467,19 @@ class Portfolio(object):
    
 
 
-def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None, copies=None, refyear=None, verbose=2):
-    ''' Create a geospatial spreadsheet template based on a project file '''
-    ''' copies - Number of low-level projects to subdivide a high-level project into (e.g. districts in nation) '''      
-    ''' refyear - Any year that exists in the high-level project calibration for which low-level project data exists '''    
+def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None, copies=None, refyear=None, verbose=2, names=None):
+    ''' 
+    Create a geospatial spreadsheet template based on a project file.
+    
+    Arguments:
+        project    -- base project to use
+        filename   -- output filename
+        folder     -- folder to use if not specified in filename
+        parsetname -- parset to take projections from
+        copies     -- optional argument specifying the number of regions
+        refyear    -- the reference year for the projections for population size and prevalence estimates
+        names      -- Optional list of names of regions; if supplied, len(names) overrides copies
+    '''
     
     # Load a project file and set defaults
     if project is None: raise OptimaException('No project loaded.')
@@ -484,7 +491,24 @@ def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None
     try:    results = project.parsets[parsetname].getresults()
     except: results = project.runsim(name=project.parsets[parsetname].name)
     
+    # Handle copies
+    if copies is None:
+        if names is not None: copies = len(names)
+        else:
+            errormsg = 'You must supply either a number of copies or a list of region names'
+            raise OptimaException(errormsg)
     copies = int(copies)
+    
+    # Handle names
+    if names is None:
+        names = []
+        for row in range(copies):
+            names.append('%s - region %i' % (project.name, row))
+    
+    # Handle reference year and other things
+    if copies!=len(names):
+        errormsg = 'Number of copies (%i) does not match number of named regions (%i)' % (copies, len(names))
+        raise OptimaException(errormsg)
     refyear = int(refyear)
     if not refyear in [int(x) for x in results.tvec]:
         errormsg = "Input not within range of years used by aggregate project's last stored calibration."
@@ -509,7 +533,7 @@ def makegeospreadsheet(project=None, filename=None, folder=None, parsetname=None
     row, col = 0, 0
     for row in range(copies+1):
         if row != 0:
-            wspopsize.write(row, col, '%s - region %i' % (project.name, row), bold)
+            wspopsize.write(row, col, names[row-1], bold)
             wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col), bold)
         for popname in project.data['pops']['short']:
             col += 1
