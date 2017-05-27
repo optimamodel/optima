@@ -40,11 +40,13 @@ interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for int
 
 
 
-def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, **kwargs):
+def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, fig=None, **kwargs):
     ''' Decide whether to make an interactive figure() or a non-interactive Figure()'''
-    if interactive:  fig = figure(facecolor=facecolor, figsize=figsize, **kwargs)
-    else:            fig = Figure(facecolor=facecolor, figsize=figsize, **kwargs)
-    return fig
+    if fig is None: # Create a new figure if one is not supplied
+        if interactive:  fig = figure(facecolor=facecolor, figsize=figsize, **kwargs)
+        else:            fig = Figure(facecolor=facecolor, figsize=figsize, **kwargs)
+    naxes = len(fig.axes)+1 # Count the number of existing axes
+    return fig, naxes
 
 
 def setposition(ax=None, position=None, interactive=False):
@@ -176,7 +178,7 @@ def getplotselections(results, advanced=False):
 
 
 
-def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=None, plotendyear=None, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=None, plotendyear=None, fig=None, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -196,13 +198,13 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     results = sanitizeresults(results)
-        
+    
     ## Add improvement plot
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'improvement') and results.improvement is not None: # WARNING, duplicated from getplotselections()
-                allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
+                allplots['improvement'] = plotimprovement(results, die=die, fig=fig, **kwargs)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot improvement: "%s"' % E.__repr__(), 1, verbose)
@@ -213,7 +215,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot.remove('budgets') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
-                budgetplots = plotbudget(results, die=die, **kwargs)
+                budgetplots = plotbudget(results, die=die, fig=fig, **kwargs)
                 allplots.update(budgetplots)
         except OptimaException as E: 
             if die: raise E
@@ -224,7 +226,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot.remove('coverage') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
-                coverageplots = plotcoverage(results, die=die, **kwargs)
+                coverageplots = plotcoverage(results, die=die, fig=fig, **kwargs)
                 allplots.update(coverageplots)
         except OptimaException as E: 
             if die: raise E
@@ -234,7 +236,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
         try: 
-            cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
+            cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
             allplots.update(cascadeplots)
         except OptimaException as E: 
             if die: raise E
@@ -245,7 +247,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     if 'deathbycd4' in toplot:
         toplot.remove('deathbycd4') # Because everything else is passed to plotepi()
         try: 
-            allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, **kwargs)
+            allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, fig=fig, **kwargs)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot deaths by CD4: "%s"' % E.__repr__(), 1, verbose)
@@ -255,14 +257,14 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     if 'plhivbycd4' in toplot:
         toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
         try: 
-            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, **kwargs)
+            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot PLHIV by CD4: "%s"' % E.__repr__(), 1, verbose)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
     allplots.update(epiplots)
     
     return allplots
@@ -273,7 +275,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, interactive=None, **kwargs):
+            legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, interactive=None, fig=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -404,8 +406,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
                 
-                epiplots[pk] = makefigure(figsize=figsize, interactive=interactive) # If it's anything other than HIV prevalence by population, create a single plot
-                ax = epiplots[pk].add_subplot(111)
+                epiplots[pk],naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig) # If it's anything other than HIV prevalence by population, create a single plot
+                ax = epiplots[pk].add_subplot(naxes, 1, naxes)
                 setposition(ax, position, interactive)
                 allydata = [] # Keep track of the lowest value in the data
     
@@ -535,7 +537,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, position=None, interactive=False, **kwargs):
+def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, position=None, interactive=False, fig=None, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -556,8 +558,8 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     # Set up figure and do plot
     sigfigs = 2 # Number of significant figures
-    fig = makefigure(figsize=figsize, interactive=interactive)
-    ax = fig.add_subplot(111)
+    fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+    ax = fig.add_subplot(naxes, 1, naxes)
     setposition(ax, position, interactive)
     colors = gridcolors(ncurves)
     
@@ -598,7 +600,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     
 def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
-               usepie=False, verbose=2, interactive=False, **kwargs):
+               usepie=False, verbose=2, interactive=False, fig=None, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -637,8 +639,8 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     # Make pie plots
     if usepie:
         for i in range(nallocs):
-            fig = makefigure(figsize=figsize, interactive=interactive)
-            ax = fig.add_subplot(111)
+            fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+            ax = fig.add_subplot(naxes, 1, naxes)
             setposition(ax, position, interactive)
             
             # Make a pie
@@ -656,8 +658,8 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
       
     # Make bar plots
     else:
-        fig = makefigure(figsize=figsize, interactive=interactive)
-        ax = fig.add_subplot(111)
+        fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+        ax = fig.add_subplot(naxes, 1, naxes)
         if position == globalposition: # If defaults, reset
             position = dcp(position)
             position[0] = 0.25 # More room on left side for y-tick labels
@@ -708,7 +710,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 ##################################################################
     
     
-def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None, verbose=2, interactive=False, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None, verbose=2, interactive=False, fig=None, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -738,15 +740,15 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     
     for plt in range(nallocs):
         
-        fig = makefigure(figsize=figsize, interactive=interactive)
+        fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+        ax.append(fig.add_subplot(naxes, 1, naxes))
+        setposition(ax[-1], position, interactive)
+        ax[-1].hold(True)
         
         nprogs = nprogslist[plt]
         proglabels = progkeylists[plt]
         colors = gridcolors(nprogs)
         nbudgetyears = len(budgetyearstoplot[plt])
-        ax.append(fig.add_subplot(111))
-        setposition(ax[-1], position, interactive)
-        ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
             progdata = zeros(len(toplot[plt]))
@@ -806,8 +808,8 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ## Plot cascade
 ##################################################################
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
-                labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, 
-                useSIticks=True, showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, **kwargs):
+                labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
+                showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -846,8 +848,8 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         bottom = 0*results.tvec # Easy way of setting to 0...
         
         ## Do the plotting
-        fig = makefigure(facecolor=(1,1,1), figsize=figsize, interactive=interactive)
-        ax = fig.add_subplot(111)
+        fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+        ax = fig.add_subplot(naxes, 1, naxes)
         setposition(ax, position, interactive)
         for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: 
