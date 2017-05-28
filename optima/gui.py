@@ -136,17 +136,19 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    if advanced: cbapos = [0.05, 0.07, 0.9, 1.8] # cba="check box axes position": extra tall, for moving later
-    else:        cbapos = [0.10, 0.07, 0.8, 0.9]
+    xinit = 0.10
+    if advanced: cbapos = [0.05,  0.07, 0.9, 1.8] # cba="check box axes position": extra tall, for moving later
+    else:        cbapos = [xinit, 0.07, 0.8, 0.9]
     ypos = 0.02 # y-position of buttons
-    bwid = 0.12 # x-width of buttons
+    bwid = 0.14 # x-width of buttons
     bhei = 0.03 # y-height of buttons
+    sep  = 0.165 # Separation between buttons
     checkboxaxes = panelfig.add_axes(cbapos) # Create checkbox locations
-    updateaxes   = panelfig.add_axes([0.10, ypos, bwid, bhei]) # Create update button location
-    clearaxes    = panelfig.add_axes([0.27, ypos, bwid, bhei]) # Create clear button location
-    defaultsaxes = panelfig.add_axes([0.44, ypos, bwid, bhei]) # Create defaults button location
-    advancedaxes = panelfig.add_axes([0.61, ypos, bwid, bhei]) # Create defaults button location
-    closeaxes    = panelfig.add_axes([0.78, ypos, bwid, bhei]) # Create close button location
+    updateaxes   = panelfig.add_axes([xinit+0*sep, ypos, bwid, bhei]) # Create update button location
+    clearaxes    = panelfig.add_axes([xinit+1*sep, ypos, bwid, bhei]) # Create clear button location
+    defaultsaxes = panelfig.add_axes([xinit+2*sep, ypos, bwid, bhei]) # Create defaults button location
+    advancedaxes = panelfig.add_axes([xinit+3*sep, ypos, bwid, bhei]) # Create defaults button location
+    closeaxes    = panelfig.add_axes([xinit+4*sep, ypos, bwid, bhei]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     
     # Reformat the checkboxes
@@ -708,12 +710,16 @@ def defaultselections(event=None):
 
 def advancedselections(event=None):
     ''' Toggle advance doptions '''
-    global check, results, globaladvanced, plotfig, panelfig
+    global check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plotfig, panelfig, results, plotargs, globaladvanced
     globaladvanced = not(globaladvanced) # Toggle
-    closegui()
-    plotfig, panelfig = None, None
+    try:    close(plotfig) # These work better here than caling closegui() directly
+    except: pass
+    try:    close(panelfig)
+    except: pass
+    check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plotfig, panelfig, plotargs = [None]*10 # Clear the bejesus out of everything
     pygui(results, advanced=globaladvanced)
-    pause(0.2) # Without this, it doesn't work
+    print('Switching to/from advanced; if GUI hangs, press enter in console') # Unfortunately, this happens from time to time
+    pause(0.2) # Without this, it doesn't work...siiiigh
     return None
     
     
