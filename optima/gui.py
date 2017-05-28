@@ -57,23 +57,16 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     # Actually create plots
     if 'figsize' in kwargs: kwargs.pop('figsize', None)
     plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height), fig=fig, **kwargs)
-    nplots = len(plots)
-    nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
-    ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
+    naxes = 0
+    for p in range(len(plots)):
+        naxes += len(plots[p].axes)
+    nrows = int(ceil(sqrt(naxes)))  # Calculate rows and columns of subplots
+    ncols = nrows-1 if nrows*(nrows-1)>=naxes else nrows
+    count = 0
     for p in range(len(plots)): 
-        naxes = len(plots[p].axes)
-        if naxes==1: # Usual situation: just plot the normal axis
-            addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=p+1, present=True)
-        elif naxes>1: # Multiple axes, e.g. allocation bar plots -- have to do some maths to figure out where to put the plots
-            origrow = floor(p/ncols)
-            origcol = p%ncols # Column doesn't change
-            newnrows = nrows*naxes
-            newrowstart = naxes*origrow # e.g. 2 axes in 3rd row = 5th row in new system
-            for a in range(naxes):
-                thisrow = newrowstart+a # Increment rows
-                newp = ncols*thisrow + origcol # Calculate new row/column
-                addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1), present=True)
-        else: pass # Must have 0 length or something
+        for a in range(len(plots[p].axes)):
+            count += 1
+            addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=count, present=True)
     
     if wasinteractive: ion()
     show()
@@ -548,6 +541,9 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
 def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1, present=False):
     ''' Add a plot to an existing figure, and return original size '''
     if not present: thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+    print('hi', name, nrows, ncols, n)
+    from pylab import pause
+    pause(0.3)
     thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
     orig = thisplot.get_position() # get the original position 
     widthfactor = 0.9/ncols**(1/4.)
