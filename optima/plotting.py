@@ -135,7 +135,7 @@ def getplotselections(results, advanced=False):
     plotselections['keys'].append('cascade')
     plotselections['names'].append('Treatment cascade')
     
-#    ## Deaths by CD4
+#    ## Deaths by CD4 -- broken because no results.raw
 #    if advanced:
 #        plotselections['keys'].append('deathbycd4')
 #        plotselections['names'].append('Deaths by CD4')

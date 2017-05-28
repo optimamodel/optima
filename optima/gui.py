@@ -9,12 +9,12 @@ Version: 2017may27
 
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
-from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
-from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, draw
+from pylab import figure, close, floor, ion, ioff, isinteractive, ceil, array, show, pause
+from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 
-global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs, scrwid, scrhei  # For manualfit GUI
-if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs, scrwid, scrhei = [None]*20
+global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, closebutton, plotargs, scrwid, scrhei, globaladvanced  # For manualfit GUI
+if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, closebutton, plotargs, scrwid, scrhei, globaladvanced = [None]*22
 scrwid, scrhei = 24, 12 # Specify these here...if too large, should shrink anyway
 
 
@@ -99,12 +99,13 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     Version: 1.3 (2017feb07)
     '''
     
-    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results, plotargs
+    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results, plotargs, globaladvanced
     plotargs = kwargs # Reset global to match function input
     results = sanitizeresults(tmpresults)
+    globaladvanced = advanced
     
     ## Define options for selection
-    plotselections = getplotselections(results, advanced=advanced)
+    plotselections = getplotselections(results, advanced=globaladvanced)
     print(plotselections)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
@@ -127,7 +128,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
             errormsg += '%s\n' % tmptoplot
             errormsg += 'Available keys are:\n'
             errormsg += '%s' % checkboxes
-            if not advanced: errormsg += 'Set advanced=True for more options'
+            if not globaladvanced: errormsg += 'Set advanced=True for more options'
             printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
@@ -135,10 +136,11 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    checkboxaxes = axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
-    updateaxes   = axes([0.1, 0.02, 0.2, 0.03]) # Create update button location
-    clearaxes    = axes([0.4, 0.02, 0.2, 0.03]) # Create close button location
-    closeaxes    = axes([0.7, 0.02, 0.2, 0.03]) # Create close button location
+    checkboxaxes = panelfig.add_axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
+    updateaxes   = panelfig.add_axes([0.1, 0.02, 0.15, 0.03]) # Create update button location
+    clearaxes    = panelfig.add_axes([0.3, 0.02, 0.15, 0.03]) # Create close button location
+    defaultsaxes = panelfig.add_axes([0.5, 0.02, 0.15, 0.03]) # Create defaults button location
+    closeaxes    = panelfig.add_axes([0.7, 0.02, 0.15, 0.03]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     
     # Reformat the checkboxes
@@ -155,13 +157,16 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
         elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
         else:                             label.set_weight('bold')
     
-    updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
-    clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
-    closebutton    = Button(closeaxes,    'Close', color=fc) # Make button pretty and blue
+    updatebutton   = Button(updateaxes,   'Update',   color=fc) # Make button pretty and blue
+    clearbutton    = Button(clearaxes,    'Clear',    color=fc) # Make button pretty and blue
+    defaultsbutton = Button(defaultsaxes, 'Defaults', color=fc) # Make button pretty and blue
+    closebutton    = Button(closeaxes,    'Close',    color=fc) # Make button pretty and blue
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     clearbutton.on_clicked(clearselections) # Clear all checkboxes
+    defaultsbutton.on_clicked(defaultselections) # Return to default selections
     closebutton.on_clicked(closegui) # Close figures
     updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
+    return check
 
 
 
@@ -182,7 +187,8 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     '''
     
     ## Random housekeeping
-    global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
+    global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, globaladvanced
+    globaladvanced = advanced
     if figargs is None: figargs = dict()
     fig = figure(**figargs); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     ion() # We really need this here!
@@ -196,7 +202,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     tmppars = parset.pars
     origpars = dcp(tmppars)
     
-    mflists = parset.manualfitlists(parsubset=parsubset, advanced=advanced)
+    mflists = parset.manualfitlists(parsubset=parsubset, advanced=globaladvanced)
     fullkeylist    = mflists['keys']
     fullsubkeylist = mflists['subkeys']
     fulltypelist   = mflists['types']
@@ -645,6 +651,22 @@ def clearselections(event=None):
     for box in range(len(check.lines)):
         for i in [0,1]: check.lines[box][i].set_visible(False)
     updateplots()
+    return None
+
+
+def defaultselections(event=None):
+    ''' Reset to default options '''
+    print('hiiiiiii')
+    global plotfig, check, checkboxes, results, globaladvanced
+    plotselections = getplotselections(results, advanced=globaladvanced) # WARNING, assumes defaults don't change with advanced
+    for box,tf in enumerate(plotselections['defaults']):
+        print box,tf
+        if tf: # True if in defaults, false otherwise
+            for i in [0,1]: check.lines[box][i].set_visible(True) # Two lines...stupid
+        else:
+            for i in [0,1]: check.lines[box][i].set_visible(False)
+    updateplots()
+    print('ok')
     return None
     
     
