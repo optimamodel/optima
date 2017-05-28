@@ -10,7 +10,7 @@ Version: 2017may27
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
 from pylab import figure, close, floor, ion, ioff, isinteractive, axes, ceil, sqrt, array, show, pause
-from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
+from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title, draw
 from matplotlib.widgets import CheckButtons, Button
 
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton, plotargs, scrwid, scrhei  # For manualfit GUI
@@ -57,19 +57,27 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     # Actually create plots
     if 'figsize' in kwargs: kwargs.pop('figsize', None)
     plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height), fig=fig, **kwargs)
-    naxes = 0
-    for p in range(len(plots)):
-        naxes += len(plots[p].axes)
-    nrows = int(ceil(sqrt(naxes)))  # Calculate rows and columns of subplots
-    ncols = nrows-1 if nrows*(nrows-1)>=naxes else nrows
-    count = 0
-    for p in range(len(plots)): 
-        for a in range(len(plots[p].axes)):
-            count += 1
-            addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=count, present=True)
+    naxes = len(plots[0].axes) # If done interactively, they're all in the first plot
+    aspectratio = 1.5
+    nrows = 1
+    ncols = 1
+    while nrows*ncols < naxes:
+        if width/ncols/aspectratio > height/nrows: ncols += 1
+        else:                                     nrows += 1
+        print naxes, width, height, nrows, ncols, width/ncols/aspectratio, height/nrows
     
+#    nrows = int(ceil(sqrt(naxes)))  # Calculate rows and columns of subplots
+#    ncols = nrows-1 if nrows*(nrows-1)>=naxes else nrows
+    
+    # Adjust margins
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.85, top=0.95, wspace=0.9, hspace=0.7)
+    
+    for a,ax in enumerate(plots[-1].axes):
+        ax.change_geometry(nrows, ncols, a+1)
+
     if wasinteractive: ion()
     show()
+    return plots, fig
 
 
 def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kwargs):
@@ -541,9 +549,6 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
 def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1, present=False):
     ''' Add a plot to an existing figure, and return original size '''
     if not present: thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
-    print('hi', name, nrows, ncols, n)
-    from pylab import pause
-    pause(0.3)
     thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
     orig = thisplot.get_position() # get the original position 
     widthfactor = 0.9/ncols**(1/4.)

@@ -199,6 +199,27 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     results = sanitizeresults(results)
     
+    ## Precalculate how many plots are required
+    toplotcount = dcp(toplot)
+    plotcount = 0
+    
+    # One-plot figures
+    for key in ['improvement', 'budgets']:
+        if key in toplotcount:
+            plotcount += 1
+            toplotcount.remove(key)
+    
+    # Count number of keys
+    if 'coverages' in toplotcount:
+        try:    
+            plotcount += len(results.coverages.keys())
+        except Exception as E: 
+            print('WARNING, coverages in plot list but could not calculate number of plots: %s' % E.__repr__())
+    
+    
+    
+    ## ADD PLOTS
+    
     ## Add improvement plot
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
