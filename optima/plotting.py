@@ -202,26 +202,6 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     results = sanitizeresults(results)
     
-    ## Precalculate how many plots are required
-    toplotcount = dcp(toplot)
-    plotcount = 0
-    
-    # One-plot figures
-    for key in ['improvement', 'budgets']:
-        if key in toplotcount:
-            plotcount += 1
-            toplotcount.remove(key)
-    
-    # Count number of keys
-    if 'coverages' in toplotcount:
-        try:    
-            plotcount += len(results.coverages.keys())
-        except Exception as E: 
-            print('WARNING, coverages in plot list but could not calculate number of plots: %s' % E.__repr__())
-    
-    
-    
-    ## ADD PLOTS
     
     ## Add improvement plot
     if 'improvement' in toplot:
@@ -232,7 +212,6 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot improvement: "%s"' % E.__repr__(), 1, verbose)
-        
     
     ## Add budget plot
     if 'budgets' in toplot:
@@ -266,8 +245,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
             if die: raise E
             else: printv('Could not plot cascade: "%s"' % E.__repr__(), 1, verbose)
     
-    
-    ## Add deaths by CD4 plot
+    ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
     if 'deathbycd4' in toplot:
         toplot.remove('deathbycd4') # Because everything else is passed to plotepi()
         try: 
@@ -276,8 +254,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
             if die: raise E
             else: printv('Could not plot deaths by CD4: "%s"' % E.__repr__(), 1, verbose)
     
-    
-    ## Add PLHIV by CD4 plot
+    ## Add PLHIV by CD4 plot -- WARNING, only available if results includes raw
     if 'plhivbycd4' in toplot:
         toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
         try: 
@@ -325,6 +302,14 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
         startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
         
         # Initialize
+        if toplot is None: # If toplot is None...
+            toplot = getdefaultplots(ismulti=ismultisim) # ...get defaults...
+            toremove = []
+            for key in toplot: # ...then loop over them...
+                if key.find('-')<0: 
+                    toremove.append(key) # ...and collect keys that don't look like epi plots
+            for key in toremove:
+                toplot.remove(key) # Remove keys that don't look like epi plots -- note, can't do this in one loop :(
         toplot = promotetolist(toplot) # If single value, put inside list
         epiplots = odict()
         colorsarg = dcp(colors) # This is annoying, but it gets overwritten later and need to preserve it here
@@ -344,7 +329,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 elif len(plotkeys)==1: # Otherwise, try to use the default
                     try: plottype = results.main[epikey].defaultplot # If it's just e.g. numplhiv, then use the default plotting type
                     except: 
-                        errormsg = 'Unable to retrieve default plot type (total/population/stacked); falling back on %s'% plottype
+                        errormsg = 'Unable to retrieve default plot type (total/population/stacked) for %s; falling back on %s'% (epikey,plottype)
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 2, verbose)
                 else: # Give up
