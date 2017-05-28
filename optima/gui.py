@@ -13,8 +13,8 @@ from pylab import figure, close, floor, ion, ioff, isinteractive, ceil, array, s
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 
-global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, closebutton, plotargs, scrwid, scrhei, globaladvanced  # For manualfit GUI
-if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, closebutton, plotargs, scrwid, scrhei, globaladvanced = [None]*22
+global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plotargs, scrwid, scrhei, globaladvanced  # For manualfit GUI
+if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plotargs, scrwid, scrhei, globaladvanced = [None]*23
 scrwid, scrhei = 24, 12 # Specify these here...if too large, should shrink anyway
 
 
@@ -99,7 +99,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     Version: 1.3 (2017feb07)
     '''
     
-    global check, checkboxes, updatebutton, clearbutton, defaultsbutton, closebutton, panelfig, results, plotargs, globaladvanced
+    global check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, panelfig, results, plotargs, globaladvanced
     plotargs = kwargs # Reset global to match function input
     results = sanitizeresults(tmpresults)
     globaladvanced = advanced
@@ -139,13 +139,14 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     if advanced: cbapos = [0.05, 0.07, 0.9, 1.8] # cba="check box axes position": extra tall, for moving later
     else:        cbapos = [0.10, 0.07, 0.8, 0.9]
     ypos = 0.02 # y-position of buttons
-    bwid = 0.15 # x-width of buttons
+    bwid = 0.12 # x-width of buttons
     bhei = 0.03 # y-height of buttons
     checkboxaxes = panelfig.add_axes(cbapos) # Create checkbox locations
     updateaxes   = panelfig.add_axes([0.10, ypos, bwid, bhei]) # Create update button location
-    clearaxes    = panelfig.add_axes([0.31, ypos, bwid, bhei]) # Create clear button location
-    defaultsaxes = panelfig.add_axes([0.54, ypos, bwid, bhei]) # Create defaults button location
-    closeaxes    = panelfig.add_axes([0.75, ypos, bwid, bhei]) # Create close button location
+    clearaxes    = panelfig.add_axes([0.27, ypos, bwid, bhei]) # Create clear button location
+    defaultsaxes = panelfig.add_axes([0.44, ypos, bwid, bhei]) # Create defaults button location
+    advancedaxes = panelfig.add_axes([0.61, ypos, bwid, bhei]) # Create defaults button location
+    closeaxes    = panelfig.add_axes([0.78, ypos, bwid, bhei]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     
     # Reformat the checkboxes
@@ -191,13 +192,17 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
             check.lines[b][0].set_data(line0pos)
             check.lines[b][1].set_data(line1pos)
     
+    if advanced: advlabel = 'Normal'
+    else:        advlabel = 'Advanced'
     updatebutton   = Button(updateaxes,   'Update',   color=fc) # Make button pretty and blue
     clearbutton    = Button(clearaxes,    'Clear',    color=fc) # Make button pretty and blue
     defaultsbutton = Button(defaultsaxes, 'Defaults', color=fc) # Make button pretty and blue
+    advancedbutton = Button(advancedaxes, advlabel,   color=fc) # Make button pretty and blue
     closebutton    = Button(closeaxes,    'Close',    color=fc) # Make button pretty and blue
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     clearbutton.on_clicked(clearselections) # Clear all checkboxes
     defaultsbutton.on_clicked(defaultselections) # Return to default selections
+    advancedbutton.on_clicked(advancedselections) # Return to default selections
     closebutton.on_clicked(closegui) # Close figures
     updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
     return None
@@ -665,7 +670,7 @@ def makenewfigure(**figargs):
 
 def closegui(event=None):
     ''' Close all GUI windows '''
-    global check, checkboxes, updatebutton, clearbutton, defaultsbutton, closebutton, panelfig, results
+    global panelfig
     try: close(plotfig)
     except: pass
     try: close(panelfig)
@@ -681,7 +686,7 @@ def getchecked(check=None):
 
 
 def clearselections(event=None):
-    global plotfig, check, checkboxes, results
+    global check
     for box in range(len(check.lines)):
         for i in [0,1]: check.lines[box][i].set_visible(False)
     updateplots()
@@ -690,7 +695,7 @@ def clearselections(event=None):
 
 def defaultselections(event=None):
     ''' Reset to default options '''
-    global plotfig, check, checkboxes, results, globaladvanced
+    global check, results, globaladvanced
     plotselections = getplotselections(results, advanced=globaladvanced) # WARNING, assumes defaults don't change with advanced
     for box,tf in enumerate(plotselections['defaults']):
         if tf: # True if in defaults, false otherwise
@@ -698,6 +703,15 @@ def defaultselections(event=None):
         else:
             for i in [0,1]: check.lines[box][i].set_visible(False)
     updateplots()
+    return None
+
+
+def advancedselections(event=None):
+    ''' Toggle advance doptions '''
+    global check, results, globaladvanced
+    globaladvanced = not(globaladvanced) # Toggle
+    closegui()
+    pygui(results, advanced=globaladvanced)
     return None
     
     
