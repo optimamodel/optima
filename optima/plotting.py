@@ -26,8 +26,6 @@ estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
 fillzorder = 0 # The order in which to plot things -- fill at the back
 datazorder = 100 # Then data
 linezorder = 200 # Finally, lines
-defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
-defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 12
@@ -38,6 +36,14 @@ globalfigsize = (8,4)
 globalposition = [0.1,0.06,0.6,0.8]
 interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for interactive plots
 
+
+def getdefaultplots(ismulti='both'):
+    ''' Since these can get overwritten otherwise '''
+    defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+    defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
+    if ismulti==False:  return defaultplots
+    elif ismulti==True: return defaultmultiplots
+    else:               return defaultplots,defaultmultiplots
 
 
 def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, fig=None, **kwargs):
@@ -99,7 +105,7 @@ def getplotselections(results, advanced=False):
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
     plots such as the cascade.
     
-    Version: 2017jan20
+    Version: 2017may29
     '''
     
     # Figure out what kind of result it is -- WARNING, copied from below
@@ -115,12 +121,10 @@ def getplotselections(results, advanced=False):
     plotselections['names'] = list()
     plotselections['defaults'] = list()
     
-    
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
     if hasattr(results, 'improvement') and results.improvement is not None:
         plotselections['keys'].append('improvement') # WARNING, maybe more standard to do append()...
         plotselections['names'].append('Improvement')
-    
     
     ## Add selection for budget allocations and coverage
     budcovlist = [('budgets','budgets','Budget allocations'), ('coverage','coverages','Program coverages')]
@@ -165,15 +169,14 @@ def getplotselections(results, advanced=False):
         plotepikeys = dcp(epikeys)
         plotepinames = dcp(epinames)
     
+    defaultplots = getdefaultplots(ismulti=ismultisim)
     if not advanced:
         for i in range(len(defaultplots)): defaultplots[i] = defaultplots[i].split('-')[0] # Discard second half of plot name
-        for i in range(len(defaultmultiplots)): defaultmultiplots[i] = defaultmultiplots[i].split('-')[0] # Discard second half of plot name
     plotselections['keys'] += plotepikeys
     plotselections['names'] += plotepinames
     for key in plotselections['keys']: # Loop over each key
-        if ismultisim: plotselections['defaults'].append(key in defaultmultiplots)
-        else:          plotselections['defaults'].append(key in defaultplots) # Append True if it's in the defaults; False otherwise
-    
+        plotselections['defaults'].append(key in defaultplots) # Append True if it's in the defaults; False otherwise
+
     return plotselections
 
 
@@ -192,10 +195,10 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     
     ## Initialize
     allplots = odict()
-    if toplot is None: toplot = defaultplots # Go straight ahead and replace with defaults
+    if toplot is None: toplot = getdefaultplots(ismulti=False) # Go straight ahead and replace with defaults
     if not(isinstance(toplot, list)): toplot = [toplot] # Handle single entries, for example 
     if 'default' in toplot: # Special case for handling default plots
-        toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
+        toplot[0:0] = getdefaultplots(ismulti=False) # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     results = sanitizeresults(results)
     
