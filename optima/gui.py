@@ -70,7 +70,7 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
 #    ncols = nrows-1 if nrows*(nrows-1)>=naxes else nrows
     
     # Adjust margins
-    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.85, top=0.95, wspace=0.9, hspace=0.7)
+    fig.subplots_adjust(left=0.07, bottom=0.05, right=0.85, top=0.95, wspace=0.9, hspace=0.7)
     
     for a,ax in enumerate(plots[-1].axes):
         ax.change_geometry(nrows, ncols, a+1)
