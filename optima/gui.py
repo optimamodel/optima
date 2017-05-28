@@ -137,7 +137,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    if advanced: cbapos = [0.05, 0.07, 0.9, 1.9] # Make extra tall, for moving later
+    if advanced: cbapos = [0.05, 0.07, 0.9, 1.8] # Make extra tall, for moving later
     else:        cbapos = [0.1, 0.07, 0.8, 0.9]
     checkboxaxes = panelfig.add_axes(cbapos) # Create checkbox locations
     updateaxes   = panelfig.add_axes([0.1, 0.02, 0.15, 0.03]) # Create update button location
@@ -160,19 +160,19 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
         elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
         else:                             label.set_weight('bold')
     
-    # Split into two columns -- insanely complicated because Matplotlib sucks :(
-    if advanced: 
+    
+    if advanced: # Split into two columns
         for b in range(nboxes):
-            percol = ceil(nboxes/2.0) # Number of boxes per column
-            col = (b+1)>percol
-            print percol, b+1, col
+            percol = floor(nboxes/2.0) # Number of boxes per column
+            col = floor(b/percol)
+            print percol, b, col
             
             labelpos = list(check.labels[b].get_position())
             rectpos = list(check.rectangles[b].get_xy())
             line0pos = check.lines[b][0].get_data()
             line1pos = check.lines[b][1].get_data()
             
-            yoffset = 0.50
+            yoffset = 0.5
             xoffset = 0.45
             if col==0:
                 labelpos[1] -= yoffset
