@@ -58,23 +58,21 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     if 'figsize' in kwargs: kwargs.pop('figsize', None)
     plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height), fig=fig, **kwargs)
     naxes = len(plots[0].axes) # If done interactively, they're all in the first plot
-    aspectratio = 1.5
+    
+    # Calculate the rows and columns
+    aspectratio = 1.5 # The target aspect ratio for plots, for choosing how many rows and columns to use
     nrows = 1
     ncols = 1
     while nrows*ncols < naxes:
-        if width/ncols/aspectratio > height/nrows: ncols += 1
-        else:                                     nrows += 1
-        print naxes, width, height, nrows, ncols, width/ncols/aspectratio, height/nrows
-    
-#    nrows = int(ceil(sqrt(naxes)))  # Calculate rows and columns of subplots
-#    ncols = nrows-1 if nrows*(nrows-1)>=naxes else nrows
+        if width/ncols/aspectratio > height/nrows: ncols += 1 # Height is more squashed: add a column
+        else:                                      nrows += 1 # Width is more squashed: add a row
     
     # Adjust margins
-    fig.subplots_adjust(left=0.07, bottom=0.05, right=0.85, top=0.95, wspace=0.9, hspace=0.7)
-    
+    fig.subplots_adjust(left=0.07, bottom=0.05, right=0.85, top=0.95, wspace=0.9, hspace=0.7) # NB, 1.0 seems meaningless for wspace and hspace...
     for a,ax in enumerate(plots[-1].axes):
         ax.change_geometry(nrows, ncols, a+1)
 
+    # Handle interactivity like a boss
     if wasinteractive: ion()
     show()
     return plots, fig
@@ -107,6 +105,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     
     ## Define options for selection
     plotselections = getplotselections(results, advanced=advanced)
+    print(plotselections)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
     isselected = []
