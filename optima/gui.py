@@ -670,7 +670,7 @@ def makenewfigure(**figargs):
 
 def closegui(event=None):
     ''' Close all GUI windows '''
-    global panelfig
+    global panelfig, plotfig
     try: close(plotfig)
     except: pass
     try: close(panelfig)
@@ -708,10 +708,12 @@ def defaultselections(event=None):
 
 def advancedselections(event=None):
     ''' Toggle advance doptions '''
-    global check, results, globaladvanced
+    global check, results, globaladvanced, plotfig, panelfig
     globaladvanced = not(globaladvanced) # Toggle
     closegui()
+    plotfig, panelfig = None, None
     pygui(results, advanced=globaladvanced)
+    pause(0.2) # Without this, it doesn't work
     return None
     
     
