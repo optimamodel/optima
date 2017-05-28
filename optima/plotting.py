@@ -171,7 +171,6 @@ def getplotselections(results, advanced=False):
     plotselections['keys'] += plotepikeys
     plotselections['names'] += plotepinames
     for key in plotselections['keys']: # Loop over each key
-        print key
         if ismultisim: plotselections['defaults'].append(key in defaultmultiplots)
         else:          plotselections['defaults'].append(key in defaultplots) # Append True if it's in the defaults; False otherwise
     

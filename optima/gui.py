@@ -75,7 +75,7 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
     # Handle interactivity like a boss
     if wasinteractive: ion()
     show()
-    return plots, fig
+    return None
 
 
 def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kwargs):
@@ -106,7 +106,6 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     
     ## Define options for selection
     plotselections = getplotselections(results, advanced=globaladvanced)
-    print(plotselections)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
     isselected = []
@@ -137,19 +136,21 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    if advanced: cbapos = [0.05, 0.07, 0.9, 1.8] # Make extra tall, for moving later
-    else:        cbapos = [0.1, 0.07, 0.8, 0.9]
+    if advanced: cbapos = [0.05, 0.07, 0.9, 1.8] # cba="check box axes position": extra tall, for moving later
+    else:        cbapos = [0.10, 0.07, 0.8, 0.9]
+    ypos = 0.02 # y-position of buttons
+    bwid = 0.15 # x-width of buttons
+    bhei = 0.03 # y-height of buttons
     checkboxaxes = panelfig.add_axes(cbapos) # Create checkbox locations
-    updateaxes   = panelfig.add_axes([0.1, 0.02, 0.15, 0.03]) # Create update button location
-    clearaxes    = panelfig.add_axes([0.3, 0.02, 0.15, 0.03]) # Create close button location
-    defaultsaxes = panelfig.add_axes([0.5, 0.02, 0.15, 0.03]) # Create defaults button location
-    closeaxes    = panelfig.add_axes([0.7, 0.02, 0.15, 0.03]) # Create close button location
+    updateaxes   = panelfig.add_axes([0.10, ypos, bwid, bhei]) # Create update button location
+    clearaxes    = panelfig.add_axes([0.31, ypos, bwid, bhei]) # Create clear button location
+    defaultsaxes = panelfig.add_axes([0.54, ypos, bwid, bhei]) # Create defaults button location
+    closeaxes    = panelfig.add_axes([0.75, ypos, bwid, bhei]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     
     # Reformat the checkboxes
-    totstr = ' -- total' # analysis:ignore WARNING, these should not be explicit!!!!!
-    stastr = ' -- stacked'
-    perstr = ' -- population'
+    stastr = ' - stacked'
+    perstr = ' - population'
     nboxes = len(check.rectangles)
     for b in range(nboxes):
         label = check.labels[b]
@@ -160,33 +161,32 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
         elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
         else:                             label.set_weight('bold')
     
-    
-    if advanced: # Split into two columns
+    #  If advanced, split into two columns -- messy since Matplotlib sucks! :(
+    if advanced: 
         for b in range(nboxes):
             percol = floor(nboxes/2.0) # Number of boxes per column
-            col = floor(b/percol)
-            print percol, b, col
+            col = floor(b/percol) # Which column to plto in
             
-            labelpos = list(check.labels[b].get_position())
-            rectpos = list(check.rectangles[b].get_xy())
-            line0pos = check.lines[b][0].get_data()
+            labelpos = list(check.labels[b].get_position()) # Get label positions and convert tuple -> list
+            rectpos = list(check.rectangles[b].get_xy()) # Likewise for rectangles
+            line0pos = check.lines[b][0].get_data() # There are two lines, and they have data
             line1pos = check.lines[b][1].get_data()
             
-            yoffset = 0.5
-            xoffset = 0.45
-            if col==0:
+            yoffset = 0.5 # Specify amount to move everything in column 0 down by
+            xoffset = 0.45 # Specify amount to move everything on column 1 over by
+            if col==0: # Left column: shift everything down
                 labelpos[1] -= yoffset
                 rectpos[1] -= yoffset
                 for i in range(2): # Start and end points
                     line0pos[1][i] -= yoffset
                     line1pos[1][i] -= yoffset
-            else:
+            else: # Right column: shift everything over
                 labelpos[0] += xoffset
                 rectpos[0] += xoffset
                 for i in range(2): # Start and end points
                     line0pos[0][i] += xoffset
                     line1pos[0][i] += xoffset
-            check.labels[b].set_position(labelpos)
+            check.labels[b].set_position(labelpos) # Actually set positions
             check.rectangles[b].set_xy(rectpos)
             check.lines[b][0].set_data(line0pos)
             check.lines[b][1].set_data(line1pos)
@@ -200,7 +200,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     defaultsbutton.on_clicked(defaultselections) # Return to default selections
     closebutton.on_clicked(closegui) # Close figures
     updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
-    return check
+    return None
 
 
 
@@ -690,17 +690,14 @@ def clearselections(event=None):
 
 def defaultselections(event=None):
     ''' Reset to default options '''
-    print('hiiiiiii')
     global plotfig, check, checkboxes, results, globaladvanced
     plotselections = getplotselections(results, advanced=globaladvanced) # WARNING, assumes defaults don't change with advanced
     for box,tf in enumerate(plotselections['defaults']):
-        print box,tf
         if tf: # True if in defaults, false otherwise
             for i in [0,1]: check.lines[box][i].set_visible(True) # Two lines...stupid
         else:
             for i in [0,1]: check.lines[box][i].set_visible(False)
     updateplots()
-    print('ok')
     return None
     
     
