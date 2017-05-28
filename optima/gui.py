@@ -99,7 +99,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     Version: 1.3 (2017feb07)
     '''
     
-    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results, plotargs, globaladvanced
+    global check, checkboxes, updatebutton, clearbutton, defaultsbutton, closebutton, panelfig, results, plotargs, globaladvanced
     plotargs = kwargs # Reset global to match function input
     results = sanitizeresults(tmpresults)
     globaladvanced = advanced
@@ -132,11 +132,14 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
             printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
-    figwidth = 7
+    if advanced: figwidth = 14
+    else:        figwidth = 7
     figheight = 12
     fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    checkboxaxes = panelfig.add_axes([0.1, 0.07, 0.8, 0.9]) # Create checkbox locations
+    if advanced: cbapos = [0.05, 0.07, 0.9, 1.9] # Make extra tall, for moving later
+    else:        cbapos = [0.1, 0.07, 0.8, 0.9]
+    checkboxaxes = panelfig.add_axes(cbapos) # Create checkbox locations
     updateaxes   = panelfig.add_axes([0.1, 0.02, 0.15, 0.03]) # Create update button location
     clearaxes    = panelfig.add_axes([0.3, 0.02, 0.15, 0.03]) # Create close button location
     defaultsaxes = panelfig.add_axes([0.5, 0.02, 0.15, 0.03]) # Create defaults button location
@@ -156,6 +159,37 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
         if labeltext.endswith(perstr):    label.set_text('Per population') # Clear label
         elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
         else:                             label.set_weight('bold')
+    
+    # Split into two columns -- insanely complicated because Matplotlib sucks :(
+    if advanced: 
+        for b in range(nboxes):
+            percol = ceil(nboxes/2.0) # Number of boxes per column
+            col = (b+1)>percol
+            print percol, b+1, col
+            
+            labelpos = list(check.labels[b].get_position())
+            rectpos = list(check.rectangles[b].get_xy())
+            line0pos = check.lines[b][0].get_data()
+            line1pos = check.lines[b][1].get_data()
+            
+            yoffset = 0.50
+            xoffset = 0.45
+            if col==0:
+                labelpos[1] -= yoffset
+                rectpos[1] -= yoffset
+                for i in range(2): # Start and end points
+                    line0pos[1][i] -= yoffset
+                    line1pos[1][i] -= yoffset
+            else:
+                labelpos[0] += xoffset
+                rectpos[0] += xoffset
+                for i in range(2): # Start and end points
+                    line0pos[0][i] += xoffset
+                    line1pos[0][i] += xoffset
+            check.labels[b].set_position(labelpos)
+            check.rectangles[b].set_xy(rectpos)
+            check.lines[b][0].set_data(line0pos)
+            check.lines[b][1].set_data(line1pos)
     
     updatebutton   = Button(updateaxes,   'Update',   color=fc) # Make button pretty and blue
     clearbutton    = Button(clearaxes,    'Clear',    color=fc) # Make button pretty and blue
@@ -631,7 +665,7 @@ def makenewfigure(**figargs):
 
 def closegui(event=None):
     ''' Close all GUI windows '''
-    global check, checkboxes, updatebutton, clearbutton, closebutton, panelfig, results
+    global check, checkboxes, updatebutton, clearbutton, defaultsbutton, closebutton, panelfig, results
     try: close(plotfig)
     except: pass
     try: close(panelfig)
