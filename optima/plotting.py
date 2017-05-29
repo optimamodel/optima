@@ -431,6 +431,11 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 
                 xdata = results.tvec # Pull this out here for clarity
                 
+                # Make sure plots are in the correct order
+                origorder = arange(nlinesperplot)
+                plotorder = nlinesperplot-1-origorder
+                if reorder: plotorder = [reorder[k] for k in plotorder]
+                
                 # e.g. single simulation, prev-tot: single line, single plot
                 if not ismultisim and istotal:
                     ydata = factor*best[0]
@@ -446,15 +451,12 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
                 if not ismultisim and isstacked:
                     if ispercentage: # Multi-line plot
-                        for l in range(nlinesperplot):
-                            ydata = factor*best[l]
+                        for k in plotorder:
+                            ydata = factor*best[k]
                             allydata.append(ydata)
-                            ax.plot(xdata, ydata, lw=lw, c=colors[l], zorder=linezorder) # Index is each different population
+                            ax.plot(xdata, ydata, lw=lw, c=colors[k], zorder=linezorder, label=results.popkeys[k]) # Index is each different population
                     else: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
-                        origorder = arange(nlinesperplot)
-                        plotorder = nlinesperplot-1-origorder
-                        if reorder: plotorder = [reorder[k] for k in plotorder]
                         for k in plotorder: # Loop backwards so correct ordering -- first one at the top, not bottom
                             ylower = factor*bottom
                             yupper = factor*(bottom+best[k])
