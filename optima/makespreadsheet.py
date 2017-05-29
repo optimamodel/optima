@@ -328,9 +328,18 @@ class TitledRange(object):
             for n, name in enumerate(names):
                 formats.write_rowcol_name(self.sheet, current_row, start_col+n, name, rc_row_align)
             #emit data if present
-            if self.content.data is not None and self.content.data!=[]: # Makes sure it's not an empty list
-                for j, item in enumerate(self.content.data[i]):
-                    formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, row_format)
+            parentdata = self.content.data
+            try:
+                thesedata = self.content.data[i]
+            except:
+                
+            if thesedata: # Makes sure it's not an empty list
+                try:
+                    for j, item in enumerate(self.content.data[i]):
+                        formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, row_format)
+                except:
+                    errormsg = 'WARNING, %s failed to save with the following data:\n%s' % (self.content.name, self.content.data)
+                    print(errormsg)
             else:
                 for j in range(self.data_range.num_cols):
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
@@ -338,8 +347,15 @@ class TitledRange(object):
             if self.content.assumption:
                 formats.write_option(self.sheet, current_row, self.data_range.last_col+1, name = self.content.assumption_properties['connector'])
                 for index, col_name in enumerate(self.content.assumption_properties['columns']):
-                    if self.content.assumption_data is not None:
-                        formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[i], row_format)
+                    parentdata = self.content.assumption_data
+                    try: 
+                        thesedata = parentdata[i]
+                    except:
+                        errormsg = 'WARNING, %s failed to save with the following data:\n%s' % (self.content.name, parentdata)
+                        print(errormsg)
+                        thesedata = None
+                    if thesedata is not None:
+                        formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, thesedata, row_format)
                     else:
                         formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, row_format)
             current_row+=1
