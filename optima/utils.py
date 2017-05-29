@@ -1612,7 +1612,17 @@ class odict(OrderedDict):
         return self.sort(sortby=sortby, copy=True, reverse=reverse)
 
 
-
+    def reverse(self, copy=False):
+        ''' Reverse the order of an odict '''
+        reversedkeys = self.keys()
+        reversedkeys.reverse()
+        output = self.sort(sortby=reversedkeys, copy=copy)
+        return output
+    
+    
+    def reversed(self):
+        ''' Shortcut for making a copy of the sorted odict '''
+        return self.reverse(copy=True)
 
 
 

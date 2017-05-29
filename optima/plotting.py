@@ -850,7 +850,16 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
         
     # Handle colors
-    if cascadecolors is None:      colors = gridcolors(len(cascadelist), reverse=True)
+    defaultcascadecolors = odict([ # Based on https://www.aids.gov/federal-resources/policies/care-continuum/
+        ('undx',  [0.71, 0.26, 0.24]),
+        ('dx',    [0.49, 0.58, 0.23]),
+        ('care',  [0.49, 0.58, 0.23]),
+        ('retain',[0.49, 0.58, 0.23]),
+        ('unsupp',[0.38, 0.52, 0.64]),
+        ('supp',  [0.43, 0.29, 0.62]),
+        ])
+    if cascadecolors is None:      colors = defaultcascadecolors[:]
+    elif cascadecolors=='grid':    colors = gridcolors(len(cascadelist), reverse=True)
     elif cascadecolors=='alpine':  colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
     elif type(cascadecolors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=cascadecolors)[1:-1] # Remove first and last element
     else: colors = cascadecolors
