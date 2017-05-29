@@ -202,7 +202,6 @@ def backup():
         
         # Create the backups folder
         backupsfolder = safemkdir(os.path.expanduser("~"), defaultfolder)
-        logfilename = os.path.join('/tmp','optimabackupdebug%0.0f.log'%(1e6*rand()))
         
         # Figure out last folder and current folder
         folderlist = sorted(os.listdir(backupsfolder)) # WARNING, assumes everything in here is a folder
@@ -212,6 +211,7 @@ def backup():
         now = datetime.datetime.now()
         current = '%4i-%02i-%02i' % (now.year, now.month, now.day)
         currabs = safemkdir(backupsfolder,current)
+        logfilename = os.path.join('/tmp','optimabackupdebug_%s_%0.0f.log'%(current,1e6*rand())) # Set the log file name
         
         
         # Check things
