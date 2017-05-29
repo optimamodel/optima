@@ -42,7 +42,7 @@ def safemkdir(*args):
     return fullpath
     
 
-def downloadprojects(username=None, password=None, savelocation=None, server=None, overwrite=False):
+def downloadprojects(username=None, password=None, savelocation=None, server=None, overwrite=None, withresults=None):
     '''
     A utility for downloading all projects from an Optima 2.0+ server for an admin account.
 
@@ -58,6 +58,8 @@ def downloadprojects(username=None, password=None, savelocation=None, server=Non
     if password is None:     password     = 'zzz'
     if savelocation is None: savelocation = 'optimaprojects'
     if server is None:       server       = 'http://localhost:8080'
+    if overwrite is None:    overwrite    = False
+    if withresults is None:  withresults  = False
     
     # Try timing
     try:    T = op.tic()
@@ -139,7 +141,9 @@ def downloadprojects(username=None, password=None, savelocation=None, server=Non
                 else:          fname += '.new' # Just keep appending till the cows come home
             try:
                 url = server + '/api/download'
-                payload = {'name': 'download_project', 'args': [project['id']]}
+                if withresults: downloadfunc = 'download_project_with_result'
+                else:           downloadfunc = 'download_project'
+                payload = {'name': downloadfunc, 'args': [project['id']]}
                 response = session.post(url, data=json.dumps(payload))
                 try:
                     with open(fname, 'wb') as f:
@@ -222,14 +226,18 @@ def backup():
         
         
         # Actually download projects
-        try:    username = sys.argv[1]
-        except: username = None
-        try:    password = sys.argv[2]
-        except: password = None
-        try:    server = sys.argv[3]
-        except: server = None
+        try:    username    = sys.argv[1]
+        except: username    = None
+        try:    password    = sys.argv[2]
+        except: password    = None
+        try:    server      = sys.argv[3]
+        except: server      = None
+        try:    overwrite   = sys.argv[4]
+        except: overwrite   = None
+        try:    withresults = sys.argv[5]
+        except: withresults = None
         print('Downloading projects into the current folder: username=%s, server=%s' % (username, server))
-        downloadprojects(username=username, password=password, savelocation=currabs, server=server)
+        downloadprojects(username=username, password=password, savelocation=currabs, server=server, overwrite=overwrite, withresults=withresults)
         
         # Create symlinks
         subfolders = os.listdir(currabs)
