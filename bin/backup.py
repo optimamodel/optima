@@ -115,15 +115,18 @@ def downloadprojects(username=None, password=None, savelocation=None, server=Non
     order = argsort(combined) # Figure out the alphabetical order
     sortedusernames = []
     sortedprojectnames = []
+    sortedprojects = []
     for o in order:
         sortedusernames.append(usernames[o])
         sortedprojectnames.append(projectnames[o])
+        sortedprojects.append(projects[o])
     
     print('Downloading all projects...')
     nprojects = len(sortedprojectnames)
     for i in range(nprojects):
         username = sortedusernames[i]
         projectname = sortedprojectnames[i]
+        project = sortedprojects[i]
         try:
             print('  Downloading user "%s" project "%s" (%i/%i)' % (username, projectname, i+1, nprojects))
     
