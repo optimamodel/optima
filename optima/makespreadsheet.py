@@ -328,7 +328,7 @@ class TitledRange(object):
             for n, name in enumerate(names):
                 formats.write_rowcol_name(self.sheet, current_row, start_col+n, name, rc_row_align)
             #emit data if present
-            if self.content.data is not None:
+            if self.content.data is not None and self.content.data!=[]: # Makes sure it's not an empty list
                 for j, item in enumerate(self.content.data[i]):
                     formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, row_format)
             else:
