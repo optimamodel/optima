@@ -12,11 +12,12 @@ from utils import printv, isnumber
 from numpy import isnan
 from optima import version, odict, getdate, today, loaddatapars, Settings
 
+
 settings = Settings()
 default_datastart = settings.start
-default_dataend = settings.dataend
+default_dataend    = settings.dataend
 
-def makespreadsheet(filename=None, pops=None, datastart=default_datastart, dataend=default_dataend, data=None, verbose=2):
+def makespreadsheet(filename=None, pops=None, datastart=None, dataend=None, data=None, verbose=2):
     """
     Generate the Optima spreadsheet. pops can be supplied as a number of populations, 
     or as a list of dictionaries with keys 'short', 'name', 'male', 'female', 'age_from', 'age_to'.
@@ -45,6 +46,8 @@ def makespreadsheet(filename=None, pops=None, datastart=default_datastart, datae
             pops.append({'short':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
             
     # Ensure years are integers
+    if datastart is None: datastart = default_datastart
+    if dataend is None:   dataend   = default_dataend
     datastart, dataend = int(datastart), int(dataend)
     
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
@@ -56,7 +59,7 @@ def makespreadsheet(filename=None, pops=None, datastart=default_datastart, datae
     return filename
 
 
-def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, dataend=default_dataend, verbose=2):
+def makeprogramspreadsheet(filename, pops, progs, datastart=None, dataend=None, verbose=2):
     """ Generate the Optima programs spreadsheet """
 
     # An integer argument is given: just create a pops dict using empty entries
@@ -65,6 +68,12 @@ def makeprogramspreadsheet(filename, pops, progs, datastart=default_datastart, d
         pops = [] # Create real pops list
         for p in range(npops):
             pops.append({'short_name':'Pop %i'%(p+1)}) # Must match make_populations_range definitions
+    
+    # Ensure years are integers
+    if datastart is None: datastart = default_datastart
+    if dataend is None:   dataend   = default_dataend
+    datastart, dataend = int(datastart), int(dataend)
+    
     
     printv('Generating program spreadsheet: pops=%i, progs=%i, datastart=%s, dataend=%s' % (len(pops), len(progs), datastart, dataend), 1, verbose)
 
@@ -328,35 +337,33 @@ class TitledRange(object):
             for n, name in enumerate(names):
                 formats.write_rowcol_name(self.sheet, current_row, start_col+n, name, rc_row_align)
             #emit data if present
-            parentdata = self.content.data
-            try:
-                thesedata = self.content.data[i]
-            except:
-                
-            if thesedata: # Makes sure it's not an empty list
+            savedata = False
+            if self.content.data is not None:
                 try:
                     for j, item in enumerate(self.content.data[i]):
                         formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, row_format)
+                    savedata = True # It saved successfully
                 except:
-                    errormsg = 'WARNING, %s failed to save with the following data:\n%s' % (self.content.name, self.content.data)
+                    errormsg = 'WARNING, failed to save "%s" with data:\n%s' % (self.content.name, self.content.data)
                     print(errormsg)
-            else:
+                    savedata = False
+            if not savedata:
                 for j in range(self.data_range.num_cols):
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
             if self.content.assumption:
                 formats.write_option(self.sheet, current_row, self.data_range.last_col+1, name = self.content.assumption_properties['connector'])
                 for index, col_name in enumerate(self.content.assumption_properties['columns']):
-                    parentdata = self.content.assumption_data
-                    try: 
-                        thesedata = parentdata[i]
-                    except:
-                        errormsg = 'WARNING, %s failed to save with the following data:\n%s' % (self.content.name, parentdata)
-                        print(errormsg)
-                        thesedata = None
-                    if thesedata is not None:
-                        formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, thesedata, row_format)
-                    else:
+                    saveassumptiondata = False
+                    if self.content.assumption_data is not None:
+                        try:
+                            formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[i], row_format)
+                            saveassumptiondata = True
+                        except:
+                            errormsg = 'WARNING, failed to save assumption "%s" with data:\n%s' % (self.content.name, self.content.assumption_data)
+                            print(errormsg)
+                            saveassumptiondata = False
+                    if not saveassumptiondata:
                         formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, row_format)
             current_row+=1
             if num_levels > 1 and ((i+1) % num_levels)==0: # shift between the blocks
@@ -369,7 +376,7 @@ class TitledRange(object):
 
 
 class OptimaSpreadsheet:
-    def __init__(self, name, pops, data_start=default_datastart, data_end=default_dataend, data=None, verbose=0):
+    def __init__(self, name, pops, data_start=None, data_end=None, data=None, verbose=0):
         self.name = name
         self.pops = pops
         self.data_start = data_start
@@ -602,7 +609,7 @@ class OptimaSpreadsheet:
 
 
 class OptimaProgramSpreadsheet:
-    def __init__(self, name, pops, progs, data_start = default_datastart, data_end = default_dataend, verbose = 0):
+    def __init__(self, name, pops, progs, data_start=None, data_end=None, verbose = 0):
         self.sheet_names = odict([
             ('instr', 'Instructions'),
             ('targeting','Populations & programs'),

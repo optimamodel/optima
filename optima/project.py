@@ -148,10 +148,16 @@ class Project(object):
         return None
 
 
-    def makespreadsheet(self, filename=None, folder=None, pops=None):
+    def makespreadsheet(self, filename=None, folder=None, pops=None, datastart=None, dataend=None):
         ''' Create a spreadsheet with the data from the project'''
         fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='xlsx')
-        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
+        if datastart is None: 
+            try:    datastart = self.data['years'][0]
+            except: datastart = self.settings.start
+        if dataend is None:   
+            try:    dataend = self.data['years'][-1]
+            except: dataend = self.settings.dataend
+        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=datastart, dataend=dataend)
         return fullpath
 
 
