@@ -46,8 +46,10 @@ def getdefaultplots(ismulti='both'):
     else:               return defaultplots,defaultmultiplots
 
 
-def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, fig=None, **kwargs):
+def makefigure(figsize=None, facecolor=None, interactive=False, fig=None, **kwargs):
     ''' Decide whether to make an interactive figure() or a non-interactive Figure()'''
+    if figsize is None:   figsize = globalfigsize
+    if facecolor is None: facecolor = (1,1,1)
     if fig is None: # Create a new figure if one is not supplied
         if interactive:  fig = figure(facecolor=facecolor, figsize=figsize, **kwargs)
         else:            fig = Figure(facecolor=facecolor, figsize=figsize, **kwargs)
