@@ -193,7 +193,7 @@ import defaults as _defaults; del defaults
 
 # Load high level GUI module
 try: 
-    from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, addplot, showplots, loadplot, geogui
+    from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, showplots, loadplot, geogui
     import gui as _gui; del gui
 except Exception as E: _failed.append('gui: %s' % E.__repr__())
 
