@@ -852,12 +852,12 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     # Handle colors
     defaultcascadecolors = odict([ # Based on https://www.aids.gov/federal-resources/policies/care-continuum/
         ('undx',  [0.71, 0.26, 0.24]),
-        ('dx',    [0.49, 0.58, 0.23]),
-        ('care',  [0.49, 0.58, 0.23]),
-        ('retain',[0.49, 0.58, 0.23]),
+        ('dx',    [0.39, 0.48, 0.13]),
+        ('care',  [0.49, 0.68, 0.23]),
+        ('retain',[0.59, 0.78, 0.33]),
         ('unsupp',[0.38, 0.52, 0.64]),
         ('supp',  [0.43, 0.29, 0.62]),
-        ])
+        ]).reversed() # Colors get called in opposite order
     if cascadecolors is None:      colors = defaultcascadecolors[:]
     elif cascadecolors=='grid':    colors = gridcolors(len(cascadelist), reverse=True)
     elif cascadecolors=='alpine':  colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
