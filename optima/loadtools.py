@@ -17,46 +17,43 @@ def setmigrations(which='migrations'):
     Version: 2017may23
     '''
 
-    migrations = {
+    migrations = op.odict([
         # Orig    New       Date         Migration        Description
-        '2.0':   ('2.0.0', '2016-07-19', None,              'Converted version number to string'),
-        '2.0.0': ('2.0.1', '2016-07-20', addscenuid,        'Added UID to scenarios'),
-        '2.0.1': ('2.0.2', '2016-07-29', addforcepopsize,   'Added option for forcing population size to match'),
-        '2.0.2': ('2.0.3', '2016-08-25', delimmediatecare,  'Removed immediate care parameter'),
-        '2.0.3': ('2.0.4', '2016-08-31', addproppmtct,      'Added new parameter -- proportion on PMTCT'),
-        '2.0.4': ('2.1',   '2016-09-12', redotransitions,   'Major update to how transitions in health states are handled'),
-        '2.1':   ('2.1.1', '2016-10-02', makepropsopt,      'Removed data on proportion parameters'),
-        '2.1.1': ('2.1.2', '2016-10-05', addalleverincare,  'Included new setting to store everyone in care'),
-        '2.1.2': ('2.1.3', '2016-10-18', removenumcircdata, "Don't store data on number circumcised"),
-        '2.1.3': ('2.1.4', '2016-10-18', removepopchardata, "Don't store sex worker and injecting characteristics"),
-        '2.1.4': ('2.1.5', '2016-11-01', addaidsleavecare,  'Added new parameter -- AIDS leave care percentage'),
-        '2.1.5': ('2.1.6', '2016-11-01', addaidslinktocare, 'Added new parameter -- AIDS link to care duration'),
-        '2.1.6': ('2.1.7', '2016-11-03', adddataend,        'Separated dataend from end'),
-        '2.1.7': ('2.1.8', '2016-11-07', fixsettings,       'Added new attributes to settings'),
-        '2.1.8': ('2.1.9', '2016-12-22', addoptimscaling,   'Added a budget scaling parameter to optimizations'),
-        '2.1.9': ('2.1.10','2016-12-28', addpropsandcosttx, 'Added treatment cost parameter'),
-        '2.1.10':('2.2',   '2017-01-13', redoparameters,    'Updated the way parameters are handled'),
-        '2.2':   ('2.2.1', '2017-02-01', redovlmon,         'Updated the VL monitoring parameter'),
-        '2.2.1': ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the proect in the results'),
-        '2.2.2': ('2.3',   '2017-02-09', redoparamattr,     'Updated parameter attributes'),
-        '2.3':   ('2.3.1', '2017-02-15', removespreadsheet, "Don't store the spreadsheet with the project, to save space"),
-        '2.3.1': ('2.3.2', '2017-03-01', addagetopars,      'Ensured that age is stored in parsets'),
-        '2.3.2': ('2.3.3', '2017-03-02', redotranstable,    'Split transition table into two tables to speed processing'),
-        '2.3.3': ('2.3.4', '2017-03-30', redotranstable,    'Added aditional fixes to the transition table'),
-        '2.3.4': ('2.3.5', '2017-04-18', None,              'Added migrations for portfolios'),
-        '2.3.5': ('2.3.6', '2017-04-21', None,              'Fixed PMTCT calculations'),
-        '2.3.6': ('2.3.7', '2017-05-13', None,              'Changed plotting syntax'),
-        '2.3.7': ('2.3.8', '2017-05-23', None,              'Many minor changes to plotting, parameters, etc.'),
+        ('2.0',   ('2.0.0', '2016-07-19', None,              'Converted version number to string')),
+        ('2.0.0', ('2.0.1', '2016-07-20', addscenuid,        'Added UID to scenarios')),
+        ('2.0.1', ('2.0.2', '2016-07-29', addforcepopsize,   'Added option for forcing population size to match')),
+        ('2.0.2', ('2.0.3', '2016-08-25', delimmediatecare,  'Removed immediate care parameter')),
+        ('2.0.3', ('2.0.4', '2016-08-31', addproppmtct,      'Added new parameter -- proportion on PMTCT')),
+        ('2.0.4', ('2.1',   '2016-09-12', redotransitions,   'Major update to how transitions in health states are handled')),
+        ('2.1',   ('2.1.1', '2016-10-02', makepropsopt,      'Removed data on proportion parameters')),
+        ('2.1.1', ('2.1.2', '2016-10-05', addalleverincare,  'Included new setting to store everyone in care')),
+        ('2.1.2', ('2.1.3', '2016-10-18', removenumcircdata, "Don't store data on number circumcised")),
+        ('2.1.3', ('2.1.4', '2016-10-18', removepopchardata, "Don't store sex worker and injecting characteristics")),
+        ('2.1.4', ('2.1.5', '2016-11-01', addaidsleavecare,  'Added new parameter -- AIDS leave care percentage')),
+        ('2.1.5', ('2.1.6', '2016-11-01', addaidslinktocare, 'Added new parameter -- AIDS link to care duration')),
+        ('2.1.6', ('2.1.7', '2016-11-03', adddataend,        'Separated dataend from end')),
+        ('2.1.7', ('2.1.8', '2016-11-07', fixsettings,       'Added new attributes to settings')),
+        ('2.1.8', ('2.1.9', '2016-12-22', addoptimscaling,   'Added a budget scaling parameter to optimizations')),
+        ('2.1.9', ('2.1.10','2016-12-28', addpropsandcosttx, 'Added treatment cost parameter')),
+        ('2.1.10',('2.2',   '2017-01-13', redoparameters,    'Updated the way parameters are handled')),
+        ('2.2',   ('2.2.1', '2017-02-01', redovlmon,         'Updated the VL monitoring parameter')),
+        ('2.2.1', ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the proect in the results')),
+        ('2.2.2', ('2.3',   '2017-02-09', redoparamattr,     'Updated parameter attributes')),
+        ('2.3',   ('2.3.1', '2017-02-15', removespreadsheet, "Don't store the spreadsheet with the project, to save space")),
+        ('2.3.1', ('2.3.2', '2017-03-01', addagetopars,      'Ensured that age is stored in parsets')),
+        ('2.3.2', ('2.3.3', '2017-03-02', redotranstable,    'Split transition table into two tables to speed processing')),
+        ('2.3.3', ('2.3.4', '2017-03-30', redotranstable,    'Added aditional fixes to the transition table')),
+        ('2.3.4', ('2.3.5', '2017-04-18', None,              'Added migrations for portfolios')),
+        ('2.3.5', ('2.3.6', '2017-04-21', None,              'Fixed PMTCT calculations')),
+        ('2.3.6', ('2.3.7', '2017-05-13', None,              'Changed plotting syntax')),
+        ('2.3.7', ('2.3.8', '2017-05-23', None,              'Many minor changes to plotting, parameters, etc.')),
         #'2.2': redoprograms,
-        }
-    
-    migrations = op.odict(migrations) # Convert to odict
-    migrations.sort() # Make sure it's ordered
+        ])
     
     # Define changelog
     changelog = op.odict()
     for ver,date,migrator,msg in migrations.values():
-        changelog.append(ver,date+' | '+msg)
+        changelog[ver] = date+' | '+msg
     
     # Return the migrations structure, unless the changelog is specifically requested
     if which=='changelog': return changelog
