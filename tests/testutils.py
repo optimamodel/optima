@@ -75,7 +75,7 @@ if 'gridcolormap' in tests and doplot:
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
     t = tic()
     
-    from optima import gridcolormap
+    from optima import gridcolors
     from pylab import figure, plot, cumsum, rand, legend, show, title
     
     nlines1 = 5
@@ -83,8 +83,8 @@ if 'gridcolormap' in tests and doplot:
     npts = 50
     lw = 3 # Line width
     
-    colors1 = gridcolormap(ncolors=nlines1)
-    colors2 = gridcolormap(ncolors=nlines2)
+    colors1 = gridcolors(ncolors=nlines1)
+    colors2 = gridcolors(ncolors=nlines2)
     
     fig = figure(figsize=(12,12))
     
@@ -98,11 +98,11 @@ if 'gridcolormap' in tests and doplot:
     legend(['%i' % l for l in range(nlines2)], loc='upper left')
     title('>=10 colors: generate based on color cube')
     
-    fig.add_subplot(2,2,3, projection='3d')
-    gridcolormap(ncolors=nlines1, doplot=True, newwindow=False)
+    ax = fig.add_subplot(2,2,3, projection='3d')
+    gridcolors(ncolors=nlines1, doplot='existing')
     
-    fig.add_subplot(2,2,4, projection='3d')
-    gridcolormap(ncolors=nlines2, doplot=True, newwindow=False)
+    ax = fig.add_subplot(2,2,4, projection='3d')
+    gridcolors(ncolors=nlines2, doplot='existing')
     
         
     
