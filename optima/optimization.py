@@ -696,6 +696,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             if mc: # If MC, run multiple
                 if extremeoutcomes[bestprogram] < extremeoutcomes['Baseline']:
                     allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
+                    allseeds.append(randseed+1) # Append a new seed if we're running a program extreme as well
                 for i in range(abs(mc)): # For the remainder, do randomizations
                     scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
                     mcrand = i*(2**6-1)
