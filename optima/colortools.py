@@ -95,9 +95,12 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
     ## For plotting -- optional
     if doplot:
         from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
-        from pylab import figure
-        fig = figure(facecolor='w')
-        ax = fig.add_subplot(111, projection='3d')
+        from pylab import figure, gca
+        if doplot=='new':
+            fig = figure(facecolor='w')
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            ax = gca()
         ax.scatter(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0)
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
