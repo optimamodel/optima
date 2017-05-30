@@ -196,7 +196,7 @@ class Project(object):
 
     def makedefaults(self, name='default', overwrite=False):
         ''' When creating a project, create a default program set, scenario, and optimization to begin with '''
-        scenname = 'Current conditions'
+        scenname = 'Baseline conditions'
         if overwrite or name not in self.progsets:
             progset = Programset(name=name, project=self)
             self.addprogset(progset)

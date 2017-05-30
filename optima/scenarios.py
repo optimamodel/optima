@@ -261,13 +261,13 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
 
 def baselinescenario(parset=None, verbose=2):
-    """ Define the baseline scenario -- "Current conditions" by default """
+    """ Define the baseline scenario -- "Baseline" by default """
     if parset is None: raise OptimaException('You need to supply a parset to generate default scenarios')
     
     scenlist = [Parscen()]
     
     ## Current conditions
-    scenlist[0].name = 'Current conditions'
+    scenlist[0].name = 'Baseline'
     scenlist[0].parset = parset
     scenlist[0].pars = [] # No changes
     
@@ -276,7 +276,7 @@ def baselinescenario(parset=None, verbose=2):
 
 
 def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, verbose=2):
-    """ Define a list of default scenarios -- only "Current conditions" by default """
+    """ Set the values of a parameter scenario """
     if parset is None: raise OptimaException('You need to supply a parset to generate default scenarios')
     
     if parname is None: raise OptimaException('Please supply a parameter')
@@ -306,16 +306,16 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
         for key in maxbudget: maxbudget[key] += project.settings.infmoney
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
-            Parscen(name='Current conditions', parsetname=0, pars=[]),
+            Parscen(name='Baseline', parsetname=0, pars=[]),
             Budgetscen(name='No budget', parsetname=0, progsetname=0, t=[startyear], budget=nobudget),
-            Budgetscen(name='Current budget', parsetname=0, progsetname=0, t=[startyear], budget=defaultbudget),
+            Budgetscen(name='Baseline budget', parsetname=0, progsetname=0, t=[startyear], budget=defaultbudget),
             Budgetscen(name='Unlimited spending', parsetname=0, progsetname=0, t=[startyear], budget=maxbudget),
             ]
     
     # WARNING, this may not entirely work
     elif which=='90-90-90':
         scenlist = [
-            Parscen(name='Current conditions', parsetname=0, pars=[]),
+            Parscen(name='Baseline', parsetname=0, pars=[]),
             Parscen(name='90-90-90',
                   parsetname=0,
                   pars=[

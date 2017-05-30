@@ -626,7 +626,7 @@ class Multiresultset(Resultset):
         
         Use the "base" kwarg (which can be a key or an index) to set the baseline:
             resultsdiff = P.result().diff(base='No budget')
-            resultsdiff.get('numplhiv', key='Current conditions')
+            resultsdiff.get('numplhiv', key='Baseline conditions')
         '''
         
         if base is None: base = 0
