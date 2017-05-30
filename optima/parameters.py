@@ -283,40 +283,34 @@ class Parameterset(object):
     
     
     ## Define update step
-    def update(self, mflists):
+    def update(self, mflists, verbose=2):
         ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
         if not self.pars:
             raise OptimaException("No parameters available!")
     
         tmppars = self.pars
     
-        keylist = mflists['keys']
+        keylist    = mflists['keys']
         subkeylist = mflists['subkeys']
-        typelist = mflists['types']
-        valuelist = mflists['values']
-    
+        typelist   = mflists['types']
+        valuelist  = mflists['values']
+        
         ## Loop over all parameters and update them
-        verbose = 0
         for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
             if ptype=='meta':  # Metaparameters
-                vtype = type(tmppars[key].m)
-                tmppars[key].m = vtype(value)
+                tmppars[key].m = float(value)
                 printv('%s.m = %s' % (key, value), 4, verbose)
             elif ptype=='pop':  # Populations or partnerships
-                vtype = type(tmppars[key].y[subkey])
-                tmppars[key].y[subkey] = vtype(value)
+                tmppars[key].y[subkey] = float(value)
                 printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype=='exp':  # Population growth
-                vtype = type(tmppars[key].i[subkey])
-                tmppars[key].i[subkey] = vtype(value)
+                tmppars[key].i[subkey] = float(value)
                 printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype in ['const', 'advanced']:  # Constants
-                vtype = type(tmppars[key].y)
-                tmppars[key].y = vtype(value)
+                tmppars[key].y = float(value)
                 printv('%s.y = %s' % (key, value), 4, verbose)
             elif ptype=='year':  # Year parameters
-                vtype = type(tmppars[key].t)
-                tmppars[key].t = vtype(value)
+                tmppars[key].t = float(value)
                 printv('%s.t = %s' % (key, value), 4, verbose)
             else:
                 errormsg = 'Parameter type "%s" not implemented!' % ptype
@@ -431,7 +425,7 @@ class Par(object):
     
     Version: 2016nov06 by cliffk    
     '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
@@ -656,7 +650,7 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, i=None, e=None, m=1., start=2000., **defaultargs):
+    def __init__(self, i=None, e=None, m=1.0, start=2000., **defaultargs):
         Par.__init__(self, **defaultargs)
         if i is None: i = odict()
         if e is None: e = odict()
@@ -896,7 +890,7 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
         errormsg = 'Cannot create a time parameter without keyword arguments "name" and "short"! \n\nArguments:\n %s' % defaultargs.items()
         raise OptimaException(errormsg)
         
-    par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
+    par = Timepar(m=1.0, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
             validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
@@ -1054,7 +1048,7 @@ def makepars(data=None, verbose=2, die=True):
             
             elif partype=='timepar': # Otherwise it's a regular time par, made from data
                 if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-                else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
+                else: pars[parname] = Timepar(m=1.0, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
             
             elif partype=='constant': # The constants, e.g. transmfi
                 best = data[parname][0] if fromdata else nan

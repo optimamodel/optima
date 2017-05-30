@@ -272,7 +272,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
             fullvallist[b] = eval(str(box.text())) 
         
         # Create lists for update
-        mflists = dict()
+        mflists = odict()
         mflists['keys'] = fullkeylist
         mflists['subkeys'] = fullsubkeylist
         mflists['types'] = fulltypelist
@@ -313,7 +313,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     leftmargin = 10
     rowheight = 25
     colwidth = 450
-    ncols = floor(npars/maxrows)+1
+    ncols = floor(npars/(maxrows+10*advanced))+1
     nrows = ceil(nfull/float(ncols))
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
