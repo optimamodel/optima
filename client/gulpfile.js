@@ -141,113 +141,113 @@ gulp.task('watch', [], function () {
 
 // My (George's) first gulp task!
 gulp.task('mytask', function () {
-    gulp.src(['source/index.html'])
-        .pipe(version({
+    versionconfig = {
+        /**
+         * Global version value
+         * default: %MDS%
+         */
+        'value' : '%MDS%',
+
+        /**
+         * MODE: REPLACE
+         * eg:
+         *    'keyword'
+         *    /regexp/ig
+         *    ['keyword']
+         *    [/regexp/ig, '%MD5%']]
+         */
+        'replaces' : [
 
             /**
-             * Global version value
-             * default: %MDS%
+             * {String|Regexp} Replace Keyword/Rules to global value (config.value)
              */
-            'value' : '%MDS%',
+            '#{VERSION_REPlACE}#',
 
             /**
-             * MODE: REPLACE
+             * {Array}
+             * Replace keyword to custom value
+             * if just have keyword, the value will use the global value (config.value).
+             */
+            [/#{VERSION_REPlACE}#/g, '%TS%']
+        ],
+
+
+        /**
+         * MODE: APPEND
+         * Can coexist and replace, after execution to replace
+         */
+        'append' : {
+
+            /**
+             * Parameter
+             */
+            'key' : '_v',
+
+            /**
+             * Whether to overwrite the existing parameters
+             * default: 0 (don't overwrite)
+             * If the parameter already exists, as a "custom", covering not executed.
+             * If you need to cover, please set to 1
+             */
+            'cover' : 0,
+
+            /**
+             * Appended to the position (specify type)
+             * {String|Array|Object}
+             * If you set to 'all', will apply to all type, rules will use the global setting.
+             * If an array or object, will use your custom rules.
+             * others will passing.
+             *
              * eg:
-             *    'keyword'
-             *    /regexp/ig
-             *    ['keyword']
-             *    [/regexp/ig, '%MD5%']]
+             *     'js'
+             *     ['js']
+             *     {type:'js'}
+             *     ['css', '%DATE%']
              */
-            'replaces' : [
+            'to' : [
 
                 /**
-                 * {String|Regexp} Replace Keyword/Rules to global value (config.value)
+                 * {String} Specify type, the value is the global value
                  */
-                '#{VERSION_REPlACE}#',
+                'css',
 
                 /**
                  * {Array}
-                 * Replace keyword to custom value
-                 * if just have keyword, the value will use the global value (config.value).
-                 */
-                [/#{VERSION_REPlACE}#/g, '%TS%']
-            ],
-
-
-            /**
-             * MODE: APPEND
-             * Can coexist and replace, after execution to replace
-             */
-            'append' : {
-
-                /**
-                 * Parameter
-                 */
-                'key' : '_v',
-
-                /**
-                 * Whether to overwrite the existing parameters
-                 * default: 0 (don't overwrite)
-                 * If the parameter already exists, as a "custom", covering not executed.
-                 * If you need to cover, please set to 1
-                 */
-                'cover' : 0,
-
-                /**
-                 * Appended to the position (specify type)
-                 * {String|Array|Object}
-                 * If you set to 'all', will apply to all type, rules will use the global setting.
-                 * If an array or object, will use your custom rules.
-                 * others will passing.
+                 * Specify type, keyword and cover rules will use the global
+                 * setting, If you need more details, please use the object
+                 * configure.
                  *
-                 * eg:
-                 *     'js'
-                 *     ['js']
-                 *     {type:'js'}
-                 *     ['css', '%DATE%']
+                 * argument 0 necessary, otherwise passing.
+                 * argument 1 optional, the value will use the global value
                  */
-                'to' : [
+                ['image', '%TS%'],
 
-                    /**
-                     * {String} Specify type, the value is the global value
-                     */
-                    'css',
+                /**
+                 * {Object}
+                 * Use detailed custom rules to replace, missing items will
+                 * be taken in setting the global completion
 
-                    /**
-                     * {Array}
-                     * Specify type, keyword and cover rules will use the global
-                     * setting, If you need more details, please use the object
-                     * configure.
-                     *
-                     * argument 0 necessary, otherwise passing.
-                     * argument 1 optional, the value will use the global value
-                     */
-                    ['image', '%TS%'],
+                 * type is necessary, otherwise passing.
+                 */
+                {
+                    'type' : 'js',
+                    'key' : '_v',
+                    'value' : '%DATE%',
+                    'cover' : 1
+                }
+            ]
+        },
 
-                    /**
-                     * {Object}
-                     * Use detailed custom rules to replace, missing items will
-                     * be taken in setting the global completion
-
-                     * type is necessary, otherwise passing.
-                     */
-                    {
-                        'type' : 'js',
-                        'key' : '_v',
-                        'value' : '%DATE%',
-                        'cover' : 1
-                    }
-                ]
-            },
-
-            /**
-             * Output to config file
-             */
-            'output' : {
-                'file' : 'version.json'
-            }
-        }))
-        .pipe(gulp.dest('mybuild/'))
+        /**
+         * Output to config file
+         */
+        'output' : {
+            'file' : 'version.json'
+        }
+    }
+    gulp.src(['build/index.html', 'build/js/**/*.html'])
+        .pipe(version(versionconfig))
+        .pipe(gulp.dest('build/'))
     console.log('Ran gulp-version-number');
 });
 
