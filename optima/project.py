@@ -618,8 +618,6 @@ class Project(object):
             P.result('Baseline').outcome
             P.result('Halve funding').outcome
             P.result('Double funding').outcome
-        
-        Version: 2017jun02
         '''
         
         # Check inputs
@@ -658,7 +656,6 @@ class Project(object):
             P.optimize(optimname=-1) # Same as previous
             P.optimize(multi=True) # Do a multi-chain optimization
             P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
-        
         '''
         
         # Check inputs
