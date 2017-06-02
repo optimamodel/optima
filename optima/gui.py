@@ -131,25 +131,30 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
             printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
-    if advanced: figwidth = 14
-    else:        figwidth = 7
+    if advanced: 
+        figwidth = 14
+        advwid = 0.6 # Adjust button width
+    else:
+        figwidth = 7
+        advwid = 1.0
     figheight = 12
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    xinit = 0.10
-    if advanced: cbapos = [0.05,  0.07, 0.9, 1.8] # cba="check box axes position": extra tall, for moving later
-    else:        cbapos = [xinit, 0.07, 0.8, 0.9]
+    xinit = 0.10*advwid
+    if advanced: cbapos = [xinit*advwid,  0.07, 0.9, 1.8] # cba="check box axes position": extra tall, for moving later
+    else:        cbapos = [xinit,         0.07, 0.8, 0.9]
     ypos = 0.02 # y-position of buttons
-    bwid = 0.135 # x-width of buttons
+    bwid = 0.14*advwid # x-width of buttons
     bhei = 0.03 # y-height of buttons
-    sep  = 0.15 # Separation between buttons
+    sep  = 0.165 # Separation between buttons
+    pmwid = 0.03*advwid # Width of plus/minus buttons
     checkboxaxes = panelfig.add_axes(cbapos) # Create checkbox locations
     updateaxes   = panelfig.add_axes([xinit+0*sep, ypos, bwid, bhei]) # Create update button location
     clearaxes    = panelfig.add_axes([xinit+1*sep, ypos, bwid, bhei]) # Create clear button location
     defaultsaxes = panelfig.add_axes([xinit+2*sep, ypos, bwid, bhei]) # Create defaults button location
     advancedaxes = panelfig.add_axes([xinit+3*sep, ypos, bwid, bhei]) # Create defaults button location
     closeaxes    = panelfig.add_axes([xinit+4*sep, ypos, bwid, bhei]) # Create close button location
-    plusaxes     = panelfig.add_axes([xinit+4*sep+0.15, ypos+0.015, 0.03, 0.02]) # Create plus button location
-    minusaxes    = panelfig.add_axes([xinit+4*sep+0.15, ypos-0.005, 0.03, 0.02]) # Create plus button location
+    plusaxes     = panelfig.add_axes([xinit+5*sep, ypos+0.015, pmwid, 0.02]) # Create plus button location
+    minusaxes    = panelfig.add_axes([xinit+5*sep, ypos-0.005, pmwid, 0.02]) # Create plus button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     
     # Reformat the checkboxes
@@ -203,11 +208,11 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     white = (1.0,1.0,1.0)
     black = (0.4,0.4,0.4)
     darker = 0.7
-    updatebutton   = Button(updateaxes,   'Update',   color=green, hovercolor=tuple(array(green)*darker)) 
+    updatebutton   = Button(updateaxes,   'Update',   color=blue, hovercolor=tuple(array(blue)*darker)) 
     clearbutton    = Button(clearaxes,    'Clear',    color=blue,  hovercolor=tuple(array(blue)*darker))
     defaultsbutton = Button(defaultsaxes, 'Defaults', color=blue,  hovercolor=tuple(array(blue)*darker))
     advancedbutton = Button(advancedaxes,  advlabel,  color=blue,  hovercolor=tuple(array(blue)*darker))
-    closebutton    = Button(closeaxes,    'Close',    color=red,   hovercolor=tuple(array(red)*darker))
+    closebutton    = Button(closeaxes,    'Close',    color=blue,   hovercolor=tuple(array(blue)*darker))
     plusbutton     = Button(plusaxes,      '+',       color=white, hovercolor=tuple(array(white)*darker))
     minusbutton    = Button(minusaxes,     '-',       color=black, hovercolor=tuple(array(black)*darker))
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
