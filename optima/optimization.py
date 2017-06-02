@@ -296,16 +296,16 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     if which is None: 
         if objectives is not None: which = objectives['which']
         else:                      which = 'outcomes'
-    if parsetname is None: parsetname = -1
+    if parsetname  is None: parsetname  = -1
     if progsetname is None: progsetname = -1
-    if parset is None: parset  = project.parsets[parsetname] 
-    if progset is None: progset = project.progsets[progsetname] 
-    if objectives is None: objectives = defaultobjectives(project=project, progset=progset, which=which)
+    if parset      is None: parset      = project.parsets[parsetname] 
+    if progset     is None: progset     = project.progsets[progsetname] 
+    if objectives  is None: objectives  = defaultobjectives(project=project, progset=progset, which=which)
     if constraints is None: constraints = defaultconstraints(project=project, progset=progset, which=which)
     if totalbudget is None: totalbudget = objectives['budget']
-    if origbudget is None: origbudget = progset.getdefaultbudget()
-    if optiminds is None: optiminds = findinds(progset.optimizable())
-    if budgetvec is None: budgetvec = dcp(origbudget[:][optiminds])
+    if origbudget  is None: origbudget  = progset.getdefaultbudget()
+    if optiminds   is None: optiminds   = findinds(progset.optimizable())
+    if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
     if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
     
     # Validate input
@@ -322,7 +322,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
         constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
     else:
         constrainedbudget = dcp(origbudget)
-        constrainedbudget[:] = budgetvec
+        if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
+        else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
+        
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)

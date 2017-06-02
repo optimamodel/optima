@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize # Import functions
+from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, outcomecalc # Import functions
 from optima import version # Get current version
 from numpy import argmin, argsort
 from numpy.random import seed, randint
@@ -566,7 +566,7 @@ class Project(object):
         multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
         self.addresult(result=multires)
         self.modified = today()
-        return None
+        return multires
     
     
     def defaultscenarios(self, which=None, **kwargs):
@@ -574,8 +574,15 @@ class Project(object):
         defaultscenarios(self, which=which, **kwargs)
         return None
     
+    
+    def defaultbudget(self, progsetname=None):
+        ''' Small method to get the default budget '''
+        if progsetname is None: progsetname = -1
+        output = self.progsets[progsetname].getdefaultbudget()
+        return output
+    
 
-    def runbudget(self, name='runbudget', budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
+    def runbudget(self, budget=None, budgetyears=None, name='runbudget', progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
         if budget is None: raise OptimaException("Please enter a budget dictionary to run")
         if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
@@ -590,7 +597,51 @@ class Project(object):
         results.name = name
         self.addresult(results)
         self.modified = today()
-        return None
+        return results
+    
+    
+    def outcomecalc(self, budget=None, name=None, optim=None, optimname=None, parsetname=None, progsetname=None, 
+                objectives=None, constraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
+        '''
+        Calculate the outcome for a given budget -- a substep of optimize(); similar to runbudget().
+        
+        Example usage:
+            import optima as op
+            P = op.demo(0)
+            budget1 = P.defaultbudget()
+            budget2 = P.defaultbudget()
+            budget1[:] *= 0.5
+            budget2[:] *= 2.0
+            P.outcomecalc(name='Baseline')
+            P.outcomecalc(name='Halve funding', budget=budget1)
+            P.outcomecalc(name='Double funding', budget=budget2)
+            P.result('Baseline').outcome
+            P.result('Halve funding').outcome
+            P.result('Double funding').outcome
+        
+        Version: 2017jun02
+        '''
+        
+        # Check inputs
+        if name is None: name = 'outcomecalc'
+        if optim is None:
+            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname]]):
+                optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
+            if optimname is not None: # Get the optimization by name if supplied
+                optim = self.optims[optimname] 
+            else: # If neither an optim nor an optimname is supplied, create one
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+
+        # Run outcome calculation        
+        results = outcomecalc(budgetvec=budget, which='outcomes', project=self, parsetname=optim.parsetname, 
+                              progsetname=optim.progsetname, objectives=optim.objectives, constraints=optim.objectives, 
+                              origbudget=origbudget, outputresults=True, verbose=verbose, doconstrainbudget=doconstrainbudget)
+        # Add results
+        results.name = name
+        self.addresult(results)
+        self.modified = today()
+        
+        return results
 
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
