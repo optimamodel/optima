@@ -8,7 +8,7 @@ Version: 2017may27
 '''
 
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
 from pylab import figure, close, floor, ion, ioff, isinteractive, ceil, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -202,9 +202,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     
     if advanced: advlabel = 'Normal'
     else:        advlabel = 'Advanced'
-    green = (0.2,0.7,0.1)
-    blue  = (0.4,0.7,1.0)
-    red   = (1.0,0.5,0.1)
+    blue  = (0.4,0.7,1.0) # Also green = (0.2,0.7,0.1), red   = (1.0,0.5,0.1)
     white = (1.0,1.0,1.0)
     black = (0.4,0.4,0.4)
     darker = 0.7
