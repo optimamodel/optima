@@ -38,4 +38,4 @@ node_modules/gulp/bin/gulp.js
 # The line below needs to be tested, but will be needed to do the cache-busting 
 # after the main run of gulp, until the compile-build-js-client-uglify task 
 # is made to terminate correctly in gulpfile.js.
-# gulp cache-bust
+gulp cache-bust

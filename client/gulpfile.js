@@ -84,8 +84,9 @@ gulp.task('compile-build-js-client-uglify', ['write-version-js'], function () {
   var config = _(configBuild).extend(configRequire);
 
   return rjs(config)
+    .on('error', handleError)
     .pipe(ngAnnotate())
-    .pipe(uglify()) // This is key -- it compresses the JS, but takes a long time
+    .pipe(uglify().on('error', handleError)) // This is key -- it compresses the JS, but takes a long time
     .pipe(gulp.dest('build/js/'));
 });
 
@@ -179,7 +180,7 @@ gulp.task(
   [
     'copy-assets-and-vendor-js',
     'compile-build-js-client-uglify',
-    'cache-bust'  // uncomment once we can figure out how to fix 'compile-build-js-client-uglify' to halt correctly
+    //'cache-bust'  // uncomment once we can figure out how to fix 'compile-build-js-client-uglify' to halt correctly
   ]
 );
 
