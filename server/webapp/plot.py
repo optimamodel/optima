@@ -12,7 +12,7 @@ from .parse import normalize_obj
 frontendfigsize = (5.5, 2)
 frontendpositionnolegend = [[0.19, 0.12], [0.85, 0.85]]
 frontendpositionlegend   = [[0.19, 0.12], [0.63, 0.85]]
-frontendpositionmidway   = [[0.19, 0.12], [0.75, 0.85]]
+frontendpositionmidway   = [[0.19, 0.12], [0.80, 0.85]]
 
 
 def extract_graph_selector(graph_key):
