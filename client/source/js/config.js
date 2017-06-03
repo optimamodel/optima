@@ -40,7 +40,6 @@ define({
     'ui.router' : ['angular'],
     'tooltip': ['angular'],
     'rzModule': ['angular'],
-    'ng-cache-buster': ['angular'],
     'toastr': ['angular'],
     'saveAs': ['canvas2blob'],
     'mpld3' : {
