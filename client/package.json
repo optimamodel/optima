@@ -1,8 +1,9 @@
 {
   "name": "optima-client",
-  "description": "Neat combination of Angular & Require intended for bulding complex frontend applications",
-  "repository": "http://git@github.com:StarterSquad/angularjs-requirejs-seed.git",
-  "version": "2.0.0alpha",
+  "description": "Optima HIV client code, originally based on ng-seed by StarterSquad",
+  "repository": "http://git@github.com:optimamodel/optima.git",
+  "version": "2.3.7",
+  "license": "LGPL-3.0",
   "devDependencies": {
     "amdefine": "=1.0.0",
     "autoprefixer": "=6.0.3",
@@ -17,6 +18,7 @@
     "gulp-plumber": "=1.0.1",
     "gulp-postcss": "=6.0.1",
     "gulp-protractor": "=1.0.0",
+    "gulp-regex-replace": "^0.2.3",
     "gulp-replace": "^0.5.4",
     "gulp-requirejs": "=0.1.3",
     "gulp-sass": "=2.0.4",
@@ -28,5 +30,8 @@
   },
   "scripts": {
     "postinstall": "node_modules/bower/bin/bower install"
+  },
+  "dependencies": {
+    "gulp": "^3.9.1"
   }
 }

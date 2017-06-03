@@ -39,7 +39,7 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
               $state.go('home');
             }
           },
-          templateUrl: 'js/modules/user/login.html' ,
+          templateUrl: 'js/modules/user/login.html?cacheBust=xxx' ,
           controller: 'LoginController'
         })
         .state('register', {
@@ -49,21 +49,21 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
               $state.go('home');
             }
           },
-          templateUrl: 'js/modules/user/register.html' ,
+          templateUrl: 'js/modules/user/register.html?cacheBust=xxx' ,
           controller: 'RegisterController'
         })
         .state('edit', {
           url: '/edit',
-          templateUrl: 'js/modules/user/edit.html' ,
+          templateUrl: 'js/modules/user/edit.html?cacheBust=xxx' ,
           controller: 'EditController'
         })
         .state('feedback', {
           url: '/feedback',
-          templateUrl: 'js/modules/user/feedback.html'
+          templateUrl: 'js/modules/user/feedback.html?cacheBust=xxx'
         })
         .state('help', {
           url: '/help',
-          templateUrl: 'js/modules/user/help.html',
+          templateUrl: 'js/modules/user/help.html?cacheBust=xxx',
           controller: function ($scope) {
             $scope.version = version;
           }

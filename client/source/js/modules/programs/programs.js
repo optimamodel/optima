@@ -10,7 +10,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
     $stateProvider
       .state('programs', {
         url: '/programs',
-        templateUrl: 'js/modules/programs/programs.html',
+        templateUrl: 'js/modules/programs/programs.html?cacheBust=xxx',
         controller: 'ProgramSetController'
       });
   });
@@ -271,7 +271,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
 
     function openProgramModal(program, openProject, programList, parameters, categories) {
       return $modal.open({
-        templateUrl: 'js/modules/programs/program-modal.html',
+        templateUrl: 'js/modules/programs/program-modal.html?cacheBust=xxx',
         controller: 'ProgramModalController',
         size: 'lg',
         resolve: {
