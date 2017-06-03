@@ -9,7 +9,6 @@ define([
   'ui.router',
   'tooltip',
   'rzModule',
-  'ng-cache-buster',
   './modules/common/rpc-service',
   './modules/common/project-service',
   './modules/common/poller-service',
@@ -53,7 +52,6 @@ define([
         'ui.router', // to create $stateProviders defining url
         'tooltip.module', // tooltips
         'rzModule', // sliders for the graphs
-        //'ngCacheBuster', // cache-buster for angular
 
         // these are services available to other modules
         'app.local-storage', // to save user's active project between sessions
