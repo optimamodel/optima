@@ -21,7 +21,7 @@ define([
       $stateProvider
         .state('scenarios', {
           url: '/scenarios',
-          templateUrl: 'js/modules/scenarios/scenarios.html' ,
+          templateUrl: 'js/modules/scenarios/scenarios.html?cacheBust=xxx' ,
           controller: 'AnalysisScenariosController'
         });
     });
@@ -172,10 +172,10 @@ define([
       var templateUrl, controller;
       var scenario_type = scenario.scenario_type;
       if ((scenario_type === "budget" ) || (scenario_type === 'coverage')) {
-        templateUrl = 'js/modules/scenarios/program-scenarios-modal.html';
+        templateUrl = 'js/modules/scenarios/program-scenarios-modal.html?cacheBust=xxx';
         controller = 'ProgramScenariosModalController';
       } else  {
-        templateUrl = 'js/modules/scenarios/parameter-scenarios-modal.html';
+        templateUrl = 'js/modules/scenarios/parameter-scenarios-modal.html?cacheBust=xxx';
         controller = 'ParameterScenariosModalController';
       }
       return $modal.open({

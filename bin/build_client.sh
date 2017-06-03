@@ -34,3 +34,8 @@ npm install --skip-installed
 # compile sass scripts and minify javascript and copy client and everything
 echo -e '\nCompiling client (including minifying JavaScript)'
 node_modules/gulp/bin/gulp.js
+
+# The line below needs to be tested, but will be needed to do the cache-busting 
+# after the main run of gulp, until the compile-build-js-client-uglify task 
+# is made to terminate correctly in gulpfile.js.
+# gulp cache-bust

@@ -11,7 +11,7 @@ define(['angular', 'underscore'], function( angular, _) {
     $stateProvider
       .state('geospatial', {
         url: '/geospatial',
-        templateUrl: 'js/modules/geospatial/geospatial.html',
+        templateUrl: 'js/modules/geospatial/geospatial.html?cacheBust=xxx',
         controller: 'PortfolioController',
       })
   });

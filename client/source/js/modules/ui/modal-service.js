@@ -24,7 +24,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         };
 
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/ui/modal-confirm.html',
+          templateUrl: 'js/modules/ui/modal-confirm.html?cacheBust=xxx',
           controller: ['$scope', '$document', function($scope, $document) {
             $scope.title = title ? title : 'Please respond …';
             $scope.message = message || 'Are you sure?';
@@ -58,7 +58,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         };
 
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/ui/modal-inform.html',
+          templateUrl: 'js/modules/ui/modal-inform.html?cacheBust=xxx',
           controller: ['$scope', '$document', function($scope, $document) {
             $scope.message = message || 'Be informed';
             $scope.title = title || 'Attention...';
@@ -89,7 +89,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         };
 
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/ui/modal-inform-errors.html',
+          templateUrl: 'js/modules/ui/modal-inform-errors.html?cacheBust=xxx',
           controller: ['$scope', '$document', function($scope, $document) {
             $scope.errors = errors;
             $scope.title = title ? title : 'Error';
@@ -114,7 +114,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         };
 
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/ui/modal-optimalite.html',
+          templateUrl: 'js/modules/ui/modal-optimalite.html?cacheBust=xxx',
           controller: ['$scope', '$document', function($scope, $document) {
             $document.on('keydown', onModalKeyDown); // observe
             $scope.$on('$destroy', function() {
@@ -139,7 +139,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         options = options || {};
 
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/ui/modal-prompt.html',
+          templateUrl: 'js/modules/ui/modal-prompt.html?cacheBust=xxx',
           controller: ['$scope', '$document', function($scope, $document) {
             $scope.title = title;
             $scope.label = label;
@@ -174,7 +174,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
           }
         };
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/ui/modal-choice.html',
+          templateUrl: 'js/modules/ui/modal-choice.html?cacheBust=xxx',
           controller: ['$scope', '$document', function($scope, $document) {
             $scope.title = title || '';
             $scope.message = message || '';
@@ -210,7 +210,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
       rename: function(acceptName, title, message, name, errorMessage, invalidNames) {
 
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/ui/modal-rename.html',
+          templateUrl: 'js/modules/ui/modal-rename.html?cacheBust=xxx',
           controller: ['$scope', '$document', function($scope, $document) {
 
             $scope.name = name;

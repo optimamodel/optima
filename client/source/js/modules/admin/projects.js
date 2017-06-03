@@ -8,7 +8,7 @@ define(['angular', 'ui.router'], function(angular) {
     $stateProvider
       .state('adminprojects', {
         url: '/admin-projects',
-        templateUrl: 'js/modules/admin/projects.html',
+        templateUrl: 'js/modules/admin/projects.html?cacheBust=xxx',
         controller: 'AdminManageProjectsController',
       });
   });
