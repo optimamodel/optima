@@ -1318,8 +1318,18 @@ def comparepars(pars1=None, pars2=None):
 def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
     ''' 
     Function to compare two sets of simpars, like what's stored in results.
-    comparesimpars(P.results[0].simpars[0][0], Q.results[0].simpars[0])
+    
+    Example:
+        import optima as op
+        P = op.demo(0)
+        P.copyparset(0,'new')
+        P.pars('new')['numtx'].y[:] *= 1.5
+        R1 = P.runsim('default', keepraw=True)
+        R2 = P.runsim('new', keepraw=True)
+        op.comparesimpars(R1.simpars, R2.simpars)
     '''
+    if type(pars1)==list: pars1 = pars1[0] # If a list is supplied, pull out just the dict
+    if type(pars2)==list: pars2 = pars2[0]
     keys = pars1.keys()
     nkeys = 0
     count = 0
@@ -1349,11 +1359,15 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
                 pars2str = str(this2)
             if pars1str != pars2str: # Convert to string representation for testing equality
                 count += 1
-                msg = 'Parameter "%s" %s differs:\n' % (key, key2str)
+                dividerlen = 70
+                bigdivide    = '='*dividerlen+'\n'
+                littledivide = '-'*int(dividerlen/2.0-4)
+                msg  = '\n\n'+bigdivide
+                msg += 'Parameter "%s" %s differs:\n\n' % (key, key2str)
                 msg += '%s\n' % pars1str
-                msg += 'vs\n'
-                msg += '%s\n' % pars2str
-                msg += '\n\n'
+                msg += littledivide + ' vs ' + littledivide + '\n'
+                msg += '%s\n\n' % pars2str
+                msg += bigdivide
                 print(msg)
     if count==0: print('All %i parameters match' % nkeys)
     else:        print('%i of %i parameters did not match' % (count, nkeys))
