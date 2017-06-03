@@ -18,7 +18,7 @@ define(['angular' ], function (angular) {
       "calibration-panel":"h.f3jzk6oecqd9",
       "art-projection-assumptions":"h.7z3p47ssauik",
       "automatic-calibration":"h.x9hisc2lxnln",
-      "manual-calibration":"h.da77fbanyz1nB",
+      "manual-calibration":"h.da77fbanyz1n",
       "export-single-figure":"h.mxtp4gq0xbw",
       "program-sets":"h.3qlnrs1yi6px",
       "programs":"h.9zw6hj7anqs8",
@@ -50,7 +50,7 @@ define(['angular' ], function (angular) {
     var headingURL = headingMap[helpKey];
 
     var fullURL = baseURL + headingURL;
-    console.log('openHelp ', fullURL);
+    console.log('openHelp ', helpKey, fullURL);
     var scrh = screen.height;
     var scrw = screen.width;
     var h = scrh * 0.8; // Height of window
@@ -67,6 +67,9 @@ define(['angular' ], function (angular) {
   module.directive('help', function() {
     return {
       restrict: 'E',
+      scope: {
+        ref: '@'
+      },
       template:
         '<i '
           + 'class="fa fa-question-circle-o"'
@@ -77,13 +80,12 @@ define(['angular' ], function (angular) {
           + '></i>'
         ,
       link: function(scope, elem, attrs) {
-        scope.run = function(info) { openHelp(attrs['ref']); };
+        scope.run = function(info) { openHelp(scope.ref); };
       }
     }
   });
 
   // <icon action="copy" click="someFn()"/>
-
   module.directive('icon', function($compile) {
 
     var iconTypes = {
