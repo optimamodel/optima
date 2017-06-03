@@ -940,7 +940,6 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             ax.spines['right'].set_visible(False)
             ax.yaxis.set_ticks_position('left')
             ax.xaxis.set_ticks_position('bottom')
-            5
             if ismultisim: thistitle = 'Care cascade - %s' % titles[plt]
             else:          thistitle = 'Care cascade'
         
