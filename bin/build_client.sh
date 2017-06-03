@@ -34,10 +34,12 @@ echo -e '\nInstalling npm dependencies...'
 npm install --skip-installed
 
 # compile sass scripts and minify javascript and copy client and everything
-echo -e '\nCompiling client (including minifying JavaScript)'
+echo -e '\nCompiling client (including minifying JavaScript)...'
 node_modules/gulp/bin/gulp.js
 
 # This needs to be done separately, until the compile-build-js-client-uglify task 
 # is made to terminate correctly in gulpfile.js.
-echo -e '\nAdding cache-busting strings'
+echo -e '\nAdding cache-busting strings...'
 gulp cache-bust
+
+echo -e '\nDone.'
